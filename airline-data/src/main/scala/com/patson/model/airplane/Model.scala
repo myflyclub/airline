@@ -197,7 +197,7 @@ Model("BAe 146-200",	"BAe 146",	93,	93,	5,	300,	789,	3650,	28035000,	1560,	12,	M
 Model("BAe 146-300",	"BAe 146",	113,	113,	5,	349,	789,	3650,	38626000,	1560,	12,	Manufacturer("BAe",	countryCode="GB"),	1535,	imageUrl ="https://www.norebbo.com/2018/11/british-aerospace-bae-146-200-avro-rj85-blank-illustration-templates/"),
 Model("BAe Jetstream 41",	"BAe Jetstream",	29,	29,	6,	40,	482,	1433,	8811000,	1820,	0,	Manufacturer("BAe",	countryCode="GB"),	1524,	imageUrl =""),
 Model("BAe Jetstream 61",	"BAe Jetstream",	56,	56,	6,	110,	496,	1825,	20292000,	1820,	6,	Manufacturer("BAe",	countryCode="GB"),	1200,	imageUrl =""),
-Model("Boeing 2707",	"Boeing 2707",	554,	277,	10,	11100,	3300,	5900,	798597000,	1664,	63,	Manufacturer("Boeing",	countryCode="US"),	3800,	imageUrl =""),
+Model("Boeing 2707",	"Boeing 2707",	554,	277,	10,	11100,	3300,	6500,	798597000,	1664,	63,	Manufacturer("Boeing",	countryCode="US"),	3500,	imageUrl =""),
 Model("Boeing 307 Stratoliner",	"Post-War Props",	60,	60,	1,	114,	357,	3850,	2403000,	1508,	0,	Manufacturer("Boeing",	countryCode="US"),	620,	imageUrl =""),
 Model("Boeing 377 Stratocruiser",	"Post-War Props",	117,	117,	2,	310,	480,	6760,	18690000,	1456,	6,	Manufacturer("Boeing",	countryCode="US"),	1000,	imageUrl =""),
 Model("Boeing 707",	"Boeing 707",	194,	194,	3,	1025,	1003,	6700,	39338000,	2496,	0,	Manufacturer("Boeing",	countryCode="US"),	2700,	imageUrl ="https://www.norebbo.com/boeing-707-320c-blank-illustration-templates/"),
