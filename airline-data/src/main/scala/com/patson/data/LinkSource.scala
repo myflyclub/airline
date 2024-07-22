@@ -329,6 +329,10 @@ object LinkSource {
     loadFlightLinksByCriteria(List(("to_airport", toAirportId)), loadDetails)
   }
 
+  def loadFlightLinksByAirplaneModel(modelId : Int, loadDetails : Map[DetailType.Value, Boolean] = SIMPLE_LOAD) = {
+    loadFlightLinksByCriteria(List(("airplane_model", modelId)), loadDetails)
+  }
+
 //  def saveLink2(link : Link) : Option[Link] = {
 //       case Some(generatedId) =>
 //         link.id = generatedId

@@ -509,6 +509,39 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
     }))
   }
 
+  def getLinksByAirplaneModel(modelId : Int) = Action {
+    val linksByModel = LinkSource.loadFlightLinksByAirplaneModel(airportId).groupBy(_.from)
+
+    val sortedLinks: Map[List[Airport], List[Link]] = links.foldLeft(Map.empty[List[Airport], List[Link]]) { (map, link) =>
+      val forwardKey = List(link.from, link.to)
+      val reverseKey = List(link.to, link.from)
+
+      if (map.contains(forwardKey)) {
+        map.updated(forwardKey, map(forwardKey) :+ link)
+      } else if (map.contains(reverseKey)) {
+        map.updated(reverseKey, map(reverseKey) :+ link.copy(from = link.to, to = link.from))
+      } else {
+        map.updated(forwardKey, List(link))
+      }
+    }
+
+    Ok(Json.toJson(sortedLinks.toList.sortBy(_._2.map(_.futureCapacity().total).sum).reverse.map {
+      case (airports, links) =>
+        Json.obj(
+          "fromAirport" -> Json.toJson(airports(0))(AirportSimpleWrites),
+          "remoteAirport" -> Json.toJson(airports(1))(AirportSimpleWrites),
+          "capacity" -> links.map(_.futureCapacity()).foldLeft(LinkClassValues.getInstance())((x, y) => x + y),
+          "frequency" -> links.map(_.futureFrequency()).sum,
+          "operators" -> Json.toJson( links.sortBy(_.futureCapacity().total).reverse.map { link =>
+            Json.obj(
+              "airlineId" -> link.airline.id,
+            "airlineName" -> link.airline.name,
+            "capacity" -> link.futureCapacity(),
+            "frequency" -> link.frequency)
+          }))
+    }))
+  }
+
   val MAX_LOYALIST_HISTORY_AIRLINE = 5
 
   def getAirportLoyalistData(airportId : Int, airlineIdOption : Option[Int]) = Action {
