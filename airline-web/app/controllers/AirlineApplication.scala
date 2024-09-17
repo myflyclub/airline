@@ -293,9 +293,26 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
   def getBaseRejection(airline : Airline, targetBase : AirlineBase) : Option[String] = {
     val airport = targetBase.airport
     val cost = targetBase.getValue
-    if (cost > airline.getBalance) {
-      return Some("Not enough cash to build/upgrade the base")
+    val delegatesAssignedToThisCountry = airline.getDelegateInfo().busyDelegates.filter { delegate =>
+    val targetCountryCode = targetBase.countryCode
+      delegate.assignedTask.getTaskType == DelegateTaskType.COUNTRY && delegate.assignedTask.asInstanceOf[CountryDelegateTask].country.countryCode == targetCountryCode
     }
+    val upgradeDelegatesRequired = if (targetBase.scale == 1) targetBase.delegatesRequired else targetBase.delegatesRequired - targetBase.copy(scale = targetBase.scale - 1).delegatesRequired
+    println(s"upgradeDelegatesRequired ${upgradeDelegatesRequired}")
+    val requiredDelegates = airline.getBases().filter(_.countryCode == targetBase.countryCode).map(_.delegatesRequired).sum + upgradeDelegatesRequired
+    println(s"requiredDelegates ${requiredDelegates}")
+    if (cost > airline.getBalance && delegatesAssignedToThisCountry.length < requiredDelegates) {
+      return Some("Not enough cash to build/upgrade the base and it require $requiredDelegates delegate(s) assigned to ${CountryCache.getCountry(targetBase.countryCode).get.name} but only ${delegatesAssignedToThisCountry.length} assigned.")
+    }
+    else if (cost > airline.getBalance && delegatesAssignedToThisCountry.length <= requiredDelegates) {
+      return Some("Not enough cash to build/upgrade the base.")
+    }
+    else if (cost <= airline.getBalance && delegatesAssignedToThisCountry.length < requiredDelegates) {
+      return Some("Cannot build/upgrade this base, it require $requiredDelegates delegate(s) assigned to ${CountryCache.getCountry(targetBase.countryCode).get.name} but only ${delegatesAssignedToThisCountry.length} assigned.")
+    }
+    return None
+  }
+    
     if (targetBase.scale < 1) {
       return Some(s"Invalid scale ${targetBase.scale}")
     }
@@ -333,24 +350,6 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
       }
     }
 
-    //check delegates requirement
-    val delegatesAssignedToThisCountry = airline.getDelegateInfo().busyDelegates.filter { delegate =>
-      val targetCountryCode = targetBase.countryCode
-      delegate.assignedTask.getTaskType == DelegateTaskType.COUNTRY && delegate.assignedTask.asInstanceOf[CountryDelegateTask].country.countryCode == targetCountryCode
-    }
-
-    val upgradeDelegatesRequired = if (targetBase.scale == 1) targetBase.delegatesRequired else targetBase.delegatesRequired - targetBase.copy(scale = targetBase.scale - 1).delegatesRequired
-    println(s"upgradeDelegatesRequired ${upgradeDelegatesRequired}")
-
-    val requiredDelegates = airline.getBases().filter(_.countryCode == targetBase.countryCode).map(_.delegatesRequired).sum + upgradeDelegatesRequired
-    println(s"requiredDelegates ${requiredDelegates}")
-    if (delegatesAssignedToThisCountry.length < requiredDelegates) {
-      return Some(s"Cannot build/upgrade this base. Require $requiredDelegates delegate(s) assigned to ${CountryCache.getCountry(targetBase.countryCode).get.name} but only ${delegatesAssignedToThisCountry.length} assigned")
-    }
-
-
-    return None
-  }
 
    def getLoungeConsideration(airline : Airline, inputFacility : AirportFacility) : Consideration[Lounge] = {
      val airport = inputFacility.airport
