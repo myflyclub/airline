@@ -1794,3 +1794,55 @@ function getAssignedAirplanesCount(compareKey, compareValue, modelId) {
     });
     return count
 }
+
+function toggleModelLinks(modelId) {
+	clearAllPaths()
+	closeAirportInfoPopup()
+
+	showWorldMap()
+	$.ajax({
+		type: 'GET',
+		url: "airplane-models/" + modelId + "/links",
+	    contentType: 'application/json; charset=utf-8',
+	    dataType: 'json',
+	    success: function(linksByRemoteAirport) {
+	        $("#topAirportLinksPanel .topDestinations .table-row").remove()
+	    	$.each(linksByRemoteAirport, function(index, entry) {
+                drawAirportLinkPath(entry.fromAirport, entry)
+                //populate top 5 destinations
+                if (index < 5) {
+                    var $destinationRow = $('<div class="table-row"></div>')
+                    var $airportCell = $('<div class="cell"></div>')
+                    $airportCell.append(getAirportSpan(entry.remoteAirport))
+                    $destinationRow.append($airportCell)
+                    $destinationRow.append('<div class="cell">' + toLinkClassValueString(entry.capacity) + '(' + entry.frequency + ')</div>')
+                    var $operatorsCell = $('<div class="cell"></div>')
+                    $.each(entry.operators, function(index, operator) {
+                        var $airlineLogoSpan = $('<span></span>')
+                    	$airlineLogoSpan.append(getAirlineLogoImg(operator.airlineId))
+                    	$airlineLogoSpan.attr("title", operator.airlineName + ' ' + toLinkClassValueString(operator.capacity) + '(' + operator.frequency + ')')
+                        $operatorsCell.append($airlineLogoSpan)
+                    })
+                    $destinationRow.append($operatorsCell)
+
+                    $("#topAirportLinksPanel .topDestinations").append($destinationRow)
+                }
+            })
+            if (linksByRemoteAirport.length == 0) {
+                $("#topAirportLinksPanel .topDestinations").append("<div class='table-row'><div class='cell'>-</div><div class='cell'>-</div><div class='cell'>-</div></div>")
+            }
+
+	    	$("#topAirportLinksPanel").show();
+	    },
+        error: function(jqXHR, textStatus, errorThrown) {
+	            console.log(JSON.stringify(jqXHR));
+	            console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
+	    },
+	    beforeSend: function() {
+	    	$('body .loadingSpinner').show()
+	    },
+	    complete: function(){
+	    	$('body .loadingSpinner').hide()
+	    }
+	});
+}

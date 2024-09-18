@@ -210,6 +210,7 @@ GET     /research-link/:fromAirportId/:toAirportId  controllers.SearchApplicatio
 #GET		 /link-consumptions				  controllers.LinkApplication.getAllLinkConsumptions
 GET		 /airplane-models				  controllers.AirplaneApplication.getAirplaneModels
 GET		 /airplane-models/:modelId/stats     controllers.AirplaneApplication.getAirplaneModelStats(modelId : Int)
+GET		 /airplane-models/:modelId/links     controllers.Application.getLinksByAirplaneModel(modelId : Int)
 GET		 /rankings  		  		      controllers.RankingApplication.getRankings()
 GET		 /rankings/:airlineId  		      controllers.RankingApplication.getRankingsWithAirline(airlineId : Int)
 GET		 /logos/templates 				  controllers.LogoApplication.getTemplates()	
