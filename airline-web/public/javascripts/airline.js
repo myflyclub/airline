@@ -1990,9 +1990,22 @@ function updateLinksTable(sortProperty, sortOrder) {
 	//loadedLinks.sort(sortByProperty(sortProperty, sortOrder == "ascending"))
 	loadedLinks = sortPreserveOrder(loadedLinks, sortProperty, sortOrder == "ascending")
 
+	var filterOptionValues = {
+		"fromAirportCode": {},
+		"toAirportCode": {},
+		"modelId": {},
+	};
+
 	$.each(loadedLinks, function(index, link) {
 	    const quality = link.computedQuality > 0 ? link.computedQuality : "-"
 		const row = $("<div class='table-row clickable' onclick='selectLinkFromTable($(this), " + link.id + ")'></div>")
+
+		// Collect filter options
+		filterOptionValues.fromAirportCode[link.fromCountryCode] = filterOptionValues.fromAirportCode[link.fromCountryCode] || {};
+		filterOptionValues.fromAirportCode[link.fromCountryCode][link.fromAirportCode] = `${link.fromAirportCity} (${link.fromAirportCode})`;
+		filterOptionValues.toAirportCode[link.toCountryCode] = filterOptionValues.toAirportCode[link.toCountryCode] || {};
+		filterOptionValues.toAirportCode[link.toCountryCode][link.toAirportCode] = `${link.toAirportCity} (${link.toAirportCode})`;
+		filterOptionValues.modelId[link.modelId] = link.modelName;
 
 		row.append("<div class='cell'>" + getCountryFlagImg(link.fromCountryCode) + getAirportText(link.fromAirportCity, link.fromAirportCode) + "</div>")
 		row.append("<div class='cell'>" + getCountryFlagImg(link.toCountryCode) + getAirportText(link.toAirportCity, link.toAirportCode) + "</div>")
@@ -2012,13 +2025,33 @@ function updateLinksTable(sortProperty, sortOrder) {
 			row.addClass("selected")
 		}
 
+		// Handle filtering
+		let isFiltered = false;
+		Object.entries(linksColumnFilter).forEach(([property, filterValues]) => {
+			if (!Array.isArray(filterValues) || filterValues.length < 1) {
+				return;
+			}
+			if (link[property] === undefined) {
+				console.log("WARN", "updateLinksTable filtering tried to filter for property that doesnt exist in links object", property, link)
+			}
+			if (!filterValues.includes(String(link[property]))) {
+				isFiltered = true;
+			}
+		});
+		if (isFiltered) {
+			$(row).hide();
+		} else {
+			$(row).show();
+		}
+
 		linksTable.append(row)
 	});
 	if (loadedLinks.length == 0) {
-        $('#linksCanvas .noLinkTips').show();
+		$('#linksCanvas .noLinkTips').show();
 	} else {
-	    $('#linksCanvas .noLinkTips').hide();
-    }
+		$('#linksCanvas .noLinkTips').hide();
+		updateLinksColumnFilterOptions(filterOptionValues);
+	}
 
 
 }
