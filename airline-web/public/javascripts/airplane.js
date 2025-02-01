@@ -348,11 +348,12 @@ function validateAirplaneQuantity() {
 function promptBuyAirplane(modelId, condition, price, deliveryTime, explicitHomeAirportId, multipleAble, buyAirplaneFunction) {
     var model = loadedModelsById[modelId]
     if (model.imageUrl) {
-        var imageLocation = 'assets/images/airplanes/' + model.name.replace(/\s+/g, '-').toLowerCase() + '.png'
-        $('#buyAirplaneModal .modelIllustration img').attr('src', imageLocation)
+        const imageLocation = 'assets/images/airplanes/' + model.name.replace(/\s+/g, '-').toLowerCase() + '.webp'
+        const fallbackLocation = 'assets/images/airplanes/' + model.name.replace(/\s+/g, '-').toLowerCase() + '.png'
+        $('#buyAirplaneModal .modelIllustration source').attr('srcset', imageLocation)
+        $('#buyAirplaneModal .modelIllustration img').attr('src', fallbackLocation)
         $('#buyAirplaneModal .modelIllustration a').attr('href', model.imageUrl)
         $('#buyAirplaneModal .modelIllustration').show()
-
     } else {
         $('#buyAirplaneModal .modelIllustration').hide()
     }
@@ -645,8 +646,10 @@ function selectAirplaneModel(model) {
 	//show basic airplane model details
 	//model = loadedModels[modelId]
 	if (model.imageUrl) {
-		var imageLocation = 'assets/images/airplanes/' + model.name.replace(/\s+/g, '-').toLowerCase() + '.png'
-		$('#airplaneCanvas .modelIllustration img').attr('src', imageLocation)
+		const imageLocation = 'assets/images/airplanes/' + model.name.replace(/\s+/g, '-').toLowerCase() + '.webp'
+        const fallbackLocation = 'assets/images/airplanes/' + model.name.replace(/\s+/g, '-').toLowerCase() + '.png'
+        $('#airplaneCanvas .modelIllustration source').attr('srcset', imageLocation)
+        $('#airplaneCanvas .modelIllustration img').attr('src', fallbackLocation)
 		$('#airplaneCanvas .modelIllustration a').attr('href', model.imageUrl)
 		$('#airplaneCanvas .modelIllustration').show()
 	} else {
@@ -1211,8 +1214,10 @@ function loadOwnedAirplaneDetails(airplaneId, selectedItem, closeCallback, disab
     	    success: function(airplane) {
     	        var model = loadedModelsById[airplane.modelId]
                 if (model.imageUrl) {
-                    var imageLocation = 'assets/images/airplanes/' + model.name.replace(/\s+/g, '-').toLowerCase() + '.png'
-                    $('#ownedAirplaneDetail .modelIllustration img').attr('src', imageLocation)
+                    const imageLocation = 'assets/images/airplanes/' + model.name.replace(/\s+/g, '-').toLowerCase() + '.webp'
+                    const fallbackLocation = 'assets/images/airplanes/' + model.name.replace(/\s+/g, '-').toLowerCase() + '.png'
+                    $('#ownedAirplaneDetail .modelIllustration source').attr('srcset', imageLocation)
+                    $('#ownedAirplaneDetail .modelIllustration img').attr('src', fallbackLocation)
                     $('#ownedAirplaneDetail .modelIllustration a').attr('href', model.imageUrl)
                     $('#ownedAirplaneDetail .modelIllustration').show()
                 } else {
@@ -1702,8 +1707,10 @@ function cancelAirplaneHome() {
 function promptSetFavorite() {
     var model = $('#setFavoriteModal').data("model")
     if (model.imageUrl) {
-        var imageLocation = 'assets/images/airplanes/' + model.name.replace(/\s+/g, '-').toLowerCase() + '.png'
-        $('#setFavoriteModal .modelIllustration img').attr('src', imageLocation)
+        const imageLocation = 'assets/images/airplanes/' + model.name.replace(/\s+/g, '-').toLowerCase() + '.webp'
+        const fallbackLocation = 'assets/images/airplanes/' + model.name.replace(/\s+/g, '-').toLowerCase() + '.png'
+        $('#setFavoriteModal .modelIllustration source').attr('srcset', imageLocation)
+        $('#setFavoriteModal .modelIllustration img').attr('src', fallbackLocation)
         $('#setFavoriteModal .modelIllustration a').attr('href', model.imageUrl)
         $('#setFavoriteModal .modelIllustration').show()
 
