@@ -604,15 +604,26 @@ object PassengerSimulation {
                 connectionCost += (7 * 24 * 3) / frequency //$3.00 per hour wait; $36 @ 14 freq
               }
 
-              if (previousLinkAirlineId != currentLinkAirlineId && (allianceIdByAirlineId.get(previousLinkAirlineId) == null.asInstanceOf[Int] || allianceIdByAirlineId.get(previousLinkAirlineId) != allianceIdByAirlineId.get(currentLinkAirlineId))) { //switch airline, impose extra cost
-                connectionCost += 40
+              if (previousLinkAirlineId ==  currentLinkAirlineId || allianceIdByAirlineId.get(previousLinkAirlineId) == allianceIdByAirlineId.get(currentLinkAirlineId))) { //same alliance or airline, 30 % less perceived cost
+                 connectionCost -= fromCost*0.3
               }
+              
+              //make transfert impose extra cost
+              connectionCost += 40
+              
               flightTransit = true
             }
+
+    
+           if (flightTransit = false) { //if one airline (no transfer)) then should be treated as same airline or alliance.
+              connectionCost -= fromCost*0.3
+            }
+          
+            //connection cost should take into consideration of preferred link class too
             connectionCost *= passengerGroup.preference.preferredLinkClass.priceMultiplier
             connectionCost += passengerGroup.preference.preferredLinkClass.basePrice
             connectionCost *= passengerGroup.preference.connectionCostRatio
-
+            
             if (flightTransit) {
               val waitTimeDiscount = Math.min(0.5, linkConsideration.from.computeTransitDiscount(
                 predecessorLinkConsideration,
