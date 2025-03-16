@@ -8,7 +8,7 @@ object GameConstants {
   val ISOLATED_ISLAND_AIRPORTS: Seq[String] = List(
     //europe
     "GRW", "CVU", "PXO", "SJZ", //pt
-    "VDE", "GMZ", //es
+    "VDE", "GMZ", "SPC", "LPA", "IBZ", "MAH", //es
     "IDY", "ACI", "ISC", "OUI", "IDY", //FR
     "PNL", "LMP", //IT
     "HGL", "BMK", "GWT", "BMR", //DE
@@ -42,7 +42,8 @@ object GameConstants {
     "BSO", "CGM", "JOL", "CYU", "TWT", "IAO", "MBT", "USU", "ENI", //PH
     "TNJ", //TH
     "CNI", //CN
-    "NAH", //ID
+    "NAH", "BTH", //ID
+    "TOD", //MY
     "KHK", "KIH", "GSM", //IR
     "ZDY", //AE
     //africa

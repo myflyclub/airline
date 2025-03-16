@@ -109,7 +109,7 @@ abstract class FlightPreference(homeAirport : Airport) {
       } else {
         priceSensitivity
       }
-    1 + deltaFromStandardPrice * priceSensitivityModifier / standardPrice
+    0.9 + deltaFromStandardPrice * priceSensitivityModifier / standardPrice //0.95 instead of 1.0 to make pax more forgiving and book / have SF
   }
 
   def loyaltyAdjustRatio(link : Transport) = {
@@ -283,11 +283,13 @@ case class DealPreference(homeAirport : Airport, preferredLinkClass: LinkClass, 
   override val priceSensitivity = preferredLinkClass.priceSensitivity + 0.1
   override val frequencyThreshold = 3
   def computeCost(baseCost : Double, link : Transport, linkClass : LinkClass) = {
-    baseCost
+    val noise = 1.0 + getFlatTopBellRandom(0.5, 0.25)
+    val finalCost = baseCost * noise
+    Math.max(1, finalCost)
   }
 
   val getPreferenceType: FlightPreferenceType.Value = FlightPreferenceType.DEAL
-  override val connectionCostRatio = 0.2 //okay with taking connection
+  override val connectionCostRatio = 0.4 //okay with taking connection
 }
 
 
@@ -340,16 +342,9 @@ case class AppealPreference(homeAirport : Airport, preferredLinkClass : LinkClas
   }
 
   def computeCost(baseCost: Double, link : Transport, linkClass : LinkClass) : Double = {
-    var perceivedPrice = baseCost
-
-    val noise = 1.0 + getFlatTopBellRandom(0.4, 0.25)
-    val finalCost = perceivedPrice * noise
-    
-    if (finalCost >= 0) {
-      return finalCost  
-    } else { //just to play safe - do NOT allow negative cost link
-      return 0
-    }
+    val noise = 1.0 + getFlatTopBellRandom(0.5, 0.25)
+    val finalCost = baseCost * noise
+    Math.max(1, finalCost)
   }
 }
 

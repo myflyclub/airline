@@ -20,7 +20,7 @@ object DemandGenerator {
   val BUSINESS_CLASS_INCOME_MAX = 125_000
   val BUSINESS_CLASS_PERCENTAGE_MAX: Map[PassengerType.Value, Double] = Map(PassengerType.TRAVELER -> 0.16, PassengerType.BUSINESS -> 0.49, PassengerType.TOURIST -> 0.1, PassengerType.ELITE -> 0, PassengerType.OLYMPICS -> 0.25)
   val DISCOUNT_CLASS_PERCENTAGE_MAX: Map[PassengerType.Value, Double] = Map(PassengerType.TRAVELER -> 0.38, PassengerType.BUSINESS -> 0, PassengerType.TOURIST -> 0.6, PassengerType.ELITE -> 0, PassengerType.OLYMPICS -> 0)
-  val MIN_DISTANCE = 250 //does not apply to islands
+  val MIN_DISTANCE = 180 //does not apply to islands
   val HIGH_INCOME_RATIO_FOR_BOOST = 0.7 //at what percent of high income does demand change
   val PRICE_DISCOUNT_PLUS_MULTIPLIER = 1.05 //multiplier on base price
   val PRICE_LAST_MIN_MULTIPLIER = 1.11

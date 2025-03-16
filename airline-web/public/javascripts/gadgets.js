@@ -827,6 +827,10 @@ function isPremium() {
     return activeUser && activeUser.level > 0
 }
 
+function capitalizeFirstLetter(string) {
+    return String(string).charAt(0).toUpperCase() + String(string).slice(1);
+}
+
 //from millisec
 function toReadableDuration(duration) {
   var hours = Math.floor((duration / (1000 * 60 * 60)) % 24),

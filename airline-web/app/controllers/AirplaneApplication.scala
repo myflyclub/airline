@@ -164,7 +164,7 @@ class AirplaneApplication @Inject()(cc: ControllerComponents) extends AbstractCo
   }
   
   def getAirplaneModelsByAirline(airlineId : Int) = AuthenticatedAirline(airlineId) { request =>
-    val originalModelsById = AirplaneModelCache.allModels
+    val originalModelsById = if (request.user.airlineType == AirlineType.REGIONAL) AirplaneModelCache.regionalModels else AirplaneModelCache.allModels
     val allAirplanes = AirplaneSource.loadAllAirplanes() //todo: create & move to a cache
     val allModelsAndCount = allAirplanes.filter(_.constructedCycle > 0).groupBy(_.model).map {
       case (model, airplanes) =>

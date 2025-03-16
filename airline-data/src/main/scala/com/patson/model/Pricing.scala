@@ -9,10 +9,10 @@ import com.patson.model.FlightCategory.FlightCategory
  */
 object Pricing {
   val modifierBrackets: Map[LinkClass, List[(Int, Double)]] = Map(
-    DISCOUNT_ECONOMY  -> List((400, 0.13), (800, 0.071), (3800, 0.07), (3000, 0.08), (Int.MaxValue, 0.12)),
-    ECONOMY           -> List((400, 0.16), (800, 0.079), (3800, 0.073), (3000, 0.09), (Int.MaxValue, 0.14)),
-    BUSINESS          -> List((400, 0.35), (800, 0.234), (3800, 0.155), (3000, 0.15), (Int.MaxValue, 0.19)),
-    FIRST             -> List((400, 1.16), (800, 0.309), (3800, 0.355), (3000, 0.33), (Int.MaxValue, 0.48))
+    DISCOUNT_ECONOMY  -> List((400, 0.13), (800, 0.071), (3800, 0.071), (3000, 0.08), (Int.MaxValue, 0.14)),
+    ECONOMY           -> List((400, 0.16), (800, 0.079), (3800, 0.074), (3000, 0.10), (Int.MaxValue, 0.14)),
+    BUSINESS          -> List((400, 0.38), (800, 0.239), (3800, 0.168), (3000, 0.27), (Int.MaxValue, 0.27)),
+    FIRST             -> List((400, 1.17), (800, 0.331), (3800, 0.399), (3000, 0.57), (Int.MaxValue, 0.61))
   )
   val INTERNATIONAL_PRICE_MULTIPLIER = 1.05
 
@@ -36,7 +36,7 @@ object Pricing {
     } else {
       price
     }
-    price *= 1 + 0.16 * Math.min(1, airportIncome.toDouble / Airport.HIGH_INCOME)
+    price *= 1 + 0.14 * Math.min(1, airportIncome.toDouble / Airport.HIGH_INCOME)
     price *= PassengerType.priceAdjust(paxType)
     
     price.toInt
