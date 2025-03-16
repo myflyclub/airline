@@ -66,10 +66,10 @@ function refreshTopBar(airline) {
 
 	//desktop
 	//$(getGradeStarsImgs(airline.gradeValue)).attr('title', "Reputation: " + airline.reputation).appendTo($(".reputationStars"))
-//	var reputationText = "Reputation: " + airline.reputation + " (" + airline.gradeDescription + ") Next Grade: " + airlineGradeLookup[airline.gradeValue]
+	var reputationText = "Reputation: " + airline.reputation + " (" + airline.gradeDescription + ") Next Grade: " + airline.gradeCeiling
 	var $starBar = $(getGradeStarsImgs(airline.gradeLevel - 2))
 	$(".reputationStars").append($starBar)
-//	addTooltip($(".reputationStars"), reputationText, {'top' : 0, 'width' : '350px', 'white-space' : 'nowrap'})
+	addTooltip($("#topReputationStars"), reputationText, {'top' : 0, 'width' : '350px', 'white-space' : 'nowrap'})
 
 	//updateTopBarDelegatesStatus
 	refreshTopBarDelegates(airline)
@@ -993,21 +993,27 @@ function updatePlanLinkInfo(linkInfo, isRefresh) {
 	$('.planLinkFlightType').html(linkInfo.flightType)
 
     var $breakdown = $("#planLinkDetails .directDemandBreakdown")
-    plannedLinkDemands = linkInfo.demands
     $breakdown.find(".fromAirport .airportLabel").empty()
     $breakdown.find(".fromAirport .airportLabel").append(getAirportSpan({ "iata" : linkInfo.fromAirportCode, "countryCode" : linkInfo.fromCountryCode, "city" : linkInfo.fromAirportCity}))
-    $breakdown.find(".fromAirport .travelerDemand").text(toLinkClassValueString(linkInfo.demands.TravelerFrom))
-    $breakdown.find(".fromAirport .businessDemand").text(toLinkClassValueString(linkInfo.demands.BusinessFrom))
-    $breakdown.find(".fromAirport .touristDemand").text(toLinkClassValueString(linkInfo.demands.TouristFrom))
-
     $breakdown.find(".toAirport .airportLabel").empty()
     $breakdown.find(".toAirport .airportLabel").append(getAirportSpan({ "iata" : linkInfo.toAirportCode, "countryCode" : linkInfo.toCountryCode, "city" : linkInfo.toAirportCity}))
-    $breakdown.find(".toAirport .travelerDemand").text(toLinkClassValueString(linkInfo.demands.TravelerTo))
-    $breakdown.find(".toAirport .businessDemand").text(toLinkClassValueString(linkInfo.demands.BusinessTo))
-    $breakdown.find(".toAirport .touristDemand").text(toLinkClassValueString(linkInfo.demands.TouristTo))
 
-	 //+ " (business: " + linkInfo.businessPassengers + " tourist: " + linkInfo.touristPassengers + ")")
-	//$('#planLinkAirportLinkCapacity').text(linkInfo.airportLinkCapacity)
+    // Sum up all preferences for each passenger type for "from" direction
+    let fromTravelerTotal = sumPreferencesByType(linkInfo.fromDemandDetails, "Traveler")
+    let fromBusinessTotal = sumPreferencesByType(linkInfo.fromDemandDetails, "Business") 
+    let fromTouristTotal = sumPreferencesByType(linkInfo.fromDemandDetails, "Tourist")
+    $breakdown.find(".fromAirport .travelerDemand").text(toLinkClassValueString(fromTravelerTotal))
+    $breakdown.find(".fromAirport .businessDemand").text(toLinkClassValueString(fromBusinessTotal))
+    $breakdown.find(".fromAirport .touristDemand").text(toLinkClassValueString(fromTouristTotal))
+    
+    // Sum up all preferences for each passenger type for "to" direction
+    let toTravelerTotal = sumPreferencesByType(linkInfo.toDemandDetails, "Traveler")
+    let toBusinessTotal = sumPreferencesByType(linkInfo.toDemandDetails, "Business")
+    let toTouristTotal = sumPreferencesByType(linkInfo.toDemandDetails, "Tourist")
+    
+    $breakdown.find(".toAirport .travelerDemand").text(toLinkClassValueString(toTravelerTotal))
+    $breakdown.find(".toAirport .businessDemand").text(toLinkClassValueString(toBusinessTotal))
+    $breakdown.find(".toAirport .touristDemand").text(toLinkClassValueString(toTouristTotal))
 	
 	
 	$("#planLinkCompetitors .data-row").remove()
@@ -1096,6 +1102,8 @@ function updatePlanLinkInfo(linkInfo, isRefresh) {
      if (linkInfo.cost !== 0) {
         $('#planLinkSetupCostRow').show()
         $('#planLinkSetupCost').text("$" + commaSeparateNumber(linkInfo.cost))
+     } else {
+        $('#planLinkSetupCostRow').hide()
      }
 
     if (tempPath) { //remove previous plan link if it exists
@@ -1122,9 +1130,9 @@ function updatePlanLinkInfo(linkInfo, isRefresh) {
 
     var initialPrice = {}
 	if (!linkInfo.existingLink) {
-	    initialPrice.economy = linkInfo.suggestedPrice.Traveler.economy
-	    initialPrice.business = linkInfo.suggestedPrice.Traveler.business
-	    initialPrice.first = linkInfo.suggestedPrice.Traveler.first
+	    initialPrice.economy = linkInfo.suggestedPrice.TouristFrom.economy
+	    initialPrice.business = linkInfo.suggestedPrice.TravelerFrom.business
+	    initialPrice.first = linkInfo.suggestedPrice.TravelerFrom.first
 
 		$('#addLinkButton').show()
 		$('#deleteLinkButton').hide()
@@ -1171,8 +1179,8 @@ function updatePlanLinkInfo(linkInfo, isRefresh) {
                 $(this).val(Math.floor(inputPrice))
             }
         }
-        updateMarkup()
-        calculateDemand()
+        updateMarkup();
+        calculateDemand();
 	})
 
     //reset/display warnings
@@ -1196,8 +1204,8 @@ function updatePlanLinkInfo(linkInfo, isRefresh) {
         $('#planLinkExtendedDetails').hide()
         $('#planLinkModelRow').hide()
         $('#extendedPanel').hide()
-        updateMarkup()
-        calculateDemand()
+        updateMarkup();
+        calculateDemand();
         return
     } else {
         $('.linkRejection').hide()
@@ -1217,9 +1225,9 @@ function updatePlanLinkInfo(linkInfo, isRefresh) {
 	$("#planLinkModelSelect").children('option').remove()
 
 	spaceMultipliers = {
-                economy : planLinkInfo.economySpaceMultiplier,
-                business : planLinkInfo.businessSpaceMultiplier,
-                first : planLinkInfo.firstSpaceMultiplier
+                economy : gameConstants.linkClassValues.economy,
+                business : gameConstants.linkClassValues.business,
+                first : gameConstants.linkClassValues.first
     }
 
 	planLinkInfoByModel = {}
@@ -1304,8 +1312,8 @@ function updatePlanLinkInfo(linkInfo, isRefresh) {
 	}
 
 	updatePlanLinkInfoWithModelSelected(selectedModelId, assignedModelId, isRefresh)
-	updateMarkup()
-	calculateDemand()
+	updateMarkup();
+	calculateDemand();
 	$("#planLinkDetails div.value").show()
 }
 
@@ -1320,35 +1328,19 @@ function calculateDemand() {
         business: parseFloat($('#planLinkBusinessPrice').val()),
         first: parseFloat($('#planLinkFirstPrice').val()),
     }
-    const suggestedPrice = planLinkInfo.suggestedPrice
-    /** adding more estimation to capture base pax profile prices
-    breakpoints manually copied from DemandGenerator...  */
-    for (const passengerType in suggestedPrice) {
-        if (currentPrices.economy <= suggestedPrice[passengerType].discountEconomy) {
-            totalDemand.economy += Math.floor(planLinkInfo.demands[passengerType].discountEconomy);
-        } else if (currentPrices.economy <= suggestedPrice[passengerType].discountEconomy * 1.1) {
-            totalDemand.economy += Math.floor(planLinkInfo.demands[passengerType].discountEconomy * 0.4);
+    
+    const allDemandDetails = [...planLinkInfo.fromDemandDetails, ...planLinkInfo.toDemandDetails];
+    
+    allDemandDetails.forEach(demandEntry => {
+        const linkClass = demandEntry.linkClass.toLowerCase();
+		const linkClassAdjusted = linkClass === "discount economy" ? "economy" : linkClass;
+        const currentPrice = currentPrices[linkClassAdjusted];
+        
+        if (currentPrice <= demandEntry.price) {
+            totalDemand[linkClassAdjusted] += demandEntry.count;
         }
-        if (currentPrices.economy <= suggestedPrice[passengerType].economy) {
-            totalDemand.economy += Math.floor(planLinkInfo.demands[passengerType].economy);
-        } else if (currentPrices.economy <= suggestedPrice[passengerType].economy * 1.05) {
-            totalDemand.economy += Math.floor(planLinkInfo.demands[passengerType].economy * 0.4);
-        }
-        if (currentPrices.business <= suggestedPrice[passengerType].business) {
-            totalDemand.business += Math.floor(planLinkInfo.demands[passengerType].business);
-        } else if (currentPrices.business <= suggestedPrice[passengerType].business * 1.11) {
-            totalDemand.business += Math.floor(planLinkInfo.demands[passengerType].business * 0.4);
-        } else if (currentPrices.business <= suggestedPrice[passengerType].business * 1.26) {
-            totalDemand.business += Math.floor(planLinkInfo.demands[passengerType].business * 0.2);
-        }
-        if (currentPrices.first <= suggestedPrice[passengerType].first) {
-            totalDemand.first += Math.floor(planLinkInfo.demands[passengerType].first);
-        } else if (currentPrices.first <= suggestedPrice[passengerType].first * 1.11) {
-            totalDemand.first += Math.floor(planLinkInfo.demands[passengerType].first * 0.4);
-        }  else if (currentPrices.first <= suggestedPrice[passengerType].first * 1.3) {
-            totalDemand.first += Math.floor(planLinkInfo.demands[passengerType].first * 0.2);
-      }
-    }
+    });
+
     $('#planLinkDirectDemand').text(toLinkClassValueString(totalDemand))
 }
 
@@ -1367,13 +1359,13 @@ function updatePrice(percentage, classType = "all") {
     const firstInput = $('#planLinkFirstPrice');
 
     if (classType === "economy" || classType === "all") {
-        economyInput.val(Math.round(planLinkInfo.suggestedPrice.Traveler.economy * percentage.economy));
+        economyInput.val(Math.round(planLinkInfo.suggestedPrice.TouristFrom.economy * percentage.economy));
     }
     if (classType === "business" || classType === "all") {
-        businessInput.val(Math.round(planLinkInfo.suggestedPrice.Traveler.business * percentage.business));
+        businessInput.val(Math.round(planLinkInfo.suggestedPrice.TravelerFrom.business * percentage.business));
     }
     if (classType === "first" || classType === "all") {
-        firstInput.val(Math.round(planLinkInfo.suggestedPrice.Traveler.first * percentage.first));
+        firstInput.val(Math.round(planLinkInfo.suggestedPrice.TravelerFrom.first * percentage.first));
     }
 
     updateMarkup();
@@ -1386,9 +1378,9 @@ function increasePrice(classType = "all") {
     const businessInput = $('#planLinkBusinessPrice');
     const firstInput = $('#planLinkFirstPrice');
 
-    const currentPercentageEconomy = parseFloat(economyInput.val() || 0) * 20 / planLinkInfo.suggestedPrice.Traveler.economy / 20;
-    const currentPercentageBusiness = parseFloat(businessInput.val() || 0) * 20 / planLinkInfo.suggestedPrice.Traveler.business / 20;
-    const currentPercentageFirst = parseFloat(firstInput.val() || 0) * 20 / planLinkInfo.suggestedPrice.Traveler.first / 20;
+    const currentPercentageEconomy = parseFloat(economyInput.val() || 0) * 20 / planLinkInfo.suggestedPrice.TouristFrom.economy / 20;
+    const currentPercentageBusiness = parseFloat(businessInput.val() || 0) * 20 / planLinkInfo.suggestedPrice.TravelerFrom.business / 20;
+    const currentPercentageFirst = parseFloat(firstInput.val() || 0) * 20 / planLinkInfo.suggestedPrice.TravelerFrom.first / 20;
 
     const newPercentage = {
         economy: currentPercentageEconomy,
@@ -1397,13 +1389,13 @@ function increasePrice(classType = "all") {
     };
 
     if (classType === "economy" || classType === "all") {
-        newPercentage.economy += 0.05;
+        newPercentage.economy += 0.049;
     }
     if (classType === "business" || classType === "all") {
-        newPercentage.business += 0.05;
+        newPercentage.business += 0.049;
     }
     if (classType === "first" || classType === "all") {
-        newPercentage.first += 0.05;
+        newPercentage.first += 0.049;
     }
 
     updatePrice(newPercentage, classType);
@@ -1414,7 +1406,7 @@ function decreasePrice(classType = "all") {
 
     CLASSES.forEach((paxClass) => {
         const currentPrice = document.getElementById(`planLink${paxClass}Price`).value ?? 0;
-        const defaultPrice = planLinkInfo.suggestedPrice.Traveler[paxClass.toLowerCase()]
+        const defaultPrice = planLinkInfo.suggestedPrice.TouristFrom[paxClass.toLowerCase()]
         const hasCompetitor = planLinkInfo.otherLinks.length > 1
         const currentPercentage = parseFloat(currentPrice || 0) * 20 / defaultPrice / 20;
         const priceFloor = (function() {
@@ -1441,11 +1433,27 @@ function decreasePrice(classType = "all") {
     updatePrice(newPercentages, classType);
 }
 
-
 function updateMarkup(){
-    $('#planMarkupEconomy').text(($('#planLinkEconomyPrice').val()/planLinkInfo.suggestedPrice.Traveler.economy*100).toFixed(0)+"%")
-    $('#planMarkupBusiness').text(($('#planLinkBusinessPrice').val()/planLinkInfo.suggestedPrice.Traveler.business*100).toFixed(0)+"%")
-    $('#planMarkupFirst').text(($('#planLinkFirstPrice').val()/planLinkInfo.suggestedPrice.Traveler.first*100).toFixed(0)+"%")
+    $('#planMarkupEconomy').text(($('#planLinkEconomyPrice').val()/planLinkInfo.suggestedPrice.TravelerFrom.economy*100).toFixed(0)+"%")
+    $('#planMarkupBusiness').text(($('#planLinkBusinessPrice').val()/planLinkInfo.suggestedPrice.TravelerFrom.business*100).toFixed(0)+"%")
+    $('#planMarkupFirst').text(($('#planLinkFirstPrice').val()/planLinkInfo.suggestedPrice.TravelerFrom.first*100).toFixed(0)+"%")
+}
+
+function sumPreferencesByType(demandDetails, passengerType) {
+    let totals = {
+        "economy" : 0,
+        "business" : 0,
+        "first" : 0,
+        "discountEconomy" : 0
+    }
+    
+    demandDetails.forEach(detail => {
+        if (detail.passengerType === passengerType) {
+            totals[detail.linkClass.toLowerCase()] += detail.count
+        }
+    })
+    
+    return totals
 }
 
 function updateFrequencyBar(frequencyBar, valueContainer, airplane, currentFrequency) {
@@ -1467,7 +1475,7 @@ function updatePlanLinkInfoWithModelSelected(newModelId, assignedModelId, isRefr
 //		thisModelPlanLinkInfo.airplanes.sort(sortByProperty('airplane.condition', true))
 //		thisModelPlanLinkInfo.airplanes = sortPreserveOrder(thisModelPlanLinkInfo.airplanes, 'frequency', false) //higher frequency first
 
-		$('#planLinkAirplaneSelect').data('badConditionThreshold', thisModelPlanLinkInfo.badConditionThreshold)
+		$('#planLinkAirplaneSelect').data('badConditionThreshold', gameConstants.linkAircraft.conditionBad)
 
 		thisModelPlanLinkInfo.airplanes.sort(function(a, b) {
 		    var result = b.frequency - a.frequency
@@ -1967,7 +1975,7 @@ function loadLinksTable() {
 				link.totalCapacity = link.capacity.economy + link.capacity.business + link.capacity.first
 				link.totalCapacityHistory = link.capacityHistory.economy + link.capacityHistory.business + link.capacityHistory.first
 				link.totalPassengers = link.passengers.economy + link.passengers.business + link.passengers.first
-				link.totalLoadFactor = link.totalCapacityHistory > 0 ? Math.round((link.totalPassengers + link.cancelledSeats.total) / link.totalCapacityHistory * 100) : 0
+				link.totalLoadFactor = link.totalCapacityHistory > 0 ? Math.round(link.totalPassengers / (link.totalCapacityHistory - link.cancelledSeats.total)* 100) : 0
 				var assignedModel
 				if (link.assignedAirplanes && link.assignedAirplanes.length > 0) {
 					assignedModel = link.assignedAirplanes[0].airplane.name

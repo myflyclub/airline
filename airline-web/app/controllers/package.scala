@@ -74,8 +74,6 @@ package object controllers {
         "size" -> JsNumber(airplaneModel.airplaneTypeSize),
         "turnaroundTime" -> JsNumber(airplaneModel.turnaroundTime),
         "runwayRequirement" -> JsNumber(airplaneModel.runwayRequirement),
-        "badConditionThreshold" -> JsNumber(Airplane.BAD_CONDITION), //same for all models for now
-        "criticalConditionThreshold" -> JsNumber(Airplane.CRITICAL_CONDITION), //same for all models for now
         "constructionTime" -> JsNumber(airplaneModel.constructionTime),
         "imageUrl" -> JsString(airplaneModel.imageUrl),
         "countryCode" -> JsString(airplaneModel.manufacturer.countryCode),
@@ -99,7 +97,6 @@ package object controllers {
         "range" -> JsNumber(airplane.model.range),
         "price" -> JsNumber(airplane.model.price),
         "lifespan" -> JsNumber(airplane.model.lifespan),
-        "airplaneType" -> JsString(airplane.model.airplaneTypeLabel),
         "condition" -> JsNumber(airplane.condition),
         "constructedCycle" -> JsNumber(airplane.constructedCycle),
         "purchasedCycle" ->  JsNumber(airplane.purchasedCycle),
@@ -111,10 +108,7 @@ package object controllers {
         "dealerRatio" -> JsNumber(airplane.dealerRatio),
         "configurationId" -> JsNumber(airplane.configuration.id),
         "configuration" -> Json.obj("economy" -> airplane.configuration.economyVal, "business" -> airplane.configuration.businessVal, "first" -> airplane.configuration.firstVal),
-        "maxFlightMinutes" -> JsNumber(Airplane.MAX_FLIGHT_MINUTES),
         "homeAirportId" -> JsNumber(airplane.home.id),
-        "badConditionThreshold" -> JsNumber(Airplane.BAD_CONDITION),
-        "criticalConditionThreshold" -> JsNumber(Airplane.CRITICAL_CONDITION)
       ))
     }
   }
@@ -899,8 +893,10 @@ package object controllers {
 
   val cachedAirportsByPower = AirportSource.loadAllAirports(fullLoad = false, loadFeatures = true).filter(_.population > 0).sortBy(_.power)
 
-
   val allAirplaneModels = ModelSource.loadAllModels()
+
+  val regionalAirplaneModels = allAirplaneModels.filter(_.airplaneTypeSize < AirlineType.REGIONAL_MODEL_MAX_SIZE)
+  
   val allCountryRelationships = CountrySource.getCountryMutualRelationships()
 
   object LoginStatus extends Enumeration {

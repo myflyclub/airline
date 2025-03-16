@@ -17,7 +17,6 @@ import scala.util.Random
 
 object GenericTransitGenerator {
 
-  //larger airport goes first
   val TRANSIT_MANUAL_LINKS = Map(
     "HND" -> "NRT",
     "KIX" -> "KIX",
@@ -132,6 +131,7 @@ object GenericTransitGenerator {
     "AAZ" -> "GUA",
     "GRU" -> "VCP",
     "CGH" -> "VCP",
+    "SNN" -> "ORK",
     "LGW" -> "LTN",
     "STN" -> "LHR",
     "STN" -> "LGW",
@@ -141,6 +141,7 @@ object GenericTransitGenerator {
     "AMS" -> "EIN",
     "EIN" -> "MST",
     "RTM" -> "EIN",
+    "EIN" -> "ANR",
     "OST" -> "BRU",
     "LGG" -> "BRU",
     "XCR" -> "CDG",
@@ -202,94 +203,89 @@ object GenericTransitGenerator {
     "MEL" -> "AVV",
     "PMR" -> "WLG"
   )
-  val ISLANDS = List(
-    "ZNZ", //africa
-    "SKN", "SSJ", "BNN", "MOL", "BYR", "HGL", "BMK", "GWT", "BMR", "HAU", //europe
-    "JAG", //dk / greenland
-    "HZK", "GRY", //is
-    "ANX", //no
-    "NNR", //ie
-    "EGH", "EOI", "FIE", "FOA", "LWK", "LSI", "ACI", "TRE", "BRR", "BEB", "SYY", "KOI", "ILY", "CAL", "ISC", "GCI", "JER", "GIB", "IOM", "EOI", //GB
-    "BIC", "UVE", "TGL", "IDY", //fr
-    "HGL", "BMK", "GWT", "BMR", //de
-    "GRW", "CVU", "PXO", "SJZ", "TER", "PIX", //pt
-    "VDE", "GMZ", "TFN", //es
-    "OLB", "EBA", //it
-    "KDL", "URE", //ee
-    "AOK", "KSJ", "JMK", "JNX", "JSI", "JTR", "KIT", "LKS", "MLO", "SMI", "JIK", "KGS", "RHO", "LXS", "MJT", "JKH", "ZTH", "EFL", "SMI", //gr
-    "ECN", //turkish CY
-    "KUM", "TNE", "MYE", "MK1", "OIM", "HAC", "AO1", "SDS", "OIR", "RIS", "OKI", "TSJ", "FUJ", "KKX", "TKN", "OKE", "RNJ", "UEO", "OKA", "MMY", "TRA", "ISG", "OGN", "IKI", "MMD", "KTD", "OIM", //JP
-    "KNH", "MZG", //TW
-    "TBH", "TAG", "BCD", "IAO", "CGM", //ph
-    "LBU", "BTH", "LGK", "TMC", "BMU", "TTE", "ARD", //my & id
-    "KOS", //vn
-    "NMF", "HRF", "KDM", "NAN", "MEE", "PTF", "ELC", "PMK", //oceania & AU
-    "WLG", //nz (channel crossing)
-    "HRF", "HDK", "PRI", //indian ocean
-    "WRG", "MQC", "YBC", "YCD", "LAK", "YPN", "YZG", "YEV", //ca
-    "MVY", "ACK", "FRD", "ESD", "MKK", "LNY", "BID", "AVX", "JNU", "HNH", "ISP", "HTO",  //us
-    "CZM", //mx
-    "MQS", "GST", "VQS", "CPX", "GBJ", "SBH", "SAB", "UNI", "STT", "EIS", "AXA", "PLS", "GDT", "GGT", "SVD", "HID", "APW", "PTT", "MNI", "TCB", "JIK", "ESD", "HHH", "SAQ", "TIQ", "HOR", "PIX", "KOI", "HTI", "BON", "CRU", "EUX",
-    "SPR",
-    "PMV" //ve
-  )
-  val ISOLATED_COUNTRIES = Array("FO", "BS", "KY", "TC", "VC", "GD", "DM", "AG", "MS", "BQ", "BL", "MF", "SX", "AI", "VI", "VG", "VC", "VU", "WF", "MU", "MV", "CC", "CK", "CV", "ST", "NP")
 
   def main(args : Array[String]) : Unit = {
-    LinkSource.deleteLinksByCriteria(List(("transport_type", TransportType.GENERIC_TRANSIT.id)))
-//    generateGenericTransit()
+    generateGenericTransit()
     Await.result(actorSystem.terminate(), Duration.Inf)
   }
-  def generateGenericTransit(range : Int = 50) : Unit = {
-    val airports = AirportSource.loadAllAirports(true).filter(_.population >= 500).filter(_.runwayLength >= 500).filter { airport => !ISOLATED_COUNTRIES.contains(airport.countryCode) }.sortBy { _.power }
 
-    var counter = 0;
-    var progressCount = 0;
+  def generateGenericTransit(range : Int = 60) : Unit = {
+    LinkSource.deleteLinksByCriteria(List(("transport_type", TransportType.GENERIC_TRANSIT.id)))
+
+    val airports = AirportSource.loadAllAirports(true)
+      .filter(_.population >= 500)
+      .filter(_.runwayLength >= 500)
+      .filter { airport => !GameConstants.ISOLATED_COUNTRIES.contains(airport.countryCode) }
+      .filter { airport => !GameConstants.isIsland(airport.iata) }
+      .sortBy { _.power }
+
+    var counter = 0
+    var progressCount = 0
 
     val processed = mutable.HashSet[(Int, Int)]()
+    def addProcessedPair(id1: Int, id2: Int) = {
+      processed.add((id1, id2))
+      processed.add((id2, id1))
+    }
+    
     val countryRelationships = CountrySource.getCountryMutualRelationships()
+    
     for (airport <- airports) {
-      //calculate max and min longitude that we should kick off the calculation
       val boundaryLongitude = calculateLongitudeBoundary(airport.latitude, airport.longitude, range)
       val airportsInRange = scala.collection.mutable.ListBuffer[(Airport, Double)]()
+      
       for (targetAirport <- airports) {
-        if (!processed.contains((targetAirport.id, airport.id)) && //check the swap pairs are not processed already to avoid duplicates
-          (TRANSIT_MANUAL_LINKS.get(airport.iata).contains(targetAirport.iata) || TRANSIT_MANUAL_LINKS.get(targetAirport.iata).contains(airport.iata))
-        ) {
-          val distance = Util.calculateDistance(airport.latitude, airport.longitude, targetAirport.latitude, targetAirport.longitude).toInt
-          airportsInRange += Tuple2(targetAirport, distance)
-        } else if (airport.id != targetAirport.id &&
-            (!ISLANDS.contains(airport.iata) || !ISLANDS.contains(targetAirport.iata)) &&
-            targetAirport.popMiddleIncome > 2500 &&
-            !processed.contains((targetAirport.id, airport.id)) && //check the swap pairs are not processed already to avoid duplicates
-            airport.longitude >= boundaryLongitude._1 && airport.longitude <= boundaryLongitude._2 &&
-            countryRelationships.getOrElse((airport.countryCode, targetAirport.countryCode), 0) >= 2
-        ) {
-          val distance = Util.calculateDistance(airport.latitude, airport.longitude, targetAirport.latitude, targetAirport.longitude).toInt
-          if (range >= distance) {
-            airportsInRange += Tuple2(targetAirport, distance)
+        // Skip if already processed this pair
+        if (!processed.contains((airport.id, targetAirport.id))) {
+          val isManualLink = TRANSIT_MANUAL_LINKS.get(airport.iata).contains(targetAirport.iata) || 
+                            TRANSIT_MANUAL_LINKS.get(targetAirport.iata).contains(airport.iata)
+          
+          if (isManualLink || (
+              airport.id != targetAirport.id &&
+              targetAirport.popMiddleIncome > 2500 &&
+              airport.longitude >= boundaryLongitude._1 && 
+              airport.longitude <= boundaryLongitude._2 &&
+              countryRelationships.getOrElse((airport.countryCode, targetAirport.countryCode), 0) >= 2
+          )) {
+            val distance = Util.calculateDistance(airport.latitude, airport.longitude, 
+                                               targetAirport.latitude, targetAirport.longitude).toInt
+            if (isManualLink || range >= distance) {
+              airportsInRange += Tuple2(targetAirport, distance)
+            }
           }
+          // Mark as processed after checking
+          addProcessedPair(airport.id, targetAirport.id)
         }
-        processed.add((airport.id, targetAirport.id))
       }
-
-
-
 
       airportsInRange.foreach { case (targetAirport, distance) =>
         val isDomesticAirport = if(targetAirport.isDomesticAirport() || airport.isDomesticAirport()) 2 else 0
         val isGatewayAirport = if(targetAirport.isGateway() || airport.isGateway()) 3.5 else 0
         val multiplier = Math.min(airport.size, targetAirport.size) + isDomesticAirport + isGatewayAirport
         val capacity = (multiplier * 12000).toInt
-        val genericTransit = GenericTransit(from = airport, to = targetAirport, distance = distance.toInt, capacity = LinkClassValues.getInstance(economy = capacity, business = (capacity * 0.3).toInt))
-        LinkSource.saveLink(genericTransit)
-        println(s"${airport.iata}, ${airport.countryCode}, ${targetAirport.iata}, ${targetAirport.countryCode}, $distance, $capacity")
+        
+        try {
+          val genericTransit = GenericTransit(
+            from = airport, 
+            to = targetAirport, 
+            distance = distance.toInt, 
+            capacity = LinkClassValues.getInstance(
+              economy = capacity, 
+              business = (capacity * 0.3).toInt
+            )
+          )
+          LinkSource.saveLink(genericTransit)
+          println(s"${airport.iata}, ${airport.countryCode}, ${targetAirport.iata}, ${targetAirport.countryCode}, $distance, $capacity")
+        } catch {
+          case e: Exception => 
+            println(s"Error saving link between ${airport.iata} and ${targetAirport.iata}: ${e.getMessage}")
+        }
       }
 
       val progressChunk = airports.size / 100
       counter += 1
       if (counter % progressChunk == 0) {
-        progressCount += 1;
+        progressCount += 1
         print(".")
         if (progressCount % 10 == 0) {
           print(progressCount + "% ")

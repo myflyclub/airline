@@ -1,15 +1,16 @@
 <div class="tutorial modal" data-category="welcome" id="tutorialWelcome">
-	<div class="modal-content" style="width: 500px;" onclick="closeModal($(this).closest('.modal'))">
+	<div class="modal-content" style="width: 500px;">
 		<h4>Welcome to My Fly Club!</h4>
-
-		<p>Where you can build the airline of your dreams – from an Alaskan bush service to a discount vacation carrier!</p>
-
-		<h4>Press Escape or Tap on this dialog to proceed</h4>
+		<p class="py-4">Where you can build the airline of your dreams – from an Alaskan bush service to a discount vacation carrier!</p>
+		<div class="flex-row">
+			<button class="ml-auto button" onclick="promptSkipTutorial(event)">Disable Tutorials</button>
+			<button class="button primary" onclick="closeModal($(this).closest('.modal'))">Next</button>
+		</div>
 	</div>
 </div>
 
 <div class="modal tutorial" data-category="control" id="tutorialControl">
-	<div class="modal-content" style="width: 500px; display: flex; flex-direction: column; align-items: center;" onclick="closeModal($(this).closest('.modal'))">
+	<div class="modal-content" style="width: 500px; display: flex; flex-direction: column; align-items: center;">
 		<h4>Menu</h4>
 
 		<h5>Hover your mouse to left side of the window to show the Menu</h5>
@@ -22,12 +23,15 @@
 			<img loading="lazy" src="assets/images/tutorial/mobile-menu.gif">
 		</div>
 
-		<h5>Press Escape or Tap on this dialog to proceed</h5>
+		<div class="flex-row">
+			<button class="ml-auto button" onclick="promptSkipTutorial(event)">Disable Tutorials</button>
+			<button class="button primary" onclick="closeModal($(this).closest('.modal'))">Next</button>
+		</div>
 	</div>
 </div>
 
 <div class="tutorial modal" data-category="welcome" id="tutorialViewAirport">
-	<div class="modal-content" style="width: 500px;" onclick="closeModal($(this).closest('.modal'))">
+	<div class="modal-content" style="width: 500px;">
 		<h4>Tutorial</h4>
 		<ul>
 			<li class="label">You must first select an airport to build your Headquarters!</li>
@@ -35,77 +39,79 @@
 			<li class="label">Smaller airports might require further zoom in before they become visible on the map</li>
 			<li class="label">
 				<picture>
-					<source srcset="assets/images/markers/airport-gateway.avif" type="image/avif">
 					<img loading="lazy" src="assets/images/markers/airport-gateway.png" style="vertical-align:middle">
 				</picture>
 				Country Gateway Airport
 			</li>
 			<li class="label">
 				<picture>
-					<source srcset="assets/images/markers/airport-darker.avif" type="image/avif">
 					<img loading="lazy" src="assets/images/markers/airport-darker.png" style="vertical-align:middle">
 				</picture>
 				Large Airport
 			</li>
 			<li class="label">
 				<picture>
-					<source srcset="assets/images/markers/airport.avif" type="image/avif">
 					<img loading="lazy" src="assets/images/markers/airport.png" style="vertical-align:middle">
 				</picture>
 				Medium Airport
 			</li>
 			<li class="label">
 				<picture>
-					<source srcset="assets/images/markers/airport-lighter.avif" type="image/avif">
 					<img loading="lazy" src="assets/images/markers/airport-lighter.png" style="vertical-align:middle">
 				</picture>
 				Small Airport
 			</li>
 		</ul>
-		<div class="clickable footer" onclick='promptSkipTutorial(event)'>Disable Tutorials</div>
+		<div class="flex-row">
+			<button class="ml-auto button" onclick="promptSkipTutorial(event)">Disable Tutorials</button>
+			<button class="button primary" onclick="closeModal($(this).closest('.modal'))">Next</button>
+		</div>
 	</div>
 </div>
 
 
 <div class="tutorial modal" data-category="airport" id="tutorialAirportDetails">
-	<div class="modal-content" style="width: 500px;" onclick="closeModal($(this).closest('.modal'))">
+	<div class="modal-content" style="width: 500px;">
 		<h4>Airport Details</h4>
-		<ul>
-			<li class="label">Airport View contains many crucial information and statistics.</li>
-			<li class="label">For a quick overview of the airport's strength, inspect the "Airport Rating" box on the top left.</li>
-			<br/>
-			<li class="label">The more challenging the airport, the more start-up capital you will obtain.</li>
-		</ul>
-		<div class="clickable footer" onclick='promptSkipTutorial(event)'>Disable Tutorials</div>
+		<h5>Click the Build Headquarters button if you decide to start your HQ here.</h5>
+		<p>The more challenging the airport, the more start-up capital you will obtain.</p>
+		<div class="flex-row">
+			<button class="ml-auto button" onclick="promptSkipTutorial(event)">Disable Tutorials</button>
+			<button class="button primary" onclick="closeModal($(this).closest('.modal'))">Next</button>
+		</div>
 	</div>
 </div>
 
 <div class="tutorial modal" data-category="airport" id="tutorialBuildHq">
-	<div class="modal-content" style="width: 500px;" onclick="closeModal($(this).closest('.modal'))">
+	<div class="modal-content" style="width: 500px;">
 		<h4>Airport Details</h4>
 		<ul>
-			<li class="label">Click the Build Headquarters button if you decide to start your HQ here.</li>
-			<li class="label">Take note that once HQ is built, you can no longer move it unless you rebuild your airlines.</li>
-			<li class="label">All your initial flights will depart from the HQ airport.</li>
-			<li class="label">The country houses your HQ will also become your company's home country, which determines your initial relationship with airplane manufacturers and other countries.</li>
+			<li class="label">Once HQ is built, you can no longer move it unless you rebuild your airlines.</li>
+			<li class="label">Your HQ's country will also become your company's home country, which determines your initial relationship with airplane manufacturers and other countries.</li>
 		</ul>
-		<div class="clickable footer" onclick='promptSkipTutorial(event)'>Disable Tutorials</div>
+		<div class="flex-row">
+			<button class="ml-auto button" onclick="promptSkipTutorial(event)">Disable Tutorials</button>
+			<button class="button primary" onclick="closeModal($(this).closest('.modal'))">Next</button>
+		</div>
 	</div>
 </div>
 
 <div class="tutorial modal" data-category="plan-link" id="tutorialSetupLink1">
-	<div class="modal-content" style="width: 500px;" onclick="closeModal($(this).closest('.modal'))">
+	<div class="modal-content" style="width: 500px;">
 		<h4>Start your first flight</h4>
 		<ul>
 			<li class="label">Set up your first flight by clicking "Plan Link" on the airport you want to fly to.</li>
 		</ul>
 		<img loading="lazy" src="assets/images/tutorial/plan-link-1.gif" loading="lazy" style="vertical-align:middle; max-width: 100%">
-		<div class="clickable footer" onclick='promptSkipTutorial(event)'>Disable Tutorials</div>
+		<div class="flex-row">
+			<button class="ml-auto button" onclick="promptSkipTutorial(event)">Disable Tutorials</button>
+			<button class="button primary" onclick="closeModal($(this).closest('.modal'))">Next</button>
+		</div>
 	</div>
 </div>
 
 <div class="tutorial modal" data-category="plan-link" id="tutorialSetupLink2">
-	<div class="modal-content" style="width: 500px;" onclick="closeModal($(this).closest('.modal'))">
+	<div class="modal-content" style="width: 500px;">
 		<h4>Edit your flight details</h4>
 		<ul>
 			<li class="label">Select airplane model, assign airplane, frequency, pricing and service level</li>
@@ -114,12 +120,15 @@
 			<source srcset="assets/images/tutorial/plan-link-1.avif" type="image/avif">
 			<img loading="lazy" src="assets/images/tutorial/plan-link-1.png" style="vertical-align:middle; max-width: 100%">
 		</picture>
-		<div class="clickable footer" onclick='promptSkipTutorial(event)'>Disable Tutorials</div>
+		<div class="flex-row">
+			<button class="ml-auto button" onclick="promptSkipTutorial(event)">Disable Tutorials</button>
+			<button class="button primary" onclick="closeModal($(this).closest('.modal'))">Next</button>
+		</div>
 	</div>
 </div>
 
 <div class="tutorial modal" data-category="plan-link" id="tutorialSetupLink3">
-	<div class="modal-content" style="width: 500px;" onclick="closeModal($(this).closest('.modal'))">
+	<div class="modal-content" style="width: 500px;">
 		<h4>Purchase Airplanes</h4>
 		<ul>
 			<li class="label">If you have not yet owned any airplanes of the selected model</li>
@@ -142,13 +151,16 @@
 			<source srcset="assets/images/tutorial/plan-link-4.avif" type="image/avif">
 			<img loading="lazy" src="assets/images/tutorial/plan-link-4.png" style="vertical-align:middle; max-width: 100%">
 		</picture>
-		
-		<div class="clickable footer" onclick='promptSkipTutorial(event)'>Disable Tutorials</div>
+
+		<div class="flex-row">
+			<button class="ml-auto button" onclick="promptSkipTutorial(event)">Disable Tutorials</button>
+			<button class="button primary" onclick="closeModal($(this).closest('.modal'))">Next</button>
+		</div>
 	</div>
 </div>
 
 <div class="tutorial modal" data-category="plan-link" id="tutorialNegotiation1">
-	<div class="modal-content" style="width: 500px;" onclick="closeModal($(this).closest('.modal'))">
+	<div class="modal-content" style="width: 500px;">
 		<h4>Negotiation</h4>
 		<ul>
 			<li class="label">Looks like negotiation is required to set up this flight!</li>
@@ -157,11 +169,14 @@
 			<source srcset="assets/images/tutorial/negotiation-1.avif" type="image/avif">
 			<img loading="lazy" src="assets/images/tutorial/negotiation-1.png" style="vertical-align:middle; max-width: 100%">
 		</picture>
-		<div class="clickable footer" onclick='promptSkipTutorial(event)'>Disable Tutorials</div>
+		<div class="flex-row">
+			<button class="ml-auto button" onclick="promptSkipTutorial(event)">Disable Tutorials</button>
+			<button class="button primary" onclick="closeModal($(this).closest('.modal'))">Next</button>
+		</div>
 	</div>
 </div>
 <div class="tutorial modal" data-category="plan-link" id="tutorialNegotiation2">
-	<div class="modal-content" style="width: 500px;" onclick="closeModal($(this).closest('.modal'))">
+	<div class="modal-content" style="width: 500px;">
 		<h4>Negotiation Difficulty</h4>
 		<ul>
 			<li class="label">Every negotiation has its difficulty, the higher the value the more difficult it gets!</li>
@@ -170,11 +185,14 @@
 			<source srcset="assets/images/tutorial/negotiation-2.avif" type="image/avif">
 			<img loading="lazy" src="assets/images/tutorial/negotiation-2.png" style="vertical-align:middle; max-width: 100%">
 		</picture>
-		<div class="clickable footer" onclick='promptSkipTutorial(event)'>Disable Tutorials</div>
+		<div class="flex-row">
+			<button class="ml-auto button" onclick="promptSkipTutorial(event)">Disable Tutorials</button>
+			<button class="button primary" onclick="closeModal($(this).closest('.modal'))">Next</button>
+		</div>
 	</div>
 </div>
 <div class="tutorial modal" data-category="plan-link" id="tutorialNegotiation3">
-	<div class="modal-content" style="width: 500px;" onclick="closeModal($(this).closest('.modal'))">
+	<div class="modal-content" style="width: 500px;">
 		<h4>Negotiation Difficulty Breakdown</h4>
 		<ul>
 			<li class="label">To understand the difficulty details. Hover over the bubble next to the difficulty value.</li>
@@ -184,7 +202,7 @@
 	</div>
 </div>
 <div class="tutorial modal" data-category="plan-link" id="tutorialNegotiation4">
-	<div class="modal-content" style="width: 500px;" onclick="closeModal($(this).closest('.modal'))">
+	<div class="modal-content" style="width: 500px;">
 		<h4>Assign Delegates</h4>
 		<ul>
 			<li class="label">You would need to assign delegates to start the negotiations.</li>
@@ -197,13 +215,16 @@
 			<source srcset="assets/images/tutorial/negotiation-3.avif" type="image/avif">
 			<img loading="lazy" src="assets/images/tutorial/negotiation-3.png" style="vertical-align:middle; max-width: 100%">
 		</picture>
-		
-		<div class="clickable footer" onclick='promptSkipTutorial(event)'>Disable Tutorials</div>
+
+		<div class="flex-row">
+			<button class="ml-auto button" onclick="promptSkipTutorial(event)">Disable Tutorials</button>
+			<button class="button primary" onclick="closeModal($(this).closest('.modal'))">Next</button>
+		</div>
 	</div>
 </div>
 
 <div class="tutorial modal" data-category="plan-link" id="tutorialNegotiation5">
-	<div class="modal-content" style="width: 500px;" onclick="closeModal($(this).closest('.modal'))">
+	<div class="modal-content" style="width: 500px;">
 		<h4>Too Difficult!</h4>
 		<ul>
 			<li class="label">Sometimes the negotiation could be too difficult for your available delegates to take action</li>
@@ -222,14 +243,17 @@
 			<li class="label">Always inspect the difficulty breakdown to better understand the issues</li>
 		</ul>
 
-		<div class="clickable footer" onclick='promptSkipTutorial(event)'>Disable Tutorials</div>
+		<div class="flex-row">
+			<button class="ml-auto button" onclick="promptSkipTutorial(event)">Disable Tutorials</button>
+			<button class="button primary" onclick="closeModal($(this).closest('.modal'))">Next</button>
+		</div>
 	</div>
 </div>
 
 
 
 <div class="tutorial modal" data-category="oil" id="tutorialOilIntro1">
-	<div class="modal-content" style="width: 500px;" onclick="closeModal($(this).closest('.modal'))">
+	<div class="modal-content" style="width: 500px;">
 		<h4>Introduction</h4>
 		<ul>
 			<li class="label">Watch the Oil market price and manage your oil contract here.</li>
@@ -240,7 +264,7 @@
 	</div>
 </div>
 <div class="tutorial modal" data-category="oil" id="tutorialOilIntro2">
-	<div class="modal-content" style="width: 500px;" onclick="closeModal($(this).closest('.modal'))">
+	<div class="modal-content" style="width: 500px;">
 		<h4>Inventory Price and Policy</h4>
 		<ul>
 			<li class="label" style="font-weight: bolder;">$70 is considered the "neutral" oil price. Price above is considered over-priced and below is under-priced.</li>
@@ -248,11 +272,14 @@
 			<li class="label">For example, if the current oil market price is $80 which is $10 above the neutral price, you will only need to pay $71 which is 90% off the price delta ($10).</li>
 			<li class="label">Though conservative policy protects you from price fluctuation, it also means that you will reap less benefit when the oil price is low.</li>
 		</ul>
-		<div class="clickable footer" onclick='promptSkipTutorial(event)'>Disable Tutorials</div>
+		<div class="flex-row">
+			<button class="ml-auto button" onclick="promptSkipTutorial(event)">Disable Tutorials</button>
+			<button class="button primary" onclick="closeModal($(this).closest('.modal'))">Next</button>
+		</div>
 	</div>
 </div>
 <div class="tutorial modal" data-category="oil" id="tutorialOilIntro3">
-	<div class="modal-content" style="width: 500px;" onclick="closeModal($(this).closest('.modal'))">
+	<div class="modal-content" style="width: 500px;">
 		<h4>Oil Contract</h4>
 		<ul>
 			<li class="label">You can also sign an oil contract with a specified duration to lock the price you pay.</li>
@@ -261,12 +288,15 @@
 			<li class="label">Please be reminded that excessive oil from the contract will be sold back to the market at half the market price.</li>
 			<li class="label">The default contract volume is the barrels required to fulfill your need based on the oil consumption from previous week.</li>
 		</ul>
-		<div class="clickable footer" onclick='promptSkipTutorial(event)'>Disable Tutorials</div>
+		<div class="flex-row">
+			<button class="ml-auto button" onclick="promptSkipTutorial(event)">Disable Tutorials</button>
+			<button class="button primary" onclick="closeModal($(this).closest('.modal'))">Next</button>
+		</div>
 	</div>
 </div>
 
 <div class="tutorial modal" data-category="search" id="tutorialSearch1">
-	<div class="modal-content" style="width: 500px;" onclick="closeModal($(this).closest('.modal'))">
+	<div class="modal-content" style="width: 500px;">
 		<h4>Ticket Search</h4>
 		<ul>
 			<li class="label">Ticket search shows flight ticket sold in previous weeks</li>
@@ -274,39 +304,48 @@
 			<li class="label">You can research on passenger flight itineraries here.</li>
 			<li class="label">For example, you can search on airport pair you wish to establish a new flight for and check your competitions and how much the PAX willing to pay.</li>
 		</ul>
-		<div class="clickable footer" onclick='promptSkipTutorial(event)'>Disable Tutorials</div>
+		<div class="flex-row">
+			<button class="ml-auto button" onclick="promptSkipTutorial(event)">Disable Tutorials</button>
+			<button class="button primary" onclick="closeModal($(this).closest('.modal'))">Next</button>
+		</div>
 	</div>
 </div>
 
 
 <div class="tutorial modal" data-category="office" id="tutorialOffice1">
-	<div class="modal-content" style="width: 500px;" onclick="closeModal($(this).closest('.modal'))">
+	<div class="modal-content" style="width: 500px;">
 		<h4>Office</h4>
 		<ul>
 			<li class="label">In Office View, you can find various information about your airlines</li>
 			<br/>
 			<li class="label">You can also set various important parameters here</li>
 		</ul>
-		<div class="clickable footer" onclick='promptSkipTutorial(event)'>Disable Tutorials</div>
+		<div class="flex-row">
+			<button class="ml-auto button" onclick="promptSkipTutorial(event)">Disable Tutorials</button>
+			<button class="button primary" onclick="closeModal($(this).closest('.modal'))">Next</button>
+		</div>
 	</div>
 </div>
 
 <div class="tutorial modal" data-category="office" id="tutorialOffice2">
-	<div class="modal-content" style="width: 500px;" onclick="closeModal($(this).closest('.modal'))">
-		<h4>Service Quality</h4>
+	<div class="modal-content" style="width: 500px;">
+		<h4>Employee Quality (EQ)</h4>
 		<ul>
-			<li class="label">"Service Quality" refers to the R&D and training of your airline overall.</li>
-			<li class="label">This applies to all your flights and affect the overall flight quality level</li>
+			<li class="label">Spend more on labor and your airline's quality will improve!</li>
+			<li class="label">This applies to all your flights, and you can see the costs under the "crew" item.</li>
 			<br/>
-			<li class="label">You can set the desired "Service Quality" level by clicking on the gear icon next to Target Service Quality</li>
-			<li class="label">Service quality will climb slowly to your target level, after all, R&D and training take time!</li>
+			<li class="label">You can set the desired EQ by clicking on the gear icon next to Target Employee Quality</li>
+			<li class="label">EQ will climb slowly to your target level – after all training takes time!</li>
 		</ul>
-		<div class="clickable footer" onclick='promptSkipTutorial(event)'>Disable Tutorials</div>
+		<div class="flex-row">
+			<button class="ml-auto button" onclick="promptSkipTutorial(event)">Disable Tutorials</button>
+			<button class="button primary" onclick="closeModal($(this).closest('.modal'))">Next</button>
+		</div>
 	</div>
 </div>
 
 <div class="tutorial modal" data-category="office" id="tutorialOffice3">
-	<div class="modal-content" style="width: 500px;" onclick="closeModal($(this).closest('.modal'))">
+	<div class="modal-content" style="width: 500px;">
 		<h4>Staff</h4>
 		<ul>
 			<li class="label">Next, you will find a table of Airline Bases with staff and overtime information</li>
@@ -322,13 +361,16 @@
 			<li class="label">2. Level up your base/hub</li>
 			<li class="label">3. Use bigger airplanes to increase capacity instead of high frequency with smaller airplane models</li>
 		</ul>
-		<div class="clickable footer" onclick='promptSkipTutorial(event)'>Disable Tutorials</div>
+		<div class="flex-row">
+			<button class="ml-auto button" onclick="promptSkipTutorial(event)">Disable Tutorials</button>
+			<button class="button primary" onclick="closeModal($(this).closest('.modal'))">Next</button>
+		</div>
 	</div>
 </div>
 
 
 <div class="tutorial modal" data-category="airlineGrade" id="tutorialAirlineGrade">
-	<div class="modal-content" style="width: 500px;" onclick="closeModal($(this).closest('.modal'))">
+	<div class="modal-content" style="width: 500px;">
 		<h4>Airline Grade</h4>
 		<ul>
 			<li class="label">Congratulations on leveling up!</li>
@@ -344,12 +386,15 @@
 			<br/>
 			<li class="label">You will get more delegates (the little green men in office view) each time you level up.</li>
 		</ul>
-		<div class="clickable footer" onclick='promptSkipTutorial(event)'>Disable Tutorials</div>
+		<div class="flex-row">
+			<button class="ml-auto button" onclick="promptSkipTutorial(event)">Disable Tutorials</button>
+			<button class="button primary" onclick="closeModal($(this).closest('.modal'))">Next</button>
+		</div>
 	</div>
 </div>
 
 <div class="tutorial modal" data-category="loyalist" id="tutorialLoyalistMilestone">
-	<div class="modal-content" style="width: 500px;" onclick="closeModal($(this).closest('.modal'))">
+	<div class="modal-content" style="width: 500px;">
 		<h4>Loyalist</h4>
 		<ul>
 			<li class="label">Your airline has started accumulating loyalists!</li>
@@ -371,7 +416,10 @@
 				</picture>
 				on the map. Info for each airport can be inspected in the Airport View</li>
 		</ul>
-		<div class="clickable footer" onclick='promptSkipTutorial(event)'>Disable Tutorials</div>
+		<div class="flex-row">
+			<button class="ml-auto button" onclick="promptSkipTutorial(event)">Disable Tutorials</button>
+			<button class="button primary" onclick="closeModal($(this).closest('.modal'))">Next</button>
+		</div>
 	</div>
 
 </div>

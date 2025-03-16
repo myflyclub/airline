@@ -19,8 +19,10 @@ object LinkSimulation {
 
   val FUEL_UNIT_COST = OilPrice.DEFAULT_UNIT_COST * 92 //for easier flight monitoring, let's make it the default unit price here
   val FUEL_DISTANCE_FACTOR = 1.4
+  val FUEL_EMPTY_AIRCRAFT_BURN_PERCENT = 0.62
   val CREW_UNIT_COST = 6.75
   val CREW_BASE_COST = 300
+  val CREW_EQ_EXPONENT = 1.95
 
 
   def linkSimulation(cycle: Int) : (List[LinkConsumptionDetails], scala.collection.immutable.Map[Lounge, LoungeConsumptionDetails], immutable.Map[(PassengerGroup, Airport, Route), Int], List[AirlineStat]) = {
@@ -214,7 +216,7 @@ object LinkSimulation {
 
     val fuelCost = flightLink.getAssignedModel() match {
       case Some(model) =>
-        val loadFactor = 0.7 + 0.3 * flightLink.getTotalSoldSeats.toDouble / flightLink.capacity.totalwithSeatSize
+        val loadFactor = FUEL_EMPTY_AIRCRAFT_BURN_PERCENT + (1 - FUEL_EMPTY_AIRCRAFT_BURN_PERCENT) * flightLink.getTotalSoldSeats.toDouble / flightLink.capacity.totalwithSeatSize
         val distanceFactor = 1 + 0.1 * Math.pow(flightLink.duration.toDouble / 60, FUEL_DISTANCE_FACTOR * loadFactor)
         val fuelCost = FUEL_UNIT_COST * model.capacity * distanceFactor * (model.ascentBurn * loadFactor + model.cruiseBurn * link.distance / 800)
 
@@ -259,7 +261,7 @@ object LinkSimulation {
         depreciation += (airplane.depreciationRate * assignmentWeights(airplane)).toInt
     }
 
-    val targetQualityCost = Math.pow(flightLink.airline.getTargetServiceQuality().toDouble / 22, 1.95)
+    val targetQualityCost = Math.pow(flightLink.airline.getTargetServiceQuality().toDouble / 22, CREW_EQ_EXPONENT)
     var crewCost = CREW_BASE_COST
     var inflightCost, revenue = 0
     val crewUnitCost = if (link.airline.airlineType == AirlineType.ULCC || link.airline.airlineType == AirlineType.BEGINNER) CREW_UNIT_COST * 0.75 else CREW_UNIT_COST
@@ -311,7 +313,7 @@ object LinkSimulation {
     passengerCostEntries.foreach {
       case PassengerCost(passengerGroup, passengerCount, cost) =>
         val preferredLinkClass = passengerGroup.preference.preferredLinkClass
-        val standardPrice = flightLink.standardPrice(preferredLinkClass)
+        val standardPrice = flightLink.standardPrice(preferredLinkClass, passengerGroup.passengerType)
         val satisfaction = Computation.computePassengerSatisfaction(cost, standardPrice)
         satisfactionTotalValue += satisfaction * passengerCount
         totalPassengerCount += passengerCount
@@ -333,7 +335,7 @@ object LinkSimulation {
       } else if (link.rawQuality <= 60) {
         4
       } else if (link.rawQuality <= 80) {
-        10
+        9
       } else {
         15
       }

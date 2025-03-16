@@ -18,7 +18,7 @@ class LinkSpec(_system: ActorSystem) extends TestKit(_system) with ImplicitSende
   val toAirport = Airport("", "", "To Airport", 0, 180, "", "", "", 1, baseIncome = 40000, basePopulation = 1, 0, 0)
   val distance = Util.calculateDistance(fromAirport.latitude, fromAirport.longitude, toAirport.latitude, toAirport.longitude).toInt
   val flightType = Computation.getFlightCategory(fromAirport, toAirport)
-  val defaultPrice = Pricing.computeStandardPriceForAllClass(distance, flightType)
+  val defaultPrice = Pricing.computeStandardPriceForAllClass(distance, FlightCategory.INTERNATIONAL, PassengerType.TRAVELER, Airport.HIGH_INCOME / 2)
   val model = Model.modelByName("Boeing 737 MAX 9")
 
 

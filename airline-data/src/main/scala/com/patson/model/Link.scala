@@ -61,7 +61,7 @@ case class Link(from : Airport, to : Airport, airline: Airline, price : LinkClas
     this.assignedModel = Some(model)
   }
 
-  override def computedQuality : Int= {
+  override def computedQuality() : Int= {
     if (!hasComputedQuality) {
 
       if (inServiceAirplanes.isEmpty) {
@@ -71,11 +71,11 @@ case class Link(from : Airport, to : Airport, airline: Airline, price : LinkClas
           case ((airplane, assignmentPerAirplane)) => 20 * airplane.condition / Airplane.MAX_CONDITION * assignmentPerAirplane.frequency
         }.sum / frequency
         val airplaneTypeQuality = getAssignedModel() match {
-          case Some(model) => Math.pow(model.quality + 1, 1.8) - 16
+          case Some(model) => Math.pow(model.quality + 1, 1.7) - 9
           case None => 0
         }
         val serviceQuality = 30 * (rawQuality.toDouble - 20) / (Link.MAX_QUALITY - 20)
-        val laborQuality = 30 * (airline.airlineInfo.currentServiceQuality / Airline.MAX_SERVICE_QUALITY)
+        val laborQuality = 30 * (airline.airlineInfo.currentServiceQuality / Airline.EQ_MAX)
         computedQualityStore = (airplaneTypeQuality + serviceQuality + laborQuality + airplaneConditionQuality).toInt
         hasComputedQuality = true
         computedQualityStore
@@ -99,15 +99,15 @@ case class Link(from : Airport, to : Airport, airline: Airline, price : LinkClas
   }
 
   lazy val getFutureOfficeStaffRequired : Int = {
-    getOfficeStaffRequired(from, to, futureFrequency(), futureCapacity(), rawQuality, getAssignedModel())
+    getOfficeStaffRequired(from, to, futureFrequency(), futureCapacity(), airline, rawQuality, getAssignedModel())
   }
 
   lazy val getFutureOfficeStaffBreakdown : StaffBreakdown = {
-    getOfficeStaffBreakdown(from, to, futureFrequency(), futureCapacity(), rawQuality, getAssignedModel())
+    getOfficeStaffBreakdown(from, to, futureFrequency(), futureCapacity(), airline, rawQuality, getAssignedModel())
   }
 
   lazy val getCurrentOfficeStaffRequired : Int = {
-    getOfficeStaffRequired(from, to, frequency, capacity, rawQuality, getAssignedModel())
+    getOfficeStaffRequired(from, to, frequency, capacity, airline, rawQuality, getAssignedModel())
   }
 
   var loadedFrequencyByClass : LinkClassValues = LinkClassValues.getInstance()
@@ -156,11 +156,11 @@ case class Link(from : Airport, to : Airport, airline: Airline, price : LinkClas
 
   lazy val schedule : Seq[TimeSlot] = Scheduling.getLinkSchedule(this)
 
-  lazy val getOfficeStaffRequired = (from : Airport, to : Airport, frequency : Int, capacity : LinkClassValues, rawQuality : Int, model : Option[Model]) => {
-    getOfficeStaffBreakdown(from, to, frequency, capacity, rawQuality, model).total
+  lazy val getOfficeStaffRequired = (from : Airport, to : Airport, frequency : Int, capacity : LinkClassValues, airline : Airline, rawQuality : Int, model : Option[Model]) => {
+    getOfficeStaffBreakdown(from, to, frequency, capacity, airline, rawQuality, model).total
   }
 
-  lazy val getOfficeStaffBreakdown = (from : Airport, to : Airport, frequency : Int, capacity : LinkClassValues, rawQuality : Int, modelOption : Option[Model]) => {
+  lazy val getOfficeStaffBreakdown = (from : Airport, to : Airport, frequency : Int, capacity : LinkClassValues, airline : Airline, rawQuality : Int, modelOption : Option[Model]) => {
     val flightCategory = Computation.getFlightCategory(from, to)
     val model: Model.Type.Value = modelOption match {
       case Some(model) => model.airplaneType
@@ -170,7 +170,7 @@ case class Link(from : Airport, to : Airport, airline: Airline, price : LinkClas
     if (frequency == 0) { //future flights
       StaffBreakdown(0, 0, 0, airlineBaseModifier)
     } else {
-      val StaffSchemeBreakdown(basicStaff, perFrequencyStaff, per500PaxStaff) = Link.getStaffRequired(distance, flightCategory)
+      val StaffSchemeBreakdown(basicStaff, perFrequencyStaff, per500PaxStaff) = Link.getStaffRequired(distance, flightCategory, airline.airlineType)
       StaffBreakdown(basicStaff, perFrequencyStaff * frequency, per500PaxStaff * capacity.totalwithSeatSize / 500, airlineBaseModifier)
     }
   }
@@ -192,14 +192,14 @@ object Link {
     Link(from = Airport.fromId(0), to = Airport.fromId(0), Airline.fromId(0), price = LinkClassValues.getInstance(), distance = 0, capacity = LinkClassValues.getInstance(), rawQuality = 0, duration = 0, frequency = 0, id = id)
   }
 
-  def getStaffRequired(distance: Int, flightCategory: FlightCategory.Value) : StaffSchemeBreakdown = {
+  def getStaffRequired(distance: Int, flightCategory: FlightCategory.Value, airlineType: AirlineType.AirlineType) : StaffSchemeBreakdown = {
     val base = if (flightCategory == FlightCategory.INTERNATIONAL) 6 else 3
     val multiplier = if (flightCategory == FlightCategory.INTERNATIONAL) {
       Math.pow(distance + 1600, 0.16) - 1.5
     } else {
       Math.pow(distance + 1000, 0.15) - 2
     }
-    val staffPerFrequency = 0.5 * multiplier
+    val staffPerFrequency = if (airlineType == AirlineType.REGIONAL) {0.1 * multiplier} else {0.5 * multiplier}
     val staffPer500Pax = 1.25 * multiplier
     StaffSchemeBreakdown(base, staffPerFrequency, staffPer500Pax)
   }
@@ -283,17 +283,17 @@ case class CostStoreProvider() extends CostProvider {
 sealed abstract class LinkClass(val code : String, val spaceMultiplier : Double, val resourceMultiplier : Double, val priceSensitivity : Double, val level : Int) {
   def label : String //level for sorting/comparison purpose
 }
-case object FIRST extends LinkClass("F", spaceMultiplier = 6, resourceMultiplier = 4, priceSensitivity = 0.75, level = 3) {
+case object FIRST extends LinkClass("F", spaceMultiplier = 6, resourceMultiplier = 3.6, priceSensitivity = 0.75, level = 3) {
   override def label = "first"
 }
-case object BUSINESS extends LinkClass("J", spaceMultiplier = 2.5, resourceMultiplier = 1.75, priceSensitivity = 0.85, level = 2) {
+case object BUSINESS extends LinkClass("J", spaceMultiplier = 2.5, resourceMultiplier = 1.5, priceSensitivity = 0.85, level = 2) {
   override def label = "business"
 }
-case object ECONOMY extends LinkClass("Y", spaceMultiplier = 1, resourceMultiplier = 1.2, priceSensitivity = 0.95, level = 1) {
+case object ECONOMY extends LinkClass("Y", spaceMultiplier = 1, resourceMultiplier = 1.1, priceSensitivity = 0.95, level = 1) {
   override def label = "economy"
 }
 case object DISCOUNT_ECONOMY extends LinkClass("D", spaceMultiplier = 1, resourceMultiplier = 1.0, priceSensitivity = 0.95, level = 0) {
-  override def label = "discount economy"
+  override def label = "discountEconomy"
 }
 object LinkClass {
   val values = List(FIRST, BUSINESS, ECONOMY, DISCOUNT_ECONOMY)

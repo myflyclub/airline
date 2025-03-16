@@ -342,6 +342,7 @@ function updateAllianceBasicsDetails(allianceId) {
                 let loginStatus = loginStatusByAirlineId[member.airlineId]
                 row.append("<div class='cell' style='vertical-align:middle; width: 10px;'><img src='" + getStatusLogo(loginStatus) + "' title='" + getStatusTitle(loginStatus) + "' style='vertical-align:middle;'/>")
                 row.append("<div class='cell' style='vertical-align: middle;'>" + getAirlineSpan(member.airlineId, member.airlineName) + "</div>")
+                row.append("<div class='cell' style='vertical-align: middle;'>" + member.airlineType + "</div>")
                 if (member.allianceRole == "Applicant") {
                     row.append("<div class='cell warning' style='vertical-align: middle;'>" + member.allianceRole + "</div>")
                 } else {
@@ -349,9 +350,7 @@ function updateAllianceBasicsDetails(allianceId) {
                 }
                 if (activeAirline) {
                     var $actionCell = $("<div class='cell action' style='vertical-align: middle;'></div>")
-
                     row.append($actionCell)
-
                 }
                 $("#allianceMemberList").append(row)
             });

@@ -462,16 +462,16 @@ case class Airport(iata : String, icao : String, name : String, latitude : Doubl
     runwayLength >= airplaneModel.runwayRequirement
   }
 
-  //class baseline = -5 to 35
-  //distance = up to 9, 18, 27
+  //class baseline = -10 to 35
+  //distance = up to 20, 30
   //airport income = up to 30
-  //GOOD_QUALITY_DELTA seeks up to another 20, but never more than 100
+  //GOOD_QUALITY_DELTA seeks up to another 20
   val expectedQuality = (distance: Int, linkClass: LinkClass) => {
-    val classBaseline = LinkClassValues.getInstance(15, 20, 35, -5)
-    val distanceMod = Math.min(9.0, distance / 1200.0) * LinkClassValues.getInstance(2, 3, 3, 1)(linkClass)
-    val incomeBaseline = Math.min((baseIncome.toDouble / 76000 * 30).toInt, 30)
+    val classBaseline = LinkClassValues.getInstance(10, 20, 35, -10)
+    val distanceMod = Math.min(10.0, distance / 1000.0) * LinkClassValues.getInstance(2, 3, 3, 2)(linkClass)
+    val incomeBaseline = Math.min((baseIncome.toDouble / Airport.HIGH_INCOME * 30).toInt, 30)
 
-    Math.max(0, Math.min(99,classBaseline(linkClass) + incomeBaseline + distanceMod).toInt)
+    Math.max(0, Math.min(100,classBaseline(linkClass) + incomeBaseline + distanceMod).toInt)
   }
 
   private[this] def getCountry() : Country = {
@@ -561,6 +561,7 @@ object Airport {
   }
 
   val MAJOR_AIRPORT_LOWER_THRESHOLD = 5
+  val HIGH_INCOME = 80000
   val MIN_RUNWAY_LENGTH = 750
 }
 

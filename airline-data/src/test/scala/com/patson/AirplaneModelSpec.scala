@@ -21,7 +21,7 @@ class AirplaneModelSpec extends WordSpecLike with Matchers with BeforeAndAfterAl
   "all airplane models".must {
     "Generate good profit at MAX LF at suitable range".in {
       Model.models.foreach { airplaneModel =>
-        val distances = List(12000, 9000, 6000, 3000, 2000, 1200, 800, 400).reverse
+        val distances = List(15000, 12000, 9000, 6000, 3000, 2000, 1200, 800, 400).reverse
         var outputString = airplaneModel.name
         distances.foreach { distance =>
           if (airplaneModel.range >= distance) {
@@ -61,11 +61,12 @@ class AirplaneModelSpec extends WordSpecLike with Matchers with BeforeAndAfterAl
     val duration = Computation.calculateDuration(airplaneModel, distance)
     val frequency = Computation.calculateMaxFrequency(airplaneModel, distance)
     val capacity = frequency * (airplaneModel.capacity / linkClass.spaceMultiplier).toInt
-    val fromAirport = Airport.fromId(1).copy(size = airportSize, baseIncome = 60000, basePopulation = 1)
+    val income = 40000
+    val fromAirport = Airport.fromId(1).copy(size = airportSize, baseIncome = income, basePopulation = 1)
     fromAirport.initAirlineBases(List())
     val toAirport = Airport.fromId(2).copy(size = airportSize)
     toAirport.initAirlineBases(List())
-    var price = Pricing.computeStandardPriceForAllClass(distance, flightType)
+    var price = Pricing.computeStandardPriceForAllClass(distance, flightType, PassengerType.TRAVELER, income)
     if (airplaneModel.airplaneType == SUPERSONIC) {
       price *= 1.8
     }
@@ -82,7 +83,7 @@ class AirplaneModelSpec extends WordSpecLike with Matchers with BeforeAndAfterAl
       case DISCOUNT_ECONOMY => 20
       case FIRST => 80
       case BUSINESS => 60
-      case _ => 40
+      case _ => 20
     }
     val airplaneConfiguration: AirplaneConfiguration = linkClass match {
       case FIRST => AirplaneConfiguration.first(airline, airplaneModel)

@@ -1,12 +1,14 @@
 package controllers
 
-import java.util.Random
+import com.patson.data.airplane.ModelSource
 
+import java.util.Random
 import com.patson.data.{AirlineSource, AirplaneSource, AirportSource, BankSource, CycleSource, TutorialSource}
 import com.patson.model._
 import com.patson.model.airplane._
 import com.patson.util.AirportCache
 import controllers.AuthenticationObject.AuthenticatedAirline
+
 import javax.inject.Inject
 import models.Profile
 import play.api.libs.json.{JsValue, Json, _}
@@ -40,7 +42,7 @@ class ProfileApplication @Inject()(cc: ControllerComponents) extends AbstractCon
   val LOAN_YEARS = 12
 
   def generateAirplanes(value : Int, capacityRange : scala.collection.immutable.Range, quality : Int, homeAirport : Airport, condition : Double, airline : Airline, random : Random) : List[Airplane] =  {
-    val qualityRange = (quality - 2) to (quality + 2)
+    val qualityRange = (quality - 1) to (quality + 1)
     val eligibleModels = allAirplaneModels.filter(model => capacityRange.contains(model.capacity))
       .filter(model => model.purchasableWithRelationship(allCountryRelationships.getOrElse((homeAirport.countryCode, model.countryCode), 0)))
       .filter(model => model.price * condition / Airplane.MAX_CONDITION <= value / 3)
@@ -82,7 +84,7 @@ class ProfileApplication @Inject()(cc: ControllerComponents) extends AbstractCon
 
 
 
-    val smallAirplanes = generateAirplanes(capital, (10 to 90), 2, airport, 90, airline, random)
+    val smallAirplanes = generateAirplanes(capital, (10 to 90), 4, airport, 90, airline, random)
     if (smallAirplanes.nonEmpty) {
       val beginnerProfile = Profile(
         name = "Beginner's start",
@@ -109,7 +111,7 @@ class ProfileApplication @Inject()(cc: ControllerComponents) extends AbstractCon
     )
     profiles.append(loanProfile)
 
-    val largeAirplanes = generateAirplanes((capital * 4).toInt, (airport.size * 12 to airport.size * 20), 5, airport, 72, airline, random)
+    val largeAirplanes = generateAirplanes((capital * 4).toInt, (80 to airport.size * 21), 4, airport, 72, airline, random)
     if (largeAirplanes.nonEmpty) {
       val largeAirplaneProfile = Profile(
         name = "Revival of past glory",
@@ -136,7 +138,7 @@ class ProfileApplication @Inject()(cc: ControllerComponents) extends AbstractCon
     )
     profiles.append(megaHQ)
 
-    val ULCCAirplanes = generateAirplanes((capital * 2.75).toInt, (airport.size * 14 to airport.size * 22), 2, airport, 85, airline, random)
+    val ULCCAirplanes = generateAirplanes((capital * 2.75).toInt, (airport.size * 14 to airport.size * 22), 3, airport, 85, airline, random)
     if (!ULCCAirplanes.isEmpty) {
       val cheapAirplaneProfile = Profile(
         name = "ULCC Airline",
@@ -152,6 +154,23 @@ class ProfileApplication @Inject()(cc: ControllerComponents) extends AbstractCon
         loan = Bank.getLoan(airline.id, (capital * 2.25).toInt, BASE_INTEREST_RATE, CycleSource.loadCycle(), LOAN_YEARS)
       )
       profiles.append(cheapAirplaneProfile)
+    }
+    val regionalAirplanes = generateAirplanes((capital * 2.75).toInt, 60 to 112, 4, airport, 85, airline, random)
+    if (!regionalAirplanes.isEmpty) {
+      val regionalProfile = Profile(
+        name = "Regional Partner Airline",
+        airlineType = AirlineType.REGIONAL,
+        difficulty = "Hard",
+        description = "Work with your alliance partners!",
+        rule = List("Can only buy regional or smaller aircraft!","3x alliance points","Need 80% less staff to support frequency","Base crew costs are 25% lower"),
+        cash = (capital * 3.5).toInt - regionalAirplanes.map(_.value).sum,
+        airport = airport,
+        reputation = 20,
+        quality = 30,
+        airplanes = ULCCAirplanes,
+        loan = Bank.getLoan(airline.id, (capital * 2.25).toInt, BASE_INTEREST_RATE, CycleSource.loadCycle(), LOAN_YEARS)
+      )
+      profiles.append(regionalProfile)
     }
 
     val fancyAirplanes = generateAirplanes((capital * 2.5).toInt, (36 to 90), 9, airport, 85, airline, random)
@@ -190,11 +209,12 @@ class ProfileApplication @Inject()(cc: ControllerComponents) extends AbstractCon
     val airline = request.user
     buildHqWithProfileLock.synchronized {
       if (!airline.isInitialized) {
+        val cycle = CycleSource.loadCycle()
         val airport = AirportCache.getAirport(airportId, true).get
         val profile = generateProfiles(airline, airport)(profileId)
-        val targetQuality = Math.max(35, profile.quality)
+        val targetQuality = profile.quality
 
-        val base = AirlineBase(airline, airport, airport.countryCode, 1, CycleSource.loadCycle(), true)
+        val base = AirlineBase(airline, airport, airport.countryCode, 1, cycle, true)
         airline.airlineType = profile.airlineType
         AirlineSource.updateAirlineType(airlineId, airline.airlineType.id)
         AirlineSource.saveAirlineBase(base)
@@ -216,7 +236,6 @@ class ProfileApplication @Inject()(cc: ControllerComponents) extends AbstractCon
 
         val bonus = 16
         val gameWeeks = 12 * 4 + 6
-        val cycle = CycleSource.loadCycle()
         AirlineSource.saveAirlineModifier(airline.id, DelegateBoostAirlineModifier(bonus, gameWeeks, cycle))
 
         Ok(Json.toJson(updatedAirline))

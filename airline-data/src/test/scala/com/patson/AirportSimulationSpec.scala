@@ -73,7 +73,7 @@ class AirportSimulationSpec extends WordSpecLike with Matchers {
       List(smallAirplane, largeAirplane).foreach { airplane =>
         val distance = airplane.model.range / 2
         val duration = Computation.calculateDuration(airplane.model, distance)
-        val price = Pricing.computeStandardPrice(distance, FlightCategory.INTERNATIONAL, ECONOMY)
+        val price = Pricing.computeStandardPrice(distance, FlightCategory.INTERNATIONAL, ECONOMY, PassengerType.TRAVELER, Airport.HIGH_INCOME / 2)
       
         val frequency = Computation.calculateMaxFrequency(airplane.model, distance)
         val capacity = frequency * airplane.model.capacity

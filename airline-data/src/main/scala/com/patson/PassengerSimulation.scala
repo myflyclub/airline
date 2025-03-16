@@ -51,7 +51,7 @@ object PassengerSimulation {
         case (_, soldSeats) => soldSeats 
       }
       
-    soldLinks.foreach{ case(link, soldSeats) => println(link.airline.name + "($" + link.price + "; recommend $" + link.standardPrice(ECONOMY) + ") " + soldSeats  + " : " + link.from.name + " => " + link.to.name) }
+    soldLinks.foreach{ case(link, soldSeats) => println(link.airline.name + "($" + link.price + "; recommend $" + link.standardPrice(ECONOMY, PassengerType.TRAVELER) + ") " + soldSeats  + " : " + link.from.name + " => " + link.to.name) }
     println("seats sold: " + soldLinks.foldLeft(0) {
       case (holder, (link, soldSeats)) => holder + soldSeats
     })
@@ -194,7 +194,7 @@ object PassengerSimulation {
             case Some(pickedRoute) =>
               //println("picked route info" + passengerGroup + " " + pickedRoute.links(0).airline)
               val fromAirport = passengerGroup.fromAirport
-              val rejection = getRouteRejection(pickedRoute, fromAirport, toAirport, passengerGroup.preference.preferredLinkClass)
+              val rejection = getRouteRejection(pickedRoute, fromAirport, toAirport, passengerGroup.preference.preferredLinkClass, passengerGroup.passengerType)
               rejection match {
                 case None =>
                   synchronized {
@@ -304,7 +304,7 @@ object PassengerSimulation {
     val TOTAL_COST, LINK_COST, DISTANCE = Value
   }
 
-  def getRouteRejection(route: Route, fromAirport: Airport, toAirport: Airport, preferredLinkClass : LinkClass) : Option[RouteRejectionReason.Value] = {
+  def getRouteRejection(route: Route, fromAirport: Airport, toAirport: Airport, preferredLinkClass : LinkClass, paxType: PassengerType.Value) : Option[RouteRejectionReason.Value] = {
     import RouteRejectionReason._
     val routeDisplacement = Computation.calculateDistance(fromAirport, toAirport)
     val routeDistance = route.links.foldLeft(0)(_ + _.link.distance)
@@ -313,7 +313,7 @@ object PassengerSimulation {
       return Some(DISTANCE)
     }
 
-    val routeAffordableCost = Pricing.computeStandardPrice(routeDisplacement, Computation.getFlightCategory(fromAirport, toAirport), preferredLinkClass) * ROUTE_COST_TOLERANCE_FACTOR
+    val routeAffordableCost = Pricing.computeStandardPrice(routeDisplacement, Computation.getFlightCategory(fromAirport, toAirport), preferredLinkClass, paxType, fromAirport.baseIncome) * ROUTE_COST_TOLERANCE_FACTOR
     if (route.totalCost > routeAffordableCost) {
       //println(s"rejected affordable: $routeAffordableCost, cost : , ${route.totalCost}  $route" )
       return Some(TOTAL_COST)
@@ -322,7 +322,7 @@ object PassengerSimulation {
     //now check individual link
     val unaffordableLink = route.links.find { linkConsideration => //find links that are too expensive
       val link = linkConsideration.link
-      val linkAffordableCost = link.standardPrice(preferredLinkClass) * LINK_COST_TOLERANCE_FACTOR * PassengerType.priceAdjust(linkConsideration.passengerGroup.passengerType)
+      val linkAffordableCost = link.standardPrice(preferredLinkClass, paxType) * LINK_COST_TOLERANCE_FACTOR
       linkConsideration.cost > linkAffordableCost
     }
 
@@ -330,7 +330,6 @@ object PassengerSimulation {
       return Some(LINK_COST)
     }
     return None
-
   }
 
   case class SpecializationModifier(deltaByLinkClassAndPassengerType: Map[(LinkClass, PassengerType.Value), Double]) {
@@ -492,7 +491,7 @@ object PassengerSimulation {
         if (activeVertices.contains(linkConsideration.from.id)) { //optimization - only need to re-run if the vertex was update in last iteration
           val predecessorLinkConsideration = predecessorMap.get(linkConsideration.from.id)
 
-          var connectionCost = 15.0
+          var connectionCost = 20.0
           var isValid : Boolean = true
           val fromCost = distanceMap.get(linkConsideration.from.id)
           var flightTransit = false
@@ -505,13 +504,14 @@ object PassengerSimulation {
             if (linkConsideration.link.id == predecessorLink.id) { //going back and forth on the same link
               isValid = false
             } else if (predecessorLink.transportType == TransportType.GENERIC_TRANSIT && linkConsideration.link.transportType == TransportType.GENERIC_TRANSIT) {
-              isValid = false //don't allow transit 2 transit connections
-            } else if (predecessorLink.transportType == TransportType.GENERIC_TRANSIT && predecessorLink.from.id != passengerGroup.fromAirport.id) {
-              connectionCost += 55 //middle "leave the airport" transit connections more expensive
-            } else if (predecessorLink.transportType == TransportType.GENERIC_TRANSIT || linkConsideration.link.transportType == TransportType.GENERIC_TRANSIT) {
-              connectionCost = 0
+              isValid = false //don't allow ground 2 ground connections
+            } else if (predecessorLink.transportType == TransportType.GENERIC_TRANSIT && predecessorLink.from.id == passengerGroup.fromAirport.id) {
+              connectionCost = 0 //origin ground link only incurs link cost
+            } else if (predecessorLink.transportType == TransportType.GENERIC_TRANSIT) {
+              connectionCost += 90 //middle "leave the airport" ground connections more expensive; note this has to be 2x as expensive as initial connection ground cost was free
+            } else if (linkConsideration.link.transportType == TransportType.GENERIC_TRANSIT) {
+              connectionCost = 0 //destination ground link only incurs link cost, note this will also catch 1st connection of "middle" ground connectons
             } else {
-
               //now look at the frequency of the link arriving at this FromAirport and the link (current link) leaving this FromAirport. check frequency
               val frequency = Math.max(predecessorLink.frequencyByClass(predecessorLinkConsideration.linkClass), linkConsideration.link.frequencyByClass(linkConsideration.linkClass))
 

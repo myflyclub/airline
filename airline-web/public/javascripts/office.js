@@ -225,9 +225,9 @@ function addProgressGrades(track, grades){
 }
 
 function updateProgress(stats, stockPrice){
-    if(! stats && ! stockPrice){
-        return null
-    }
+//    if(! stats && ! stockPrice){
+//        return null
+//    }
     const shortNumber = (number) => {
         if(number >= 10000){
             return (number / 1000).toFixed(0).toLocaleString() + "k"
@@ -340,15 +340,6 @@ function updateAirlineDetails() {
 	    contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
 	    success: function(airline) {
-//	        $('#officeCanvas .reputationDetails').empty()
-//	        $('#officeCanvas .reputationDetails').append("<span>" + airline.reputation + " (" + airline.gradeDescription + ")</span>")
-//            var infoIcon = $('<span><img src="/assets/images/icons/information.png"></span>').appendTo($('#officeCanvas .reputationDetails'))
-//            var reputationHtml = $("<div></div>")
-//            if (airline.reputationBreakdowns.breakdowns.length == 0) { //not yet updated by sim on first creation
-//                reputationHtml.append("<div>Target Reputation: -</div>")
-//            } else {
-//                reputationHtml.append("<div>Target Reputation: " + airline.reputationBreakdowns.total.toFixed(2) + "</div>")
-//            }
             var breakdownList = $("<ul></ul>")
             $.each(airline.reputationBreakdowns.breakdowns, function(index, breakdown) {
                 if (!breakdown.description.toLowerCase().includes("milestone")) {
@@ -358,9 +349,6 @@ function updateAirlineDetails() {
             const milestoneValue = updateMilestones(airline.reputationBreakdowns.breakdowns)
             breakdownList.append("<li>Milestones: <span class='rep-value'>" + milestoneValue.toFixed(2) + "</span></li>")
             $('#officeCanvas .reputationDetails').html(breakdownList)
-//            reputationHtml.append(breakdownList)
-//            reputationHtml.append("<div class='remarks'>Current reputation adjusts slowly towards the target reputation</div>")
-//            addTooltipHtml(infoIcon, reputationHtml, {'width' : '350px'})
 
             $('#officeCanvas .airlineName').text(airline.name)
             $('#officeCanvas .airlineType').text(airline.type)

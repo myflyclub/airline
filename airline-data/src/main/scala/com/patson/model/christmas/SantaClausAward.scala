@@ -38,7 +38,7 @@ class ServiceQualityAward(santaClausInfo: SantaClausInfo) extends SantaClausAwar
   override val getType: SantaClausAwardType.Value = SantaClausAwardType.SERVICE_QUALITY
   val BONUS = 10 * difficultyMultiplier
   override def applyAward(): Unit = {
-    val newQuality = Math.min(santaClausInfo.airline.getCurrentServiceQuality() + BONUS, Airline.MAX_SERVICE_QUALITY)
+    val newQuality = Math.min(santaClausInfo.airline.getCurrentServiceQuality() + BONUS, Airline.EQ_MAX)
 
     santaClausInfo.airline.setCurrentServiceQuality(newQuality)
     AirlineSource.saveAirlineInfo(santaClausInfo.airline, updateBalance = false)

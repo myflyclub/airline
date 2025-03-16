@@ -482,6 +482,14 @@ body.christmas {
   border-radius:0 6px 0 0;
 }
 
+.table:not(.rounded-none) .table-row:first-child .cell:last-child {
+    border-top-right-radius: 6px;
+}
+
+.table:not(.rounded-none) .table-row:first-child .cell:first-child {
+    border-top-left-radius: 6px;
+}
+
 .table:not(.rounded-none) .table-row:last-child .cell:last-child {
     border-bottom-right-radius: 6px;
 }
@@ -620,6 +628,10 @@ div.button, button.button, .ajax-file-upload {
 .button.small {
     height: 20px;
     width: 20px;
+}
+.button.primary {
+    font-weight: 600;
+    font-size: 120%;
 }
 
 div.glow, span.glow, img.glow {
@@ -1406,6 +1418,7 @@ button:disabled {
 }
 
 .modal-grid-options .option {
+    border: 1px solid rgb(100 126 151 / 20%);
     border-radius: 8px;
     padding: 16px 12px 20px 12px;
     box-sizing: border-box;
@@ -1614,6 +1627,7 @@ i, .italic {
 .mr-0 { margin-right: 0px !important; }
 .mb-0 { margin-bottom: 0px !important; }
 .ml-0 { margin-left: 0px !important; }
+.ml-auto { margin-left: auto !important; }
 .pt-0 { padding-top: 0px; }
 .pt-1 { padding-top: 4px; }
 .pt-2 { padding-top: 8px; }

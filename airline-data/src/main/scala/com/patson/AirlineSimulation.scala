@@ -206,10 +206,8 @@ object AirlineSimulation {
           false
         }
         if (isBankrupt) {
-          val resetBalance = 0
-          //todd: add public notice of bankruptcy with stats
           println(s"Resetting $airline due to negative value")
-          Airline.resetAirline(airline.id, newBalance = resetBalance)
+          Airline.resetAirline(airline.id, newBalance = 0, resetExtendedInfo = true)
           NoticeSource.saveTrackingNotice(airline.id, GameOverNotice())
         }
 
@@ -626,9 +624,9 @@ object AirlineSimulation {
     val delta = targetQuality - currentQuality
     val adjustment = 
       if (delta >= 0) { //going up, slower when current quality is already high
-        MAX_SERVICE_QUALITY_INCREMENT * (1 - (currentQuality / Airline.MAX_SERVICE_QUALITY * 0.9)) //at current quality 0, multiplier 1x; current quality 100, multiplier 0.1x
+        MAX_SERVICE_QUALITY_INCREMENT * (1 - (currentQuality / Airline.EQ_MAX * 0.9)) //at current quality 0, multiplier 1x; current quality 100, multiplier 0.1x
       } else { //going down, faster when current quality is already high
-        -1 * MAX_SERVICE_QUALITY_DECREMENT * (0.1 + (currentQuality / Airline.MAX_SERVICE_QUALITY * 0.9)) //at current quality 0, multiplier 0.1x; current quality 100, multiplier 1x
+        -1 * MAX_SERVICE_QUALITY_DECREMENT * (0.1 + (currentQuality / Airline.EQ_MAX * 0.9)) //at current quality 0, multiplier 0.1x; current quality 100, multiplier 1x
       }
     if (adjustment >= 0) {
       if (adjustment + currentQuality >= targetQuality) {

@@ -78,7 +78,7 @@ object LinkCommentUtil {
     import LinkCommentGroup._
     val poolByPreference : Map[FlightPreference, CommentWeightedPool] = preferences.map { preference =>
       val adjustRatioByGroup : Map[controllers.LinkCommentGroup.Value, Double] = Map(
-        PRICE -> preference.priceAdjustRatio(link, linkClass),
+        PRICE -> preference.priceAdjustRatio(link, linkClass, paxType),
         LOYALTY -> preference.loyaltyAdjustRatio(link),
         QUALITY -> preference.qualityAdjustRatio(homeAirport, link, preferredLinkClass, paxType),
         DURATION -> preference.tripDurationAdjustRatio(link, preferredLinkClass, paxType),

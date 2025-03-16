@@ -31,8 +31,6 @@ object AirportSimulation {
     println("finished loading all airports")
 
     val flightLinks = LinkSource.loadAllLinks(LinkSource.ID_LOAD).filter(_.transportType == TransportType.FLIGHT).map(_.asInstanceOf[Link])
-    val linksByFromAirportId = flightLinks.groupBy(_.from.id)
-    val linksByToAirportId = flightLinks.groupBy(_.to.id)
 
     //update the loyalist on airports based on link consumption
     println("Adjust loyalist by link consumptions")
@@ -41,12 +39,7 @@ object AirportSimulation {
     //check whether lounge is still active
     updateLoungeStatus(allAirports, linkRidershipDetails)
 
-
-    println("Finished simulation of loyalty by link consumption")
-
-
     println("Finished loyalist simulation")
-    //airportProjectSimulation(allAirports)
 
     AirportSource.purgeAirlineAppealBonus(cycle)
 
@@ -207,7 +200,7 @@ object AirportSimulation {
             flightLinks.foreach { linkConsideration =>
               val link = linkConsideration.link
               val preferredLinkClass = passengerGroup.preference.preferredLinkClass
-              val standardPrice = Pricing.computeStandardPrice(link, preferredLinkClass)
+              val standardPrice = Pricing.computeStandardPrice(link, preferredLinkClass, passengerGroup.passengerType)
 
               val satisfaction = Computation.computePassengerSatisfaction(linkConsideration.cost, standardPrice)
 
@@ -321,7 +314,7 @@ object AirportSimulation {
     println("Checking lounge status")
     val passengersByAirport : MapView[Airport, MapView[Airline, Int]] = linkRidershipDetails.toList.flatMap {
       case ((passengerGroup, airport, route), count) =>
-        route.links.filter(_.link.transportType == TransportType.FLIGHT).flatMap { linkConsideration =>
+        route.links.filter(route => route.link.transportType == TransportType.FLIGHT && route.linkClass.level > 1).flatMap { linkConsideration =>
           List((linkConsideration.link.airline, linkConsideration.from, count), (linkConsideration.link.airline, linkConsideration.to, count))
         }
 

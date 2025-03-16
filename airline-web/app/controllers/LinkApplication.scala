@@ -142,8 +142,6 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
       val jsObject = JsObject(List(
       "modelId" -> JsNumber(modelPlanLinkInfo.model.id),
       "modelName" -> JsString(modelPlanLinkInfo.model.name),
-      "badConditionThreshold" -> JsNumber(Airplane.BAD_CONDITION),
-      "criticalConditionThreshold" -> JsNumber(Airplane.CRITICAL_CONDITION),
       "capacity" -> JsNumber(modelPlanLinkInfo.model.capacity),
       "duration" -> JsNumber(modelPlanLinkInfo.duration),
       "flightMinutesRequired" -> JsNumber(modelPlanLinkInfo.flightMinutesRequired),
@@ -437,9 +435,9 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
         val existingCapacity = existingLink.fold(LinkClassValues.getInstance())(_.futureCapacity())
         val capacityChange = incomingLink.futureCapacity() - existingCapacity //use future capacity here
         val normalizedCapacityChange = capacityChange(ECONOMY) * ECONOMY.spaceMultiplier + capacityChange(BUSINESS) * BUSINESS.spaceMultiplier + capacityChange(FIRST) * FIRST.spaceMultiplier
-        val capacityMonetaryBaseValue = (resultLink.standardPrice(ECONOMY) * normalizedCapacityChange).toLong //this could be negative if freq increased but capacity decreased
+        val capacityMonetaryBaseValue = (resultLink.standardPrice(ECONOMY, PassengerType.TRAVELER) * normalizedCapacityChange).toLong //this could be negative if freq increased but capacity decreased
         val frequencyChange = incomingLink.futureFrequency() - existingFrequency
-        val frequencyMonetaryBaseValue = frequencyChange.toLong * resultLink.getAssignedModel().get.capacity * resultLink.standardPrice(ECONOMY)
+        val frequencyMonetaryBaseValue = frequencyChange.toLong * resultLink.getAssignedModel().get.capacity * resultLink.standardPrice(ECONOMY, PassengerType.TRAVELER)
         val monetaryBaseValue = Math.max(0, Math.max(capacityMonetaryBaseValue, frequencyMonetaryBaseValue))
 
         val bonus = NegotiationUtil.getLinkBonus(resultLink, monetaryBaseValue, busyDelegates)
@@ -725,38 +723,23 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
             planLinkInfoByModel.append(ModelPlanLinkInfo(model, duration, flightMinutesRequired, assignedModel.isDefined && assignedModel.get.id == model.id, maxFrequency, airplaneList))
         }
 
-//        val priceAdjust = PassengerType.priceAdjust(paxType)
-        val paxTypes = List(PassengerType.TOURIST, PassengerType.BUSINESS, PassengerType.TRAVELER)
+        val paxTypes = List(PassengerType.TOURIST, PassengerType.TRAVELER)
         val suggestedPrice: Map[String, LinkClassValues] = paxTypes.map { paxType =>
-          val multiplier = PassengerType.priceAdjust(paxType)
-          (PassengerType.label(paxType) -> LinkClassValues.getInstance(
-            (Pricing.computeStandardPrice(distance, flightCategory, ECONOMY) * multiplier).toInt,
-            (Pricing.computeStandardPrice(distance, flightCategory, BUSINESS) * multiplier).toInt,
-            (Pricing.computeStandardPrice(distance, flightCategory, FIRST) * multiplier).toInt,
-            (Pricing.computeStandardPrice(distance, flightCategory, DISCOUNT_ECONOMY) * multiplier).toInt
-          ))
+          s"${PassengerType.label(paxType)}From" -> LinkClassValues.getInstance(
+            Pricing.computeStandardPrice(distance, flightCategory, ECONOMY, paxType, fromAirport.income),
+            Pricing.computeStandardPrice(distance, flightCategory, BUSINESS, paxType, fromAirport.income),
+            Pricing.computeStandardPrice(distance, flightCategory, FIRST, paxType, fromAirport.income),
+            Pricing.computeStandardPrice(distance, flightCategory, DISCOUNT_ECONOMY, paxType, fromAirport.income)
+          )
+        }.toMap ++
+          paxTypes.map { paxType =>
+            s"${PassengerType.label(paxType)}To" -> LinkClassValues.getInstance(
+              Pricing.computeStandardPrice(distance, flightCategory, ECONOMY, paxType, fromAirport.income),
+              Pricing.computeStandardPrice(distance, flightCategory, BUSINESS, paxType, fromAirport.income),
+              Pricing.computeStandardPrice(distance, flightCategory, FIRST, paxType, fromAirport.income),
+              Pricing.computeStandardPrice(distance, flightCategory, DISCOUNT_ECONOMY, paxType, fromAirport.income)
+            )
         }.toMap
-//        val suggestedPrice: scala.collection.mutable.Map[String, LinkClassValues] = scala.collection.mutable.Map(
-//          ("Traveler", ),
-//          ("Tourist", LinkClassValues.getInstance(
-//            Pricing.computeStandardPrice(distance, flightType, ECONOMY, PassengerType.TOURIST),
-//            Pricing.computeStandardPrice(distance, flightType, BUSINESS, PassengerType.TOURIST),
-//            Pricing.computeStandardPrice(distance, flightType, FIRST, PassengerType.TOURIST),
-//            Pricing.computeStandardPrice(distance, flightType, DISCOUNT_ECONOMY, PassengerType.TOURIST)
-//          )),
-//          ("Business", LinkClassValues.getInstance(
-//            Pricing.computeStandardPrice(distance, flightType, ECONOMY, PassengerType.BUSINESS),
-//            Pricing.computeStandardPrice(distance, flightType, BUSINESS, PassengerType.BUSINESS),
-//            Pricing.computeStandardPrice(distance, flightType, FIRST, PassengerType.BUSINESS),
-//            Pricing.computeStandardPrice(distance, flightType, DISCOUNT_ECONOMY, PassengerType.BUSINESS)
-//          ))
-//          ("BusinessPlus", LinkClassValues.getInstance(
-//            (Pricing.computeStandardPrice(distance, flightType, ECONOMY, PassengerType.BUSINESS).toDouble * 1.15).toInt,
-//            Pricing.computeStandardPrice(distance, flightType, BUSINESS, PassengerType.BUSINESS),
-//            Pricing.computeStandardPrice(distance, flightType, FIRST, PassengerType.BUSINESS),
-//            Pricing.computeStandardPrice(distance, flightType, DISCOUNT_ECONOMY, PassengerType.BUSINESS)
-//          ))
-//        )
 
         //adjust suggestedPrice with Lounge
 //        toAirport.getLounge(airline.id, airline.getAllianceId, activeOnly = true).foreach { lounge =>
@@ -776,34 +759,53 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
 //        }
 
 
-        val fromDemand = DemandGenerator.computeDemandBetweenAirports(fromAirport, toAirport, affinity, relationship, distance)
-        val toDemand = DemandGenerator.computeDemandBetweenAirports(toAirport, fromAirport, affinity, relationshipTo, distance)
+        val fromDemand = DemandGenerator.computeDemandWithPreferencesBetweenAirports(fromAirport, toAirport, affinity, distance)
+        val toDemand = DemandGenerator.computeDemandWithPreferencesBetweenAirports(toAirport, fromAirport, affinity, distance)
 
-        val directFromAirportTravelerDemand = fromDemand.travelerDemand
-        val directToAirportTravelerDemand = toDemand.travelerDemand
-        val directTravelerDemand = directFromAirportTravelerDemand + directToAirportTravelerDemand
+        //group demands by passenger type and preference type
+        val fromDemandByTypeAndPreference = fromDemand.groupBy { case ((linkClass, preference, passengerType), count) =>
+          (linkClass, passengerType, preference.getPreferenceType)
+        }.view.mapValues(_.map(_._2).sum)
 
-        val directFromAirportBusinessDemand = fromDemand.businessDemand
-        val directToAirportBusinessDemand = toDemand.businessDemand
-        val directBusinessDemand = directFromAirportBusinessDemand + directToAirportBusinessDemand
+        val toDemandByTypeAndPreference = toDemand.groupBy { case ((linkClass, preference, passengerType), count) =>
+          (linkClass, passengerType, preference.getPreferenceType)
+        }.view.mapValues(_.map(_._2).sum)
 
-        val directFromAirportTouristDemand = fromDemand.touristDemand
-        val directToAirportTouristDemand = toDemand.touristDemand
-        val directTouristDemand = directFromAirportTouristDemand + directToAirportTouristDemand
+        //create json arrays for the detailed demands
+        var fromDemandDetailsJson = Json.arr()
+        fromDemandByTypeAndPreference.foreach {
+          case ((linkClass, passengerType, preferenceType), total) =>
+            val priceMultiplier = {
+              if (preferenceType == FlightPreferenceType.LAST_MINUTE) DemandGenerator.PRICE_LAST_MIN_MULTIPLIER
+              else if (preferenceType == FlightPreferenceType.LAST_MINUTE_DEAL) DemandGenerator.PRICE_LAST_MIN_DEAL_MULTIPLIER / 2 //not exactly right but close enough
+              else 1
+            }
+            fromDemandDetailsJson = fromDemandDetailsJson.append(Json.obj(
+              "linkClass" -> linkClass.label,
+              "passengerType" -> PassengerType.label(passengerType),
+              "preferenceType" -> preferenceType.title,
+              "price" -> priceMultiplier * Pricing.computeStandardPrice(distance, flightCategory, linkClass, passengerType, fromAirport.income),
+              "count" -> total
+            ))
+        }
 
-        val demandMap: Map[String, LinkClassValues] = Map(
-          "Traveler" -> directTravelerDemand,
-          "TravelerFrom" -> directFromAirportTravelerDemand,
-          "TravelerTo" -> directToAirportTravelerDemand,
-          "Business" -> directBusinessDemand,
-          "BusinessFrom" -> directFromAirportBusinessDemand,
-          "BusinessTo" -> directToAirportBusinessDemand,
-          "Tourist" -> directTouristDemand,
-          "TouristFrom" -> directFromAirportTouristDemand,
-          "TouristTo" -> directToAirportTouristDemand
-        )
-
-        val directDemand = directTravelerDemand + directBusinessDemand + directTouristDemand
+        var toDemandDetailsJson = Json.arr()
+        toDemandByTypeAndPreference.foreach {
+          case ((linkClass, passengerType, preferenceType), total) =>
+            val priceMultiplier = {
+              if (preferenceType == FlightPreferenceType.LAST_MINUTE) DemandGenerator.PRICE_LAST_MIN_MULTIPLIER
+              else if (preferenceType == FlightPreferenceType.LAST_MINUTE_DEAL) DemandGenerator.PRICE_LAST_MIN_DEAL_MULTIPLIER
+              else if (passengerType == DISCOUNT_ECONOMY) DemandGenerator.PRICE_DISCOUNT_PLUS_MULTIPLIER / 2 //not exactly right but close enough
+              else 1
+            }
+            toDemandDetailsJson = toDemandDetailsJson.append(Json.obj(
+              "linkClass" -> linkClass.label,
+              "passengerType" -> PassengerType.label(passengerType),
+              "preferenceType" -> preferenceType.title,
+              "price" -> priceMultiplier * Pricing.computeStandardPrice(distance, flightCategory, linkClass, passengerType, toAirport.income),
+              "count" -> total
+            ))
+        }
 
         val cost = if (existingLink.isEmpty) Computation.getLinkCreationCost(fromAirport, toAirport) else 0
         val quality = if (existingLink.isEmpty) 0 else existingLink.get.computedQuality()
@@ -841,8 +843,6 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
           case None => NotFound
         }
 
-
-
         var resultObject = Json.obj(
           "fromAirportId" -> fromAirport.id,
           "fromAirportName" -> fromAirport.name,
@@ -852,6 +852,7 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
           "fromAirportLongitude" -> fromAirport.longitude,
           "fromCountryCode" -> fromAirport.countryCode,
           "fromExpectedQuality" -> fromExpectedQuality,
+          "fromDemandDetails" -> fromDemandDetailsJson,
           "toAirportId" -> toAirport.id,
           "toAirportName" -> toAirport.name,
           "toAirportCode" -> toAirport.iata,
@@ -860,6 +861,7 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
           "toAirportLongitude" -> toAirport.longitude,
           "toCountryCode" -> toAirport.countryCode,
           "toExpectedQuality" -> toExpectedQuality,
+          "toDemandDetails" -> toDemandDetailsJson,
           "quality" -> quality,
           "flightCode" -> flightCode,
           "mutualRelationship" -> relationship,
@@ -867,11 +869,6 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
           "distance" -> distance,
           "flightType" -> FlightCategory.label(flightCategory),
           "suggestedPrice" -> suggestedPrice,
-          "economySpaceMultiplier" -> ECONOMY.spaceMultiplier,
-          "businessSpaceMultiplier" -> BUSINESS.spaceMultiplier,
-          "firstSpaceMultiplier" -> FIRST.spaceMultiplier,
-          "directDemand" -> directDemand,
-          "demands" -> demandMap,
           "cost" -> cost).+("modelPlanLinkInfo", Json.toJson(planLinkInfoByModel.toList))
 
         estimatedDifficulty.foreach { difficulty => resultObject = resultObject + ("estimatedDifficulty" -> JsNumber(difficulty)) }

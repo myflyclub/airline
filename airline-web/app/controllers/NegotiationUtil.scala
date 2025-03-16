@@ -41,11 +41,8 @@ object NegotiationUtil {
 
   def getMaxFrequencyByGroup(baseScale : Int, flightCategory : FlightCategory.Value) : Int = {
     var maxFrequency = flightCategory match {
-      case FlightCategory.DOMESTIC => 1 + (baseScale * 2.5).toInt
-      case FlightCategory.INTERNATIONAL => 2 + (baseScale * 1.5).toInt
-    }
-    if (baseScale >= 4) {
-      maxFrequency += ((baseScale - 3) * 1.75).toInt
+      case FlightCategory.DOMESTIC => 3 + (baseScale * 2.9).toInt
+      case FlightCategory.INTERNATIONAL => 4 + (baseScale * 1.9).toInt
     }
 
     maxFrequency
@@ -227,12 +224,12 @@ object NegotiationUtil {
     }
     requirements.toList
   }
-  val getStaffRequired = (link : Link) => {
-    Computation.getFlightCategory(link.from, link.to) match {
-      case FlightCategory.DOMESTIC => 3
-      case FlightCategory.INTERNATIONAL => 6
-    }
-  }
+//  val getStaffRequired = (link : Link) => {
+//    Computation.getFlightCategory(link.from, link.to) match {
+//      case FlightCategory.DOMESTIC => 3
+//      case FlightCategory.INTERNATIONAL => 6
+//    }
+//  }
 
   def getNegotiationRequirements(newLink : Link, existingLinkOption : Option[Link], airline : Airline, airlineLinks : List[Link]) = {
     val fromAirportRequirements : List[NegotiationRequirement] = getFromAirportRequirements(airline, newLink, existingLinkOption, airlineLinks)

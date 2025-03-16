@@ -1,10 +1,9 @@
 package com.patson
 
 import java.util.{ArrayList, Collections}
-import com.patson.data.{AirportSource, CountrySource, CycleSource, DestinationSource, EventSource}
+import com.patson.data.{AirportSource, CountrySource, CycleSource, DestinationSource, EventSource, GameConstants}
 import com.patson.model.event.{EventType, Olympics}
 import com.patson.model.{PassengerType, _}
-import com.patson.model.AirportFeatureType.{AirportFeatureType, DOMESTIC_AIRPORT, FINANCIAL_HUB, GATEWAY_AIRPORT, INTERNATIONAL_HUB, ISOLATED_TOWN, OLYMPICS_IN_PROGRESS, OLYMPICS_PREPARATIONS, UNKNOWN, VACATION_HUB}
 
 import java.util.concurrent.ThreadLocalRandom
 import scala.collection.immutable.Map
@@ -20,11 +19,16 @@ object DemandGenerator {
   val FIRST_CLASS_PERCENTAGE_MAX: Map[PassengerType.Value, Double] = Map(PassengerType.TRAVELER -> 0, PassengerType.BUSINESS -> 0.12, PassengerType.TOURIST -> 0, PassengerType.ELITE -> 1, PassengerType.OLYMPICS -> 0)
   val BUSINESS_CLASS_INCOME_MAX = 125_000
   val BUSINESS_CLASS_PERCENTAGE_MAX: Map[PassengerType.Value, Double] = Map(PassengerType.TRAVELER -> 0.16, PassengerType.BUSINESS -> 0.49, PassengerType.TOURIST -> 0.1, PassengerType.ELITE -> 0, PassengerType.OLYMPICS -> 0.25)
-  val DISCOUNT_CLASS_PERCENTAGE_MAX: Map[PassengerType.Value, Double] = Map(PassengerType.TRAVELER -> 0.38, PassengerType.BUSINESS -> 0.09, PassengerType.TOURIST -> 0.6, PassengerType.ELITE -> 0, PassengerType.OLYMPICS -> 0)
-  val MIN_DISTANCE = 50
-  val launchDemandFactor : Double = if (CycleSource.loadCycle() <= 1) 1.0 else Math.min(1, (45 + CycleSource.loadCycle().toDouble / 24) / 100)
-//  val launchDemandFactor : Double = 1.0
-  val baseLaunchDemandFactor : Double = if (CycleSource.loadCycle() <= 1) 1.0 else Math.min(1, (55 + CycleSource.loadCycle().toDouble / 48) / 100)
+  val DISCOUNT_CLASS_PERCENTAGE_MAX: Map[PassengerType.Value, Double] = Map(PassengerType.TRAVELER -> 0.38, PassengerType.BUSINESS -> 0, PassengerType.TOURIST -> 0.6, PassengerType.ELITE -> 0, PassengerType.OLYMPICS -> 0)
+  val MIN_DISTANCE = 250 //does not apply to islands
+  val HIGH_INCOME_RATIO_FOR_BOOST = 0.7 //at what percent of high income does demand change
+  val PRICE_DISCOUNT_PLUS_MULTIPLIER = 1.05 //multiplier on base price
+  val PRICE_LAST_MIN_MULTIPLIER = 1.11
+  val PRICE_LAST_MIN_DEAL_MULTIPLIER = 0.9
+//  val launchDemandFactor : Double = if (CycleSource.loadCycle() <= 1) 1.0 else Math.min(1, (45 + CycleSource.loadCycle().toDouble / 24) / 100)
+  val launchDemandFactor : Double = 1.0
+//  val baseLaunchDemandFactor : Double = if (CycleSource.loadCycle() <= 1) 1.0 else Math.min(1, (55 + CycleSource.loadCycle().toDouble / 48) / 100)
+  val baseLaunchDemandFactor : Double = 1.0
   val demandRandomizer: Int = CycleSource.loadCycle() % 3
 
   import scala.jdk.CollectionConverters._
@@ -34,7 +38,7 @@ object DemandGenerator {
   def computeDemand(cycle: Int) = {
     println("Loading airports")
     //val allAirports = AirportSource.loadAllAirports(true)
-    val airports: List[Airport] = AirportSource.loadAllAirports(true).filter { airport => (airport.iata != "" || airport.icao != "") && airport.power > 0 }
+    val airports: List[Airport] = AirportSource.loadAllAirports(true).filter { airport => (airport.iata != "" || airport.popMiddleIncome > 0) && airport.power > 0 }
     println("Loaded " + airports.size + " airports")
     
     val allDemands = new ArrayList[(Airport, List[(Airport, (PassengerType.Value, LinkClassValues))])]()
@@ -46,11 +50,11 @@ object DemandGenerator {
 
       airports.par.foreach { toAirport =>
         val distance = Computation.calculateDistance(fromAirport, toAirport)
-        if (fromAirport != toAirport && fromAirport.population != 0 && toAirport.population != 0 && distance >= MIN_DISTANCE) {
+        if (fromAirport != toAirport && (distance >= MIN_DISTANCE || GameConstants.connectsIsland(fromAirport, toAirport))) {
           val relationship = countryRelationships.getOrElse((fromAirport.countryCode, toAirport.countryCode), 0)
           val affinity = Computation.calculateAffinityValue(fromAirport.zone, toAirport.zone, relationship)
 
-          val demand = computeBaseDemandBetweenAirports(fromAirport, toAirport, affinity, relationship, distance)
+          val demand = computeBaseDemandBetweenAirports(fromAirport, toAirport, affinity, distance)
           val cutoff = fromAirport.id % 2 + demandRandomizer
           if (demand.travelerDemand.total > cutoff + 1) {
             demandList.add((toAirport, (PassengerType.TRAVELER, demand.travelerDemand)))
@@ -67,7 +71,7 @@ object DemandGenerator {
       val fromDemand = demandList.asScala.toList ++ eliteDemand.getOrElse(List.empty)
 
 	    allDemands.add((fromAirport, fromDemand))
-  }
+    }
 
     val allDemandsAsScala = allDemands.asScala
     println(s"generated ${allDemandsAsScala.length} base demand groups; min feature size = $demandRandomizer")
@@ -111,9 +115,9 @@ object DemandGenerator {
     allDemandChunks.toList
   }
 
-  def computeDemandBetweenAirports(fromAirport : Airport, toAirport : Airport, affinity : Int, relationship : Int, distance : Int) : Demand = {
+  def computeDemandBetweenAirports(fromAirport : Airport, toAirport : Airport, affinity : Int, distance : Int) : Demand = {
     val demand = if (fromAirport != toAirport && fromAirport.population != 0 && toAirport.population != 0 && distance >= MIN_DISTANCE) {
-      computeBaseDemandBetweenAirports(fromAirport: Airport, toAirport: Airport, affinity: Int, relationship: Int, distance: Int): Demand
+      computeBaseDemandBetweenAirports(fromAirport: Airport, toAirport: Airport, affinity: Int, distance: Int): Demand
     } else {
       Demand(
         LinkClassValues(0, 0, 0),
@@ -124,7 +128,37 @@ object DemandGenerator {
     demand
   }
 
-  def computeBaseDemandBetweenAirports(fromAirport : Airport, toAirport : Airport, affinity : Int, relationship : Int, distance : Int) : Demand = {
+  def computeDemandWithPreferencesBetweenAirports(fromAirport: Airport, toAirport: Airport, affinity: Int, distance: Int): Map[(LinkClass, FlightPreference, PassengerType.Value), Int] = {
+    val demand = computeDemandBetweenAirports(fromAirport, toAirport, affinity, distance)
+    val flightPreferencesPool = getFlightPreferencePoolOnAirport(fromAirport)
+    val demandByPreference = mutable.Map[(LinkClass, FlightPreference, PassengerType.Value), Int]()
+    
+    def processLinkClassDemand(passengerType: PassengerType.Value, linkClassValues: LinkClassValues) = {
+      LinkClass.values.foreach { linkClass =>
+        val demandForClass = linkClassValues(linkClass)
+        if (demandForClass > 0) {
+          var remainingDemand = demandForClass
+          while (remainingDemand > 0) {
+            val groupSize = Math.min(remainingDemand, 10 + ThreadLocalRandom.current().nextInt(10)) //random group size between 10 and 20
+            val preference = flightPreferencesPool.draw(passengerType, linkClass, fromAirport, toAirport)
+            val key = (linkClass, preference, passengerType)
+            demandByPreference(key) = demandByPreference.getOrElse(key, 0) + groupSize
+            remainingDemand -= groupSize
+          }
+        }
+      }
+    }
+    
+    processLinkClassDemand(PassengerType.BUSINESS, demand.businessDemand)
+    processLinkClassDemand(PassengerType.TOURIST, demand.touristDemand)
+    processLinkClassDemand(PassengerType.TRAVELER, demand.travelerDemand)
+    
+    demandByPreference.map { case ((linkClass, preference, passengerType), total) =>
+      ((linkClass, preference, passengerType), total)
+    }.toMap
+  }
+
+  def computeBaseDemandBetweenAirports(fromAirport : Airport, toAirport : Airport, affinity : Int, distance : Int) : Demand = {
     val hasFirstClass = fromAirport.countryCode != toAirport.countryCode && distance >= 1500 || distance >= 3000
     val fromPopIncomeAdjusted = if (fromAirport.popMiddleIncome > 0) fromAirport.popMiddleIncome else 1
     val demand = computeRawDemandBetweenAirports(fromAirport : Airport, toAirport : Airport, affinity : Int, distance : Int)
@@ -166,10 +200,10 @@ object DemandGenerator {
     )
   }
 
-  //adds more demand, up to 225
-  private def addToVeryLowIncome(fromPop: Long): Int = {
+  //adds more demand
+  private def addToVeryLowIncome(fromPop: Long, airportScale: Int): Int = {
     val minPop = 5e5
-    val minDenominator = 15000
+    val minDenominator = 13000
 
     val boost = if (fromPop <= minPop) {
       (fromPop / minDenominator).toInt
@@ -178,36 +212,49 @@ object DemandGenerator {
       val adjustedDenominator = (minDenominator * logFactor)
       (fromPop / adjustedDenominator).toInt + 8
     }
-    Math.min(225, boost)
+    Math.min(575, boost * (airportScale - 0.8)).toInt
   }
 
 
   private def computeRawDemandBetweenAirports(fromAirport : Airport, toAirport : Airport, affinity : Int, distance : Int) : Int = {
     val fromPopIncomeAdjusted = if (fromAirport.popMiddleIncome > 0) fromAirport.popMiddleIncome else 1
+    val toPopIncomeAdjusted = 0.6 * toAirport.popMiddleIncome + 0.4 * toAirport.population
 
     val distanceReducerExponent: Double =
-      if (distance < 350 && !List("FO", "BS", "KY", "TC", "VC", "GD", "DM", "AG", "MS", "BQ", "BL", "MF", "SX", "AI", "VI", "VG", "VC", "VU", "WF", "MU", "MV", "CC", "CK", "CV", "ST", "NP").contains(fromAirport.countryCode)) {
+      if (distance < 350 && ! GameConstants.ISOLATED_COUNTRIES.contains(fromAirport.countryCode) && ! GameConstants.isIsland(fromAirport.iata) && ! GameConstants.isIsland(toAirport.iata)) {
         distance.toDouble / 350
-      } else if (distance > 5000) {
-        1.0 - distance.toDouble / 38000 * (1 - affinity.toDouble / 15.0) //affinity affects perceived distance
-      } else if (distance > 2000) { //bit less than medium-distance, with a 0.01 boost
-        1.11 - distance.toDouble / 20000 * (1 - affinity.toDouble / 20.0) //affinity affects perceived distance
-      } else 1
+      } else if (distance > 4000) {
+        0.975 - distance.toDouble / 40000 * (1 - affinity.toDouble / 10.0) * Math.max(5.5 - toAirport.size.toDouble * 0.5, 0) //affinity & scale affects perceived distance
+      } else if (distance > 1000) {
+        1.05 - distance.toDouble / 10000 * (1 - affinity.toDouble / 10.0) //affinity affects perceived distance
+      } else {
+        1
+      }
 
     //domestic/foreign/affinity relation multiplier
     val airportAffinityMutliplier: Double =
       if (affinity >= 5) (affinity - 5) * 0.05 + 1 //domestic+
       else if (affinity < 0) 0.025
-      else affinity * 0.1 + 0.075
+      else affinity * 0.1 + 0.025
 
     val specialCountryModifier =
       if (fromAirport.countryCode == "AU" || fromAirport.countryCode == "NZ") {
-        9.0 //they travel a lot; difficult to model
+        if (fromAirport.countryCode == toAirport.countryCode) {
+          12.0 //they travel a lot; difficult to model
+        } else {
+          8.0
+        }
+      } else if (fromAirport.countryCode == "ZA") {
+        if (fromAirport.countryCode != toAirport.countryCode) {
+          5.0
+        } else {
+          9.0 //much southern africa & int'l
+        }
       } else if (fromAirport.countryCode == "NO" && toAirport.countryCode == "NO") {
-        4.5 //very busy domestic routes
-      } else if (List("NO", "IS", "FO", "GL", "GR", "CY", "FJ", "KR").contains(fromAirport.countryCode)) {
+        6.5 //very busy domestic routes
+      } else if (List("BZ", "CY", "FO", "GL", "GU", "GR", "IS").contains(fromAirport.countryCode)) {
         2.25 //very high per capita flights https://ourworldindata.org/grapher/air-trips-per-capita
-      } else if (List("SE", "GB", "CL", "BS", "AE", "DK").contains(fromAirport.countryCode)) {
+      } else if (List("AE", "BS", "CH", "CL", "DK", "FJ", "GB", "KR", "IE", "LU", "QA", "SE").contains(fromAirport.countryCode)) {
         1.5 // high per capita flights
       } else if (List("CD", "CG", "CV", "CI", "GN", "GW", "LR", "ML", "MR", "NE", "SD", "SO", "SS", "TD", "TG").contains(fromAirport.countryCode)) {
         4.0 //very poor roads but unstable governance
@@ -216,33 +263,31 @@ object DemandGenerator {
       } else if (fromAirport.countryCode == "IN" && toAirport.countryCode == "IN") {
         0.67 //pops are just very large
       } else if (fromAirport.countryCode == "CN") {
-        if(distance < 900) {
-          0.53 //China has a very extensive highspeed rail network, pops are just very large
+        (distance.toDouble / 1600) * 0.65 //China has a very extensive highspeed rail network, pops are just very large
+      } else if (fromAirport.countryCode == "JP" && toAirport.countryCode == "JP") {
+        if (distance < 500) {
+          0.1 //HSR / rail
         } else {
-          0.7
+          2.25 //but otherwise quite high per captia flights
         }
-      } else if (fromAirport.countryCode == "JP" && toAirport.countryCode == "JP" && distance < 500) {
-        0.5 //also interconnected by HSR / intercity rail
-      } else if (fromAirport.countryCode == "FR" && distance < 550 && toAirport.countryCode != "GB") {
-        0.2
-      } else if (fromAirport.countryCode == "IT" && distance < 500) {
-        0.5
+      } else if (List("FR","IT","ES","NL","BE").contains(fromAirport.countryCode) && distance < 700 && toAirport.countryCode != "GB" && ! GameConstants.isIsland(fromAirport.iata) && ! GameConstants.isIsland(toAirport.iata)) {
+        0.2 //EU rail & climate demand mod
       } else if (distance < 260 && fromAirport.zone.contains("EU")) {
         0.6
       } else 1.0
 
     //set very low income floor, specifically traffic to/from central airports that is otherwise missing
-    val buffLowIncomeAirports = if (fromAirport.income <= 5000 && toAirport.income <= 8000 && distance <= 3000 && (toAirport.size >= 4 || fromAirport.size >= 4)) addToVeryLowIncome(fromAirport.population) else 0
+    val buffLowIncomeAirports = if (fromAirport.income <= 6000 && toAirport.income <= 8000 && distance <= 3000 && (toAirport.size >= 4 || fromAirport.size >= 4)) addToVeryLowIncome(fromAirport.population, fromAirport.size) else 0
 
     //always have some demand between gateways and very large airports to all other nearby domestic airports
-    val domesticDemandFloor = if (distance > 400 && distance < 1800 && affinity >= 5 && ( toAirport.isGateway() || toAirport.size - fromAirport.size >= 6)) {
-      20 + ThreadLocalRandom.current().nextInt(50)
+    val domesticDemandFloor = if (distance > 300 && distance < 1800 && affinity >= 5 && ( toAirport.isGateway() || toAirport.size - fromAirport.size >= 6)) {
+      20 + ThreadLocalRandom.current().nextInt(40)
     } else {
       0
     }
 
-    val baseDemand : Double = Math.max(domesticDemandFloor, baseLaunchDemandFactor * specialCountryModifier * airportAffinityMutliplier * fromPopIncomeAdjusted * toAirport.population.toDouble / 250_000 / 250_000) + buffLowIncomeAirports
-    (Math.pow(baseDemand, distanceReducerExponent)).toInt
+    val baseDemand : Double = Math.max(domesticDemandFloor, baseLaunchDemandFactor * specialCountryModifier * airportAffinityMutliplier * fromPopIncomeAdjusted * toPopIncomeAdjusted / 250_000 / 250_000) + buffLowIncomeAirports
+    Math.pow(baseDemand, Math.max(0, distanceReducerExponent)).toInt
   }
 
   private def computeClassCompositionFromIncome(demand: Double, income: Int, passengerType: PassengerType.Value, hasFirstClass: Boolean) : LinkClassValues = {
@@ -377,65 +422,84 @@ object DemandGenerator {
     scaledDemands
   }
 
-  def getFlightPreferencePoolOnAirport(homeAirport : Airport) : FlightPreferencePool = {
-    //price mods are also used on frontend for demand estimation
-    //modding price by pax type
-    val touristMod = PassengerType.priceAdjust(PassengerType.TOURIST)
-    val travelerMod = PassengerType.priceAdjust(PassengerType.TRAVELER)
-    val defaultMod = PassengerType.priceAdjust(PassengerType.BUSINESS)
-    //modding price (sometimes) by class
-    val discountPlus = 0.08
-    val economyPlus = 0.04
-    val businessPlus = 0.08
-    val firstPlus = 0.08
-    val flightPreferences = Map(
-      PassengerType.BUSINESS -> List( //is default, i.e. also elite & olympic
-        (DealPreference(homeAirport, DISCOUNT_ECONOMY, defaultMod), 3),
-        (DealPreference(homeAirport, DISCOUNT_ECONOMY, defaultMod + discountPlus), 2),
-        (AppealPreference.getAppealPreferenceWithId(homeAirport, ECONOMY, defaultMod, loungeLevelRequired = 0), 1),
-        (AppealPreference.getAppealPreferenceWithId(homeAirport, ECONOMY, defaultMod, loungeLevelRequired = 0, loyaltyRatio = 1.1), 1),
-        (AppealPreference.getAppealPreferenceWithId(homeAirport, ECONOMY, defaultMod, loungeLevelRequired = 0, loyaltyRatio = 1.2), 1),
-        (LastMinutePreference(homeAirport, ECONOMY, defaultMod + economyPlus + 0.03, loungeLevelRequired = 0), 1),
-        (LastMinutePreference(homeAirport, ECONOMY, defaultMod + economyPlus + 0.07, loungeLevelRequired = 0), 1),
-        (AppealPreference.getAppealPreferenceWithId(homeAirport, BUSINESS, defaultMod, loungeLevelRequired = 1), 1),
-        (AppealPreference.getAppealPreferenceWithId(homeAirport, BUSINESS, defaultMod, loungeLevelRequired = 2, loyaltyRatio = 1.15), 1),
-        (AppealPreference.getAppealPreferenceWithId(homeAirport, BUSINESS, defaultMod, loungeLevelRequired = 2, loyaltyRatio = 1.25), 1),
-        (LastMinutePreference(homeAirport, BUSINESS, defaultMod + businessPlus, loungeLevelRequired = 0), 1),
-        (LastMinutePreference(homeAirport, BUSINESS, defaultMod + businessPlus + 0.06, loungeLevelRequired = 0), 1),
-        (AppealPreference.getAppealPreferenceWithId(homeAirport, FIRST, defaultMod, loungeLevelRequired = 2), 1),
-        (AppealPreference.getAppealPreferenceWithId(homeAirport, FIRST, defaultMod + firstPlus, loungeLevelRequired = 4, loyaltyRatio = 1.15), 1),
-        (AppealPreference.getAppealPreferenceWithId(homeAirport, FIRST, defaultMod, loungeLevelRequired = 3, loyaltyRatio = 1.25), 1),
-        (LastMinutePreference(homeAirport, FIRST, defaultMod + firstPlus, loungeLevelRequired = 1), 1),
-        (LastMinutePreference(homeAirport, FIRST, defaultMod + firstPlus + 0.1, loungeLevelRequired = 0), 1),
+  def getFlightPreferencePoolOnAirport(homeAirport: Airport): FlightPreferencePool = {
+    import FlightPreferenceDefinition._
+
+    /**
+     * each class has a total weight of 4, unless "high income" and then 5
+     * we use the standardized weighting to estimate demand in the frontend
+     */
+    val basePreferences: Map[PassengerType.Value, List[(FlightPreference, Int)]] = Map(
+      PassengerType.BUSINESS -> List(
+        dealPreference(homeAirport, DISCOUNT, 1.0, weight = 2),
+        dealPreference(homeAirport, DISCOUNT, PRICE_DISCOUNT_PLUS_MULTIPLIER, weight = 2),
+        appealPreference(homeAirport, ECONOMY, 1.0, loungeLevelRequired = 0, weight = 1),
+        appealPreference(homeAirport, ECONOMY, 1.0, loungeLevelRequired = 0, loyaltyRatio = 1.1, weight = 1),
+        appealPreference(homeAirport, ECONOMY, 1.0, loungeLevelRequired = 0, loyaltyRatio = 1.2, weight = 1),
+        lastMinutePreference(homeAirport, ECONOMY, PRICE_LAST_MIN_MULTIPLIER, loungeLevelRequired = 0, weight = 1),
+        appealPreference(homeAirport, BUSINESS, 1.0, loungeLevelRequired = 1, weight = 1),
+        appealPreference(homeAirport, BUSINESS, 1.0, loungeLevelRequired = 2, loyaltyRatio = 1.15, weight = 1),
+        appealPreference(homeAirport, BUSINESS, 1.0, loungeLevelRequired = 2, loyaltyRatio = 1.25, weight = 1),
+        lastMinutePreference(homeAirport, BUSINESS, PRICE_LAST_MIN_MULTIPLIER, loungeLevelRequired = 0, weight = 1),
+        appealPreference(homeAirport, FIRST, 1.0, loungeLevelRequired = 2, weight = 1),
+        appealPreference(homeAirport, FIRST, 1.0, loungeLevelRequired = 4, loyaltyRatio = 1.15, weight = 1),
+        appealPreference(homeAirport, FIRST, 1.0, loungeLevelRequired = 3, loyaltyRatio = 1.25, weight = 1),
+        lastMinutePreference(homeAirport, FIRST, PRICE_LAST_MIN_MULTIPLIER, loungeLevelRequired = 1, weight = 1),
       ),
       PassengerType.TOURIST -> List(
-        (DealPreference(homeAirport, DISCOUNT_ECONOMY, touristMod), 3),
-        (DealPreference(homeAirport, DISCOUNT_ECONOMY, touristMod + discountPlus), 2),
-        (DealPreference(homeAirport, ECONOMY, touristMod), 1),
-        (AppealPreference.getAppealPreferenceWithId(homeAirport, ECONOMY, touristMod + economyPlus, loungeLevelRequired = 0), 1),
-        (AppealPreference.getAppealPreferenceWithId(homeAirport, ECONOMY, touristMod + economyPlus, loungeLevelRequired = 0, loyaltyRatio = 1.1), 1),
-        (LastMinutePreference(homeAirport, ECONOMY, touristMod - 0.05, loungeLevelRequired = 0), 2),
-        (DealPreference(homeAirport, BUSINESS, touristMod), 2),
-        (AppealPreference.getAppealPreferenceWithId(homeAirport, BUSINESS, touristMod + businessPlus, loungeLevelRequired = 1), 1),
-        (AppealPreference.getAppealPreferenceWithId(homeAirport, BUSINESS, touristMod + businessPlus + 0.16, loungeLevelRequired = 2, loyaltyRatio = 1.15), 1),
-        (LastMinutePreference(homeAirport, BUSINESS, touristMod - 0.05, loungeLevelRequired = 1), 1),
-        (AppealPreference.getAppealPreferenceWithId(homeAirport, FIRST, touristMod, loungeLevelRequired = 2, loyaltyRatio = 1.1), 1),
+        dealPreference(homeAirport, DISCOUNT, 1.0, weight = 2),
+        dealPreference(homeAirport, DISCOUNT, PRICE_DISCOUNT_PLUS_MULTIPLIER, weight = 2),
+        dealPreference(homeAirport, ECONOMY, 1.0, weight = 1),
+        appealPreference(homeAirport, ECONOMY, 1.0, loungeLevelRequired = 0, weight = 1),
+        appealPreference(homeAirport, ECONOMY, 1.0, loungeLevelRequired = 0, loyaltyRatio = 1.1, weight = 1),
+        lastMinutePreference(homeAirport, ECONOMY, PRICE_LAST_MIN_DEAL_MULTIPLIER, loungeLevelRequired = 0, weight = 2),
+        dealPreference(homeAirport, BUSINESS, 1.0, weight = 2),
+        appealPreference(homeAirport, BUSINESS, 1.0, loungeLevelRequired = 1, weight = 1),
+        appealPreference(homeAirport, BUSINESS, 1.0, loungeLevelRequired = 2, loyaltyRatio = 1.15, weight = 1),
+        lastMinutePreference(homeAirport, BUSINESS, PRICE_LAST_MIN_DEAL_MULTIPLIER, loungeLevelRequired = 1, weight = 1),
+        appealPreference(homeAirport, FIRST, 1.0, loungeLevelRequired = 2, loyaltyRatio = 1.1, weight = 4),
       ),
       PassengerType.TRAVELER -> List(
-        (DealPreference(homeAirport, DISCOUNT_ECONOMY, travelerMod), 3),
-        (DealPreference(homeAirport, DISCOUNT_ECONOMY, travelerMod + discountPlus), 2),
-        (DealPreference(homeAirport, ECONOMY, travelerMod), 1),
-        (AppealPreference.getAppealPreferenceWithId(homeAirport, ECONOMY, travelerMod, loungeLevelRequired = 0), 2),
-        (AppealPreference.getAppealPreferenceWithId(homeAirport, ECONOMY, travelerMod + economyPlus, loungeLevelRequired = 0, loyaltyRatio = 1.1), 1),
-        (LastMinutePreference(homeAirport, ECONOMY, travelerMod + economyPlus + 0.03, loungeLevelRequired = 0), 1),
-        (DealPreference(homeAirport, BUSINESS, travelerMod), 1),
-        (AppealPreference.getAppealPreferenceWithId(homeAirport, BUSINESS, travelerMod, loungeLevelRequired = 1), 2),
-        (AppealPreference.getAppealPreferenceWithId(homeAirport, BUSINESS, travelerMod + businessPlus, loungeLevelRequired = 1, loyaltyRatio = 1.2), 1),
-        (LastMinutePreference(homeAirport, BUSINESS, travelerMod + businessPlus + 0.1, loungeLevelRequired = 0), 1),
+        dealPreference(homeAirport, DISCOUNT, 1.0, weight = 2),
+        dealPreference(homeAirport, DISCOUNT, PRICE_DISCOUNT_PLUS_MULTIPLIER, weight = 2),
+        dealPreference(homeAirport, ECONOMY, 1.0, weight = 1),
+        appealPreference(homeAirport, ECONOMY, 1.0, loungeLevelRequired = 0, weight = 2),
+        appealPreference(homeAirport, ECONOMY, 1.0, loungeLevelRequired = 0, loyaltyRatio = 1.1, weight = 1),
+        dealPreference(homeAirport, BUSINESS, 1.0, weight = 1),
+        appealPreference(homeAirport, BUSINESS, 1.0, loungeLevelRequired = 1, weight = 2),
+        appealPreference(homeAirport, BUSINESS, 1.0, loungeLevelRequired = 1, loyaltyRatio = 1.2, weight = 1),
+        appealPreference(homeAirport, FIRST, 1.0, loungeLevelRequired = 2, weight = 4),
       )
     )
 
-    new FlightPreferencePool(flightPreferences)
+    val lastMinutePreferences = List(
+      lastMinutePreference(homeAirport, ECONOMY, PRICE_LAST_MIN_MULTIPLIER, loungeLevelRequired = 0, weight = 1),
+      lastMinutePreference(homeAirport, BUSINESS, PRICE_LAST_MIN_MULTIPLIER, loungeLevelRequired = 1, weight = 1),
+      lastMinutePreference(homeAirport, FIRST, PRICE_LAST_MIN_MULTIPLIER, loungeLevelRequired = 2, weight = 1)
+    )
+
+    val flightPreferencesAdjusted = if (homeAirport.income > Airport.HIGH_INCOME * HIGH_INCOME_RATIO_FOR_BOOST) {
+      basePreferences.map { case (passengerType, preferences) => passengerType -> (preferences ++ lastMinutePreferences) }
+    } else basePreferences
+
+    new FlightPreferencePool(flightPreferencesAdjusted)
+  }
+
+  object FlightPreferenceDefinition {
+
+    def dealPreference(homeAirport: Airport, linkClass: LinkClass, modifier: Double, weight: Int): (FlightPreference, Int) =
+      (DealPreference(homeAirport, linkClass, modifier), weight)
+
+    def appealPreference(homeAirport: Airport, linkClass: LinkClass, modifier: Double, loungeLevelRequired: Int, loyaltyRatio: Double = 1.0, weight: Int): (FlightPreference, Int) =
+      (AppealPreference.getAppealPreferenceWithId(homeAirport, linkClass, modifier, loungeLevelRequired, loyaltyRatio), weight)
+
+    def lastMinutePreference(homeAirport: Airport, linkClass: LinkClass, modifier: Double, loungeLevelRequired: Int, weight: Int): (FlightPreference, Int) =
+      (LastMinutePreference(homeAirport, linkClass, modifier, loungeLevelRequired), weight)
+
+    val ECONOMY = com.patson.model.ECONOMY
+    val BUSINESS = com.patson.model.BUSINESS
+    val FIRST = com.patson.model.FIRST
+    val DISCOUNT = com.patson.model.DISCOUNT_ECONOMY
   }
 
   sealed case class Demand(travelerDemand: LinkClassValues, businessDemand : LinkClassValues, touristDemand : LinkClassValues)

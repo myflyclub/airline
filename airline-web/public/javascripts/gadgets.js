@@ -682,7 +682,7 @@ function disableButton(button, reason) {
             $(button).find('.tooltiptext').remove()
             //add tooltip
             $(button).addClass("tooltip")
-            var $descriptionSpan = $('<span class="tooltiptext below alignLeft" style="width: 400px;  text-transform: none;">')
+            var $descriptionSpan = $('<span class="tooltiptext top alignLeft" style="width: 400px;  text-transform: none;">')
             $descriptionSpan.text(reason)
             $(button).append($descriptionSpan)
         }

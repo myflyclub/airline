@@ -197,7 +197,7 @@ object AirlineType extends Enumeration {
     case NON_PLAYER => "Non-Player"
     case ULCC => "Ultra Low-Cost"
     case LUXURY => "Luxury"
-    case REGIONAL => "Regional Contract"
+    case REGIONAL => "Regional Partner"
     case MEGA_HQ => "Mega HQ"
     case BEGINNER => "Beginner"
     case NOSTALGIA => "Nostalgia"
@@ -213,6 +213,7 @@ object AirlineType extends Enumeration {
     case 7 => NOSTALGIA
     case _ => throw new IllegalArgumentException("Invalid AirlineType ID: " + id)
   }
+  val REGIONAL_MODEL_MAX_SIZE = 0.1 //used in web app to set allowed planes
 }
 
 case class DelegateInfo(availableCount : Int, boosts : List[DelegateBoostAirlineModifier], busyDelegates: List[BusyDelegate]) {
@@ -354,31 +355,30 @@ object Airline {
     airlineWithJustId.id = id
     airlineWithJustId
   }
-  val MAX_SERVICE_QUALITY : Double = 100
+  val EQ_MAX : Double = 100 //employee quality
+  val EQ_INTITIAL: Int = 35
 
   def resetAirline(airlineId : Int, newBalance : Long, resetExtendedInfo : Boolean = false) : Option[Airline] = {
     AirlineSource.loadAirlineById(airlineId, true) match {
       case Some(airline) =>
-        LinkSource.deleteLinksByAirlineId(airlineId)//remove all links
-
+        //remove all links
+        LinkSource.deleteLinksByAirlineId(airlineId)
         //remove all airplanes
         AirplaneSource.deleteAirplanesByCriteria(List(("owner", airlineId)));
-
         //remove all assets
         AirportAssetSource.loadAirportAssetsByAirline(airlineId).foreach { asset =>
           AirportAssetSource.deleteAirportAsset(asset.id)
         }
-
         //remove all bases
         airline.getBases().foreach(_.delete)
-
         //remove all loans
         BankSource.loadLoansByAirline(airlineId).foreach { loan =>
           BankSource.deleteLoan(loan.id)
         }
-
         //remove all oil contract
         OilSource.deleteOilContractByCriteria(List(("airline", airlineId)))
+        //remove any temp delegates
+        AirlineSource.deleteAirlineModifier(airline.id, AirlineModifierType.DELEGATE_BOOST)
 
         airline.getAllianceId().foreach { allianceId =>
           AllianceSource.loadAllianceById(allianceId).foreach { alliance =>
@@ -395,7 +395,6 @@ object Airline {
           }
         }
 
-
         AirlineSource.deleteReputationBreakdowns(airline.id)
 
         NegotiationSource.deleteLinkDiscountsByAirline(airline.id)
@@ -403,7 +402,7 @@ object Airline {
         airline.setBalance(newBalance)
 
         airline.removeCountryCode()
-        airline.setTargetServiceQuality(30)
+        airline.setTargetServiceQuality(EQ_INTITIAL)
         airline.setCurrentServiceQuality(0)
 
         if (resetExtendedInfo) {
@@ -423,7 +422,7 @@ object Airline {
         NoticeSource.deleteNoticesByAirline(airline.id)
 
         AirlineSource.saveAirlineInfo(airline)
-        println(s"Reset airline - $airline")
+        println(s"!! Reset airline - $airline")
         Some(airline)
       case None =>
         None
@@ -470,27 +469,27 @@ object AirlineGrades {
     25 -> 0,
     50 -> 0,
     75 -> 1,
-    100 -> 1,
-    125 -> 1,
-    150 -> 2,
-    175 -> 3,
-    200 -> 4,
-    240 -> 5,
-    280 -> 6,
-    320 -> 7,
-    360 -> 8,
-    400 -> 9,
-    500 -> 11,
-    600 -> 13,
-    700 -> 15,
-    800 -> 17,
-    900 -> 19,
-    1000 -> 20,
-    1200 -> 21,
-    1400 -> 22,
-    1600 -> 23,
-    1800 -> 24,
-    2000 -> 25,
+    100 -> 2,
+    125 -> 3,
+    150 -> 4,
+    175 -> 5,
+    200 -> 6,
+    240 -> 7,
+    280 -> 8,
+    320 -> 10,
+    360 -> 14,
+    400 -> 16,
+    500 -> 18,
+    600 -> 20,
+    700 -> 22,
+    800 -> 24,
+    900 -> 26,
+    1000 -> 28,
+    1200 -> 30,
+    1400 -> 32,
+    1600 -> 33,
+    1800 -> 34,
+    2000 -> 35,
   )
 
   def findTaxRate(reputation: Double) : Int = {

@@ -121,6 +121,10 @@ class AirplaneApplication @Inject()(cc: ControllerComponents) extends AbstractCo
     Ok(Json.toJson(allAirplaneModels))
   }
 
+  def getRegionalAirplaneModels() = Action {
+    Ok(Json.toJson(regionalAirplaneModels))
+  }
+
   val MODEL_TOP_N = 10
   def getAirplaneModelStatsByAirline(airlineId : Int, modelId : Int) = AuthenticatedAirline(airlineId) { request =>
     Ok(getAirplaneModelStatsJson(modelId, Some(airlineId)))
@@ -233,10 +237,9 @@ class AirplaneApplication @Inject()(cc: ControllerComponents) extends AbstractCo
   }
   
   def getRejection(model: Model, quantity : Int, relationship : AirlineCountryRelationship, ownedModels : Set[Model], airline : Airline) : Option[String]= {
-    if (quantity > 12) {
-      return Some("Cannot order more than 12 planes in one order")
+    if (quantity > 10) {
+      return Some("Cannot order more than 10 planes in one order")
     }
-
     if (airline.getHeadQuarter().isEmpty) { //no HQ
       return Some("Must build HQs before purchasing any airplanes")
     }
@@ -256,6 +259,9 @@ class AirplaneApplication @Inject()(cc: ControllerComponents) extends AbstractCo
     if (cost > airline.getBalance()) {
       return Some("Not enough cash to purchase this airplane model")
     }
+    if (airline.airlineType == AirlineType.REGIONAL && model.airplaneTypeSize > AirlineType.REGIONAL_MODEL_MAX_SIZE) {
+      return Some(s"Regional airline cannot buy this large of aircraft")
+    }
     
     return None
   }
@@ -263,6 +269,10 @@ class AirplaneApplication @Inject()(cc: ControllerComponents) extends AbstractCo
   def getUsedRejections(usedAirplanes : List[Airplane], model : Model, airline : Airline) : Map[Airplane, String] = {
     if (airline.getHeadQuarter().isEmpty) { //no HQ
       return usedAirplanes.map((_, "Must build HQs before purchasing any airplanes")).toMap
+    }
+
+    if (airline.airlineType == AirlineType.REGIONAL && model.airplaneTypeSize > AirlineType.REGIONAL_MODEL_MAX_SIZE) {
+      return usedAirplanes.map((_, s"Regional airline cannot buy this large of aircraft")).toMap
     }
 
     val countryRelationship = airline.getCountryCode() match {

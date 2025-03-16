@@ -92,7 +92,7 @@ function addAirplaneInventoryDivByConfiguration(configurationDiv, modelId) {
         if (airplane.configurationId == configurationId) {
             var airplaneId = airplane.id
             var li = $("<div class='clickable' onclick='loadOwnedAirplaneDetails(" + airplaneId + ", $(this), refreshConfigurationAfterAirplaneUpdate)'></div>").appendTo(airplanesDiv)
-            var airplaneIcon = getAirplaneIcon(airplane, info.badConditionThreshold)
+            var airplaneIcon = getAirplaneIcon(airplane, gameConstants.linkAircraft.conditionBad)
             enableAirplaneIconDrag(airplaneIcon, airplaneId)
             enableAirplaneIconDrop(airplaneIcon, airplaneId, "refreshConfigurationAfterAirplaneUpdate")
             li.append(airplaneIcon)

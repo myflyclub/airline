@@ -41,6 +41,7 @@ class AllianceApplication @Inject()(cc: ControllerComponents) extends AbstractCo
     def writes(allianceMember: AllianceMember): JsValue = JsObject(List(
       "airlineId" -> JsNumber(allianceMember.airline.id),
       "airlineName" -> JsString(allianceMember.airline.name),
+      "airlineType" -> JsString(AirlineType.label(allianceMember.airline.airlineType)),
       "allianceRole" -> JsString(allianceMember.role match {
         case LEADER => "Leader"
         case CO_LEADER => "Co-leader"
@@ -650,10 +651,11 @@ class AllianceApplication @Inject()(cc: ControllerComponents) extends AbstractCo
       return Some("Airline does not have headquarters")
     }
     
-    if (approvedMembers.size >= Alliance.MAX_MEMBER_COUNT) {
-      return Some("Alliance has reached max member size " + Alliance.MAX_MEMBER_COUNT + " already")
+    if (approvedMembers.size >= Alliance.MAX_MEMBER_NON_REGIONAL_COUNT + Alliance.MAX_MEMBER_REGIONALS_COUNT) {
+      return Some("Alliance has reached max member size for all airline types" + Alliance.MAX_MEMBER_NON_REGIONAL_COUNT + " already")
+    } else if (airline.airlineType != AirlineType.REGIONAL && approvedMembers.size >= Alliance.MAX_MEMBER_NON_REGIONAL_COUNT) {
+      return Some("Alliance only has slots to accept Regional Partner Airline members")
     }
-    
     
     val allAllianceHeadquarters = approvedMembers.flatMap(_.airline.getHeadQuarter()).map(_.airport)
 

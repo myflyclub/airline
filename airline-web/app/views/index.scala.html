@@ -155,7 +155,7 @@
 					<p style="margin: 0px 8px" title="An estimation of how long until next cycle/week"><img src='@routes.Assets.versioned("images/icons/clock-moon-phase.png")' style="vertical-align: middle;"><span class="nextTickEstimation label" style="font-weight: bold;">Estimating...</span></p>
 					<p style="margin: 0px 16px" title="Balance">$<span class="balance"></span></p>
 					<p style="font-size: 13px;" class="currentAirline label font-display"></p>
-					<div class="reputationStars"></div>
+					<div class="reputationStars" id="topReputationStars"></div>
 					<div class="delegatesShortcut clickable" onclick="toggleDelegateStatusModal()"></div>
 				</div>
   			</div>
@@ -665,7 +665,7 @@
 								</div>
 
 								<div class="flex-row py-2">
-									<div style="width:162px"><p>Direct Demand:</p></div>
+									<div style="width:162px"><p>Direct Demand:<br><small><i>at current prices</i></small></p></div>
 									<div class="h-4">
 										<span id="planLinkDirectDemand"></span>
 										<div class="tooltip pl-1">
@@ -1331,7 +1331,7 @@
 							  <div class="cell" style="width: 25%; text-align: right;">Weekly Passengers</div>
 						  </div>
 					  </div>
-					  <h4 class="inline-icons pt-4"><img src='@routes.Assets.versioned("images/icons/building-low.png")'> Airline Bases</h4>
+					  <h4 class="inline-icons pt-4"><img src='@routes.Assets.versioned("images/icons/building-low.png")'>Airline Bases</h4>
 					  <div id="airportDetailsBaseList" style="width: 100%; margin-bottom: 15px;" class="table data">
 						  <div class="table-header">
 							  <div class="cell" style="width: 30%">Airline</div>
@@ -2421,7 +2421,7 @@
                         <div class="section">
                             <h4>Headquarters</h4>
 							<div style="position: relative; height: 125px; width: 150px; margin: auto;box-sizing: border-box;" class="headquartersMap"></div>
-							<h4 style="margin-bottom:0;padding-bottom:0;padding-top:1rem;">Airline Bases</h4>
+							<h4>Airline Bases</h4>
 							<div style="width: 100%;" class="table">
 								<div class="table-header">
 									<div class="cell" style="width: 14%">Scale</div>
@@ -2578,7 +2578,6 @@
                                 <li class="label dot">All routes will be cancelled</li>
                                 <li class="label dot">All loans and oil contracts cancelled<li>
                                 <li class="label dot">Dropped from current Alliance<li>
-                                <li class="label dot">Service Quality will be reset<li>
                                 <li class="label dot">Reputation and Loyalty will be kept</li>
                             </ul>
                             <div class='button resetAirline rebuild' onclick='promptConfirm("Rebuild Airline?", resetAirline, true)'>Rebuild Airline</div>

@@ -433,8 +433,8 @@ class SearchApplication @Inject()(cc: ControllerComponents) extends AbstractCont
     val affinity = Computation.calculateAffinityValue(fromAirport.zone, toAirport.zone, relationship)
     val affinityText = Computation.constructAffinityText(fromAirport.zone, toAirport.zone, fromAirport.countryCode, toAirport.countryCode, relationship, affinity)
 
-    val fromDemand = DemandGenerator.computeDemandBetweenAirports(fromAirport, toAirport, affinity, relationship, distance)
-    val toDemand = DemandGenerator.computeDemandBetweenAirports(toAirport, fromAirport, affinity, relationship, distance)
+    val fromDemand = DemandGenerator.computeDemandBetweenAirports(fromAirport, toAirport, affinity, distance)
+    val toDemand = DemandGenerator.computeDemandBetweenAirports(toAirport, fromAirport, affinity, distance)
 
     val directFromAirportTravelerDemand = fromDemand.travelerDemand
     val directToAirportTravelerDemand = toDemand.travelerDemand
@@ -468,7 +468,7 @@ class SearchApplication @Inject()(cc: ControllerComponents) extends AbstractCont
         }
         result
     }
-    val basePrice = Pricing.computeStandardPriceForAllClass(distance, flightCategory)
+    val basePrice = Pricing.computeStandardPriceForAllClass(distance, flightCategory, PassengerType.TOURIST, fromAirport.income)
 
     //basic details
     var result = Json.obj(

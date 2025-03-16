@@ -10,10 +10,6 @@ import scala.concurrent.duration.Duration
 
 object GeoDataPatcher extends App {
 
-  import actorSystem.dispatcher
-
-  //implicit val materializer = FlowMaterializer()
-
   mainFlow
   
   def mainFlow() {

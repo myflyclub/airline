@@ -471,8 +471,8 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
 
   def deleteBase(airlineId : Int, airportId : Int) = AuthenticatedAirline(airlineId) { request =>
     AirlineSource.loadAirlineBaseByAirlineAndAirport(airlineId, airportId) match {
-      case Some(base) if base.headquarter => //no deleting head quarter for now
-        BadRequest("Not allowed to delete headquarter for now")
+      case Some(base) if base.headquarter =>
+        BadRequest("Cannot remove headquarter")
       case Some(base) =>
         getDeleteBaseRejection(request.user, base) match {
           case Some(rejection) => BadRequest(rejection)

@@ -12,6 +12,7 @@ abstract class Transport extends IdObject{
   var frequency : Int
   val frequencyByClass : LinkClass => Int
   val transportType : TransportType.Value
+//  val transportCategory : TransportCategory.Value
   val price: LinkClassValues
   var availableSeats : LinkClassValues = capacity.copy()
   var minorDelayCount : Int
@@ -20,7 +21,7 @@ abstract class Transport extends IdObject{
 
   @volatile var soldSeats : LinkClassValues = LinkClassValues.getInstance()
   @volatile var cancelledSeats :  LinkClassValues = LinkClassValues.getInstance()
-  private val standardPrice : ConcurrentHashMap[LinkClass, Int] = new ConcurrentHashMap[LinkClass, Int]()
+  private val standardPrice : ConcurrentHashMap[(LinkClass, PassengerType.Value), Int] = new ConcurrentHashMap[(LinkClass, PassengerType.Value), Int]()
 
   val cost: LinkClassValues //the cost of taking this transport, could just be the price, or with the hidden cost of taking it
 
@@ -53,11 +54,11 @@ abstract class Transport extends IdObject{
     this.availableSeats = this.availableSeats - cancelledSeats;
   }
 
-  def standardPrice(linkClass : LinkClass) : Int = {
-    var price = standardPrice.get(linkClass)
+  def standardPrice(linkClass : LinkClass, paxType: PassengerType.Value) : Int = {
+    var price = standardPrice.get((linkClass, paxType))
     if (price == null.asInstanceOf[Int]) {
-      price = Pricing.computeStandardPrice(this.distance, Computation.getFlightCategory(from, to), linkClass)
-      standardPrice.put(linkClass, price)
+      price = Pricing.computeStandardPrice(distance, Computation.getFlightCategory(from, to), linkClass, paxType, from.baseIncome)
+      standardPrice.put((linkClass, paxType), price)
     }
     price
   }

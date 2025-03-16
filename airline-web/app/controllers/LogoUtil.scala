@@ -8,13 +8,12 @@ import javax.imageio.ImageIO
 object LogoUtil {
   val logos : scala.collection.mutable.Map[Int, Array[Byte]] = collection.mutable.Map(AirlineSource.loadLogos().toSeq: _*) 
   val blank = getBlankLogo()
-  val rat = getRatLogo()
   val imageHeight = 12
   val imageWidth = 24
   
   def getLogo(airlineId : Int) : Array[Byte]= {
-    if (airlineId < 300) {
-      rat
+    if (airlineId < 30) {
+      getRatLogo()
     } else {
       logos.get(airlineId) match {
         case Some(logo) => logo

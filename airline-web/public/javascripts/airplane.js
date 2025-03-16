@@ -170,13 +170,12 @@ function calcFreq(airplane, distance) {
     if (airplane.range < distance) {
         return "-"
     }
-    const maxFlightMinutes = 4.5 * 24 * 60;
     const flightTime = calcFlightTime(airplane, distance);
-    return Math.floor(maxFlightMinutes / ((flightTime + airplane.turnaroundTime) * 2));
+    return Math.floor(gameConstants.linkAircraft.maxFlightMin / ((flightTime + airplane.turnaroundTime) * 2));
 }
 
 function calcCostPerPax(airplane, distance) {
-    const maxFlightMinutes = 4.5 * 24 * 60;
+    const maxFlightMinutes = gameConstants.linkAircraft.maxFlightMin;
     const flightTime = calcFlightTime(airplane, distance);
     const frequency = Math.floor(maxFlightMinutes / ((flightTime + airplane.turnaroundTime) * 2));
     const aircraftFlightTime = frequency * 2 * (flightTime + airplane.turnaroundTime);
@@ -906,7 +905,7 @@ function showAllAirplaneInventory(modelId) {
     $.each(allAirplanes, function( key, airplane ) {
         var airplaneId = airplane.id
         var li = $("<div style='float: left;' class='clickable' onclick='loadOwnedAirplaneDetails(" + airplaneId + ", $(this), refreshAllAirplaneInventoryAfterAirplaneUpdate)'></div>").appendTo(airplanesDiv)
-        var airplaneIcon = getAirplaneIcon(airplane, info.badConditionThreshold)
+        var airplaneIcon = getAirplaneIcon(airplane, gameConstants.linkAircraft.conditionBad)
         enableAirplaneIconDrag(airplaneIcon, airplaneId)
         enableAirplaneIconDrop(airplaneIcon, airplaneId, "refreshAllAirplaneInventoryAfterAirplaneUpdate")
         li.append(airplaneIcon)
@@ -957,9 +956,9 @@ function addAirplaneInventoryDivByBase(containerDiv, modelId, compareKey, compar
         if (airplane[compareKey] == compareValue) {
             var airplaneId = airplane.id
             var li = $("<div style='float: left;' class='clickable' onclick='loadOwnedAirplaneDetails(" + airplaneId + ", $(this), refreshBaseAfterAirplaneUpdate)'></div>").appendTo(airplanesDiv)
-            var airplaneIcon = getAirplaneIcon(airplane, info.badConditionThreshold)
+            var airplaneIcon = getAirplaneIcon(airplane, gameConstants.linkAircraft.conditionBad)
 
-            enableAirplaneIconDrag(airplaneIcon, airplaneId, airplane.availableFlightMinutes != airplane.maxFlightMinutes)
+            enableAirplaneIconDrag(airplaneIcon, airplaneId, airplane.availableFlightMinutes != gameConstants.linkAircraft.maxFlightMin)
             enableAirplaneIconDrop(airplaneIcon, airplaneId, "refreshBaseAfterAirplaneUpdate")
             li.append(airplaneIcon)
             empty = false
@@ -1002,7 +1001,7 @@ function addAirplaneHangarDivByModel($containerDiv, modelInfo) {
         $.each(airplanes, function( index, airplane ) {
             var airplaneId = airplane.id
             var li = $("<div style='float: left;' class='clickable' onclick='loadOwnedAirplaneDetails(" + airplaneId + ", $(this), showAirplaneCanvas)'></div>").appendTo($airplanesByBaseDiv)
-            var airplaneIcon = getAirplaneIcon(airplane, modelInfo.badConditionThreshold)
+            var airplaneIcon = getAirplaneIcon(airplane, gameConstants.linkAircraft.conditionBad)
             li.append(airplaneIcon)
         })
         $airplanesByBaseDiv.append("<div style='clear:both; '></div>")
@@ -1052,7 +1051,7 @@ function getAirplaneIcon(airplane, badConditionThreshold, explicitIsAssigned) {
     if (typeof explicitIsAssigned != 'undefined') {
         isAssigned = explicitIsAssigned
     } else {
-        isAssigned = airplane.availableFlightMinutes != airplane.maxFlightMinutes
+        isAssigned = airplane.availableFlightMinutes != gameConstants.linkAircraft.maxFlightMin
     }
 
     if (typeof explicitIsAssigned == 'undefined') {
@@ -1063,7 +1062,7 @@ function getAirplaneIcon(airplane, badConditionThreshold, explicitIsAssigned) {
     div.append(img)
 
     //utilization label
-	var utilization = Math.round((airplane.maxFlightMinutes - airplane.availableFlightMinutes) / airplane.maxFlightMinutes * 100)
+	var utilization = Math.round((gameConstants.linkAircraft.maxFlightMin - airplane.availableFlightMinutes) / gameConstants.linkAircraft.maxFlightMin * 100)
     var color
     if (utilization < 25) {
         color = "#FF9973"
@@ -1243,9 +1242,9 @@ function loadOwnedAirplaneDetails(airplaneId, selectedItem, closeCallback, disab
         		if (age >= 0) {
         		    $("#airplaneDetailsAge").text(getYearMonthText(age) + " old | " + airplane.condition.toFixed(2) + "% condition")
                     $("#airplaneDetailsCondition").removeClass("warning fatal")
-                    if (airplane.condition < airplane.criticalConditionThreshold) {
+                    if (airplane.condition < gameConstants.linkAircraft.conditionCritical) {
                         $("#airplaneDetailsCondition").addClass("fatal")
-                    } else if (airplane.condition < airplane.badConditionThreshold) {
+                    } else if (airplane.condition < gameConstants.linkAircraft.conditionBad) {
                         $("#airplaneDetailsCondition").addClass("warning")
                     }
         			$("#airplaneDetailsAge").show()
