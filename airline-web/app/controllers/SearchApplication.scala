@@ -433,6 +433,8 @@ class SearchApplication @Inject()(cc: ControllerComponents) extends AbstractCont
     val affinity = Computation.calculateAffinityValue(fromAirport.zone, toAirport.zone, relationship)
     val affinityText = Computation.constructAffinityText(fromAirport.zone, toAirport.zone, fromAirport.countryCode, toAirport.countryCode, relationship, affinity)
 
+    val (fromDemandDetailsJson, toDemandDetailsJson) = LinkApplication.generateDemands(fromAirport, toAirport, affinity, distance, flightCategory)
+
     val fromDemand = DemandGenerator.computeDemandBetweenAirports(fromAirport, toAirport, affinity, distance)
     val toDemand = DemandGenerator.computeDemandBetweenAirports(toAirport, fromAirport, affinity, distance)
 
@@ -482,6 +484,8 @@ class SearchApplication @Inject()(cc: ControllerComponents) extends AbstractCont
       "mutualRelationship" -> relationship,
       "affinity" -> affinityText,
       "basePrice" -> basePrice,
+      "fromAirportDemand" -> directFromAirportTravelerDemand,
+      "toAirportDemand" -> directToAirportTravelerDemand,
       "fromAirportTravelerDemand" -> directFromAirportTravelerDemand,
       "toAirportTravelerDemand" -> directToAirportTravelerDemand,
       "fromAirportBusinessDemand" -> directFromAirportBusinessDemand,
@@ -500,7 +504,7 @@ class SearchApplication @Inject()(cc: ControllerComponents) extends AbstractCont
 
 
 
-    result = result + ("consumptions" -> Json.toJson(consumptions)(Writes.list(MinimumLinkConsumptionWrite)))
+    result = result + ("consumptions" -> Json.toJson(consumptions)(Writes.list(SimpleLinkConsumptionWrite)))
     Ok(result)
   }
 

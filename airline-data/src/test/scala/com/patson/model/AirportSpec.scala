@@ -1,5 +1,7 @@
 package com.patson.model
 
+import com.patson.data.{AirportSource, GameConstants}
+
 import scala.collection.immutable.Map
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.Finders
@@ -70,6 +72,21 @@ class AirportSpec(_system: ActorSystem) extends TestKit(_system) with ImplicitSe
       assert(airport.computeLoyaltyByLoyalist(List(Loyalist(airport, Airline.fromId(1), airport.population.toInt / 5)))(1) < 50.0)
     }
 
+  }
+
+  "islandAirport".must {
+    "be island if island country".in {
+      val islandCountryAirport = AirportSource.loadAirportByIata("VLI", true).get
+      val notIsland = AirportSource.loadAirportByIata("JFK", true).get
+      assert(GameConstants.connectsIsland(islandCountryAirport, notIsland))
+      assert(GameConstants.connectsIsland(notIsland, islandCountryAirport))
+    }
+    "be island if island airport".in {
+      val islandAirport = AirportSource.loadAirportByIata("ESD", true).get
+      val notIsland = AirportSource.loadAirportByIata("JFK", true).get
+      assert(GameConstants.connectsIsland(islandAirport, notIsland))
+      assert(GameConstants.connectsIsland(notIsland, islandAirport))
+    }
   }
   
   override def afterAll {

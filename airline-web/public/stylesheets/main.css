@@ -1174,25 +1174,6 @@ img.flag {
   }
 }
 
-/* Loading spinner */
-.loadingSpinner {
-    display:    none;
-    position:   fixed;
-    z-index:    1000;
-    top:        0;
-    left:       0;
-    height:     100%;
-    width:      100%;
-    background: var(--loading-spinner-background)
-                url('/assets/images/icons/spinning-wheel.gif')
-                50% 50%
-                no-repeat;
-}
-.searchInput .spinner {
-    position: absolute;
-    margin: auto;
-}
-
 .snowflake {
   /*color: #fff;*/
   color: rgba(255, 255, 255, 0);
@@ -1372,7 +1353,7 @@ button:disabled {
   width: 100%;
   height: 100%;
   background: var(--loading-spinner-background)
-                  url('/assets/images/icons/spinning-wheel.gif')
+                  url('/assets/images/icons/spinner-plane.svg')
                   50% 50%
                   no-repeat;
   background-size: auto 80%;
@@ -1860,6 +1841,43 @@ div#serviceLevelBar {
 .class-value-child-helper {
     opacity:0.6;
     font-size:80%
+}
+
+/* Loading spinner */
+.loadingSpinner {
+    display:    none;
+    position:   fixed;
+    z-index:    1000;
+    top:        0;
+    left:       0;
+    height:     100%;
+    width:      100%;
+    background: var(--loading-spinner-background);
+}
+.loader-svg {
+    width:  220px;
+    height: 220px;
+    margin: 30% auto;
+    animation:  1.4s linear infinite loader-spin;
+    background: url('/assets/images/icons/spinner-plane.svg')
+                50% 50%
+                no-repeat;
+}
+.searchInput .spinner {
+    position: absolute;
+    top: -20px;
+}
+.spinner {
+    z-index: 99;
+    animation: 1.4s linear infinite loader-spin;
+}
+@keyframes loader-spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 [popover] {

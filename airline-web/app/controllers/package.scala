@@ -207,7 +207,7 @@ package object controllers {
       "computedQuality" -> JsNumber(link.computedQuality()),
       "duration" -> JsNumber(link.duration),
       "frequency" -> JsNumber(link.frequency),
-      "availableSeat" -> Json.toJson(link.availableSeats),
+//      "availableSeat" -> Json.toJson(link.availableSeats),
       "fromLatitude" -> JsNumber(link.from.latitude),
       "fromLongitude" -> JsNumber(link.from.longitude),
       "toLatitude" -> JsNumber(link.to.latitude),

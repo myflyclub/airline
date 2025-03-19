@@ -163,6 +163,8 @@ object AirportSizeAdjust {
         //AQ
         "TNM" -> 3,
         //https://en.wikipedia.org/wiki/List_of_airports_in_Bangladesh
+        "CGP" -> 5,
+        "ZYL" -> 5,
         //belgium
         "LGG" -> 3,
         "ANR" -> 3,
@@ -361,22 +363,24 @@ object AirportSizeAdjust {
         "GAU" -> 6,
         "JAI" -> 6,
         "SXR" -> 6,
-        "PAT" -> 6,
         "IXC" -> 6,
         "BBI" -> 6,
+        "PAT" -> 5,
         "CCJ" -> 5,
         "IDR" -> 5,
         "VTZ" -> 5,
         "DED" -> 5,
         "IXR" -> 5,
         "GOX" -> 5,
+        "IXB" -> 5,
         "TIR" -> 4,
         "AYJ" -> 4,
         "VNS" -> 4,
         "DHM" -> 3,
         "BHO" -> 4,
         "RPR" -> 4,
-        "AGR" -> 5, //upscaling near DEL to cut its pop
+        "RDP" -> 4, //upscaling to cut CCU
+        "AGR" -> 5, //upscaling to cut DEL
         "HDO" -> 3,
         "PGH" -> 3,
         "HSS" -> 3,
@@ -478,6 +482,7 @@ object AirportSizeAdjust {
         //morocco
         "ERH" -> 3,
         //https://en.wikipedia.org/wiki/List_of_airports_in_Mozambique
+        "INH" -> 3,
         //namibia
         "WVB" -> 3,
         "OMD" -> 3,
@@ -576,7 +581,8 @@ object AirportSizeAdjust {
         "LUG" -> 3,
         "ACH" -> 3,
         //Tawain
-        "RMQ" -> 3,
+        "RMQ" -> 5,
+        "TNN" -> 3,
         "CYI" -> 3,
         "HUN" -> 2,
         //https://en.wikipedia.org/wiki/List_of_airports_in_Tajikistan
@@ -590,6 +596,7 @@ object AirportSizeAdjust {
         //Taiwan
         "PIF" -> 1,
         "HCN" -> 2,
+        "TNN" -> 3,
         //trinidad tobago
         "TAB" -> 4,
         //https://en.wikipedia.org/wiki/List_of_the_busiest_airports_in_Turkey

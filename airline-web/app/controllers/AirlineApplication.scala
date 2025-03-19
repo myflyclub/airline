@@ -305,14 +305,22 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
       if (airline.getHeadQuarter().isDefined) { //building non-HQ
         AllianceSource.loadAllianceMemberByAirline(airline).filter(_.role != AllianceRole.APPLICANT).foreach { allianceMember =>
           AllianceCache.getAlliance(allianceMember.allianceId, true).foreach { alliance =>
-            val allAllianceBaseAirports : List[(Airport, Airline)] = alliance.members.flatMap { allianceMember =>
+            val allAllianceBaseAirports: List[(Airport, Airline)] = alliance.members.flatMap { allianceMember =>
               allianceMember.airline.getBases().filter(!_.headquarter).map { base =>
                 (base.airport, allianceMember.airline)
               }
             }
 
-            allAllianceBaseAirports.find(_._1.id == targetBase.airport.id).foreach {
-              case (overlappingAirport, allianceAirline) => return Some("Alliance member " + allianceAirline.name + " already has a base in this airport")
+            val existingBasesAtAirport = allAllianceBaseAirports.count(_._1.id == targetBase.airport.id)
+            if (airline.airlineType == AirlineType.REGIONAL) {
+              // For regional airlines, allow up to 1 existing alliance base
+              if (existingBasesAtAirport >= 2) {
+                return Some(s"There are too many alliance member bases at this airport, even for a regional airline.")
+              }
+            } else {
+              if (existingBasesAtAirport >= 1) {
+                return Some("There can only be one alliance member base per airport.")
+              }
             }
           }
         }
@@ -772,7 +780,7 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
   def getFleet(airlineId : Int) = Action { request =>
     var result = Json.arr()
     AirplaneSource.loadAirplanesByOwner(airlineId)
-//      .filter(_.constructedCycle != 0) //filtering out non-player airplanes
+      .filter(_.owner.airlineType != AirlineType.NON_PLAYER)
       .groupBy(_.model).toList
       .sortBy(_._1.name).foreach {
         case(model, airplanes) => result = result.append(Json.obj("name" -> model.name, "quantity" -> airplanes.size))

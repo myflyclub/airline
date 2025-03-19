@@ -162,12 +162,12 @@ class ProfileApplication @Inject()(cc: ControllerComponents) extends AbstractCon
         airlineType = AirlineType.REGIONAL,
         difficulty = "Hard",
         description = "Work with your alliance partners!",
-        rule = List("Can only buy regional or smaller aircraft!","3x alliance points","Need 80% less staff to support frequency","Base crew costs are 25% lower"),
+        rule = List("Can only buy regional or smaller aircraft!","3x alliance points","Need 80% less staff to support frequency","Base crew costs are 25% lower","May build overlapping bases with alliance mates (one plus per airport)"),
         cash = (capital * 3.5).toInt - regionalAirplanes.map(_.value).sum,
         airport = airport,
         reputation = 20,
         quality = 30,
-        airplanes = ULCCAirplanes,
+        airplanes = regionalAirplanes,
         loan = Bank.getLoan(airline.id, (capital * 2.25).toInt, BASE_INTEREST_RATE, CycleSource.loadCycle(), LOAN_YEARS)
       )
       profiles.append(regionalProfile)

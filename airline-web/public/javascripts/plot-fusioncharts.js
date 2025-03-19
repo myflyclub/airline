@@ -107,7 +107,8 @@ function plotSeatConfigurationBar(container, configuration, maxSeats, spaceMulti
 
 
     var businessPosition = configuration.economy / maxSeats * 100
-    var firstPosition = (maxSeats - configuration.first * spaceMultipliers.first) / maxSeats * 100
+    var firstPosition = configuration.economy / maxSeats * 100 + configuration.business * spaceMultipliers.business / maxSeats * 100
+    var emptyPosition = configuration.economy / maxSeats * 100 + configuration.business * spaceMultipliers.business / maxSeats * 100 + configuration.first * spaceMultipliers.first / maxSeats * 100
 
     var economyRange = {
                          "minValue": "0",
@@ -121,16 +122,21 @@ function plotSeatConfigurationBar(container, configuration, maxSeats, spaceMulti
                          }
     var firstRange = {
                       "minValue": firstPosition,
-                      "maxValue": "100",
+                      "maxValue": emptyPosition,
                       "code": "#FFE62B"
                       }
+    var emptyRange = {
+                       "minValue": emptyPosition,
+                       "maxValue": "100",
+                       "code": "#cccccc"
+                     }
     if (!hideValues) {
         economyRange.label = "Y : " + configuration.economy
         businessRange.label = "J : " + configuration.business
         firstRange.label = "F : " + configuration.first
     }
 
-    dataSource["colorRange"] = { "color": [economyRange, businessRange, firstRange] }
+    dataSource["colorRange"] = { "color": [economyRange, businessRange, firstRange, emptyRange] }
 
     if (!height) {
         height = "20px"

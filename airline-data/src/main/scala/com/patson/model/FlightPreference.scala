@@ -9,6 +9,7 @@ import java.util.concurrent.ThreadLocalRandom
  * When a link contains certain properties that the "Flight preference" likes/hates, it might reduce (if like) or increase (if hate) the "perceived price"  
  */
 abstract class FlightPreference(homeAirport : Airport) {
+  val COST_BASIS = 0.85
   def computeCost(baseCost : Double, link : Transport, linkClass : LinkClass) : Double
   def preferredLinkClass : LinkClass
   def getPreferenceType : FlightPreferenceType.Value
@@ -30,6 +31,8 @@ abstract class FlightPreference(homeAirport : Airport) {
     cost = cost * loungeAdjustRatio(link, loungeLevelRequired, preferredLinkClass)
 
     cost *= externalCostModifier
+
+    cost *= COST_BASIS
 
     computeCost(cost, link, linkClass)
   }
@@ -76,7 +79,7 @@ abstract class FlightPreference(homeAirport : Airport) {
 
   val priceSensitivity : Double
   val priceModifier : Double = 1.0
-  val qualitySensitivity : Double = 0.5
+  val qualitySensitivity : Double = 1.0
   val loyaltySensitivity : Double = 0
   val frequencyThreshold : Int = 7
   val flightDurationSensitivity : Double = 0.5
@@ -105,11 +108,11 @@ abstract class FlightPreference(homeAirport : Airport) {
     val classAdjustedPrice = priceAdjustedByLinkClassDiff(link, linkClass, paxType)
     val deltaFromStandardPrice = classAdjustedPrice - standardPrice
     val priceSensitivityModifier = if (deltaFromStandardPrice < 0 && (getPreferenceType == FlightPreferenceType.FREQUENT || getPreferenceType == FlightPreferenceType.BRAND || getPreferenceType == FlightPreferenceType.LAST_MINUTE)) {
-        0.9 * priceSensitivity * classAdjustedPrice.toDouble / standardPrice //low prices impact these preferences less
+        0.95 * priceSensitivity * classAdjustedPrice.toDouble / standardPrice //low prices impact these preferences less
       } else {
         priceSensitivity
       }
-    0.9 + deltaFromStandardPrice * priceSensitivityModifier / standardPrice //0.95 instead of 1.0 to make pax more forgiving and book / have SF
+    1.0 + deltaFromStandardPrice * priceSensitivityModifier / standardPrice
   }
 
   def loyaltyAdjustRatio(link : Transport) = {
@@ -121,16 +124,12 @@ abstract class FlightPreference(homeAirport : Airport) {
   }
 
   def qualityAdjustRatio(homeAirport : Airport, link : Transport, preferredLinkClass : LinkClass, paxType: PassengerType.Value) : Double = {
-    val qualitySensitivity = paxType match {
-      case PassengerType.BUSINESS => 1.0
-      case PassengerType.ELITE => 1.2
-      case PassengerType.OLYMPICS => 0.75
-      case PassengerType.TRAVELER => 0.75
-      case _ => 0.5
-    }
     val qualityDelta = link.computedQuality - homeAirport.expectedQuality(link.distance, preferredLinkClass)
-
-    val GOOD_QUALITY_DELTA = 20
+    val GOOD_QUALITY_DELTA = if (paxType == PassengerType.ELITE) {
+      30
+    } else {
+      20
+    }
 
     val priceAdjust =
       if (qualityDelta < 0) {
@@ -139,7 +138,7 @@ abstract class FlightPreference(homeAirport : Airport) {
         1 - qualityDelta.toDouble / Link.MAX_QUALITY * 0.5
       } else { //reduced benefit on extremely high quality
         val extraDelta = qualityDelta - GOOD_QUALITY_DELTA
-        1 - GOOD_QUALITY_DELTA.toDouble / Link.MAX_QUALITY * 0.5 - extraDelta.toDouble / Link.MAX_QUALITY * 0.25
+        1 - GOOD_QUALITY_DELTA.toDouble / Link.MAX_QUALITY * 0.5 - extraDelta.toDouble / Link.MAX_QUALITY * 0.2
       }
 
     if  (link.transportType == TransportType.GENERIC_TRANSIT) {
@@ -236,31 +235,10 @@ abstract class FlightPreference(homeAirport : Airport) {
       val toLoungeLevel = toLounge.map(_.level).getOrElse(0)
 
 
-      val fromLoungeRatioDelta : Double =
-        if (fromLoungeLevel < loungeLevelRequired) { //penalty for not having lounge required
-          if (link.distance <= 2000) { //shorter flight has much less impact
-            (loungeLevelRequired - fromLoungeLevel) * 0.03
-          } else if (link.distance <= 5000) {
-            (loungeLevelRequired - fromLoungeLevel) * 0.1
-          } else {
-            (loungeLevelRequired - fromLoungeLevel) * 0.15
-          }
-        } else {
-          fromLounge.map(_.getPriceReduceFactor(link.distance)).getOrElse(0)
-        }
+      val fromLoungeRatioDelta = Lounge.priceAdjustRatio(fromLoungeLevel, loungeLevelRequired, link.distance)
 
-      val toLoungeRatioDelta : Double =
-        if (toLoungeLevel < loungeLevelRequired) { //penalty for not having lounge required
-          if (link.distance <= 2000) { //shorter flight has less impact
-            (loungeLevelRequired - toLoungeLevel) * 0.05
-          } else if (link.distance <= 5000) {
-            (loungeLevelRequired - toLoungeLevel) * 0.1
-          } else {
-            (loungeLevelRequired - toLoungeLevel) * 0.15
-          }
-        } else {
-          toLounge.map(_.getPriceReduceFactor(link.distance)).getOrElse(0) //credit is 2% per level > ULTRA distance, otherwise 1%
-        }
+      val toLoungeRatioDelta = Lounge.priceAdjustRatio(toLoungeLevel, loungeLevelRequired, link.distance)
+
       1 + fromLoungeRatioDelta + toLoungeRatioDelta
     }
   }
@@ -280,12 +258,12 @@ object FlightPreferenceType extends Enumeration {
 }
 
 case class DealPreference(homeAirport : Airport, preferredLinkClass: LinkClass, override val priceModifier: Double) extends FlightPreference(homeAirport : Airport) {
-  override val priceSensitivity = preferredLinkClass.priceSensitivity + 0.1
-  override val frequencyThreshold = 3
+  override val priceSensitivity = preferredLinkClass.priceSensitivity + 0.15
+  override val qualitySensitivity = 0.4
+  override val frequencyThreshold = 2
+
   def computeCost(baseCost : Double, link : Transport, linkClass : LinkClass) = {
-    val noise = 1.0 + getFlatTopBellRandom(0.5, 0.25)
-    val finalCost = baseCost * noise
-    Math.max(1, finalCost)
+    Math.max(1, baseCost)
   }
 
   val getPreferenceType: FlightPreferenceType.Value = FlightPreferenceType.DEAL
@@ -295,6 +273,11 @@ case class DealPreference(homeAirport : Airport, preferredLinkClass: LinkClass, 
 
 case class LastMinutePreference(homeAirport : Airport, preferredLinkClass: LinkClass, override val priceModifier : Double, override val loungeLevelRequired : Int) extends FlightPreference(homeAirport : Airport) {
   override val priceSensitivity = preferredLinkClass.priceSensitivity
+  override val qualitySensitivity = if (priceModifier < 1) { //LAST_MINUTE_DEAL
+    0.3
+  } else {
+    1.0
+  }
   def computeCost(baseCost : Double, link : Transport, linkClass : LinkClass) = {
     baseCost
   }
@@ -319,10 +302,15 @@ case class LastMinutePreference(homeAirport : Airport, preferredLinkClass: LinkC
 case class AppealPreference(homeAirport : Airport, preferredLinkClass : LinkClass, override val priceModifier : Double, override val loungeLevelRequired : Int, loyaltyRatio : Double, id : Int)  extends FlightPreference(homeAirport) {
   override val loyaltySensitivity = loyaltyRatio
   override val priceSensitivity = preferredLinkClass.priceSensitivity
+  override val qualitySensitivity = if (loyaltyRatio > 1) {
+    1.1
+  } else {
+    1.5
+  }
   override val frequencyThreshold = if (loyaltyRatio > 1) {
     21
   } else {
-    14
+    7
   }
 
   val getPreferenceType = {
@@ -342,7 +330,7 @@ case class AppealPreference(homeAirport : Airport, preferredLinkClass : LinkClas
   }
 
   def computeCost(baseCost: Double, link : Transport, linkClass : LinkClass) : Double = {
-    val noise = 1.0 + getFlatTopBellRandom(0.5, 0.25)
+    val noise = 1.0 + getFlatTopBellRandom(0.35, 0.25)
     val finalCost = baseCost * noise
     Math.max(1, finalCost)
   }

@@ -722,7 +722,7 @@ function search(event, input, retry) {
     var searchType = input.closest('div.searchInput').data('searchType')
     var phrase = input.val()
 	var url = "search-" + searchType + "?input=" + phrase
-    if (currentSearchAjax) {
+    if (currentSearchAjax || phrase.length < 3) {
         currentSearchAjax.abort()
     }
 
@@ -822,11 +822,6 @@ function researchFlight(fromAirportId, toAirportId) {
                 $breakdown.find(".fromAirport .businessDemand").text(toLinkClassValueString(result.fromAirportBusinessDemand))
                 $breakdown.find(".fromAirport .touristDemand").text(toLinkClassValueString(result.fromAirportTouristDemand))
 
-                $breakdown.find(".toAirport .airportLabel").empty()
-                $breakdown.find(".toAirport .airportLabel").append(getAirportSpan(toAirport))
-                $breakdown.find(".toAirport .travelerDemand").text(toLinkClassValueString(result.toAirportTravelerDemand))
-                $breakdown.find(".toAirport .businessDemand").text(toLinkClassValueString(result.toAirportBusinessDemand))
-                $breakdown.find(".toAirport .touristDemand").text(toLinkClassValueString(result.toAirportTouristDemand))
 
 
                 $("#researchSearchResult .table.links .table-row").remove()

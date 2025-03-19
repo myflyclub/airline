@@ -293,10 +293,10 @@ object PassengerSimulation {
     PassengerConsumptionResult(collapsedMap.toMap, missedMap)
   }
 
-  val ROUTE_COST_TOLERANCE_FACTOR = 1.5
-  val LINK_COST_TOLERANCE_FACTOR = 0.925
+  val ROUTE_COST_TOLERANCE_FACTOR = 1.15
+  val LINK_COST_TOLERANCE_FACTOR = 0.95
   val LINK_DISTANCE_TOLERANCE_FACTOR = 1.6
-  val ROUTE_DISTANCE_TOLERANCE_FACTOR = 3.0
+  val ROUTE_DISTANCE_TOLERANCE_FACTOR = 2.75
 
 
   object RouteRejectionReason extends Enumeration {
@@ -508,7 +508,7 @@ object PassengerSimulation {
             } else if (predecessorLink.transportType == TransportType.GENERIC_TRANSIT && predecessorLink.from.id == passengerGroup.fromAirport.id) {
               connectionCost = 0 //origin ground link only incurs link cost
             } else if (predecessorLink.transportType == TransportType.GENERIC_TRANSIT) {
-              connectionCost += 90 //middle "leave the airport" ground connections more expensive; note this has to be 2x as expensive as initial connection ground cost was free
+              connectionCost += 120 //middle "leave the airport" ground connections more expensive; note this has to be 2x as expensive as initial connection ground cost was free
             } else if (linkConsideration.link.transportType == TransportType.GENERIC_TRANSIT) {
               connectionCost = 0 //destination ground link only incurs link cost, note this will also catch 1st connection of "middle" ground connectons
             } else {
@@ -518,9 +518,11 @@ object PassengerSimulation {
               if (frequency < 7) {
                 connectionCost += 150 + (7 - frequency ) * 10 //possible overnight stay //$160 @ 6; $210 @ 1
               } else if (frequency < 14) {
-                connectionCost += 40 + (14 - frequency) * 10 //$110 @ 7; $50 @ 13
-              } else if (frequency < 28) {
-                connectionCost += 20
+                connectionCost += 50 + (14 - frequency) * 10 //$120 @ 7; $60 @ 13
+              } else if (frequency < 21) {
+                connectionCost += 13 + (21 - frequency) * 7 //$52 @ 14; $20 @ 20
+              } else if (frequency < 40) {
+                connectionCost += (40 - frequency)
               }
 
               if (previousLinkAirlineId != currentLinkAirlineId && (allianceIdByAirlineId.get(previousLinkAirlineId) == null.asInstanceOf[Int] || allianceIdByAirlineId.get(previousLinkAirlineId) != allianceIdByAirlineId.get(currentLinkAirlineId))) { //switch airline, impose extra cost
@@ -528,6 +530,7 @@ object PassengerSimulation {
               }
               flightTransit = true
             }
+            connectionCost *= Math.min(1.0, 0.4 + 0.6 * passengerGroup.fromAirport.income.toDouble / Airport.HIGH_INCOME)
             connectionCost *= passengerGroup.preference.preferredLinkClass.spaceMultiplier
             connectionCost *= passengerGroup.preference.connectionCostRatio
 

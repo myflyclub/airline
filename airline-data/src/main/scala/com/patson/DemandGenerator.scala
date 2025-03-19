@@ -20,10 +20,10 @@ object DemandGenerator {
   val BUSINESS_CLASS_INCOME_MAX = 125_000
   val BUSINESS_CLASS_PERCENTAGE_MAX: Map[PassengerType.Value, Double] = Map(PassengerType.TRAVELER -> 0.16, PassengerType.BUSINESS -> 0.49, PassengerType.TOURIST -> 0.1, PassengerType.ELITE -> 0, PassengerType.OLYMPICS -> 0.25)
   val DISCOUNT_CLASS_PERCENTAGE_MAX: Map[PassengerType.Value, Double] = Map(PassengerType.TRAVELER -> 0.38, PassengerType.BUSINESS -> 0, PassengerType.TOURIST -> 0.6, PassengerType.ELITE -> 0, PassengerType.OLYMPICS -> 0)
-  val MIN_DISTANCE = 180 //does not apply to islands
+  val MIN_DISTANCE = 175 //does not apply to islands
   val HIGH_INCOME_RATIO_FOR_BOOST = 0.7 //at what percent of high income does demand change
   val PRICE_DISCOUNT_PLUS_MULTIPLIER = 1.05 //multiplier on base price
-  val PRICE_LAST_MIN_MULTIPLIER = 1.11
+  val PRICE_LAST_MIN_MULTIPLIER = 1.12
   val PRICE_LAST_MIN_DEAL_MULTIPLIER = 0.9
 //  val launchDemandFactor : Double = if (CycleSource.loadCycle() <= 1) 1.0 else Math.min(1, (45 + CycleSource.loadCycle().toDouble / 24) / 100)
   val launchDemandFactor : Double = 1.0
@@ -50,7 +50,7 @@ object DemandGenerator {
 
       airports.par.foreach { toAirport =>
         val distance = Computation.calculateDistance(fromAirport, toAirport)
-        if (fromAirport != toAirport && (distance >= MIN_DISTANCE || GameConstants.connectsIsland(fromAirport, toAirport))) {
+        if (fromAirport != toAirport && (distance > MIN_DISTANCE || GameConstants.connectsIsland(fromAirport, toAirport) && distance > 25)) {
           val relationship = countryRelationships.getOrElse((fromAirport.countryCode, toAirport.countryCode), 0)
           val affinity = Computation.calculateAffinityValue(fromAirport.zone, toAirport.zone, relationship)
 
@@ -116,7 +116,7 @@ object DemandGenerator {
   }
 
   def computeDemandBetweenAirports(fromAirport : Airport, toAirport : Airport, affinity : Int, distance : Int) : Demand = {
-    val demand = if (fromAirport != toAirport && fromAirport.population != 0 && toAirport.population != 0 && distance >= MIN_DISTANCE) {
+    val demand = if (fromAirport != toAirport && fromAirport.population != 0 && toAirport.population != 0 && (distance > MIN_DISTANCE || GameConstants.connectsIsland(fromAirport, toAirport) && distance > 25)) {
       computeBaseDemandBetweenAirports(fromAirport: Airport, toAirport: Airport, affinity: Int, distance: Int): Demand
     } else {
       Demand(
@@ -442,7 +442,7 @@ object DemandGenerator {
         appealPreference(homeAirport, BUSINESS, 1.0, loungeLevelRequired = 2, loyaltyRatio = 1.25, weight = 1),
         lastMinutePreference(homeAirport, BUSINESS, PRICE_LAST_MIN_MULTIPLIER, loungeLevelRequired = 0, weight = 1),
         appealPreference(homeAirport, FIRST, 1.0, loungeLevelRequired = 2, weight = 1),
-        appealPreference(homeAirport, FIRST, 1.0, loungeLevelRequired = 4, loyaltyRatio = 1.15, weight = 1),
+        appealPreference(homeAirport, FIRST, 1.0, loungeLevelRequired = 3, loyaltyRatio = 1.15, weight = 1),
         appealPreference(homeAirport, FIRST, 1.0, loungeLevelRequired = 3, loyaltyRatio = 1.25, weight = 1),
         lastMinutePreference(homeAirport, FIRST, PRICE_LAST_MIN_MULTIPLIER, loungeLevelRequired = 1, weight = 1),
       ),

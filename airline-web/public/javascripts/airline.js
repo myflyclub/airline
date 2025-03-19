@@ -943,7 +943,6 @@ function planLink(fromAirport, toAirport, isRefresh) {
 
 var planLinkInfo = null
 var planLinkInfoByModel = {}
-var spaceMultipliers = null
 var existingLink
 
 function updatePlanLinkInfo(linkInfo, isRefresh) {
@@ -1131,8 +1130,8 @@ function updatePlanLinkInfo(linkInfo, isRefresh) {
     var initialPrice = {}
 	if (!linkInfo.existingLink) {
 	    initialPrice.economy = linkInfo.suggestedPrice.TouristFrom.economy
-	    initialPrice.business = linkInfo.suggestedPrice.TravelerFrom.business
-	    initialPrice.first = linkInfo.suggestedPrice.TravelerFrom.first
+	    initialPrice.business = linkInfo.suggestedPrice.TouristFrom.business
+	    initialPrice.first = linkInfo.suggestedPrice.TouristFrom.first
 
 		$('#addLinkButton').show()
 		$('#deleteLinkButton').hide()
@@ -1223,12 +1222,6 @@ function updatePlanLinkInfo(linkInfo, isRefresh) {
     }
 
 	$("#planLinkModelSelect").children('option').remove()
-
-	spaceMultipliers = {
-                economy : gameConstants.linkClassValues.economy,
-                business : gameConstants.linkClassValues.business,
-                first : gameConstants.linkClassValues.first
-    }
 
 	planLinkInfoByModel = {}
 	//existingLinkModelId = 0
@@ -1418,9 +1411,9 @@ function changeClassPrice(paxClass, percent) {
 }
 
 function updateMarkup(){
-    $('#planMarkupEconomy').text(($('#planLinkEconomyPrice').val()/planLinkInfo.suggestedPrice.TravelerFrom.economy*100).toFixed(0)+"%")
-    $('#planMarkupBusiness').text(($('#planLinkBusinessPrice').val()/planLinkInfo.suggestedPrice.TravelerFrom.business*100).toFixed(0)+"%")
-    $('#planMarkupFirst').text(($('#planLinkFirstPrice').val()/planLinkInfo.suggestedPrice.TravelerFrom.first*100).toFixed(0)+"%")
+    $('#planMarkupEconomy').text(($('#planLinkEconomyPrice').val()/planLinkInfo.suggestedPrice.TouristFrom.economy*100).toFixed(0)+"%")
+    $('#planMarkupBusiness').text(($('#planLinkBusinessPrice').val()/planLinkInfo.suggestedPrice.TouristFrom.business*100).toFixed(0)+"%")
+    $('#planMarkupFirst').text(($('#planLinkFirstPrice').val()/planLinkInfo.suggestedPrice.TouristFrom.first*100).toFixed(0)+"%")
 }
 
 function sumPreferencesByType(demandDetails, passengerType) {
@@ -1559,6 +1552,10 @@ function updateFrequencyDetail(info) {
 
 function addAirplaneRow(container, airplane, frequency) {
     var airplaneRow = $("<div class='table-row airplaneRow'></div>") //airplane bar contains - airplane icon, configuration, frequency
+	let spaceMultipliers = {}
+	gameConstants.linkClassValues.forEach(linkClass => {
+		spaceMultipliers[linkClass.name] = linkClass.spaceMultiplier
+	})
 
     var configurationDiv = $("<div class='configuration' style='transform: translate(0%, -75%);'></div>")
     var airplaneUpdateCallback = function(configurationDiv, airplaneId) {
@@ -2736,7 +2733,7 @@ function updateTopAirportComposition($container, airportComposition) {
 	var $table
 	$.each(airportComposition, function(index, entry) {
 	    if (index % maxPerColumn == 0) { //flush a column (a table)
-	        $table = $('<div class="table data" style="flex : 1; min-width: 200px;"></div>').appendTo($container)
+	        $table = $('<div class="table rounded-none data" style="flex : 1; min-width: 200px;"></div>').appendTo($container)
 	    }
 		$table.append("<div class='table-row data-row' style='max-width: 320px;'><div class='cell' style='width: 80%;'>" + getCountryFlagImg(entry.countryCode) + entry.airport
 	 			   + "</div><div class='cell' style='width: 20%; text-align: right;'>" + commaSeparateNumber(entry.passengerCount) + "</div></div>")

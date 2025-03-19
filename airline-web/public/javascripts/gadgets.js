@@ -139,24 +139,24 @@ function toLinkPercentOfBasePrices(priceValues, basePrice) {
     return  economyValue + "%" + " / " + businessValue + "%" + " / " + firstValue + "%"
 }
 
-function toLinkClassValueString(linkValues, prefix, suffix) {
-	if (!prefix) {
-		prefix = ""
-	}
-	if (!suffix) {
-		suffix = ""
-	}
-	var discountValue = linkValues.hasOwnProperty('discountEconomy') ? linkValues.discountEconomy : 0
-	var economyValue = linkValues.hasOwnProperty('economy') ? linkValues.economy + discountValue : '-'
-	var businessValue = linkValues.hasOwnProperty('business') ? linkValues.business : '-'
-	var firstValue = linkValues.hasOwnProperty('first') ? linkValues.first : '-'
+function toLinkClassValueString(linkValues, prefix = "", suffix = "", displayDiscountEconomy = false) {
+    const formatValue = (value) => value > 0 ? (value >= 10000 ? commaSeparateNumber(value) : value) : '-';
+    
+    const discountValue = linkValues.discountEconomy || 0;
+    const economyValue = (linkValues.economy || 0) + (!displayDiscountEconomy ? discountValue : 0);
+    
+    const values = {
+        discount: formatValue(discountValue),
+        economy: formatValue(economyValue),
+        business: formatValue(linkValues.business),
+        first: formatValue(linkValues.first)
+    };
 
+    const parts = displayDiscountEconomy 
+        ? [values.discount, values.economy, values.business, values.first]
+        : [values.economy, values.business, values.first];
 
-	if (economyValue >= 10000 || businessValue >= 10000 || firstValue >= 10000) {
- 	    return prefix + commaSeparateNumber(economyValue) + suffix + " / " + prefix + commaSeparateNumber(businessValue) + suffix + " / " + prefix + commaSeparateNumber(firstValue) + suffix
-    } else {
-        return prefix + economyValue + suffix + " / " + prefix + businessValue + suffix + " / " + prefix + firstValue + suffix
-    }
+    return parts.map(v => `${prefix}${v}${suffix}`).join(' / ');
 }
 
 function toLinkClassDiv(linkValues, prefix, suffix) {

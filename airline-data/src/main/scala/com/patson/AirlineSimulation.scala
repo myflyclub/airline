@@ -156,9 +156,10 @@ object AirlineSimulation {
         val reputationByElites = 25 * airlineEliteBonus * AirlineGradeElites.findGrade(airlineStat.elites).level
         reputationBreakdowns.append(ReputationBreakdown(ReputationType.ELITES, reputationByElites))
 
+        val airlineAllianceBonus = if (airline.airlineType == AirlineType.REGIONAL) 3 else 1
         val reputationBonusFromAlliance: Double = allianceByAirlineId.get(airline.id) match {
           case Some(alliance) => allianceRankings.get(alliance) match {
-            case Some((ranking, _)) => Alliance.getReputationBonus(ranking)
+            case Some((ranking, _)) => Alliance.getReputationBonus(ranking) * airlineAllianceBonus
             case None => 0.0
           }
           case None => 0.0
