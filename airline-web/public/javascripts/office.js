@@ -42,10 +42,6 @@ $( document ).ready(function() {
     $airlineColorPicker.change(function() {
         setAirlineColor($(this).val())
     });
-
-
-
-    populateBaseDetailsModal()
 })
 
 function showOfficeCanvas() {
@@ -346,6 +342,9 @@ function updateAirlineDetails() {
                     breakdownList.append("<li>" + breakdown.description + ": <span class='rep-value'>" + breakdown.value.toFixed(2) + "</span></li>")
                 }
             })
+			document.getElementById("aircraftTypes").innerText = `${airline.fleetTypes ?? 0} Aircraft Types`;
+			document.getElementById("countriesServed").innerText = `${airline.countriesServed ?? 0} Countries Served`;
+			document.getElementById("paxKM").innerText = `Passenger KM`;
             const milestoneValue = updateMilestones(airline.reputationBreakdowns.breakdowns)
             breakdownList.append("<li>Milestones: <span class='rep-value'>" + milestoneValue.toFixed(2) + "</span></li>")
             $('#officeCanvas .reputationDetails').html(breakdownList)
@@ -366,12 +365,14 @@ function updateAirlineDetails() {
 	    	$('#airlineCode').text(airline.airlineCode)
 	    	$('#airlineCodeInput').val(airline.airlineCode)
 	    	$(".fuelTaxRate").text(airline.fuelTaxRate + "% ")
-	    	$('#destinations').text(airline.destinations)
-	    	$('#fleetSize').text(airline.fleetSize)
-	    	$('#fleetAge').text(getYearMonthText(airline.fleetAge))
+	    	// $('#destinations').text(airline.destinations)
+	    	// $('#fleetSize').text(airline.fleetSize)
+	    	// $('#fleetAge').text(getYearMonthText(airline.fleetAge))
 //	    	$('#assets').text('$' + commaSeparateNumber(airline.assets))
-	    	$('#officeCanvas .linkCount').text(airline.linkCount)
+	    	// $('#officeCanvas .linkCount').text(airline.linkCount)
 			$('#minimumRenewalBalance').text('$' + commaSeparateNumber(airline.minimumRenewalBalance))
+
+
 	    },
         error: function(jqXHR, textStatus, errorThrown) {
 	            console.log(JSON.stringify(jqXHR));
@@ -1319,57 +1320,4 @@ function resetAirline(keepAssets) {
 	    }
 	});
 	
-}
-
-function populateBaseDetailsModal() {
-	$.ajax({
-		type: 'GET',
-		url: "airports/base/scale-details",
-	    contentType: 'application/json; charset=utf-8',
-	    dataType: 'json',
-
-	    success: function(result) {
-	        var $table = $('#baseDetailsModal .scaleDetails')
-            var $remarks = $('#baseDetailsModal .groupRemarks')
-            $remarks.empty()
-            var index = 1
-	        $.each(result.groupInfo, function(group, description) {
-//                var $header = $table.find('.table-header .cell[data-group="' + group + '"]')
-//                addTooltip($header, description, {'width' : '200px'})
-                $remarks.append("<h5><span class='dot'>Freq Cap " + (index ++) +  " - " + description + "</span></h5>")
-            })
-
-	        $table.children("div.table-row").remove()
-	    	$.each(result.scaleProgression, function(index, entry) {
-	    	    var maxFrequency = entry.maxFrequency
-
-                var row = $("<div class='table-row'></div>")
-                row.append("<div class='cell'>" + entry.scale + "</div>")
-
-                row.append("<div class='cell'>" + entry.headquartersStaffCapacity + "/" + entry.baseStaffCapacity + "</div>")
-                row.append("<div class='cell'>" + maxFrequency.INTERNATIONAL + "</div>")
-                row.append("<div class='cell'>" + maxFrequency.DOMESTIC + "</div>")
-                row.attr('data-scale', entry.scale)
-
-                $table.append(row)
-	    	})
-	    },
-        error: function(jqXHR, textStatus, errorThrown) {
-	            console.log(JSON.stringify(jqXHR));
-	            console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
-	    }
-	});
-}
-
-function showBaseDetailsModal() {
-    var scale = $('#baseDetailsModal').data('scale')
-    $('#baseDetailsModal .table-row').removeClass('selected')
-
-    if (scale) {
-        var $selectRow = $('#baseDetailsModal').find('.table-row[data-scale="' + scale + '"]')
-        $selectRow.addClass('selected')
-    }
-
-    $('#baseDetailsModal').fadeIn(500)
-
 }

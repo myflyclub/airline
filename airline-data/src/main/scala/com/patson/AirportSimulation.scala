@@ -55,13 +55,12 @@ object AirportSimulation {
   }
 
   def processChampionInfoChanges(previousInfo : List[AirportChampionInfo], newInfo : List[AirportChampionInfo], currentCycle : Int) = {
-    val previousInfoByAirlineId : Predef.Map[Int, List[AirportChampionInfo]] = previousInfo.groupBy(_.loyalist.airline.id)
-    val newInfoByAirlineId : Predef.Map[Int, List[AirportChampionInfo]] = newInfo.groupBy(_.loyalist.airline.id)
+    val previousInfoByAirlineId : Predef.Map[Int, List[AirportChampionInfo]] = previousInfo.filter(_.loyalist.airline.airlineType != AirlineType.NON_PLAYER).groupBy(_.loyalist.airline.id)
+    val newInfoByAirlineId : Predef.Map[Int, List[AirportChampionInfo]] = newInfo.filter(_.loyalist.airline.airlineType != AirlineType.NON_PLAYER).groupBy(_.loyalist.airline.id)
 
-    val maxGeneratedAirlineId = 300 //todo hookup to generated constant
-    val airlineIds = (previousInfoByAirlineId.keySet ++ newInfoByAirlineId.keySet).filter(_ > maxGeneratedAirlineId)
-
+    val airlineIds = (previousInfoByAirlineId.keySet ++ newInfoByAirlineId.keySet)
     val logs = ListBuffer[Log]()
+
     airlineIds.foreach { airlineId =>
       val changes = ListBuffer[ChampionInfoChange]()
       previousInfoByAirlineId.get(airlineId) match {
@@ -201,8 +200,9 @@ object AirportSimulation {
               val link = linkConsideration.link
               val preferredLinkClass = passengerGroup.preference.preferredLinkClass
               val standardPrice = Pricing.computeStandardPrice(link, preferredLinkClass, passengerGroup.passengerType)
+              val loadFactor = link.soldSeats.totalwithSeatSize / link.capacity.totalwithSeatSize
 
-              val satisfaction = Computation.computePassengerSatisfaction(linkConsideration.cost, standardPrice)
+              val satisfaction = Computation.computePassengerSatisfaction(linkConsideration.cost, standardPrice, loadFactor)
 
 
               var conversionRatio =

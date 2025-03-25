@@ -3,7 +3,7 @@ package controllers
 import com.patson.{AirportSimulation, DemandGenerator, LinkSimulation}
 import com.patson.data._
 import com.patson.model.Scheduling.{TimeSlot, TimeSlotStatus}
-import com.patson.model.airplane.Airplane
+import com.patson.model.airplane.{Airplane, AirplaneConfiguration, Model}
 import com.patson.model.{Link, _}
 import com.patson.util.{AirlineCache, AirportCache, ChampionUtil}
 import controllers.AuthenticationObject.AuthenticatedAirline
@@ -518,7 +518,7 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
   def getGameRules() = Action {
     //todo add: constants for fuel formula, deprecation, etc (but not things that may become airline specific)
     var scaleProgressionResult = Json.arr()
-    (1 to 15).map { scale =>
+    (1 to 18).map { scale =>
       var perScaleResult = Json.obj("scale" -> scale)
       var maxFrequencyJson = Json.obj()
       FlightCategory.values.foreach { group =>
@@ -551,18 +551,39 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
       "priceLastMinDealMultiplier" -> JsNumber(DemandGenerator.PRICE_LAST_MIN_DEAL_MULTIPLIER),
     )
 
-    val linkAircraft = Json.obj(
-      "fuelCost" -> JsNumber(LinkSimulation.FUEL_UNIT_COST),
+    val aircraft = Json.obj(
       "maxFlightMin" -> JsNumber(Airplane.MAX_FLIGHT_MINUTES),
       "conditionBad" -> JsNumber(Airplane.BAD_CONDITION),
-      "conditionCritical" -> JsNumber(Airplane.CRITICAL_CONDITION)
+      "conditionCritical" -> JsNumber(Airplane.CRITICAL_CONDITION),
+      "minSeatsPerClass" -> JsNumber(AirplaneConfiguration.MIN_SEATS_PER_CLASS),
+      "timeToCruise" -> Json.obj(
+        "Small Prop" -> JsNumber(Model.TIME_TO_CRUISE_PROPELLER_SMALL),
+        "Large Prop" -> JsNumber(Model.TIME_TO_CRUISE_PROPELLER_MEDIUM),
+        "Small Jet" -> JsNumber(Model.TIME_TO_CRUISE_SMALL),
+        "Regional Jet" -> JsNumber(Model.TIME_TO_CRUISE_REGIONAL),
+        "Narrow-body" ->  JsNumber(Model.TIME_TO_CRUISE_MEDIUM),
+        "Narrow-body XL" ->  JsNumber(Model.TIME_TO_CRUISE_MEDIUM),
+        "Helicopter" ->  JsNumber(Model.TIME_TO_CRUISE_MEDIUM),
+        "Airship" -> JsNumber(Model.TIME_TO_CRUISE_MEDIUM),
+        "Other" -> JsNumber(Model.TIME_TO_CRUISE_OTHER),
+      )
+    )
+
+    val linkCosts = Json.obj(
+      "fuelCost" -> JsNumber(LinkSimulation.FUEL_UNIT_COST),
+      "fuelDistanceExponent" -> JsNumber(LinkSimulation.FUEL_DISTANCE_EXPONENT),
+      "fuelEmptyAircraftBurnPercent" -> JsNumber(LinkSimulation.FUEL_EMPTY_AIRCRAFT_BURN_PERCENT),
+      "crewUnitCost" -> JsNumber(LinkSimulation.CREW_UNIT_COST),
+      "crewBaseCost" -> JsNumber(LinkSimulation.CREW_BASE_COST),
+      "crewEQExponent" -> JsNumber(LinkSimulation.CREW_EQ_EXPONENT),
     )
 
     val result = Json.obj(
       "baseScaleProgression" -> scaleProgressionResult,
       "linkPrice" -> linkPrice,
       "linkClassValues" -> linkClassJson,
-      "linkAircraft" -> linkAircraft
+      "aircraft" -> aircraft,
+      "linkCosts" -> linkCosts
     )
     Ok(result)
   }

@@ -178,10 +178,10 @@ class ProfileApplication @Inject()(cc: ControllerComponents) extends AbstractCon
       val fancyAirplaneProfile = Profile(
         name = "Luxury Startup",
         airlineType = AirlineType.LUXURY,
-        difficulty = "Hard",
+        difficulty = "Very Hard",
         description = "A highly motivated team with high quality aircraft. Perfect for premium service!",
         rule = List("You can never add an economy class!","2x reputation from elite track","Service quality costs are 30% lower"),
-        cash = (capital * 3.25).toInt - fancyAirplanes.map(_.value).sum,
+        cash = (capital * 3.75).toInt - fancyAirplanes.map(_.value).sum,
         airport = airport,
         reputation = 25,
         quality = 90,

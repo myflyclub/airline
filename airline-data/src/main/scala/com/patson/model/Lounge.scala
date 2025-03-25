@@ -2,11 +2,11 @@ package com.patson.model
 
 case class Lounge(airline : Airline, allianceId : Option[Int], airport : Airport, name : String = "", level : Int, status : LoungeStatus.Value, foundedCycle : Int) {
   def getValue : Long = {
-    (Math.pow(level, 2) * 40000000).toLong
+    (10_000_000 + Math.pow(level, 2) * 400 * airport.baseIncome).toLong
   }
   
   val getUpkeep : Long = {
-    if (status == LoungeStatus.ACTIVE) (5000 + airport.baseIncome) * 2 * level else 0 //use base income for calculation here
+    if (status == LoungeStatus.ACTIVE) (50000 + airport.baseIncome) * level else 0 //use base income for calculation here
   }
 
   val rankingThreshold = Map(

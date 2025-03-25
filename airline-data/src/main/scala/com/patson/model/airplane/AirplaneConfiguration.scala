@@ -14,17 +14,26 @@ case class AirplaneConfiguration(economyVal : Int, businessVal : Int, firstVal :
 object AirplaneConfiguration {
   val empty = AirplaneConfiguration(0, 0, 0, Airline.fromId(0), Model.fromId(0), true)
   val default : ((Airline, Model) => AirplaneConfiguration) = (airline, model) => {
-    if (model.quality >= 8) {
+    if (model.quality == 10) {
       if (model.capacity >= 100) {
-        val first = ((model.capacity * 0.3) / FIRST.spaceMultiplier).toInt
+        val first = ((model.capacity * 0.4) / FIRST.spaceMultiplier).toInt
         val biz = ((model.capacity * 0.6) / BUSINESS.spaceMultiplier).toInt
+        AirplaneConfiguration(0, biz, first, airline, model, true)
+      } else {
+        val biz = ((model.capacity).toDouble / BUSINESS.spaceMultiplier).toInt
+        AirplaneConfiguration(0, biz, 0, airline, model, true)
+      }
+    } else if (model.quality >= 7) {
+      if (model.capacity >= 200) {
+        val first = ((model.capacity * 0.2) / FIRST.spaceMultiplier).toInt
+        val biz = ((model.capacity * 0.3) / BUSINESS.spaceMultiplier).toInt
         val econ = (model.capacity - (biz * BUSINESS.spaceMultiplier + first * FIRST.spaceMultiplier)).toInt
         AirplaneConfiguration(econ, biz, first, airline, model, true)
       } else if (model.capacity <= 40) {
         val biz = ((model.capacity).toDouble / BUSINESS.spaceMultiplier).toInt
         AirplaneConfiguration(0, biz ,0, airline, model, true)
       } else {
-        val biz = ((model.capacity * 0.5) / BUSINESS.spaceMultiplier).toInt
+        val biz = ((model.capacity * 0.2) / BUSINESS.spaceMultiplier).toInt
         val econ = (model.capacity - biz * BUSINESS.spaceMultiplier).toInt
         AirplaneConfiguration(econ, biz ,0, airline, model, true)
       }

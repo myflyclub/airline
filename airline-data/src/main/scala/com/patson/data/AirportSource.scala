@@ -92,6 +92,17 @@ object AirportSource {
     bonusByAirlineId.view.mapValues(_.toList).toMap
   }
 
+  def getLuxuryAirlineBonuses(airport: Airport): Map[Int, List[AirlineBonus]] = {
+    val bonusByAirlineId = mutable.Map[Int, ListBuffer[AirlineBonus]]()
+    val bases = airport.getAirlineBases()
+    bases.foreach(base =>
+      if (base._2.airline.airlineType == AirlineType.LUXURY) {
+        bonusByAirlineId.getOrElseUpdate(base._2.airline.id, ListBuffer[AirlineBonus]()).append(AirlineBonus(BonusType.LUXURY, AirlineAppeal(AirlineType.LUXURY_EXTRA_LOYALTY), None))
+      }
+    )
+    bonusByAirlineId.view.mapValues(_.toList).toMap
+  }
+
   def saveAirlineAppealBonus(airportId : Int, airlineId : Int, bonus : AirlineBonus) = {
     val connection = Meta.getConnection()
     try {
@@ -312,19 +323,11 @@ object AirportSource {
           airlineBaseStatement.close()
           airport.initAirlineBases(airlineBases.toList)
 
-
-//          val airlineBonusesByAirlineIdBeforeFlatten : Map[Int, Seq[(Int, List[AirlineBonus])]] = (getAirlineTitleBonuses(airport, countryAirlineTitleCache).toSeq ++ getCampaignBonuses(airport, currentCycle).toSeq).groupBy(_._1)
-//
-//          val airlineBonuses : Map[Int, List[AirlineBonus]] = airlineBonusesByAirlineIdBeforeFlatten.view.mapValues { entry =>
-//            entry.map {
-//              case ((airlineId, bonusList)) => bonusList
-//            }.flatten.toList
-//          }.toMap
-          //^^shorter but very unreadable...let's try something like below
           val titleBonuses = getAirlineTitleBonuses(airport, countryAirlineTitleCache)
           val campaignBonuses = getCampaignBonuses(airport, currentCycle)
+          val luxuryAirlineBonunses = getLuxuryAirlineBonuses(airport)
           val airlineBonusesMutable = mutable.Map[Int, ListBuffer[AirlineBonus]]()
-          (titleBonuses.toList ++ campaignBonuses.toList ++ airlineGlobalBonuses.toList).foreach {
+          (titleBonuses.toList ++ campaignBonuses.toList ++ luxuryAirlineBonunses.toList ++ airlineGlobalBonuses.toList).foreach {
             case((airlineId, bonuses)) =>
               val existingBonusesOfThisAirline = airlineBonusesMutable.getOrElseUpdate(airlineId, ListBuffer[AirlineBonus]())
               existingBonusesOfThisAirline.appendAll(bonuses)

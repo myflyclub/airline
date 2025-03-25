@@ -211,7 +211,8 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
        val airportsServed = links.flatMap {
          link => List(link.from, link.to)
        }.toSet.size
-       
+
+       val countriesServed = links.flatMap(_.to.countryCode).toSet.size
        val destinations = if (airportsServed > 0) airportsServed - 1 else 0 //minus home base
        
        val airplanes = AirplaneSource.loadAirplanesByOwner(airlineId).filter(_.isReady)
@@ -223,10 +224,12 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
        val fleetCondition = if (fleetSize > 0) airplanes.map(_.condition).sum / fleetSize else 0
        val minimumRenewalBalance = airline.getMinimumRenewalBalance()
 
+
        airlineJson =
          airlineJson +
            ("linkCount" -> JsNumber(links.length)) +
            ("destinations"-> JsNumber(destinations)) +
+           ("countriesServed"-> JsNumber(countriesServed)) +
            ("fleetSize"-> JsNumber(fleetSize)) +
            ("fleetCondition"-> JsNumber(fleetCondition)) +
            ("fleetTypes"-> JsNumber(airplaneTypes)) +
@@ -250,7 +253,8 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
         val existingBase = airport.getAirlineBase(airlineId)
 
         existingBase.foreach { base =>
-            result = result + ("base" -> Json.toJson(base))
+//            result = result + ("base" -> Json.toJson(base))
+            result = result + ("baseScale" -> Json.toJson(base.scale))
 
             val linksFromThisBase = LinkSource.loadFlightLinksByFromAirportAndAirlineId(base.airport.id, airlineId, LinkSource.SIMPLE_LOAD)
             val currentStaffRequired = linksFromThisBase.map(_.getCurrentOfficeStaffRequired).sum
@@ -259,7 +263,8 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
             result = result + ("officeCapacity"->
               Json.obj("staffCapacity" -> staffCapacity,
                 "currentStaffRequired" -> currentStaffRequired,
-                "futureStaffRequired" -> futureStaffRequired))
+                "futureStaffRequired" -> futureStaffRequired)
+            )
         }
 
         val targetBase = existingBase match {
@@ -329,9 +334,9 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
         targetBase.allowAirline(airline) match {
           case Left(requiredTitle) =>
             if (airport.isGateway()) {
-              return Some(s"Can only build hub in this gateway airport when your airline attain ${Title.description(requiredTitle)} with this country")
+              return Some(s"Can only build base in this gateway airport when your airline attains ${Title.description(requiredTitle)}.")
             } else {
-              return Some(s"Can only build hub in this non-gateway airport when your airline attain ${Title.description(requiredTitle)} with this country")
+              return Some(s"Can only build base in this non-gateway airport when your airline attains ${Title.description(requiredTitle)}.")
             }
           case Right(_) => //ok
         }

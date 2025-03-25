@@ -214,6 +214,7 @@ object AirlineType extends Enumeration {
     case _ => throw new IllegalArgumentException("Invalid AirlineType ID: " + id)
   }
   val REGIONAL_MODEL_MAX_SIZE = 0.1 //used in web app to set allowed planes
+  val LUXURY_EXTRA_LOYALTY = 8
 }
 
 case class DelegateInfo(availableCount : Int, boosts : List[DelegateBoostAirlineModifier], busyDelegates: List[BusyDelegate]) {

@@ -937,7 +937,6 @@
 							<div id="airplaneModelDetails" style="width: 100%; display: none;">
 								<div class="table">
 									<h4>Airplane Model Details</h4>
-				<!-- 					Model : <select id="airplaneModelOption" onchange="updateModelInfo()"></select><br/> -->
 									<div class="table-row">
 										<div class="label" style="width: 50%;"><h5>Model:</h5></div>
 										<div class="value" id="modelName"></div>
@@ -997,6 +996,10 @@
 									<div class="table-row">
 										<div class="label">Delivery Time:</div>
 										<div class="value delivery"></div>
+									</div>
+									<div class="table-row aircraftNote">
+										<div class="label">Note:</div>
+										<div class="warning note"></div>
 									</div>
 									<button type="button" class="button add ml-0" onclick="promptBuyNewAirplane($('#airplaneModelDetails .selectedModel').val(), true, $('#planLinkFromAirportId').val())">Purchase</button>
 									<button type="button" class="button" onclick="showAirplaneBaseFromPlanLink($('#airplaneModelDetails .selectedModel').val())">Base</button>
@@ -1175,10 +1178,10 @@
 									  <div class="tooltip">
 										  <img class="info svg" src='@routes.Assets.versioned("images/icons/information.svg")'>
 										  <span class="tooltiptext alignLeft" style="width: 400px;">
-										<p><b>Gini coefficient</b> is a common measure of inequality. In-game,
-											population, income, and inequality is applied to determine how much of
-											each airport is low, middle, and extremely-high income.</p>
-									</span>
+											  <p><b>Gini coefficient</b> is a common measure of inequality. In-game,
+												population, income, and inequality is applied to determine how much of
+												each airport is low, middle, and extremely-high income.</p>
+										  </span>
 									  </div>
 								  </div>
 								  <div class="i-value">
@@ -1187,15 +1190,18 @@
 							  </div>
 						  </div>
 					  </div>
-					  <div id="airportBaseDetails" class="section"
-						   style="box-sizing:border-box; margin-left: 0; margin-right: 0; margin-bottom:0px;">
-						  <h4 id="airportBaseDetailsHeading" class="pb-2">Your Airline <span
-								  id="airportDetailsBaseType">Headquarters</span>
-						  </h4>
+					  <div id="airportBaseDetails" class="section m-0" style="box-sizing:border-box;">
+						  <h4 id="airportBaseDetailsHeading" class="pb-2">Your Airline Headquarters</h4>
 						  <div class="item-grid" id="airportBaseIsBase">
 							  <div class="item">
 								  <div class="i-label">Upkeep Costs</div>
-								  <div class="i-value"><span id="airportDetailsBaseUpkeep"></span></div>
+								  <div class="i-value">
+									  <span id="airportDetailsBaseUpkeep"></span>
+									  <span class="tooltip" onmouseover="showBaseUpkeepModal()">
+										  <img class="info svg" src='@routes.Assets.versioned("images/icons/information.svg")'>
+										  <span class="tooltiptext below" style="width: 400px;"></span>
+									  </span>
+								  </div>
 							  </div>
 							  <div class="item">
 								  <div class="i-label">Regulatory status</div>
@@ -1218,14 +1224,14 @@
 								  <div class="i-label">Facilities</div>
 								  <div class="i-value" id="airportDetailsFacilities"></div>
 							  </div>
-							  <div class="item">
+							  <!-- <div class="item">
 								  <div class="i-label upgradeCostLabel">Upgrade Cost</div>
 								  <div class="i-value" id="airportDetailsBaseUpgradeCost"></div>
 							  </div>
 							  <div class="item">
 								  <div class="i-label">Base Upkeep after upgrade</div>
 								  <div class="i-value" id="airportDetailsBaseUpgradeUpkeep"></div>
-							  </div>
+							  </div> -->
 							  <div class="item">
 								  <div class="i-label">Airport Loyalty
 										<img src='@routes.Assets.versioned("images/icons/gear.png")' class="clickable campaignGear"
@@ -1247,12 +1253,10 @@
 								  <div class="i-label">Staff required / capacity</div>
 								  <div class="i-value" style="display: flex; align-items: center;">
 									  <span id="airportDetailsStaff"></span>
-									  <span class="tooltip"
-											onmouseover="showBaseDetailsModal()">
-									<img class="info svg" src='@routes.Assets.versioned("images/icons/information.svg")'>
-									<span class="tooltiptext below alignLeft" style="width: 400px;">
-									</span>
-							  </span>
+									  <span class="tooltip" onmouseover="showBaseDetailsModal()">
+										  <img class="info svg" src='@routes.Assets.versioned("images/icons/information.svg")'>
+										  <span class="tooltiptext below alignLeft" style="width: 400px;"></span>
+									  </span>
 								  </div>
 							  </div>
 						  </div>
@@ -1814,6 +1818,10 @@
 										<div class="label">Total in Circulation:</div>
 										<div class="value total"></div>
 									</div>
+									<div class="table-row aircraftNote">
+										<div class="label">Note:</div>
+										<div class="warning note"></div>
+									</div>
 									<input type="hidden" class="selectedModel"/>
 								</div>
 								<div class="flex-container-width-half gap-2 pt-2">
@@ -2024,7 +2032,7 @@
 								<h4>Milestones</h4>
 								<div class="flex-container-width-third py-2">
 									<div>
-										<h5>Passenger Km</h5>
+										<h5 id="paxKM">Passenger Km</h5>
 										<div style="width: 150px;justify-content: space-between;" class="flex-row py-1">
 											<div class="font-mono text-sm flex-center">
 												50 thousand<img height="16" id="m-pax1" class="pl-1" src="/assets/images/icons/cross.png"></div><div style="color:gold;display: flex;flex-direction: row;" class="">15 <img height="16" src="/assets/images/icons/reputation.svg">
@@ -2047,7 +2055,7 @@
 										</div>
 									</div>
 									<div>
-										<h5>Countries Served</h5>
+										<h5 id="countriesServed">Countries Served</h5>
 										<div style="width: 120px;justify-content: space-between;" class="flex-row py-1">
 											<div class="font-mono text-sm flex-center">
 												15<img height="16" id="m-country1" class="pl-1" src="/assets/images/icons/cross.png"></div><div style="color:gold;display: flex;flex-direction: row;" class="">15 <img height="16" src="/assets/images/icons/reputation.svg">
@@ -2070,7 +2078,7 @@
 										</div>
 									</div>
 									<div>
-										<h5>Aircraft Types</h5>
+										<h5 id="aircraftTypes">Aircraft Types</h5>
 										<div style="width: 120px;justify-content: space-between;" class="flex-row py-1">
 											<div class="font-mono text-sm flex-center">
 												4<img height="16" id="m-aircraft1" class="pl-1" src="/assets/images/icons/cross.png"></div><div style="color:gold;display: flex;flex-direction: row;" class="">5 <img height="16" src="/assets/images/icons/reputation.svg">
@@ -2373,16 +2381,16 @@
 							</div>
 		<!--          		end cashflow sheet -->
 							<div style="width : 100%; display: none;" id="airlineStatsSheet" class="sheet">
-								<div id="airlineStatsChart" style="width: 100%; height: 300px; margin: 0 auto;"></div>
+								<div id="airlineStatsChart" style="width: 100%; height: 700px; margin: 0 auto;"></div>
 							</div>
 						</div>
 	<!-- 					end statements -->
-						<div class="section" style="width: 100%; display: flex;">
-							<h4>Settings</h4>
 
-							<div class="button" onclick="promptConfirm('Reset all tutorials?', setSkipTutorial, false)">Reset Tutorials</div>
-
-							<div class="table-row">
+						<div class="section" style="width: 100%;">
+							<h4>Airline Settings</h4>
+							<div class="item-grid py-4">
+								<div class="button" style="width: 120px;" onclick="promptConfirm('Reset all tutorials?', setSkipTutorial, false)">Reset Tutorials</div>
+								<div class="table-row">
 								<div class="cell label">Airline Code:</div>
 								<div class="cell value">
 									<span id="airlineCodeDisplaySpan">
@@ -2396,13 +2404,13 @@
 									</span>
 								</div>
 							</div>
-							<div class="table-row airlineColor">
+								<div class="table-row airlineColor">
 								<div class="cell label">Color:</div>
 								<div class="cell value">
 									<input type="color" class="picker">
 								</div>
 							</div>
-							<div class="table-row">
+								<div class="table-row">
 								<div class="cell label">Logo:</div>
 								<div class="cell value">
 									<span style="display: flex; align-items: center">
@@ -2412,7 +2420,7 @@
 									</span>
 								</div>
 							</div>
-
+							</div>
 						</div>
 
 					</div>
@@ -2441,29 +2449,29 @@
 								</div>
 							</div>
                         </div>
-						<div class="section">
-							<h4>Airport Assets</h4>
-							<div class="table data" style="width: 100%;">
-								<div class="table-header">
-									<div class="cell" style="width: 15%">Airport</div>
-									<div class="cell" style="width: 40%">Asset</div>
-									<div class="cell" style="width: 10%">Level</div>
-									<div class="cell" style="width: 20%">Profit</div>
-									<div class="cell" style="width: 15%">Margin</div>
-								</div>
-							</div>
-							<div style="max-height: 250px; overflow: auto;">
-								<div class="table data assetList" style="width: 100%; max-height: 200px; overflow-y: auto;">
-									<div class="table-header">
-										<div class="cell" style="width: 15%; border-bottom: none;"></div>
-										<div class="cell" style="width: 40%; border-bottom: none;"></div>
-										<div class="cell" style="width: 10%; border-bottom: none;"></div>
-										<div class="cell" style="width: 20%; border-bottom: none;"></div>
-										<div class="cell" style="width: 15%; border-bottom: none;"></div>
-									</div>
-								</div>
-							</div>
-						</div>
+<!--						<div class="section">-->
+<!--							<h4>Airport Assets</h4>-->
+<!--							<div class="table data" style="width: 100%;">-->
+<!--								<div class="table-header">-->
+<!--									<div class="cell" style="width: 15%">Airport</div>-->
+<!--									<div class="cell" style="width: 40%">Asset</div>-->
+<!--									<div class="cell" style="width: 10%">Level</div>-->
+<!--									<div class="cell" style="width: 20%">Profit</div>-->
+<!--									<div class="cell" style="width: 15%">Margin</div>-->
+<!--								</div>-->
+<!--							</div>-->
+<!--							<div style="max-height: 250px; overflow: auto;">-->
+<!--								<div class="table data assetList" style="width: 100%; max-height: 200px; overflow-y: auto;">-->
+<!--									<div class="table-header">-->
+<!--										<div class="cell" style="width: 15%; border-bottom: none;"></div>-->
+<!--										<div class="cell" style="width: 40%; border-bottom: none;"></div>-->
+<!--										<div class="cell" style="width: 10%; border-bottom: none;"></div>-->
+<!--										<div class="cell" style="width: 20%; border-bottom: none;"></div>-->
+<!--										<div class="cell" style="width: 15%; border-bottom: none;"></div>-->
+<!--									</div>-->
+<!--								</div>-->
+<!--							</div>-->
+<!--						</div>-->
 
 						<div class="section">
 							<h4>Airplane Livery
@@ -2581,7 +2589,7 @@
                                 <li class="label dot">Reputation and Loyalty will be kept</li>
                             </ul>
                             <div class='button resetAirline rebuild' onclick='promptConfirm("Rebuild Airline?", resetAirline, true)'>Rebuild Airline</div>
-                            <h4>Declare bankruptcy<img src='@routes.Assets.versioned("images/icons/heart-break.png")'/></h4>
+                            <h4 class="pt-4">Declare bankruptcy<img src='@routes.Assets.versioned("images/icons/heart-break.png")'/></h4>
                             <ul>
                                 <li class="label dot">Reset to initial game start</li>
                             </ul>
@@ -4187,8 +4195,8 @@
 	<div id="facilityModal" class="modal facility">
 	  <div class="modal-content"  style="width : 400px;">
 	    <span class="close" onclick="closeModal($(this).closest('.modal'))">&times;</span>
-	    <h4><span class="facilityType"></span></h4>
-		<h6 class="facilityDescription"></h6>
+	    <h4 class="modalHeader"><span class="facilityType"></span></h4>
+		<p class="facilityDescription"></p>
 	    <div class="table" style="width: 100%">
 			<div class="table-row">
 				<div class="label" style="width: 50%"><h5>Name:</h5></div>
@@ -4243,13 +4251,15 @@
 
 		  <div class="data table genericTransits" style="width: 100%">
 			  <div class="table-header">
-				  <div class="cell" style="width: 40%">To Airport</div>
+				  <div class="cell" style="width: 30%">To Airport</div>
 				  <div class="cell" style="width: 20%" align="right">Pop</div>
-				  <div class="cell" style="width: 20%" align="right">Cap</div>
-				  <div class="cell" style="width: 20%" align="right">PAX</div>
+				  <div class="cell" style="width: 20%" align="right">Distance</div>
+				  <div class="cell" style="width: 15%" align="right">Capacity</div>
+				  <div class="cell" style="width: 15%" align="right">Pax</div>
 			  </div>
 		  </div>
 
+		  <p class="helper-rule my-2">The further the distance, the more a passenger prefers to stay in their home airport.</p>
 		  <button type="button" class="button confirmButton" onclick="closeModal($(this).closest('.modal'))">OK</button>
 	  </div>
 	</div>
@@ -4654,7 +4664,7 @@
   <div id="linkConfirmationModal" class="modal">
 	  <div class="modal-content" style="width : 600px">
 		  <span class="close" onclick="closeModal($('#linkConfirmationModal'))">&times;</span>
-		  <h4 style="margin-bottom: 10px;" class="modalHeader"></h4>
+		  <h4 class="modalHeader"></h4>
 		  <div style=" float: left; width:50%; padding-left: 10%; box-sizing: border-box; display: flex; flex-direction: column; align-items: center;">
 			  <img class="fromAirport roundImage" style="height: 150px; width:150px; max-height: 30vw; max-width: 30vw;">
 			  <div style="display:inline-block; align-self: center; margin-top:5px; font-weight: bold;" class="fromAirportText"></div>
@@ -4752,7 +4762,7 @@
   <div id="negotiationDifficultyModal" class="modal">
 	  <div class="modal-content" style="width : 750px">
 		  <span class="close" onclick="closeModal($('#negotiationDifficultyModal'))">&times;</span>
-		  <h4 style="margin-bottom: 10px;" class="modalHeader">Negotiation Difficulty Details</h4>
+		  <h4 class="modalHeader">Negotiation Difficulty Details</h4>
           <div style="clear: both;"></div>
 		  <div class="negotiationInfo">
           <!-- requirements list-->
@@ -4857,7 +4867,7 @@
   <div id="negotiationAnimation" class="modal">
 	  <div class="modal-content" style="width : 520px; max-width : 95vw;">
 		  <span class="close" onclick="closeModal($('#negotiationAnimation'))">&times;</span>
-		  <h4 class="modalHeader" style="margin-bottom: 10px; text-align: center;">Negotiation in progress... Success Rate:&nbsp;<span class="successRate"></span>%</h4>
+		  <h4 class="modalHeader">Negotiation in progress... Success Rate:&nbsp;<span class="successRate"></span>%</h4>
 		  <div class="negotiationIcons" style="width: 260px; height: 35px; margin: auto;text-align:center;"></div>
 		  <div class="negotiationDescriptions" class="py-2 px-8" style="height: 15px; text-align: center;"></div>
 		  <div class="negotiationBar progressbar" style="margin: auto;">
@@ -5472,14 +5482,30 @@
 	  <div id="baseDetailsModal" class="modal">
 		  <div class="modal-content"  style="width : 400px;">
 			  <span class="close" onclick="closeModal($(this).closest('.modal'))">&times;</span>
-			  <h4 style="margin-bottom: 10px;">Base Details</h4>
-			  <p>As you level up your base, you have more staff to handle more flights at higher frequencies.</p>
+			  <h4 style="margin-bottom: 10px;">Base Frequency</h4>
+			  <p>As you level up your base, you have more capability to handle more flights at higher frequencies.</p>
 			  <div class="table data scaleDetails" style="width: 100%;">
 				  <div class="table-header">
 					  <div class="cell" style="width: 15%;"><p>Scale</p></div>
 					  <div class="cell" style="width: 25%;"><p>Staff Cap<br><small>HQ / base</small></p></div>
 					  <div class="cell" data-group="INTERNATIONAL" style="width: 30%;"><p>Int'l Freq</p></div>
 					  <div class="cell" data-group="DOMESTIC" style="width: 30%;"><p>Domestic Freq</p></div>
+				  </div>
+			  </div>
+			  <div class="groupRemarks">
+			  </div>
+		  </div>
+	  </div>
+
+	  <div id="baseUpkeepModal" class="modal">
+		  <div class="modal-content"  style="width : 400px;">
+			  <span class="close" onclick="closeModal($(this).closest('.modal'))">&times;</span>
+			  <h4 style="margin-bottom: 10px;">Base Upkeep</h4>
+			  <div class="table data scaleDetails" style="width: 100%;">
+				  <div class="table-header">
+					  <div class="cell" style="width: 30%;"><p>Scale</p></div>
+					  <div class="cell" data-group="upkeep" style="width: 35%;"><p>Upkeep Cost</p></div>
+					  <div class="cell" data-group="build" style="width: 35%;"><p>Build Cost</p></div>
 				  </div>
 			  </div>
 			  <div class="groupRemarks">

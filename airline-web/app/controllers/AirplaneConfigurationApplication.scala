@@ -53,7 +53,7 @@ class AirplaneConfigurationApplication @Inject()(cc: ControllerComponents) exten
     val airline = AirlineCache.getAirline(airlineId, fullLoad = true).get
     println(s"check: ${airline.name} is ${airline.airlineType}")
     if (economy < 0 || business < 0 || first < 0) {
-       BadRequest("cannot have negative values for configurations")
+      BadRequest("cannot have negative values for configurations")
     } else if (airline.airlineType == AirlineType.ULCC && business > 0 || airline.airlineType == AirlineType.ULCC && first > 0) {
       BadRequest("ULCC airline cannot have business or first class")
     } else if (airline.airlineType == AirlineType.LUXURY && economy > 0) {
@@ -62,7 +62,9 @@ class AirplaneConfigurationApplication @Inject()(cc: ControllerComponents) exten
       ModelSource.loadModelById(modelId) match {
         case Some(model) =>
           if (economy * ECONOMY.spaceMultiplier + business * BUSINESS.spaceMultiplier + first * FIRST.spaceMultiplier > model.capacity) {
-            BadRequest("configuration is not within capacity limit!")
+            BadRequest("Configuration is not within capacity limit!")
+          } else if (model.quality == 10 && economy > 0) {
+            BadRequest("5 star aircraft cannot have economy seats!")
           } else if (economy != 0 && economy < AirplaneConfiguration.MIN_SEATS_PER_CLASS || business != 0 && business < AirplaneConfiguration.MIN_SEATS_PER_CLASS || first != 0 && first < AirplaneConfiguration.MIN_SEATS_PER_CLASS) {
             BadRequest(s"must have at least ${AirplaneConfiguration.MIN_SEATS_PER_CLASS} seats per class!")
           } else {

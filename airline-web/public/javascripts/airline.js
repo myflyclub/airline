@@ -1452,7 +1452,7 @@ function updatePlanLinkInfoWithModelSelected(newModelId, assignedModelId, isRefr
 //		thisModelPlanLinkInfo.airplanes.sort(sortByProperty('airplane.condition', true))
 //		thisModelPlanLinkInfo.airplanes = sortPreserveOrder(thisModelPlanLinkInfo.airplanes, 'frequency', false) //higher frequency first
 
-		$('#planLinkAirplaneSelect').data('badConditionThreshold', gameConstants.linkAircraft.conditionBad)
+		$('#planLinkAirplaneSelect').data('badConditionThreshold', gameConstants.aircraft.conditionBad)
 
 		thisModelPlanLinkInfo.airplanes.sort(function(a, b) {
 		    var result = b.frequency - a.frequency
@@ -2727,17 +2727,20 @@ function updateTopCountryComposition(countryComposition, selector) {
 }
 
 function updateTopAirportComposition($container, airportComposition) {
-	var maxPerColumn = Math.max(2, Math.floor(airportComposition.length / 2));
-	var index = 0;
-	$container.empty()
-	var $table
-	$.each(airportComposition, function(index, entry) {
-	    if (index % maxPerColumn == 0) { //flush a column (a table)
-	        $table = $('<div class="table rounded-none data" style="flex : 1; min-width: 200px;"></div>').appendTo($container)
-	    }
-		$table.append("<div class='table-row data-row' style='max-width: 320px;'><div class='cell' style='width: 80%;'>" + getCountryFlagImg(entry.countryCode) + entry.airport
-	 			   + "</div><div class='cell' style='width: 20%; text-align: right;'>" + commaSeparateNumber(entry.passengerCount) + "</div></div>")
-	});
+    var halfLength = Math.ceil(airportComposition.length / 2);
+    $container.empty();
+    $container.css({
+        'display': 'flex',
+        'max-width': '100%'
+    });
+    var $leftTable = $('<div class="table rounded-none data" style="flex: 1; min-width: 200px;"></div>').appendTo($container);
+    var $rightTable = $('<div class="table rounded-none data" style="flex: 1; min-width: 200px;"></div>').appendTo($container);
+    
+    $.each(airportComposition, function(index, entry) {
+        var $targetTable = index < halfLength ? $leftTable : $rightTable;
+        $targetTable.append("<div class='table-row data-row' style='max-width: 320px;'><div class='cell' style='width: 80%;'>" + getCountryFlagImg(entry.countryCode) + entry.airport
+                + "</div><div class='cell' style='width: 20%; text-align: right; padding-right: 0.5rem;'>" + commaSeparateNumber(entry.passengerCount) + "</div></div>");
+    });
 }
 
 function updatePassengerTypeComposition(typeComposition) {

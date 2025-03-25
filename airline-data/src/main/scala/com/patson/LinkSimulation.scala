@@ -15,13 +15,11 @@ import com.patson.model.oil.OilPrice
 import java.util.concurrent.ThreadLocalRandom
 
 object LinkSimulation {
-
-
   val FUEL_UNIT_COST = OilPrice.DEFAULT_UNIT_COST * 92 //for easier flight monitoring, let's make it the default unit price here
-  val FUEL_DISTANCE_FACTOR = 1.4
+  val FUEL_DISTANCE_EXPONENT = 1.4
   val FUEL_EMPTY_AIRCRAFT_BURN_PERCENT = 0.62
   val CREW_UNIT_COST = 6.75
-  val CREW_BASE_COST = 300
+  val CREW_BASE_COST = 50
   val CREW_EQ_EXPONENT = 1.95
 
 
@@ -217,7 +215,7 @@ object LinkSimulation {
     val fuelCost = flightLink.getAssignedModel() match {
       case Some(model) =>
         val loadFactor = FUEL_EMPTY_AIRCRAFT_BURN_PERCENT + (1 - FUEL_EMPTY_AIRCRAFT_BURN_PERCENT) * flightLink.getTotalSoldSeats.toDouble / flightLink.capacity.totalwithSeatSize
-        val distanceFactor = 1 + 0.1 * Math.pow(flightLink.duration.toDouble / 60, FUEL_DISTANCE_FACTOR * loadFactor)
+        val distanceFactor = 1 + 0.1 * Math.pow(flightLink.duration.toDouble / 60, FUEL_DISTANCE_EXPONENT * loadFactor)
         val fuelCost = FUEL_UNIT_COST * model.capacity * distanceFactor * (model.ascentBurn * loadFactor + model.cruiseBurn * link.distance / 800)
 
         (fuelCost * (flightLink.frequency - flightLink.cancellationCount)).toInt
@@ -314,7 +312,8 @@ object LinkSimulation {
       case PassengerCost(passengerGroup, passengerCount, cost) =>
         val preferredLinkClass = passengerGroup.preference.preferredLinkClass
         val standardPrice = flightLink.standardPrice(preferredLinkClass, passengerGroup.passengerType)
-        val satisfaction = Computation.computePassengerSatisfaction(cost, standardPrice)
+        val loadFactor = link.soldSeats.totalwithSeatSize / link.capacity.totalwithSeatSize
+        val satisfaction = Computation.computePassengerSatisfaction(cost, standardPrice, loadFactor)
         satisfactionTotalValue += satisfaction * passengerCount
         totalPassengerCount += passengerCount
     }

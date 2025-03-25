@@ -18,11 +18,13 @@ import scala.util.Random
 object GenericTransitGenerator {
 
   val TRANSIT_MANUAL_LINKS = Map(
-    "HND" -> "NRT",
-    "KIX" -> "KIX",
+    "CAI" -> "HBE",
+    "HBE" -> "DBB",
     "KOJ" -> "KMI",
     "KPO" -> "USN",
     "TAE" -> "USN",
+    "CTS" -> "OBO",
+    "CTS" -> "HKD",
     "TAE" -> "PUS",
     "AOG" -> "SHE",
     "PEK" -> "PKX",
@@ -43,6 +45,8 @@ object GenericTransitGenerator {
     "YPB" -> "CTU",
     "KGT" -> "TFU",
     "KGT" -> "CTU",
+    "SGN" -> "VCA",
+    "SUB" -> "MLG",
     "KJH" -> "KWE",
     "AMD" -> "BDQ",
     "STV" -> "BDQ",
@@ -62,7 +66,7 @@ object GenericTransitGenerator {
     "HVN" -> "HPN",
     "TTN" -> "PHL",
     "PHL" -> "ACY",
-    "PHL" -> "LNS",
+    "PHL" -> "MDT",
     "JFK" -> "ISP",
     "HTO" -> "ISP",
     "BOS" -> "PSM",
@@ -70,8 +74,9 @@ object GenericTransitGenerator {
     "BOS" -> "ORH",
     "ORH" -> "MHT",
     "ORH" -> "BDL",
+    "GRR" -> "MKG",
+    "MSP" -> "RST",
     "HVN" -> "BDL",
-    "BOS" -> "PVD",
     "MIA" -> "PBI",
     "FLL" -> "PBI",
     "MCO" -> "DAB",
@@ -101,8 +106,11 @@ object GenericTransitGenerator {
     "SMF" -> "SCK",
     "OAK" -> "SCK",
     "SFO" -> "SCK",
+    "SFO" -> "MRY",
     "ISP" -> "JFK",
     "LGA" -> "SWF",
+    "IAD" -> "CHO",
+    "IAD" -> "RIC",
     "CAK" -> "CLE",
     "FNT" -> "DTW",
     "TOL" -> "DTW",
@@ -111,8 +119,6 @@ object GenericTransitGenerator {
     "LAF" -> "MDW",
     "SBN" -> "ORD",
     "SBN" -> "MDW",
-    "RFD" -> "ORD",
-    "MKE" -> "ORD",
     "SWO" -> "TUL",
     "SWO" -> "OKC",
     "STL" -> "BLV",
@@ -129,9 +135,9 @@ object GenericTransitGenerator {
     "MEX" -> "TLC",
     "MEX" -> "PBC",
     "AAZ" -> "GUA",
-    "GRU" -> "VCP",
+    "GIG" -> "CFB",
     "CGH" -> "VCP",
-    "SNN" -> "ORK",
+    "ORK" -> "SNN",
     "LGW" -> "LTN",
     "STN" -> "LHR",
     "STN" -> "LGW",
@@ -141,7 +147,7 @@ object GenericTransitGenerator {
     "AMS" -> "EIN",
     "EIN" -> "MST",
     "RTM" -> "EIN",
-    "EIN" -> "ANR",
+    "AMS" -> "GRQ",
     "OST" -> "BRU",
     "LGG" -> "BRU",
     "XCR" -> "CDG",
@@ -174,6 +180,7 @@ object GenericTransitGenerator {
     "BLL" -> "KRP",
     "AGH" -> "CPH",
     "OSL" -> "TRF",
+    "KUN" -> "VNO",
     "ARN" -> "VST",
     "ARN" -> "NYO",
     "GVA" -> "BRN",
@@ -191,33 +198,27 @@ object GenericTransitGenerator {
     "DME" -> "SVO",
     "CSY" -> "KZN",
     "ULV" -> "KZN",
-    "NBC" -> "KZN",
     "ULV" -> "KUF",
     "GSV" -> "BWO",
     "SVX" -> "CEK",
     "NJC" -> "SGC",
     "KGO" -> "SGC",
     "NJC" -> "KGP",
-    "KEJ" -> "TOF",
     "BAX" -> "OVB",
-    "MEL" -> "AVV",
     "PMR" -> "WLG"
   )
 
   def main(args : Array[String]) : Unit = {
-    generateGenericTransit()
+//    generateGenericTransit()
+    LinkSource.deleteLinksByCriteria(List(("transport_type", TransportType.GENERIC_TRANSIT.id)))
     Await.result(actorSystem.terminate(), Duration.Inf)
   }
 
-  def generateGenericTransit(range : Int = 60) : Unit = {
-    LinkSource.deleteLinksByCriteria(List(("transport_type", TransportType.GENERIC_TRANSIT.id)))
-
+  def generateGenericTransit() : Unit = {
     val airports = AirportSource.loadAllAirports(true)
       .filter(_.population >= 500)
       .filter(_.runwayLength >= 500)
-      .filter { airport => !GameConstants.ISOLATED_COUNTRIES.contains(airport.countryCode) }
-      .filter { airport => !GameConstants.isIsland(airport.iata) }
-      .sortBy { _.power }
+      .sortBy { _.power }.reverse
 
     var counter = 0
     var progressCount = 0
@@ -231,6 +232,13 @@ object GenericTransitGenerator {
     val countryRelationships = CountrySource.getCountryMutualRelationships()
     
     for (airport <- airports) {
+      val range = {
+        if (List("CDG", "IST", "ATL", "DEN", "DFW", "ORD", "SFO", "NRT", "PEK", "ICN", "PVG", "SYD").contains(airport.iata)) 240
+        else if (List("MEX", "BLR", "HYD", "BOM", "MUC", "TFU", "YYZ", "YVR", "YYC", "YUL", "LAS", "BOS", "SEA", "PHX", "MSP", "FCO", "NCE", "FRA", "ARN", "LHR", "MAN", "MXP", "WAW").contains(airport.iata)) 160
+        else if (airport.size >= 6) 105
+        else 65
+      }
+      if (airport.size >= 7) 120 else 65
       val boundaryLongitude = calculateLongitudeBoundary(airport.latitude, airport.longitude, range)
       val airportsInRange = scala.collection.mutable.ListBuffer[(Airport, Double)]()
       
@@ -242,8 +250,9 @@ object GenericTransitGenerator {
           
           if (isManualLink || (
               airport.id != targetAirport.id &&
+              ! GameConstants.connectsIsland(airport, targetAirport) &&
               targetAirport.popMiddleIncome > 2500 &&
-              airport.longitude >= boundaryLongitude._1 && 
+              airport.longitude >= boundaryLongitude._1 &&
               airport.longitude <= boundaryLongitude._2 &&
               countryRelationships.getOrElse((airport.countryCode, targetAirport.countryCode), 0) >= 2
           )) {
@@ -271,7 +280,7 @@ object GenericTransitGenerator {
             distance = distance.toInt, 
             capacity = LinkClassValues.getInstance(
               economy = capacity, 
-              business = (capacity * 0.3).toInt
+              business = (capacity * 0.2).toInt
             )
           )
           LinkSource.saveLink(genericTransit)

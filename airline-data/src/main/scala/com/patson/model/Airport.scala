@@ -1,7 +1,7 @@
 package com.patson.model
 
 import com.google.common.cache.{CacheBuilder, CacheLoader, LoadingCache}
-import com.patson.data.{AirportSource, CountrySource, DestinationSource}
+import com.patson.data.{AirportSource, CountrySource, DestinationSource, GameConstants}
 import com.patson.model.AirlineBaseSpecialization.{POWERHOUSE, PowerhouseSpecialization}
 import com.patson.model.AirportAssetType.{PassengerCostModifier, TransitModifier}
 import com.patson.model.airplane.Model
@@ -409,7 +409,7 @@ case class Airport(iata : String, icao : String, name : String, latitude : Doubl
 
   def slotFee(airplaneModel : Model, airline : Airline) : Int = {
     val baseSlotFee = if (airplaneModel.airplaneType == HELICOPTER) {
-      4
+      2
     } else {
       size match {
         case 1 => 2 //small airport
@@ -418,8 +418,8 @@ case class Airport(iata : String, icao : String, name : String, latitude : Doubl
         case 4 => 16
         case 5 => 32
         case 6 => 64
-        case 7 => 96
-        case _ => 128 //mega
+        case 7 => 88
+        case _ => 112 //mega
       }
     }
 
@@ -428,11 +428,11 @@ case class Airport(iata : String, icao : String, name : String, latitude : Doubl
       case REGIONAL => 3
       case MEDIUM => 4
       case MEDIUM_XL => 5
-      case LARGE => 9
-      case EXTRA_LARGE => 12
-      case JUMBO => 18
-      case JUMBO_XL => 22
-      case SUPERSONIC => 16
+      case LARGE => 8
+      case EXTRA_LARGE => 10
+      case JUMBO => 16
+      case JUMBO_XL => 18
+      case SUPERSONIC => 12
       case _ => 2
     }
 
@@ -452,7 +452,7 @@ case class Airport(iata : String, icao : String, name : String, latitude : Doubl
       if (this.hasFeature(AirportFeatureType.ISOLATED_TOWN)) {
         -12 //remote subsidy
       } else {
-        size
+        size - 1
       }
 
     soldSeats * perSeat
@@ -483,13 +483,17 @@ case class Airport(iata : String, icao : String, name : String, latitude : Doubl
 
   //airport range
   lazy val airportRadius : Int = {
-    size match {
-      case 1 => 200
-      case 2 => 200
-      case 6 => 280
-      case 7 => 320
-      case n if (n >= 8) => 360
-      case _ => 240
+    if (GameConstants.COUNTRIES_SUB_SAHARAN.contains(countryCode)) {
+      300
+    } else {
+      size match {
+        case 1 => 200
+        case 2 => 200
+        case 6 => 280
+        case 7 => 320
+        case n if (n >= 8) => 360
+        case _ => 240
+      }
     }
   }
 
@@ -537,7 +541,7 @@ case class AirlineBonus(bonusType : BonusType.Value, bonus : AirlineAppeal, expi
 
 object BonusType extends Enumeration {
   type BonusType = Value
-  val NATIONAL_AIRLINE, PARTNERED_AIRLINE, OLYMPICS_VOTE, OLYMPICS_PASSENGER, SANTA_CLAUS, CAMPAIGN, NEGOTIATION_BONUS, BASE_SPECIALIZATION_BONUS, BANNER, NO_BONUS = Value
+  val NATIONAL_AIRLINE, PARTNERED_AIRLINE, OLYMPICS_VOTE, OLYMPICS_PASSENGER, SANTA_CLAUS, CAMPAIGN, NEGOTIATION_BONUS, BASE_SPECIALIZATION_BONUS, BANNER, NO_BONUS, LUXURY = Value
   val description : BonusType.Value => String = {
     case NATIONAL_AIRLINE => "National Airline"
     case PARTNERED_AIRLINE => "Partnered Airline"
@@ -548,6 +552,7 @@ object BonusType extends Enumeration {
     case NEGOTIATION_BONUS => "Negotiation Great Success"
     case BASE_SPECIALIZATION_BONUS => "Base Specialization Bonus"
     case BANNER => "Winning Banner"
+    case LUXURY => "No Rift-raft Luxury Loyalty Bonus"
     case NO_BONUS => "N/A"
 
   }

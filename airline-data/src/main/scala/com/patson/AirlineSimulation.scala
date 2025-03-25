@@ -195,7 +195,7 @@ object AirlineSimulation {
         if (targetReputation > currentReputation && targetReputation - currentReputation > MAX_REPUTATION_DELTA) {
           targetReputation = currentReputation + MAX_REPUTATION_DELTA //make sure it increases/decreases gradually based on passenger volume
         } else if (targetReputation < currentReputation && currentReputation - targetReputation > MAX_REPUTATION_DELTA) {
-          targetReputation = Math.min(currentReputation - MAX_REPUTATION_DELTA, 250)
+          targetReputation = currentReputation - MAX_REPUTATION_DELTA
         }
         airline.setReputation(targetReputation)
 

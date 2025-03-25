@@ -46,23 +46,11 @@ function updateAirportDetails(airport, cityImageUrl, airportImageUrl) {
 	if (airportImageUrl) {
 		$('#airportDetailsAirportImage').append('<img src="' + airportImageUrl + '" style="width:100%;"/>')
 	}
-
 	
 	$('.airportName').text(airport.name)
 	$('.airportIataIaco').text(
 	     airport.icao ? airport.iata + " / " + airport.icao : airport.iata
 	)
-//	if (airport.iata) {
-//		$('#airportDetailsIata').text(airport.iata)
-//	} else {
-//		$('#airportDetailsIata').text('-')
-//	}
-//
-//	if (airport.icao) {
-//		$('#airportDetailsIcao').text(airport.icao)
-//	} else {
-//		$('#airportDetailsIcao').text('-')
-//	}
 
 	//loyalist-trend
 //	$.each(result.airlineDeltas, function(index, deltaEntry) {
@@ -131,8 +119,9 @@ function updateAirportDetails(airport, cityImageUrl, airportImageUrl) {
 		    contentType: 'application/json; charset=utf-8',
 		    dataType: 'json',
 		    success: function(baseDetails) {
-		    	airportBase = baseDetails.base
-		    	if (!airportBase) { //new base
+		    	airportBase = baseDetails.targetBase
+		    	populateBaseUpkeepModal(baseDetails.targetBase)
+		    	if (!baseDetails.baseScale) { //new base
 		    	    document.getElementById('airportBaseDetailsHeading').innerHTML = `Build base`
 	    			$('#airportDetailsBaseUpkeep').text('0')
 	    			$('#airportDetailsBaseDelegatesRequired').text('1 to Build Base')
@@ -208,9 +197,10 @@ function updateAirportDetails(airport, cityImageUrl, airportImageUrl) {
 	    			enableButton($('#airportBaseDetails .specialization.button'))
 	    		}
 
-		    	var targetBase = baseDetails.targetBase
-		    	$('#airportDetailsBaseUpgradeCost').text('$' + commaSeparateNumber(targetBase.value))
-    			$('#airportDetailsBaseUpgradeUpkeep').text('$' + commaSeparateNumber(targetBase.upkeep))
+		    	var targetBaseScale = baseDetails.targetBase.scale
+				const upgradeText = targetBaseScale === 1 ? "Build base" : "Upgrade base"
+		    	$('#upgradeBaseButton').text(upgradeText + " for $" + commaSeparateNumber(baseDetails.targetBase.upgradeCostByLevel[targetBaseScale - 1]))
+    			$('#airportDetailsBaseUpgradeUpkeep').text('$' + commaSeparateNumber(baseDetails.targetBase.upkeepByLevel[targetBaseScale - 1]))
 
 	    		
 	    		//update buttons and reject reasons
@@ -1548,6 +1538,7 @@ function showGenericTransitModal() {
         $row = $('<div class="table-row" style="width: 100%"></div>')
         $row.append($('<div class="cell">' + transit.toAirportText + '</div>'))
         $row.append($('<div class="cell" align="right">' + commaSeparateNumber(transit.toAirportPopulation) + '</div>'))
+        $row.append($('<div class="cell" align="right">' + commaSeparateNumber(transit.distance) + 'km</div>'))
         $row.append($('<div class="cell capacity" align="right">' + commaSeparateNumber(transit.capacity) + '</div>'))
         $row.append($('<div class="cell" align="right">' + commaSeparateNumber(transit.passenger) + '</div>'))
 
@@ -1611,5 +1602,91 @@ async function toggleAllianceBaseMapViewButton (state) {
     }
 }
 
+function populateBaseUpkeepModal(targetBase) {
+    const tableContainer = document.querySelector('#baseUpkeepModal .table.data.scaleDetails');
+    
+    const existingRows = tableContainer.querySelectorAll('.table-row:not(.table-header)');
+    existingRows.forEach(row => row.remove());
 
+	const currentScale = targetBase.scale - 1;
+
+    targetBase.upkeepByLevel.forEach((upkeep, index) => {
+        const row = document.createElement('div');
+        row.className = 'table-row';
+        row.setAttribute('data-scale', index);
+		if (index === currentScale) {
+            row.classList.add('selected');
+        }
+
+        const scaleCell = document.createElement('div');
+        scaleCell.className = 'cell';
+        scaleCell.style.width = '30%';
+        scaleCell.textContent = index + 1;
+        row.appendChild(scaleCell);
+
+        const upkeepCell = document.createElement('div');
+        upkeepCell.className = 'cell';
+        upkeepCell.style.width = '35%';
+        upkeepCell.textContent = '$' + commaSeparateNumber(upkeep);
+        row.appendChild(upkeepCell);
+
+        const costCell = document.createElement('div');
+        costCell.className = 'cell';
+        costCell.style.width = '35%';
+        costCell.textContent = '$' + commaSeparateNumber(targetBase.upgradeCostByLevel[index]);
+        row.appendChild(costCell);
+
+        tableContainer.appendChild(row);
+    });
+}
+
+function showBaseUpkeepModal() {
+	$('#baseUpkeepModal').fadeIn(500)
+}
+
+function populateBaseDetailsModal() {
+    const tableContainer = document.querySelector('#baseDetailsModal .table.data.scaleDetails');
+    
+    gameConstants.baseScaleProgression.forEach(entry => {
+        const maxFrequency = entry.maxFrequency;
+
+        const row = document.createElement('div');
+        row.className = 'table-row';
+        row.setAttribute('data-scale', entry.scale);
+
+        const scaleCell = document.createElement('div');
+        scaleCell.className = 'cell';
+        scaleCell.textContent = entry.scale;
+        row.appendChild(scaleCell);
+
+        const staffCell = document.createElement('div');
+        staffCell.className = 'cell';
+        staffCell.textContent = `${entry.headquartersStaffCapacity}/${entry.baseStaffCapacity}`;
+        row.appendChild(staffCell);
+
+        const internationalCell = document.createElement('div');
+        internationalCell.className = 'cell';
+        internationalCell.textContent = maxFrequency.INTERNATIONAL;
+        row.appendChild(internationalCell);
+
+        const domesticCell = document.createElement('div');
+        domesticCell.className = 'cell';
+        domesticCell.textContent = maxFrequency.DOMESTIC;
+        row.appendChild(domesticCell);
+
+        tableContainer.appendChild(row);
+    });
+}
+
+function showBaseDetailsModal() {
+    var scale = $('#baseDetailsModal').data('scale')
+    $('#baseDetailsModal .table-row').removeClass('selected')
+
+    if (scale) {
+        var $selectRow = $('#baseDetailsModal').find('.table-row[data-scale="' + scale + '"]')
+        $selectRow.addClass('selected')
+    }
+
+    $('#baseDetailsModal').fadeIn(500)
+}
 

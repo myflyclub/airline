@@ -349,6 +349,7 @@ object ConsumptionHistorySource {
 
             val preferredLinkClass = LinkClass.fromCode(resultSet.getString("preferred_link_class"))
             val paxType = PassengerType(resultSet.getInt("passenger_type"))
+            val loadFactor = link.soldSeats.totalwithSeatSize / link.capacity.totalwithSeatSize
             result += LinkConsumptionHistory(link = link, 
                 passengerCount = resultSet.getInt("passenger_count"), 
                 homeAirport = AirportCache.getAirport(resultSet.getInt("home_airport")).get,
@@ -357,7 +358,7 @@ object ConsumptionHistorySource {
                 preferredLinkClass = preferredLinkClass,
                 preferenceType = FlightPreferenceType(resultSet.getInt("preference_type")),
                 linkClass = LinkClass.fromCode(resultSet.getString("link_class")),
-                satisfaction = Computation.computePassengerSatisfaction(resultSet.getInt("cost"), link.standardPrice(preferredLinkClass, paxType))
+                satisfaction = Computation.computePassengerSatisfaction(resultSet.getInt("cost"), link.standardPrice(preferredLinkClass, paxType), loadFactor)
             )
           }
           

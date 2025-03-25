@@ -12,7 +12,7 @@ import scala.collection.mutable
 
 object Computation {
   val MODEL_COUNTRY_CODE = "US"
-  val MODEL_COUNTRY_POWER : Double = CountrySource.loadCountryByCode(MODEL_COUNTRY_CODE) match {
+  lazy val MODEL_COUNTRY_POWER : Double = CountrySource.loadCountryByCode(MODEL_COUNTRY_CODE) match {
     case Some(country) =>
       country.airportPopulation.toDouble * country.income
     case None =>
@@ -51,13 +51,13 @@ object Computation {
 //      case _ => 4
 //    }
     val timeToCruise: Int = airplaneModel.airplaneType match {
-      case Model.Type.PROPELLER_SMALL => 5
-      case Model.Type.PROPELLER_MEDIUM => 8
-      case Model.Type.SMALL => 14
-      case Model.Type.REGIONAL => 20
-      case Model.Type.MEDIUM | Model.Type.MEDIUM_XL => 28
-      case Model.Type.HELICOPTER | Model.Type.AIRSHIP => 0
-      case _ => 40
+      case Model.Type.PROPELLER_SMALL => Model.TIME_TO_CRUISE_PROPELLER_SMALL
+      case Model.Type.PROPELLER_MEDIUM => Model.TIME_TO_CRUISE_PROPELLER_MEDIUM
+      case Model.Type.SMALL => Model.TIME_TO_CRUISE_SMALL
+      case Model.Type.REGIONAL => Model.TIME_TO_CRUISE_REGIONAL
+      case Model.Type.MEDIUM | Model.Type.MEDIUM_XL => Model.TIME_TO_CRUISE_MEDIUM
+      case Model.Type.HELICOPTER | Model.Type.AIRSHIP => Model.TIME_TO_CRUISE_HELICOPTER
+      case _ => Model.TIME_TO_CRUISE_OTHER
     }
     val cruiseTime = distance.toDouble * 60 / airplaneModel.speed
 
@@ -312,7 +312,7 @@ def constructAffinityText(fromZone : String, toZone : String, fromCountry : Stri
     val airportSizeMultiplier = Math.pow(1.5, minAirportSize) 
     val distance = calculateDistance(from, to)
     val distanceMultiplier = distance.toDouble / 5000
-    val internationalMultiplier = if (from.countryCode == to.countryCode) 1 else 3
+    val internationalMultiplier = if (from.countryCode == to.countryCode) 1 else 2
     
     (baseCost * airportSizeMultiplier * distanceMultiplier * internationalMultiplier).toInt 
   }
@@ -357,17 +357,19 @@ def constructAffinityText(fromZone : String, toZone : String, fromCountry : Stri
     val overall = airplanes + bases + assets + loans + oilContracts + existingBalance
   }
 
-  val MAX_SATISFACTION_PRICE_RATIO_THRESHOLD = 0.7 //at 100% satisfaction is <= this threshold
-  val MIN_SATISFACTION_PRICE_RATIO_THRESHOLD = LINK_COST_TOLERANCE_FACTOR + 0.05 //0% satisfaction >= this threshold ... +0.05 so, there will be at least some satisfaction even at the LINK_COST_TOLERANCE_FACTOR
+  val SATISFACTION_MAX_PRICE_RATIO_THRESHOLD = 0.7 //at 100% satisfaction is <= this threshold
+  val SATISFACTION_MIN_PRICE_RATIO_THRESHOLD = LINK_COST_TOLERANCE_FACTOR + 0.05 //0% satisfaction >= this threshold ... +0.05 so, there will be at least some satisfaction even at the LINK_COST_TOLERANCE_FACTOR
+  val SATISFACTION_NOT_CROWDED_MAX_BONUS_THRESHOLD = 0.125
   /**
     * From 0 (not satisfied at all) to 1 (fully satisfied)
     *
     *
     */
-  val computePassengerSatisfaction = (cost: Double, standardPrice : Int) => {
+  val computePassengerSatisfaction = (cost: Double, standardPrice: Int, crowded: Double) => {
+    val crowdedMod = Math.max(1 - SATISFACTION_NOT_CROWDED_MAX_BONUS_THRESHOLD - crowded, 0) * SATISFACTION_NOT_CROWDED_MAX_BONUS_THRESHOLD
     val ratio = cost / standardPrice
-    var satisfaction = (MIN_SATISFACTION_PRICE_RATIO_THRESHOLD - ratio) / (MIN_SATISFACTION_PRICE_RATIO_THRESHOLD - MAX_SATISFACTION_PRICE_RATIO_THRESHOLD)
-    satisfaction = Math.min(1, Math.max(0, satisfaction))
+    var satisfaction = (SATISFACTION_MIN_PRICE_RATIO_THRESHOLD - ratio) / (SATISFACTION_MIN_PRICE_RATIO_THRESHOLD - SATISFACTION_MAX_PRICE_RATIO_THRESHOLD)
+    satisfaction = Math.min(1, Math.max(0, satisfaction + crowdedMod))
     //println(s"${cost} vs standard price $standardPrice. satisfaction : ${satisfaction}")
     satisfaction
   }

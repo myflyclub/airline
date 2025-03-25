@@ -8,7 +8,7 @@ import com.patson.util.AirportCache
 
 case class AirlineBase(airline : Airline, airport : Airport, countryCode : String, scale : Int, foundedCycle : Int, headquarter : Boolean = false) {
   private lazy val COST_EXPONENTIAL_BASE = if (airline.airlineType == AirlineType.MEGA_HQ && headquarter) {
-    1.6
+    1.54
   } else if (airline.airlineType == AirlineType.MEGA_HQ && !headquarter) {
     1.73
   } else {
@@ -16,21 +16,35 @@ case class AirlineBase(airline : Airline, airport : Airport, countryCode : Strin
   }
 
   lazy val getValue : Long = {
+    calculateUpgradeCost(scale)
+  }
+
+  def calculateUpgradeCost (scale: Int): Long = {
+    val adjustedScale = Math.min(12, Math.max(1, scale)) //for non-existing base, calculate as if the base is 1, cap at 12
     if (scale == 0) {
       0
     } else if (headquarter && scale == 1) { //free to start HQ
       0
     } else {
-      val baseCost = if (airline.airlineType == AirlineType.MEGA_HQ && !headquarter) {
-        (40 * 1000000 + airport.rating.overallRating * 120000).toLong
+      val baseCost = if (airline.airlineType == AirlineType.MEGA_HQ) {
+        if (headquarter) {
+          (airport.rating.overallRating * 100000).toLong
+        } else {
+          (40 * 1000000 + airport.rating.overallRating * 120000).toLong
+        }
       } else {
         (1000000 + airport.rating.overallRating * 120000).toLong
       }
-      (baseCost * airportTypeMultiplier * airportSizeRatio * Math.pow (COST_EXPONENTIAL_BASE, (scale - 1) )).toLong
+      val cost = baseCost * airportTypeMultiplier * airportSizeRatio * Math.pow (COST_EXPONENTIAL_BASE, (adjustedScale - 1) )
+      (cost * Math.max(1, 1 + (scale - 12) * 0.2)).toLong
     }
   }
 
   lazy val getUpkeep : Long = {
+    calculateUpkeep(scale)
+  }
+
+  def calculateUpkeep (scale: Int): Long = {
     val adjustedScale = Math.min(12, Math.max(1, scale)) //for non-existing base, calculate as if the base is 1, cap at 12
     val baseUpkeep = 3000 + airport.rating.overallRating * 150
     val upkeep = baseUpkeep * airportTypeMultiplier * airportSizeRatio * Math.pow(COST_EXPONENTIAL_BASE, adjustedScale - 1)

@@ -149,6 +149,7 @@ object PassengerSimulation {
       val remainingDemandChunks = Collections.synchronizedList(new util.ArrayList[(PassengerGroup, Airport, Int)]())
       remainingDemandChunks.addAll(demandChunksForLater.asJava)
       println("Demand chunks saved for later: " + remainingDemandChunks.size)
+      println("Demand chunks already removed: " + missedDemandChunks.size)
 
       //find out required routes - which "to airports" does each passengerGroup has
       print("Find required routes...")
@@ -294,7 +295,7 @@ object PassengerSimulation {
   }
 
   val ROUTE_COST_TOLERANCE_FACTOR = 1.15
-  val LINK_COST_TOLERANCE_FACTOR = 0.95
+  val LINK_COST_TOLERANCE_FACTOR = 0.95 //used by computePassengerSatisfaction
   val LINK_DISTANCE_TOLERANCE_FACTOR = 1.6
   val ROUTE_DISTANCE_TOLERANCE_FACTOR = 2.75
 
@@ -313,7 +314,8 @@ object PassengerSimulation {
       return Some(DISTANCE)
     }
 
-    val routeAffordableCost = Pricing.computeStandardPrice(routeDisplacement, Computation.getFlightCategory(fromAirport, toAirport), preferredLinkClass, paxType, fromAirport.baseIncome) * ROUTE_COST_TOLERANCE_FACTOR
+    val routeCostTolerance = PassengerType.routeCostTolerance(paxType)
+    val routeAffordableCost = Pricing.computeStandardPrice(routeDisplacement, Computation.getFlightCategory(fromAirport, toAirport), preferredLinkClass, paxType, fromAirport.baseIncome) * routeCostTolerance
     if (route.totalCost > routeAffordableCost) {
       //println(s"rejected affordable: $routeAffordableCost, cost : , ${route.totalCost}  $route" )
       return Some(TOTAL_COST)
@@ -505,12 +507,14 @@ object PassengerSimulation {
               isValid = false
             } else if (predecessorLink.transportType == TransportType.GENERIC_TRANSIT && linkConsideration.link.transportType == TransportType.GENERIC_TRANSIT) {
               isValid = false //don't allow ground 2 ground connections
-            } else if (predecessorLink.transportType == TransportType.GENERIC_TRANSIT && predecessorLink.from.id == passengerGroup.fromAirport.id) {
-              connectionCost = 0 //origin ground link only incurs link cost
             } else if (predecessorLink.transportType == TransportType.GENERIC_TRANSIT) {
-              connectionCost += 120 //middle "leave the airport" ground connections more expensive; note this has to be 2x as expensive as initial connection ground cost was free
+              if (predecessorLink.from.id == passengerGroup.fromAirport.id || predecessorLink.to.id == passengerGroup.fromAirport.id) {
+                connectionCost = 0 //origin ground link only incurs link cost
+              } else {
+                connectionCost += 140 //middle "leave the airport" ground connections are v expensive; note this has to be 2x expensive as initial connection ground cost was free
+              }
             } else if (linkConsideration.link.transportType == TransportType.GENERIC_TRANSIT) {
-              connectionCost = 0 //destination ground link only incurs link cost, note this will also catch 1st connection of "middle" ground connectons
+              connectionCost = 0 //ground link is free, which may be destination (via ground) OR if there's then an additional flight connection it's caught above with a very expensive connection cost
             } else {
               //now look at the frequency of the link arriving at this FromAirport and the link (current link) leaving this FromAirport. check frequency
               val frequency = Math.max(predecessorLink.frequencyByClass(predecessorLinkConsideration.linkClass), linkConsideration.link.frequencyByClass(linkConsideration.linkClass))

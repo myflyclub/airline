@@ -646,14 +646,16 @@ class AllianceApplication @Inject()(cc: ControllerComponents) extends AbstractCo
   
   def getApplyRejection(airline : Airline, alliance : Alliance) : Option[String] = {
     val approvedMembers = alliance.members.filter(_.role != AllianceRole.APPLICANT)
-    
+    val approvedMembersRegionalCount = Math.min(Alliance.MAX_MEMBER_REGIONALS_COUNT, alliance.members.count(member => member.role != AllianceRole.APPLICANT && member.airline.airlineType == AirlineType.REGIONAL))
+    val maxSize = Alliance.MAX_MEMBER_NON_REGIONAL_COUNT + Alliance.MAX_MEMBER_REGIONALS_COUNT
+
     if (airline.getHeadQuarter().isEmpty) { 
       return Some("Airline does not have headquarters")
     }
-    
-    if (approvedMembers.size >= Alliance.MAX_MEMBER_NON_REGIONAL_COUNT + Alliance.MAX_MEMBER_REGIONALS_COUNT) {
-      return Some("Alliance has reached max member size for all airline types" + Alliance.MAX_MEMBER_NON_REGIONAL_COUNT + " already")
-    } else if (airline.airlineType != AirlineType.REGIONAL && approvedMembers.size >= Alliance.MAX_MEMBER_NON_REGIONAL_COUNT) {
+
+    if (approvedMembers.size >= maxSize) {
+      return Some("Alliance has reached " + maxSize + " max member size for all airline types already")
+    } else if (airline.airlineType != AirlineType.REGIONAL && approvedMembers.size - approvedMembersRegionalCount >= Alliance.MAX_MEMBER_NON_REGIONAL_COUNT) {
       return Some("Alliance only has slots to accept Regional Partner Airline members")
     }
     

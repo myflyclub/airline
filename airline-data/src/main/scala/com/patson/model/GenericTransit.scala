@@ -2,14 +2,18 @@ package com.patson.model
 
 case class GenericTransit(from : Airport, to : Airport, distance : Int, var capacity: LinkClassValues, var id : Int = 0) extends Transport {
   override val transportType : TransportType.Value = TransportType.GENERIC_TRANSIT
-  override val duration : Int = (distance.toDouble / 35 * 60).toInt
+  override val duration : Int = (distance.toDouble / 40 * 60).toInt
   override var frequency : Int = 24 * 7
   override def computedQuality() : Int = GenericTransit.QUALITY //constant quality
   override val price : LinkClassValues = LinkClassValues.getInstance()
   val flightCategory = FlightCategory.DOMESTIC
 
-  val localCostRatio = 0.2
-  override val cost : LinkClassValues = LinkClassValues.getInstance(economy = (Pricing.computeStandardPrice(distance, FlightCategory.DOMESTIC, ECONOMY, PassengerType.TRAVELER, from.baseIncome) * localCostRatio).toInt, business = (Pricing.computeStandardPrice(distance, FlightCategory.DOMESTIC, BUSINESS, PassengerType.TRAVELER, from.income) * localCostRatio).toInt) //hidden cost of general transit
+  val localCostRatio = 0.7
+  override val cost : LinkClassValues = LinkClassValues.getInstance(
+    economy = ((Pricing.computeStandardPrice(distance, FlightCategory.DOMESTIC, ECONOMY, PassengerType.TRAVELER, from.baseIncome) - Pricing.PRICE_BASE) * localCostRatio).toInt,
+    business = ((Pricing.computeStandardPrice(distance, FlightCategory.DOMESTIC, BUSINESS, PassengerType.TRAVELER, from.baseIncome) - Pricing.PRICE_BASE) * localCostRatio).toInt,
+    first = (Pricing.computeStandardPrice(distance, FlightCategory.DOMESTIC, FIRST, PassengerType.TRAVELER, from.baseIncome) * localCostRatio).toInt
+  )
 
   val upkeep = 0
   override var minorDelayCount : Int = 0

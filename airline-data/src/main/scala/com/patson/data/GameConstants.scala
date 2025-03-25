@@ -7,7 +7,7 @@ object GameConstants {
   val ISOLATED_COUNTRIES: Seq[String] = List("AG", "AI", "BQ", "BL", "BS", "CC", "CK", "CV", "DM", "FO", "GD", "KM", "KY", "MF", "MS", "MU", "MV", "NP", "SC", "ST", "SX", "TC", "VI", "VG", "VC", "VU", "WF")
   val ISOLATED_ISLAND_AIRPORTS: Seq[String] = List(
     //europe
-    "GRW", "CVU", "PXO", "SJZ", "FNC", "PXO", //pt
+    "SMA", "SJZ", "HOR", "FNC", "PIX", "GRW", "PXO", "CVU", //pt
     "VDE", "GMZ", "SPC", "LPA", "FUE", "ACE", "IBZ", "PMI", "MAH", //es
     "IDY", "ACI", "ISC", "OUI", "IDY", //FR
     "UVE", "LIF", "TGJ", "MEE", "ILP", //FR Pacific
@@ -22,7 +22,7 @@ object GameConstants {
     "PJA", //SE
     "EN9","EN1","EN2", "SKN", "SSJ", "BNN", "MOL", "OSY", "RVK", "SDN", "SOG", "HAU", //NO
     "HZK", "GRY", //IS
-    "AOK", "JMK", "JNX", "JSI", "JTR", "KIT", "LKS", "MLO", "SMI", "JIK", "KGS", "RHO", "LXS", "MJT", "JKH", "ZTH", "EFL", "SMI", //GR
+    "AOK", "JMK", "JNX", "JSI", "KIT", "LKS", "MLO", "SMI", "JIK", "KGS", "RHO", "LXS", "MJT", "JKH", "ZTH", "EFL", "SMI", //GR
     "KGD", "ITU", //RU
     //americas
     "FRD", "ESD", "ACK", "MVY", "BID", "AVX", "OTZ", //US
@@ -67,17 +67,20 @@ object GameConstants {
   )
   val OTHER_ISLAND_AIRPORTS: Seq[String] = List(
     //europe
+    "TER", "PDL", //pt
     "PMI", "IBZ", "MAH", //es
     "BIA", "CLY", "AJA", "FSC", //fr
     "OLB", "AHO", "CAG", "PMO", "CTA", "TPS", "CIY", "EBA", //it
+    "JTR", //gr
     "MLA",
     //asia
-    "BAH",
+    "BAH", "AUH", "AAN", //block local connects
     "TBH", "TAG", "BCD", "IAO", "CGM", //ph
     "LBU", "BTH", "LGK", "TMC", "BMU", "TTE", "ARD", "DPS", //my & id
     //americas
     "PMV",
     "YBC", "YCD", "LAK", "YPN", "YZG", "YEV", //ca
+    "YYJ",
     "HYA", "ISP", "HTO", //us allow channel crossings & block transit
     "HNL", "OGG", "HNM", //us HI
     "CDB", "NLG", "SDP", "ADQ", "MYU", "PQS", "RSH", //US AK

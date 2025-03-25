@@ -23,7 +23,7 @@ class GenericTransitApplication @Inject()(cc: ControllerComponents) extends Abst
           transit.from
         }
 
-      var transitJson = Json.obj("toAirportId" -> toAirport.id, "toAirportText" -> toAirport.displayText, "toAirportPopulation" -> toAirport.population, "capacity" -> transit.capacity.total, "linkId" -> transit.id)
+      var transitJson = Json.obj("toAirportId" -> toAirport.id, "toAirportText" -> toAirport.displayText, "toAirportPopulation" -> toAirport.population, "capacity" -> transit.capacity.total, "linkId" -> transit.id, "distance" -> transit.distance)
       consumptionByLinkId.get(transit.id) match {
         case Some(consumption) =>
           transitJson = transitJson + ("passenger" -> JsNumber(consumption.link.getTotalSoldSeats))
