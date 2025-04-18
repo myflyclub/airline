@@ -361,23 +361,21 @@ function plotLinkProfit(linkConsumptions, container, plotUnit) {
     }
 
     var maxMark = plotUnit.maxMark
-  	var xLabel
+  	var xLabel = 'Period & Week'
   	var yLabel
-  	var weeksPerMark = plotUnit.weeksPerMark
+  	// var weeksPerMark = plotUnit.weeksPerMark
    	switch (plotUnit.value) {
         case plotUnitEnum.MONTH.value:
-            xLabel = 'Month'
             yLabel = 'Monthly Profit'
             break;
         case plotUnitEnum.QUARTER.value:
-            xLabel = 'Quarter'
             yLabel = 'Quarterly Profit'
             break;
     }
 
 	$.each(linkConsumptions, function(index, linkConsumption) {
 		//group in months first
-		var mark = Math.floor(linkConsumption.cycle / weeksPerMark)
+		var mark = getGameDate(linkConsumption.cycle)
 		if (profitByMark[mark] === undefined) {
 			profitByMark[mark] = linkConsumption.profit
 			markOrder.push(mark)
@@ -466,13 +464,11 @@ function plotLinkConsumption(linkConsumptions, ridershipContainer, revenueContai
 
 	var maxWeek = plotUnit.maxWeek
 	var weeksPerMark = plotUnit.weeksPerMark
-	var xLabel
+	var xLabel = 'Period & Week'
 	switch (plotUnit.value) {
       case plotUnitEnum.MONTH.value:
-        xLabel = 'Month'
         break;
       case plotUnitEnum.QUARTER.value:
-        xLabel = 'Quarter'
         break;
     }
 
@@ -515,7 +511,7 @@ function plotLinkConsumption(linkConsumptions, ridershipContainer, revenueContai
 			    priceByClass.first.push({ value : linkConsumption.price.first })
 			}
 
-			var mark = Math.floor(linkConsumption.cycle / weeksPerMark)
+			var mark = getGameDate(linkConsumption.cycle)
 			//var week = linkConsumption.cycle % 4 + 1
 			category.push({ label : mark.toString()})
 		})
@@ -539,8 +535,9 @@ function plotLinkConsumption(linkConsumptions, ridershipContainer, revenueContai
                                       "bgAlpha":"0",
                                       "showValues":"0",
                                       "canvasPadding":"0",
-                                      "labelDisplay":"wrap",
-                                      "labelStep": weeksPerMark
+                                    "labelDisplay": "rotate",
+      								"slantLabel": "1",
+                                    "labelStep": weeksPerMark
                       	    	}
 
 	checkDarkTheme(chartConfig, true)
@@ -559,8 +556,7 @@ function plotLinkConsumption(linkConsumptions, ridershipContainer, revenueContai
 						 ,{"seriesName": "Sold Seats (Business)","data" : soldSeatsData.business}
 						 ,{"seriesName": "Sold Seats (First)", "data" : soldSeatsData.first}
 						 ,{ "seriesName": "Cancelled Seats", "data" : cancelledSeatsData}
-						 ,{ "seriesName": "Empty Seats", "data" : emptySeatsData}			              
-			            //, {"seriesName": "Load Factor", "renderAs" : "line", "parentYAxis": "S", "data" : loadFactorData} 
+						 ,{ "seriesName": "Empty Seats", "data" : emptySeatsData}
 			            ]
 	    }
 	})
@@ -583,7 +579,8 @@ function plotLinkConsumption(linkConsumptions, ridershipContainer, revenueContai
                     "bgAlpha":"0",
                     "showValues":"0",
                     "canvasPadding":"0",
-                    "labelDisplay":"wrap",
+                    "labelDisplay": "rotate",
+					"slantLabel": "1",
     	            "labelStep": weeksPerMark}
 	checkDarkTheme(chartConfig, true)
 	
@@ -622,7 +619,8 @@ function plotLinkConsumption(linkConsumptions, ridershipContainer, revenueContai
                                   "showValues":"0",
                                   "canvasPadding":"0",
                                   "formatNumberScale" : "0",
-                                  "labelDisplay":"wrap",
+                                "labelDisplay": "rotate",
+      							"slantLabel": "1",
                   	            "labelStep": weeksPerMark
                   	    	}
     checkDarkTheme(chartConfig, true)

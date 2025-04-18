@@ -1851,6 +1851,7 @@ function deleteLink() {
 	    success: function() {
 	    	$("#linkDetails").fadeOut(200)
 	    	updateLinksInfo()
+	    	updateAirlineInfo(activeAirline.id)
 	    	deselectLink()
 
 	    	if ($('#linksCanvas').is(':visible')) { //reload the links table then

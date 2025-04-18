@@ -1017,9 +1017,9 @@
 				<div id="linksCanvas"  class="canvas" style="display: none; height: 100%;">
 					<div class="mainPanel">
 						<div class="section tight">
-							<div style="height: 20px; text-align: left;">
-								<img src='@routes.Assets.versioned("images/icons/clock-frame.png")' class="button" title="Sort by last updated" onclick="toggleLinksTableSortOrder($('#hiddenLinkSortBy'))" style="vertical-align: text-bottom">
-								<img src='@routes.Assets.versioned("images/icons/funnel.png")' class="button" title="Show / Hide Filter Row" onclick="toggleLinksTableFilterRow()" style="vertical-align: text-bottom">
+							<div class="no-highlight">
+								<a class="px-2 py-1 inline-block" title="Sort by last updated" onclick="toggleLinksTableSortOrder($('#hiddenLinkSortBy'))"><img src='@routes.Assets.versioned("images/icons/clock-frame.png")' style="vertical-align: text-bottom" class="button"></a>
+								<a class="px-2 py-1 inline-block" title="Show / Hide Filter Row" onclick="toggleLinksTableFilterRow()"><img src='@routes.Assets.versioned("images/icons/funnel.png")' style="vertical-align: text-bottom" class="button"></a>
 							</div>
 								<div class="table-container-x">
 									<div class="table data" style="min-width: 920px; height: 20px;">
@@ -1178,7 +1178,7 @@
 								  <div class="i-label"><span class="airportCountryName">Country</span> Gini
 									  <div class="tooltip">
 										  <img class="info svg" src='@routes.Assets.versioned("images/icons/information.svg")'>
-										  <span class="tooltiptext alignLeft" style="width: 400px;">
+										  <span class="tooltiptext" style="width: 400px;">
 											  <p><b>Gini coefficient</b> is a common measure of inequality. In-game,
 												population, income, and inequality is applied to determine how much of
 												each airport is low, middle, and extremely-high income.</p>
@@ -2453,22 +2453,33 @@
 									</div>
 									<div class="item">
 										<div class="i-label">Revenue Available<br>Seat km</div>
-										<div class="i-value RASK"></div>
+										<div class="i-value">¢<span class="RASK"></span></div>
 									</div>
 									<div class="item">
-										<div class="i-label">Cost Available<br>Seat km</div>
-										<div class="i-value CASK"></div>
+										<div class="i-label">Cost Available<br>Seat km<div class="tooltip">
+											<img src="/assets/images/icons/information.svg">
+											<div class="tooltiptext below" style="width: 280px;">
+												<p>Includes all flights expenses except fuel taxes, and includes base upkeep & base overtime cost.</p>
+												<p><i>RASK is our standard metric for comparing two airlines' costs, regardless of their reputation.</i></p>
+											</div>
+										</div></div>
+										<div class="i-value">¢<span class="CASK"></span></div>
 									</div>
 									<div class="item">
 										<div class="i-label">Satisfaction</div>
-										<div class="i-value satisfaction"></div>
+										<div class="i-value"><span class="satisfaction"></span>%</div>
 									</div>
 									<div class="item">
 										<div class="i-label">Load Factor</div>
 										<div class="i-value loadFactor"></div>
 									</div>
 									<div class="item">
-										<div class="i-label">On-Time Performance</div>
+										<div class="i-label">On-Time Performance<div class="tooltip">
+											<img src="/assets/images/icons/information.svg">
+											<div class="tooltiptext below" style="width: 280px;">
+												<p>On-time performance is modified by the average age of your fleet and whether you have maintenance hangars.</p>
+											</div>
+										</div></div>
 										<div class="i-value onTime"></div>
 									</div>
 									<div class="divider"></div>
@@ -2491,11 +2502,11 @@
 									</div>
 									<div class="item">
 										<div class="i-label">Fleet condition</div>
-										<div class="i-value fleetCondition"></div>
+										<div class="i-value"><span class="fleetCondition"></span>%</div>
 									</div>
 									<div class="item">
 										<div class="i-label">Fleet Utilization</div>
-										<div class="i-value fleetUtilization"></div>
+										<div class="i-value"><span class="fleetUtilization"></span>%</div>
 									</div>
 									
 								</div>
@@ -3954,26 +3965,7 @@
 								  <div class="table-row">
 									  <p class="label" style="width:50%">Direct Demand</p>
 									  <div class="value" style="width:50%">
-										  <div style="text-align: right">
-											  <span class="demand">
-											  </span>
-											  <div class="tooltip">
-												  <img class="info svg" src='@routes.Assets.versioned("images/icons/information.svg")'>
-												  <span class="tooltiptext below directDemandBreakdown" style="width: 200px;">
-														<div class="fromAirport">
-															<h4><span class="airportLabel"></span></h4>
-															<p> Traveler: <span class="travelerDemand"></span></p>
-															<p> Business: <span class="businessDemand"></span></p>
-															<p> Tourist: <span class="touristDemand"></span></p>
-														</div>
-														<div class="toAirport" style="margin-top: 8px;">
-															<h4><span class="airportLabel"></span></h4>
-															<p> Traveler: <span class="travelerDemand"></span></p>
-															<p> Business: <span class="businessDemand"></span></p>
-															<p> Tourist: <span class="touristDemand"></span></p>
-														</div>
-													</span>
-											  </div>
+										  <div style="text-align: right" class="demand">
 										  </div>
 									  </div>
 								  </div>

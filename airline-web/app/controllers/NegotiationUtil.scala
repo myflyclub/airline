@@ -34,8 +34,8 @@ object NegotiationUtil {
   def getMaxFrequencyByGroup(baseScale : Int, flightCategory : FlightCategory.Value, isDomesticAirport: Boolean) : Int = {
     val domesticAirportBonus = if (isDomesticAirport) 6 else 0
     val maxFrequency = flightCategory match {
-      case FlightCategory.DOMESTIC => 3 + (baseScale * 2.9).toInt
-      case FlightCategory.INTERNATIONAL => 4 + (baseScale * 1.9).toInt
+      case FlightCategory.DOMESTIC => 5 + (baseScale * 2.9).toInt
+      case FlightCategory.INTERNATIONAL => 6 + (baseScale * 1.9).toInt
     }
 
     maxFrequency + domesticAirportBonus

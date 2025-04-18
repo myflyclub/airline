@@ -18,7 +18,7 @@ import java.util.concurrent.ThreadLocalRandom
 object LinkSimulation {
   val FUEL_UNIT_COST = OilPrice.DEFAULT_UNIT_COST * 94 //for easier flight monitoring, let's make it the default unit price here
   val FUEL_DISTANCE_EXPONENT = 1.4
-  val FUEL_EMPTY_AIRCRAFT_BURN_PERCENT = 0.62
+  val FUEL_EMPTY_AIRCRAFT_BURN_PERCENT = 0.58
   val CREW_UNIT_COST = 6.75
   val CREW_BASE_COST = 50
   val CREW_EQ_EXPONENT = 1.95

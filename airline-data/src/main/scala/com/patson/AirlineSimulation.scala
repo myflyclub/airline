@@ -489,7 +489,7 @@ object AirlineSimulation {
           // Calculate RASK & CASK using linksIncome values & base costs and calculated ASK
           if (totalASK > 0) {
             calculatedRASK = (linksIncome.revenue).toDouble / totalASK
-            calculatedCASK = (linksIncome.expense + othersIncome.baseUpkeep + othersIncome.overtimeCompensation).toDouble / totalASK
+            calculatedCASK = (linksIncome.expense + -1 * (othersIncome.baseUpkeep + othersIncome.overtimeCompensation) + linksIncome.fuelTax).toDouble / totalASK //fuelTax is already negative
           }
 
           // Calculate Satisfaction & Load Factor averages

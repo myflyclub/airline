@@ -23,13 +23,13 @@ object DemandGenerator {
   val MIN_DISTANCE = 175 //does not apply to islands
   val HIGH_INCOME_RATIO_FOR_BOOST = 0.7 //at what percent of high income does demand change
   val PRICE_DISCOUNT_PLUS_MULTIPLIER = 1.05 //multiplier on base price
-  val PRICE_LAST_MIN_MULTIPLIER = 1.12
+  val PRICE_LAST_MIN_MULTIPLIER = 1.14
   val PRICE_LAST_MIN_DEAL_MULTIPLIER = 0.9
   val HUB_AIRPORTS_MAX_RADIUS = 1400
-  val launchDemandFactor : Double = if (CycleSource.loadCycle() <= 1) 1.0 else Math.min(1, (58 + CycleSource.loadCycle().toDouble / 24) / 100)
-//  val launchDemandFactor : Double = 1.0
-  val baseLaunchDemandFactor : Double = if (CycleSource.loadCycle() <= 1) 1.0 else Math.min(1, (65 + CycleSource.loadCycle().toDouble / 48) / 100)
-//  val baseLaunchDemandFactor : Double = 1.0
+//  val launchDemandFactor : Double = if (CycleSource.loadCycle() <= 1) 1.0 else Math.min(1, (50 + CycleSource.loadCycle().toDouble / 24) / 100)
+  val launchDemandFactor : Double = 1.0
+//  val baseLaunchDemandFactor : Double = if (CycleSource.loadCycle() <= 1) 1.0 else Math.min(1, (65 + CycleSource.loadCycle().toDouble / 48) / 100)
+  val baseLaunchDemandFactor : Double = 1.0
   val demandRandomizer: Int = CycleSource.loadCycle() % 10
 
   import scala.jdk.CollectionConverters._
@@ -59,8 +59,8 @@ object DemandGenerator {
     } else {
       val percentages = percentagesHubAirports(hubAirports :+ toAirport, fromAirport)
       val updatedList = percentages.map(_._1) // Extract the sorted airports
-      if (updatedList.length > fromAirport.size + 3) {
-        updatedList.take(fromAirport.size + 3) // Keep only the top `fromAirportSize + 2` airports
+      if (updatedList.length > fromAirport.size + 4) {
+        updatedList.take(fromAirport.size + 4) // Keep only the top `fromAirportSize + 2` airports
       } else {
         updatedList
       }
@@ -68,16 +68,17 @@ object DemandGenerator {
   }
 
   def percentagesHubAirports(hubAirports: List[Airport], fromAirport: Airport): List[(Airport, Double)] = {
+    val distanceFloor = HUB_AIRPORTS_MAX_RADIUS.toDouble / 3
     if (hubAirports.isEmpty) {
       List.empty
     } else {
       val avgPopMiddleIncome = hubAirports.map(_.popMiddleIncome).sum.toDouble / hubAirports.size
-      val avgDistance = hubAirports.map(airport => Computation.calculateDistance(airport, fromAirport)).sum.toDouble / hubAirports.size
+      val avgDistance = hubAirports.map(airport => Math.max(distanceFloor, Computation.calculateDistance(airport, fromAirport))).sum.toDouble / hubAirports.size
 
       val airportsWithScores = hubAirports.map { airport =>
         val popPercent = airport.popMiddleIncome.toDouble / avgPopMiddleIncome
-        val distancePercent = 1 - Computation.calculateDistance(airport, fromAirport).toDouble / avgDistance
-        val weightedScore = 0.45 * distancePercent + 0.55 * popPercent
+        val distancePercent = 1 - Math.max(distanceFloor, Computation.calculateDistance(airport, fromAirport)).toDouble / avgDistance
+        val weightedScore = 0.55 * distancePercent + 0.45 * popPercent
         (airport, weightedScore)
       }
 
@@ -104,7 +105,7 @@ object DemandGenerator {
       None
     } else {
       val percentages = percentagesHubAirports(hubAirports, fromAirport)
-      val fromDemand = Math.max(12, Math.min(3200, fromAirport.popMiddleIncome / 1000 * Math.min(5, fromAirport.size + 1)))
+      val fromDemand = Math.max(12, Math.min(3400, fromAirport.popMiddleIncome / 1000 * Math.min(5, fromAirport.size + 1)))
 
       // Divide the demand among hubAirports based on percentages
       val demands = percentages.map { case (airport, percentage) =>
@@ -140,14 +141,14 @@ object DemandGenerator {
 
           val demand = computeBaseDemandBetweenAirports(fromAirport, toAirport, affinity, distance)
 
-          val cutoff = demandRandomizer % 2
-          if (demand.travelerDemand.total > cutoff) {
+          val cutoff = if (demandRandomizer % 2 == fromAirport.id % 2) 2 else 0
+          if (demand.travelerDemand.total >= cutoff) {
             demandList.add((toAirport, (PassengerType.TRAVELER, demand.travelerDemand)))
           }
-          if (demand.businessDemand.total > cutoff + 1) {
+          if (demand.businessDemand.total >= Math.abs(12 - cycle % 24) / 2) {
             demandList.add((toAirport, (PassengerType.BUSINESS, demand.businessDemand)))
           }
-          if (demand.touristDemand.total > cutoff * 2) {
+          if (demand.touristDemand.total >= Math.abs(12 - (cycle + 8) % 24) / 2) {
             demandList.add((toAirport, (PassengerType.TOURIST, demand.touristDemand)))
           }
           if (distance < HUB_AIRPORTS_MAX_RADIUS && fromAirport.countryCode == toAirport.countryCode) {
@@ -241,10 +242,11 @@ object DemandGenerator {
             var remainingDemand = demandForClass
             while (remainingDemand > 0) {
               val groupSize = Math.min(remainingDemand, 10 + ThreadLocalRandom.current().nextInt(10)) //random group size between 10 and 20
+              val groupSizeWithMinCheck = if (remainingDemand - groupSize <= 10) remainingDemand else groupSize //if remaining group is small, just combine them
               val preference = flightPreferencesPool.draw(passengerType, linkClass, fromAirport, toAirport)
               val key = (linkClass, preference, passengerType)
-              demandByPreference(key) = demandByPreference.getOrElse(key, 0) + groupSize
-              remainingDemand -= groupSize
+              demandByPreference(key) = demandByPreference.getOrElse(key, 0) + groupSizeWithMinCheck
+              remainingDemand -= groupSizeWithMinCheck
             }
           }
         }
@@ -425,8 +427,8 @@ object DemandGenerator {
     val firstClassCutoff = if (firstClassDemand > 1) firstClassDemand else 0
     val businessClassCutoff = if (businessClassDemand > 2) businessClassDemand else 0
     val discountClassCutoff = if (discountClassDemand > 15) discountClassDemand else 0
-
     val economyClassDemand = Math.max(0, demand - firstClassCutoff - businessClassCutoff - discountClassCutoff)
+
     LinkClassValues.getInstance(economyClassDemand.toInt, businessClassCutoff.toInt, firstClassCutoff.toInt, discountClassCutoff.toInt)
   }
 
@@ -449,7 +451,7 @@ object DemandGenerator {
         distance > CLOSE_DESTINATIONS_RADIUS
       }
 
-      var numberDestinations = Math.ceil(launchDemandFactor * 0.75 * fromAirport.popElite / groupSize.toDouble).toInt
+      var numberDestinations = Math.ceil(launchDemandFactor * 0.7 * fromAirport.popElite / groupSize.toDouble).toInt
 
       while (numberDestinations >= 0) {
         val destination = if (numberDestinations % 2 == 1 && closeDestinations.length > 5) {

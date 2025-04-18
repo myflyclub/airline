@@ -53,25 +53,25 @@ sealed case class InternationalHubFeature(baseStrength : Int, boosts : List[Airp
   val featureType = AirportFeatureType.INTERNATIONAL_HUB
   override def demandAdjustment(rawDemand : Double, passengerType : PassengerType.Value, airportId : Int, fromAirport : Airport, toAirport : Airport, affinity : Int, distance : Int) : Int = {
     if (airportId == toAirport.id  && passengerType == PassengerType.TOURIST) { //only affect if as a destination
-      val charmStrength = 0.0004 * strengthFactor
+      val charmStrength = 0.00041 * strengthFactor
       val incomeModifier = Math.max(fromAirport.baseIncome.toDouble / (Airport.HIGH_INCOME * 0.6), 0.2)
       val distanceModifier = if (distance < 500) {
         distance.toDouble / 500
-      } else if (distance < 6000) {
+      } else if (distance < 5500) {
         1.0
       } else {
-        6000 / distance.toDouble
+        5500 / distance.toDouble
       }
       val airportAffinityMutliplier: Double =
         if (affinity >= 5) (affinity - 5) * 0.1 + 1 //domestic+
         else if (affinity == 4) 0.75
-        else if (affinity == 3) 0.6
-        else if (affinity == 2) 0.4
-        else if (affinity == 1) 0.3
-        else if (affinity == 0) 0.2
-        else 0.1
+        else if (affinity == 3) 0.55
+        else if (affinity == 2) 0.35
+        else if (affinity == 1) 0.25
+        else if (affinity == 0) 0.1
+        else 0.05
       val specialCountryModifier =
-        if (List("AU","NZ").contains(fromAirport.countryCode)) {
+        if (List("AU","NZ","AE","SG").contains(fromAirport.countryCode)) {
           2.0 //they travel a lot; difficult to model
         } else 1.0
 
@@ -110,12 +110,12 @@ sealed case class VacationHubFeature(baseStrength : Int, boosts : List[AirportBo
       val distanceModifier = if (distance < 400) {
         (distance - 25).toDouble / 400
       } else if (distance < 2200) {
-        1.0
+        1.02
       } else {
         Math.max(2200 / distance.toDouble, 0.2)
       }
       val airportAffinityMutliplier: Double =
-        if (affinity >= 5) (affinity - 5) * 0.05 + 1 //each increases 5%
+        if (affinity >= 5) (affinity - 5) * 0.05 + 1.01 //each increases 5%
         else if (affinity == 4) 0.5
         else if (affinity == 3) 0.3
         else if (affinity == 2) 0.1
@@ -137,18 +137,18 @@ sealed case class FinancialHubFeature(baseStrength : Int, boosts : List[AirportB
   override def demandAdjustment(rawDemand : Double, passengerType : PassengerType.Value, airportId : Int, fromAirport : Airport, toAirport : Airport, affinity : Int, distance : Int) : Int = {
     if (passengerType == PassengerType.BUSINESS) {
       val hasFeatureInBothAirports = fromAirport.hasFeature(AirportFeatureType.FINANCIAL_HUB) && toAirport.hasFeature(AirportFeatureType.FINANCIAL_HUB)
-      val doubleBonus = if (hasFeatureInBothAirports) 0.65 else 1.15
+      val doubleBonus = if (hasFeatureInBothAirports) 0.75 else 1.25
       val charmStrength =
-        if (toAirport.id == airportId) { //going to business center
-          0.00025 * strengthFactor
-        } else if (hasFeatureInBothAirports) {
+        if (hasFeatureInBothAirports) {
+          0.00026 * strengthFactor
+        } else if (toAirport.id == airportId) { //going to business center
           0.00015 * strengthFactor * Math.min(1.5, toAirport.population.toDouble / fromAirport.population)
         } else {
           0.00004 * strengthFactor * Math.min(1.5, toAirport.population.toDouble / fromAirport.population)
         }
       val distanceReducerExponent: Double =
         if (hasFeatureInBothAirports && distance < 500) {
-          1.1
+          1.2
         } else if (distance < 500) {
           distance.toDouble / 500
         } else if (distance > 4000) {
@@ -241,14 +241,14 @@ sealed case class IsolatedTownFeature(strength : Int) extends AirportFeature {
   override def demandAdjustment(rawDemand : Double, passengerType : PassengerType.Value, airportId : Int, fromAirport : Airport, toAirport : Airport, affinity : Int, distance : Int) : Int = {
     if (passengerType == PassengerType.TRAVELER && fromAirport.hasFeature(AirportFeatureType.ISOLATED_TOWN) && affinity >= 2) {
       val affinityMod = if (affinity >= 5) 1.0 else affinity.toDouble / 10
-      val tempAdjustment = if (fromAirport.countryCode == "CA") 3 else 1 //todo: will degrade & remove this
+      val tempAdjustment = if (fromAirport.countryCode == "CA") 2.7 else 1 //todo: will degrade & remove this
 
       val mod = if (distance <= boostRange) {
         val basis = 150.0 + DemandGenerator.demandRandomizer * 5
         val distanceModifier = if (distance >= 1500 && toAirport.size <= 3) {
           0
         } else if (distance >= boostRange) {
-          0.5 + (1 - distance / boostRange) / 2
+           boostRange / distance
         } else {
           1.0
         }
