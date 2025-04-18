@@ -294,15 +294,23 @@ object AirportSizeAdjust {
         "SPX" -> 3,
         //https://en.wikipedia.org/wiki/List_of_the_busiest_airports_in_France
         "NTE" -> 6,
+        "MPL" -> 5,
+        "SXB" -> 5,
         "BES" -> 4,
+        "BIQ" -> 4,
+        "AJA" -> 4,
         "GNB" -> 3,
         "XCR" -> 3,
         "TLN" -> 3,
         "LTT" -> 2,
         "FSP" -> 3,
-        "PTP" -> 5,
         "WLS" -> 3,
-        "AJA" -> 4,
+        "ETZ" -> 2,
+        "DNR" -> 2,
+        "LRT" -> 2,
+        "SNR" -> 2,
+        "PUF" -> 2,
+        "PTP" -> 5, //overseas
         //ethiopia
         "MQX" -> 3,
         //eritrea
@@ -510,6 +518,7 @@ object AirportSizeAdjust {
         "TOS" -> 5,
         "TRF" -> 4,
         "AES" -> 4,
+        "KRS" -> 4,
         //https://en.wikipedia.org/wiki/List_of_the_busiest_airports_in_Pakistan
         "SKT" -> 3,
         "UET" -> 3,
@@ -534,6 +543,9 @@ object AirportSizeAdjust {
         "WMI" -> 4,
         //portugal
         "CAT" -> 3,
+        //https://en.wikipedia.org/wiki/List_of_the_busiest_airports_in_Romania
+        "CLJ" -> 5,
+        "IAS" -> 5,
         //https://en.wikipedia.org/wiki/List_of_airports_in_Rwanda
         //https://en.wikipedia.org/wiki/List_of_the_busiest_airports_in_Russia
         "KZN" -> 6,
