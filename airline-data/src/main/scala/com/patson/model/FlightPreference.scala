@@ -267,7 +267,7 @@ case class DealPreference(homeAirport : Airport, preferredLinkClass: LinkClass, 
   }
 
   val getPreferenceType: FlightPreferenceType.Value = FlightPreferenceType.DEAL
-  override val connectionCostRatio = 0.4 //okay with taking connection
+  override val connectionCostRatio = 0.6 //okay with taking connection
 }
 
 

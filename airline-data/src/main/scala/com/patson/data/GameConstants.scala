@@ -9,9 +9,9 @@ object GameConstants {
     //europe
     "SMA", "SJZ", "HOR", "FNC", "PIX", "GRW", "PXO", "CVU", //pt
     "VDE", "GMZ", "SPC", "LPA", "FUE", "ACE", "IBZ", "PMI", "MAH", //es
-    "IDY", "ACI", "ISC", "OUI", "IDY", //FR
+    "IDY", "ACI", "BIC", "ISC", "OUI", "IDY", //FR
     "UVE", "LIF", "TGJ", "MEE", "ILP", //FR Pacific
-    "PNL", "LMP", //IT
+    "PNL", "LMP", "EBA", //IT
     "HGL", "BMK", "GWT", "BMR", //DE
     "EGH", "EOI", "FIE", "FOA", "LWK", "LSI", "ACI", "TRE", "BRR", "BEB", "SYY", "KOI", "ILY", "CAL", "ISC", "GCI", "JER", "GIB", "IOM", "EOI", //GB
     "BYR", "RNN", "FAE", //DK
@@ -70,7 +70,7 @@ object GameConstants {
     "JEG", "UAK", "KUZ", "KUS", "AGM", "CNP", "JQA", "JUV", //DK GL
     "TER", "PDL", //pt
     "PMI", "IBZ", "MAH", //es
-    "BIA", "CLY", "AJA", "FSC", //fr
+    "BIA", "CLY", "AJA", "FSC", "MCM", //fr
     "OLB", "AHO", "CAG", "PMO", "CTA", "TPS", "CIY", "EBA", //it
     "JTR", //gr
     "MLA",

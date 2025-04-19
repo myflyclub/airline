@@ -500,13 +500,13 @@ object PassengerSimulation {
               val frequency = Math.max(predecessorLink.frequencyByClass(predecessorLinkConsideration.linkClass), linkConsideration.link.frequencyByClass(linkConsideration.linkClass))
 
               if (frequency < 7) {
-                connectionCost += 160 + (7 - frequency ) * 10 //possible overnight stay //$170 @ 6; $230 @ 1
+                connectionCost += 165 + (7 - frequency ) * 10 //possible overnight stay //$175 @ 6; $235 @ 1
               } else if (frequency < 14) {
-                connectionCost += 60 + (14 - frequency) * 10 //$130 @ 7; $70 @ 13
+                connectionCost += 65 + (14 - frequency) * 10 //$135 @ 7; $75 @ 13
               } else if (frequency < 21) {
-                connectionCost += 13 + (21 - frequency) * 7 //$62 @ 14; $20 @ 20
-              } else if (frequency < 40) {
-                connectionCost += (40 - frequency)
+                connectionCost += 15 + (21 - frequency) * 7 //$67 @ 14; $25 @ 20
+              } else if (frequency < 45) {
+                connectionCost += (45 - frequency)
               }
               val previousLinkAirlineId = predecessorLink.airline.id
               val currentLinkAirlineId = linkConsideration.link.airline.id

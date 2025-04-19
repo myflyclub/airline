@@ -103,8 +103,7 @@ class FlightPreferenceSpec(_system: ActorSystem) extends TestKit(_system) with I
   "Class adjust".must {
     "generate similar cost if price and distance is the same, and small difference in loyalty".in {
       val distances = List(50,100,200,400,800,1600,3200,6400,12800)
-      var preference = DealPreference(fromAirport, ECONOMY, 1.0)
-      preference.preferredLinkClass() = BUSINESS
+      var preference = DealPreference(fromAirport, BUSINESS, 1.0)
 
       for (distance <- distances) {
         println(s"at $distance:")
