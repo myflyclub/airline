@@ -350,7 +350,7 @@ function searchLinkHistory() {
         data: JSON.stringify(searchData),
         dataType: 'json',
         success: function(searchResult) {
-            $("#linkHistorySearchResult").empty()
+	    plotCumulativeCapacityChart(searchResult, "cumulativeCapacityChartContainer");
             $("#searchCanvas .linkHistorySearchTable").data("entries", searchResult)
             updateLinkHistoryTable()
         },
