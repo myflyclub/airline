@@ -266,6 +266,12 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
     val fromAirport = AirportCache.getAirport(incomingLink.from.id, true).getOrElse(return BadRequest("From airport not found"))
     val toAirport = AirportCache.getAirport(incomingLink.to.id, true).getOrElse(return BadRequest("To airport not found"))
 
+    // Pre-validate target base exists
+    val targetBaseOption = airline.getBases().find(_.airport.id == incomingLink.from.id)
+    if (targetBaseOption.isEmpty) {
+      return BadRequest(s"Target airport ${incomingLink.from.id} is not a base for airline $airlineId")
+    }
+    val targetBase = targetBaseOption.get
 
     val existingLink : Option[Link] = LinkSource.loadFlightLinkByAirportsAndAirline(incomingLink.from.id, incomingLink.to.id, airlineId)
 
@@ -294,14 +300,22 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
 
     val flightMinutesRequiredPerFrequency = Computation.calculateFlightMinutesRequired(model, incomingLink.distance)
 
+    val airplanesToUpdate = ListBuffer[Airplane]() // keep track of planes that need to move to new airport
     //check if the assigned planes are owned by this airline and have minutes left for this
     incomingLink.getAssignedAirplanes().foreach {
       case(airplane, assignment) =>
         if (airplane.owner.id != airlineId){
           return BadRequest(s"Cannot insert link - airplane $airplane is not owned by ${request.user}")
         }
-        if (airplane.home.id != incomingLink.from.id) {
-          return BadRequest(s"Cannot insert link - airplane $airplane is not based in ${incomingLink.from}")
+        if (airplane.home.id != incomingLink.from.id) { // plane home airport does not match link origin airport
+          // check if it is unused and can be moved
+          val currentAssignments = AirplaneSource.loadAirplaneLinkAssignmentsByAirplaneId(airplane.id) // load fresh assignments
+          if (currentAssignments.isEmpty) {
+            airplane.home = targetBase.airport
+            airplanesToUpdate.append(airplane)
+          } else {
+            return BadRequest(s"Cannot move airplane $airplane as it has other assigned links.")
+          }
         }
 
         val linkAssignments = AirplaneSource.loadAirplaneLinkAssignmentsByAirplaneId(airplane.id)
@@ -381,6 +395,11 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
 
 
     println("PUT " + incomingLink)
+
+    // Perform airplane moves before link update
+    if (airplanesToUpdate.nonEmpty) {
+      AirplaneSource.updateAirplanesDetails(airplanesToUpdate.toList)
+    }
 
     val resultLink : Link =
       if (negotiationResultOption.map(_.isSuccessful).getOrElse(true)) { //negotiation successful or no negotiation needed {
@@ -693,13 +712,20 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
               }
           }
         }
-
+        
+        // Load all link assignments for the airline to find unused airplanes
+        val allLinkAssignments = AirplaneSource.loadAirplaneLinkAssignmentsByOwner(airlineId)
+        
         //available airplanes are either the ones that are already assigned to this link or have available flight minutes that is >= required minutes
         //group airplanes by model, also add Int to indicated how many frequency is this airplane currently assigned to this link
         val availableAirplanesByModel : immutable.Map[Model, List[(Airplane, Int)]] = availableModelsAndCustoms.map { model =>
           val ownedAirplanesOfThisModel = ownedAirplanesByModel.getOrElse(model, List.empty)
           val flightMinutesRequired = Computation.calculateFlightMinutesRequired(model, distance)
-          val availableAirplanesOfThisModel = ownedAirplanesOfThisModel.filter(airplane => (airplane.home.id == fromAirportId && airplane.availableFlightMinutes >= flightMinutesRequired) || airplanesAssignedToThisLink.isDefinedAt(airplane.id))
+          val availableAirplanesOfThisModel = ownedAirplanesOfThisModel.filter { airplane =>
+            val isBasedHere = airplane.home.id == fromAirportId
+            val isAssignedToThisLink = airplanesAssignedToThisLink.isDefinedAt(airplane.id)
+            val isUnused = allLinkAssignments.getOrElse(airplane.id, LinkAssignments.empty).isEmpty
+            (isBasedHere && airplane.availableFlightMinutes >= flightMinutesRequired) || isAssignedToThisLink || isUnused }
 
           (model, availableAirplanesOfThisModel.map(airplane => (airplane, airplanesAssignedToThisLink.getOrElse(airplane.id, 0))))
         }.toMap
