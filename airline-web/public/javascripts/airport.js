@@ -1159,7 +1159,7 @@ function updateAirportBaseMarkers(newBaseAirports, relatedFlightPaths) {
 
     })
     baseMarkers = []
-    var headquarterMarkerIcon = $("#map").data("headquarterMarker")
+	var headquarterMarkerIcon = $("#map").data("headquarterMarker")
     var baseMarkerIcon = $("#map").data("baseMarker")
 	var baseAllianceIcon = $("#map").data("baseAllianceMarker")
 	var baseAllianceHQIcon = $("#map").data("baseAlliancehqMarker")
