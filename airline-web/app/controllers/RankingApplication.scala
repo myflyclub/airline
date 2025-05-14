@@ -42,6 +42,8 @@ class RankingApplication @Inject()(cc: ControllerComponents) extends AbstractCon
           result = result + ("airlineName" -> JsString(link.airline.name)) + ("airlineId" -> JsNumber(link.airline.id)) ++ Json.obj("rankInfo" -> Json.obj("from" -> fromJson, "to" -> toJson))
         case lounge : Lounge =>
           result = result + ("airlineName" -> JsString(lounge.airline.name)) + ("airlineId" -> JsNumber(lounge.airline.id)) + ("rankInfo" -> JsString(getLoungeDescription(lounge)))
+        case (airline : Airline, airport : Airport) =>
+          result = result + ("airportName" -> JsString(airport.name)) + ("airportId" -> JsNumber(airport.id)) + ("iata" -> JsString(airport.iata)) + ("countryCode" -> JsString(airport.countryCode) + "airlineName" -> JsString(airline.name)) + ("airlineId" -> JsNumber(airline.id)) + ("airlineSlogan" -> JsString(airline.slogan.getOrElse("")))
         case airport : Airport =>
           result = result + ("airportName" -> JsString(airport.name)) + ("airportId" -> JsNumber(airport.id)) + ("iata" -> JsString(airport.iata)) + ("countryCode" -> JsString(airport.countryCode))
         case (airport1 : Airport, airport2 : Airport) =>
@@ -65,11 +67,7 @@ class RankingApplication @Inject()(cc: ControllerComponents) extends AbstractCon
       )
     }
   }
-  
-  def getLinkDescription(link : Link) = {
-    link.from.city + "(" + link.from.iata + ") ↔ " + link.to.city + "(" + link.to.iata + ")"
-  }
-  
+
   def getLoungeDescription(lounge : Lounge) = {
     lounge.name + " at " + lounge.airport.city + "(" + lounge.airport.iata + ")" 
   }

@@ -1019,12 +1019,14 @@ function plotPie(dataSource, currentKey, container, keyName, valueName) {
 
 	var ref = container.insertFusionCharts({
 		type: 'pie2d',
-	    width: '100%',
+	    width: '160px',
 	    height: '160px',
 	    dataFormat: 'json',
 	    containerBackgroundOpacity :'0',
 		dataSource: {
 	    	"chart": {
+				"showBorder": "0",
+				"showShadow": "0",
 	    		"animation": "0",
 	    		"pieRadius": "65",
 	    		"showBorder":"0",

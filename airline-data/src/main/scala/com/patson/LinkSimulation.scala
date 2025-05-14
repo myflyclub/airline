@@ -431,34 +431,34 @@ object LinkSimulation {
   }
 
   def generateFlightStatistics(consumptionResult: scala.collection.immutable.Map[(PassengerGroup, Airport, Route), Int], cycle : Int) : List[LinkStatistics] = {
-    val statistics = Map[LinkStatisticsKey, Int]()
+    val statistics = mutable.Map[LinkStatisticsKey, (Int, Int)]() //(pax count, premium pax count)
     consumptionResult.foreach {
-      case ((_, _, route), passengerCount) =>
+      case ((paxGroup, _, route), passengerCount) =>
         for (i <- 0 until route.links.size) {
           val link = route.links(i)
-          if (link.link.transportType == TransportType.FLIGHT) { //only do stats on flights here
-            val airline = link.link.airline
-            val key =
-              if (i == 0) {
-                if (route.links.size == 1) {
-                  LinkStatisticsKey(link.from, link.to, true, true, airline)
-                } else {
-                  LinkStatisticsKey(link.from, link.to, true, false, airline)
-                }
-              } else if (i == route.links.size - 1) { //last one in list
-                LinkStatisticsKey(link.from, link.to, false, true, airline)
-              } else { //in the middle
-                LinkStatisticsKey(link.from, link.to, false, false, airline)
+          val paxClass = paxGroup.preference.preferredLinkClass
+          val airline = link.link.airline
+          val key =
+            if (i == 0) {
+              if (route.links.size == 1) {
+                LinkStatisticsKey(link.from, link.to, isDeparture = true, isDestination = true, airline)
+              } else {
+                LinkStatisticsKey(link.from, link.to, true, false, airline)
               }
-            val newPassengerCount = statistics.getOrElse(key, 0) + passengerCount
-            statistics.put(key, newPassengerCount)
-          }
+            } else if (i == route.links.size - 1) { //last one in list
+              LinkStatisticsKey(link.from, link.to, false, true, airline)
+            } else { //in the middle
+              LinkStatisticsKey(link.from, link.to, false, false, airline)
+            }
+          val (currentPassengerCount, currentPremiumCount) = statistics.getOrElse(key, (0, 0))
+          val premiumCount = if (paxClass.level > 1) passengerCount else 0
+          statistics.put(key, (currentPassengerCount + passengerCount, currentPremiumCount + premiumCount))
         }
     }
     
     statistics.map { 
-      case (linkStatisticsKey, passenger) =>
-        LinkStatistics(linkStatisticsKey, passenger, cycle)
+      case (linkStatisticsKey, (passenger, premium)) =>
+        LinkStatistics(linkStatisticsKey, passenger, premium, cycle)
     }.toList
     
   }

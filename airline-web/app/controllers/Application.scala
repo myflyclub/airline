@@ -15,6 +15,7 @@ import play.api.mvc._
 
 import java.util.Random
 import javax.inject.Inject
+import scala.collection.mutable
 import scala.collection.mutable.{ListBuffer, Set}
 import scala.math.BigDecimal.RoundingMode
 
@@ -101,10 +102,10 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
         "economicRating" -> entry.economicPowerRating,
         "competitionRating" -> entry.competitionRating,
         "countryRating" -> entry.countryPowerRating,
-        "difficulty" -> entry.overallDifficulty,
-        "features" -> JsArray(entry.features.sortBy(_.featureType.id).map { airportFeature =>
-          Json.obj("type" -> airportFeature.featureType.toString(), "strength" -> airportFeature.strength, "title" -> airportFeature.getDescription)
-        })
+        "difficulty" -> entry.overallDifficulty
+//        "features" -> JsArray(entry.features.sortBy(_.featureType.id).map { airportFeature =>
+//          Json.obj("type" -> airportFeature.featureType.toString(), "strength" -> airportFeature.strength, "title" -> airportFeature.getDescription)
+//        })
       )
     }
   }
@@ -202,35 +203,57 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
         //group things up
         val flightsFromThisAirport = LinkStatisticsSource.loadLinkStatisticsByFromAirport(airportId, LinkStatisticsSource.SIMPLE_LOAD)
         val flightsToThisAirport = LinkStatisticsSource.loadLinkStatisticsByToAirport(airportId, LinkStatisticsSource.SIMPLE_LOAD)
-        val departureOrArrivalFlights = flightsFromThisAirport.filter { _.key.isDeparture} ++ flightsToThisAirport.filter { _.key.isDestination }
-        val connectionFlights = flightsFromThisAirport.filterNot { _.key.isDeparture} ++ flightsToThisAirport.filterNot { _.key.isDestination }
+        val departureOrArrivalPaxGroups = flightsFromThisAirport.filter(_.key.airline.id != 0).filter { _.key.isDeparture} ++ flightsToThisAirport.filter(_.key.airline.id != 0).filter { _.key.isDestination }
+        val connectionPaxGroups = flightsFromThisAirport.filter(_.key.airline.id != 0).filterNot { _.key.isDeparture} ++ flightsToThisAirport.filter(_.key.airline.id != 0).filterNot { _.key.isDestination }
 
-        val flightDepartureByAirline = flightsFromThisAirport.groupBy { _.key.airline }
-        val flightDestinationByAirline = flightsToThisAirport.groupBy { _.key.airline }
-        
-        val departureOrArrivalPassengers = departureOrArrivalFlights.map{ _.passengers }.sum
-        val transitPassengers = connectionFlights.map{ _.passengers }.sum
-          
-        
-        val statisticsDepartureByAirline : List[(Airline, Int)] = flightDepartureByAirline.foldRight(List[(Airline, Int)]()) { 
+        val departureOrArrivalPassengers = departureOrArrivalPaxGroups.map{ _.passengers }.sum
+        val transitPassengers = connectionPaxGroups.map{ _.passengers }.sum
+        val localPaxByAirport: Map[Airport, Int] =
+          flightsFromThisAirport.filter(_.key.airline.id == 0).groupBy(_.key.toAirport).view.mapValues(_.map(_.passengers).sum).toMap ++
+          flightsToThisAirport.filter(_.key.airline.id == 0).groupBy(_.key.fromAirport).view.mapValues(_.map(_.passengers).sum).toMap
+
+        val statisticsTotalByAirline : List[(Airline, Int)] = (departureOrArrivalPaxGroups ++ connectionPaxGroups).groupBy(_.key.airline).foldRight(List[(Airline, Int)]()) {
           case ((airline, statistics), foldList) =>
             val totalPassengersOfThisAirline = statistics.foldLeft(0)( _ + _.passengers) //all the passengers of this airline
             (airline, totalPassengersOfThisAirline) :: foldList
-        }
-        val statisticsArrivalByAirline : List[(Airline, Int)] = flightDestinationByAirline.foldRight(List[(Airline, Int)]()) { 
+        }.sortBy(_._2).reverse
+
+        val statisticsOriginPaxByAirline : List[(Airline, Int)] = departureOrArrivalPaxGroups.groupBy(_.key.airline).foldRight(List[(Airline, Int)]()) {
           case ((airline, statistics), foldList) =>
-            val totalPassengersOfThisAirline = statistics.foldLeft(0)( _ + _.passengers) //all the passengers of this airline
+            val totalPassengersOfThisAirline = statistics.foldLeft(0)( _ + _.passengers) //all the passengers of this airline, if pax are origin
             (airline, totalPassengersOfThisAirline) :: foldList
-        }
-        
+        }.sortBy(_._2).reverse
+
+        val statisticsPremiumPaxByAirline : List[(Airline, Int)] = (departureOrArrivalPaxGroups ++ connectionPaxGroups).groupBy(_.key.airline).foldRight(List[(Airline, Int)]()) {
+          case ((airline, statistics), foldList) =>
+            val totalPassengersOfThisAirline = statistics.foldLeft(0)( _ + _.premiumPax)
+            (airline, totalPassengersOfThisAirline) :: foldList
+        }.sortBy(_._2).reverse
+
         val links = LinkSource.loadFlightLinksByFromAirport(airportId) ++ LinkSource.loadFlightLinksByToAirport(airportId)
         
+        val airlineStats = links.groupBy(_.airline.id).map { case (airlineId, airlineLinks) =>
+          val linkCount = airlineLinks.size
+          val avgDistance = (airlineLinks.map{ link =>
+            link.distance * link.frequency
+          }.sum.toDouble / airlineLinks.map(_.frequency).sum).toInt
+          val avgFrequency = (airlineLinks.map(_.frequency).sum.toDouble / airlineLinks.size).toInt
+          val airlineSlogan = airlineLinks.head.airline.slogan.getOrElse("")
+          val airlineType = AirlineType.label(airlineLinks.head.airline.airlineType)
+          
+          (airlineId, (airlineType, airlineSlogan, avgDistance, avgFrequency, linkCount))
+        }
+        
+        val flightFrequency = links.map(_.frequency).sum
+        val linkAvgDistance = (links.map(_.distance).sum.toDouble / links.size).toInt
+        val linksCapacity = links.map(_.capacity.total).sum
+        val linksLF = ((departureOrArrivalPaxGroups.map(_.passengers).sum + connectionPaxGroups.map(_.passengers).sum).toDouble / links.map(_.capacity.total).sum * 100).toInt
+        val linksIntl = (links.filter { link =>
+          link.to.countryCode != link.from.countryCode
+        }.map(_.capacity.total).sum.toDouble / linksCapacity * 100).toInt
+
         val servedCountries = Set[String]()
         val servedAirports = Set[Airport]()
-        val airlines = Set[Airline]()
-        var flightFrequency = 0;
-        val linkCountByAirline = links.groupBy(_.airline.id).view.mapValues(_.size).toMap
-        
         links.foreach { link =>
           servedCountries.add(link.from.countryCode)
           servedCountries.add(link.to.countryCode)
@@ -239,10 +262,8 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
           } else {
             servedAirports.add(link.to)
           }
-          airlines.add(link.airline)
-          flightFrequency = flightFrequency + link.frequency
         }
-        
+
         val loungesStats = LoungeHistorySource.loadLoungeConsumptionsByAirportId(airport.id)
         val loungesWithVisitors = loungesStats.map { _.lounge.airline.id }
         val emptyLoungesStats = ListBuffer[LoungeConsumptionDetails]() 
@@ -252,24 +273,30 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
             emptyLoungesStats += LoungeConsumptionDetails(lounge = lounge, selfVisitors = 0, allianceVisitors = 0, cycle = 0)
           }
         }
-         
-        
-        
-        Ok(Json.obj("connectedCountryCount" -> servedCountries.size,
-                    "connectedAirportCount" -> (servedAirports.size), //do not count itself
-                    "airlineCount" -> airlines.size,
-                    "linkCount" -> links.size,
-                    "linkCountByAirline" -> linkCountByAirline.foldLeft(Json.arr()) {
-                      case(jsonArray, (airlineId, linkCount)) => jsonArray :+ Json.obj("airlineId" -> JsNumber(airlineId), "linkCount"-> JsNumber(linkCount))
-                    },
-                    "flightFrequency" -> flightFrequency,
-                    "bases" -> Json.toJson(airport.getAirlineBases().values),
-                    "lounges" -> Json.toJson(loungesStats ++ emptyLoungesStats),
-                    "departureOrArrivalPassengers" -> departureOrArrivalPassengers, 
-                    "transitPassengers" -> transitPassengers,
-                    "airlineDeparture" -> Json.toJson(statisticsDepartureByAirline),
-                    "airlineArrival" -> Json.toJson(statisticsArrivalByAirline),
-                    "rating" -> Json.toJson(airport.rating)))
+
+        Ok(Json.obj(
+          "connectedCountryCount" -> servedCountries.size,
+          "connectedAirportCount" -> (servedAirports.size), //do not count itself
+          "airlineCount" -> airlineStats.size,
+          "linkCount" -> links.size,
+          "linkAvgDistance" -> linkAvgDistance,
+          "linkCountByAirline" -> airlineStats.foldLeft(Json.arr()) {
+            case(jsonArray, (airlineId, (airlineType, airlineSlogan, avgDistance, avgFrequency, linkCount))) => jsonArray :+ Json.obj("airlineId" -> JsNumber(airlineId), "linkCount"-> JsNumber(linkCount), "avgDistance" -> JsNumber(avgDistance), "avgFrequency" -> JsNumber(avgFrequency), "airlineType" -> JsString(airlineType.toString), "airlineSlogan" -> JsString(airlineSlogan.toString))
+          },
+          "flightFrequency" -> flightFrequency,
+          "bases" -> Json.toJson(airport.getAirlineBases().values),
+          "lounges" -> Json.toJson(loungesStats ++ emptyLoungesStats),
+          "departureOrArrivalPassengers" -> departureOrArrivalPassengers,
+          "transitPassengers" -> transitPassengers,
+          "localPaxByAirport" -> Json.toJson(localPaxByAirport),
+          "airlinePax" -> Json.toJson(statisticsTotalByAirline),
+          "airlinePremiumPax" -> Json.toJson(statisticsPremiumPaxByAirline),
+          "airlineOrigin" -> Json.toJson(statisticsOriginPaxByAirline),
+          "rating" -> Json.toJson(airport.rating),
+          "totalSeats" -> Json.toJson(linksCapacity),
+          "linksLF" -> Json.toJson(linksLF),
+          "linksIntl" -> Json.toJson(linksIntl)
+        ))
       }
       case None => NotFound
     }
@@ -278,9 +305,7 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
   
   def getDepartures(airportId : Int, dayOfWeek : Int, hour : Int, minute : Int) = Action {
     val links = LinkSource.loadFlightLinksByFromAirport(airportId, LinkSource.SIMPLE_LOAD) ++ (LinkSource.loadFlightLinksByToAirport(airportId, LinkSource.SIMPLE_LOAD).map { link => link.copy(from = link.to, to = link.from) })
-    
-    val map = Map[Int, String]()
-    
+
     val currentTime = TimeSlot(dayOfWeek = dayOfWeek, hour = hour, minute = minute)
     
     val linkConsumptions : Map[Int, LinkConsumptionDetails] = LinkSource.loadLinkConsumptionsByLinksId(links.map(_.id)).map( linkConsumption => (linkConsumption.link.id, linkConsumption)).toMap

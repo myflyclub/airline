@@ -238,15 +238,10 @@ class AllianceApplication @Inject()(cc: ControllerComponents) extends AbstractCo
     
     alliances.foreach {
       alliance =>
-        val isCurrentMember = airlineId match {
-          case Some(airlineId) => alliance.members.map(_.airline.id).contains(airlineId)
-          case None => false
-        }
-
         var allianceJson = Json.toJson(alliance).asInstanceOf[JsObject]
         var allianceMemberJson = Json.arr()
         alliance.members.foreach { allianceMember =>
-          var thisMemberJson = Json.toJson(allianceMember).asInstanceOf[JsObject]
+          val thisMemberJson = Json.toJson(allianceMember).asInstanceOf[JsObject]
           allianceMemberJson = allianceMemberJson.append(thisMemberJson)
           if (allianceMember.role == LEADER) {
             allianceJson = allianceJson.asInstanceOf[JsObject] + ("leader" -> Json.toJson(allianceMember.airline))
@@ -384,8 +379,9 @@ class AllianceApplication @Inject()(cc: ControllerComponents) extends AbstractCo
         val topEntries = allianceChampions.sortBy(_.reputationBoost).reverse.take(MAX_CHAMPION_ENTRIES)
         val (topMemberChampions, topApplicantChampions) = topEntries.partition(entry => approvedMemberAirlineIds.contains(entry.loyalist.airline.id))
 
-        val totalReputation = allianceChampions.filter(entry => approvedMemberAirlineIds.contains(entry.loyalist.airline.id)).map(_.reputationBoost).sum
-        Ok(Json.obj("members" -> Json.toJson(topMemberChampions), "applicants" -> Json.toJson(topApplicantChampions), "totalReputation" -> BigDecimal(totalReputation).setScale(2, RoundingMode.HALF_UP), "truncatedEntries" -> Math.max(0, allianceChampions.length - MAX_CHAMPION_ENTRIES)))
+        val airportReputation = allianceChampions.filter(entry => approvedMemberAirlineIds.contains(entry.loyalist.airline.id)).map(_.reputationBoost).sum
+        val totalReputation = AirlineCache.getAirlines(approvedMemberAirlineIds).map(_._2.getReputation()).sum
+        Ok(Json.obj("members" -> Json.toJson(topMemberChampions), "applicants" -> Json.toJson(topApplicantChampions), "airportReputation" -> BigDecimal(airportReputation).setScale(2, RoundingMode.HALF_UP), "totalReputation" -> BigDecimal(totalReputation).setScale(2, RoundingMode.HALF_UP), "truncatedEntries" -> Math.max(0, allianceChampions.length - MAX_CHAMPION_ENTRIES)))
       }
     }
   }

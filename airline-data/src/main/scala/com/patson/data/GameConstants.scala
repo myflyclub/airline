@@ -31,6 +31,8 @@ object GameConstants {
     "YGR", "YPN", "YYB", "YBE", "YAY", "YYG", //CA
     "MQC", //FR
     "FSP",
+    "LQM",
+    "IQT", "PCL", "CIJ", "CZS", //Amazon
     //caribbean
     "CYB", "RTB", "UII", "SPR",  "NAS", "MQS", "GST", "FPO",
     "STT", "STX", "SXM", "SFG", "SKB", "SBH", "NEV", "BBQ", "NCA", "XSC", "GDT",

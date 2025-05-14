@@ -254,10 +254,14 @@ function getAirlineLabelSpan(airlineId, airlineName) {
 	return $airlineLabelSpan[0].outerHTML
 }
 
-function getAirlineSpan(airlineId, airlineName) {
+function getAirlineSpan(airlineId, airlineName, tooltip = null) {
     var $airlineSpan = $('<span></span>')
 	$airlineSpan.append(getAirlineLogoImg(airlineId))
 	$airlineSpan.append(getAirlineLabelSpan(airlineId, airlineName))
+	if (tooltip) {
+		$airlineSpan.append(`<div class="tooltiptext below" style="min-width: 140px; padding: 12px">${tooltip}</div>`)
+        $airlineSpan.addClass('tooltip')
+	}
 
 	return $airlineSpan[0].outerHTML
 }

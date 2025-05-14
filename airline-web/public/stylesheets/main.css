@@ -1573,6 +1573,10 @@ i, .italic {
     font-weight: 600;
     padding-right: 4px;
 }
+.heading-center {
+    text-align: center;
+    line-height: 1.1;
+}
 /* tailwinds style helpers */
 .text-xl {
     font-size: 1.25rem;
@@ -1627,6 +1631,9 @@ i, .italic {
 .mb-0 { margin-bottom: 0px !important; }
 .ml-0 { margin-left: 0px !important; }
 .ml-auto { margin-left: auto !important; }
+.mr-auto { margin-right: auto !important; }
+.mt-auto { margin-top: auto !important; }
+.mb-auto { margin-bottom: auto !important; }
 .pt-0 { padding-top: 0px; }
 .pt-1 { padding-top: 4px; }
 .pt-2 { padding-top: 8px; }

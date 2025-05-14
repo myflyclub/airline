@@ -79,7 +79,7 @@ object LinkStatisticsSource {
           })
         }
         
-        val linkStatistics = LinkStatistics(LinkStatisticsKey(fromAirport, toAirport, resultSet.getBoolean("is_departure"), resultSet.getBoolean("is_destination"), airline), resultSet.getInt("passenger_count"), resultSet.getInt("cycle"))
+        val linkStatistics = LinkStatistics(LinkStatisticsKey(fromAirport, toAirport, resultSet.getBoolean("is_departure"), resultSet.getBoolean("is_destination"), airline), resultSet.getInt("passenger_count"), resultSet.getInt("premium_count"), resultSet.getInt("cycle"))
         links += linkStatistics
       }
       
@@ -115,7 +115,7 @@ object LinkStatisticsSource {
   def saveLinkStatistics(linkStatistics : List[LinkStatistics]) = {
     val connection = Meta.getConnection()
     try {    
-        val preparedStatement = connection.prepareStatement("INSERT INTO " + LINK_STATISTICS_TABLE + "(from_airport, to_airport, is_departure, is_destination, airline, passenger_count, cycle) VALUES(?,?,?,?,?,?,?)")
+        val preparedStatement = connection.prepareStatement("INSERT INTO " + LINK_STATISTICS_TABLE + "(from_airport, to_airport, is_departure, is_destination, airline, passenger_count, premium_count, cycle) VALUES(?,?,?,?,?,?,?,?)")
         
         connection.setAutoCommit(false)
         linkStatistics.foreach { 
@@ -126,7 +126,8 @@ object LinkStatisticsSource {
             preparedStatement.setBoolean(4, linkStatisticsEntry.key.isDestination)
             preparedStatement.setInt(5, linkStatisticsEntry.key.airline.id)
             preparedStatement.setInt(6, linkStatisticsEntry.passengers)
-            preparedStatement.setInt(7, linkStatisticsEntry.cycle)
+            preparedStatement.setInt(7, linkStatisticsEntry.premiumPax)
+            preparedStatement.setInt(8, linkStatisticsEntry.cycle)
             //preparedStatement.executeUpdate()
             preparedStatement.addBatch()
         }

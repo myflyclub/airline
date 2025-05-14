@@ -758,7 +758,7 @@
 										<h5 class="">Route quality</h5>
 										<p class="pt-2">Current quality:</p>
 										<div id="planLinkQuality"></div>
-										<p class="pt-2">Set route service level:</p>
+										<p class="pt-2">Set route service stars:</p>
 										<div id="serviceLevelBar" data-empty-icon='@routes.Assets.versioned("images/icons/star-empty.svg")' data-fill-icon='@routes.Assets.versioned("images/icons/star-full.svg")'></div>
 										<input type="hidden" id="planLinkServiceLevel" value="1"/>
 									</div>
@@ -1326,9 +1326,11 @@
 						  <div class="table-header">
 							  <div class="cell" style="width: 30%">Airline</div>
 							  <div class="cell" style="width: 10%; text-align: right;">Home Country</div>
-							  <div class="cell" style="width: 10%; text-align: right;">Office Scale</div>
-							  <div class="cell" style="width: 25%; text-align: right;">Flight Routes</div>
-							  <div class="cell" style="width: 25%; text-align: right;">Weekly Passengers</div>
+							  <div class="cell" style="width: 10%; text-align: right;">Base Scale</div>
+							  <div class="cell" style="width: 13%; text-align: right;">Flight Routes</div>
+							  <div class="cell" style="width: 13%; text-align: right;">Weekly Passengers</div>
+							  <div class="cell" style="width: 13%; text-align: right;">Average Frequency</div>
+							  <div class="cell" style="width: 13%; text-align: right;">Average Distance</div>
 						  </div>
 					  </div>
 					  <h4 class="inline-icons pt-4"><img src='@routes.Assets.versioned("images/icons/building-low.png")'>Airline Bases</h4>
@@ -1336,9 +1338,11 @@
 						  <div class="table-header">
 							  <div class="cell" style="width: 30%">Airline</div>
 							  <div class="cell" style="width: 10%; text-align: right;">Home Country</div>
-							  <div class="cell" style="width: 10%; text-align: right;">Office Scale</div>
-							  <div class="cell" style="width: 25%; text-align: right;">Flight Routes</div>
-							  <div class="cell" style="width: 25%; text-align: right;">Weekly Passengers</div>
+							  <div class="cell" style="width: 10%; text-align: right;">Base Scale</div>
+							  <div class="cell" style="width: 13%; text-align: right;">Flight Routes</div>
+							  <div class="cell" style="width: 13%; text-align: right;">Weekly Passengers</div>
+							  <div class="cell" style="width: 13%; text-align: right;">Average Frequency</div>
+							  <div class="cell" style="width: 13%; text-align: right;">Average Distance</div>
 						  </div>
 					  </div>
 					  <h4 class="inline-icons pt-4"><img src='@routes.Assets.versioned("images/icons/sofa.png")'> Airline Lounges</h4>
@@ -1363,44 +1367,56 @@
 						  <div class="table-row runwayTable table data" style="width: 95%;"></div>
 					  </div>
 					  <div class="item-grid">
-						  <div class="item">
-							  <div class="i-label">Weekly Passengers</div>
-							  <div class="i-value" id="airportDetailsPassengerCount"></div>
-						  </div>
-						  <div class="item">
-							  <div class="i-label">Total Flight Routes</div>
-							  <div class="i-value" id="airportDetailsLinkCount"></div>
-						  </div>
-						  <div class="item">
-							  <div class="i-label">Weekly Flight Movements</div>
-							  <div class="i-value" id="airportDetailsFlightFrequency"></div>
-						  </div>
-						  <div class="item">
-							  <div class="i-label">Connected Airports</div>
-							  <div class="i-value" id="airportDetailsConnectedAirportCount"></div>
-						  </div>
-						  <div class="item">
-							  <div class="i-label">Connected Countries</div>
-							  <div class="i-value" id="airportDetailsConnectedCountryCount"></div>
-						  </div>
-						  <div class="item">
-							  <div class="i-label">Served By Airlines</div>
-							  <div class="i-value" id="airportDetailsAirlineCount"></div>
-						  </div>
+							<div class="item">
+								<div class="i-label">Served By Airlines</div>
+								<div class="i-value" id="airportDetailsAirlineCount"></div>
+							</div>
+							<div class="item">
+								<div class="i-label">Flight Routes</div>
+								<div class="i-value" id="airportDetailsLinkCount"></div>
+							</div>
+							<div class="item">
+								<div class="i-label">Daily Flight Movements</div>
+								<div class="i-value" id="airportDetailsFlightFrequency"></div>
+							</div>
+						    <div class="item">
+							  <div class="i-label">Daily Ticketed Passengers</div>
+							  <div class="i-value" id="airportDetailsTotalTickets"></div>
+						    </div>
+							<div class="item">
+								<div class="i-label">Connected Airports</div>
+								<div class="i-value" id="airportDetailsConnectedAirportCount"></div>
+							</div>
+							<div class="item">
+								<div class="i-label">Connected Countries</div>
+								<div class="i-value" id="airportDetailsConnectedCountryCount"></div>
+							</div>
+							<div class="item">
+								<div class="i-label">Average Load Factor</div>
+								<div class="i-value" id="airportDetailsLF"></div>
+							</div>
+							<div class="item">
+								<div class="i-label">Percent of Seats International</div>
+								<div class="i-value" id="airportDetailsInternational"></div>
+							</div>
 					  </div>
 				  </div>
-				  <div id="airportStatistics" class="py-2 flex-row overflow-x-auto" style="width: 100%;height: 180px;">
-					  <div>
-						  <h5 align="center">Outbound Airline Share<br>(includes transfers)</h5>
-						  <div id="airlineDeparturePie" style="height: 160px; width: 250px;" align="center"></div>
+				  <div id="airportStatistics" class="pt-6 flex-row gap-8 overflow-x-auto" style="width: 100%;">
+					  <div class="vertical-group" style="width: 180px; margin: auto;">
+						  <h5 class="heading-center mb-auto" style="">Total Passenger Share</h5>
+						  <div id="airlineTotalPie" style="height: 180px;"></div>
 					  </div>
-					  <div>
-						  <h5 align="center">Inbound Airline Share<br>(includes transfers)</h5>
-						  <div id="airlineArrivalPie" style="height: 160px; width: 250px;" align="center"></div>
+					  <div class="vertical-group" style="width: 180px; margin: auto;">
+						  <h5 class="heading-center mb-auto" style="">Premium Share</h5>
+						  <div id="airlinePremiumPie" style="height: 160px; width: 160px;"></div>
 					  </div>
-					  <div>
-						  <h5 align="center">Local vs Transit Passengers</h5>
-						  <div id="transitTypePie" style="height: 160px; width: 250px;" align="center"></div>
+					  <div class="vertical-group" style="width: 160px; margin: auto;">
+						  <h5 class="heading-center mb-auto" style=""><span class="airportIata"></span> Origin Pax Share</h5>
+						  <div id="airlineOriginPie" style="height: 160px;"></div>
+					  </div>
+					  <div class="vertical-group" style="width: 160px; margin: auto;">
+						  <h5 class="heading-center mb-auto" style="">Pax Origin / Destination</h5>
+						  <div id="transitTypePie" style="height: 160px;"></div>
 					  </div>
 				  </div>
 			  </div>
@@ -3181,7 +3197,8 @@
 					<div id="rivalDetails" class="sidePanel vertical-group" style="display: none;">
 						<div class="section" style="display: flex; flex-wrap: wrap; gap: 8px;">
 							<div style="min-width: 200px; flex: 1;">
-								<h4 class="m-0"><span class="airlineName"></span><span class="airlineGrade"></span></h4>
+								<div class="airlineGrade"></div>
+								<h4 class="m-0"><span class="airlineName"></span></h4>
 								<p class="pb-4"><i class="airlineType"></i></p>
 								<p><span class="airlineSlogan"></span></p>
 
@@ -3478,7 +3495,7 @@
 									<div class="cell clickable" style="width: 30%" data-sort-property="name" data-sort-order="ascending" onclick="toggleAllianceTableSortOrder($(this))">Alliance Name</div>
 									<div class="cell clickable" style="width: 30%" data-sort-property="leaderAirlineName" data-sort-order="ascending" onclick="toggleAllianceTableSortOrder($(this))">Leader Airline</div>
 									<div class="cell clickable" style="width: 20%" align="right" data-sort-property="memberCount" data-sort-order="descending" onclick="toggleAllianceTableSortOrder($(this))">Airline Member</div>
-									<div class="cell clickable selected" style="width: 20%" align="right" data-sort-property="championPointsValue" data-sort-order="descending" onclick="toggleAllianceTableSortOrder($(this))">Champion Points</div>
+									<div class="cell clickable selected" style="width: 20%" align="right" data-sort-property="championPointsValue" data-sort-order="descending" onclick="toggleAllianceTableSortOrder($(this))">Total Reputation</div>
 								</div>
 							</div>
 							<div style="width: 100%; flex: 1; overflow-y: auto;" id="allianceTableContainer">
@@ -4250,7 +4267,7 @@
 
 	<!-- Confirmation Modal -->
 	<div id="confirmationModal" class="modal">
-	  <div class="modal-content"  style="width : 400px;">
+	  <div class="modal-content"  style="width : 480px;">
 	    <span class="close" onclick="closeModal($('#confirmationModal'))">&times;</span>
 	    <div style="display: flex; align-items: center; margin-bottom: 12px;">
 	    	<img src='@routes.Assets.versioned("images/icons/32px/question.png")'><span style="font-size: 14px;">Confirmation</span>
@@ -4263,7 +4280,7 @@
 
 	  <!-- Selection Modal -->
 	  <div id="selectionModal" class="modal">
-		  <div class="modal-content"  style="width : 400px;">
+		  <div class="modal-content"  style="width : 480px;">
 			  <span class="close" onclick="closeModal($('#selectionModal'))">&times;</span>
 			  <div style="margin-bottom: 10px;">
 				  <img class="pr-2" width="24px" src='@routes.Assets.versioned("images/icons/question.svg")'><span style="font-size: 16px;">Selection</span>
@@ -4277,7 +4294,7 @@
 	<!-- Logo Modal -->
 	
 	<div id="logoModal" class="modal">
-	  <div class="modal-content"  style="width : 400px;">
+	  <div class="modal-content"  style="width : 480px;">
 	    <span class="close" onclick="closeModal($('#logoModal'))">&times;</span>
 	    <h4>Logo Templates</h4>
 	    <div id="logoTemplates"></div>
@@ -4299,7 +4316,7 @@
 	</div>
 	
 	<div id="uploadLogoModal" class="modal">
-		<div class="modal-content"  style="width : 400px;">
+		<div class="modal-content"  style="width : 480px;">
 			<span class="close" onclick="closeModal($('#uploadLogoModal'))">&times;</span>
 			<h4>Upload Own Logo</h4>
 			<ul>
@@ -4317,7 +4334,7 @@
 	</div>
 
   <div id="uploadLiveryModal" class="modal">
-	  <div class="modal-content"  style="width : 400px;">
+	  <div class="modal-content"  style="width : 480px;">
 		  <span class="close" onclick="closeModal($('#uploadLiveryModal'))">&times;</span>
 		  <h4>Upload Airline Livery</h4>
 		  <ul>
@@ -4336,7 +4353,7 @@
 	
 	<!-- airport facility modal -->
 	<div id="facilityModal" class="modal facility">
-	  <div class="modal-content"  style="width : 400px;">
+	  <div class="modal-content"  style="width : 480px;">
 	    <span class="close" onclick="closeModal($(this).closest('.modal'))">&times;</span>
 	    <h4 class="modalHeader"><span class="facilityType"></span></h4>
 		<p class="facilityDescription"></p>
@@ -4531,7 +4548,7 @@
 			<ul>
 				<li class="label">- Average aircraft age on the route</li>
 				<li class="label">- Aircraft "passenger experience" rating</li>
-				<li class="label">- Route's service level</li>
+				<li class="label">- Route's service star</li>
 				<li class="label">- Company-wide level employee quality</li>
 			</ul>
 			
@@ -5623,7 +5640,7 @@
 <!--  end campaign model-->
 
 	  <div id="baseDetailsModal" class="modal">
-		  <div class="modal-content"  style="width : 400px;">
+		  <div class="modal-content"  style="width : 480px;">
 			  <span class="close" onclick="closeModal($(this).closest('.modal'))">&times;</span>
 			  <h4 style="margin-bottom: 10px;">Base Frequency</h4>
 			  <p>As you level up your base, you have more capability to handle more flights at higher frequencies.</p>
@@ -5641,7 +5658,7 @@
 	  </div>
 
 	  <div id="baseUpkeepModal" class="modal">
-		  <div class="modal-content"  style="width : 400px;">
+		  <div class="modal-content"  style="width : 480px;">
 			  <span class="close" onclick="closeModal($(this).closest('.modal'))">&times;</span>
 			  <h4 style="margin-bottom: 10px;">Base Upkeep</h4>
 			  <div class="table data scaleDetails" style="width: 100%;">
@@ -5718,7 +5735,7 @@
 	  </div>
 
   <div id="delegateStatusModal" class="modal">
-	  <div class="modal-content"  style="width : 400px;">
+	  <div class="modal-content"  style="width : 480px;">
 		  <span class="close" onclick="closeModal($('#delegateStatusModal'))">&times;</span>
 		  <h4>Delegates Pool<span class="delegatesTooltip"><img class="info svg" src='@routes.Assets.versioned("images/icons/information.svg")'></span></h4>
 		  <div class="delegateStatus"></div>

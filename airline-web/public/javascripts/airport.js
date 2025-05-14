@@ -52,7 +52,10 @@ function updateAirportDetails(airport, cityImageUrl, airportImageUrl) {
 	$('.airportIataIaco').text(
 	     airport.icao ? airport.iata + " / " + airport.icao : airport.iata
 	)
-
+    Array.from(document.getElementsByClassName('airportIata')).forEach(function(el) {
+        el.innerText = airport.iata;
+    });
+    
 	//loyalist-trend
 //	$.each(result.airlineDeltas, function(index, deltaEntry) {
 //        var airlineName = deltaEntry.airlineName
@@ -416,23 +419,35 @@ function loadAirportStatistics(airport) {
 	    dataType: 'json',
 	    success: function(airportStatistics) {
 	    	var transitTypeData = [
-	    	 {"transitType" : "departure/arrival passengers", "passengers" : airportStatistics.departureOrArrivalPassengers},
-	    	 {"transitType" : "transit passengers", "passengers" : airportStatistics.transitPassengers}
+	    	 {"transitType" : `${airport.name}`, "passengers" : airportStatistics.departureOrArrivalPassengers},
+	    	 {"transitType" : "Transfer passengers", "passengers" : airportStatistics.transitPassengers},
+             ...airportStatistics.localPaxByAirport.map(entry => ({
+                 transitType: entry.airportName,
+                 passengers: entry.passengers
+             })),
 	    	 ]
-	    	plotPie(transitTypeData, null , $("#transitTypePie"), "transitType", "passengers")
+	    	 plotPie(transitTypeData, "" , $("#transitTypePie"), "transitType", "passengers")
 	    	
-	    	assignAirlineColors(airportStatistics.airlineDeparture, "airlineId")
-	    	assignAirlineColors(airportStatistics.airlineArrival, "airlineId")
-	    	
-	    	plotPie(airportStatistics.airlineDeparture, activeAirline ? activeAirline.name : null , $("#airlineDeparturePie"), "airlineName", "passengers")
-	    	plotPie(airportStatistics.airlineArrival, activeAirline ? activeAirline.name : null, $("#airlineArrivalPie"), "airlineName", "passengers")
-	    	
-	    	$('#airportDetailsPassengerCount').text(airportStatistics.departureOrArrivalPassengers)
-	    	$('#airportDetailsConnectedCountryCount').text(airportStatistics.connectedCountryCount)
+	    	assignAirlineColors(airportStatistics.airlinePax, "airlineId")
+	    	assignAirlineColors(airportStatistics.airlinePremiumPax, "airlineId")
+	    	assignAirlineColors(airportStatistics.airlineOrigin, "airlineId")
+
+	    	plotPie(airportStatistics.airlinePax, activeAirline ? activeAirline.name : "" , $("#airlineTotalPie"), "airlineName", "passengers")
+	    	plotPie(airportStatistics.airlineOrigin, activeAirline ? activeAirline.name : "" , $("#airlineOriginPie"), "airlineName", "passengers")
+	    	plotPie(airportStatistics.airlinePremiumPax, activeAirline ? activeAirline.name : "" , $("#airlinePremiumPie"), "airlineName", "passengers")
+
+
 	    	$('#airportDetailsConnectedAirportCount').text(airportStatistics.connectedAirportCount)
+	    	$('#airportDetailsConnectedCountryCount').text(airportStatistics.connectedCountryCount)
+	    	$('#airportDetailsLF').text(airportStatistics.linksLF + "%")
+            $('#airportDetailsInternational').text(airportStatistics.linksIntl + "%")
 	    	$('#airportDetailsAirlineCount').text(airportStatistics.airlineCount)
 	    	$('#airportDetailsLinkCount').text(airportStatistics.linkCount)
-	    	$('#airportDetailsFlightFrequency').text(airportStatistics.flightFrequency)
+	    	$('#airportDetailsFlightFrequency').text( Math.floor(airportStatistics.flightFrequency / 7) )
+	    	const total = Math.floor((airportStatistics.departureOrArrivalPassengers + airportStatistics.transitPassengers) / 7)
+	    	$('#airportDetailsTotalTickets').text( commaSeparateNumber(total) )
+
+	    	//these build the base & lounge tables in the airport view
 	    	updateAirportRating(airportStatistics.rating)
 	    	updateFacilityList(airportStatistics)
 	    },
@@ -544,36 +559,37 @@ function updateFacilityList(statistics) {
 	var hasLounges = false
 	$.each(statistics.bases, function(index, base) {
 		var row = $("<div class='table-row clickable' data-link='rival'></div>")
-		row.append("<div class='cell'>" +  getAirlineSpan(base.airlineId, base.airlineName) + "</div>")
+        let airlineTooltip = "";
+        let linkCount = 0;
+        let avgFreq = 0;
+        let avgDistance = 0;
+
+        for (const entry of statistics.linkCountByAirline) {
+            if (entry.airlineId === base.airlineId) {
+                ({ airlineType, airlineSlogan, linkCount, avgFrequency: avgFreq, avgDistance } = entry);
+                airlineSlogan = airlineSlogan || "We don't have a slogan";
+                airlineTooltip = `<p style="margin-bottom: 0.5rem;">${base.airlineName} <i>${airlineType} Airline</i></p><p>&ldquo;${airlineSlogan}&rdquo;</p>`
+                break;
+            }
+        }
+        var passengers = 0
+        $.each(statistics.airlinePax, function(index, entry) {
+            if (entry.airlineId == base.airlineId) {
+                passengers += entry.passengers;
+                return false; //break
+            }
+        });
+
+		row.append("<div class='cell'>" +  getAirlineSpan(base.airlineId, base.airlineName, airlineTooltip) + "</div>")
 		row.append("<div class='cell' style='text-align: right;'>" + getCountryFlagImg(base.airlineCountryCode) + "</div>")
 		row.append("<div class='cell' style='text-align: right;'>" + base.scale + "</div>")
 		row.click(function() {
 		    showRivalsCanvas(base.airlineId)
 		})
-
-		var linkCount = 0;
-		$.each(statistics.linkCountByAirline, function(index, entry) {
-			if (entry.airlineId == base.airlineId) {
-				linkCount = entry.linkCount;
-				return false; //break
-			}
-		});
-		var passengers = 0
-		$.each(statistics.airlineDeparture, function(index, entry) {
-			if (entry.airlineId == base.airlineId) {
-				passengers += entry.passengers;
-				return false; //break
-			}
-		});
-		$.each(statistics.airlineArrival, function(index, entry) {
-			if (entry.airlineId == base.airlineId) {
-				passengers += entry.passengers;
-				return false; //break
-			}
-		});
-		
 		row.append("<div class='cell' style='text-align: right;'>" + linkCount + "</div>")
 		row.append("<div class='cell' style='text-align: right;'>" + commaSeparateNumber(passengers) + "</div>")
+        row.append("<div class='cell' style='text-align: right;'>" + avgFreq + "</div>")
+        row.append("<div class='cell' style='text-align: right;'>" + avgDistance + " km</div>")
 		
 		if (base.headquarter) {
 			$('#airportDetailsHeadquarterList').append(row)
@@ -603,24 +619,21 @@ function updateFacilityList(statistics) {
 	})
 
 	populateNavigation($('#airportCanvas'))
+
+    var emptyBaseRow = $("<div class='table-row'></div>")
+        emptyBaseRow.append("<div class='cell'>-</div>")
+        emptyBaseRow.append("<div class='cell' style='text-align: right;'>-</div>")
+        emptyBaseRow.append("<div class='cell' style='text-align: right;'>-</div>")
+        emptyBaseRow.append("<div class='cell' style='text-align: right;'>-</div>")
+        emptyBaseRow.append("<div class='cell' style='text-align: right;'>-</div>")
+        emptyBaseRow.append("<div class='cell' style='text-align: right;'>-</div>")
+        emptyBaseRow.append("<div class='cell' style='text-align: right;'>-</div>")
 	
 	if (!hasHeadquarters) {
-		var emptyRow = $("<div class='table-row'></div>")
-		emptyRow.append("<div class='cell'>-</div>")
-		emptyRow.append("<div class='cell' style='text-align: right;'>-</div>")
-		emptyRow.append("<div class='cell' style='text-align: right;'>-</div>")
-		emptyRow.append("<div class='cell' style='text-align: right;'>-</div>")
-		emptyRow.append("<div class='cell' style='text-align: right;'>-</div>")
-		$('#airportDetailsHeadquarterList').append(emptyRow)
+		$('#airportDetailsHeadquarterList').append(emptyBaseRow)
 	}
 	if (!hasBases) {
-		var emptyRow = $("<div class='table-row'></div>")
-		emptyRow.append("<div class='cell'>-</div>")
-		emptyRow.append("<div class='cell' style='text-align: right;'>-</div>")
-		emptyRow.append("<div class='cell' style='text-align: right;'>-</div>")
-		emptyRow.append("<div class='cell' style='text-align: right;'>-</div>")
-		emptyRow.append("<div class='cell' style='text-align: right;'>-</div>")
-		$('#airportDetailsBaseList').append(emptyRow)
+		$('#airportDetailsBaseList').append(emptyBaseRow)
 	}
 	if (!hasLounges) {
 		var emptyRow = $("<div class='table-row'></div>")
