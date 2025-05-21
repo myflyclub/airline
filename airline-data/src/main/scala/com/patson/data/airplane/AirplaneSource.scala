@@ -141,6 +141,52 @@ object AirplaneSource {
       result(airplaneId)
     }
    }
+   
+  /**
+    * Load link assignments for multiple airplane IDs in a single database call
+    * 
+    * @param airplaneIds List of airplane IDs to load assignments for
+    * @return Map of airplane ID to its LinkAssignments
+    */
+  def loadAirplaneLinkAssignmentsByAirplaneIds(airplaneIds : List[Int]) : Map[Int, LinkAssignments] = {
+    if (airplaneIds.isEmpty) {
+      Map.empty
+    } else {
+      val connection = Meta.getConnection()
+      try {
+        val queryString = new StringBuilder("SELECT airplane, link, frequency, flight_minutes FROM " + LINK_ASSIGNMENT_TABLE + " WHERE airplane IN (")
+        for (i <- 0 until airplaneIds.size - 1) {
+          queryString.append("?,")
+        }
+        queryString.append("?)")
+        
+        val preparedStatement = connection.prepareStatement(queryString.toString())
+        
+        for (i <- 0 until airplaneIds.size) {
+          preparedStatement.setInt(i + 1, airplaneIds(i))
+        }
+        
+        val resultSet = preparedStatement.executeQuery()
+        
+        val airplanesWithAssignedLink = new mutable.HashMap[Int, mutable.HashMap[Int, LinkAssignment]]()
+        while (resultSet.next()) {
+          val airplaneId = resultSet.getInt("airplane")
+          val linkId = resultSet.getInt("link")
+          
+          val assignedLinks = airplanesWithAssignedLink.getOrElseUpdate(airplaneId, new mutable.HashMap[Int, LinkAssignment]())
+          assignedLinks.put(linkId, LinkAssignment(resultSet.getInt("frequency"), resultSet.getInt("flight_minutes")))
+        }
+        
+        resultSet.close()
+        preparedStatement.close()
+        
+        // Convert to immutable map and return
+        airplanesWithAssignedLink.view.mapValues(mutableMap => LinkAssignments(mutableMap.toMap)).toMap
+      } finally {
+        connection.close()
+      }
+    }
+  }
 
   /**
     *

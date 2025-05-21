@@ -300,22 +300,34 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
 
     val flightMinutesRequiredPerFrequency = Computation.calculateFlightMinutesRequired(model, incomingLink.distance)
 
-    val airplanesToUpdate = ListBuffer[Airplane]() // keep track of planes that need to move to new airport
+    // Get all airplanes that need to be checked for relocation
+    val airplanesToCheck = incomingLink.getAssignedAirplanes().filter(_._1.home.id != incomingLink.from.id).map(_._1)
+    
+    // Only load assignments once for all airplanes that need to be checked
+    val airplanesToUpdate = if (airplanesToCheck.nonEmpty) {
+      // Get all assignments for these airplanes in a single DB call
+      val airplaneIds = airplanesToCheck.map(_.id).toList
+      val allAssignments = AirplaneSource.loadAirplaneLinkAssignmentsByAirplaneIds(airplaneIds)
+      
+      // Filter to only include airplanes with no assignments
+      airplanesToCheck.filter(airplane => allAssignments.getOrElse(airplane.id, LinkAssignments.empty).isEmpty)
+        .map(airplane => {
+          airplane.home = targetBase.airport
+          airplane
+        })
+    } else {
+      List.empty[Airplane]
+    }
+    
     //check if the assigned planes are owned by this airline and have minutes left for this
     incomingLink.getAssignedAirplanes().foreach {
       case(airplane, assignment) =>
         if (airplane.owner.id != airlineId){
           return BadRequest(s"Cannot insert link - airplane $airplane is not owned by ${request.user}")
         }
-        if (airplane.home.id != incomingLink.from.id) { // plane home airport does not match link origin airport
-          // check if it is unused and can be moved
-          val currentAssignments = AirplaneSource.loadAirplaneLinkAssignmentsByAirplaneId(airplane.id) // load fresh assignments
-          if (currentAssignments.isEmpty) {
-            airplane.home = targetBase.airport
-            airplanesToUpdate.append(airplane)
-          } else {
-            return BadRequest(s"Cannot move airplane $airplane as it has other assigned links.")
-          }
+        if (airplane.home.id != incomingLink.from.id && !airplanesToUpdate.contains(airplane)) { 
+          // If the airplane is not in the list of airplanes to update, it means it has assignments
+          return BadRequest(s"Cannot move airplane $airplane as it has other assigned links.")
         }
 
         val linkAssignments = AirplaneSource.loadAirplaneLinkAssignmentsByAirplaneId(airplane.id)
@@ -398,7 +410,7 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
 
     // Perform airplane moves before link update
     if (airplanesToUpdate.nonEmpty) {
-      AirplaneSource.updateAirplanesDetails(airplanesToUpdate.toList)
+      AirplaneSource.updateAirplanesDetails(airplanesToUpdate)
     }
 
     val resultLink : Link =
