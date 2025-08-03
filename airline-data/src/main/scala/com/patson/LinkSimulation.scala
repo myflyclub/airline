@@ -22,9 +22,27 @@ object LinkSimulation {
   val CREW_UNIT_COST = 6.75
   val CREW_BASE_COST = 50
   val CREW_EQ_EXPONENT = 1.95
+  
+  // Cache for actual fuel costs per airline (calculated in previous cycle)
+  private var actualFuelCostsPerAirline: Map[Int, Double] = Map.empty
+  
+  def setActualFuelCostPerAirline(airlineId: Int, actualFuelCostPerBarrel: Double): Unit = {
+    actualFuelCostsPerAirline = actualFuelCostsPerAirline + (airlineId -> actualFuelCostPerBarrel)
+  }
+  
+  def getActualFuelCostPerAirline(airlineId: Int): Option[Double] = {
+    actualFuelCostsPerAirline.get(airlineId)
+  }
+  
+  def clearActualFuelCosts(): Unit = {
+    actualFuelCostsPerAirline = Map.empty
+  }
 
 
   def linkSimulation(cycle: Int) : (List[LinkConsumptionDetails], scala.collection.immutable.Map[Lounge, LoungeConsumptionDetails], immutable.Map[(PassengerGroup, Airport, Route), Int], immutable.Map[Int, AirlinePaxStat]) = {
+    // Clear the actual fuel cost cache at the beginning of each cycle
+    clearActualFuelCosts()
+    
     println("Loading all links")
     val links = LinkSource.loadAllLinks(LinkSource.FULL_LOAD)
     val flightLinks = links.filter(_.transportType == TransportType.FLIGHT).map(_.asInstanceOf[Link])
@@ -204,7 +222,7 @@ object LinkSimulation {
     computeLinkAndLoungeConsumptionDetail(link, cycle, assignmentsToThis, List.empty)._1
   }
 
-  def computeLinkAndLoungeConsumptionDetail(link : Link, cycle : Int, allAirplaneAssignments : immutable.Map[Int, LinkAssignments], passengerCostEntries : List[PassengerCost]) : (LinkConsumptionDetails, List[LoungeConsumptionDetails]) = {
+  def computeLinkAndLoungeConsumptionDetail(link : Link, cycle : Int, allAirplaneAssignments : immutable.Map[Int, LinkAssignments], passengerCostEntries : List[PassengerCost], actualFuelCostPerBarrel : Option[Double] = None) : (LinkConsumptionDetails, List[LoungeConsumptionDetails]) = {
     val flightLink = link.asInstanceOf[Link]
 
 
@@ -212,7 +230,8 @@ object LinkSimulation {
       case Some(model) =>
         val loadFactor = FUEL_EMPTY_AIRCRAFT_BURN_PERCENT + (1 - FUEL_EMPTY_AIRCRAFT_BURN_PERCENT) * flightLink.getTotalSoldSeats.toDouble / flightLink.capacity.totalwithSeatSize
         val distanceFactor = 1 + 0.1 * Math.pow(flightLink.duration.toDouble / 60, FUEL_DISTANCE_EXPONENT * loadFactor)
-        val fuelCost = FUEL_UNIT_COST * model.capacity * distanceFactor * (model.ascentBurn * loadFactor + model.cruiseBurn * link.distance / 800)
+        val fuelUnitCost = actualFuelCostPerBarrel.getOrElse(getActualFuelCostPerAirline(link.airline.id).getOrElse(FUEL_UNIT_COST))
+        val fuelCost = fuelUnitCost * model.capacity * distanceFactor * (model.ascentBurn * loadFactor + model.cruiseBurn * link.distance / 800)
 
         (fuelCost * (flightLink.frequency - flightLink.cancellationCount)).toInt
       case None => 0
