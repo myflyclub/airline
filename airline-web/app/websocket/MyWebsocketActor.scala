@@ -29,7 +29,11 @@ object MyWebSocketActor {
     airlineId.toString + "-" + counter.getAndIncrement
   }
 
-  startBackgroundPingTrigger()
+  // Lazy initialization to avoid circular dependency
+  private lazy val backgroundPingTriggerStarted: Boolean = {
+    startBackgroundPingTrigger()
+    true
+  }
 
   def startBackgroundPingTrigger(): Unit = {
     actorSystem.scheduler.scheduleAtFixedRate(Duration.Zero, Duration(30, TimeUnit.SECONDS))(new Runnable {

@@ -53,7 +53,7 @@ object Bank {
     val currentCycle = CycleSource.loadCycle()
     BankSource.loadLoanInterestRateByCycle(currentCycle) match {
       case Some(currentRate) =>
-        getLoanOptions(principal, currentRate.annualRate.toDouble, currentCycle)
+        getLoanOptions(principal, currentRate, currentCycle)
       case None =>
         List.empty[Loan]
     }

@@ -11,7 +11,7 @@ import scala.collection.mutable.ListBuffer
 object AirlineStatisticsSource {
 
   def saveAirlineStats(stats: List[AirlineStat]) = {
-    val queryString = s"REPLACE INTO $AIRLINE_STATISTICS_TABLE (airline, cycle, period, tourists, elites, business, total, codeshares, rask, cask, satisfaction, load_factor, on_time, hub_dominance) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+    val queryString = s"REPLACE INTO $AIRLINE_STATISTICS_TABLE (airline, cycle, period, tourists, elites, business, total, codeshares, rask, cask, satisfaction, load_factor, on_time, cash_on_hand, eps, link_count, rep_total, rep_leaderboards) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
     val connection = Meta.getConnection()
     try {
       connection.setAutoCommit(false)
@@ -27,10 +27,14 @@ object AirlineStatisticsSource {
         preparedStatement.setInt(8, entry.codeshares)
         preparedStatement.setDouble(9, entry.RASK)
         preparedStatement.setDouble(10, entry.CASK)
-        preparedStatement.setDouble(11, entry.satisfaction)
-        preparedStatement.setDouble(12, entry.loadFactor)
-        preparedStatement.setDouble(13, entry.onTime)
-        preparedStatement.setDouble(14, entry.hubDominance)
+        preparedStatement.setDouble(11, BigDecimal(entry.satisfaction).setScale(4, BigDecimal.RoundingMode.HALF_UP).toDouble)
+        preparedStatement.setDouble(12, BigDecimal(entry.loadFactor).setScale(4, BigDecimal.RoundingMode.HALF_UP).toDouble)
+        preparedStatement.setDouble(13, BigDecimal(entry.onTime).setScale(4, BigDecimal.RoundingMode.HALF_UP).toDouble)
+        preparedStatement.setInt(14, entry.cashOnHand)
+        preparedStatement.setDouble(15, BigDecimal(entry.eps).setScale(4, BigDecimal.RoundingMode.HALF_UP).toDouble)
+        preparedStatement.setInt(16, entry.linkCount)
+        preparedStatement.setInt(17, entry.repTotal)
+        preparedStatement.setInt(18, entry.repLeaderboards)
         preparedStatement.executeUpdate()
       }
       preparedStatement.close()
@@ -40,35 +44,7 @@ object AirlineStatisticsSource {
     }
   }
 
-  def saveAirlineStat(stat: AirlineStat) = {
-    val queryString = s"REPLACE INTO $AIRLINE_STATISTICS_TABLE (airline, cycle, period, tourists, elites, business, total, codeshares, rask, cask, satisfaction, load_factor, on_time, hub_dominance) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
-    val connection = Meta.getConnection()
-    try {
-      connection.setAutoCommit(false)
-      val preparedStatement = connection.prepareStatement(queryString)
-      preparedStatement.setInt(1, stat.airlineId)
-      preparedStatement.setInt(2, stat.cycle)
-      preparedStatement.setInt(3, stat.period.id)
-      preparedStatement.setInt(4, stat.tourists)
-      preparedStatement.setInt(5, stat.elites)
-      preparedStatement.setInt(6, stat.business)
-      preparedStatement.setInt(7, stat.total)
-      preparedStatement.setInt(8, stat.codeshares)
-      preparedStatement.setDouble(9, stat.RASK)
-      preparedStatement.setDouble(10, stat.CASK)
-      preparedStatement.setDouble(12, stat.satisfaction)
-      preparedStatement.setDouble(13, stat.loadFactor)
-      preparedStatement.setDouble(14, stat.onTime)
-      preparedStatement.setDouble(15, stat.hubDominance)
-      preparedStatement.executeUpdate()
-      preparedStatement.close()
-      connection.commit()
-    } finally {
-      connection.close()
-    }
-  }
-
-  def deleteIncomesBefore(cycleAndBefore : Int, period : Period.Value) = {
+  def deleteStatsBefore(cycleAndBefore : Int, period : Period.Value): Unit = {
     val connection = Meta.getConnection()
     try {
       connection.setAutoCommit(false)
@@ -78,7 +54,7 @@ object AirlineStatisticsSource {
       deleteStatement.executeUpdate()
 
       deleteStatement.close()
-      connection.commit
+      connection.commit()
     } finally {
       connection.close()
     }
@@ -121,8 +97,12 @@ object AirlineStatisticsSource {
           val satisfaction = resultSet.getDouble("satisfaction")
           val loadFactor = resultSet.getDouble("load_factor")
           val onTime = resultSet.getDouble("on_time")
-          val hubDominance = resultSet.getDouble("hub_dominance")
-          airlineStats += AirlineStat(airlineId, cycle, period, tourists, elites, business, total, codeshares, rask, cask, satisfaction, loadFactor, onTime, hubDominance)
+          val cashOnHand = resultSet.getInt("cash_on_hand")
+          val eps = resultSet.getDouble("eps")
+          val linkCount = resultSet.getInt("link_count")
+          val repTotal = resultSet.getInt("rep_total")
+          val repLeaderboards = resultSet.getInt("rep_leaderboards")
+          airlineStats += AirlineStat(airlineId, cycle, period, tourists, elites, business, total, codeshares, rask, cask, satisfaction, loadFactor, onTime, cashOnHand, eps, linkCount, repTotal, repLeaderboards)
         }
 
         airlineStats.toList
@@ -134,11 +114,7 @@ object AirlineStatisticsSource {
 
   def loadAirlineStat(airlineId: Int, cycle: Int): Option[AirlineStat] = {
     val airlineStats = loadAirlineStatsByCriteria(List(("airline", airlineId), ("cycle", cycle)))
-    if (airlineStats.length > 0) {
-      Some(airlineStats(0))
-    } else {
-      None
-    }
+    airlineStats.headOption
   }
 
   def loadAirlineStats(airlineId: Int): List[AirlineStat] = {
@@ -170,8 +146,12 @@ object AirlineStatisticsSource {
         val satisfaction = resultSet.getDouble("satisfaction")
         val loadFactor = resultSet.getDouble("load_factor")
         val onTime = resultSet.getDouble("on_time")
-        val hubDominance = resultSet.getDouble("hub_dominance")
-        airlineStats += AirlineStat(airlineId, cycle, period, tourists, elites, business, total, codeshares, rask, cask, satisfaction, loadFactor, onTime, hubDominance)
+        val cashOnHand = resultSet.getInt("cash_on_hand")
+        val eps = resultSet.getDouble("eps")
+        val linkCount = resultSet.getInt("link_count")
+        val repTotal = resultSet.getInt("rep_total")
+        val repLeaderboards = resultSet.getInt("rep_leaderboards")
+        airlineStats += AirlineStat(airlineId, cycle, period, tourists, elites, business, total, codeshares, rask, cask, satisfaction, loadFactor, onTime, cashOnHand, eps, linkCount, repTotal, repLeaderboards)
       }
 
       airlineStats.toList

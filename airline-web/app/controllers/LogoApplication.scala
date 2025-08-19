@@ -15,6 +15,12 @@ class LogoApplication @Inject()(cc: ControllerComponents) extends AbstractContro
 
   def getTemplates() = Action {
      Ok(Json.toJson(templates.keySet.toList.sorted))
+       .withHeaders(
+         CACHE_CONTROL -> "public, max-age=2419200",
+         ETAG -> s""""$currentApiVersion"""", // Use version as ETag
+         EXPIRES -> java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME
+           .format(java.time.ZonedDateTime.now().plusWeeks(4))
+       )
   }
   
   def getTemplate(id : Int) = Action {

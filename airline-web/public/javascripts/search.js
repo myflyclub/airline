@@ -1,5 +1,16 @@
-var loadedOlympicsEvents = []
-var loadedAlerts = []
+// State management for History Search
+let historySearchState = {};
+const resetHistorySearchState = () => {
+    historySearchState = {
+        from: { type: null, id: null, text: '' },
+        to: { type: null, id: null, text: '' },
+        airline: { id: null, text: '' },
+        alliance: { id: null, text: '' },
+        capacity: null,
+        capacityDelta: null
+    };
+};
+resetHistorySearchState(); // Initial state reset
 
 function showSearchCanvas(historyAirline) {
     var titlesContainer = $("#searchCanvas div.titlesContainer")
@@ -11,32 +22,38 @@ function showSearchCanvas(historyAirline) {
 	if (isMobileDevice()) {
 	   $('#searchCanvas .banner').hide()
 	} else {
+        $('#map').fadeIn(200);
 	   showBanner()
     }
 	$("#historySearchResult .table-row").empty()
 	$('#searchCanvas .searchContainer input').val('')
 	$('#searchCanvas .searchContainer input').removeData("selectedId")
+    // resetHistorySearchState(); // Reset state object every time search is opened
 
-    refreshSearchDiv(titlesContainer.children('div.selected'))
-    var titleSelections =  titlesContainer.children('div.titleSelection')
-    titleSelections.off("click.refreshSearchDiv");
-    titleSelections.on("click.refreshSearchDiv", function(){
-      refreshSearchDiv($(this))
-    });
     updateNavigationArrows(titlesContainer)
 
     initializeHistorySearch()
 
-    if (historyAirline) {
-        var historyDiv = titlesContainer.find('.titleSelection[data-search-type="history"]')
-        $(historyDiv).trigger('click')
-        $('#searchCanvas div.historySearch input.airline').data('selectedId',historyAirline.id)
-        $('#searchCanvas div.historySearch input.airline').val(getAirlineTextEntry(historyAirline, false))
+    if (historyAirline > 0) {
+        refreshSearchDiv('history');
+
+        // Update state and UI for the provided airline
+        const airlineId = historyAirline.id;
+        const airlineText = getAirlineTextEntry(historyAirline, false);
+        historySearchState.airline = { id: airlineId, text: airlineText };
+        $('#searchCanvas div.historySearch input.airline').data('selectedId', airlineId).val(airlineText);
+
         searchLinkHistory()
+    } else if (historyAirline == 0) {
+        refreshSearchDiv('research');
+    } else {
+        refreshSearchDiv('route');
     }
 }
 
 function showBanner() {
+    return; //is disabled
+
     $.ajax({
             type: 'GET',
             url: "banner",
@@ -65,29 +82,70 @@ function showBanner() {
 }
 
 function initializeHistorySearch() {
-    var locationSearchInput = $('#searchCanvas div.searchCriterion input')
-    locationSearchInput.on('confirmSelection', function(e) {
-        var disablingInputs
-        if ($(this).data("searchGroup")) {
-            var searchGroup = $(this).data("searchGroup")
-            disablingInputs = $(this).closest('div.searchCriterion').siblings('div.searchCriterion').find('input[data-search-group="' + searchGroup + '"]') //disable other to-s
-        }
+    const searchCanvas = $('#searchCanvas');
+    const titlesContainer = searchCanvas.find('div.titlesContainer');
 
-        disablingInputs.val('')
-        disablingInputs.removeData("selectedId") //disable other inputs in div.searchCriterion
-        //alert('My Custom Event - Change Data Called! for ' + $(this).data("selectedId"));
-    })
-    //register sort function for result table
-     var sortHeaderCells = $('#searchCanvas div.historySearch div.sortHeader div.cell.clickable')
-     sortHeaderCells.on("click.toggleSort", function(){
-       toggleTableSortOrder($(this), function(sortProperty, sortOrder) {
-        updateLinkHistoryTable(sortProperty, sortOrder)
-       })
-     });
+    // Logic to sync airport info between tabs
+    titlesContainer.off('mousedown.syncAirport click.syncAirport') // Clear previous handlers
+        .on('mousedown.syncAirport', '.titleSelection', function() {
+            const $clickedTitle = $(this);
+            if (!$clickedTitle.hasClass('selected')) {
+                const fromSearchType = $clickedTitle.siblings('.selected').data('searchType');
+                titlesContainer.data('fromSearchType', fromSearchType);
+            } else {
+                titlesContainer.removeData('fromSearchType');
+            }
+        })
+        .on('click.syncAirport', '.titleSelection', function() {
+            const $clickedTitle = $(this);
+            const fromSearchType = titlesContainer.data('fromSearchType');
+            const toSearchType = $clickedTitle.data('searchType');
+
+            if (fromSearchType && fromSearchType !== toSearchType) {
+                const getInputs = (type) => {
+                    if (!type) return null;
+                    const containerSelector = (type === 'route' || type === 'research') ? '.searchFieldContainer' : '.historySearch';
+                    return {
+                        from: searchCanvas.find(`${containerSelector} .fromAirport`),
+                        to: searchCanvas.find(`${containerSelector} .toAirport`)
+                    };
+                };
+
+                const fromInputs = getInputs(fromSearchType);
+                const toInputs = getInputs(toSearchType);
+
+                if (fromInputs && toInputs) {
+                    const fromId = fromInputs.from.data('selectedId');
+                    if (fromId) {
+                        toInputs.from.data('selectedId', fromId).val(fromInputs.from.val());
+                    }
+                    const toId = fromInputs.to.data('selectedId');
+                    if (toId) {
+                        toInputs.to.data('selectedId', toId).val(fromInputs.to.val());
+                    }
+                }
+            }
+            titlesContainer.removeData('fromSearchType');
+        });
+
+    // Handlers for capacity/delta inputs to update state
+    searchCanvas.find('.historySearch input.capacity').on('input', function() {
+        const value = $(this).val();
+        historySearchState.capacity = value && !isNaN(value) ? parseInt(value) : null;
+    });
+
+    searchCanvas.find('.historySearch input.capacityDelta').on('input', function() {
+        const value = $(this).val();
+        historySearchState.capacityDelta = value && !isNaN(value) ? parseInt(value) : null;
+    });
+
+    // Sort function for result table
+    searchCanvas.find('.historySearch .sortHeader .cell.clickable').off('click.toggleSort').on('click.toggleSort', function() {
+        toggleTableSortOrder($(this), updateLinkHistoryTable);
+    });
 }
 
-function refreshSearchDiv(selectedDiv) {
-    var searchTitleType = selectedDiv.data('searchType')
+function refreshSearchDiv(searchTitleType) {
     if (searchTitleType === 'route') {
         $('#searchCanvas div.routeSearch').show();
         $('#searchCanvas div.routeSearch').siblings('.searchContainer').hide();
@@ -102,7 +160,6 @@ function refreshSearchDiv(selectedDiv) {
         $('#searchCanvas div.research').siblings('.searchContainer').hide();
         $('#searchCanvas .searchFieldContainer').show();
     }
-
 }
 
 function searchAction(fromAirportId, toAirportId) {
@@ -114,232 +171,184 @@ function searchAction(fromAirportId, toAirportId) {
     }
 }
 
+function showResearchPreloaded() {
+    removeTempPath();
+    document.querySelector('#searchCanvas div.titlesContainer .selected').classList.remove('selected')
+    document.querySelector('#searchCanvas div.titlesContainer [data-search-type="research"]').classList.add('selected')
+    const fromId = $('#planLinkFromAirportId').val() > 0 ? $('#planLinkFromAirportId').val() : activeAirline.headquarterAirport.airportId;
+    const toId = $('#airportPopupId').val();
+    const from = getAirportById(fromId);
+    const to = getAirportById(toId);
+    showSearchCanvas(0);
+    researchFlight(fromId, toId);
+
+    //create a temp path
+    var tempLink = {fromLatitude: from.latitude, fromLongitude: from.longitude, toLatitude: to.latitude, toLongitude: to.longitude}
+    //set the temp path
+    tempPath = drawFlightPath(tempLink, '#3b94e6')
+
+    document.querySelector('#searchCanvas .searchInput .fromAirport').value = from.iata;
+    document.querySelector('#searchCanvas .searchInput .toAirport').value = to.iata;
+    document.querySelector('#searchCanvas .searchInput .fromAirport').setAttribute('data-selectedid', fromId);
+    document.querySelector('#searchCanvas .searchInput .toAirport').setAttribute('data-selectedid', toId);
+}
+
 
 function searchRoute(fromAirportId, toAirportId) {
-    if (fromAirportId && toAirportId) {
-        var url = "search-route/" + fromAirportId + "/" + toAirportId
-
-        $.ajax({
-            type: 'GET',
-            url: url,
-            contentType: 'application/json; charset=utf-8',
-            dataType: 'json',
-            success: function(searchResult) {
-                $("#routeSearchResult").empty()
-                $("#searchCanvas .banner").hide()
-
-                $.each(searchResult, function(index, entry) {
-                    var itineraryDiv = $("<div class='section itinerary' onclick='toggleSearchLinkDetails($(this))'></div>")
-                    var total = 0
-
-                    var routeDiv = $("<div style='float:left; width : 85%'></div>")
-                    itineraryDiv.append(routeDiv)
-
-                     //Generate Summary
-                    var startLink
-                    for (i = 0 ; i < entry.route.length; i ++) {
-                        if (entry.route[i].transportType == 'FLIGHT') {
-                            startLink = entry.route[i]
-                            break;
-                        }
-                    }
-
-                    var endLink
-                    for (i = entry.route.length - 1 ; i >= 0 ; i --) {
-                        if (entry.route[i].transportType == 'FLIGHT') {
-                            endLink = entry.route[i]
-                            break;
-                        }
-                    }
-
-                    var startDay = Math.floor(startLink.departure / (24 * 60))
-                    var summaryDiv = $("<div class='summary'  style='display: flex; align-items: center;'></div>")
-                    summaryDiv.append("<div style='width: 50%; float:left;'> " + getAirlineTimeSlotText(startLink.departure, startDay) + " - " + getAirlineTimeSlotText(endLink.arrival, startDay) + "</div>")
-                    summaryDiv.append("<div style='width: 50%; float:left;'> " + getDurationText(endLink.arrival - startLink.departure) +  "</div>")
-                    summaryDiv.append("<div style='clear:both; '></div>")
-
-                    routeDiv.append(summaryDiv)
-
-                    var previousLink
-                    var flightCount = 0
-                    $.each(entry.route, function(index, link) {
-                        if (link.transportType == 'FLIGHT') {
-                            flightCount ++
-                            //check generic transit
-                            var preGenericTransit
-                            var postGenericTransit
-                            if (index > 0) {
-                                if (entry.route[index - 1].transportType == 'GENERIC_TRANSIT') {
-                                    preGenericTransit = entry.route[index - 1]
-                                }
-                            }
-                            if (index < entry.route.length - 1) {
-                                if (entry.route[index + 1].transportType == 'GENERIC_TRANSIT') {
-                                    postGenericTransit = entry.route[index + 1]
-                                }
-                            }
-
-                            var linkDiv = $("<div style='margin-bottom: 10px;'></div>")
-                            var linkSummaryDiv = $("<div style='margin : 10px 0;'></div>")
-                            linkSummaryDiv.append("<div style='width: 50%; float:left; display: flex; align-items: center;'> " + getAirlineLogoImg(link.airlineId) + "<span class='summary'>" + link.airlineName + "</span></div>")
-                            var linkDurationText = getDurationText(link.arrival - link.departure)
-                            var remarks = []
-                            if (preGenericTransit) {
-                                remarks.push("Depart from " + link.fromAirportIata)
-                            }
-                            if (postGenericTransit) {
-                                remarks.push("Arrive at " + link.toAirportIata)
-                            }
-                            if (previousLink) {
-                                remarks.push("+" + getDurationText(link.departure - previousLink.arrival) + " layover at " + link.fromAirportIata)
-                            }
-
-                            if (remarks.length > 0) {
-                                var remarksText = remarks.join(", ")
-                                linkDurationText += "(" + remarksText + ")"
-                            }
-
-                            linkSummaryDiv.append("<div style='width: 50%; float:left;'> " + linkDurationText + "</div>")
-    //                        airlineSpan.append("<div style='width: 50%; float:left;'> " + link.flightCode + "&nbsp;" + getAirlineTimeSlotText(link.departure, startDay) + " - " + getAirlineTimeSlotText(link.arrival, startDay) + "</div>")
-                            linkSummaryDiv.append("<div style='clear:both; '></div>")
-                            linkDiv.append(linkSummaryDiv)
-
-                            var linkDetailDiv = $("<div style='display: flex; align-items: center; margin: 0 10px;' class='linkDetails'></div>")
-                            var linkDetailLeftDiv = $("<div style='width: 50%;'></div>").appendTo(linkDetailDiv)
-                            linkDetailLeftDiv.append("<div style='display: inline-block; width: 75px;' class='summary'> " + link.flightCode + "</div>")
-                            linkDetailLeftDiv.append("<span>" + getAirlineTimeSlotText(link.departure, startDay) + " - " + getAirlineTimeSlotText(link.arrival, startDay) + "</span>")
-                            linkDetailLeftDiv.append("<div>$" + link.price + " (" +  link.linkClass + ")</div>")
-                            $featureIconsDiv = getLinkFeatureIconsDiv(link.features)
-                            linkDetailLeftDiv.append($featureIconsDiv)
-                            linkDetailLeftDiv.append(getLinkReviewDiv(link.computedQuality))
-
-
-                            var linkDetailRightDiv = $("<div style='width: 50%;'></div>").appendTo(linkDetailDiv)
-                            linkDetailRightDiv.append("<div style='display: flex; align-items: center;'>" + getAirportText(link.fromAirportCity, link.fromAirportIata) + "<img src='assets/images/icons/arrow.png' style='margin: 0 5px;'>" + getAirportText(link.toAirportCity, link.toAirportIata) + "</div>")
-                            linkDetailRightDiv.append("<div>Aircraft : " + (link.airplaneModelName ? link.airplaneModelName : "-") + "</div>")
-                            if (link.operatorAirlineId) { //code share
-                                linkDetailRightDiv.append("<div>Operated by " + getAirlineLogoImg(link.operatorAirlineId) + link.operatorAirlineName + "</div>")
-                            }
-                            if (preGenericTransit) {
-                                linkDetailRightDiv.append("<div>Depart from " + preGenericTransit.toAirportText + "</div>")
-                            }
-                            if (postGenericTransit) {
-                                linkDetailRightDiv.append("<div>Arrive at " + postGenericTransit.fromAirportText + "</div>")
-                            }
-
-
-                            linkDetailDiv.append("<div style='clear:both; '></div>")
-
-                            linkDetailDiv.hide()
-                            linkDiv.append(linkDetailDiv)
-
-    //                        var directionDiv = $("<div style='display: flex; align-items: center;' >" + link.flightCode + "&nbsp;" + getAirportText(link.fromAirportCity, link.fromAirportIata) + "<img src='assets/images/icons/arrow.png' style='margin: 0 5px;'>" + getDurationText(link.duration) + " " + link.linkClass + "</div>")
-    //                        linkDiv.append(directionDiv)
-
-                            routeDiv.append(linkDiv)
-                            total += link.price
-                            previousLink = link
-                        }
-                    })
-                    var stopDescription
-                    if (flightCount == 1) {
-                        stopDescription = "Direct Flight"
-                    } else if (flightCount == 2) {
-                        stopDescription = "1 Stop"
-                    } else {
-                        stopDescription = (flightCount - 1) + " Stops"
-                    }
-                    var priceDiv = $("<div style='float: right; width: 15%;'><div class='price'>$ " + total + "</div></div>")
-                    var priceTextDiv = priceDiv.find('div.price')
-
-                    $.each(entry.remarks, function(index, remark) {
-                        if (remark == 'BEST_SELLER') {
-                            priceTextDiv.css("color", "darkgreen")
-                            priceTextDiv.after("<div style='display:inline-block;' class='remark'>BEST SELLER</div>")
-                        } else if (remark == 'BEST_DEAL') {
-                            priceTextDiv.css("color", "darkgreen")
-                            priceTextDiv.after("<div style='display:inline-block;' class='remark'>BEST DEAL</div>")
-                        }
-                    })
-
-
-                    priceDiv.append($("<div style='margin-top: 5px;'>" + stopDescription + "</div>"))
-
-
-                    itineraryDiv.append(priceDiv)
-                    itineraryDiv.append("<div style='clear:both;'></div>")
-                    $("#routeSearchResult").append(itineraryDiv)
-                })
-
-
-
-                if (searchResult.length == 0) {
-                    $("#routeSearchResult").append("<div class='ticketTitle'>Sorry, no flights available.</div>")
-                }
-            },
-            error: function(jqXHR, textStatus, errorThrown) {
-                    console.log(JSON.stringify(jqXHR));
-                    console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
-            },
-            beforeSend: function() {
-                $('body .loadingSpinner').show()
-            },
-            complete: function(){
-                $('body .loadingSpinner').hide()
-            }
-        });
+    if (!fromAirportId || !toAirportId) {
+        return;
     }
+
+    const url = `search-route/${fromAirportId}/${toAirportId}`;
+
+    $.ajax({
+        type: 'GET',
+        url: url,
+        contentType: 'application/json; charset=utf-8',
+        dataType: 'json',
+        success: function(searchResult) {
+            const resultContainer = $("#routeSearchResult");
+            resultContainer.empty();
+            $("#searchCanvas .banner").hide();
+
+            if (searchResult.length === 0) {
+                resultContainer.append("<div class='ticketTitle'>Sorry, no flights available.</div>");
+                return;
+            }
+
+            $.each(searchResult, function(index, entry) {
+                const flightLinks = entry.route.filter(link => link.transportType === 'FLIGHT');
+                if (flightLinks.length === 0) {
+                    return true; // continue to next entry in $.each
+                }
+
+                const startLink = flightLinks[0];
+                const endLink = flightLinks[flightLinks.length - 1];
+                const startDay = Math.floor(startLink.departure / (24 * 60));
+                const totalCost = entry.route.reduce((acc, link) => acc + (link.price || 0), 0);
+
+                let stopDescription;
+                if (flightLinks.length === 1) {
+                    stopDescription = "Direct Flight";
+                } else if (flightLinks.length === 2) {
+                    stopDescription = "1 Stop";
+                } else {
+                    stopDescription = `${flightLinks.length - 1} Stops`;
+                }
+
+                let remarksLabel = '';
+                if (entry.remarks) {
+                    entry.remarks.forEach(remark => {
+                        if (remark === 'BEST_SELLER' || remark === 'BEST_DEAL') {
+                            remarksLabel += `<div style='display:inline-block;' class='remark bg-darkGreen'>${remark.replace('_', ' ')}</div>`;
+                        }
+                    });
+                }
+                const priceColor = remarksLabel ? 'darkgreen' : 'inherit';
+
+
+                const linksHtml = flightLinks.map((link, index) => {
+                    const previousLink = index > 0 ? flightLinks[index - 1] : null;
+                    const preGenericTransit = entry.route.find(r => r.toAirportIata === link.fromAirportIata && r.transportType === 'GENERIC_TRANSIT');
+                    const postGenericTransit = entry.route.find(r => r.fromAirportIata === link.toAirportIata && r.transportType === 'GENERIC_TRANSIT');
+
+                    let remarks = [];
+                    if (preGenericTransit) remarks.push(`Depart from ${link.fromAirportIata}`);
+                    if (postGenericTransit) remarks.push(`Arrive at ${link.toAirportIata}`);
+                    if (previousLink) remarks.push(`+${getDurationText(link.departure - previousLink.arrival)} layover at ${link.fromAirportIata}`);
+
+                    const linkDurationText = getDurationText(link.arrival - link.departure);
+                    const remarksText = remarks.length > 0 ? `(${remarks.join(", ")})` : '';
+
+                    return `
+                        <div style='margin-bottom: 10px;'>
+                            <div style='margin : 10px 0; display: flex;'>
+                                <div style='width: 50%; display: flex; align-items: center;'>
+                                    ${getAirlineLogoImg(link.airlineId)}<span class='summary'>${link.airlineName}</span>
+                                </div>
+                                <div style='width: 50%;'>${linkDurationText} ${remarksText.length > 0 ? '<span class="remark">' + remarksText + '</span>' : ''}</div>
+                            </div>
+                            <div style='display: none;' class='linkDetails pb-2'>
+                                <div style='width: 50%;'>
+                                    <div style='display: inline-block; width: 75px;' class='summary'>${link.flightCode}</div>
+                                    <span class='summary'>${getAirlineTimeSlotText(link.departure, startDay)} - ${getAirlineTimeSlotText(link.arrival, startDay)}</span>
+                                    <div>$${link.price}</div>
+                                    ${getLinkFeatureIconsDiv(link.features).prop('outerHTML')}
+                                    ${getLinkReviewDiv(link.computedQuality, link.linkClass).prop('outerHTML')}
+                                </div>
+                                <div style='width: 50%;'>
+                                    <div style='display: flex; align-items: center;'>
+                                        ${getAirportText(link.fromAirportCity, link.fromAirportIata)}
+                                        <img src='assets/images/icons/arrow.png' style='margin: 0 5px;'>
+                                        ${getAirportText(link.toAirportCity, link.toAirportIata)}
+                                    </div>
+                                    <div><i>${link.airplaneModelName ? link.airplaneModelName : "-"}</i></div>
+                                    ${link.operatorAirlineId ? `<div>Operated by ${getAirlineLogoImg(link.operatorAirlineId)}${link.operatorAirlineName}</div>` : ''}
+                                    ${preGenericTransit ? `<div>Depart from ${preGenericTransit.toAirportText}</div>` : ''}
+                                    ${postGenericTransit ? `<div>Arrive at ${postGenericTransit.fromAirportText}</div>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                const itineraryHtml = `
+                    <div class='section itinerary' onclick='toggleSearchLinkDetails($(this))'>
+                        <div style='float:left; width : 85%'>
+                            <div class='summary' style='display: flex; align-items: center;'>
+                                <div style='width: 50%; float:left;'>${getAirlineTimeSlotText(startLink.departure, startDay)} - ${getAirlineTimeSlotText(endLink.arrival, startDay)}</div>
+                                <div style='width: 50%; float:left;'>${getDurationText(endLink.arrival - startLink.departure)}</div>
+                            </div>
+                            ${linksHtml}
+                        </div>
+                        <div style='float: right; width: 15%;'>
+                            <div class='price' style='color: ${priceColor};'>$ ${totalCost}</div>
+                            ${remarksLabel}
+                            <div style='margin-top: 5px;'>${stopDescription}</div>
+                        </div>
+                        <div style='clear:both;'></div>
+                    </div>
+                `;
+                resultContainer.append(itineraryHtml);
+            });
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+                console.log(JSON.stringify(jqXHR));
+                console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
+        },
+        beforeSend: function() {
+            $('body .loadingSpinner').show()
+        },
+        complete: function(){
+            $('body .loadingSpinner').hide()
+        }
+    });
 }
 
 
 function searchLinkHistory() {
-    var url = "search-link-history"
+    const url = "search-link-history";
+    const searchData = {};
 
-    var fromAirportId = $('#searchCanvas div.historySearch input.fromAirport').data('selectedId')
-    var toAirportId = $('#searchCanvas div.historySearch input.toAirport').data('selectedId')
-    var fromCountryCode = $('#searchCanvas div.historySearch input.fromCountry').data('selectedId')
-    var toCountryCode = $('#searchCanvas div.historySearch input.toCountry').data('selectedId')
-    var fromZone = $('#searchCanvas div.historySearch input.fromZone').data('selectedId')
-    var toZone = $('#searchCanvas div.historySearch input.toZone').data('selectedId')
-    var airlineId = $('#searchCanvas div.historySearch input.airline').data('selectedId')
-    var allianceId = $('#searchCanvas div.historySearch input.alliance').data('selectedId')
-
-    var capacity = $('#searchCanvas input.capacity').val() ? parseInt($('#searchCanvas input.capacity').val()) : null
-    var capacityDelta = $('#searchCanvas input.capacityDelta').val() ? parseInt($('#searchCanvas input.capacityDelta').val()) : null
-
-    var searchData = {}
-
-    if (fromAirportId) {
-        searchData["fromAirportId"] = parseInt(fromAirportId)
+    if (historySearchState.from.id) {
+        const key = historySearchState.from.type === 'airport' ? 'fromAirportId' : 'fromCountryCode';
+        searchData[key] = historySearchState.from.id;
     }
-    if (toAirportId) {
-        searchData["toAirportId"] = parseInt(toAirportId)
+    if (historySearchState.to.id) {
+        const key = historySearchState.to.type === 'airport' ? 'toAirportId' : 'toCountryCode';
+        searchData[key] = historySearchState.to.id;
     }
-    if (fromCountryCode) {
-        searchData["fromCountryCode"] = fromCountryCode
+    if (historySearchState.airline.id) {
+        searchData["airlineId"] = historySearchState.airline.id;
     }
-    if (toCountryCode) {
-        searchData["toCountryCode"] = toCountryCode
+    if (historySearchState.alliance.id) {
+        searchData["allianceId"] = historySearchState.alliance.id;
     }
-    if (fromZone) {
-        searchData["fromZone"] = fromZone
+    if (historySearchState.capacity) {
+        searchData["capacity"] = historySearchState.capacity;
     }
-    if (toZone) {
-        searchData["toZone"] = toZone
-    }
-    if (airlineId) {
-        searchData["airlineId"] = airlineId
-    }
-    if (allianceId) {
-        searchData["allianceId"] = allianceId
-    }
-
-    if ($('#searchCanvas input.capacity').val()) {
-        searchData["capacity"] = parseInt($('#searchCanvas input.capacity').val())
-    }
-
-    if ($('#searchCanvas input.capacityDelta').val()) {
-        searchData["capacityDelta"] = parseInt($('#searchCanvas input.capacityDelta').val())
+    if (historySearchState.capacityDelta) {
+        searchData["capacityDelta"] = historySearchState.capacityDelta;
     }
 
 
@@ -517,34 +526,34 @@ function getLinkFeatureIconsDiv(features) {
     return featureIconsDiv
 }
 
-function getLinkReviewDiv(quality) {
+function getLinkReviewDiv(quality, classText) {
 
     var color
     var text
     if (quality >= 80) {
-        text = "Excellent flight"
+        text = "Excellent"
         color = "darkgreen"
     } else if (quality >= 70) {
-        text = "Very good flight"
+        text = "Very good"
         color = "darkgreen"
     } else if (quality >= 60) {
-        text = "Good flight"
+        text = "Good"
         color = "darkgreen"
     } else if (quality >= 50) {
-        text = "Average flight"
+        text = "Average"
         color = "gold"
     } else if (quality >= 40) {
-        text = "Poor flight"
+        text = "Poor"
         color = "darkorange"
     } else if (quality >= 30) {
-        text = "Terrible flight"
+        text = "Terrible"
         color = "crimson"
     } else {
-        text = "Abysmal flight"
+        text = "Abysmal"
         color = "crimson"
     }
     var text = text + " (" + (quality / 10) + "/10)"
-    return $("<div style='color: "  + color + "'>" + text + "</div>")
+    return $("<div style='color: "  + color + "'>" + text + " " + classText + " seat</div>")
 }
 
 function getAirlineTimeSlotText(minutes, startDay) {
@@ -605,6 +614,7 @@ function resetSearchInput(button) {
     var disablingInputs = button.closest('.searchContainer').find('input')
     disablingInputs.val('')
     disablingInputs.removeData("selectedId")
+    resetHistorySearchState();
 }
 
 function searchButtonKeyPress(event, button) {
@@ -621,8 +631,23 @@ function searchKeyDown(event, input) {
 }
 
 function searchChange(input) {
-    search(event, input)
-    input.removeData("selectedId")
+    search(event, input);
+    input.removeData("selectedId");
+
+    // Clear from state object
+    const searchType = input.closest('div.searchInput').data('searchType');
+    const searchGroup = input.data('searchGroup');
+
+    if (searchGroup === 'fromDestination' || searchGroup === 'toDestination') {
+        const targetGroup = searchGroup === 'fromDestination' ? 'from' : 'to';
+        if (historySearchState[targetGroup].type === searchType) {
+            historySearchState[targetGroup] = { type: null, id: null, text: '' };
+        }
+    } else if (searchGroup === 'entity') {
+        if (historySearchState[searchType]) {
+            historySearchState[searchType] = { id: null, text: '' };
+        }
+    }
 }
 
 function searchKeyUp(event, input) {
@@ -643,38 +668,57 @@ function searchFocusOut(input) {
 
     var resultContainer = input.closest('div.searchInput').siblings('div.searchResult')
     resultContainer.hide()
-
 }
 
 function confirmSelection(input) {
-    var resultContainer = input.closest('div.searchInput').siblings('div.searchResult')
-    var searchType = input.closest('div.searchInput').data("searchType")
-    var selected = resultContainer.find('div.selected').data(searchType)
+    const $input = input.closest('div.searchInput');
+    const resultContainer = $input.siblings('div.searchResult');
+    const searchType = $input.data('searchType');
+    const selected = resultContainer.find('div.selected').data(searchType);
+
     if (selected) {
-        var displayVal
-        var selectedId
+        var displayVal;
+        var selectedId;
         if (searchType === "airport") {
-            displayVal = getAirportShortText(selected)
-            selectedId = selected.airportId
+            displayVal = getAirportShortText(selected);
+            selectedId = selected.airportId;
         } else if (searchType === "country") {
-            displayVal = getCountryTextEntry(selected)
-            selectedId = selected.countryCode
-        } else if (searchType === "zone") {
-            displayVal = getZoneTextEntry(selected)
-            selectedId = selected.zone
+            displayVal = getCountryTextEntry(selected);
+            selectedId = selected.countryCode;
         } else if (searchType === "airline") {
-            displayVal = getAirlineTextEntry(selected, false)
-            selectedId = selected.airlineId
+            displayVal = getAirlineTextEntry(selected, false);
+            selectedId = selected.airlineId;
         } else if (searchType === "alliance") {
-            displayVal = getAllianceTextEntry(selected)
-            selectedId = selected.allianceId
+            displayVal = getAllianceTextEntry(selected);
+            selectedId = selected.allianceId;
         }
 
-        input.val(displayVal)
-        input.data("selectedId", selectedId).trigger('confirmSelection')
-    }
+        input.val(displayVal);
+        input.attr("data-selectedId", selectedId);
+        input.data("selectedId", selectedId); // Keep for UI purposes
+        input.trigger('confirmSelection');
 
-    resultContainer.hide()
+        // Update state object
+        const searchGroup = input.data('searchGroup'); // fromDestination, toDestination, entity
+        if (searchGroup === 'fromDestination' || searchGroup === 'toDestination') {
+            const targetGroup = searchGroup === 'fromDestination' ? 'from' : 'to';
+            const otherInputInGroup = searchType === 'airport' ? 'country' : 'airport';
+
+            historySearchState[targetGroup] = { type: searchType, id: selectedId, text: displayVal };
+
+            // Visually clear the other input in the same group
+            $input.closest('.searchCriterion').siblings('.searchCriterion').find(`input.${otherInputInGroup}`).val('');
+
+        } else if (searchGroup === 'entity') { // airline or alliance
+            const otherEntity = searchType === 'airline' ? 'alliance' : 'airline';
+            historySearchState[searchType] = { id: selectedId, text: displayVal };
+            historySearchState[otherEntity] = { id: null, text: '' }; // Clear other entity
+
+            // Visually clear the other input in the same group
+            $input.closest('.searchCriterion').siblings('.searchCriterion').find(`input.${otherEntity}`).val('');
+        }
+    }
+    resultContainer.hide();
 }
 
 function clickSelection(selectionDiv) {
@@ -710,76 +754,227 @@ function changeSelection(indexChange, resultContainer) {
 }
 
 function numberInputFocusOut(input) {
-    if (!parseInt(input.val())) {
+    const value = input.val();
+    const parsedValue = value && !isNaN(value) ? parseInt(value) : null;
+    if (!parsedValue) {
         input.val('')
+    }
+
+    if (input.hasClass('capacity')) {
+        historySearchState.capacity = parsedValue;
+    } else if (input.hasClass('capacityDelta')) {
+        historySearchState.capacityDelta = parsedValue;
     }
 }
 
-var currentSearchAjax
+let searchState = {};
 
-function search(event, input, retry) {
-    var resultContainer = input.closest('div.searchInput').siblings('div.searchResult')
-    var searchType = input.closest('div.searchInput').data('searchType')
-    var phrase = input.val()
-	var url = "search-" + searchType + "?input=" + phrase
-    if (currentSearchAjax || phrase.length < 3) {
-        return
+/**
+ * Generic search configuration for different search types
+ */
+const searchConfigs = {
+    airport: {
+        dataSource: () => airports,
+        searchFields: [
+            { field: 'city', exactScore: 100, partialScore: 50 },
+            { field: 'iata', exactScore: 200, partialScore: 80 },
+            { field: 'icao', exactScore: 200, partialScore: 80 },
+            { field: 'name', exactScore: 70, partialScore: 30 }
+        ],
+        resultMapper: (item) => ({
+            airportId: item.id,
+            airportCity: item.city,
+            airportIata: item.iata,
+            airportIcao: item.icao,
+            airportName: item.name,
+            countryCode: item.countryCode
+        }),
+        textEntryFunction: getAirportTextEntry,
+        idField: 'airportId'
+    },
+    country: {
+        dataSource: () => Object.entries(loadedCountriesByCode || {}).map(([code, country]) => ({
+            countryCode: code,
+            countryName: country.name
+        })),
+        searchFields: [
+            { field: 'countryName', exactScore: 100, partialScore: 50 },
+            { field: 'countryCode', exactScore: 200, partialScore: 80 }
+        ],
+        resultMapper: (item) => item,
+        textEntryFunction: getCountryTextEntry,
+        idField: 'countryCode'
+    },
+    airline: {
+        dataSource: () => loadedRivals || [],
+        searchFields: [
+            { field: 'airlineCode', exactScore: 200, partialScore: 80 },
+            { field: 'name', exactScore: 100, partialScore: 50 },
+            { field: 'username', exactScore: 50, partialScore: 25 },
+        ],
+        resultMapper: (item) => ({
+            airlineId: item.airlineId,
+            airlineName: item.name,
+            airlineCode: item.airlineCode,
+            countryCode: item.countryCode
+        }),
+        textEntryFunction: (entry) => getAirlineTextEntry(entry, true),
+        idField: 'airlineId'
+    },
+    alliance: {
+        dataSource: () => loadedAlliances || [],
+        searchFields: [
+            { field: 'name', exactScore: 100, partialScore: 50 }
+        ],
+        resultMapper: (item) => ({
+            allianceId: item.id,
+            allianceName: item.name
+        }),
+        textEntryFunction: getAllianceTextEntry,
+        idField: 'allianceId'
+    }
+};
+
+/**
+ * Generic search function that works with any configured search type
+ * @param {string} searchType - The type of search (airport, country, airline, alliance)
+ * @param {string} phrase - Search phrase
+ * @returns {Array} Array of matching entries
+ */
+function searchCachedData(searchType, phrase) {
+    const config = searchConfigs[searchType];
+    if (!config) {
+        console.error(`No search configuration found for type: ${searchType}`);
+        return [];
     }
 
-	currentSearchAjax = $.ajax({
-		type: 'GET',
-		url: url,
-	    contentType: 'application/json; charset=utf-8',
-	    dataType: 'json',
-	    beforeSend: function () {
-	        input.parent().find(".spinner").show(0)
-	        searching = true
-	    },
-	    success: function(searchResult) {
-	  //      input.prop('disabled', false);
-	        //resultContainer.removeData("selectedIndex")
-	        resultContainer.find("div.searchResultEntry, div.message").remove()
-	        if (searchResult.message) {
-	            resultContainer.append("<div class='message'>" + searchResult.message + "</div>")
-	        }
+    const dataSource = config.dataSource();
+    if (!dataSource || !Array.isArray(dataSource)) {
+        console.error(`Data source not loaded or invalid for type: ${searchType}`);
+        return [];
+    }
 
-	        if (searchResult.entries) {
-                $.each(searchResult.entries, function(index, entry) {
-                    var textEntry
-                    if (searchType === "airport") {
-                        textEntry = getAirportTextEntry(entry)
-                    } else if (searchType === "country") {
-                        textEntry = getCountryTextEntry(entry)
-                    } else if (searchType === "zone") {
-                        textEntry = getZoneTextEntry(entry)
-                    } else if (searchType === "airline") {
-                        textEntry = getAirlineTextEntry(entry, true)
-                    } else if (searchType === "alliance") {
-                        textEntry = getAllianceTextEntry(entry)
+    const searchTerm = phrase.toLowerCase().trim();
+    const results = [];
+
+    // Search through data source
+    for (let i = 0; i < dataSource.length; i++) {
+        const item = dataSource[i];
+        let matches = false;
+        let matchScore = 0;
+
+        // Check each configured search field
+        for (const fieldConfig of config.searchFields) {
+            const fieldValue = item[fieldConfig.field];
+            if (fieldValue && typeof fieldValue === 'string') {
+                const fieldValueLower = fieldValue.toLowerCase();
+                if (fieldValueLower.includes(searchTerm)) {
+                    matches = true;
+                    if (fieldValueLower === searchTerm) {
+                        matchScore += fieldConfig.exactScore;
+                    } else if (fieldValueLower.startsWith(searchTerm)) {
+                        matchScore += fieldConfig.exactScore * 0.8;
+                    } else {
+                        matchScore += fieldConfig.partialScore;
                     }
-
-
-                    var text = highlightText(textEntry, phrase)
-                    var searchResultDiv = $("<div class='searchResultEntry' onmousedown='clickSelection($(this))'>" + text + "</div>")
-                    searchResultDiv.data(searchType, entry)
-                    resultContainer.append(searchResultDiv)
-                    if (index == 0) {
-                        searchResultDiv.addClass("selected")
-                    }
-                })
+                }
             }
-            resultContainer.show()
-	    },
-	    error: function(jqXHR, textStatus, errorThrown) {
-	            console.log(JSON.stringify(jqXHR));
-	            console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
-	    },
-        complete:function() {
-              //Hide the loader over here
-              input.parent().find(".spinner").hide()
-              currentSearchAjax = undefined
         }
-	});
+
+        if (matches) {
+            // Add population score for airports
+            if (searchType === 'airport' && item.population) {
+                // Add a score based on population, scaled logarithmically
+                // A multiplier of 30 brings a 20M population airport to a score of ~220
+                const populationScore = Math.log10(item.population) * 25;
+                matchScore += populationScore;
+            }
+
+            const mappedResult = config.resultMapper(item);
+            mappedResult.matchScore = matchScore;
+            results.push(mappedResult);
+        }
+    }
+
+    // Sort by match score (highest first), then by primary field
+    results.sort((a, b) => {
+        if (b.matchScore !== a.matchScore) {
+            return b.matchScore - a.matchScore;
+        }
+        // Use the first field as primary sort
+        const primaryField = config.searchFields[0].field;
+        const aValue = a[primaryField] || '';
+        const bValue = b[primaryField] || '';
+        return aValue.localeCompare(bValue);
+    });
+
+    return results.slice(0, 15); // Limit to 15 results
+}
+
+/**
+ * Generic cached search UI handler
+ * @param {string} searchType - The type of search
+ * @param {jQuery} input - The search input element
+ * @param {jQuery} resultContainer - The results container element
+ * @param {string} phrase - The search phrase
+ */
+function performSearch(searchType, input, resultContainer, phrase) {
+    input.parent().find(".spinner").show(0);
+    
+    // Use setTimeout to make it asynchronous and allow UI to update
+    setTimeout(function() {
+        try {
+            // Clear previous results
+            resultContainer.find("div.searchResultEntry, div.message").remove();
+            
+            // Search cached data
+            const searchResults = searchCachedData(searchType, phrase);
+            const config = searchConfigs[searchType];
+            
+            if (searchResults.length === 0) {
+                resultContainer.append(`<div class='message'>No ${searchType}s found</div>`);
+            } else {
+                $.each(searchResults, function(index, entry) {
+                    var textEntry = config.textEntryFunction(entry);
+                    var text = highlightText(textEntry, phrase);
+                    var searchResultDiv = $("<div class='searchResultEntry' onmousedown='clickSelection($(this))'>" + text + "</div>");
+                    searchResultDiv.data(searchType, entry);
+                    resultContainer.append(searchResultDiv);
+                    if (index == 0) {
+                        searchResultDiv.addClass("selected");
+                    }
+                });
+            }
+            
+            resultContainer.show();
+        } catch (error) {
+            console.error(`Error searching cached ${searchType}s:`, error);
+            resultContainer.append(`<div class='message'>Search error occurred</div>`);
+            resultContainer.show();
+        } finally {
+            input.parent().find(".spinner").hide();
+        }
+    }, 10); // Small delay to allow UI to update
+}
+
+function search(event, input) {
+    const resultContainer = input.closest('div.searchInput').siblings('div.searchResult');
+    const searchType = input.closest('div.searchInput').data('searchType');
+    const phrase = input.val();
+
+    if (phrase.length < 3 && searchType !== 'country') {
+        resultContainer.hide();
+        return;
+    }
+
+    // Use cached search for all supported types
+    if (searchConfigs[searchType]) {
+        performSearch(searchType, input, resultContainer, phrase);
+    } else {
+        // A search type was used that is not configured in searchConfigs
+        console.warn(`Unsupported search type: ${searchType}`);
+        resultContainer.hide();
+    }
 }
 
 function buildDemandsTable(demands, targetDiv) {
@@ -813,111 +1008,113 @@ function buildDemandsTable(demands, targetDiv) {
 
 
 function researchFlight(fromAirportId, toAirportId) {
-    if (fromAirportId && toAirportId) {
-        var url = "research-link/" + fromAirportId + "/" + toAirportId
-
-        $.ajax({
-            type: 'GET',
-            url: url,
-            contentType: 'application/json; charset=utf-8',
-            dataType: 'json',
-            success: function(result) {
-                var fromAirportId = result.fromAirportId
-                var toAirportId = result.toAirportId
-                loadAirportImage(fromAirportId, $('#researchSearchResult img.fromAirport') )
-                loadAirportImage(toAirportId, $('#researchSearchResult img.toAirport'))
-                $("#researchSearchResult .fromAirportText").text(result.fromAirportText)
-		        $("#researchSearchResult .fromAirportText")[0].setAttribute("onclick", `showAirportDetails(${fromAirportId})`)
-                $("#researchSearchResult .fromAirport .population").text(commaSeparateNumber(result.fromAirportPopulation))
-                $("#researchSearchResult .fromAirport .incomeLevel").text("$" + commaSeparateNumber(result.fromAirportIncome))
-                $("#researchSearchResult .toAirportText").text(result.toAirportText)
-		        $("#researchSearchResult .toAirportText")[0].setAttribute("onclick", `showAirportDetails(${toAirportId})`)
-		        populateNavigation($("#researchSearchResult"))
-                $("#researchSearchResult .toAirport .population").text(commaSeparateNumber(result.toAirportPopulation))
-                $("#researchSearchResult .toAirport .incomeLevel").text("$" + commaSeparateNumber(result.toAirportIncome))
-
-                $("#researchSearchResult .relationship").html(getCountryFlagImg(result.fromAirportCountryCode) + "&nbsp;vs&nbsp;" + getCountryFlagImg(result.toAirportCountryCode) + getCountryRelationshipDescription(result.mutualRelationship))
-                $("#researchSearchResult .affinities").text(result.affinity)
-                $("#researchSearchResult .distance").text(result.distance)
-                $("#researchSearchResult .flightType").text(result.flightType)
-                $("#researchSearchResult .demand").text(toLinkClassValueString(result.directDemand))
-
-                // var $breakdown = $("#researchSearchResult .directDemandBreakdown")
-                // $breakdown.find(".fromAirport .airportLabel").empty()
-                // // $breakdown.find(".fromAirport .airportLabel").append(getAirportSpan(fromAirport))
-                // $breakdown.find(".fromAirport .travelerDemand").text(toLinkClassValueString(result.fromAirportTravelerDemand))
-                // $breakdown.find(".fromAirport .businessDemand").text(toLinkClassValueString(result.fromAirportBusinessDemand))
-                // $breakdown.find(".fromAirport .touristDemand").text(toLinkClassValueString(result.fromAirportTouristDemand))
-
-
-
-                document.querySelectorAll("#researchSearchResult .table.links .table-row").forEach(row => row.remove());
-
-                result.links.forEach((link, index) => {
-                    const loadFactor = Math.round(result.consumptions[index].soldSeats * 100 / link.capacity.total);
-                    const row = document.createElement('div');
-                    row.className = 'table-row';
-                    row.innerHTML = `
-                        <div class='cell'>${link.airlineName}</div>
-                        <div class='cell'>${toLinkPercentOfBasePrices(link.price, result.basePrice)}</div>
-                        <div class='cell'>${toLinkClassValueString(link.capacity)}</div>
-                        <div class='cell'>${link.frequency}</div>
-                        <div class='cell'>${link.computedQuality}</div>
-                        <div class='cell'>${loadFactor}%</div>
-                    `;
-                    document.querySelector('#researchSearchResult .table.links').appendChild(row);
-                });
-
-                if (result.links.length === 0) {
-                    const row = document.createElement('div');
-                    row.className = 'table-row';
-                    row.innerHTML = `
-                        <div class='cell'>-</div>
-                        <div class='cell'>-</div>
-                        <div class='cell'>-</div>
-                        <div class='cell'>-</div>
-                        <div class='cell'>-</div>
-                        <div class='cell'>-</div>
-                    `;
-                    document.querySelector('#researchSearchResult .table.links').appendChild(row);
-                }
-
-                // assignAirlineColors(result.consumptions, "airlineId")
-                plotPie(result.consumptions, null, $("#researchSearchResult .linksPie"), "airlineName", "soldSeats")
-
-                document.querySelector('#researchSearchResult .fromDemandHeading').textContent = "Demand From " + result.fromAirportIata
-                buildDemandsTable(result.fromDemands, "fromDemand")
-                document.querySelector('#researchSearchResult .toDemandHeading').textContent = "Demand From " + result.toAirportIata
-                buildDemandsTable(result.toDemands, "toDemand")
-
-                $('#researchSearchResult').show()
-
-                //plot consumptions
-             },
-             error: function(jqXHR, textStatus, errorThrown) {
-                            console.log(JSON.stringify(jqXHR));
-                            console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
-             },
-             complete:function() {
-                          //Hide the loader over here
-                          input.parent().find(".spinner").hide()
-                          currentSearchAjax = undefined
-             },
-             beforeSend: function() {
-                 $('body .loadingSpinner').show()
-             },
-             complete: function(){
-                 $('body .loadingSpinner').hide()
-             }
-        });
+    if (!fromAirportId || !toAirportId) {
+        return;
     }
+
+    const url = `research-link/${fromAirportId}/${toAirportId}`;
+
+    $.ajax({
+        type: 'GET',
+        url: url,
+        contentType: 'application/json; charset=utf-8',
+        dataType: 'json',
+        success: function(result) {
+            populateResearchHeader(result);
+            populateResearchLinksTable(result.links, result.consumptions, result.basePrice);
+            populateResearchDemandTables(result);
+
+            $('#researchSearchResult').show();
+
+            assignAirlineColors(result.consumptions, "airlineId") 
+            // plotPie(result.consumptions, null, "linksPie", "airlineName", "soldSeats");
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            console.log(JSON.stringify(jqXHR));
+            console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
+        },
+        beforeSend: function() {
+            $('body .loadingSpinner').show();
+        },
+        complete: function(){
+            $('body .loadingSpinner').hide();
+        }
+    });
 }
 
+function populateResearchHeader(result) {
+    const {
+        fromAirportId, toAirportId, fromAirportText, toAirportText,
+        fromAirportPopulation, fromAirportIncome, toAirportPopulation, toAirportIncome,
+        fromAirportCountryCode, toAirportCountryCode, mutualRelationship,
+        affinity, distance, flightType, directDemand
+    } = result;
 
+    const researchResult = $('#researchSearchResult');
 
+    loadAirportImage(fromAirportId, researchResult.find('img.fromAirport'));
+    loadAirportImage(toAirportId, researchResult.find('img.toAirport'));
 
+    researchResult.find(".fromAirportText").text(fromAirportText).attr("onclick", `showAirportDetails(${fromAirportId})`);
+    researchResult.find(".fromAirport .population").text(commaSeparateNumber(fromAirportPopulation));
+    researchResult.find(".fromAirport .income").text("$" + commaSeparateNumber(fromAirportIncome));
 
+    researchResult.find(".toAirportText").text(toAirportText).attr("onclick", `showAirportDetails(${toAirportId})`);
+    researchResult.find(".toAirport .population").text(commaSeparateNumber(toAirportPopulation));
+    researchResult.find(".toAirport .income").text("$" + commaSeparateNumber(toAirportIncome));
 
+    populateNavigation(researchResult);
+
+    researchResult.find(".relationship").html(`${getCountryFlagImg(fromAirportCountryCode)}&nbsp;vs&nbsp;${getCountryFlagImg(toAirportCountryCode)}${getCountryRelationshipDescription(mutualRelationship)}`);
+    researchResult.find(".affinities").text(affinity);
+    researchResult.find(".distance").text(distance);
+    researchResult.find(".flightType").text(flightType);
+    researchResult.find(".demand").text(toLinkClassValueString(directDemand));
+}
+
+function populateResearchLinksTable(links, consumptions, basePrice) {
+    const linksTable = $('#researchSearchResult .table.links');
+    linksTable.find(".table-row").remove(); // Clear existing rows
+
+    if (links.length === 0) {
+        const emptyRow = `
+            <div class='table-row'>
+                <div class='cell'>-</div>
+                <div class='cell'>-</div>
+                <div class='cell'>-</div>
+                <div class='cell'>-</div>
+                <div class='cell'>-</div>
+                <div class='cell'>-</div>
+            </div>`;
+        linksTable.append(emptyRow);
+        return;
+    }
+
+    links.forEach((link, index) => {
+        const consumption = consumptions[index];
+        const loadFactor = link.capacity.total > 0 ? Math.round(consumption.soldSeats * 100 / link.capacity.total) : 0;
+        const rowHtml = `
+            <div class='table-row'>
+                <div class='cell'>${getAirlineLogoImg(link.airlineId)} ${link.airlineName}</div>
+                <div class='cell'>${toLinkPercentOfBasePrices(link.price, basePrice)}</div>
+                <div class='cell'>${toLinkClassValueString(link.capacity)}</div>
+                <div class='cell'>${link.frequency}</div>
+                <div class='cell'>${link.computedQuality}</div>
+                <div class='cell'>${loadFactor}%</div>
+            </div>`;
+        linksTable.append(rowHtml);
+    });
+}
+
+function populateResearchDemandTables(result) {
+    const { fromAirportIata, toAirportIata, fromDemands, toDemands } = result;
+
+    $('#researchSearchResult .fromDemandHeading').text(`Demand From ${fromAirportIata}`);
+    buildDemandsTable(fromDemands, "fromDemand");
+
+    $('#researchSearchResult .toDemandHeading').text(`Demand To ${toAirportIata}`);
+    buildDemandsTable(toDemands, "toDemand");
+}
 
 function getCountryTextEntry(country) {
    return country.countryName + "(" + country.countryCode + ")"
@@ -1026,5 +1223,3 @@ function updateNavigationArrows($titlesContainer, animated) {
         }
     }
 }
-
-

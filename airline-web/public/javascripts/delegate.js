@@ -1,7 +1,7 @@
 function changeTaskDelegateCount($delegateSection, delta, callback) {
     var assignedDelegateCount = $delegateSection.data('assignedDelegateCount')
     var availableDelegates = $delegateSection.data('availableDelegates')
-    var originalDelegates = $delegateSection.data('originalDelegates')
+    // var originalDelegates = $delegateSection.data('originalDelegates')
     var delegatesRequired = $delegateSection.data('delegatesRequired')
 
     var newLength = -1
@@ -28,7 +28,6 @@ function changeTaskDelegateCount($delegateSection, delta, callback) {
 function refreshAssignedDelegates($delegateSection) {
     $delegateIcons = $delegateSection.find('div.assignedDelegatesIcons')
     $delegateIcons.empty()
-    //var $delegateSection = $('#airlineCountryRelationshipModal .delegateSection')
     var originalDelegates = $delegateSection.data('originalDelegates')
     var assignedDelegateCount = $delegateSection.data('assignedDelegateCount')
 
@@ -86,9 +85,9 @@ function refreshAirlineDelegateStatus($delegateStatusDiv, delegateInfo) {
     var iconIndex = delegateIcons.length //mark the available ones first
     $.each(delegateInfo.boosts, function(index, boost) {
         for (i = 0 ; i < boost.amount; i ++) {
-            while (--iconIndex > 0 && !delegateIcons[iconIndex].expirable) {
+            // while (--iconIndex > 0 && !delegateIcons[iconIndex].expirable) {
                 //find the first icon (traverse from the back) that can be marked as expirable
-            }
+            // }
             var $boostRemainingDiv = $("<div style='position: absolute; left: 1px; top: 0; background-color: #a4f5b0; color: #454544; font-size: 8px; font-weight: bold;' title='Boost expiring in " + boost.remainingCycles + " week(s)'>" + boost.remainingCycles + "</div>")
             delegateIcons[iconIndex].append($boostRemainingDiv)
         }
@@ -102,7 +101,6 @@ function refreshAirlineDelegateStatus($delegateStatusDiv, delegateInfo) {
 
 function updateAirlineDelegateStatus($delegateStatusDiv, successFunction) {
     $delegateStatusDiv.empty()
-    var airlineId = activeAirline.id
 
 	$.ajax({
 		type: 'GET',
@@ -169,9 +167,6 @@ function refreshTopBarDelegates(airline) {
         $delegateIconDiv.append($availableCountDiv)
         $delegateIconDiv.attr('title', "Delegates (available/total) : " + availableDelegates + "/" + (availableDelegates + busyDelegates))
     }
-
-
-
 }
 
 function toggleDelegateStatusModal() {

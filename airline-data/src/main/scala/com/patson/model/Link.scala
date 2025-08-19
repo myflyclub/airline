@@ -7,6 +7,8 @@ import com.patson.model.airplane.{Airplane, LinkAssignment, Model}
 import com.patson.util.AirportCache
 import com.patson.model
 
+import scala.math.BigDecimal.RoundingMode
+
 /**
  *
  * Frequency sum of all assigned plane
@@ -71,7 +73,7 @@ case class Link(from : Airport, to : Airport, airline: Airline, price : LinkClas
           case ((airplane, assignmentPerAirplane)) => 20 * airplane.condition / Airplane.MAX_CONDITION * assignmentPerAirplane.frequency
         }.sum / frequency
         val airplaneTypeQuality = getAssignedModel() match {
-          case Some(model) => Math.pow(model.quality + 1, 1.7) - 9
+          case Some(model) => Math.pow(model.quality + 1, 1.7) - 6
           case None => 0
         }
         val serviceQuality = 30 * (rawQuality.toDouble - 20) / (Link.MAX_QUALITY - 20)
@@ -98,7 +100,7 @@ case class Link(from : Airport, to : Airport, airline: Airline, price : LinkClas
     }
   }
 
-  lazy val getFutureOfficeStaffRequired : Int = {
+  lazy val getFutureOfficeStaffRequired : Double = {
     getOfficeStaffRequired(from, to, futureFrequency(), futureCapacity(), airline, rawQuality, getAssignedModel())
   }
 
@@ -106,7 +108,7 @@ case class Link(from : Airport, to : Airport, airline: Airline, price : LinkClas
     getOfficeStaffBreakdown(from, to, futureFrequency(), futureCapacity(), airline, rawQuality, getAssignedModel())
   }
 
-  lazy val getCurrentOfficeStaffRequired : Int = {
+  lazy val getCurrentOfficeStaffRequired : Double = {
     getOfficeStaffRequired(from, to, frequency, capacity, airline, rawQuality, getAssignedModel())
   }
 
@@ -151,16 +153,16 @@ case class Link(from : Airport, to : Airport, airline: Airline, price : LinkClas
   }
 
   override def toString() = {
-    s"Flight $id; ${airline.name}; ${from.city}(${from.iata}) => ${to.city}(${to.iata}); distance $distance; freq $frequency; capacity $capacity; price $price"
+    s"Flight $id; ${airline.name}; ${from.city}(${from.iata}) => ${to.city}(${to.iata}); distance $distance; BASE_FREQ_COST $frequency; capacity $capacity; price $price"
   }
 
   lazy val schedule : Seq[TimeSlot] = Scheduling.getLinkSchedule(this)
 
-  lazy val getOfficeStaffRequired = (from : Airport, to : Airport, frequency : Int, capacity : LinkClassValues, airline : Airline, rawQuality : Int, model : Option[Model]) => {
+  private lazy val getOfficeStaffRequired = (from : Airport, to : Airport, frequency : Int, capacity : LinkClassValues, airline : Airline, rawQuality : Int, model : Option[Model]) => {
     getOfficeStaffBreakdown(from, to, frequency, capacity, airline, rawQuality, model).total
   }
 
-  lazy val getOfficeStaffBreakdown = (from : Airport, to : Airport, frequency : Int, capacity : LinkClassValues, airline : Airline, rawQuality : Int, modelOption : Option[Model]) => {
+  private lazy val getOfficeStaffBreakdown = (from : Airport, to : Airport, frequency : Int, capacity : LinkClassValues, airline : Airline, rawQuality : Int, modelOption : Option[Model]) => {
     val flightCategory = Computation.getFlightCategory(from, to)
     val model: Model.Type.Value = modelOption match {
       case Some(model) => model.airplaneType
@@ -181,48 +183,59 @@ case class Link(from : Airport, to : Airport, airline: Airline, price : LinkClas
       frequency
     }
   }
-
 }
 
 object Link {
   val MAX_QUALITY = 100
   val HIGH_FREQUENCY_THRESHOLD = 21
   val LINK_NEGOTIATION_COOL_DOWN = 6
+  val DELAY_MINOR_ONTIME = 0.2
+  val DELAY_MAJOR_ONTIME = 0.8
+  val CANCELLATION_ONTIME = 1.0
+
   def fromId(id : Int) : Link = {
     Link(from = Airport.fromId(0), to = Airport.fromId(0), Airline.fromId(0), price = LinkClassValues.getInstance(), distance = 0, capacity = LinkClassValues.getInstance(), rawQuality = 0, duration = 0, frequency = 0, id = id)
   }
 
-  def getStaffRequired(distance: Int, flightCategory: FlightCategory.Value, airlineType: AirlineType.AirlineType) : StaffSchemeBreakdown = {
+  def getStaffRequired(distance: Int, flightCategory: FlightCategory.Value, airlineType: AirlineType) : StaffSchemeBreakdown = {
     val multiplier = if (flightCategory == FlightCategory.INTERNATIONAL) {
-      Math.pow(distance + 900, 0.16) - 1.5
+      Math.pow(distance + 900, 0.17) - 1.75
     } else {
-      Math.pow(distance + 600, 0.15) - 2
+      Math.pow(distance + 600, 0.16) - 2.25
     }
-    val base = if (flightCategory == FlightCategory.INTERNATIONAL) 4.75 * multiplier - 5.25 else 3.5 * multiplier - 1.25
-    val staffPerFrequency =
-      if (airlineType == AirlineType.REGIONAL) {
-        0.1 * multiplier
-      } else if (airlineType == AirlineType.LUXURY) {
-        0.2 * multiplier
+    val base = if (flightCategory == FlightCategory.INTERNATIONAL) 4.75 * multiplier - 5.5 else 3.5 * multiplier - 2
+    val staffPerFrequency = {
+      val BASE_FREQ_COST = 0.5
+      if (airlineType == RegionalAirline) {
+        if (distance > RegionalAirline.staffReductionRangeFadeTo) {
+          BASE_FREQ_COST * multiplier
+        } else if (distance >= RegionalAirline.staffReductionRange && distance <= RegionalAirline.staffReductionRangeFadeTo) {
+          val reduced = RegionalAirline.staffFreqRatio * BASE_FREQ_COST * multiplier
+          val standard = BASE_FREQ_COST * multiplier
+          val ratio = (RegionalAirline.staffReductionRangeFadeTo - distance).toDouble / RegionalAirline.staffReductionRange
+          ratio * reduced + (1 - ratio) * standard
+        } else {
+          RegionalAirline.staffFreqRatio * BASE_FREQ_COST * multiplier
+        }
+      } else if (airlineType == LuxuryAirline) {
+        LuxuryAirline.staffFreqRatio * BASE_FREQ_COST * multiplier
       } else {
-        0.5 * multiplier
+        BASE_FREQ_COST * multiplier
       }
-    val staffPer500Pax = 1.35 * multiplier
+    }
+    val staffPer500Pax = 1.3 * multiplier
     StaffSchemeBreakdown(base.toInt, staffPerFrequency, staffPer500Pax)
   }
 }
 
-case class StaffBreakdown(basicStaff : Int, frequencyStaff : Double, capacityStaff : Double, modifier : Double) {
-  val total = (math.round(basicStaff + frequencyStaff + capacityStaff) * modifier).toInt
+case class StaffBreakdown(basicStaff: Int, frequencyStaff: Double, capacityStaff: Double, modifier: Double) {
+  private val costWithMin = Math.max(3, (basicStaff + frequencyStaff + capacityStaff) * modifier)
+  val total: Double = BigDecimal(costWithMin).setScale(1, RoundingMode.HALF_UP).toDouble
 }
-case class StaffSchemeBreakdown(basic : Int, perFrequency : Double, per500Pax : Double)
+case class StaffSchemeBreakdown(basicStaff: Int, perFrequency: Double, per500Pax: Double)
 
 trait CostModifier {
   def value(link : Transport, linkClass : LinkClass, paxType: PassengerType.Value) : Double
-}
-
-object ExplicitLinkConsideration {
-
 }
 
 object LinkConsideration {

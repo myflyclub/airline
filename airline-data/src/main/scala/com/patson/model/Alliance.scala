@@ -1,10 +1,7 @@
 package com.patson.model
 
-import scala.collection.mutable.ListBuffer
-import com.patson.data.{AllianceSource, CountrySource, CycleSource}
+import com.patson.data.{AllianceSource, CycleSource}
 import com.patson.model.AllianceEvent.{BOOT_ALLIANCE, LEAVE_ALLIANCE, PROMOTE_LEADER, REJECT_ALLIANCE}
-import com.patson.util.{AirlineCache, ChampionUtil}
-import play.api.libs.json.Json
 
 import scala.math.BigDecimal.RoundingMode
 
@@ -78,22 +75,6 @@ object Alliance {
   val MAX_MEMBER_NON_REGIONAL_COUNT = 5
   val MAX_MEMBER_REGIONALS_COUNT = 2
   val ESTABLISH_MIN_MEMBER_COUNT = 3
-
-  val getReputationBonus: (Int => Double) = { (ranking: Int) =>
-    if (ranking == 1) {
-      30
-    } else if (ranking == 2) {
-      26
-    } else if (ranking == 3) {
-      22
-    } else if (ranking == 4) {
-      19
-    } else if (ranking == 5) {
-      17
-    } else {
-      Math.max(20 - ranking, 8)
-    }
-  }
 
   /**
     *

@@ -60,7 +60,5 @@ object CountrySimulation {
 
     val result = countryAirlineTitles.toList
     CountrySource.saveCountryAirlineTitles(result)
-
-    countryChampionInfoEntries.toList
   }
 }

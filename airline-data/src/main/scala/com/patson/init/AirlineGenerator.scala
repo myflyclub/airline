@@ -60,7 +60,7 @@ object AirlineGenerator extends App {
     UserSource.deleteGeneratedUsers()
     UserCache.invalidateAll()
     AirlineCache.invalidateAll()
-    AirlineSource.deleteAirlinesByCriteria(List(("airline_type", AirlineType.NON_PLAYER.id)))
+    AirlineSource.deleteAirlinesByCriteria(List(("airline_type", NonPlayerAirline.id)))
     AirplaneOwnershipCache.invalidateAll()
   }
 
@@ -278,10 +278,11 @@ object AirlineGenerator extends App {
   }
 
   private def createAirline(name: String, hqAirport: Airport, targetServiceQuality: Int, currentServiceQuality: Int, reputation: Int, initialBalance: Long): Airline = {
-    val airline = Airline(name + " [bot]", AirlineType.NON_PLAYER)
+    val airline = Airline(name + " [bot]", NonPlayerAirline)
     airline.setBalance(initialBalance)
     airline.setTargetServiceQuality(targetServiceQuality)
     airline.setCurrentServiceQuality(currentServiceQuality)
+    airline.setSharesOutstanding(400000000)
     airline.setReputation(reputation)
     airline.setSkipTutorial(true)
     airline.setCountryCode(hqAirport.countryCode)

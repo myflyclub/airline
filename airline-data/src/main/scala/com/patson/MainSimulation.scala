@@ -6,25 +6,20 @@ import java.util.concurrent.TimeUnit
 import org.apache.pekko.actor.Props
 import org.apache.pekko.actor.Actor
 import com.patson.data._
+import com.patson.model.{Link, TransportType}
 import com.patson.stream.{CycleCompleted, CycleStart, SimulationEventStream}
-import com.patson.util.{AirlineCache, AirplaneOwnershipCache, AirplaneOwnershipInfo, AirportCache}
+import com.patson.util.{AirlineCache, AirplaneOwnershipCache, AirportCache, AirportStatisticsCache}
 
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 
 object MainSimulation extends App {
-  val CYCLE_DURATION : Int = 60 * 29
+  val CYCLE_DURATION : Int = 60 * 5
   var currentWeek: Int = 0
 
-//  implicit val actorSystem = ActorSystem("rabbit-akka-stream")
-
-//  import actorSystem.dispatcher
-
-//  implicit val materializer = FlowMaterializer()
-  
   mainFlow
-  
+
   def mainFlow() = {
     val actor = actorSystem.actorOf(Props[MainSimulationActor])
     actorSystem.scheduler.schedule(Duration.Zero, Duration(CYCLE_DURATION, TimeUnit.SECONDS), actor, Start)
@@ -32,65 +27,79 @@ object MainSimulation extends App {
   }
 
 
+  def initializeCaches() = {
+    println("Initializing caches...")
+    val startTime = System.currentTimeMillis()
+    AirportCache.getAllAirports(true)
+    val endTime = System.currentTimeMillis()
+    println(s"Cache initialization completed in ${endTime - startTime}ms")
+  }
+
   def invalidateCaches() = {
     AirlineCache.invalidateAll()
     AirportCache.invalidateAll()
+    AirportStatisticsCache.invalidateAll()
     AirplaneOwnershipCache.invalidateAll()
   }
 
   def startCycle(cycle : Int) = {
-      val cycleStartTime = System.currentTimeMillis()
-      println("cycle " + cycle + " starting!")
-      if (cycle == 1) { //initialize it
-        OilSimulation.simulate(1)
-        LoanInterestRateSimulation.simulate(1)
-      }
+    val cycleStartTime = System.currentTimeMillis()
+    println("cycle " + cycle + " starting!")
+    if (cycle == 1) { //initialize it
+      OilSimulation.simulate(1)
+      LoanInterestRateSimulation.simulate(1)
+    }
 
-      SimulationEventStream.publish(CycleStart(cycle, cycleStartTime), None)
-      invalidateCaches()
+    SimulationEventStream.publish(CycleStart(cycle, cycleStartTime), None)
+    invalidateCaches()
+    initializeCaches()
 
-      UserSimulation.simulate(cycle)
-      println("Event simulation")
-      EventSimulation.simulate(cycle)
+    UserSimulation.simulate(cycle)
+    println("Event simulation")
+    EventSimulation.simulate(cycle)
 
-      val (flightLinkResult, loungeResult, linkRidershipDetails, airlineStats) = LinkSimulation.linkSimulation(cycle)
-      println("Airport simulation")
-      val airportChampionInfo = AirportSimulation.airportSimulation(cycle, flightLinkResult, linkRidershipDetails)
+    val (flightLinkResult, loungeResult, linkRidershipDetails, paxStatsByAirlineId) = LinkSimulation.linkSimulation(cycle)
 
-      println("Airport assets simulation")
-      AirportAssetSimulation.simulate(cycle, linkRidershipDetails)
+    println("Airport simulation")
+    val airportChampionInfo = AirportSimulation.airportSimulation(cycle, linkRidershipDetails)
 
-      println("Airplane simulation")
-      val airplanes = AirplaneSimulation.airplaneSimulation(cycle)
-      println("Airline simulation")
-      AirlineSimulation.airlineSimulation(cycle, flightLinkResult, loungeResult, airplanes, airlineStats)
-      println("Country simulation")
-      val countryChampionInfo = CountrySimulation.simulate(cycle)
+    println("Alliance simulation")
+    AllianceSimulation.simulate(flightLinkResult, loungeResult, paxStatsByAirlineId, airportChampionInfo, cycle)
 
-      println("Alliance simulation")
-      AllianceSimulation.simulate(cycle, flightLinkResult, loungeResult, airportChampionInfo, countryChampionInfo)
-      println("Airplane model simulation")
-      AirplaneModelSimulation.simulate(cycle)
+    println("Airport assets simulation")
+    AirportAssetSimulation.simulate(cycle, linkRidershipDetails)
 
-      //purge log
-      println("Purging logs")
-      LogSource.deleteLogsBeforeCycle(cycle - com.patson.model.Log.RETENTION_CYCLE)
+    println("Airplane simulation")
+    val airplanes = AirplaneSimulation.airplaneSimulation(cycle)
 
-      //purge history
-      println("Purging link history")
-      ChangeHistorySource.deleteLinkChangeByCriteria(List(("cycle", "<", cycle - 500)))
+    println("Airline simulation")
+    AirlineSimulation.airlineSimulation(cycle, flightLinkResult, loungeResult, airplanes, paxStatsByAirlineId)
 
-      println("Purging Alliance Stats – remove if running AllianceSimulation")
-      AllianceSource.deleteAllianceStatsBeforeCutoff(cycle - 108)
+    println("Country simulation")
+    CountrySimulation.simulate(cycle)
 
-      //purge airline modifier
-      println("Purging airline modifier")
-      AirlineSource.deleteAirlineModifierByExpiry(cycle)
+    println("Airplane model simulation")
+    AirplaneModelSimulation.simulate(cycle)
 
-      val cycleEnd = System.currentTimeMillis()
-      
-      println(">>>>> cycle " + cycle + " spent " + (cycleEnd - cycleStartTime) / 1000 + " secs")
-      cycleEnd
+    //purge log
+    println("Purging logs")
+    LogSource.deleteLogsBeforeCycle(cycle - com.patson.model.Log.RETENTION_CYCLE)
+
+    //purge history
+    println("Purging link history")
+    ChangeHistorySource.deleteLinkChangeByCriteria(List(("cycle", "<", cycle - 400)))
+
+    println("Purging Alliance Stats – remove if running AllianceSimulation")
+    AllianceSource.deleteAllianceStatsBeforeCutoff(cycle - 108)
+
+    //purge airline modifier
+    println("Purging airline modifier")
+    AirlineSource.deleteAirlineModifierByExpiry(cycle)
+
+    val cycleEnd = System.currentTimeMillis()
+
+    println(">>>>> cycle " + cycle + " spent " + (cycleEnd - cycleStartTime) / 1000 + " secs")
+    cycleEnd
   }
 
   /**
@@ -137,8 +146,8 @@ object MainSimulation extends App {
         SimulationEventStream.publish(CycleCompleted(currentWeek - 1, endTime), None)
     }
   }
-   
-  
+
+
   case class Start()
 
   var status : SimulationStatus.Value = SimulationStatus.WAITING_CYCLE_START
@@ -147,6 +156,5 @@ object MainSimulation extends App {
     val IN_PROGRESS, WAITING_CYCLE_START = Value
   }
 
-  
-}
 
+}

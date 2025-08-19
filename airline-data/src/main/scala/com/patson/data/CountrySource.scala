@@ -5,8 +5,6 @@ import com.patson.data.Constants._
 import com.patson.model._
 
 import scala.collection.mutable.Map
-import com.patson.model.AirlineAppeal
-import java.sql.Statement
 
 import com.patson.util.AirlineCache
 

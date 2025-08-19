@@ -6,10 +6,6 @@ import com.patson.model._
 import java.sql.Statement
 
 object CitySource {
-  def loadAllCities() = {
-      loadCitiesByCriteria(List.empty)
-  }
-  
   def loadCitiesByCriteria(criteria : List[(String, Any)]) = {
       //open the hsqldb
     val connection = Meta.getConnection()
@@ -55,7 +51,6 @@ object CitySource {
       connection.close()
     }
   }
-
 
   def loadCityById(id : Int) = {
       val result = loadCitiesByCriteria(List(("id", id)))

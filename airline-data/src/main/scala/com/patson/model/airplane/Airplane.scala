@@ -1,7 +1,7 @@
 package com.patson.model.airplane
 
 import com.patson.data.{AirplaneSource, LinkSource}
-import com.patson.model.{Airline, AirlineType, Airport, Computation, IdObject, Link, LinkClassValues}
+import com.patson.model.{Airline, Airport, Computation, IdObject, Link, LinkClassValues, DiscountAirline, LuxuryAirline}
 
 case class Airplane(model : Model, var owner : Airline, constructedCycle : Int, var purchasedCycle : Int, condition : Double, depreciationRate : Int, value : Int, var isSold : Boolean = false, var dealerRatio : Double = Airplane.DEFAULT_DEALER_RATIO, var configuration : AirplaneConfiguration = AirplaneConfiguration.empty, var home : Airport = Airport.fromId(0), isReady : Boolean = true, var purchaseRate : Double = 1, version : Int = 0,var id : Int = 0) extends IdObject {
   val dealerValue = {
@@ -30,9 +30,9 @@ case class Airplane(model : Model, var owner : Airline, constructedCycle : Int, 
     val configurationOptions = AirplaneSource.loadAirplaneConfigurationsByCriteria(List(("airline", owner.id), ("model", model.id)))
     val pickedConfiguration =
       if (configurationOptions.isEmpty) { //create one for this airline
-        val newConfiguration = if (this.owner.airlineType == AirlineType.DISCOUNT) {
+        val newConfiguration = if (this.owner.airlineType == DiscountAirline) {
           AirplaneConfiguration.economy(this.owner, this.model)
-        } else if (this.owner.airlineType == AirlineType.LUXURY) {
+        } else if (this.owner.airlineType == LuxuryAirline) {
           AirplaneConfiguration.business(this.owner, this.model)
         } else {
           AirplaneConfiguration.default(this.owner, this.model)
@@ -67,8 +67,8 @@ case class Airplane(model : Model, var owner : Airline, constructedCycle : Int, 
 
 object Airplane {
   val MAX_CONDITION = 100
-  val BAD_CONDITION = 35
-  val CRITICAL_CONDITION = 10
+  val BAD_CONDITION = 45
+  val CRITICAL_CONDITION = 15
   val DEFAULT_DEALER_RATIO = 1.0
   val MAX_FLIGHT_MINUTES : Int = (24 * 60 * 4.5).toInt
 }

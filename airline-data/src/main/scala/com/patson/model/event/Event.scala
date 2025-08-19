@@ -10,14 +10,14 @@ abstract class Event(val eventType : EventType.Value, val startCycle : Int, val 
 }
 
 case class Olympics(override val startCycle : Int, override val duration : Int = Olympics.WEEKS_PER_YEAR * 4, var olympicsId : Int = 0) extends Event(EventType.OLYMPICS, startCycle, duration, olympicsId) {
-  val currentYear = (currentCycle : Int) => {
+  val currentYear: Int => Int = (currentCycle : Int) => {
     (currentCycle - startCycle) /  Olympics.WEEKS_PER_YEAR + 1
   } //start from 1 to 4
-  val isNewYear = (currentCycle : Int) => currentWeek(currentCycle) == 0
-  val currentWeek = (currentCycle : Int) => (currentCycle - startCycle) % Olympics.WEEKS_PER_YEAR //start from 0 to WEEKS_PER_YEAR
+  val isNewYear: Int => Boolean = (currentCycle : Int) => currentWeek(currentCycle) == 0
+  val currentWeek: Int => Int = (currentCycle : Int) => (currentCycle - startCycle) % Olympics.WEEKS_PER_YEAR //start from 0 to WEEKS_PER_YEAR
 
   import OlympicsStatus._
-  val status = (currentCycle : Int) =>
+  val status: Int => Value = (currentCycle : Int) =>
     if (isActive(currentCycle)) {
       currentYear(currentCycle) match {
         case 1 => VOTING
@@ -45,7 +45,13 @@ object OlympicsStatus extends Enumeration {
 
 
 object Olympics {
-  val WEEKS_PER_YEAR = 52
+  val TOOLTIP = List(
+    "Olympics are scored for the last 52 weeks of each 4 year Olympic cycle, with more passengers traveling the very last 4 weeks.",
+    "When it starts, you will be given a \"goal\" score based on how many passengers you transported the week before.",
+    "You get one point for every passenger you transport from origin to Olympics (regardless of type), and a partial point if you fulfilled part of the journey.",
+    "If you make your goal over the 52 weeks, you get a prize, and you get a bigger prize the more you over-deliver."
+  )
+  val WEEKS_PER_YEAR = 48
   val GAMES_DURATION = 4
   def getCandidates(eventId : Int) : List[Airport] = {
     EventSource.loadOlympicsCandidates(eventId)

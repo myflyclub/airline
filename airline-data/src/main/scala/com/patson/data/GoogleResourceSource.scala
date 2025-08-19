@@ -12,7 +12,7 @@ object GoogleResourceSource {
   val insertResource = (resource: GoogleResource) => {
     val connection = Meta.getConnection()
     //case class Log(airline : Airline, message : String, cateogry : LogCategory.Value, severity : LogSeverity.Value, cycle : Int)
-    val statement = connection.prepareStatement("REPLACE INTO " + GOOGLE_RESOURCE_TABLE + "(resource_id, resource_type, url, max_age_deadline) VALUES(?,?,?,?)")
+    val statement = connection.prepareStatement("REPLACE INTO " + GOOGLE_RESOURCE_TABLE + "(resource_id, resource_type, url, max_age_deadline, caption) VALUES(?,?,?,?,?)")
 
 
     try {
@@ -23,6 +23,7 @@ object GoogleResourceSource {
         case Some(deadline) => statement.setLong(4, deadline)
         case None => statement.setNull(4, Types.BIGINT)
       }
+      statement.setString(5, resource.caption)
       statement.executeUpdate()
     } finally {
       statement.close()
@@ -32,9 +33,7 @@ object GoogleResourceSource {
 
   def deleteResource(resourceId : Int, resourceType : ResourceType.Value): Unit = {
     val connection = Meta.getConnection()
-    //case class Log(airline : Airline, message : String, cateogry : LogCategory.Value, severity : LogSeverity.Value, cycle : Int)
     val statement = connection.prepareStatement("DELETE FROM " + GOOGLE_RESOURCE_TABLE + " WHERE resource_id = ? AND resource_type = ?")
-
 
     try {
       statement.setInt(1, resourceId)
@@ -87,13 +86,14 @@ object GoogleResourceSource {
         val resourceType = resultSet.getInt("resource_type")
         val url = resultSet.getString("url")
         val deadlineValue = resultSet.getLong("max_age_deadline")
+        val caption = resultSet.getString("caption")
         val deadline =
           if (resultSet.wasNull()) {
             None
           } else {
             Some(deadlineValue)
           }
-        result += GoogleResource(resourceId, ResourceType(resourceType), url, deadline)
+        result += GoogleResource(resourceId, ResourceType(resourceType), url, deadline, caption)
       }
 
       resultSet.close()

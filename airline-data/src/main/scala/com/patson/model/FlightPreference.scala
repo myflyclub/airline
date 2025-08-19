@@ -9,7 +9,7 @@ import java.util.concurrent.ThreadLocalRandom
  * When a link contains certain properties that the "Flight preference" likes/hates, it might reduce (if like) or increase (if hate) the "perceived price"  
  */
 abstract class FlightPreference(homeAirport : Airport) {
-  val COST_BASIS = 0.89
+  val COST_BASIS = 0.95
   def computeCost(baseCost : Double, link : Transport, linkClass : LinkClass) : Double
   def preferredLinkClass : LinkClass
   def getPreferenceType : FlightPreferenceType.Value
@@ -28,7 +28,7 @@ abstract class FlightPreference(homeAirport : Airport) {
       cost = (cost * loyaltyAdjustRatio(link)).toInt
     }
 
-    cost = cost * loungeAdjustRatio(link, loungeLevelRequired, preferredLinkClass)
+    cost = loungeAdjust(cost, link, loungeLevelRequired, preferredLinkClass)
 
     cost *= externalCostModifier
 
@@ -60,10 +60,10 @@ abstract class FlightPreference(homeAirport : Airport) {
       cost = (cost * loyaltyAdjust).toInt
     }
 
-    val loungeAdjust = loungeAdjustRatio(link, loungeLevelRequired, linkClass)
-    cost = cost * loungeAdjust
+    val costWithLounge = loungeAdjust(cost, link, loungeLevelRequired, linkClass)
+    cost = costWithLounge
 
-    CostBreakdown(computeCost(cost, link, linkClass), priceAdjust, qualityAdjust, tripDurationAdjust, loyaltyAdjust, loungeAdjust)
+    CostBreakdown(computeCost(cost, link, linkClass), priceAdjust, qualityAdjust, tripDurationAdjust, loyaltyAdjust, costWithLounge)
   }
 
   /**
@@ -82,7 +82,6 @@ abstract class FlightPreference(homeAirport : Airport) {
   val qualitySensitivity : Double = 1.0
   val loyaltySensitivity : Double = 0
   val frequencyThreshold : Int = 7
-  val flightDurationSensitivity : Double = 0.5
   val loungeLevelRequired : Int = 0
 
   lazy val appealList : Map[Int, AirlineAppeal] = homeAirport.getAirlineAdjustedAppeals
@@ -118,7 +117,7 @@ abstract class FlightPreference(homeAirport : Airport) {
   def loyaltyAdjustRatio(link : Transport) = {
     val appeal = appealList.getOrElse(link.airline.id, AirlineAppeal(0))
     val loyalty = appeal.loyalty
-    val base =  1 + (-0.1 + loyalty.toDouble / maxLoyalty / 2.25)  * loyaltySensitivity
+    val base =  1 + (-0.1 + loyalty / maxLoyalty / 2.25)  * loyaltySensitivity
     //println("factor " + loyaltyRatio + " at loyalty " + loyalty + " : " + adjustment)
     1 / base
   }
@@ -224,9 +223,9 @@ abstract class FlightPreference(homeAirport : Airport) {
     }
   }
 
-  def loungeAdjustRatio(link : Transport, loungeLevelRequired : Int, linkClass: LinkClass) = {
+  def loungeAdjust(cost: Double, link : Transport, loungeLevelRequired : Int, linkClass: LinkClass): Double = {
     if (linkClass.level < BUSINESS.level) {
-      1.0
+      cost
     } else {
       val fromLounge = link.from.getLounge(link.airline.id, link.airline.getAllianceId, activeOnly = true)
       val toLounge = link.to.getLounge(link.airline.id, link.airline.getAllianceId, activeOnly = true)
@@ -234,12 +233,10 @@ abstract class FlightPreference(homeAirport : Airport) {
       val fromLoungeLevel = fromLounge.map(_.level).getOrElse(0)
       val toLoungeLevel = toLounge.map(_.level).getOrElse(0)
 
+      var newCost = Lounge.priceAdjust(cost, fromLoungeLevel, loungeLevelRequired)
+      newCost = Lounge.priceAdjust(cost, toLoungeLevel, loungeLevelRequired)
 
-      val fromLoungeRatioDelta = Lounge.priceAdjustRatio(fromLoungeLevel, loungeLevelRequired, link.distance)
-
-      val toLoungeRatioDelta = Lounge.priceAdjustRatio(toLoungeLevel, loungeLevelRequired, link.distance)
-
-      1 + fromLoungeRatioDelta + toLoungeRatioDelta
+      Math.max(1, newCost)
     }
   }
 }
@@ -262,8 +259,10 @@ case class DealPreference(homeAirport : Airport, preferredLinkClass: LinkClass, 
   override val qualitySensitivity = 0.4
   override val frequencyThreshold = 2
 
-  def computeCost(baseCost : Double, link : Transport, linkClass : LinkClass) = {
-    Math.max(1, baseCost)
+  def computeCost(baseCost: Double, link : Transport, linkClass : LinkClass) : Double = {
+    val noise = 0.9 + getFlatTopBellRandom(0.2, 0.2)
+    val finalCost = baseCost * noise
+    Math.max(1, finalCost)
   }
 
   val getPreferenceType: FlightPreferenceType.Value = FlightPreferenceType.DEAL
@@ -278,8 +277,10 @@ case class LastMinutePreference(homeAirport : Airport, preferredLinkClass: LinkC
   } else {
     1.0
   }
-  def computeCost(baseCost : Double, link : Transport, linkClass : LinkClass) = {
-    baseCost
+  def computeCost(baseCost: Double, link : Transport, linkClass : LinkClass) : Double = {
+    val noise = 0.85 + getFlatTopBellRandom(0.3, 0.3)
+    val finalCost = baseCost * noise
+    Math.max(1, finalCost)
   }
 
   val getPreferenceType: FlightPreferenceType.Value = {
@@ -330,7 +331,7 @@ case class AppealPreference(homeAirport : Airport, preferredLinkClass : LinkClas
   }
 
   def computeCost(baseCost: Double, link : Transport, linkClass : LinkClass) : Double = {
-    val noise = 1.0 + getFlatTopBellRandom(0.35, 0.25)
+    val noise = 0.85 + getFlatTopBellRandom(0.3, 0.3)
     val finalCost = baseCost * noise
     Math.max(1, finalCost)
   }
@@ -343,19 +344,4 @@ object AppealPreference {
     AppealPreference(homeAirport, linkClass, priceModifier, loungeLevelRequired = loungeLevelRequired, loyaltyRatio = loyaltyRatio, count)
   }
   
-}
-
-
-class FlightPreferencePool(preferencesWithWeight: Map[PassengerType.Value, List[(FlightPreference, Int)]]) { // Change the key
-  val pool: Map[PassengerType.Value, Map[LinkClass, List[FlightPreference]]] = preferencesWithWeight.map { case (passengerType, preferenceList) =>
-    (passengerType, preferenceList.groupBy { case (flightPreference, weight) =>
-      flightPreference.preferredLinkClass
-    }.view.mapValues { _.map { case (pref, weight) => pref }.toList }.toMap)
-  }
-
-  def draw(passengerType: PassengerType.Value, linkClass: LinkClass, fromAirport: Airport, toAirport: Airport): FlightPreference = {
-    val poolForPassengerType = pool.getOrElse(passengerType, pool(PassengerType.BUSINESS))
-    val poolForClass = poolForPassengerType(linkClass)
-    poolForClass(ThreadLocalRandom.current().nextInt(poolForClass.length))
-  }
 }

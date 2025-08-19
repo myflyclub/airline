@@ -1,42 +1,36 @@
 package com.patson.model
 
 import com.patson.data.{AirlineSource, AirportSource, AllianceSource}
-import com.patson.model.AirlineBaseSpecialization.FlightTypeSpecialization
 import com.patson.model.airplane.Model
 import com.patson.util.AllianceCache
 
 
 case class AirlineBase(airline : Airline, airport : Airport, countryCode : String, scale : Int, foundedCycle : Int, headquarter : Boolean = false) {
-  private lazy val COST_EXPONENTIAL_BASE = if (airline.airlineType == AirlineType.MEGA_HQ && headquarter) {
-    1.54
-  } else if (airline.airlineType == AirlineType.MEGA_HQ && !headquarter) {
-    1.73
-  } else {
-    1.68
-  }
 
   lazy val getValue : Long = {
-    calculateUpgradeCost(scale)
+    calculateUpgradeCost()
   }
 
-  def calculateUpgradeCost (scale: Int): Long = {
-    val adjustedScale = Math.min(12, Math.max(1, scale)) //for non-existing base, calculate as if the base is 1, cap at 12
-    if (scale == 0) {
+  def calculateUpgradeCost (scale: Int = scale, airlineType: AirlineType = airline.airlineType): Long = {
+    val adjustedScale = Math.min(12 + 0.2 * (scale - 12), Math.max(1, scale)) //for non-existing base, calculate as if the base is 1, cap at 12
+    val airportSizeDiscount =  (Math.max(4, airport.size).toDouble / 2) * 0.1
+    val baseCost = airport.rating.overallDifficulty * 105000
+
+    if (headquarter && scale == 1) {
+      //free to start HQ
       0
-    } else if (headquarter && scale == 1) { //free to start HQ
-      0
+    } else if (airlineType == MegaHqAirline && headquarter) {
+      //mega hq hq
+      val cost: Long = baseCost.toLong * Math.pow(0.93 + airportSizeDiscount, adjustedScale).toLong
+      Math.max(5_000_000, cost - 40_000_000)
+    } else if (airlineType == MegaHqAirline && ! headquarter) {
+      //mega hq base
+      val cost: Long = (baseCost.toLong * Math.pow(1.2 + airportSizeDiscount, adjustedScale)).toLong
+      cost + 30_000_000
     } else {
-      val baseCost = if (airline.airlineType == AirlineType.MEGA_HQ) {
-        if (headquarter) {
-          (airport.rating.overallRating * 100000).toLong
-        } else {
-          (40 * 1000000 + airport.rating.overallRating * 120000).toLong
-        }
-      } else {
-        (1000000 + airport.rating.overallRating * 120000).toLong
-      }
-      val cost = baseCost * airportTypeMultiplier * airportSizeRatio * Math.pow (COST_EXPONENTIAL_BASE, (adjustedScale - 1) )
-      (cost * Math.max(1, 1 + (scale - 12) * 0.2)).toLong
+      //regular
+      val cost: Long = (baseCost.toLong * Math.pow(1.1 + airportSizeDiscount, adjustedScale)).toLong
+      cost
     }
   }
 
@@ -44,28 +38,22 @@ case class AirlineBase(airline : Airline, airport : Airport, countryCode : Strin
     calculateUpkeep(scale)
   }
 
-  def calculateUpkeep (scale: Int): Long = {
-    val adjustedScale = Math.min(12, Math.max(1, scale)) //for non-existing base, calculate as if the base is 1, cap at 12
-    val baseUpkeep = 3000 + airport.rating.overallRating * 150
-    val upkeep = baseUpkeep * airportTypeMultiplier * airportSizeRatio * Math.pow(COST_EXPONENTIAL_BASE, adjustedScale - 1)
-    (upkeep * Math.max(1, 1 + (scale - 12) * 0.1)).toLong
-  }
+  def calculateUpkeep (scale: Int, airlineType: AirlineType = airline.airlineType): Long = {
+    val adjustedScale = Math.max(1, scale) //for non-existing base, calculate as if the base is 1
+    val baseUpkeep = airport.rating.overallDifficulty * 65
+    val airportSizeMod =  (airport.size.toDouble / 2) * 0.1
 
-  lazy val airportTypeMultiplier =
-    if (airport.isDomesticAirport()) {
-      0.7
-    } else if (airport.isGateway()) {
-      1.1
+    if (airlineType == MegaHqAirline && headquarter) {
+      //mega hq hq
+      (baseUpkeep.toLong * Math.pow(adjustedScale, 1.86)).toLong
+    } else if (airlineType == MegaHqAirline && ! headquarter) {
+      //mega hq base
+      (baseUpkeep.toLong * Math.pow(adjustedScale, 2.0 + airportSizeMod)).toLong
     } else {
-      1.0
+      //regular
+      (baseUpkeep.toLong * Math.pow(adjustedScale, 1.9 + airportSizeMod)).toLong
     }
-
-  lazy val airportSizeRatio =
-    if (airport.size > 7) {
-      1.0
-    } else { //discount for size < 7
-      0.3 + airport.size * 0.1
-    }
+  }
 
   val getOfficeStaffCapacity = AirlineBase.getOfficeStaffCapacity(scale, headquarter)
 
@@ -77,13 +65,13 @@ case class AirlineBase(airline : Airline, airport : Airport, countryCode : Strin
     }
   }.toInt
 
-  def getOvertimeCompensation(staffRequired : Int) = {
+  def getOvertimeCompensation(staffRequired: Double) = {
     if (getOfficeStaffCapacity >= staffRequired) {
       0
     } else {
-      val delta = staffRequired - getOfficeStaffCapacity
+      val delta = staffRequired.toInt - getOfficeStaffCapacity
       var compensation = 0
-      compensation += delta * (50000 + airport.baseIncome) / 52 * 10 //weekly compensation, *10, as otherwise it's too low
+      compensation += (delta.toDouble * (50000 + airport.income.toDouble * 0.8) / 52 * 10).toInt //weekly compensation, *10, as otherwise it's too low
 
       compensation
     }
@@ -109,7 +97,7 @@ case class AirlineBase(airline : Airline, airport : Airport, countryCode : Strin
   }
 
   lazy val getStaffModifier : ((FlightCategory.Value, Model.Type.Value, Int) => Double) = (flightCategory, model, serviceStars) => {
-    val flightTypeSpecializations = specializations.filter(_.getType == BaseSpecializationType.FLIGHT_TYPE).map(_.asInstanceOf[FlightTypeSpecialization])
+    val flightTypeSpecializations = specializations.collect { case spec: FlightTypeSpecialization => spec }
     if (flightTypeSpecializations.isEmpty) {
       1
     } else {
@@ -117,8 +105,8 @@ case class AirlineBase(airline : Airline, airport : Airport, countryCode : Strin
     }
   }
 
-  lazy val specializations : List[AirlineBaseSpecialization.Value] = {
-    (AirlineBaseSpecialization.values.filter(_.free).toList ++
+  lazy val specializations : List[AirlineBaseSpecialization] = {
+    (AirlineBaseSpecialization.values.filter(_.free) ++
     AirportSource.loadAirportBaseSpecializations(airport.id, airline.id)).filter(_.scaleRequirement <= scale)
   }
 
@@ -170,7 +158,7 @@ object AirlineBase {
         var baseOther = 0
         alliance.members.flatMap { allianceMember =>
           allianceMember.airline.getBases().map { base =>
-            if (!base.headquarter && base.airline.airlineType == AirlineType.REGIONAL && baseRegionalBonus < AirlineType.REGIONAL_EXTRA_SHARED_BASE_LIMIT && targetBase.airport.id == base.airport.id) {
+            if (!base.headquarter && base.airline.airlineType == RegionalAirline && baseRegionalBonus < RegionalAirline.extraSharedBaseLimit && targetBase.airport.id == base.airport.id) {
               baseRegionalBonus = baseRegionalBonus + 1
             } else if (!base.headquarter && targetBase.airport.id == base.airport.id) {
               baseOther = baseOther + 1
@@ -178,8 +166,8 @@ object AirlineBase {
           }
         }
 
-        if (airline.airlineType == AirlineType.REGIONAL) {// For regional airlines, allow up to 1 existing alliance base
-          if (baseOther + baseRegionalBonus >= 1 + AirlineType.REGIONAL_EXTRA_SHARED_BASE_LIMIT) {
+        if (airline.airlineType == RegionalAirline) {// For regional airlines, allow up to 1 existing alliance base
+          if (baseOther + baseRegionalBonus >= 1 + RegionalAirline.extraSharedBaseLimit) {
             return Some(s"There are too many alliance member bases at this airport, even for a regional airline.")
           }
         } else {

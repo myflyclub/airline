@@ -2,7 +2,7 @@ html {
   --text-color: #606060;
   --item-label-color: DimGray;
   --text-shadow: 0;
-  --background-gradient-image: linear-gradient(to bottom, #EEEEEE, #EEEEEE 95%, #DDDDDD);
+  --background-gradient-image: linear-gradient(#111111ec, #111d);
   --section-background-image: var(--background-gradient-image);
   --button-shadow: inset 0 0 2px white, 0 0 4px rgba(0, 0, 0, 0.6);
   --button-background: #ebebeb;
@@ -26,7 +26,7 @@ html {
   --menubar-shadow: inset 0 -7px 9px -7px rgba(0,0,0,0.2);
   --scrollbar-color: hsl(0, 0%, 60%) hsl(0, 0%, 80%);
   --scrollbar-shadow-color: rgba(0, 0, 0, 0.5);
-  --tooltip-background-color: rgba(240, 240, 240, 0.85);
+  --tooltip-background-color: rgba(240, 240, 240, 0.9);
   --modal-background-color: rgba(0,0,0,0.75);
   --modal-content-background-image: var(--background-gradient-image);
   --chat-background: #ebebeb;
@@ -52,8 +52,8 @@ html[data-theme='dark'] {
   --text-color: rgba(255, 255, 255, 0.8);
   --item-label-color: lightgray;
   --background-gradient-color: background-color: rgba(0, 0, 0, 0.4);
-  --background-gradient-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4));
-  --section-background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4));
+  --background-gradient-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.3));
+  --section-background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.3));
   --section-background-color: rgba(0, 0, 0, 0.6);
   --button-shadow: inset 0 0 2px rgba(255, 255, 255, 0.4);
   --button-background: rgba(255, 255, 255, 0.2);
@@ -77,7 +77,7 @@ html[data-theme='dark'] {
   --menubar-shadow: inset 0 -7px 9px -7px rgba(255,255,255,0.4);
   --scrollbar-color: rgba(255, 255, 255, 0.5) rgba(125, 125, 125, 0.6);
   --scrollbar-shadow-color: rgba(255, 255, 255, 0.5);
-  --tooltip-background-color: rgba(0, 0, 0, 0.9);
+  --tooltip-background-color: rgba(0, 0, 0, 0.95);
   --modal-background-color: rgba(255,255,255,0.5);
   --modal-content-background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.95), rgba(0, 0, 0, 0.95));
   --chat-background: rgba(0, 0, 0, 0.4);
@@ -98,8 +98,6 @@ html[data-theme='dark'] {
   --fallback-background: #222222;
   --highlight-text-color: rgb(140, 185, 217);
 }
-
-
 
 body {
 	font-size: 13px;
@@ -124,6 +122,11 @@ h1, h2, h3, h4, h5, h6, .font-display {
 
 .font-mono {
     font-family: "ibm-plex-mono", monospace;
+}
+
+.font-normal {
+    font-size: 13px;
+    font-family: system-ui;
 }
 
 ::placeholder {
@@ -280,7 +283,7 @@ h1, h2, h3, h4, h5, h6, .font-display {
    position: relative;
 }
 
-@media only screen and (min-device-width : 800px) {
+@media only screen and (min-device-width: 800px) {
     #airplaneModelTableFilters {
         position: absolute;
         top: 0px;
@@ -294,11 +297,11 @@ h1, h2, h3, h4, h5, h6, .font-display {
 }
 
 .bankCanvasLeftGroup, .oilCanvasLeftGroup {
-   width: 40%;
+   width: 44%;
 }
 
 .bankCanvasRightGroup, .oilCanvasRightGroup {
-   width: 60%;
+   width: 56%;
 }
 
 .airplaneCanvasRightGroup {
@@ -314,22 +317,53 @@ h1, h2, h3, h4, h5, h6, .font-display {
     display: flex;
     flex-direction: column;
 }
+#opsSheet .text-success, #opsSheet .text-warning, #opsSheet .text-danger {
+    font-weight: 600;
+}
 .sheet {
     padding: 0 8px;
+    box-sizing: border-box;
 }
 .sheet .table.data {
     padding: 20px;
 }
 
-#airportCanvas {
-}
-.airportCanvasLeftGroup {
-    padding: 0 10px 0 10px;
-    box-sizing: border-box;
+.airportCountryFlag .flag {
+    position: relative;
+    top: -1px;
+    width: 18px;
+    height: auto;
+    margin: 0;
 }
 
-.airportCanvasRightGroup {
-    width: 20%;
+#airportDetailsCityImage {
+    display: none;
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 22%;
+    height: 100%;
+    border-radius: 8px;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+#airportDetailsAirportImage {
+    width: 100%;
+    height: 260px;
+    margin-top: auto;
+    border-radius: 8px;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+.caption {
+    position: absolute;
+    bottom: 8px;
+    background: rgba(0, 0, 0, .4);
+    font-size: 10px;
 }
 
 #rankingCanvas {
@@ -347,17 +381,18 @@ h1, h2, h3, h4, h5, h6, .font-display {
 }
 
 .assetsDetails div.blueprint {
-    filter : grayscale(100%);
+    filter: grayscale(100%);
     margin: 0 !important;
 }
 
 .assetsDetails div.blueprint:hover {
-    filter : none;
+    filter: none;
 }
 
 #loanInterestRateChart, #oilPriceChart {
-    width: 90%;
-    height: 300px;
+    width: 100%;
+    height: 40vh;
+    min-height: 320px;
     margin: 0 auto;
 }
 
@@ -400,7 +435,30 @@ body.christmas {
 	justify-content: space-between;
 	backdrop-filter: var(--backdrop-filter);
 	box-shadow: var(--menubar-shadow);
-	/* 	margin-top: -80px; */
+}
+
+#topBar .topBarDetails {
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    gap: 0 1rem;
+}
+
+#topBar .topBarDetails > * {
+    height: 16px;
+}
+
+#topBar .reputationStars {
+    margin: 0;
+}
+
+#topBar p {
+    margin: 0;
+}
+
+#topBar .oilprice {
+    position: relative;
+    bottom: 2px;
 }
 
 #patreonDiv {
@@ -427,9 +485,20 @@ body.christmas {
 	vertical-align: middle;
 }
 
+.table-width-50 .cell {
+    width: 50% !important;
+}
+
 .table .cell {
 	display: table-cell;
 	vertical-align: middle;
+}
+
+.summary-row .cell {
+    position: sticky;
+    border-bottom: 2px solid grey;
+    height: 22px;
+    background: darkcyan;
 }
 
 .table.frequencyDetail .cell, .table.frequencyDetailTotal .cell{
@@ -447,26 +516,33 @@ body.christmas {
 	overflow: hidden;
 }
 
-
 .table .table-header {
 	display: table-header-group;
 	width: 100%;
 }
-
 .table .table-header .cell:not(:empty) {
     background: var(--table-header-background);
     padding: 6px 4px;
     box-sizing: border-box;
     font-size: 12px;
     font-weight: 600;
-    color : var(--table-header-color);
+    color: var(--table-header-color);
     overflow: hidden;
     letter-spacing: 0.5px;
     border-bottom: 1px solid #777;
 }
-
-
-
+.table-header option {
+	font-size: 0.75rem;
+	padding: 4px 2px;
+}
+.table-header option.selected {
+    background-color: light-dark(rgb(118, 118, 118), rgb(195, 195, 195));
+    color: light-dark(rgb(255, 255, 255), rgb(16, 16, 16));
+}
+.table-header select option {
+	background: var(--background-1);
+	color: var(--color-1)
+}
 .table .table-header .cell.selected, .progressionItem.selected {
     background: var(--table-header-selected-background);
     box-shadow: var(--table-header-selected-shadow);
@@ -508,7 +584,7 @@ body.christmas {
     box-shadow: var(--table-selected-row-shadow);
 }
 
-div.section.clickable:hover, div.section.clickable.selected, .allianceMissionCandidates div.selected {
+.section.clickable:hover, .section.clickable.selected, .allianceMissionCandidates div.selected {
   background: var(--table-header-selected-background);
   box-shadow: var(--table-header-selected-shadow);
 }
@@ -538,20 +614,20 @@ div.section.clickable:hover, div.section.clickable.selected, .allianceMissionCan
   gap: 16px;
   width: 100%;
 }
-
+.grid-header {
+    grid-column: 1 / -1;
+}
 .item {
     width: 160px;
     height: 40px;
     padding-bottom: 8px;
 }
-
 .item-span-2 {
     grid-row: span 2;
     width: auto;
     height: auto;
     padding-bottom: 8px;
 }
-
 .item-grid > .divider {
     grid-column: 1 / -1;
     margin: 0.5 rem;
@@ -574,6 +650,7 @@ div.section.clickable:hover, div.section.clickable.selected, .allianceMissionCan
     font-size: 13px;
     letter-spacing: -0.1px;
     display: flex;
+    align-items: center;
     gap: 4px;
 }
 
@@ -587,14 +664,12 @@ div.section.clickable:hover, div.section.clickable.selected, .allianceMissionCan
     text-shadow: 0px 0px 3px rgba(255,255,255,0.6);
     font-size: 1.1em;
     font-weight: bold;
-    color : rgb(0, 0, 0, 0.5);
+    color: rgb(0, 0, 0, 0.5);
     border-radius: 3px;
     width: 100px;
     margin: 0.2em 0.2em;
 }
 
-
- 
 .label, div.header, span.header {
 	line-height: 1.1;
 	color: var(--text-color);
@@ -613,7 +688,6 @@ div.header, span.header {
 div.button, button.button, .ajax-file-upload {
 	text-align: center;
 	line-height: 1.6em;
-	/* color: #454544; */
 	background-color: var(--button-background);
 	text-decoration: none;
 	font-size: 12px;
@@ -622,7 +696,6 @@ div.button, button.button, .ajax-file-upload {
 	padding: 5px 15px;
 	margin: 4px;
 	box-shadow: var(--button-shadow);
-	/*backdrop-filter: var(--button-backdrop-filter); otherwise touch title will be blurred*/
 }
 
 .button:hover {
@@ -686,21 +759,38 @@ button.gm-svpc {
 
 .airportPopupName {
     font-size: 14px;
-    line-height: 1.02;
-    padding: 0 18px 6px 0;
+    padding: 0 20px 6px 0;
+}
+
+#airportPopupIata {
+    float: left;
 }
 
 #airportPopupName {
     padding: 0 2px;
+    font-size: 13px;
 }
 
 #airportPopupCity {
     font-size: 15px;
 }
 
+#airportPopupCustomsIcon img {
+    width: auto;
+    height: 15px;
+    vertical-align: middle;
+    margin-left: 4px;
+}
+
+.airportPopupItem {
+    min-width: 100px;
+    display: inline-flex;
+    align-items: center;
+}
+
 .airportFeatures {
   display: flex;
-  gap: 4px;
+  gap: 10px;
   flex-wrap: wrap;
 }
 
@@ -717,6 +807,7 @@ button.gm-svpc {
 
 .gm-style .gm-style-iw-c {
     padding: 12px !important;
+    overflow: visible !important;
 }
 
 .gm-style-iw-d {
@@ -725,7 +816,6 @@ button.gm-svpc {
 
 .gm-style-iw {
     max-height: unset !important;
-	overflow: hidden !important;
 	line-height: 1.35;
 	white-space: nowrap;
 }
@@ -746,17 +836,15 @@ dd.error {
 
 #floatMessageBox {
 	position: absolute;
-	top: 0;
-	right: 0;
+	top: 36px;
 	border-radius: 0px 0px 15px 15px;
 	z-index: 1000;
-	/* 	background:#ffc; */
 	background: var(--float-message-box-background);
 	padding: 5px;
 	text-align: center;
-	box-shadow: var(--float-message-box-shadow)
-	color: var(--float-message-box-color)
-	text-shadow: var(float-message-text-shadow)
+	box-shadow: var(--float-message-box-shadow);
+	color: var(--float-message-box-color);
+	text-shadow: var(float-message-text-shadow);
 }
 
 .mapControlPanel {
@@ -803,17 +891,11 @@ dd.error {
 	height: 20px;
 }
 
-#console .actionMessage, #console .errorMessage {
-	//animation-name: fadeIn;
-  	//animation-duration: 1s;
-}
-
-
 #console .errorMessage {
 	color: #AF383F;
 }
 
-div.section, div.selectedSection, .modal-content {
+.section, div.selectedSection, .modal-content {
 	border-radius: 5px 5px 5px 5px;
 	box-shadow: inset 0 0 2px white, 0 0 3px rgba(0, 0, 0, 0.5);
 	border-radius: 0.5em 0.5em 0.5em 0.5em;
@@ -821,13 +903,20 @@ div.section, div.selectedSection, .modal-content {
 	box-sizing:border-box;
 }
 
-div.section {
+.section {
+    position: relative;
 	border-radius: 8px;
 	padding: 16px 12px 20px 12px;
 	background: var(--section-background-image);
 }
-div.section.tight {
+.section.tight {
 	padding: 4px 4px;
+}
+.section.tight > h4 {
+	padding: 12px 2px 4px;
+}
+.section.tight > p {
+	padding: 2px;
 }
 .section textarea {
     border-radius: 8px;
@@ -839,7 +928,7 @@ div.section.tight {
     padding-bottom: 8px;
 }
 
-div.section div.section {
+.section .section {
     margin: 8px;
 }
 
@@ -929,7 +1018,7 @@ div.divider {
 }
 
 
-a.selected, :not(.button):not(.no-highlight) > a:hover, span.selected, .clickable:hover:not(.cell), .clickable.selected:not(.cell) {
+a.selected,:not(.button):not(.no-highlight) > a:hover, span.selected, .clickable:hover:not(.cell), .clickable.selected:not(.cell) {
 	border-radius: 3px 3px 3px 3px;
 	background: #72ad5f;  /* fallback for old browsers */
     background: -webkit-linear-gradient(#72ad5f, #90be81);  /* Chrome 10-25, Safari 5.1-6 */
@@ -947,16 +1036,14 @@ a:hover, .clickable:hover, .clickable-no-highlight:hover {
 }
 
 
-#airportIcons .feature {
-	margin-left: 2px;
-	margin-right: 2px;
+.airportFeatures .feature {
+    display: flex;
 }
-
 
 .tabs {
 	list-style: none;
 	position: relative;
-} 
+}
 
 .tabs li:hover {
 	color: #6093e7;
@@ -971,13 +1058,6 @@ li.row, div.table-row {
 	font-size: 11px;
 	color: var(--text-color);
 }
-
-/**
-.table-panel {
-    overflow-x: auto;
-    overflow-y: hidden;
-}
-*/
 
 .table-container-y {
     -webkit-overflow-scrolling: touch;
@@ -1012,7 +1092,7 @@ li.row, div.table-row {
 }
 
 div.future {
-    color : #68A357;
+    color: #68A357;
     display: inline-block;
 }
 
@@ -1053,7 +1133,7 @@ div.future {
   right: 0;
   cursor: pointer;
   background: rgba(255, 255, 255, 0); //transparent
-} 
+}
 
 
 #canvas {
@@ -1065,13 +1145,12 @@ div.future {
     box-sizing: border-box;
     display: flex;
     gap: 8px;
-    padding-top: 8px;
     padding-left: 8px;
-    padding-right: 8px;
+    padding-right: 4px;
 }
 
 .highlight-text {
-    color : var(--highlight-text-color) !important;
+    color: var(--highlight-text-color) !important;
     font-weight: bold !important;
 }
 
@@ -1148,8 +1227,18 @@ img.logo {
     margin-right: 4px;
 }
 
+.logo-alliance {
+    width: 32px;
+    height: 16px;
+    margin-top: -4px;
+    margin-bottom: -4px;
+    transform: scale(1.1) translateX(-2px);
+}
+
 img.flag {
     margin-right: 3px;
+    position: relative;
+    bottom: -1px;
 }
 
 .airlineColorDot {
@@ -1200,8 +1289,8 @@ img.flag {
 
 @-webkit-keyframes snowflakes-fall{0%{top:-10%}100%{top:100%}}
 @keyframes snowflakes-fall{0%{top:-10%}100%{top:100%}}
-@-webkit-keyframes snowflakes-shimmer{0%{opacity : 1},100%{ opacity : 1}50%{opacity : 0.2}}
-@keyframes snowflakes-shimmer{0%{opacity : 1},100%{ opacity : 1}50%{opacity : 0.2}}
+@-webkit-keyframes snowflakes-shimmer{0%{opacity: 1},100%{ opacity: 1}50%{opacity: 0.2}}
+@keyframes snowflakes-shimmer{0%{opacity: 1},100%{ opacity: 1}50%{opacity: 0.2}}
 
 /*@-webkit-keyframes snowflakes-shake-0{0%,100%{-webkit-transform:translateX(0);transform:translateX(0)}50%{-webkit-transform:translateX(80px);transform:translateX(80px)}}*/
 @keyframes snowflakes-shake-1{0%,100%{transform:translateX(0)}50%{transform:translateX(80px)}}
@@ -1217,12 +1306,6 @@ img.flag {
 
 .snowflake{
     position:fixed;top:-10%;z-index:9999;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;cursor:default;
-    /*-webkit-animation-name:snowflakes-fall,snowflakes-shake,snowflakes-shimmer;/
-    -webkit-animation-duration:10s,3s,10s;
-    -webkit-animation-timing-function:linear,ease-in-out,ease-in-out;
-    -webkit-animation-iteration-count:infinite,infinite,infinite;
-    -webkit-animation-play-state:running,running,running;*/
-    /*animation-name:snowflakes-fall,snowflakes-shake, snowflakes-shimmer;*/
     animation-duration:10s,3s,10s;
     animation-timing-function:linear,ease-in-out,ease-in-out;
     animation-iteration-count:infinite,infinite,infinite;
@@ -1349,16 +1432,6 @@ button:disabled {
   cursor: not-allowed;
 }
 
-/*.button.disabled:after, .clickable.disabled:after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.4);
-}*/
-
 .button.loading {
     position: relative; /*not sure if it's safe to apply to everything*/
 }
@@ -1386,7 +1459,7 @@ button:disabled {
     z-index: 1;
     white-space: nowrap;
     background: linear-gradient(#F0E069 0%, #FFF6B3 10%);
-    color : #606060;
+    color: #606060;
     border-radius: 3px 3px 3px 3px;
     text-transform: none !important;
 }
@@ -1441,7 +1514,6 @@ button:disabled {
 }
 
 .mobileOnly {
-    visibility: hidden;
     display: none;
 }
 
@@ -1453,8 +1525,8 @@ li.dot {
 }
 
 div.remarks {
-    font-style : italic;
-    font-size : 12px;
+    font-style: italic;
+    font-size: 12px;
     font-weight: bold;
     display: flex;
     align-items: center;
@@ -1482,7 +1554,7 @@ iframe.clip {
 }
 .threshold-bar-container {
     overflow-x: scroll;
-    overflow-y: hidden;
+    overflow-y: visible;
     height: 20px;
     padding: 12px 4px;
 }
@@ -1528,13 +1600,43 @@ iframe.clip {
     top: 0;
 }
 .reputationDetails {
-    margin: 12px auto;
+    margin: 6px auto 12px;
     width: max-content;
 }
 .rep-value {
     float: right;
     padding-left: 4px;
 }
+/* airlineType hide/show */
+.airlineType-Mega-BaseState-Owned #stockProgress,
+.airlineType-Mega-BaseState-Owned .airlineTypeHide {
+    display: none;
+}
+.airlineType-Legacy #elitesProgress,
+.airlineType-Legacy #touristsTravelersProgress {
+    display: none;
+}
+.airlineType-RegionalPartner #touristsTravelersProgress,
+.airlineType-RegionalPartner #elitesProgress {
+    display: none;
+}
+.airlineType-Discount #elitesProgress,
+.airlineType-Discount .business,
+.airlineType-Discount .first {
+   display: none;
+}
+.airlineType-Luxury .economy,
+.airlineType-Luxury #touristsTravelersProgress {
+    display: none;
+}
+.airlineType-RegionalPartner .MEDIUM,
+.airlineType-RegionalPartner .LARGE,
+.airlineType-RegionalPartner .EXTRAORDINARY {
+    display: none;
+}
+
+
+/* base styles */
 button {
   /* Appearance Resets */
   background-color: transparent;
@@ -1556,6 +1658,9 @@ button {
 }
 small, .small {
     font-size: 85%;
+}
+.very-small {
+    font-size: 75%;
 }
 .small-10px {
     font-size: 10px;
@@ -1605,6 +1710,18 @@ i, .italic {
 .font-extralight {
     font-weight: 200;
 }
+.text-danger {
+    color: #da3e3e;
+}
+.text-warning {
+    color: #ed9624;
+}
+.text-middling {
+    color: #e8e854;
+}
+.text-success {
+    color: #239536;
+}
 .font-normal {
     font-weight: 400;
 }
@@ -1622,6 +1739,9 @@ i, .italic {
 }
 .leading-relaxed {
     line-height: 1.625;
+}
+.bg-darkGreen {
+    background-color: darkgreen;
 }
 /* Padding: Top, Right, Bottom, Left */
 .mx-auto { margin-left: auto; margin-right: auto; }
@@ -1656,6 +1776,8 @@ i, .italic {
 .pr-10 { padding-right: 40px; }
 .pr-12 { padding-right: 48px; }
 .pr-16 { padding-right: 64px; }
+.pr-1\/4 { padding-right: 25%; }
+.pr-1-4 { padding-right: 25%; }
 .pb-0 { padding-bottom: 0px; }
 .pb-1 { padding-bottom: 4px; }
 .pb-2 { padding-bottom: 8px; }
@@ -1717,6 +1839,7 @@ i, .italic {
 .min-w-96 { min-width: 24rem; }
 .max-w-60 { max-width: 15rem; }
 .max-w-72 { max-width: 19rem; }
+.max-w-260px { max-width: 260px; }
 .w-full { width: 100% !important; }
 .w-half { width: 50% !important; }
 .max-w-32 {max-width: 8rem;}
@@ -1729,12 +1852,13 @@ i, .italic {
 .scale-75 { scale: 75%; }
 .rotate-90 { rotate: 90deg}
 .-rotate-90 { rotate: -90deg}
-.list-disc { list-style-type: disc; }
+.list-disc { list-style: outside circle; padding-left: 16px; }
 .text-left { text-align: left; }
 .text-right { text-align: right; }
 .text-center { text-align: center; }
 .rounded-none { border-radius: 0px !important; }
 .overflow-x-auto { overflow-x: auto !important; }
+.overflow-y-auto { overflow-x: auto !important; }
 .flex-align-center {
     display: flex;
     align-items: center;
@@ -1746,6 +1870,14 @@ i, .italic {
     display: flex;
     width: 100%;
     gap: 0 0.5rem;
+    box-sizing: border-box;
+}
+.flex-col {
+    display: flex;
+    flex-direction: column;
+    gap: 0 0.5rem;
+    height: 100%;
+    box-sizing: border-box;
 }
 .flex-wrap {
     flex-wrap: wrap;
@@ -1792,6 +1924,16 @@ i, .italic {
     box-sizing: border-box;
     margin: 0 auto;
     margin-top: 0;
+}
+.container-cols-180px {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 2rem 1.33rem;
+    width: 100%;
+}
+.container-cols-180px > div,
+.container-cols-180px > button {
+    box-sizing: border-box;
 }
 .flex-container-width-quarter {
     display: flex;
@@ -1857,13 +1999,14 @@ div#serviceLevelBar {
 .class-values {
     display: flex;
     width: 210px;
-    justify-content: space-between;
+    gap: 1.5rem;
 }
 .class-value-child {
     width: 50px;
     text-align: right;
 }
 .class-value-child-helper {
+    width: 50px;
     opacity:0.6;
     font-size:80%
 }

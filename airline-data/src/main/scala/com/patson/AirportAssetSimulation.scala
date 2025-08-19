@@ -208,15 +208,8 @@ object AirportAssetSimulation {
     previousLevelBoosts.map { previousBoost =>
       val maxGain = asset.baseBoosts.find(_.boostType == previousBoost.boostType).get.value * 0.2
       var gain = maxGain * (0.2 + upgradeFactor * 0.8)
-      if (AirportBoostType.getValueType(previousBoost.boostType) == classOf[Long]) {
-        gain = gain.toLong
-      } else {
-        gain = BigDecimal(gain).setScale(3, RoundingMode.HALF_UP).toDouble
-      }
-      var newValue = previousBoost.value + gain
-      if (AirportBoostType.getValueType(previousBoost.boostType) == classOf[Long]) {
-        newValue = newValue.toLong
-      }
+      gain = BigDecimal(gain).setScale(3, RoundingMode.HALF_UP).toDouble
+      val newValue = previousBoost.value + gain
       (AirportBoost(previousBoost.boostType, newValue), gain)
     }
   }

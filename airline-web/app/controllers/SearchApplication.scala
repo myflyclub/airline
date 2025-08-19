@@ -17,84 +17,16 @@ import scala.util.Random
 
 class SearchApplication @Inject()(cc: ControllerComponents) extends AbstractController(cc) {
 
-  implicit object AirportSearchResultWrites extends Writes[AirportSearchResult] {
-    def writes(airportSearchResult : AirportSearchResult) : JsValue = {
-      Json.obj(
-        "airportId" -> airportSearchResult.getId,
-        "airportName" -> airportSearchResult.getName,
-        "airportIata" -> airportSearchResult.getIata,
-        "airportCity" -> airportSearchResult.getCity,
-        "countryCode" -> airportSearchResult.getCountryCode,
-        "score" -> airportSearchResult.getScore)
-
-    }
-  }
-
-  implicit object CountrySearchResultWrites extends Writes[CountrySearchResult] {
-    def writes(countrySearchResult : CountrySearchResult) : JsValue = {
-      Json.obj(
-        "countryName" -> countrySearchResult.getName,
-        "countryCode" -> countrySearchResult.getCountryCode,
-        "score" -> countrySearchResult.getScore)
-    }
-  }
-
-//  implicit object ZoneSearchResultWrites extends Writes[ZoneSearchResult] {
-//    def writes(result : ZoneSearchResult) : JsValue = {
-//      Json.obj(
-//        "zoneName" -> result.getName,
-//        "zone" -> result.getZone,
-//        "score" -> result.getScore)
-//    }
-//  }
-
-  class AirlineSearchResultWrites(searchString : String) extends Writes[AirlineSearchResult] {
-    def writes(result : AirlineSearchResult) : JsValue = {
-
-      var jsonResult = Json.obj(
-        "airlineName" -> result.getAirline.name,
-        "airlineCode" -> result.getAirline.getAirlineCode(),
-        "airlineId" -> result.getAirline.id,
-        "score" -> result.getScore)
-
-      if (result.isPreviousNameMatch) {
-        var namesJson = Json.arr()
-        result.getAirline.previousNames.foreach { previousName =>
-          if (!previousName.equalsIgnoreCase(result.getAirline.name) && previousName.toLowerCase().contains(searchString.toLowerCase())) {
-            namesJson = namesJson.append(JsString(previousName))
-          }
-        }
-        jsonResult = jsonResult + ("previousNames" -> namesJson)
-      }
-      jsonResult
-    }
-  }
-
-  implicit object AllianceSearchResultWrites extends Writes[AllianceSearchResult] {
-    def writes(result : AllianceSearchResult) : JsValue = {
-      Json.obj(
-        "allianceName" -> result.getAllianceName,
-        "allianceId" -> result.getAllianceId,
-        "score" -> result.getScore)
-    }
-  }
-
-
-
-
   def searchRoute(fromAirportId : Int, toAirportId : Int) = Action {
     val routes: List[(SimpleRoute, PassengerType.Value, Int)] = ConsumptionHistorySource.loadConsumptionsByAirportPair(fromAirportId, toAirportId).toList.sortBy(_._2._2).map {
       case ((route, (passengerType, passengerCount))) =>
-        (SimpleRoute(route.links.map(linkConsideration => (linkConsideration.link, linkConsideration.linkClass, linkConsideration.inverted))), passengerType, passengerCount)
+        (SimpleRoute(route.links.map(linkConsideration => (linkConsideration.link, linkConsideration.linkClass, linkConsideration.inverted)), route.totalCost.toInt), passengerType, passengerCount)
     }
 
     val reverseRoutes : List[(SimpleRoute, PassengerType.Value, Int)] = ConsumptionHistorySource.loadConsumptionsByAirportPair(toAirportId, fromAirportId).toList.sortBy(_._2._2).map {
       case ((route, (passengerType, passengerCount))) =>
-        (SimpleRoute(route.links.reverse.map(linkConsideration => (linkConsideration.link, linkConsideration.linkClass, !linkConsideration.inverted))), passengerType, passengerCount)
+        (SimpleRoute(route.links.reverse.map(linkConsideration => (linkConsideration.link, linkConsideration.linkClass, !linkConsideration.inverted)), route.totalCost.toInt), passengerType, passengerCount)
     }
-
-    println(s"Search route found ${routes.length} route(s)")
-//    println(routes.groupBy(_._1).size)
 
     val sortedRoutes: List[(SimpleRoute, Int)] = (routes ++ reverseRoutes).groupBy(_._1).view.mapValues( _.map(_._3).sum).toList.sortBy(_._1.totalPrice)
     val allianceMap = AllianceSource.loadAllAlliances().map(alliance => (alliance.id, alliance)).toMap
@@ -229,85 +161,12 @@ class SearchApplication @Inject()(cc: ControllerComponents) extends AbstractCont
     Ok(resultJson)
   }
 
-
-  import scala.jdk.CollectionConverters._
-  def searchAirport(input : String) = Action {
-    if (input.length < 3) {
-      Ok(Json.obj("message" -> "Search with at least 3 characters"))
-    } else {
-      val result: List[AirportSearchResult] = SearchUtil.searchAirport(input).asScala.toList
-      if (result.isEmpty) {
-        Ok(Json.obj("message" -> "No match"))
-      } else {
-        Ok(Json.obj("entries" -> Json.toJson(result)))
-      }
-    }
-  }
-
-  def searchCountry(input : String) = Action {
-    if (input.length < 2) {
-      Ok(Json.obj("message" -> "Search with at least 2 characters"))
-    } else {
-      val result: List[CountrySearchResult] = SearchUtil.searchCountry(input).asScala.toList
-      if (result.isEmpty) {
-        Ok(Json.obj("message" -> "No match"))
-      } else {
-        Ok(Json.obj("entries" -> Json.toJson(result)))
-      }
-    }
-  }
-
-//  def searchZone(input : String) = Action {
-//    if (input.length < 2) {
-//      Ok(Json.obj("message" -> "Search with at least 2 characters"))
-//    } else {
-//      val result: List[ZoneSearchResult] = SearchUtil.searchZone(input).asScala.toList
-//      if (result.isEmpty) {
-//        Ok(Json.obj("message" -> "No match"))
-//      } else {
-//        Ok(Json.obj("entries" -> Json.toJson(result)))
-//      }
-//    }
-//  }
-
-  def searchAirline(input : String) = Action {
-    if (input.length < 2) {
-      Ok(Json.obj("message" -> "Search with at least 3 characters"))
-    } else {
-      val result: List[AirlineSearchResult] = SearchUtil.searchAirline(input).asScala.toList
-      if (result.isEmpty) {
-        Ok(Json.obj("message" -> "No match"))
-      } else {
-        Ok(Json.obj("entries" -> Json.toJson(result)(Writes.list(new AirlineSearchResultWrites(input)))))
-      }
-    }
-  }
-
-  def searchAlliance(input : String) = Action {
-    if (input.length < 2) {
-      Ok(Json.obj("message" -> "Search with at least 3 characters"))
-    } else {
-      val result: List[AllianceSearchResult] = SearchUtil.searchAlliance(input).asScala.toList
-      if (result.isEmpty) {
-        Ok(Json.obj("message" -> "No match"))
-      } else {
-        Ok(Json.obj("entries" -> Json.toJson(result)))
-      }
-    }
-  }
-
-  case class SimpleRoute(links : List[(Transport, LinkClass, Boolean)]) {
+  case class SimpleRoute(links: List[(Transport, LinkClass, Boolean)], routeCost: Int) {
     val totalPrice = links.map {
       case (link, linkClass, _) => link.price(linkClass)
     }.sum
   }
 
-//
-//  def computeLayover(previousLink : Link, currentLink : Link) = {
-//    val frequency = previousLink.frequency + currentLink.frequency
-//    val random = new Random(previousLink.id)
-//    (((random.nextDouble() + 2) * 24 * 60) / frequency).toInt + 15 //some randomness
-//  }
 
   def generateRouteSchedule(links : List[Transport]) : List[(Transport, TimeSlot)] = {
     val scheduleOptions : ListBuffer[List[(Transport, TimeSlot)]] = ListBuffer()

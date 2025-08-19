@@ -4,6 +4,7 @@ import com.patson.data.{AirlineSource, BankSource, CycleSource}
 import com.patson.model.{Loan, _}
 import com.patson.model.bank.LoanInterestRate
 import controllers.AuthenticationObject.AuthenticatedAirline
+
 import javax.inject.Inject
 import play.api.data.{Form, Forms}
 import play.api.libs.json._
@@ -21,7 +22,6 @@ class BankApplication @Inject()(cc: ControllerComponents) extends AbstractContro
       JsObject(List(
         "rate" -> JsNumber(rate.annualRate),
         "cycle" -> JsNumber(rate.cycle)))
-
     }
   }
 
@@ -105,5 +105,8 @@ class BankApplication @Inject()(cc: ControllerComponents) extends AbstractContro
     val currentCycle = CycleSource.loadCycle()
     val rates = BankSource.loadLoanInterestRatesFromCycle(currentCycle - 100).sortBy(_.cycle)
     Ok(Json.toJson(rates))
+      .withHeaders(
+        ETAG -> s""""$currentCycle""""
+      )
   }
 }

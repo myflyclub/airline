@@ -13,8 +13,23 @@ object AirportSource {
   def loadAllAirports(fullLoad : Boolean = false, loadFeatures : Boolean = false) = {
       loadAirportsByCriteria(List.empty, fullLoad, loadFeatures)
   }
+
+  def loadAllAirportIds() : List[Int] = {
+    val connection = Meta.getConnection()
+    try {
+      val preparedStatement = connection.prepareStatement("SELECT id FROM " + AIRPORT_TABLE + " WHERE pop_middle_income > 0 ORDER BY pop_middle_income DESC")
+      val resultSet = preparedStatement.executeQuery()
+      val ids = new ListBuffer[Int]()
+      while (resultSet.next()) {
+        ids.append(resultSet.getInt("id"))
+      }
+      ids.toList
+    } finally {
+      connection.close()
+    }
+  }
   
-  def loadAirportsByIds(ids : List[Int], fullLoad : Boolean = false) = {
+  def loadAirportsByIds(ids: List[Int], fullLoad: Boolean = false, loadFeatures: Boolean = false) = {
     if (ids.isEmpty) {
       List.empty
     } else {
@@ -24,11 +39,11 @@ object AirportSource {
       }
       
       queryString.append("?)")
-      loadAirportsByQueryString(queryString.toString(), ids, fullLoad)
+      loadAirportsByQueryString(queryString.toString(), ids, fullLoad, loadFeatures)
     }
   }
   
-  def loadAirportsByCriteria(criteria : List[(String, Any)], fullLoad : Boolean = false, loadFeatures : Boolean = false) = {
+  def loadAirportsByCriteria(criteria: List[(String, Any)], fullLoad: Boolean = false, loadFeatures: Boolean = false) = {
       var queryString = BASE_QUERY
       
       if (!criteria.isEmpty) {
@@ -79,8 +94,6 @@ object AirportSource {
 
   def getCampaignBonuses(airport : Airport, currentCycle : Int): Map[Int, List[AirlineBonus]] = {
     val campaigns = CampaignSource.loadCampaignsByAreaAirport(airport.id, true)
-
-
     val bonusByAirlineId = mutable.Map[Int, ListBuffer[AirlineBonus]]()
 
     DelegateSource.loadBusyDelegatesByCampaigns(campaigns).foreach {
@@ -96,8 +109,8 @@ object AirportSource {
     val bonusByAirlineId = mutable.Map[Int, ListBuffer[AirlineBonus]]()
     val bases = airport.getAirlineBases()
     bases.foreach(base =>
-      if (base._2.airline.airlineType == AirlineType.LUXURY) {
-        bonusByAirlineId.getOrElseUpdate(base._2.airline.id, ListBuffer[AirlineBonus]()).append(AirlineBonus(BonusType.LUXURY, AirlineAppeal(AirlineType.LUXURY_EXTRA_LOYALTY), None))
+      if (base._2.airline.airlineType == LuxuryAirline) {
+        bonusByAirlineId.getOrElseUpdate(base._2.airline.id, ListBuffer[AirlineBonus]()).append(AirlineBonus(BonusType.LUXURY, AirlineAppeal(LuxuryAirline.extraLoyalty), None))
       }
     )
     bonusByAirlineId.view.mapValues(_.toList).toMap
@@ -122,7 +135,7 @@ object AirportSource {
       preparedStatement.executeUpdate()
       preparedStatement.close()
 
-      AirportCache.invalidateAirport(airportId)
+      AirportCache.refreshAirport(airportId)
 
     } finally {
       connection.close()
@@ -166,11 +179,8 @@ object AirportSource {
         preparedStatement.setObject(i + 1, criteria(i)._2)
       }
 
-
       val resultSet = preparedStatement.executeQuery()
-
       val result = mutable.HashMap[Airport, mutable.HashMap[Airline, ListBuffer[AirlineBonus]]]()
-
 
       while (resultSet.next()) {
         val airportId = resultSet.getInt("airport")
@@ -208,7 +218,7 @@ object AirportSource {
       preparedStatement.executeUpdate()
       preparedStatement.close()
 
-      AirportCache.invalidateAirport(airportId)
+      AirportCache.refreshAirport(airportId)
     } finally {
       connection.close()
     }
@@ -231,7 +241,7 @@ object AirportSource {
 
 
 
-  def loadAirportsByQueryString(queryString : String, parameters : List[Any], fullLoad : Boolean = false, loadFeatures : Boolean = false) = {
+  def loadAirportsByQueryString(queryString: String, parameters: List[Any], fullLoad: Boolean = false, loadFeatures: Boolean = false) = {
     val connection = Meta.getConnection()
     try {
       val preparedStatement = connection.prepareStatement(queryString)
@@ -240,11 +250,10 @@ object AirportSource {
         preparedStatement.setObject(i + 1, parameters(i))
       }
 
-
       val resultSet = preparedStatement.executeQuery()
 
       val airportData = new ListBuffer[Airport]()
-      //val airlineMap : Map[Int, Airline] = AirlineSource.loadAllAirlines().foldLeft(Map[Int, Airline]())( (container, airline) => container + Tuple2(airline.id, airline))
+
       val countryAirlineTitleCache = mutable.HashMap[String, immutable.Map[Int, CountryAirlineTitle]]()
       val currentCycle = CycleSource.loadCycle()
 
@@ -266,10 +275,10 @@ object AirportSource {
           resultSet.getString("zone"),
           resultSet.getInt("airport_size"),
           resultSet.getInt("income"),
-          resultSet.getLong("population"),
+          resultSet.getInt("population"),
           resultSet.getInt("pop_middle_income"),
           resultSet.getInt("pop_elite"),
-          runwayLength = resultSet.getInt("runway_length"))
+          resultSet.getInt("runway_length"))
         airport.id = resultSet.getInt("id")
         airportData += airport
 
@@ -293,17 +302,6 @@ object AirportSource {
         if (fullLoad) {
           //load assets
           airport.initAssets(AirportAssetSource.loadAirportAssetsByAirport(airport.id, Some(airport))) //pass the airport loaded so far to avoid cyclic load
-
-          val loyaltyStatement = connection.prepareStatement("SELECT airline, loyalty FROM " + AIRLINE_APPEAL_TABLE + " WHERE airport = ?")
-          loyaltyStatement.setInt(1, airport.id)
-          val loyaltyResultSet = loyaltyStatement.executeQuery()
-          while (loyaltyResultSet.next()) {
-            val airlineId = loyaltyResultSet.getInt("airline")
-            //airlineAppeals.put(airlineId, AirlineAppeal(loyaltyResultSet.getDouble("loyalty"), loyaltyResultSet.getDouble("awareness")))
-          }
-
-          loyaltyResultSet.close()
-          loyaltyStatement.close()
 
           val airlineBaseStatement = connection.prepareStatement("SELECT * FROM " + AIRLINE_BASE_TABLE + " WHERE airport = ?")
           airlineBaseStatement.setInt(1, airport.id)
@@ -338,42 +336,6 @@ object AirportSource {
 
           val lounges = AirlineSource.loadLoungesByAirport(airport)
           airport.initLounges(lounges)
-          
-          //load profile pics
-           val imageStatement = connection.prepareStatement("SELECT * FROM " + AIRPORT_IMAGE_TABLE + " WHERE airport = ?")
-          imageStatement.setInt(1, airport.id)
-          
-          val imageResultSet = imageStatement.executeQuery()
-          if (imageResultSet.next()) {
-            val airportUrl = imageResultSet.getString("airport_url")
-            val cityUrl = imageResultSet.getString("city_url")
-//            if (airportUrl != null) {
-//              airport.setAirportImageUrl(airportUrl)
-//            }
-//            if (cityUrl != null) {
-//              airport.setCityImageUrl(cityUrl)
-//            }
-          }
-          imageStatement.close()
-
-          //load runway
-          val runwayStatement = connection.prepareStatement("SELECT * FROM " + AIRPORT_RUNWAY_TABLE + " WHERE airport = ?")
-          runwayStatement.setInt(1, airport.id)
-
-          val runwayResultSet = runwayStatement.executeQuery()
-          val runways = ListBuffer[Runway]()
-
-          while (runwayResultSet.next()) {
-            val runwayType = RunwayType.withName(runwayResultSet.getString("runway_type"))
-            val code = runwayResultSet.getString("code")
-            val length = runwayResultSet.getInt("length")
-            val lighted = runwayResultSet.getBoolean("lighted")
-            runways += Runway(length, code, runwayType, lighted)
-          }
-          runwayStatement.close()
-          airport.setRunways(runways.toList)
-
-          airport.shouldLoadCities = true //set this flag so this airport can lazy load cities, which could be a lot of data
         }
       }
       
@@ -383,10 +345,10 @@ object AirportSource {
     } finally {
       connection.close()
     }
-      
+
   }
 
-  def updateAirportBaseSpecializations(airportId : Int, airlineId : Int, airlineBaseSpecializationTypes : List[AirlineBaseSpecialization.Value]) = {
+  def updateAirportBaseSpecializations(airportId : Int, airlineId : Int, airlineBaseSpecializationTypes : List[AirlineBaseSpecialization]) = {
     val connection = Meta.getConnection()
     try {
       var purgeStatement = connection.prepareStatement(s"DELETE FROM $AIRLINE_BASE_SPECIALIZATION_TABLE WHERE airport = ? AND airline = ?")
@@ -399,14 +361,13 @@ object AirportSource {
       airlineBaseSpecializationTypes.foreach { airlineBaseSpecializationType =>
         preparedStatement.setInt(1, airportId)
         preparedStatement.setInt(2, airlineId)
-        preparedStatement.setString(3, airlineBaseSpecializationType.toString)
+        preparedStatement.setString(3, airlineBaseSpecializationType.id)
         preparedStatement.executeUpdate()
       }
 
       preparedStatement.close()
 
-
-      //in theory we should just use REPLACE, however, we made a mistake that update_cycle was included in the key too...so...we will just purge it before updating
+      //todo: in theory we should just use REPLACE, however, we made a mistake that update_cycle was included in the key too...so...we will just purge it before updating
       purgeStatement = connection.prepareStatement(s"DELETE FROM $AIRLINE_BASE_SPECIALIZATION_LAST_UPDATE_TABLE WHERE airport = ? AND airline = ?")
       purgeStatement.setInt(1, airportId)
       purgeStatement.setInt(2, airlineId)
@@ -421,14 +382,14 @@ object AirportSource {
 
       preparedStatement.close()
 
-      AirportCache.invalidateAirport(airportId)
+      AirportCache.refreshAirport(airportId)
       AirlineCache.invalidateAirline(airlineId)
     } finally {
       connection.close()
     }
   }
 
-  def loadAllAirportBaseSpecializations : List[(Airline, Airport, AirlineBaseSpecialization.Value)] = {
+  def loadAllAirportBaseSpecializations : List[(Airline, Airport, AirlineBaseSpecialization)] = {
     val connection = Meta.getConnection()
     try {
       val queryString = s"SELECT * FROM $AIRLINE_BASE_SPECIALIZATION_TABLE"
@@ -437,13 +398,16 @@ object AirportSource {
 
       val resultSet = preparedStatement.executeQuery()
 
-      val result = ListBuffer[(Airline, Airport, AirlineBaseSpecialization.Value)]()
+      val result = ListBuffer[(Airline, Airport, AirlineBaseSpecialization)]()
 
       while (resultSet.next()) {
-        val specialization = AirlineBaseSpecialization.withName(resultSet.getString("specialization_type"))
-        result.append((AirlineCache.getAirline(resultSet.getInt("airline")).get, AirportCache.getAirport(resultSet.getInt("airport")).get, specialization))
-
-
+        val specializationId = resultSet.getString("specialization_type")
+        AirlineBaseSpecialization.fromId(specializationId) match {
+          case Some(specialization) =>
+            result.append((AirlineCache.getAirline(resultSet.getInt("airline")).get, AirportCache.getAirport(resultSet.getInt("airport")).get, specialization))
+          case None =>
+            println(s"Warning: Unknown specialization ID: $specializationId")
+        }
       }
       resultSet.close()
       preparedStatement.close()
@@ -454,7 +418,48 @@ object AirportSource {
     }
   }
 
-  def loadAirportBaseSpecializations(airportId : Int, airlineId : Int) : List[AirlineBaseSpecialization.Value] = {
+  def loadAirportBaseSpecializationsByTypes(specializationTypes: List[AirlineBaseSpecialization]): List[(Airline, Airport, AirlineBaseSpecialization)] = {
+    if (specializationTypes.isEmpty) {
+      List.empty
+    } else {
+      val connection = Meta.getConnection()
+      try {
+        val queryString = new StringBuilder(s"SELECT * FROM $AIRLINE_BASE_SPECIALIZATION_TABLE WHERE specialization_type IN (")
+        for (i <- 0 until specializationTypes.size - 1) {
+          queryString.append("?,")
+        }
+        queryString.append("?)")
+
+        val preparedStatement = connection.prepareStatement(queryString.toString())
+
+        for (i <- specializationTypes.indices) {
+          preparedStatement.setString(i + 1, specializationTypes(i).id)
+        }
+
+        val resultSet = preparedStatement.executeQuery()
+
+        val result = ListBuffer[(Airline, Airport, AirlineBaseSpecialization)]()
+
+        while (resultSet.next()) {
+          val specializationId = resultSet.getString("specialization_type")
+          AirlineBaseSpecialization.fromId(specializationId) match {
+            case Some(specialization) =>
+              result.append((AirlineCache.getAirline(resultSet.getInt("airline")).get, AirportCache.getAirport(resultSet.getInt("airport")).get, specialization))
+            case None =>
+              println(s"Warning: Unknown specialization ID: $specializationId")
+          }
+        }
+        resultSet.close()
+        preparedStatement.close()
+
+        result.toList
+      } finally {
+        connection.close()
+      }
+    }
+  }
+
+  def loadAirportBaseSpecializations(airportId : Int, airlineId : Int) : List[AirlineBaseSpecialization] = {
     val connection = Meta.getConnection()
     try {
       var queryString = s"SELECT * FROM $AIRLINE_BASE_SPECIALIZATION_TABLE WHERE airport = ? AND airline = ?"
@@ -467,11 +472,16 @@ object AirportSource {
 
       val resultSet = preparedStatement.executeQuery()
 
-      val result = ListBuffer[AirlineBaseSpecialization.Value]()
+      val result = ListBuffer[AirlineBaseSpecialization]()
 
       while (resultSet.next()) {
-        val specialization = AirlineBaseSpecialization.withName(resultSet.getString("specialization_type"))
-        result.append(specialization)
+        val specializationId = resultSet.getString("specialization_type")
+        AirlineBaseSpecialization.fromId(specializationId) match {
+          case Some(specialization) =>
+            result.append(specialization)
+          case None =>
+            println(s"Warning: Unknown specialization ID: $specializationId")
+        }
       }
       resultSet.close()
       preparedStatement.close()
@@ -510,9 +520,9 @@ object AirportSource {
     }
   }
 
-  
-  def loadAirportById(id : Int, fullLoad : Boolean = false) = {
-      val result = loadAirportsByCriteria(List(("id", id)), fullLoad)
+
+  def loadAirportById(id : Int, fullLoad : Boolean = false, loadFeatures : Boolean = false) = {
+      val result = loadAirportsByCriteria(List(("id", id)), fullLoad, loadFeatures)
       if (result.isEmpty) {
         None
       } else {
@@ -531,76 +541,6 @@ object AirportSource {
     loadAirportsByCriteria(List(("country_code", countryCode)))
   }
 
-  def updateAirlineAppeal(airportId : Int, airlineId : Int, airlineAppeal : AirlineAppeal) = {
-   val connection = Meta.getConnection()
-   try {  
-     connection.setAutoCommit(false)
-      if (airlineAppeal.loyalty == 0) {
-        val purgeStatement = connection.prepareStatement("DELETE FROM " + AIRLINE_APPEAL_TABLE + " WHERE airport = ? AND airline = ?")
-        purgeStatement.setInt(1, airportId)
-        purgeStatement.setInt(2, airlineId)
-        purgeStatement.executeUpdate()
-        purgeStatement.close()
-      } else {
-        val insertStatement = connection.prepareStatement("REPLACE INTO " + AIRLINE_APPEAL_TABLE + "(airport, airline, loyalty, awareness) VALUES (?,?,?,?)")
-        insertStatement.setInt(1, airportId)
-        insertStatement.setInt(2, airlineId)
-        insertStatement.setDouble(3, airlineAppeal.loyalty)
-        insertStatement.setDouble(4, 0)
-        insertStatement.executeUpdate()
-        insertStatement.close()
-      }
-     //AirportCache.invalidateAirport(airportId)
-     connection.commit()
-   } finally {
-     connection.close()
-   }
-  }
-
-  def deleteAirlineAppealsFromAllAirports(airlineId : Int) = {
-    val connection = Meta.getConnection()
-    try {
-      val purgeStatement = connection.prepareStatement("DELETE FROM " + AIRLINE_APPEAL_TABLE + " WHERE airline = ?")
-      purgeStatement.setInt(1, airlineId)
-      purgeStatement.executeUpdate()
-    } finally {
-      connection.close()
-    }
-  }
-
-  def updateAirlineAppeals(airportId : Int, airlineAppeals : Map[Int, AirlineAppeal]) = {
-    val connection = Meta.getConnection()
-    try {
-      connection.setAutoCommit(false)
-      val purgeStatement = connection.prepareStatement("DELETE FROM " + AIRLINE_APPEAL_TABLE + " WHERE airport = ? AND airline = ?")
-      val insertStatement = connection.prepareStatement("REPLACE INTO " + AIRLINE_APPEAL_TABLE + "(airport, airline, loyalty, awareness) VALUES (?,?,?,?)")
-      airlineAppeals.foreach {
-        case (airlineId, airlineAppeal) =>
-          if (airlineAppeal.loyalty == 0) {
-            purgeStatement.setInt(1, airportId)
-            purgeStatement.setInt(2, airlineId)
-            purgeStatement.addBatch()
-          } else {
-            insertStatement.setInt(1, airportId)
-            insertStatement.setInt(2, airlineId)
-            insertStatement.setDouble(3, airlineAppeal.loyalty)
-            insertStatement.setDouble(4, 0)
-            insertStatement.addBatch()
-          }
-      }
-      purgeStatement.executeBatch()
-      insertStatement.executeBatch()
-      purgeStatement.close()
-      insertStatement.close()
-      //AirportCache.invalidateAirport(airportId)
-
-      connection.commit()
-    } finally {
-      connection.close()
-    }
-  }
-
-  
   def saveAirports(airports : List[Airport]) = {
             Class.forName(DB_DRIVER);
     val connection = Meta.getConnection()
@@ -608,8 +548,12 @@ object AirportSource {
       val preparedStatement = connection.prepareStatement("INSERT INTO " + AIRPORT_TABLE + "(iata, icao, name, latitude, longitude, country_code, city, zone, airport_size, income, population, pop_middle_income, pop_elite, runway_length)  VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS)
     
       connection.setAutoCommit(false)
-      airports.foreach { 
+      airports.foreach {
         airport =>
+          if (airport.zone.length > 250) {
+            println(s"⚠️ Zone too long for ${airport.iata}: '${airport.zone}'")
+          }
+
           preparedStatement.setString(1, airport.iata)
           preparedStatement.setString(2, airport.icao)
           preparedStatement.setString(3, airport.name)
@@ -619,29 +563,20 @@ object AirportSource {
           preparedStatement.setString(7, airport.city)
           preparedStatement.setString(8, airport.zone)
           preparedStatement.setInt(9, airport.size)
-          preparedStatement.setLong(10, airport.baseIncome)
-          preparedStatement.setLong(11, airport.basePopulation)
-          preparedStatement.setInt(12, airport.popMiddleIncome)
-          preparedStatement.setInt(13, airport.popElite)
+          preparedStatement.setInt(10, airport.baseIncome)
+          preparedStatement.setInt(11, airport.basePopulation)
+          preparedStatement.setInt(12, airport.basePopMiddleIncome)
+          preparedStatement.setInt(13, airport.basePopElite)
           preparedStatement.setInt(14, airport.runwayLength)
-          
+
           preparedStatement.executeUpdate()
           val generatedKeys = preparedStatement.getGeneratedKeys
-          
+
           if (generatedKeys.next()) {
             val generatedId = generatedKeys.getInt(1)
             airport.id = generatedId
-            
-            //insert airline info too
-            airport.citiesServed.foreach { 
-              case (city, share) =>
-              val infoStatement = connection.prepareStatement("INSERT INTO " + AIRPORT_CITY_SHARE_TABLE + "(airport, city, share) VALUES(?,?,?)")
-              infoStatement.setInt(1, airport.id)
-              infoStatement.setInt(2, city.id)
-              infoStatement.setDouble(3, share)
-              infoStatement.executeUpdate()
-              infoStatement.close()
-            }
+
+            // City-airport relationships are now managed separately in GeoDataGenerator
             //insert features
             airport.getFeatures().foreach { feature =>
               val featureStatement = connection.prepareStatement("INSERT INTO " + AIRPORT_FEATURE_TABLE + "(airport, feature_type, strength) VALUES(?,?,?)")
@@ -651,17 +586,7 @@ object AirportSource {
               featureStatement.executeUpdate()
               featureStatement.close()
             }
-            //insert runway
-            airport.getRunways().foreach { runway =>
-              val statement = connection.prepareStatement("INSERT INTO " + AIRPORT_RUNWAY_TABLE + "(airport, code, runway_type, length, lighted) VALUES(?,?,?,?,?)")
-              statement.setInt(1, airport.id)
-              statement.setString(2, runway.code)
-              statement.setString(3, runway.runwayType.toString)
-              statement.setInt(4, runway.length)
-              statement.setBoolean(5, runway.lighted)
-              statement.executeUpdate()
-              statement.close()
-            }
+            // Runway operations are now handled separately via helper functions
           }
       }
       preparedStatement.close()
@@ -669,175 +594,38 @@ object AirportSource {
     } finally {
       connection.close()
     }
-  }
-  
-  def fullUpdateAirports(airports : List[Airport]) = {
-            Class.forName(DB_DRIVER);
-    val connection = Meta.getConnection()
-
-    try {
-      val preparedStatement = connection.prepareStatement("UPDATE " + AIRPORT_TABLE + " SET airport_size = ?, income = ?, population = ?, pop_middle_income = ?, pop_elite = ?, name = ?, city = ?, runway_length = ?  WHERE id = ?")
-
-      connection.setAutoCommit(false)
-
-
-      airports.foreach {
-        airport =>
-          preparedStatement.setInt(1, airport.size)
-          preparedStatement.setInt(2, airport.baseIncome)
-          preparedStatement.setLong(3, airport.basePopulation)
-          preparedStatement.setInt(4, airport.popMiddleIncome)
-          preparedStatement.setInt(5, airport.popElite)
-          preparedStatement.setString(6, airport.name)
-          preparedStatement.setString(7, airport.city)
-          preparedStatement.setInt(8, airport.runwayLength)
-          preparedStatement.setInt(9, airport.id)
-
-          preparedStatement.addBatch()
-          //preparedStatement.executeUpdate()
-
-
-          val purgeCityShareStatement = connection.prepareStatement("DELETE FROM " + AIRPORT_CITY_SHARE_TABLE + " WHERE airport = ?");
-          purgeCityShareStatement.setInt(1, airport.id)
-          purgeCityShareStatement.executeUpdate()
-          purgeCityShareStatement.close()
-          val purgeFeatureStatement = connection.prepareStatement("DELETE FROM " + AIRPORT_FEATURE_TABLE + " WHERE airport = ?");
-          purgeFeatureStatement.setInt(1, airport.id)
-          purgeFeatureStatement.executeUpdate()
-          purgeFeatureStatement.close()
-
-          //update airline info too
-          airport.citiesServed.foreach {
-            case (city, share) =>
-            val infoStatement = connection.prepareStatement("INSERT INTO " + AIRPORT_CITY_SHARE_TABLE + "(airport, city, share) VALUES(?,?,?)")
-            infoStatement.setInt(1, airport.id)
-            infoStatement.setInt(2, city.id)
-            infoStatement.setDouble(3, share)
-            infoStatement.executeUpdate()
-            infoStatement.close()
-          }
-          //insert features
-          airport.getFeatures().foreach { feature =>
-            val featureStatement = connection.prepareStatement("INSERT INTO " + AIRPORT_FEATURE_TABLE + "(airport, feature_type, strength) VALUES(?,?,?)")
-            featureStatement.setInt(1, airport.id)
-            featureStatement.setString(2, feature.featureType.toString())
-            featureStatement.setInt(3, feature.strength)
-            featureStatement.executeUpdate()
-            featureStatement.close()
-          }
-
-          val purgeRunwayStatement = connection.prepareStatement("DELETE FROM " + AIRPORT_RUNWAY_TABLE + " WHERE airport = ?");
-          purgeRunwayStatement.setInt(1, airport.id)
-          purgeRunwayStatement.executeUpdate()
-          purgeRunwayStatement.close()
-
-          //insert runways
-//          "airport INTEGER," +
-//            "code VARCHAR(16)," +
-//            "type SMALLINT," +
-//            "length SMALLINT," +
-          airport.getRunways().foreach { runway =>
-            val statement = connection.prepareStatement("INSERT INTO " + AIRPORT_RUNWAY_TABLE + "(airport, code, runway_type, length, lighted) VALUES(?,?,?,?,?)")
-            statement.setInt(1, airport.id)
-            statement.setString(2, runway.code)
-            statement.setString(3, runway.runwayType.toString)
-            statement.setInt(4, runway.length)
-            statement.setBoolean(5, runway.lighted)
-            statement.executeUpdate()
-            statement.close()
-          }
-
-
-          AirportCache.invalidateAirport(airport.id)
-      }
-      preparedStatement.executeBatch()
-      preparedStatement.close()
-      connection.commit()
-    } finally {
-      connection.close()
-    }
+    AirportCache.invalidateAll()
   }
 
-  def updateAirports(airports : List[Airport]) = {
+  def updateAirports(airports : List[Airport]): Unit = {
     Class.forName(DB_DRIVER);
     val connection = Meta.getConnection()
 
     try {
-      val preparedStatement = connection.prepareStatement("UPDATE " + AIRPORT_TABLE + " SET airport_size = ?, income = ?, population = ?, pop_middle_income = ?, pop_elite = ?, zone = ?, country_code = ?, runway_length = ?  WHERE id = ?")
+      val preparedStatement = connection.prepareStatement("UPDATE " + AIRPORT_TABLE + " SET airport_size = ?, income = ?, population = ?, pop_middle_income = ?, pop_elite = ?, zone = ?, country_code = ?, runway_length = ?, city = ?, name = ? WHERE id = ?")
 
       connection.setAutoCommit(false)
 
-
       airports.foreach {
         airport =>
+          if (airport.zone.length > 250) {
+            println(s"⚠️ Zone too long for ${airport.iata}: '${airport.zone}'")
+          }
+
           if (airport.id != 0) {
             preparedStatement.setInt(1, airport.size)
-            preparedStatement.setLong(2, airport.baseIncome)
-            preparedStatement.setLong(3, airport.basePopulation)
-            preparedStatement.setInt(4, airport.popMiddleIncome)
-            preparedStatement.setInt(5, airport.popElite)
+            preparedStatement.setInt(2, airport.baseIncome)
+            preparedStatement.setInt(3, airport.basePopulation)
+            preparedStatement.setInt(4, airport.basePopMiddleIncome)
+            preparedStatement.setInt(5, airport.basePopElite)
             preparedStatement.setString(6, airport.zone)
             preparedStatement.setString(7, airport.countryCode)
             preparedStatement.setInt(8, airport.runwayLength)
-            preparedStatement.setInt(9, airport.id)
+            preparedStatement.setString(9, airport.city)
+            preparedStatement.setString(10, airport.name)
+            preparedStatement.setInt(11, airport.id)
 
             preparedStatement.addBatch()
-            //preparedStatement.executeUpdate()
-
-
-            val purgeCityShareStatement = connection.prepareStatement("DELETE FROM " + AIRPORT_CITY_SHARE_TABLE + " WHERE airport = ?");
-            purgeCityShareStatement.setInt(1, airport.id)
-            purgeCityShareStatement.executeUpdate()
-            purgeCityShareStatement.close()
-            val purgeFeatureStatement = connection.prepareStatement("DELETE FROM " + AIRPORT_FEATURE_TABLE + " WHERE airport = ?");
-            purgeFeatureStatement.setInt(1, airport.id)
-            purgeFeatureStatement.executeUpdate()
-            purgeFeatureStatement.close()
-
-            println(s"updating airport $airport")
-
-            //update airline info too
-            airport.citiesServed.foreach {
-              case (city, share) =>
-                val infoStatement = connection.prepareStatement("INSERT INTO " + AIRPORT_CITY_SHARE_TABLE + "(airport, city, share) VALUES(?,?,?)")
-                infoStatement.setInt(1, airport.id)
-                infoStatement.setInt(2, city.id)
-                infoStatement.setDouble(3, share)
-                infoStatement.executeUpdate()
-                infoStatement.close()
-            }
-            //insert features
-            airport.getFeatures().foreach { feature =>
-              val featureStatement = connection.prepareStatement("INSERT INTO " + AIRPORT_FEATURE_TABLE + "(airport, feature_type, strength) VALUES(?,?,?)")
-              featureStatement.setInt(1, airport.id)
-              featureStatement.setString(2, feature.featureType.toString())
-              featureStatement.setInt(3, feature.strength)
-              featureStatement.executeUpdate()
-              featureStatement.close()
-            }
-
-            val purgeRunwayStatement = connection.prepareStatement("DELETE FROM " + AIRPORT_RUNWAY_TABLE + " WHERE airport = ?");
-            purgeRunwayStatement.setInt(1, airport.id)
-            purgeRunwayStatement.executeUpdate()
-            purgeRunwayStatement.close()
-
-            //insert runways
-            //          "airport INTEGER," +
-            //            "code VARCHAR(16)," +
-            //            "type SMALLINT," +
-            //            "length SMALLINT," +
-            airport.getRunways().foreach { runway =>
-              val statement = connection.prepareStatement("INSERT INTO " + AIRPORT_RUNWAY_TABLE + "(airport, code, runway_type, length, lighted) VALUES(?,?,?,?,?)")
-              statement.setInt(1, airport.id)
-              statement.setString(2, runway.code)
-              statement.setString(3, runway.runwayType.toString)
-              statement.setInt(4, runway.length)
-              statement.setBoolean(5, runway.lighted)
-              statement.executeUpdate()
-              statement.close()
-            }
-
-            AirportCache.invalidateAirport(airport.id)
           }
       }
       preparedStatement.executeBatch()
@@ -846,6 +634,7 @@ object AirportSource {
     } finally {
       connection.close()
     }
+    AirportCache.invalidateAll()
   }
 
   def updateAirportFeatures(airportId : Int, features : List[AirportFeature]) = {
@@ -866,7 +655,7 @@ object AirportSource {
         featureStatement.executeUpdate()
       }
       featureStatement.close()
-      AirportCache.invalidateAirport(airportId)
+      AirportCache.refreshAirport(airportId)
 
       connection.commit()
     } finally {
@@ -887,7 +676,7 @@ object AirportSource {
       featureStatement.executeUpdate()
 
       featureStatement.close()
-      AirportCache.invalidateAirport(airportId)
+      AirportCache.refreshAirport(airportId)
       connection.commit()
     } finally {
       connection.close()
@@ -905,7 +694,7 @@ object AirportSource {
       featureStatement.executeUpdate()
 
       featureStatement.close()
-      AirportCache.invalidateAirport(airportId)
+      AirportCache.refreshAirport(airportId)
       connection.commit()
     } finally {
       connection.close()
@@ -934,34 +723,6 @@ object AirportSource {
     }
   }
 
-
-//  def updateAirportImages(airports : List[Airport]) = {
-//    val connection = Meta.getConnection()
-//    try {
-//      connection.setAutoCommit(false)
-//      airports.foreach { airport =>
-//        val purgeStatement = connection.prepareStatement("DELETE FROM " + AIRPORT_IMAGE_TABLE + " WHERE airport = ?")
-//        purgeStatement.setInt(1, airport.id)
-//        purgeStatement.executeUpdate()
-//        purgeStatement.close()
-//
-//        val featureStatement = connection.prepareStatement("INSERT INTO " + AIRPORT_IMAGE_TABLE + "(airport, city_url, airport_url) VALUES(?,?,?)")
-//        featureStatement.setInt(1, airport.id)
-//        featureStatement.setString(2, airport.getCityImageUrl().getOrElse(null))
-//        featureStatement.setString(3, airport.getAirportImageUrl().getOrElse(null))
-//        featureStatement.executeUpdate()
-//
-//        featureStatement.close()
-//
-//        //AirportCache.invalidateAirport(airport.id)
-//      }
-//      connection.commit()
-//    } finally {
-//      connection.close()
-//    }
-//  }
-
-
   def deleteAirports(airportIds : List[Int]) = {
     //open the hsqldb
     val connection = Meta.getConnection()
@@ -974,7 +735,7 @@ object AirportSource {
           preparedStatement.setInt(1, airportId)
 
           preparedStatement.executeUpdate()
-          AirportCache.invalidateAirport(airportId)
+          AirportCache.refreshAirport(airportId)
       }
 
       preparedStatement.close()
@@ -983,16 +744,16 @@ object AirportSource {
       connection.close()
     }
   }
-  
+
   def deleteAllAirports() = {
     //open the hsqldb
     val connection = Meta.getConnection()
     try {
       var queryString = "DELETE FROM " + AIRPORT_TABLE
-      
+
       val preparedStatement = connection.prepareStatement(queryString)
       val deletedCount = preparedStatement.executeUpdate()
-      
+
       preparedStatement.close()
       println("Deleted " + deletedCount + " airport records")
       deletedCount
@@ -1008,7 +769,6 @@ object AirportSource {
           //open the hsqldb
         val connection = Meta.getConnection()
         try {  
-          //var queryString = "SELECT * FROM " + AIRPORT_CITY_SHARE_TABLE + " c LEFT JOIN " + AIRPORT_TABLE + " a ON c.airport = a.id WHERE c.city = ?"
           val queryString = "SELECT * FROM " + AIRPORT_CITY_SHARE_TABLE + " WHERE city = ?"
           
           val preparedStatement = connection.prepareStatement(queryString)
@@ -1104,10 +864,12 @@ object AirportSource {
     }
   }
 
-  def loadCitiesServed(airportId : Int) : List[(City,Double)] = {
+  def loadCitiesServed(airportId: Int): List[(City, Double)] = {
     val connection = Meta.getConnection()
     try {
-      val cityStatement = connection.prepareStatement("SELECT a.*, c.* FROM " + AIRPORT_CITY_SHARE_TABLE + " a LEFT JOIN " + CITY_TABLE + " c ON a.city = c.id WHERE airport = ?")
+      // select explicit columns and alias city id to avoid ambiguous column labels from a.* / c.*
+      val cityStatement = connection.prepareStatement(
+        "SELECT a.airport AS airport_id, a.city AS city_ref, a.share AS share, c.id AS city_id, c.name AS name, c.latitude AS latitude, c.longitude AS longitude, c.country_code AS country_code, c.population AS population, c.income AS income FROM " + AIRPORT_CITY_SHARE_TABLE + " a LEFT JOIN " + CITY_TABLE + " c ON a.city = c.id WHERE a.airport = ?")
       cityStatement.setInt(1, airportId)
       val result = ListBuffer[(City, Double)]()
       val cityResultSet = cityStatement.executeQuery()
@@ -1119,12 +881,123 @@ object AirportSource {
           cityResultSet.getString("country_code"),
           cityResultSet.getInt("population"),
           cityResultSet.getInt("income"),
-          cityResultSet.getInt("city"))
+          cityResultSet.getInt("city_id")
+        )
         result.append((city, cityResultSet.getDouble("share")))
       }
       cityResultSet.close()
       cityStatement.close()
       result.toList
+    } finally {
+      connection.close()
+    }
+  }
+
+  def saveCityAirportRelationships(airportCityRelationships: Map[Int, List[(City, Double)]]): Unit = {
+    val connection = Meta.getConnection()
+    try {
+      connection.setAutoCommit(false)
+      
+      airportCityRelationships.foreach { case (airportId, relationships) =>
+        relationships.foreach { case (city, share) =>
+          val statement = connection.prepareStatement("INSERT INTO " + AIRPORT_CITY_SHARE_TABLE + "(airport, city, share) VALUES(?,?,?)")
+          statement.setInt(1, airportId)
+          statement.setInt(2, city.id)
+          statement.setDouble(3, share)
+          statement.executeUpdate()
+          statement.close()
+        }
+      }
+      
+      connection.commit()
+      println(s"Saved ${airportCityRelationships.values.map(_.size).sum} city-airport relationships")
+    } catch {
+      case e: Exception =>
+        connection.rollback()
+        throw e
+    } finally {
+      connection.close()
+    }
+  }
+
+  def saveAirportRunways(airportId: Int, runways: List[Runway]): Unit = {
+    val connection = Meta.getConnection()
+    try {
+      connection.setAutoCommit(false)
+      
+      runways.foreach { runway =>
+        val statement = connection.prepareStatement("INSERT INTO " + AIRPORT_RUNWAY_TABLE + "(airport, code, runway_type, length, lighted) VALUES(?,?,?,?,?)")
+        statement.setInt(1, airportId)
+        statement.setString(2, runway.code)
+        statement.setString(3, runway.runwayType.toString)
+        statement.setInt(4, runway.length)
+        statement.setBoolean(5, runway.lighted)
+        statement.executeUpdate()
+        statement.close()
+      }
+      
+      connection.commit()
+    } catch {
+      case e: Exception =>
+        connection.rollback()
+        throw e
+    } finally {
+      connection.close()
+    }
+  }
+
+  def loadAirportRunways(airportId: Int): List[Runway] = {
+    val connection = Meta.getConnection()
+    try {
+      val statement = connection.prepareStatement("SELECT * FROM " + AIRPORT_RUNWAY_TABLE + " WHERE airport = ?")
+      statement.setInt(1, airportId)
+      val resultSet = statement.executeQuery()
+      
+      val runways = ListBuffer[Runway]()
+      while (resultSet.next()) {
+        val code = resultSet.getString("code")
+        val runwayType = RunwayType.withName(resultSet.getString("runway_type"))
+        val length = resultSet.getInt("length")
+        val lighted = resultSet.getBoolean("lighted")
+        runways += Runway(length, code, runwayType, lighted)
+      }
+      
+      resultSet.close()
+      statement.close()
+      runways.toList
+    } finally {
+      connection.close()
+    }
+  }
+
+  def updateAirportRunways(airportId: Int, runways: List[Runway]): Unit = {
+    val connection = Meta.getConnection()
+    try {
+      connection.setAutoCommit(false)
+      
+      // Delete existing runways
+      val purgeStatement = connection.prepareStatement("DELETE FROM " + AIRPORT_RUNWAY_TABLE + " WHERE airport = ?")
+      purgeStatement.setInt(1, airportId)
+      purgeStatement.executeUpdate()
+      purgeStatement.close()
+      
+      // Insert new runways
+      runways.foreach { runway =>
+        val statement = connection.prepareStatement("INSERT INTO " + AIRPORT_RUNWAY_TABLE + "(airport, code, runway_type, length, lighted) VALUES(?,?,?,?,?)")
+        statement.setInt(1, airportId)
+        statement.setString(2, runway.code)
+        statement.setString(3, runway.runwayType.toString)
+        statement.setInt(4, runway.length)
+        statement.setBoolean(5, runway.lighted)
+        statement.executeUpdate()
+        statement.close()
+      }
+      
+      connection.commit()
+    } catch {
+      case e: Exception =>
+        connection.rollback()
+        throw e
     } finally {
       connection.close()
     }

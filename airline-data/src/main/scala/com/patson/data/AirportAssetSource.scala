@@ -307,7 +307,7 @@ object AirportAssetSource {
           preparedStatement.close()
       }
 
-      AirportCache.invalidateAirport(asset.blueprint.airport.id)
+      AirportCache.refreshAirport(asset.blueprint.airport.id)
     } finally {
       connection.close()
     }
@@ -325,7 +325,7 @@ object AirportAssetSource {
 
       preparedStatement.close()
 
-      AirportCache.invalidateAirport(airportId)
+      AirportCache.refreshAirport(airportId)
     } finally {
       connection.close()
     }

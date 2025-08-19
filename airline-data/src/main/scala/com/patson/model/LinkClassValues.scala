@@ -41,6 +41,7 @@ abstract class AbstractLinkClassValues(economyVal : Int, businessVal : Int, firs
 }
 
 object LinkClassValues {
+  val empty = LinkClassValues(0, 0, 0)
   def getInstance(economy : Int = 0, business : Int = 0, first : Int = 0, discount : Int = 0) : LinkClassValues = {
     LinkClassValues(economy, business, first, discount)
   }

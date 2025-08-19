@@ -1,7 +1,7 @@
 package com.patson.util
 
 import com.patson.data.airplane.ModelSource
-import com.patson.model.AirlineType
+import com.patson.model.RegionalAirline
 import com.patson.model.airplane.Model
 
 
@@ -10,7 +10,7 @@ object AirplaneModelCache {
 
   //val simpleCache: LoadingCache[Int, Option[Model]] = CacheBuilder.newBuilder.maximumSize(1000).build(new SimpleLoader(ModelSource.loadAllModels()))
   val allModels = ModelSource.loadAllModels().map(model => (model.id, model)).toMap
-  val regionalModels = ModelSource.loadAllModels().filter(_.airplaneTypeSize < AirlineType.REGIONAL_MODEL_MAX_SIZE).map(model => (model.id, model)).toMap
+  val regionalModels = ModelSource.loadAllModels().filter(_.airplaneTypeSize < RegionalAirline.modelMaxSize).map(model => (model.id, model)).toMap
 
   def getModel(modelId : Int) : Option[Model] = {
     allModels.get(modelId)

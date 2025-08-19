@@ -40,7 +40,7 @@ object IncomeSource {
           incomePreparedStatement.setInt(7, period.id)
           incomePreparedStatement.setInt(8, income.cycle)
           incomePreparedStatement.addBatch()
-          
+
           linksPreparedStatement.setInt(1, income.airlineId)
           linksPreparedStatement.setLong(2, income.links.profit)
           linksPreparedStatement.setLong(3, income.links.revenue)
@@ -58,8 +58,7 @@ object IncomeSource {
           linksPreparedStatement.setInt(15, period.id)
           linksPreparedStatement.setInt(16, income.cycle)
           linksPreparedStatement.addBatch()
-          
-          
+
           transactionsPreparedStatement.setInt(1, income.airlineId)
           transactionsPreparedStatement.setLong(2, income.transactions.profit)
           transactionsPreparedStatement.setLong(3, income.transactions.revenue)
@@ -71,9 +70,7 @@ object IncomeSource {
           transactionsPreparedStatement.setInt(9, period.id)
           transactionsPreparedStatement.setInt(10, income.cycle)
           transactionsPreparedStatement.addBatch()
-          
-          
-          
+
           othersPreparedStatement.setInt(1, income.airlineId)
           othersPreparedStatement.setLong(2, income.others.profit)
           othersPreparedStatement.setLong(3, income.others.revenue)
@@ -92,8 +89,6 @@ object IncomeSource {
           othersPreparedStatement.setInt(16, period.id)
           othersPreparedStatement.setInt(17, income.cycle)
           othersPreparedStatement.addBatch()
-          
-          
       }
       
       incomePreparedStatement.executeBatch()
@@ -175,11 +170,7 @@ object IncomeSource {
   
   def loadIncomeByAirline(airlineId : Int, cycle: Int, period : Period.Value) : Option[AirlineIncome] = {
     val incomes = loadIncomeByCriteria(List(("airline", airlineId), ("cycle", cycle), ("period", period.id)))
-    if (incomes.length > 0) {
-      Some(incomes(0)) 
-    } else {
-      None
-    }
+    incomes.headOption
   }
   
   def loadIncomesByAirline(airlineId : Int) : List[AirlineIncome] = {

@@ -18,9 +18,7 @@ object DestinationSource {
   }
 
   def loadDestinationsByAirport(airportId : Int) : Option[List[Destination]] = {
-
     val result = loadDestinationsByCriteria(List(("airport", airportId)))
-
     if (result.isEmpty) {
       None
     } else {
@@ -59,7 +57,7 @@ object DestinationSource {
       while (resultSet.next()) {
         airportIds.add(resultSet.getInt("airport"))
       }
-      val airports = AirportCache.getAirports(airportIds.toList, true)
+      val airports = AirportCache.getAirports(airportIds.toList)
 
       val destinationList = new ListBuffer[Destination]()
 
@@ -78,8 +76,6 @@ object DestinationSource {
         )
         destinationList += destination
       }
-
-
       
       resultSet.close()
       preparedStatement.close()

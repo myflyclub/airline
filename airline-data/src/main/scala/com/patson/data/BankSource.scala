@@ -118,13 +118,13 @@ object BankSource {
     loadLoanInterestRatesByQueryString(queryString, List(fromCycle))
   }
 
-  def loadLoanInterestRateByCycle(cycle : Int) : Option[LoanInterestRate] = {
+  def loadLoanInterestRateByCycle(cycle : Int) : Option[Double] = {
     var queryString = "SELECT * FROM " + LOAN_INTEREST_RATE_TABLE + " WHERE cycle = ?"
     val result = loadLoanInterestRatesByQueryString(queryString, List(cycle))
     if (result.isEmpty) {
       None
     } else {
-      Some(result(0))
+      Some(result.head.annualRate.toDouble)
     }
   }
 

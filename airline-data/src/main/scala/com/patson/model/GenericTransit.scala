@@ -6,14 +6,14 @@ case class GenericTransit(from : Airport, to : Airport, distance : Int, var capa
   override var frequency : Int = 24 * 7
   override def computedQuality() : Int = GenericTransit.QUALITY //constant quality
   override val price : LinkClassValues = LinkClassValues.getInstance()
-  val flightCategory = FlightCategory.DOMESTIC
+  val flightCategory: FlightCategory.Value = FlightCategory.DOMESTIC
 
 
-  val localCostRatio = if (from.countryCode == to.countryCode) 0.9 else 1.3
+  private val localCostRatio = if (from.countryCode == to.countryCode) 0.9 else 1.5
   override val cost : LinkClassValues = LinkClassValues.getInstance(
-    economy = ((Pricing.computeStandardPrice(distance, FlightCategory.DOMESTIC, ECONOMY, PassengerType.TRAVELER, from.baseIncome) - Pricing.PRICE_BASE) * localCostRatio).toInt,
-    business = ((Pricing.computeStandardPrice(distance, FlightCategory.DOMESTIC, BUSINESS, PassengerType.TRAVELER, from.baseIncome) - Pricing.PRICE_BASE) * localCostRatio).toInt,
-    first = (Pricing.computeStandardPrice(distance, FlightCategory.DOMESTIC, FIRST, PassengerType.TRAVELER, from.baseIncome) * localCostRatio).toInt
+    economy = ((Pricing.computeStandardPrice(distance, FlightCategory.DOMESTIC, ECONOMY, PassengerType.TRAVELER, from.income) - Pricing.PRICE_BASE) * localCostRatio).toInt,
+    business = ((Pricing.computeStandardPrice(distance, FlightCategory.DOMESTIC, BUSINESS, PassengerType.TRAVELER, from.income) - Pricing.PRICE_BASE) * localCostRatio).toInt,
+    first = (Pricing.computeStandardPrice(distance, FlightCategory.DOMESTIC, FIRST, PassengerType.TRAVELER, from.income) * localCostRatio).toInt
   )
 
   val upkeep = 0
@@ -31,7 +31,7 @@ case class GenericTransit(from : Airport, to : Airport, distance : Int, var capa
 
 object GenericTransit {
   val QUALITY = 99 //note, pax preference does not consider quality if local, but setting 99 for filter
-  val TRANSIT_PROVIDER = Airline.fromId(0).copy(name = "Local Transit")
+  val TRANSIT_PROVIDER = Airline.fromId(0).copy(name = "Local Connection")
 }
 
 
