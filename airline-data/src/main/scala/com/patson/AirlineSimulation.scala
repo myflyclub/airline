@@ -372,6 +372,16 @@ object AirlineSimulation {
 //        println("airline " + airline)
 //        println("barrels used: " + barrelsUsed + " acc. fuel cost " + accountingFuelCost + " actual fuel cost " + actualFuelCost.toLong + " profit " + fuelProfit)
 
+        // Calculate actual fuel cost per barrel for use in next cycle's link simulation
+        val actualFuelCostPerBarrel = if (barrelsUsed > 0) {
+          (actualFuelCost.toDouble / barrelsUsed).toDouble
+        } else {
+          OilPrice.DEFAULT_UNIT_COST * 94 // Default to standard fuel cost if no barrels used
+        }
+        
+        // Store the actual fuel cost per barrel for this airline (this will be used in next cycle)
+        LinkSimulation.setActualFuelCostPerAirline(airline.id, actualFuelCostPerBarrel)
+
         othersSummary.put(OtherIncomeItemType.FUEL_PROFIT, fuelProfit)
 
       //campaign/ads
