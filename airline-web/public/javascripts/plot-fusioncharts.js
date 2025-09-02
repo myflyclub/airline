@@ -921,6 +921,182 @@ function toggleLinkEventBar(chart, cycle, on) {
 }
 
 
+function plotCumulativeCapacityChart(linkHistoryEntries, containerId) {
+    const container = $(`#${containerId}`);
+    container.children(':FusionCharts').each(function() {
+        $(this)[0].dispose(); 
+    });
+    container.empty(); 
+
+    if (!Array.isArray(linkHistoryEntries) || linkHistoryEntries.length === 0) {
+        container.append("<div style='text-align: center; padding: 20px;'>No data available to plot cumulative capacity changes.</div>");
+        return; 
+    }
+
+    const sortedEntries = [...linkHistoryEntries].sort((a, b) => a.cycleDelta - b.cycleDelta);
+
+    const cumulativeCapacityByAirline = {};
+    const airlineNames = {};
+    const cycles = [];
+
+    // Pass 1: Collect unique cycles and airline names, calculate net change per cycle per airline
+    const netChangeByCycleAirline = {}; // { cycleDelta: { airlineId: net_change, ... }, ...}
+    const uniqueCycles = new Set();
+
+    sortedEntries.forEach(entry => {
+        uniqueCycles.add(entry.cycleDelta);
+        const cycle = entry.cycleDelta;
+        const airlineId = entry.airlineId;
+
+        if (!netChangeByCycleAirline[cycle]) {
+            netChangeByCycleAirline[cycle] = {};
+        }
+        if (!netChangeByCycleAirline[cycle][airlineId]) {
+            netChangeByCycleAirline[cycle][airlineId] = 0;
+        }
+        netChangeByCycleAirline[cycle][airlineId] += entry.capacityDelta ? entry.capacityDelta.total : 0;
+
+        airlineNames[airlineId] = entry.airlineName; 
+    });
+
+    const sortedCycles = Array.from(uniqueCycles).sort((a, b) => a - b);
+
+    const cycleIndices = sortedCycles.reduce((map, cycleDelta, index) => {
+        map[cycleDelta] = index;
+        return map;
+    }, {});
+
+    // Pass 2: Calculate cumulative capacity for each airline across cycles
+    // Use an intermediate storage aligned by cycle index
+    const cumulativeDataPointsByAirline = {};
+
+    sortedCycles.forEach(cycleDelta => {
+        const cycleText = window.getCycleDeltaText(cycleDelta);
+        cycles.push({
+            label: cycleText
+        }); 
+
+        const currentCycleNetChanges = netChangeByCycleAirline[cycleDelta] || {};
+
+        // Initialize all known airlines for this cycle index if not already present
+        Object.keys(airlineNames).forEach(airlineId => {
+            if (!cumulativeDataPointsByAirline[airlineId]) {
+                cumulativeDataPointsByAirline[airlineId] = new Array(sortedCycles.length).fill(null);
+            }
+
+            const currentCycleIndex = cycleIndices[cycleDelta];
+
+            let previousCumulative = 0;
+            if (currentCycleIndex > 0) {
+                for (let i = currentCycleIndex - 1; i >= 0; i--) {
+                    if (cumulativeDataPointsByAirline[airlineId][i] !== null) {
+                        previousCumulative = cumulativeDataPointsByAirline[airlineId][i].value;
+                        break;
+                    }
+                }
+            }
+
+            const netChange = currentCycleNetChanges[airlineId] !== undefined ?
+                currentCycleNetChanges[airlineId] :
+                0; 
+
+            const currentCumulative = previousCumulative + netChange;
+
+            cumulativeDataPointsByAirline[airlineId][currentCycleIndex] = {
+                value: currentCumulative
+            };
+        });
+    });
+
+    // Filter out airlines with zero cumulative change throughout the period
+    const relevantAirlineIds = Object.keys(airlineNames).filter(airlineId => {
+        const dataPoints = cumulativeDataPointsByAirline[airlineId];
+        return dataPoints.some(dp => dp !== null && dp.value !== 0);
+    });
+
+    const dataset = relevantAirlineIds.map(airlineId => {
+        const airlineName = airlineNames[airlineId];
+        const color = window.airlineColors && window.airlineColors[airlineId] ? window.airlineColors[airlineId] : (window.colorFromString ? window.colorFromString(airlineName) : undefined);
+
+        // Map data points, using "" for null to create gaps in the line
+        const dataWithGaps = cumulativeDataPointsByAirline[airlineId].map(dp => dp === null ? "" : dp.value);
+
+        const series = {
+            seriesname: airlineName,
+            data: dataWithGaps.map(value => ({
+                    value: value
+                })) 
+        };
+        if (color) {
+            series._colorHint = color;
+        }
+        return series;
+    });
+
+    const paletteColors = dataset.map(series => series._colorHint).filter(color => color);
+
+    // Define chart configuration
+    const chartConfig = {
+        "caption": "Cumulative Capacity Change History", 
+        "xAxisname": "Weeks Ago", 
+        "yAxisName": "Cumulative Capacity Change (Seats)", 
+        "useroundedges": "1",
+        "animation": "1",
+        "showBorder": "0",
+        "toolTipBorderRadius": "2",
+        "toolTipPadding": "5",
+        "bgAlpha": "0", 
+        "showValues": "0", // Hide values on data points
+        "showZeroPlane": "1",
+        "zeroPlaneColor": "#AAAAAA",
+        "zeroPlaneThickness": "1",
+        "drawAnchors": "0", // Hide data point anchors
+        "legendPosition": "bottom", 
+        "showLegend": "1",
+        "legendAllowDrag": "1", 
+        "toolTipBgColor": "#444444", // Dark theme friendly tooltip background
+        "toolTipColor": "#DDDDDD", // Dark theme friendly tooltip text
+        "height": "350", 
+        "formatNumberScale": "0", // Prevent large number formatting like K, M, B
+        "yaxisscalingmode": "adaptive", 
+        "plottooltext": "$seriesName: $dataValue seats (Week $label ago)", // Improved tooltip
+
+    };
+
+    if (window.checkDarkTheme) {
+        window.checkDarkTheme(chartConfig, true); 
+    }
+
+    if (paletteColors.length > 0) {
+        chartConfig.paletteColors = paletteColors.join(",");
+    } else if (window.checkDarkTheme) {
+        window.checkDarkTheme(chartConfig, false);
+    }
+
+
+    // Render the chart
+    if (window.FusionCharts) {
+        new window.FusionCharts({
+            type: 'msline', 
+            renderAt: containerId,
+            width: '100%',
+            height: chartConfig.height, 
+            dataFormat: 'json',
+            containerBackgroundOpacity: '0',
+            dataSource: {
+                "chart": chartConfig,
+                "categories": [{
+                    "category": cycles
+                }], 
+                "dataset": dataset 
+            }
+        }).render();
+    } else {
+        console.error("FusionCharts object not found. Cannot render cumulative capacity chart.");
+        container.empty().append("<div style='text-align: center; padding: 20px; color: red;'>Chart rendering failed (FusionCharts not available).</div>");
+    }
+}
+
 
 function stringHashCode(s) {
   var h = 0, l = s.length, i = 0;
