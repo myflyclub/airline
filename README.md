@@ -18,7 +18,7 @@ Live at https://myfly.club/
 1. In `airline-data`, run `sbt run`, 
     1. Then, choose the one that runs `MainInit`. It will take awhile to init everything.
 1. Set `google.mapKey` in [`application.conf`](https://github.com/patsonluk/airline/blob/master/airline-web/conf/application.conf#L69) with your google map API key value. Be careful with setting budget and limit, google gives some free credit but it CAN go over and you might get charged!
-1. For the "Flight search" function to work, install elastic search 7.x, see https://www.elastic.co/guide/en/elasticsearch/reference/current/install-elasticsearch.html . For windows, I recommand downloading the zip archive and just unzip it - the MSI installer did not work on my PC
+1. For the "Flight search" function to work, install elastic search version 7.x(The latest version is not compatible), see https://www.elastic.co/guide/en/elasticsearch/reference/current/install-elasticsearch.html . For windows, I recommand downloading the zip archive and just unzip it - the MSI installer did not work on my PC
 1. For airport image search and email service for user pw reset - refer to https://github.com/patsonluk/airline/blob/master/airline-web/README
 1. Now run the background simulation by staying in `airline-data`, run `sbt run`, select option `MainSimulation`. It should run the background simulation.
 1. Open another terminal, navigate to `airline-web`, run the web server by `sbt run`
