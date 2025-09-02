@@ -583,12 +583,14 @@ function updateOpsDataSheet(opsData) {
             }
         });
     }
+    if (activeAirline.stats) {
 	Object.keys(activeAirline.stats).forEach((key) => {
 		const element = document.querySelector(`#opsSheet .${key}`);
 		if (element) {
 			element.textContent = commaSeparateNumber(activeAirline.stats[key]);
 		}
 	});
+    }
 }
 
 function setTargetServiceQuality(targetServiceQuality) {
