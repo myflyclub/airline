@@ -2,7 +2,7 @@ package websocket
 
 import org.apache.pekko.actor.ActorRef
 import org.apache.pekko.event.{EventBus, LookupClassification}
-import com.patson.model.{Airline, AirlineType}
+import com.patson.model.{Airline, NonPlayerAirline}
 import com.patson.util.AirlineCache
 import controllers.{PendingActionUtil, PromptUtil}
 import models.PendingAction
@@ -96,7 +96,7 @@ object Broadcaster {
   def checkPrompts(airlineId : Int) = {
 
     val airline = AirlineCache.getAirline(airlineId).get
-    if (airline.airlineType != AirlineType.NON_PLAYER) {
+    if (airline.airlineType != NonPlayerAirline) {
       val prompts = PromptUtil.getPrompts(airline)
   //    prompts.notices.foreach(localMainActor ! BroadcastWrapper(_))
   //    prompts.tutorials.foreach(localMainActor ! BroadcastWrapper(_))

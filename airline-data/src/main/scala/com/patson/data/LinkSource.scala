@@ -206,7 +206,10 @@ object LinkSource {
       }
     }
   }
-  
+
+  /**
+   * ToDo low: This can probably be removed and instead just have MySQL choose the next flight_number when the link is actually inserted
+   */
   def loadFlightNumbers(airlineId : Int) : List[Int] = {
     val connection = Meta.getConnection()
     

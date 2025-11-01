@@ -1,6 +1,5 @@
 /* mobile (portrait) ----------- */
-@media only screen
-and (max-device-width : 640px) {
+@media only screen and (max-device-width : 640px) {
     html {
         --top-bar-background-color : #FFFFFF;
     }
@@ -9,16 +8,13 @@ and (max-device-width : 640px) {
         --text-color: #DDDDDD;
         --top-bar-background-color: rgba(0, 0, 0, 0.4);
     }
-/*and (orientation : portrait or max-device-width : 1024px) {*/
+
     .mainPanel, #map {
         height: calc(75dvh - 32px);
         width: 100%;
     }
     .mainPanel {
         overflow: scroll !important;
-    }
-    .section {
-
     }
 
     div.section, div.selectedSection, .modal-content {
@@ -45,6 +41,7 @@ and (max-device-width : 640px) {
         top: calc(75dvh - 32px);
         left: 2px;
     }
+
     .table-container-y {
         max-height: calc(75dvh - 30px - 32px - 20px - 32px); /*adding all other divs...*/
     }
@@ -73,6 +70,21 @@ and (max-device-width : 640px) {
     }
 
     #oilPriceChart, #loanInterestRateChart {
+    }
+
+    #mobileTabToggle {
+        position: fixed;
+        bottom: 48px;
+        left: 8px;
+        z-index: 3;
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        border: 1px solid #AAA;
+        background: var(--top-bar-background-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .moreRow {
@@ -108,15 +120,12 @@ and (max-device-width : 640px) {
         transition: all 0.3s linear;
     }
 
-
     .mobileOnly {
-        visibility: visible;
         display: unset;
     }
 
     .desktopOnly, div.button.desktopOnly {
-        visibility: hidden;
-        display: none;
+        display: none !important;
     }
 
     .canvas {
@@ -130,10 +139,13 @@ and (max-device-width : 640px) {
 
     .menubar {
         min-height: 30px;
-        overflow: hidden;
         width: 100%;
         z-index: 999;
         background-image: var(--background-gradient-image);
+    }
+
+    #floatMessageBox{
+        width: 100vw;
     }
 
     .table.data {
@@ -144,12 +156,17 @@ and (max-device-width : 640px) {
         padding: 4px;
     }
 
+    .data:has(+ .data) {
+        margin-bottom: 0px !important;
+    }
+
     #loginDiv input[type="text"], #loginDiv input[type="password"] {
         width: 100px;
     }
 
     .topBarItem, #patreonDiv {
         margin: 0px 4px;
+        display: none;
     }
 
     #routeSearchResult {

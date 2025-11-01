@@ -453,8 +453,7 @@ abstract class AirportAsset() extends IdObject{
         case Some(_) => //need to create a new list
             blueprint.assetType.baseBoosts.map { baseBoost =>
                 baseBoost.boostType match {
-                    case AirportBoostType.INCOME =>
-                        baseBoost.copy(value = Computation.computeIncomeLevelBoostFromLevel(airport.baseIncome, baseBoost.value)) //income level boost need adjustments for high income country
+                    case AirportBoostType.INCOME => baseBoost.copy(value = 1.2 * airport.baseIncome)
                     case _ => baseBoost
                 }
             }
@@ -845,23 +844,15 @@ case class AirportBoost(boostType : AirportBoostType.Value, value : Double) //th
 
 object AirportBoostType extends Enumeration {
     type AirportBoostType = Value
-    val POPULATION, INCOME, INTERNATIONAL_HUB, ELITE_CHARM, VACATION_HUB, FINANCIAL_HUB = Value
+    val POPULATION, INCOME, ELITE, INTERNATIONAL_HUB, ELITE_CHARM, VACATION_HUB, FINANCIAL_HUB = Value
     val getLabel = (boostType : AirportBoostType.Value) => boostType match {
         case POPULATION => "Airport Population"
         case INCOME => "Airport Income Level"
+        case ELITE => "Airport Elite Population"
         case INTERNATIONAL_HUB => "International Hub Strength"
         case ELITE_CHARM => "Elite Strength"
         case VACATION_HUB => "Vacation Hub Strength"
         case FINANCIAL_HUB => "Financial Hub Strength"
-    }
-
-    val getValueType = (boostType : AirportBoostType.Value) => boostType match {
-        case POPULATION => classOf[Long]
-        case INCOME => classOf[Double]
-        case INTERNATIONAL_HUB => classOf[Double]
-        case ELITE_CHARM => classOf[Double]
-        case VACATION_HUB =>  classOf[Double]
-        case FINANCIAL_HUB => classOf[Double]
     }
 }
 

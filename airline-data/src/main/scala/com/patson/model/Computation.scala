@@ -4,8 +4,9 @@ import com.patson.PassengerSimulation.{LINK_COST_TOLERANCE_FACTOR, countryOpenne
 import com.patson.model.airplane._
 import com.patson.data.{AirlineSource, AirplaneSource, AirportAssetSource, AirportSource, AllianceSource, BankSource, CountrySource, CycleSource, OilSource}
 import com.patson.Util
-import com.patson.util.{AirlineCache, AllianceRankingUtil}
+import com.patson.util.{AirlineCache, AirportCache, AllianceRankingUtil}
 
+import java.util.concurrent.ConcurrentHashMap
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable
 
@@ -16,14 +17,13 @@ object Computation {
     case Some(country) =>
       country.airportPopulation.toDouble * country.income
     case None =>
-      println(s"Cannot find $MODEL_COUNTRY_CODE to compute model power")
+      println(s"Cannot find $MODEL_COUNTRY_CODE to compute model country_power")
       1
   }
 
   lazy val MAX_VALUES = getMaxValues()
-  lazy val MODEL_AIRPORT_POWER = MAX_VALUES._1
-  lazy val MAX_POPULATION = MAX_VALUES._3
-  lazy val MAX_INCOME = MAX_VALUES._4
+  lazy val MAX_POPULATION = MAX_VALUES._1
+  lazy val MAX_INCOME = MAX_VALUES._2
 
   val MAX_COMPUTED_DISTANCE = 20000
   lazy val standardFlightDurationCache : Array[Int] = {
@@ -34,33 +34,22 @@ object Computation {
     result
   }
 
-  def getMaxValues(): (Long, Double, Long, Long) = {
-    val allAirports = AirportSource.loadAllAirports()
+  def getMaxValues(): (Long, Int) = {
+    val allAirports = AirportCache.getAllAirports()
     //take note that below should NOT use boosted values, should use base, otherwise it will incorrectly load some lazy vals of the Airport that is MAX
-    (allAirports.maxBy(_.basePower).basePower, allAirports.maxBy(_.baseIncomeLevel).baseIncomeLevel, allAirports.maxBy(_.basePopulation).basePopulation, allAirports.maxBy(_.baseIncome).baseIncome)
+    (allAirports.maxBy(_.basePopulation).basePopulation, allAirports.maxBy(_.baseIncome).baseIncome)
   }
 
   def calculateDuration(airplaneModel: Model, distance : Int) : Int = {
-//    val multiplier: Double = airplaneModel.airplaneType match {
-//      case Model.Type.PROPELLER_SMALL => 1.5
-//      case Model.Type.PROPELLER_MEDIUM => 2
-//      case Model.Type.SMALL => 2.25
-//      case Model.Type.REGIONAL => 2.5
-//      case Model.Type.MEDIUM | Model.Type.MEDIUM_XL => 3.5
-//      case Model.Type.HELICOPTER | Model.Type.AIRSHIP => 0
-//      case _ => 4
-//    }
     val timeToCruise: Int = airplaneModel.airplaneType match {
       case Model.Type.PROPELLER_SMALL => Model.TIME_TO_CRUISE_PROPELLER_SMALL
       case Model.Type.PROPELLER_MEDIUM => Model.TIME_TO_CRUISE_PROPELLER_MEDIUM
       case Model.Type.SMALL => Model.TIME_TO_CRUISE_SMALL
-      case Model.Type.REGIONAL => Model.TIME_TO_CRUISE_REGIONAL
-      case Model.Type.MEDIUM | Model.Type.MEDIUM_XL => Model.TIME_TO_CRUISE_MEDIUM
       case Model.Type.HELICOPTER | Model.Type.AIRSHIP => Model.TIME_TO_CRUISE_HELICOPTER
-      case _ => Model.TIME_TO_CRUISE_OTHER
+      case Model.Type.SUPERSONIC => Model.TIME_TO_CRUISE_OTHER
+      case _ => Math.sqrt(airplaneModel.capacity).toInt + 10
     }
     val cruiseTime = distance.toDouble * 60 / airplaneModel.speed
-
     (timeToCruise + cruiseTime).toInt
   }
 
@@ -87,11 +76,11 @@ object Computation {
     if (value < 0) 0 else value.toInt
   }
   
-  val distanceCache: mutable.Map[(Int, Int), Int] = mutable.Map.empty
+  val distanceCache = new ConcurrentHashMap[String, Int]()
 
-  def calculateDistance(fromAirport : Airport, toAirport : Airport) : Int = {
-    val key = (fromAirport.id, toAirport.id)
-    distanceCache.getOrElseUpdate(key, Util.calculateDistance(fromAirport.latitude, fromAirport.longitude, toAirport.latitude, toAirport.longitude).toInt)
+  def calculateDistance(fromAirport: Airport, toAirport: Airport) : Int = {
+    val key = s"${fromAirport.id}${toAirport.id}"
+    distanceCache.computeIfAbsent(key, _ => Util.calculateDistance(fromAirport.latitude, fromAirport.longitude, toAirport.latitude, toAirport.longitude).toInt)
   }
 
   // is used independent of individual links, so must be globally accessible
@@ -215,61 +204,10 @@ def constructAffinityText(fromZone : String, toZone : String, fromCountry : Stri
 
   s"${introText} ${matchingItems.mkString(", ")}"
 }
-  
-
-  /**
-   * Returns income level, should be greater than 0
-   */
-  def getIncomeLevel(income : Int) : Double = {
-    val incomeLevel = income.toDouble / 1000
-    if (incomeLevel < 1) {
-      1
-    } else {
-      incomeLevel
-    }
-  }
-  def fromIncomeLevel(incomeLevel : Double) : Int = {
-    (incomeLevel * 1000).toInt
-  }
-
-  def computeIncomeLevelBoostFromPercentage(baseIncome : Int, minIncomeBoost : Int, boostPercentage : Int) = {
-    val incomeIncrement = baseIncome * boostPercentage / 100
-    val incomeBoost = Math.max(minIncomeBoost, incomeIncrement)
-
-    //10% would always be 1, but cannot make assumption of our income level calculation tho...
-    val baseIncomeLevel = getIncomeLevel(baseIncome)
-    BigDecimal(Computation.getIncomeLevel(baseIncome + incomeBoost) - baseIncomeLevel).setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble
-  }
-
-  /**
-    * For low income base, use the boost level (which is MAX boost). For higher income base, down adjust it to certain
-    * percentage
-    * @param baseIncome
-    * @param boostLevel
-    * @return
-    */
-  def computeIncomeLevelBoostFromLevel(baseIncome : Int, boostLevel : Double) = {
-    val newIncomeLevel = getIncomeLevel(baseIncome) + boostLevel
-    val incomeIncrement = fromIncomeLevel(newIncomeLevel) - baseIncome
-    val maxIncomeBoost = (boostLevel * 10_000).toInt //a bit arbitrary
-    val minIncomeBoost = (boostLevel * 2_500).toInt
-    val finalBoostLevel =
-      if (incomeIncrement < minIncomeBoost) {
-        getIncomeLevel(baseIncome + minIncomeBoost) - getIncomeLevel(baseIncome)
-      } else if (incomeIncrement <= maxIncomeBoost) {
-        boostLevel
-      } else {
-        getIncomeLevel(baseIncome + maxIncomeBoost) - getIncomeLevel(baseIncome)
-      }
-
-    BigDecimal(finalBoostLevel).setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble
-  }
 
   import org.apache.commons.math3.distribution.{LogNormalDistribution, NormalDistribution}
 
   def populationAboveThreshold(meanIncome: Double, population: Int, gini: Double, threshold: Int): Int = {
-//    val normalDistribution = new NormalDistribution(meanIncome, meanIncome * gini / 100)
-
     //larger urban areas have much more inequality
     val urbanInequalityModifier = if (population > 16000000) {
       1.6
@@ -293,51 +231,21 @@ def constructAffinityText(fromZone : String, toZone : String, fromCountry : Stri
 
     val probLognormal = 1.0 - logDistribution.cumulativeProbability(threshold)
 
-
-    // Could do a normal dist + log
-//    val normalPop = math.min(population, 1000000) // First 1 million
-//    val lognormalPop = math.max(population - 1000000, 0)
-//    val probNormal = 1.0 - normalDistribution.cumulativeProbability(threshold)
-
-    // (normalPop * probNormal + lognormalPop * probLognormal).round.toInt
     Math.ceil(population * probLognormal).toInt
   }
 
   def getLinkCreationCost(from : Airport, to : Airport) : Int = {
-    
+
     val baseCost = 100000 + (from.income + to.income)
-      
+
     val minAirportSize = Math.min(from.size, to.size) //encourage links for smaller airport
-    
-    val airportSizeMultiplier = Math.pow(1.5, minAirportSize) 
+
+    val airportSizeMultiplier = Math.pow(1.5, minAirportSize)
     val distance = calculateDistance(from, to)
     val distanceMultiplier = distance.toDouble / 5000
     val internationalMultiplier = if (from.countryCode == to.countryCode) 1 else 2
-    
-    (baseCost * airportSizeMultiplier * distanceMultiplier * internationalMultiplier).toInt 
-  }
 
-  val REDUCED_COMPENSATION_SERVICE_LEVEL_THRESHOLD = 40 //airline with service level below this will pay less compensation
-  
-  def computeCompensation(link : Link) : Int = {
-    if (link.majorDelayCount > 0 || link.minorDelayCount > 0 || link.cancellationCount > 0 ) {
-      val soldSeatsPerFlight = link.soldSeats / link.frequency
-      val halfCapacityPerFlight = link.capacity / link.frequency * 0.5
-      
-      val affectedSeatsPerFlight = if (soldSeatsPerFlight.total > halfCapacityPerFlight.total) soldSeatsPerFlight else halfCapacityPerFlight //if less than 50% LF, considered that as 50% LF
-      var compensation = (affectedSeatsPerFlight * link.cancellationCount * 0.5 * link.price).total  //50% of ticket price, as there's some penalty for that already
-      compensation = compensation + (affectedSeatsPerFlight * link.majorDelayCount * 0.3 * link.price).total //30% of ticket price
-      compensation = compensation + (affectedSeatsPerFlight * link.minorDelayCount * 0.05 * link.price).total //5% of ticket price
-
-      if (link.airline.getCurrentServiceQuality() < REDUCED_COMPENSATION_SERVICE_LEVEL_THRESHOLD) { //down to only 20%
-        val ratio = 0.2 + 0.8 * link.airline.getCurrentServiceQuality() / REDUCED_COMPENSATION_SERVICE_LEVEL_THRESHOLD
-        (compensation * ratio).toInt
-      } else {
-        compensation.toInt
-      }
-    } else {
-      0
-    }
+    (baseCost * airportSizeMultiplier * distanceMultiplier * internationalMultiplier).toInt
   }
   
   def getResetAmount(airlineId : Int) : ResetAmountInfo = {
@@ -357,24 +265,33 @@ def constructAffinityText(fromZone : String, toZone : String, fromCountry : Stri
     val overall = airplanes + bases + assets + loans + oilContracts + existingBalance
   }
 
-  val SATISFACTION_MAX_PRICE_RATIO_THRESHOLD = 0.7 //at 100% satisfaction is <= this threshold
-  val SATISFACTION_MIN_PRICE_RATIO_THRESHOLD = LINK_COST_TOLERANCE_FACTOR + 0.05 //0% satisfaction >= this threshold ... +0.05 so, there will be at least some satisfaction even at the LINK_COST_TOLERANCE_FACTOR
-  val SATISFACTION_NOT_CROWDED_MAX_BONUS_THRESHOLD = 0.125
-  /**
-    * From 0 (not satisfied at all) to 1 (fully satisfied)
-    *
-    *
-    */
-  val computePassengerSatisfaction = (cost: Double, standardPrice: Int, crowded: Double) => {
-    val crowdedMod = Math.max(1 - SATISFACTION_NOT_CROWDED_MAX_BONUS_THRESHOLD - crowded, 0) * SATISFACTION_NOT_CROWDED_MAX_BONUS_THRESHOLD
-    val ratio = cost / standardPrice
-    var satisfaction = (SATISFACTION_MIN_PRICE_RATIO_THRESHOLD - ratio) / (SATISFACTION_MIN_PRICE_RATIO_THRESHOLD - SATISFACTION_MAX_PRICE_RATIO_THRESHOLD)
-    satisfaction = Math.min(1, Math.max(0, satisfaction + crowdedMod))
-    //println(s"${cost} vs standard price $standardPrice. satisfaction : ${satisfaction}")
-    satisfaction
-  }
+  val SATISFACTION_MAX_PRICE_RATIO_THRESHOLD: Double = 0.7 //at 100% satisfaction is <= this threshold
+  private val SATISFACTION_MIN_PRICE_RATIO_THRESHOLD = LINK_COST_TOLERANCE_FACTOR //0% satisfaction >= this threshold ... +0.01 so, there will be at least some satisfaction even at the LINK_COST_TOLERANCE_FACTOR
 
-  val computeStandardFlightDuration = (distance: Int) => {
+  /**
+   * Satisfaction is calculated after seats are booked – delays and LF don't directly impact whether passengers book.
+   *
+   * (Current implicit assumptions of parameters in parentheses)
+   *
+   * @param cost perceived price
+   * @param standardPrice standard link price (for given distance)
+   * @param crowdedPercent 0-1 load factor (not seat-capacity adjusted) where 1 is 100% full and decreases/increases satisfaction by 25%
+   * @param delayPercent 0-1 delay percentage, where 0 is no delays, 0.5 is some delays / flights cancelled, 1 is all flights cancelled
+   * @return 0 (not satisfied at all) to 1 (fully satisfied)
+   */
+  def computePassengerSatisfaction(cost: Double, standardPrice: Int, crowdedPercent: Double, delayPercent: Double): Double = {
+    val ratio = cost / standardPrice
+    val satisfaction = (SATISFACTION_MIN_PRICE_RATIO_THRESHOLD - ratio) / (SATISFACTION_MIN_PRICE_RATIO_THRESHOLD - SATISFACTION_MAX_PRICE_RATIO_THRESHOLD)
+    Math.min(1.0, Math.max(0.0, satisfaction * (1.0 - delayPercent * 0.5) * (1.35 - crowdedPercent * 0.35)))
+  }
+  val TOOLTIP_SATISFACTION = List(
+    s"If a passenger has more than ${SATISFACTION_MAX_PRICE_RATIO_THRESHOLD * 100}% satisfaction they may become your loyalist.",
+    "Satisfaction is the ratio of the passenger's perceived price compared to the expected price for that distance.",
+    "Additionally load factor and delays modify satisfaction (passengers like empty seats and no delays).",
+    "When a passenger traverses multiple links in a journey, the longer links weight loyalist conversion proportionally more than the shorter links."
+  )
+
+  val computeStandardFlightDuration: Int => Int = (distance: Int) => {
     if (distance <= MAX_COMPUTED_DISTANCE) {
       standardFlightDurationCache(distance)
     } else {
@@ -382,15 +299,22 @@ def constructAffinityText(fromZone : String, toZone : String, fromCountry : Stri
       internalComputeStandardFlightDuration(distance) //just in case
     }
   }
+
   private def internalComputeStandardFlightDuration(distance : Int) = {
-    val mediumAirplaneModel = Model.modelByName("Airbus A320")
-    Computation.calculateDuration(mediumAirplaneModel, distance)
+    val min = Model.TIME_TO_CRUISE_SMALL //buff props by setting this to small jets
+    val max = Model.TIME_TO_CRUISE_OTHER
+    val expectedTimeToCruise = Math.min(max - min, (max - min) * distance / 800) //
+    val expectedSpeed = 200 + Math.min(600, 600 * distance / 1200)
+
+    (expectedTimeToCruise + distance.toDouble * 60 / expectedSpeed).toInt
   }
 
-  def getDomesticAirportWithinRange(principalAirport : Airport, range : Int) = { //range in km
+  def getAirportWithinRange(principalAirport: Airport, range: Int, minRange: Int = 0, isDomestic: Boolean = true): List[Airport] = { //range in km
     val affectedAirports = ListBuffer[Airport]()
-    AirportSource.loadAirportsByCountry(principalAirport.countryCode).foreach { airport =>
-      if (Computation.calculateDistance(principalAirport, airport) <= range) {
+    val allAirports = if (isDomestic) AirportCache.getAllAirports().filter(_.countryCode == principalAirport.countryCode) else AirportCache.getAllAirports()
+    allAirports.foreach { airport =>
+      val distance = Computation.calculateDistance(principalAirport, airport)
+      if (distance <= range && distance >= minRange) {
         affectedAirports.append(airport)
       }
     }

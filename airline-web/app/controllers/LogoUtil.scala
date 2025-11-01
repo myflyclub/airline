@@ -6,9 +6,23 @@ import com.patson.data.AirlineSource
 import javax.imageio.ImageIO
 
 object LogoUtil {
-  val logos : scala.collection.mutable.Map[Int, Array[Byte]] = collection.mutable.Map(AirlineSource.loadLogos().toSeq: _*) 
-  val blank = getBlankLogo()
-  val rat = getRatLogo()
+  // Make initialization lazy and defensive: any failure while loading from DB or resources
+  // should not blow up the class initializer (which causes NoClassDefFoundError).
+  lazy val logos: scala.collection.mutable.Map[Int, Array[Byte]] = {
+    try {
+      collection.mutable.Map(AirlineSource.loadLogos().toSeq: _*)
+    } catch {
+      case e: Throwable =>
+        // avoid failing class init; fall back to empty cache
+        e.printStackTrace()
+        collection.mutable.Map.empty[Int, Array[Byte]]
+    }
+  }
+
+  lazy val blank: Array[Byte] = loadResourceSafely("/logo/blank.png").getOrElse(Array.emptyByteArray)
+
+  lazy val rat: Array[Byte] = loadResourceSafely("/logo/bot-rat-logo.png").getOrElse(blank)
+
   val imageHeight = 12
   val imageWidth = 24
   
@@ -45,6 +59,28 @@ object LogoUtil {
       return Some("Image should be " + imageWidth + "px wide and " + imageHeight + "px tall")
     }
     return None
+  }
+  
+  private def loadResourceSafely(path: String): Option[Array[Byte]] = {
+    val isOpt = Option(play.Environment.simple().resourceAsStream(path))
+    isOpt.flatMap { is =>
+      try {
+        val baos = new java.io.ByteArrayOutputStream()
+        val buffer = new Array[Byte](8192)
+        var read = is.read(buffer)
+        while (read != -1) {
+          baos.write(buffer, 0, read)
+          read = is.read(buffer)
+        }
+        Some(baos.toByteArray)
+      } catch {
+        case e: Throwable =>
+          e.printStackTrace()
+          None
+      } finally {
+        try is.close() catch { case _: Throwable => }
+      }
+    }
   }
   
   def getBlankLogo() = {

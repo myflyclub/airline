@@ -1,74 +1,142 @@
-//package com.patson.model
-//
-//import scala.collection.mutable.Map
-//import org.scalatest.BeforeAndAfterAll
-//import org.scalatest.Finders
-//import org.scalatest.Matchers
-//import org.scalatest.WordSpecLike
-//import org.apache.pekko.actor.ActorSystem
-//import org.apache.pekko.testkit.ImplicitSender
-//import org.apache.pekko.testkit.TestKit
-//import com.patson.model.airplane.{Airplane, AirplaneConfiguration, LinkAssignment, Model}
-//import com.patson.DemandGenerator
-//import com.patson.Util
-//
-//import scala.collection.mutable
-//
-//class FlightPreferenceSpec(_system: ActorSystem) extends TestKit(_system) with ImplicitSender
-//  with WordSpecLike with Matchers with BeforeAndAfterAll {
-//
-//  def this() = this(ActorSystem("MySpec"))
-//
-//  override def afterAll {
-//    TestKit.shutdownActorSystem(system)
-//  }
-//
-//  val defaultCapacity = LinkClassValues.getInstance(10000, 10000, 10000)
-//
-//  val testAirline1 = Airline("airline 1", id = 1)
-//  val testAirline2 = Airline("airline 2", id = 2)
-//  val topAirline = Airline("top airline", id = 3)
-//  val fromAirport = Airport("", "", "From Airport", 0, 0, "", "", "", 1, baseIncome = 40000, basePopulation = 1, 0, 0)
-//  val toAirport = Airport("", "", "To Airport", 0, 180, "", "", "", 1, baseIncome = 40000, basePopulation = 1, 0, 0)
-//
-//
-//  val distance = Util.calculateDistance(fromAirport.latitude, fromAirport.longitude, toAirport.latitude, toAirport.longitude).toInt
-//  val defaultPrice = Pricing.computeStandardPriceForAllClass(distance, fromAirport, toAirport)
-//
-//  fromAirport.initAirlineAppeals(scala.collection.immutable.Map.empty)
-//  toAirport.initAirlineAppeals(scala.collection.immutable.Map.empty)
-//  fromAirport.initLounges(scala.collection.immutable.List.empty)
-//  toAirport.initLounges(scala.collection.immutable.List.empty)
-//  val flightType = Computation.getFlightType(fromAirport, toAirport, distance)
-//  val airline1Link = Link(fromAirport, toAirport, testAirline1, defaultPrice, distance = distance, defaultCapacity, rawQuality = 0, 600, 1, flightType)
-//  val airline2Link = Link(fromAirport, toAirport, testAirline2, defaultPrice, distance = distance, defaultCapacity, rawQuality = 0, 600, 1, flightType)
-//  airline1Link.setQuality(fromAirport.expectedQuality(flightType, FIRST))
-//  airline2Link.setQuality(fromAirport.expectedQuality(flightType, FIRST))
-//  val topAirlineLink = Link(fromAirport, toAirport, testAirline2, defaultPrice, distance = distance, defaultCapacity, rawQuality = 100, 600, 1, flightType)
-//  val model = Model.modelByName("Boeing 737 MAX 9")
-//  airline1Link.setTestingAssignedAirplanes(scala.collection.immutable.Map(Airplane(model, testAirline1, 0, purchasedCycle = 0, 100, 0, 0) -> 1))
-//  airline2Link.setTestingAssignedAirplanes(scala.collection.immutable.Map(Airplane(model, testAirline2, 0, purchasedCycle = 0, 100, 0, 0) -> 1))
-//  topAirlineLink.setTestingAssignedAirplanes(scala.collection.immutable.Map(Airplane(model, topAirline, 0, purchasedCycle = 0, 100, 0, 0) -> 1))
-//
-//  "An AppealPreference".must {
-//    "generate similar cost if price and distance is the same, and small differece in loyalty".in {
-//      fromAirport.initAirlineAppeals(scala.collection.immutable.Map[Int, AirlineAppeal](testAirline1.id -> AirlineAppeal(30), testAirline2.id -> AirlineAppeal(32)))
-//
-//      var airline1Picked = 0
-//      var airline2Picked = 0
-//      for (i <- 0 until 100000) {
-//        val preference = AppealPreference(fromAirport, ECONOMY, loungeLevelRequired = 0, loyaltyRatio = 1, 0)
-//        val link1Cost = preference.computeCost(airline1Link, ECONOMY)
-//        val link2Cost = preference.computeCost(airline2Link, ECONOMY)
-//        //should be around 50 50
-//        if (link1Cost < link2Cost) airline1Picked += 1  else airline2Picked += 1
-//
-//      }
-//      val ratio = airline1Picked.toDouble / airline2Picked
-//      ratio.shouldBe( >= (0.8))         //should be around 50 50
-//      ratio.shouldBe( <= (1.2))
-//
-//    }
+package com.patson.model
+
+import scala.collection.mutable.Map
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.Finders
+import org.scalatest.Matchers
+import org.scalatest.WordSpecLike
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.testkit.ImplicitSender
+import org.apache.pekko.testkit.TestKit
+import com.patson.model.airplane.{Airplane, AirplaneConfiguration, LinkAssignment, Model}
+import com.patson.DemandGenerator
+import com.patson.Util
+
+import scala.collection.mutable
+
+class FlightPreferenceSpec(_system: ActorSystem) extends TestKit(_system) with ImplicitSender
+  with WordSpecLike with Matchers with BeforeAndAfterAll {
+
+  def this() = this(ActorSystem("MySpec"))
+
+  override def afterAll {
+    TestKit.shutdownActorSystem(system)
+  }
+
+  val defaultCapacity = LinkClassValues.getInstance(10000, 10000, 10000)
+
+  val testAirline1 = Airline("airline 1", id = 1)
+  val testAirline2 = Airline("airline 2", id = 2)
+  val topAirline = Airline("top airline", id = 3)
+  val fromAirport = Airport("", "", "From Airport", 0, 0, "", "", "", 1, baseIncome = 40000, basePopulation = 1, 0, 0)
+  val toAirport = Airport("", "", "To Airport", 0, 180, "", "", "", 1, baseIncome = 40000, basePopulation = 1, 0, 0)
+
+
+  val distance = 1000
+  val defaultPrice = Pricing.computeStandardPriceForAllClass(distance, FlightCategory.DOMESTIC, PassengerType.BUSINESS, fromAirport.baseIncome)
+
+  fromAirport.initAirlineAppeals(scala.collection.immutable.Map.empty)
+  toAirport.initAirlineAppeals(scala.collection.immutable.Map.empty)
+  fromAirport.initLounges(scala.collection.immutable.List.empty)
+  toAirport.initLounges(scala.collection.immutable.List.empty)
+  val flightType = Computation.getFlightCategory(fromAirport, toAirport)
+  val airline1Link = Link(fromAirport, toAirport, testAirline1, defaultPrice, distance = distance, defaultCapacity, rawQuality = 0, 600, 1)
+  val airline2Link = Link(fromAirport, toAirport, testAirline2, defaultPrice, distance = distance, defaultCapacity, rawQuality = 0, 600, 1)
+  airline1Link.setQuality(fromAirport.expectedQuality(distance, FIRST))
+  airline2Link.setQuality(fromAirport.expectedQuality(distance, FIRST))
+  val topAirlineLink = Link(fromAirport, toAirport, testAirline2, defaultPrice, distance = distance, defaultCapacity, rawQuality = 100, 600, 1)
+  val model = Model.modelByName("Boeing 737 MAX 9")
+  val modelPropSmall = Model.modelByName("Cessna 208 Caravan")
+  val modelPropMed = Model.modelByName("De Havilland Q400")
+  val modelSST = Model.modelByName("Concorde")
+  val modelHeli = Model.modelByName("Boeing Vertol 107-II ")
+  val modelFast = Model.modelByName("Boeing 747SP")
+  airline1Link.setTestingAssignedAirplanes(scala.collection.immutable.Map(Airplane(model, testAirline1, 0, purchasedCycle = 0, 100, 0, 0) -> 1))
+  airline2Link.setTestingAssignedAirplanes(scala.collection.immutable.Map(Airplane(model, testAirline2, 0, purchasedCycle = 0, 100, 0, 0) -> 1))
+  topAirlineLink.setTestingAssignedAirplanes(scala.collection.immutable.Map(Airplane(model, topAirline, 0, purchasedCycle = 0, 100, 0, 0) -> 1))
+
+  "Speed modifier".must {
+    "props faster on shorter routes, otherwise slower".in {
+      val distances = List(50,100,200,400,800,1600,3200,6400,12800)
+      val preference = DealPreference(fromAirport, ECONOMY, 1.0)
+      for (distance <- distances) {
+        println(s"at $distance:")
+        val duration = Computation.calculateDuration(model, distance)
+        val airline1Link = Link(fromAirport, toAirport, testAirline1, defaultPrice, distance, defaultCapacity, rawQuality = 0, duration, 1)
+        airline1Link.setTestingAssignedAirplanes(scala.collection.immutable.Map(Airplane(model, testAirline1, 0, purchasedCycle = 0, 100, 0, 0) -> 1))
+        val ratio = preference.tripDurationAdjustRatio(airline1Link, ECONOMY, PassengerType.BUSINESS)
+        println(s"  ${model.name}: $duration $ratio")
+
+        val durationSST = Computation.calculateDuration(modelSST, distance)
+        val airline1LinkSST = Link(fromAirport, toAirport, testAirline1, defaultPrice, distance, defaultCapacity, rawQuality = 0, durationSST, 1)
+        airline1LinkSST.setTestingAssignedAirplanes(scala.collection.immutable.Map(Airplane(model, testAirline1, 0, purchasedCycle = 0, 100, 0, 0) -> 1))
+        val ratioSST = preference.tripDurationAdjustRatio(airline1LinkSST, ECONOMY, PassengerType.BUSINESS)
+        println(s"  ${modelSST.name}: $durationSST $ratioSST")
+
+        val durationFast = Computation.calculateDuration(modelFast, distance)
+        val airline1LinkFast = Link(fromAirport, toAirport, testAirline1, defaultPrice, distance, defaultCapacity, rawQuality = 0, durationFast, 1)
+        airline1LinkFast.setTestingAssignedAirplanes(scala.collection.immutable.Map(Airplane(model, testAirline1, 0, purchasedCycle = 0, 100, 0, 0) -> 1))
+        val ratioFast = preference.tripDurationAdjustRatio(airline1LinkFast, ECONOMY, PassengerType.BUSINESS)
+        println(s"  ${modelFast.name}: $durationFast $ratioFast")
+
+        val durationProp = Computation.calculateDuration(modelPropMed, distance)
+        val airline1LinkProp = Link(fromAirport, toAirport, testAirline1, defaultPrice, distance, defaultCapacity, rawQuality = 0, durationProp, 1)
+        airline1LinkProp.setTestingAssignedAirplanes(scala.collection.immutable.Map(Airplane(model, testAirline1, 0, purchasedCycle = 0, 100, 0, 0) -> 1))
+        val ratioProp = preference.tripDurationAdjustRatio(airline1LinkProp, ECONOMY, PassengerType.BUSINESS)
+        println(s"  ${modelPropMed.name}: $durationProp $ratioProp")
+
+        val durationSlow = Computation.calculateDuration(modelPropSmall, distance)
+        val airline1LinkSlow = Link(fromAirport, toAirport, testAirline1, defaultPrice, distance, defaultCapacity, rawQuality = 0, durationSlow, 1)
+        airline1LinkSlow.setTestingAssignedAirplanes(scala.collection.immutable.Map(Airplane(model, testAirline1, 0, purchasedCycle = 0, 100, 0, 0) -> 1))
+        val ratioSlow = preference.tripDurationAdjustRatio(airline1LinkSlow, ECONOMY, PassengerType.BUSINESS)
+        println(s"  ${modelPropSmall.name}: $durationSlow $ratioSlow")
+
+        val durationHeli = Computation.calculateDuration(modelHeli, distance)
+        val airline1LinkHeli = Link(fromAirport, toAirport, testAirline1, defaultPrice, distance, defaultCapacity, rawQuality = 0, durationHeli, 1)
+        airline1LinkHeli.setTestingAssignedAirplanes(scala.collection.immutable.Map(Airplane(model, testAirline1, 0, purchasedCycle = 0, 100, 0, 0) -> 1))
+        val ratioHeli = preference.tripDurationAdjustRatio(airline1LinkHeli, ECONOMY, PassengerType.BUSINESS)
+        println(s"  ${modelHeli.name}: $durationHeli $ratioHeli")
+//        ratio.shouldBe(>(ratioSlow))
+      }
+    }
+  }
+  "Class adjust".must {
+    "generate similar cost if price and distance is the same, and small difference in loyalty".in {
+      val distances = List(50,100,200,400,800,1600,3200,6400,12800)
+      var preference = DealPreference(fromAirport, BUSINESS, 1.0)
+
+      for (distance <- distances) {
+        println(s"at $distance:")
+        val duration = Computation.calculateDuration(model, distance)
+        val airline1Link = Link(fromAirport, toAirport, testAirline1, defaultPrice, distance, LinkClassValues.getInstance(10000, 0, 0), rawQuality = 0, duration, 1)
+        airline1Link.setTestingAssignedAirplanes(scala.collection.immutable.Map(Airplane(model, testAirline1, 0, purchasedCycle = 0, 100, 0, 0) -> 1))
+
+        val ratio = preference.priceAdjustedByLinkClassDiff(airline1Link, ECONOMY, PassengerType.BUSINESS)
+        println(s"  ${model.name}: $duration $ratio")
+//        ratio.shouldBe(>(ratioSlow))
+      }
+    }
+  }
+  "An AppealPreference".must {
+    "generate similar cost if price and distance is the same, and small difference in loyalty".in {
+      fromAirport.initAirlineAppeals(scala.collection.immutable.Map[Int, AirlineAppeal](testAirline1.id -> AirlineAppeal(30), testAirline2.id -> AirlineAppeal(32)))
+
+      var airline1Picked = 0
+      var airline2Picked = 0
+      for (i <- 0 until 100000) {
+        val preference = AppealPreference(fromAirport, ECONOMY, 1.0, loungeLevelRequired = 0, loyaltyRatio = 1.0, 0)
+        val link1Cost = preference.computeCost(airline1Link, ECONOMY, PassengerType.BUSINESS)
+        val link2Cost = preference.computeCost(airline2Link, ECONOMY, PassengerType.BUSINESS)
+        //should be around 50 50
+        if (link1Cost < link2Cost) airline1Picked += 1 else airline2Picked += 1
+      }
+      val ratio = airline1Picked.toDouble / airline2Picked
+      ratio.shouldBe(>=(0.8)) //should be around 50 50
+      ratio.shouldBe(<=(1.2))
+
+    }
+  }
+}
 //    "generate similar cost if distance and loyalty is the same, and small differece in price".in {
 //      fromAirport.initAirlineAppeals(scala.collection.immutable.Map[Int, AirlineAppeal](testAirline1.id -> AirlineAppeal(50), testAirline2.id -> AirlineAppeal(50)))
 //      val airline1Link = Link(fromAirport, toAirport, testAirline1, LinkClassValues.getInstance(1000), 10000, defaultCapacity, 0, 600, 1, flightType)

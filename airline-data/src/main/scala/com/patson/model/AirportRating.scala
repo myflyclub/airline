@@ -4,49 +4,43 @@ import com.patson.data.{AirportSource, CountrySource, LinkStatisticsSource}
 import com.patson.model.AirportFeatureType._
 import com.patson.util.{AirportCache, CountryCache}
 
-case class AirportRating(economicPowerRating : Int, competitionRating : Int, countryPowerRating : Int, features : List[AirportFeature]) {
+case class AirportRating(economicPowerRating: Int, countryPowerRating: Int, featurePower: Int) {
   val ECONOMIC_POWER_WEIGHT = 0.8
-  val COUNTRY_POWER_WEIGHT = 0.2
-  val COMPETITION_WEIGHT = 0.5
-  val featureRating = features.map { feature =>
-    feature.featureType match {
-      case INTERNATIONAL_HUB => feature.strength.toDouble / 9
-      case FINANCIAL_HUB => feature.strength.toDouble / 5
-      case VACATION_HUB => feature.strength.toDouble  / 10
-      case ISOLATED_TOWN => feature.strength.toDouble  / 3
-      case ELITE_CHARM => Math.max(1, feature.strength.toDouble / 3)
-      case GATEWAY_AIRPORT => 3
-      case _ => 0
-    }
-  }.sum
+  val COUNTRY_POWER_WEIGHT = 0.25
 
-  val overallDifficulty = Math.max(0, Math.min(100, (100 - economicPowerRating) * ECONOMIC_POWER_WEIGHT + (100 - countryPowerRating) * COUNTRY_POWER_WEIGHT + competitionRating * COMPETITION_WEIGHT - featureRating).toInt)
-  val overallRating = economicPowerRating * ECONOMIC_POWER_WEIGHT + countryPowerRating * COUNTRY_POWER_WEIGHT + featureRating
+  val overallDifficulty = Math.max(1.0, Math.min(200.0, economicPowerRating * ECONOMIC_POWER_WEIGHT + countryPowerRating * COUNTRY_POWER_WEIGHT + featurePower)).toInt
 }
 
 object AirportRating {
-  val modelAirportPower : Long = 26_475_285L * 36194 //Use static value here, HND before boost
-  val modelCountryPower : Long = 141_882_566L * 54629 //Use static value here, USA before boost
+  private val modelAirportPower: Long = 9877905 //Use static value here, HND before boost
+  // By adding 'L', we ensure the multiplication is done using Longs, preventing overflow
+  private val modelCountryPower: Long = 341465079L * 89702 //Use static value here, USA before boost
 
-  val MAX_COMPETITION_RATIO = 0.00005 //ratio of departingPassenger / airport power. If the ratio reaches this ratio, competition rating is considered 100
-
-  def rateAirport(airport : Airport) : AirportRating = {
+  def rateAirport(airport: Airport): AirportRating = {
     val detailedAirport =
       if (!airport.isFeaturesLoaded) {
         AirportCache.getAirport(airport.id, true).get
       } else {
         airport
       }
-    val flightsFromThisAirport = LinkStatisticsSource.loadLinkStatisticsByFromAirport(airport.id, LinkStatisticsSource.SIMPLE_LOAD)
-    val departurePassenger = flightsFromThisAirport.map(_.passengers).sum
     val country = CountryCache.getCountry(airport.countryCode).get
-    val ratioToModelAirportPower = airport.power.toDouble / modelAirportPower
-    val economicPowerRating = Math.max(0, (math.log10(ratioToModelAirportPower * 100) / 2 * 100).toInt)
-    val ratioToModelCountryPower = country.airportPopulation * country.income.toDouble / modelCountryPower
-    val countryPowerRating = Math.max(0,(math.log10(ratioToModelCountryPower * 100) / 2 * 100).toInt)
-    val competitionRating = Math.min(100, (Math.min(MAX_COMPETITION_RATIO, departurePassenger.toDouble / airport.power) / MAX_COMPETITION_RATIO * 10000).toInt)
+    // Perform clamping on Doubles, then convert to Int at the end
+    val ratioToModelAirportPower = Math.max(1.0, Math.min(100.0, 100.0 * airport.popMiddleIncome / modelAirportPower)).toInt
+    val ratioToModelCountryPower = Math.max(0.0, Math.min(100.0, 100.0 * country.income * country.airportPopulation / modelCountryPower)).toInt
 
+    val airportScalePower = if (detailedAirport.size >= 7) 15 + 2 * detailedAirport.size else 2 * detailedAirport.size
+    val featurePower = detailedAirport.getFeatures().map { feature =>
+      feature.featureType match {
+        case FINANCIAL_HUB => feature.strength.toDouble / 3
+        case ELITE_CHARM => feature.strength.toDouble / 4
+        case INTERNATIONAL_HUB => feature.strength.toDouble / 6
+        case ISOLATED_TOWN => -3 * feature.strength
+        case DOMESTIC_AIRPORT => -12
+        case GATEWAY_AIRPORT => ratioToModelCountryPower.toDouble / 3
+        case _ => 0
+      }
+    }.sum.toInt
 
-    AirportRating(economicPowerRating, competitionRating, countryPowerRating, detailedAirport.getFeatures())
+    AirportRating(ratioToModelAirportPower, ratioToModelCountryPower, featurePower + airportScalePower)
   }
 }

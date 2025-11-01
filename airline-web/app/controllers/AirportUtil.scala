@@ -1,19 +1,19 @@
 package controllers
 
 import com.patson.AirportSimulation
-import com.patson.data.{AirportSource, CountrySource, LinkStatisticsSource, LoyalistSource}
-import com.patson.model.AirportFeatureType.{FINANCIAL_HUB, INTERNATIONAL_HUB, VACATION_HUB}
+import com.patson.data.{AirportSource, AirportStatisticsSource, CountrySource, LinkStatisticsSource, LoyalistSource}
 import com.patson.model._
-import com.patson.util.{AirlineCache, AirportChampionInfo, ChampionUtil, CountryCache}
-import models.AirportWithChampion
+import com.patson.util.{AirlineCache, AirportCache, AirportChampionInfo, ChampionUtil, CountryCache}
+import models.AirportWithChampionAndStats
 import websocket.MyWebSocketActor
 
 import scala.collection.MapView
+import scala.jdk.CollectionConverters._
 
 object AirportUtil {
-  var cachedAirportChampions : List[AirportWithChampion] = getAirportChampions()
+  var cachedAirportChampions : List[AirportWithChampionAndStats] = getAirportChampions()
 
-  def getAirportChampions() : List[AirportWithChampion] = {
+  def getAirportChampions() : List[AirportWithChampionAndStats] = {
     val latestHistoryCycle = AirportSimulation.getHistoryCycle(MyWebSocketActor.lastSimulatedCycle, 0)
     val compareToCycle = AirportSimulation.getHistoryCycle(MyWebSocketActor.lastSimulatedCycle, -2)
     val cycleDelta = latestHistoryCycle - compareToCycle
@@ -21,7 +21,12 @@ object AirportUtil {
     val allAirportsPreviousLoyalists : MapView[Int, Map[Int, Int]] = LoyalistSource.loadLoyalistHistoryByCycle(compareToCycle).groupBy(_.entry.airport.id).view.mapValues(_.map(history => (history.entry.airline.id, history.entry.amount)).toMap)
     val loyalistByAirportId : Map[Int, List[AirportChampionInfo]] = ChampionUtil.loadAirportChampionInfo().groupBy(_.loyalist.airport.id)
 
-    cachedAirportsByPower.map { airport =>
+    val allAirports = AirportCache.getAllAirports(fullLoad = true)
+    
+    allAirports.sortBy(_.popMiddleIncome).map { airport =>
+      val stats = AirportStatisticsSource.loadAirportStatsById(airport.id).getOrElse(AirportStatistics(0,0,0,0,0,0))
+      val travelRate = (Airport.travelRate(stats.travelRate, airport.size) * 100).toInt
+      val congestion = if (stats.congestion < 0.2) None else Some((stats.congestion * 100).toInt)
       loyalistByAirportId.get(airport.id) match {
         case Some(loyalists) =>
           val airlinesSortByRank = loyalists.sortBy(_.ranking).map(_.loyalist.airline)
@@ -45,8 +50,10 @@ object AirportUtil {
               }
             }
           }
-          AirportWithChampion(airport, championAirline, contestingAirline)
-        case None => AirportWithChampion(airport, None, None)
+          
+          AirportWithChampionAndStats(airport, travelRate, stats.reputation, congestion, championAirline, contestingAirline)
+        case None =>
+          AirportWithChampionAndStats(airport, travelRate, stats.reputation, congestion, None, None)
       }
     }
   }
@@ -60,29 +67,6 @@ object AirportUtil {
 
   def refreshAirports() = {
     cachedAirportChampions = getAirportChampions()
-    visibleAirports = getVisibleAirports(airportByPowerCount)
-  }
-
-  private val airportByPowerCount = 4200
-  var visibleAirports = getVisibleAirports(airportByPowerCount)
-
-  private[this] def getVisibleAirports(airportByPowerCount : Int) : List[AirportWithChampion] = {
-    val cachedAirportChampions = AirportUtil.cachedAirportChampions
-    val powerfulAirports : Map[Int, AirportWithChampion] = cachedAirportChampions.takeRight(airportByPowerCount).map(entry => (entry.airport.id, entry)).toMap
-    val mostPowerfulAirportsPerCountry : List[AirportWithChampion] = cachedAirportChampions.groupBy(_.airport.countryCode).values.flatMap { airportsOfACountry =>
-      if (airportsOfACountry.length > 0) {
-        List(airportsOfACountry.reverse.apply(0))
-      } else {
-        List()
-      }
-    }.toList
-    val result = (powerfulAirports.values ++ mostPowerfulAirportsPerCountry.filter { mostPowerfulAirportOfACountry =>
-      val alreadyInList = powerfulAirports.contains(mostPowerfulAirportOfACountry.airport.id)
-      //println(s"$alreadyInList ? $mostPowerfulAirportOfACountry")
-      !alreadyInList
-    }).toList
-    result
   }
 }
-
 

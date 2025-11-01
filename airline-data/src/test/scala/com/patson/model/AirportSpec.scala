@@ -1,6 +1,8 @@
 package com.patson.model
 
-import com.patson.data.{AirportSource, GameConstants}
+import com.patson.DemandGenerator
+import com.patson.DemandGenerator.MIN_DISTANCE
+import com.patson.data.{AirportSource, AirportStatisticsSource, GameConstants}
 
 import scala.collection.immutable.Map
 import org.scalatest.BeforeAndAfterAll
@@ -86,6 +88,43 @@ class AirportSpec(_system: ActorSystem) extends TestKit(_system) with ImplicitSe
       val notIsland = AirportSource.loadAirportByIata("JFK", true).get
       assert(GameConstants.connectsIsland(islandAirport, notIsland))
       assert(GameConstants.connectsIsland(notIsland, islandAirport))
+    }
+    "test nearby island Airports".in {
+      val islandAirport = AirportSource.loadAirportByIata("FRD", true).get
+      val minDistance = if (GameConstants.isIsland(islandAirport.iata)) 50 else MIN_DISTANCE
+      val airports = Computation.getAirportWithinRange(islandAirport, DemandGenerator.HUB_AIRPORTS_MAX_RADIUS, minDistance)
+      println(airports.map(_.iata).mkString(", "))
+      assert(airports.exists(_.iata == "SEA"))
+    }
+  }
+  
+  "output upkeep and upgrade cost for various base sizes and airports".in {
+    val iatas = List("JFK", "ADD", "DXB", "MAD", "SCE", "PVG")
+    val baseSizes = List(4, 8, 12, 16)
+    val airline = Airline("TestAirline", id = 999)
+    val airlineMHQ = Airline("TestMegaHQ", id = 1000, airlineType = MegaHqAirline)
+    val airports = iatas.flatMap(iata => AirportSource.loadAirportByIata(iata, true))
+    println(s"Airport, BaseSize, Upkeep, UpgradeCost")
+    for (airport <- airports; baseSize <- baseSizes) {
+      val base = AirlineBase(airline, airport, airport.countryCode, baseSize, foundedCycle = 0, headquarter = false)
+      println(s"${airport.iata}, ${airport.rating.overallDifficulty}, $baseSize, ${base.getUpkeep}, ${base.getValue}")
+      val baseMHQ = AirlineBase(airlineMHQ, airport, airport.countryCode, baseSize, foundedCycle = 0, headquarter = true)
+      println(s"${airport.iata}, ${airport.rating.overallDifficulty}, $baseSize, ${baseMHQ.getUpkeep}, ${baseMHQ.getValue}")
+    }
+  }
+
+  "output all travel rates".in {
+    val allAirports: List[Airport] = AirportSource.loadAllAirports().sortBy(_.popMiddleIncome)
+    val airportStats = AirportStatisticsSource.loadAllAirportStats().groupBy(_.airportId)
+    println(s"iata, size, travel rate, rep, from pax, from demand")
+    allAirports.foreach { airport =>
+      airportStats.get(airport.id) match {
+        case Some(stat) =>
+          val travelRate = Airport.travelRate(stat.head.fromPax.toDouble / stat.head.baselineDemand, airport.size)
+          println(s"${airport.iata}, ${airport.size}, ${travelRate}, ${stat.head.reputation}, ${stat.head.fromPax}, ${stat.head.baselineDemand}")
+        case None =>
+          println(s"${airport.iata}, ${airport.size}, 0, 0, 0, 0")
+      }
     }
   }
   

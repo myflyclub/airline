@@ -8,7 +8,6 @@ object AllianceRankingUtil {
   var loadedCycle = 0
   var cachedRankings: Map[Int, (Int, BigDecimal)] = Map.empty
 
-
   /**
     *
     * @return Map[allianceId, (ranking, champion points)] . Take note that ranking starts with 1 as the top alliance
@@ -43,9 +42,3 @@ object AllianceRankingUtil {
   }
 
 }
-
-//class AirlineRanking(rankingType : RankingType.Value, airline : Airline, ranking : Int, rankedValue : Number, var movement : Int = 0) extends Ranking(rankingType, airline, ranking, rankedValue, movement) {
-//  
-//}
-
-

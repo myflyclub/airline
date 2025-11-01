@@ -18,7 +18,12 @@ object AirportRunwayPatcher extends App {
 
   def mainFlow() {
     val airports = AirportSource.loadAllAirports(true)
-    airports.foreach(airport => airport.setRunways(airport.getRunways()))
+    // Runway management is now handled separately via AirportSource helper functions
+    // This patcher is deprecated - use AirportGeoPatcher instead
+    airports.foreach { airport =>
+      val runways = AirportSource.loadAirportRunways(airport.id)
+      AirportSource.updateAirportRunways(airport.id, runways)
+    }
     AirportSource.updateAirports(airports)
 
     Await.result(actorSystem.terminate(), Duration.Inf)

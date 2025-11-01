@@ -1,31 +1,31 @@
+var oilPrices = null;
 var loadedContracts = {}
 var loadedSuggestion
 
 function showOilCanvas() {
+    if (!oilPrices) loadOilPrices();
 	setActiveDiv($("#oilCanvas"))
 	highlightTab($('.oilCanvasTab'))
-	loadOilPriceChart()
 	loadOilDetails() 
     loadExistingOilContracts()
+    plotOilPriceChart(oilPrices, "oilPriceChart");
 }
 
-function loadOilPriceChart() {
+function loadOilPrices() {
 	var url = "oil-prices"
 	$.ajax({
 		type: 'GET',
 		url: url,
 	    contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
-	    success: function(oilPrices) {
-	    	plotOilPriceChart(oilPrices, $("#oilCanvas #oilPriceChart"))
+	    success: function(oilPricesData) {
+            oilPrices = oilPricesData;
 	    },
         error: function(jqXHR, textStatus, errorThrown) {
 	            console.log(JSON.stringify(jqXHR));
 	            console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
 	    }
 	});
-	
-	
 }
 
 function loadOilDetails() {
@@ -249,8 +249,6 @@ function updateExistingContractsTable() {
 	}
 }
 
-
-
 function terminateContract(contractId) {
 	var url = "airlines/" + activeAirline.id + "/oil-contracts/" + contractId
 	$.ajax({
@@ -288,4 +286,9 @@ function setMaxOilContractDuration() {
 	loadOilContractConsideration($('#oilContractVolume').val(), $('#oilContractDuration').val())
 }
  
-
+function refreshTopBarOilPrice() {
+    if (oilPrices && oilPrices.length > 0) {
+        var latestPrice = oilPrices[oilPrices.length - 1].price
+        $('#topBar .oilprice').text('$' + commaSeparateNumber(latestPrice))
+    }
+}

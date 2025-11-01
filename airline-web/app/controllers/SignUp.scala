@@ -84,14 +84,6 @@ class SignUp @Inject()(cc: ControllerComponents)(ws: WSClient) extends AbstractC
   def form = Action { implicit request =>
     Ok(html.signup(signupForm))
   }
-  
-  /**
-   * Display a form pre-filled with an existing User.
-   */
-//  def editForm = Action {
-//    val existingUser = NewUser("fakeuser", "secret", "fake@gmail.com") 
-//    Ok(html.signup(signupForm.fill(existingUser)))
-//  }
 
   def airlineNameCheck(airlineName : String)= Action { implicit request =>
     val length = airlineName.length
@@ -106,9 +98,9 @@ class SignUp @Inject()(cc: ControllerComponents)(ws: WSClient) extends AbstractC
     }
   }
 
-   /**
-   * Handle form submission.
-   */
+ /**
+ * Handle form submission.
+ */
   def submit = Action { implicit request =>
     signupForm.bindFromRequest().fold(
       // Form has errors, redisplay it
@@ -128,15 +120,7 @@ class SignUp @Inject()(cc: ControllerComponents)(ws: WSClient) extends AbstractC
 
           AirlineSource.saveAirplaneRenewal(newAirline.id, 40)
 
-          SearchUtil.addAirline(newAirline)
-          
-//          val profile = StartupProfile.profilesById(userInput.profileId)
-//          profile.initializeAirline(newAirline)
           Redirect("/").withCookies(Cookie("sessionActive", "true", httpOnly = false)).withSession("userToken" -> SessionUtil.addUserId(user.id))
-        // } else {
-        //   BadRequest("Recaptcha check failed!")
-        // }
-        //Ok(html.index("User " + user.userName + " created! Please log in"))
       }
     )
   }

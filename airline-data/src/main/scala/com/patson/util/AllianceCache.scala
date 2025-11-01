@@ -21,6 +21,12 @@ object AllianceCache {
     }
   }
 
+  def isEstablishedAndValid(allianceId: Int, airlineId: Int) : Boolean = {
+    val alliance = getAlliance(allianceId).get
+    alliance.status == AllianceStatus.ESTABLISHED &&
+      alliance.members.exists(member => member.airline.id == airlineId && member.role != AllianceRole.APPLICANT)
+  }
+
   def invalidateAlliance(allianceId : Int) = {
     detailedCache.invalidate(allianceId)
     simpleCache.invalidate(allianceId)

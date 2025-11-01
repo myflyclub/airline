@@ -24,8 +24,8 @@ function toggleHideNonPlayerAirlines(flagValue) {
     updateRivalsTable(selectedSortHeader.data('sort-property'), selectedSortHeader.data('sort-order'), null)
 }
 
-function loadAllRivals(selectedAirline) {
-	var getUrl = "airlines?loginStatus=true"
+function loadAllRivals(selectedAirline = null, hideInactive = true) {
+	var getUrl = "airlines?loginStatus=true&hideInactive=" + hideInactive
 
 	loadedRivals = []
 	loadedRivalsById = {}
@@ -39,9 +39,9 @@ function loadAllRivals(selectedAirline) {
 	    	$.each(airlines, function(index, airline) {
 	    		loadedRivalsById[airline.id] = airline
 	    	})
-	    	
-	    	var selectedSortHeader = $('#rivalsTableSortHeader .table-header .cell.selected')
-	    	updateRivalsTable(selectedSortHeader.data('sort-property'), selectedSortHeader.data('sort-order'), selectedAirline)
+
+            var selectedSortHeader = $('#rivalsTableSortHeader .table-header .cell.selected')
+            updateRivalsTable(selectedSortHeader.data('sort-property'), selectedSortHeader.data('sort-order'), selectedAirline)
 	    },
 	    error: function(jqXHR, textStatus, errorThrown) {
 	            console.log(JSON.stringify(jqXHR));
@@ -187,6 +187,9 @@ function loadRivalDetails(row, airlineId) {
 }
 
 function loadRivalLinks(airlineId) {
+    if (!airlineId || airlineId == activeAirline.id) {
+        return
+    }
 	var airlineLinksTable = $("#rivalsCanvas #rivalLinksTable")
 	airlineLinksTable.children("div.table-row").remove()
 	
@@ -368,9 +371,9 @@ function updateRivalCountriesAirlineTitles(airlineId) {
 	    success: function(titles) {
 	    	$(titles.nationalAirlines).each(function(index, entry) {
 	    	    var country = loadedCountriesByCode[entry.countryCode]
-	    		var row = $("<div class='table-row clickable' onclick=\" showCountryView('" + country.countryCode + "');\"></div>")
-	    		row.append("<div class='cell'>" + getCountryFlagImg(entry.countryCode) + country.name + "</div>")
-	    		row.append("<div class='cell'>" + entry.bonus + "</div>")
+	    		var row = $(`<div class='table-row clickable' onclick="showCountryView('${entry.countryCode}');"></div>`);
+	    		row.append("<div class='cell'>" + getCountryFlagImg(entry.countryCode) + country.name + "</div>");
+	    		row.append("<div class='cell'>" + entry.bonus + "</div>");
 	    		$('#rivalsCanvas .nationalAirlineCountryList').append(row)
 	    	})
 

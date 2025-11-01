@@ -48,7 +48,6 @@ html[data-theme='dark'] {
 
 #routeSearchResult .remark {
     font-size : 8px;
-    background-color: darkgreen;
     box-shadow:0 0 2px #ffffff inset;
     box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
     border-radius: 2px 2px 2px 2px;
@@ -141,10 +140,6 @@ html[data-theme='dark'] {
 
 }
 
-#searchCanvas .search.button:hover {
-	background-color: var(--button-hover-color);
-}
-
 #searchCanvas .search.button:active {
 	position:relative;
 	top:1px;
@@ -195,15 +190,3 @@ html[data-theme='dark'] {
     font: 400 12px Roboto, HelveticaNeue, Arial, sans-serif;
     text-shadow: var(--search-text-shadow)
 }
-
-
-/*
-#routeSearchResult div.itinerary {
-    background-image: linear-gradient(to bottom, #FFFFFF, #FFFFFF 90%, #e8e8d8);
-    backdrop-filter: none;
-}
-#searchCanvas, #searchCanvas div.table-row, #searchCanvas .label, #searchCanvas h4, #searchCanvas .header,
-#floatMessageBox {
-    color: #606060;
-}
-*/

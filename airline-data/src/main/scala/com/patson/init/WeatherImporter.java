@@ -49,9 +49,9 @@ public class WeatherImporter {
         allAirports.sort((a1, a2) -> {
             if (a1.id() == a2.id()) {
                 return 0;
-            } else if (a1.power() == a2.power()) {
+            } else if (a1.popMiddleIncome() == a2.popMiddleIncome()) {
                 return a1.id() - a2.id();
-            } else if (a1.power() < a2.power()){
+            } else if (a1.popMiddleIncome() < a2.popMiddleIncome()){
                 return 1;
             } else {
                 return -1;

@@ -10,14 +10,10 @@ import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
 object AirplaneSource {
-  val LINK_FULL_LOAD = Map(DetailType.LINK -> true)
-  val LINK_SIMPLE_LOAD = Map(DetailType.LINK -> false)
   val LINK_ID_LOAD : Map[DetailType.Value, Boolean] = Map.empty
-  
-  private[this] val BASE_QUERY = "SELECT owner, a.id as id, a.model as model, name, capacity, quality, ascent_burn, cruise_burn, speed, fly_range, price, constructed_cycle, purchased_cycle, airplane_condition, a.depreciation_rate, a.value, is_sold, dealer_ratio, configuration, home, purchase_rate, version, economy, business, first, is_default FROM " + AIRPLANE_TABLE + " a LEFT JOIN " + AIRPLANE_MODEL_TABLE + " m ON a.model = m.id LEFT JOIN " + AIRPLANE_CONFIGURATION_TABLE + " c ON c.airplane = a.id LEFT JOIN " + AIRPLANE_CONFIGURATION_TEMPLATE_TABLE + " t ON c.configuration = t.id"
-  
   val allModels = ModelSource.loadAllModels().map(model => (model.id, model)).toMap
-  
+  private[this] val BASE_QUERY = "SELECT owner, a.id as id, a.model as model, name, capacity, quality, ascent_burn, cruise_burn, speed, fly_range, price, constructed_cycle, purchased_cycle, airplane_condition, a.depreciation_rate, a.value, is_sold, dealer_ratio, configuration, home, purchase_rate, version, economy, business, first, is_default FROM " + AIRPLANE_TABLE + " a LEFT JOIN " + AIRPLANE_MODEL_TABLE + " m ON a.model = m.id LEFT JOIN " + AIRPLANE_CONFIGURATION_TABLE + " c ON c.airplane = a.id LEFT JOIN " + AIRPLANE_CONFIGURATION_TEMPLATE_TABLE + " t ON c.configuration = t.id"
+
    
   def loadAirplanesCriteria(criteria : List[(String, Any)]) = {
     var queryString = BASE_QUERY
@@ -31,15 +27,6 @@ object AirplaneSource {
     }
     
     loadAirplanesByQueryString(queryString, criteria.map(_._2))
-  }
-  
-  def loadConstructingAirplanes() : List[Airplane] = {
-    val queryString = BASE_QUERY + " WHERE constructed_cycle > ?"
-    loadAirplanesByQueryString(queryString, List(CycleSource.loadCycle()))
-  }
-  
-  def loadUsedAirplanes(): List[Airplane] = {
-    loadAirplanesCriteria(List(("is_sold", true)))
   }
   
   def loadAirplanesByQueryString(queryString : String, parameters : List[Any]) = {
@@ -350,9 +337,7 @@ object AirplaneSource {
    */
    def updateAirplanesDetails(airplanes : List[Airplane], versionCheck : Boolean = false) : List[Airplane] = {
     val connection = Meta.getConnection()
-    var updateCount = 0
      val updatedAirplanes = ListBuffer[Airplane]()
-
       
     try {
       connection.setAutoCommit(false)
@@ -529,6 +514,111 @@ object AirplaneSource {
 
   }
 
+  /**
+    * Efficiently counts airplanes per model ID using SQL GROUP BY.
+    *
+    * @return Map of modelId -> count
+    */
+  def loadAirplaneModelCounts(): Map[Int, Int] = {
+    val connection = Meta.getConnection()
+    val query = s"SELECT model, COUNT(*) AS cnt FROM $AIRPLANE_TABLE GROUP BY model"
+    val preparedStatement = connection.prepareStatement(query)
+
+    try {
+      val resultSet = preparedStatement.executeQuery()
+      val counts = new mutable.HashMap[Int, Int]()
+      while (resultSet.next()) {
+        counts.put(resultSet.getInt("model"), resultSet.getInt("cnt"))
+      }
+      resultSet.close()
+      counts.toMap
+    } finally {
+      preparedStatement.close()
+      connection.close()
+    }
+  }
+
+  /**
+    * Efficiently swap airplane models in a batch operation.
+    * Deletes old airplanes and inserts new ones in a single transaction.
+    *
+    * @param airplaneIdsToDelete List of airplane IDs to delete (the old model airplanes)
+    * @param newAirplanesToCreate List of new Airplane objects to insert
+    * @return Tuple of (deleteCount, insertCount)
+    */
+  def swapAirplanesBatch(airplaneIdsToDelete: List[Int], newAirplanesToCreate: List[Airplane]): (Int, Int) = {
+    val connection = Meta.getConnection()
+    var deleteCount = 0
+    var insertCount = 0
+
+    try {
+      connection.setAutoCommit(false)
+
+      // Delete old airplanes
+      if (airplaneIdsToDelete.nonEmpty) {
+        val idsString = airplaneIdsToDelete.mkString(",")
+        val deleteQuery = s"DELETE FROM $AIRPLANE_TABLE WHERE id IN ($idsString)"
+        val deleteStatement = connection.prepareStatement(deleteQuery)
+        deleteCount = deleteStatement.executeUpdate()
+        deleteStatement.close()
+      }
+
+      // Insert new airplanes
+      if (newAirplanesToCreate.nonEmpty) {
+        val insertStatement = connection.prepareStatement(
+          "INSERT INTO " + AIRPLANE_TABLE + 
+          "(owner, model, constructed_cycle, purchased_cycle, airplane_condition, depreciation_rate, value, is_sold, dealer_ratio, home, purchase_rate, version) " +
+          "VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
+          Statement.RETURN_GENERATED_KEYS
+        )
+        val configurationStatement = connection.prepareStatement(
+          "REPLACE INTO " + AIRPLANE_CONFIGURATION_TABLE + "(airplane, configuration) VALUES(?,?)"
+        )
+
+        newAirplanesToCreate.foreach { airplane =>
+          insertStatement.setInt(1, airplane.owner.id)
+          insertStatement.setInt(2, airplane.model.id)
+          insertStatement.setInt(3, airplane.constructedCycle)
+          insertStatement.setInt(4, airplane.purchasedCycle)
+          insertStatement.setDouble(5, airplane.condition)
+          insertStatement.setInt(6, airplane.depreciationRate)
+          insertStatement.setInt(7, airplane.value)
+          insertStatement.setBoolean(8, airplane.isSold)
+          insertStatement.setDouble(9, airplane.dealerRatio)
+          insertStatement.setInt(10, airplane.home.id)
+          insertStatement.setDouble(11, airplane.purchaseRate)
+          insertStatement.setInt(12, airplane.version)
+          insertCount += insertStatement.executeUpdate()
+
+          val generatedKeys = insertStatement.getGeneratedKeys
+          if (generatedKeys.next()) {
+            val generatedId = generatedKeys.getInt(1)
+            airplane.id = generatedId
+
+            if (airplane.configuration.id != 0) {
+              configurationStatement.setInt(1, airplane.id)
+              configurationStatement.setInt(2, airplane.configuration.id)
+              configurationStatement.executeUpdate()
+            }
+          }
+        }
+
+        insertStatement.close()
+        configurationStatement.close()
+      }
+
+      connection.commit()
+
+      // Invalidate cache for affected airlines
+      (airplaneIdsToDelete ++ newAirplanesToCreate.map(_.owner.id)).distinct.foreach { airlineId =>
+        AirplaneOwnershipCache.invalidate(airlineId)
+      }
+
+      (deleteCount, insertCount)
+    } finally {
+      connection.close()
+    }
+  }
   
   object DetailType extends Enumeration {
     val LINK = Value

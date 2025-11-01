@@ -1,10 +1,8 @@
 package com.patson.data
 
 import java.sql.Connection
-import java.sql.Statement
 import com.patson.data.Constants._
 import com.patson.model._
-import com.patson.util.{AirlineCache}
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
@@ -13,8 +11,7 @@ import scala.collection.mutable.ListBuffer
 object AirlineStatisticsSource {
 
   def saveAirlineStats(stats: List[AirlineStat]) = {
-    //could add total? pax km?
-    val queryString = s"REPLACE INTO $AIRLINE_STATISTICS_TABLE (airline, cycle, tourists, elites, business, total) VALUES(?,?,?,?,?,?)";
+    val queryString = s"REPLACE INTO $AIRLINE_STATISTICS_TABLE (airline, cycle, period, tourists, elites, business, total, codeshares, rask, cask, satisfaction, load_factor, on_time, cash_on_hand, eps, link_count, rep_total, rep_leaderboards) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
     val connection = Meta.getConnection()
     try {
       connection.setAutoCommit(false)
@@ -22,10 +19,22 @@ object AirlineStatisticsSource {
       stats.foreach { entry =>
         preparedStatement.setInt(1, entry.airlineId)
         preparedStatement.setInt(2, entry.cycle)
-        preparedStatement.setInt(3, entry.tourists)
-        preparedStatement.setInt(4, entry.elites)
-        preparedStatement.setInt(5, entry.business)
-        preparedStatement.setInt(6, entry.total)
+        preparedStatement.setInt(3, entry.period.id)
+        preparedStatement.setInt(4, entry.tourists)
+        preparedStatement.setInt(5, entry.elites)
+        preparedStatement.setInt(6, entry.business)
+        preparedStatement.setInt(7, entry.total)
+        preparedStatement.setInt(8, entry.codeshares)
+        preparedStatement.setDouble(9, entry.RASK)
+        preparedStatement.setDouble(10, entry.CASK)
+        preparedStatement.setDouble(11, BigDecimal(entry.satisfaction).setScale(4, BigDecimal.RoundingMode.HALF_UP).toDouble)
+        preparedStatement.setDouble(12, BigDecimal(entry.loadFactor).setScale(4, BigDecimal.RoundingMode.HALF_UP).toDouble)
+        preparedStatement.setDouble(13, BigDecimal(entry.onTime).setScale(4, BigDecimal.RoundingMode.HALF_UP).toDouble)
+        preparedStatement.setInt(14, entry.cashOnHand)
+        preparedStatement.setDouble(15, BigDecimal(entry.eps).setScale(4, BigDecimal.RoundingMode.HALF_UP).toDouble)
+        preparedStatement.setInt(16, entry.linkCount)
+        preparedStatement.setInt(17, entry.repTotal)
+        preparedStatement.setInt(18, entry.repLeaderboards)
         preparedStatement.executeUpdate()
       }
       preparedStatement.close()
@@ -35,38 +44,19 @@ object AirlineStatisticsSource {
     }
   }
 
-  def saveAirlineStat(stat: AirlineStat) = {
-    val queryString = s"REPLACE INTO $AIRLINE_STATISTICS_TABLE (airline, cycle, tourists, elites, business, total) VALUES(?,?,?,?,?,?)";
+  def deleteStatsBefore(cycleAndBefore : Int, period : Period.Value): Unit = {
     val connection = Meta.getConnection()
     try {
       connection.setAutoCommit(false)
-      val preparedStatement = connection.prepareStatement(queryString)
-      preparedStatement.setInt(1, stat.airlineId)
-      preparedStatement.setInt(2, stat.cycle)
-      preparedStatement.setInt(3, stat.tourists)
-      preparedStatement.setInt(4, stat.elites)
-      preparedStatement.setInt(5, stat.business)
-      preparedStatement.setInt(6, stat.total)
-      preparedStatement.executeUpdate()
-      preparedStatement.close()
+      var deleteStatement = connection.prepareStatement("DELETE FROM " + AIRLINE_STATISTICS_TABLE + " WHERE cycle <= ? AND period = ?")
+      deleteStatement.setInt(1, cycleAndBefore)
+      deleteStatement.setInt(2, period.id)
+      deleteStatement.executeUpdate()
+
+      deleteStatement.close()
       connection.commit()
     } finally {
       connection.close()
-    }
-  }
-
-  def deleteAirlineStatsBeforeCycle(cycleCutoff : Int) = {
-    if(cycleCutoff >= 0 ){
-      val queryString = s"DELETE FROM $AIRLINE_STATISTICS_TABLE WHERE cycle < ?";
-      val connection = Meta.getConnection()
-      try {
-        val preparedStatement = connection.prepareStatement(queryString)
-        preparedStatement.setInt(1, cycleCutoff)
-        preparedStatement.executeUpdate()
-        preparedStatement.close()
-      } finally {
-        connection.close()
-      }
     }
   }
 
@@ -96,11 +86,23 @@ object AirlineStatisticsSource {
         while (resultSet.next()) {
           val airlineId = resultSet.getInt("airline")
           val cycle = resultSet.getInt("cycle")
+          val period = Period(resultSet.getInt("period"))
           val tourists = resultSet.getInt("tourists")
           val elites = resultSet.getInt("elites")
           val business = resultSet.getInt("business")
           val total = resultSet.getInt("total")
-          airlineStats += AirlineStat(airlineId, cycle, tourists, elites, business, total)
+          val codeshares = resultSet.getInt("codeshares")
+          val rask = resultSet.getDouble("rask")
+          val cask = resultSet.getDouble("cask")
+          val satisfaction = resultSet.getDouble("satisfaction")
+          val loadFactor = resultSet.getDouble("load_factor")
+          val onTime = resultSet.getDouble("on_time")
+          val cashOnHand = resultSet.getInt("cash_on_hand")
+          val eps = resultSet.getDouble("eps")
+          val linkCount = resultSet.getInt("link_count")
+          val repTotal = resultSet.getInt("rep_total")
+          val repLeaderboards = resultSet.getInt("rep_leaderboards")
+          airlineStats += AirlineStat(airlineId, cycle, period, tourists, elites, business, total, codeshares, rask, cask, satisfaction, loadFactor, onTime, cashOnHand, eps, linkCount, repTotal, repLeaderboards)
         }
 
         airlineStats.toList
@@ -112,11 +114,7 @@ object AirlineStatisticsSource {
 
   def loadAirlineStat(airlineId: Int, cycle: Int): Option[AirlineStat] = {
     val airlineStats = loadAirlineStatsByCriteria(List(("airline", airlineId), ("cycle", cycle)))
-    if (airlineStats.length > 0) {
-      Some(airlineStats(0))
-    } else {
-      None
-    }
+    airlineStats.headOption
   }
 
   def loadAirlineStats(airlineId: Int): List[AirlineStat] = {
@@ -137,12 +135,23 @@ object AirlineStatisticsSource {
       while (resultSet.next()) {
         val airlineId = resultSet.getInt("airline")
         val cycle = resultSet.getInt("cycle")
+        val period = Period(resultSet.getInt("period"))
         val tourists = resultSet.getInt("tourists")
         val elites = resultSet.getInt("elites")
         val business = resultSet.getInt("business")
         val total = resultSet.getInt("total")
-
-        airlineStats += AirlineStat(airlineId, cycle, tourists, elites, business, total)
+        val codeshares = resultSet.getInt("codeshares")
+        val rask = resultSet.getDouble("rask")
+        val cask = resultSet.getDouble("cask")
+        val satisfaction = resultSet.getDouble("satisfaction")
+        val loadFactor = resultSet.getDouble("load_factor")
+        val onTime = resultSet.getDouble("on_time")
+        val cashOnHand = resultSet.getInt("cash_on_hand")
+        val eps = resultSet.getDouble("eps")
+        val linkCount = resultSet.getInt("link_count")
+        val repTotal = resultSet.getInt("rep_total")
+        val repLeaderboards = resultSet.getInt("rep_leaderboards")
+        airlineStats += AirlineStat(airlineId, cycle, period, tourists, elites, business, total, codeshares, rask, cask, satisfaction, loadFactor, onTime, cashOnHand, eps, linkCount, repTotal, repLeaderboards)
       }
 
       airlineStats.toList

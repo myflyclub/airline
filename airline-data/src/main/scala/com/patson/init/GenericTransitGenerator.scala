@@ -205,12 +205,15 @@ object GenericTransitGenerator {
     "KGO" -> "SGC",
     "NJC" -> "KGP",
     "BAX" -> "OVB",
-    "PMR" -> "WLG"
+    "PMR" -> "WLG",
+    "AKL" -> "HLZ",
+    "AKL" -> "WRE",
+    "KKE" -> "WRE"
   )
 
   def main(args : Array[String]) : Unit = {
-//    generateGenericTransit()
     LinkSource.deleteLinksByCriteria(List(("transport_type", TransportType.GENERIC_TRANSIT.id)))
+    generateGenericTransit()
     Await.result(actorSystem.terminate(), Duration.Inf)
   }
 
@@ -218,7 +221,7 @@ object GenericTransitGenerator {
     val airports = AirportSource.loadAllAirports(true)
       .filter(_.population >= 500)
       .filter(_.runwayLength >= 500)
-      .sortBy { _.power }.reverse
+      .sortBy { _.basePopMiddleIncome }.reverse
 
     var counter = 0
     var progressCount = 0
@@ -234,11 +237,10 @@ object GenericTransitGenerator {
     for (airport <- airports) {
       val range = {
         if (List("CDG", "IST", "ATL", "DEN", "DFW", "ORD", "SFO", "NRT", "PEK", "ICN", "PVG", "SYD").contains(airport.iata)) 240
-        else if (List("MEX", "BLR", "HYD", "BOM", "MUC", "TFU", "YYZ", "YVR", "YYC", "YUL", "LAS", "BOS", "SEA", "PHX", "MSP", "FCO", "NCE", "FRA", "ARN", "LHR", "MAN", "MXP", "WAW").contains(airport.iata)) 160
+        else if (List("MEX", "BLR", "HYD", "BOM", "MUC", "TFU", "YYZ", "YVR", "YYC", "YUL", "LAS", "BOS", "SEA", "PHX", "MSP", "FCO", "NCE", "BCN", "FRA", "ARN", "LHR", "MAN", "MXP", "WAW").contains(airport.iata)) 160
         else if (airport.size >= 6) 105
         else 65
       }
-      if (airport.size >= 7) 120 else 65
       val boundaryLongitude = calculateLongitudeBoundary(airport.latitude, airport.longitude, range)
       val airportsInRange = scala.collection.mutable.ListBuffer[(Airport, Double)]()
       
@@ -254,7 +256,7 @@ object GenericTransitGenerator {
               targetAirport.popMiddleIncome > 2500 &&
               airport.longitude >= boundaryLongitude._1 &&
               airport.longitude <= boundaryLongitude._2 &&
-              countryRelationships.getOrElse((airport.countryCode, targetAirport.countryCode), 0) >= 2
+              airport.countryCode == targetAirport.countryCode
           )) {
             val distance = Util.calculateDistance(airport.latitude, airport.longitude, 
                                                targetAirport.latitude, targetAirport.longitude).toInt

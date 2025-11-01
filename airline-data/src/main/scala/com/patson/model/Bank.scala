@@ -30,10 +30,9 @@ object Bank {
       }
     }
     
-    //base on previous month
-    val previousMonthCycle = currentCycle - currentCycle % 4 - 1
+    val previousMonthCycle = currentCycle - currentCycle % Period.numberWeeks(Period.QUARTER) - 1
     
-    val creditFromProfit : Option[Long] = IncomeSource.loadIncomeByAirline(airlineId, previousMonthCycle, Period.MONTHLY).map(_.links.profit * 13 * 2)  //2 * yearly link profit
+    val creditFromProfit : Option[Long] = IncomeSource.loadIncomeByAirline(airlineId, previousMonthCycle, Period.QUARTER).map(_.links.profit * 6 * 2)  //1.5 * yearly link profit * 2
     
     val totalAssets = Computation.getResetAmount(airlineId).overall
     val creditFromAssets = (totalAssets * 0.2).toLong //offer 20% of the assets as credit
@@ -54,7 +53,7 @@ object Bank {
     val currentCycle = CycleSource.loadCycle()
     BankSource.loadLoanInterestRateByCycle(currentCycle) match {
       case Some(currentRate) =>
-        getLoanOptions(principal, currentRate.annualRate.toDouble, currentCycle)
+        getLoanOptions(principal, currentRate, currentCycle)
       case None =>
         List.empty[Loan]
     }

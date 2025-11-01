@@ -7,7 +7,7 @@ import com.patson.data.Meta
  */
 object MainInit extends App {
   Meta.createSchema()
-  GeoDataGenerator.mainFlow()
+  GeoDataGenerator.main()
   AirplaneModelInitializer.populateAirplaneModels()
   GenericTransitGenerator.generateGenericTransit()
   AirlineGenerator.mainFlow()

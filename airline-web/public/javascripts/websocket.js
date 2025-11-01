@@ -51,11 +51,9 @@ function onMessage(evt) { //right now the message is just the cycle #, so refres
 	
 	if (json.messageType == "cycleInfo") { //update time
 		updateTime(json.cycle, json.fraction, json.cycleDurationEstimation)
-//	} else if (json.messageType == "cycleStart") { //update time
-//		updateTime(json.cycle, 0)
 	} else if (json.messageType == "cycleCompleted") {
 		if (selectedAirlineId) {
-			refreshPanels(selectedAirlineId)
+			updateAllPanels(selectedAirlineId)
 		}
 	} else if (json.messageType == "broadcastMessage") {
         queuePrompt("broadcastMessagePopup", json.message)

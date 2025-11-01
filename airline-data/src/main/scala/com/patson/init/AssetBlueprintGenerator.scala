@@ -14,7 +14,7 @@ object AssetBlueprintGenerator {
   val assetTypesByGroup : Map[GenerationGroup.Value, AirportAssetType.ValueSet] = AirportAssetType.values.groupBy(GenerationGroup.getGenerationGroup(_))
 
   def main(args : Array[String]) : Unit = {
-    val airports = AirportSource.loadAllAirports(true, true).sortBy(_.power).reverse
+    val airports = AirportSource.loadAllAirports(true, true).sortBy(_.basePopMiddleIncome).reverse
     patchMissingAssets(airports)
     Await.result(actorSystem.terminate(), Duration.Inf)
   }

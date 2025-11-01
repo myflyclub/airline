@@ -9,6 +9,8 @@ import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.testkit.ImplicitSender
 import org.apache.pekko.testkit.TestKit
 
+import java.util.concurrent.ThreadLocalRandom
+import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
  
 class LinkSimulationSpec(_system: ActorSystem) extends TestKit(_system) with ImplicitSender
@@ -34,9 +36,9 @@ class LinkSimulationSpec(_system: ActorSystem) extends TestKit(_system) with Imp
   val toAirport = Airport.fromId(2).copy(size = 3)
   toAirport.initAirlineBases(List.empty)
   
-  val lightModel = Model.modelByName("Cessna Caravan")
+  val lightModel = Model.modelByName("Cessna 208 Caravan")
   val smallModel = Model.modelByName("ATR 72-600")
-  val regionalModel = Model.modelByName("Airbus A220-100")
+  val regionalModel = Model.modelByName("Embraer E170")
   val mediumModel = Model.modelByName("Airbus A321neo")
   val largeAirplaneModel = Model.modelByName("Boeing 787-8 Dreamliner")
   val extraLargeAirplaneModel = Model.modelByName("Airbus A350-1000")
@@ -53,7 +55,13 @@ class LinkSimulationSpec(_system: ActorSystem) extends TestKit(_system) with Imp
   import Model.Type._
   private val GOOD_PROFIT_MARGIN = Map(PROPELLER_SMALL -> 0.2, SMALL -> 0.2, REGIONAL -> 0.1, MEDIUM -> 0.1, MEDIUM_XL -> 0.1, LARGE -> 0.1, EXTRA_LARGE -> 0.1, JUMBO -> 0.1, SUPERSONIC -> 0.2)
   private val MAX_PROFIT_MARGIN = Map(PROPELLER_SMALL -> 0.4, SMALL -> 0.4, REGIONAL -> 0.3, MEDIUM -> 0.25, MEDIUM_XL -> 0.2, LARGE -> 0.2, EXTRA_LARGE -> 0.2, JUMBO -> 0.2, SUPERSONIC -> 0.5)
-  
+
+  //assume 50% bad weather
+  val airportWeather: Map[Int, Double] = List(
+    fromAirport.id -> 0.5,
+    toAirport.id -> 0.5,
+  ).toMap
+
   "Compute profit".must {
     "More profitable with more frequency flight (max LF)".in {
       val distance = 200
@@ -575,6 +583,109 @@ class LinkSimulationSpec(_system: ActorSystem) extends TestKit(_system) with Imp
     }
   }
 
+  "Simulate link errors".must {
+    "No cancellations and no major delays with condition = 70 and airport congestion = 70".in {
+      val airplane = Airplane(lightModel, testAirline1, 0, purchasedCycle = 0, 70, AirplaneSimulation.computeDepreciationRate(lightModel, Airplane.MAX_CONDITION.toDouble / lightModel.lifespan), lightModel.price)
+      val frequency = 21
+      val distance = 500
+      val duration = Computation.calculateDuration(airplane.model, distance)
+      val capacity = frequency * airplane.model.capacity
+      
+      val price = Pricing.computeStandardPrice(distance, FlightCategory.DOMESTIC, ECONOMY, PassengerType.TRAVELER, Airport.HIGH_INCOME / 2)
+      val link = Link(fromAirport, toAirport, testAirline1, LinkClassValues.getInstanceByMap(Map(ECONOMY -> price)), distance, LinkClassValues.getInstanceByMap(Map(ECONOMY -> capacity)), rawQuality = 0, duration, frequency)
+      link.addSoldSeats(LinkClassValues.getInstanceByMap(Map(ECONOMY -> capacity)))
+      link.setTestingAssignedAirplanes(Map(airplane -> frequency))
+      
+      // Target congestion = 70: use airport stat = 0.75 with weather = 0.5
+      // congestion = 0.75 * 70 + 0.5 * 35 = 52.5 + 17.5 = 70
+      val airportStats = scala.collection.immutable.Map(
+        fromAirport.id -> AirportStatistics(fromAirport.id, 0, 0, 0.75, 0, 0),
+        toAirport.id -> AirportStatistics(toAirport.id, 0, 0, 0.75, 0, 0)
+      )
+      
+      LinkSimulation.simulateLinkError(List(link), airportStats, airportWeather)
+      
+      println(s"Test 1 - Condition 70, Congestion 70: Minor=${link.minorDelayCount}, Major=${link.majorDelayCount}, Cancellations=${link.cancellationCount}")
+      link.majorDelayCount.should(equal(0))
+      link.cancellationCount.should(equal(0))
+    }
+
+    "At least 1 major delay with condition = 70 and airport congestion = 80".in {
+      val airplane = Airplane(lightModel, testAirline1, 0, purchasedCycle = 0, 70, AirplaneSimulation.computeDepreciationRate(lightModel, Airplane.MAX_CONDITION.toDouble / lightModel.lifespan), lightModel.price)
+      val frequency = 21
+      val distance = 500
+      val duration = Computation.calculateDuration(airplane.model, distance)
+      val capacity = frequency * airplane.model.capacity
+      
+      val price = Pricing.computeStandardPrice(distance, FlightCategory.DOMESTIC, ECONOMY, PassengerType.TRAVELER, Airport.HIGH_INCOME / 2)
+      val link = Link(fromAirport, toAirport, testAirline1, LinkClassValues.getInstanceByMap(Map(ECONOMY -> price)), distance, LinkClassValues.getInstanceByMap(Map(ECONOMY -> capacity)), rawQuality = 0, duration, frequency)
+      link.addSoldSeats(LinkClassValues.getInstanceByMap(Map(ECONOMY -> capacity)))
+      link.setTestingAssignedAirplanes(Map(airplane -> frequency))
+      
+      // Target congestion = 80: use airport stat ≈ 0.893 with weather = 0.5
+      // congestion = 0.893 * 70 + 0.5 * 35 = 62.51 + 17.5 = 80.01
+      val airportStats = scala.collection.immutable.Map(
+        fromAirport.id -> AirportStatistics(fromAirport.id, 0, 0, 0.893, 0, 0),
+        toAirport.id -> AirportStatistics(toAirport.id, 0, 0, 0.893, 0, 0)
+      )
+      
+      LinkSimulation.simulateLinkError(List(link), airportStats, airportWeather)
+      
+      println(s"Test 2 - Condition 70, Congestion 80: Minor=${link.minorDelayCount}, Major=${link.majorDelayCount}, Cancellations=${link.cancellationCount}")
+      link.majorDelayCount.should(be >= 1)
+    }
+
+    "At least 1 major delay or cancellation with condition = 50 and airport congestion = 70".in {
+      val airplane = Airplane(lightModel, testAirline1, 0, purchasedCycle = 0, 50, AirplaneSimulation.computeDepreciationRate(lightModel, Airplane.MAX_CONDITION.toDouble / lightModel.lifespan), lightModel.price)
+      val frequency = 21
+      val distance = 500
+      val duration = Computation.calculateDuration(airplane.model, distance)
+      val capacity = frequency * airplane.model.capacity
+      
+      val price = Pricing.computeStandardPrice(distance, FlightCategory.DOMESTIC, ECONOMY, PassengerType.TRAVELER, Airport.HIGH_INCOME / 2)
+      val link = Link(fromAirport, toAirport, testAirline1, LinkClassValues.getInstanceByMap(Map(ECONOMY -> price)), distance, LinkClassValues.getInstanceByMap(Map(ECONOMY -> capacity)), rawQuality = 0, duration, frequency)
+      link.addSoldSeats(LinkClassValues.getInstanceByMap(Map(ECONOMY -> capacity)))
+      link.setTestingAssignedAirplanes(Map(airplane -> frequency))
+      
+      // Target congestion = 70: use airport stat = 0.75 with weather = 0.5
+      // congestion = 0.75 * 70 + 0.5 * 35 = 52.5 + 17.5 = 70
+      val airportStats = scala.collection.immutable.Map(
+        fromAirport.id -> AirportStatistics(fromAirport.id, 0, 0, 0.8, 0, 0),
+        toAirport.id -> AirportStatistics(toAirport.id, 0, 0, 0.8, 0, 0)
+      )
+      
+      LinkSimulation.simulateLinkError(List(link), airportStats, airportWeather)
+      
+      println(s"Test 3 - Condition 50, Congestion 70: Minor=${link.minorDelayCount}, Major=${link.majorDelayCount}, Cancellations=${link.cancellationCount}")
+      val majorCancel = link.majorDelayCount + link.cancellationCount
+      majorCancel.should(be >= 1)
+    }
+
+    "At least 1 cancellation with condition = 30 and airport congestion = 100".in {
+      val airplane = Airplane(lightModel, testAirline1, 0, purchasedCycle = 0, 30, AirplaneSimulation.computeDepreciationRate(lightModel, Airplane.MAX_CONDITION.toDouble / lightModel.lifespan), lightModel.price)
+      val frequency = 21
+      val distance = 500
+      val duration = Computation.calculateDuration(airplane.model, distance)
+      val capacity = frequency * airplane.model.capacity
+      
+      val price = Pricing.computeStandardPrice(distance, FlightCategory.DOMESTIC, ECONOMY, PassengerType.TRAVELER, Airport.HIGH_INCOME / 2)
+      val link = Link(fromAirport, toAirport, testAirline1, LinkClassValues.getInstanceByMap(Map(ECONOMY -> price)), distance, LinkClassValues.getInstanceByMap(Map(ECONOMY -> capacity)), rawQuality = 0, duration, frequency)
+      link.addSoldSeats(LinkClassValues.getInstanceByMap(Map(ECONOMY -> capacity)))
+      link.setTestingAssignedAirplanes(Map(airplane -> frequency))
+      
+      // Target congestion = 100: use airport stat ≈ 1.179 with weather = 0.5
+      // congestion = 1.179 * 70 + 0.5 * 35 = 82.53 + 17.5 = 100.03
+      val airportStats = scala.collection.immutable.Map(
+        fromAirport.id -> AirportStatistics(fromAirport.id, 0, 0, 1.179, 0, 0),
+        toAirport.id -> AirportStatistics(toAirport.id, 0, 0, 1.179, 0, 0)
+      )
+      
+      LinkSimulation.simulateLinkError(List(link), airportStats, airportWeather)
+      
+      println(s"Test 4 - Condition 30, Congestion 100: Minor=${link.minorDelayCount}, Major=${link.majorDelayCount}, Cancellations=${link.cancellationCount}")
+      link.cancellationCount.should(be >= 1)
+    }
+  }
 
   
   def getProfitMargin(consumptionResult : LinkConsumptionDetails) = consumptionResult.profit.toDouble / consumptionResult.revenue.toDouble
@@ -629,7 +740,6 @@ class LinkSimulationSpec(_system: ActorSystem) extends TestKit(_system) with Imp
   def verifyInDescendingOrder(numbers : List[Double]) = {
     assert(numbers.sorted(Ordering[Double].reverse) == numbers)
   }
-  
   
 }
 

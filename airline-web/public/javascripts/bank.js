@@ -16,7 +16,7 @@ function loadInterestRateChart() {
 	    contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
 	    success: function(oilPrices) {
-	    	plotLoanInterestRatesChart(oilPrices, $("#bankCanvas #loanInterestRateChart"))
+	    	plotLoanInterestRatesChart(oilPrices, "loanInterestRateChart")
 	    },
         error: function(jqXHR, textStatus, errorThrown) {
 	            console.log(JSON.stringify(jqXHR));

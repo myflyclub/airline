@@ -43,6 +43,13 @@ object AirlineCache {
     simpleCache.invalidateAll()
   }
 
+  def getCacheStats: String = {
+    val detailedStats = detailedCache.stats()
+    val simpleStats = simpleCache.stats()
+    s"Detailed cache - Size: ${detailedCache.size()}, Hit rate: ${detailedStats.hitRate()}, Evictions: ${detailedStats.evictionCount()}; " +
+    s"Simple cache - Size: ${simpleCache.size()}, Hit rate: ${simpleStats.hitRate()}, Evictions: ${simpleStats.evictionCount()}"
+  }
+
   class DetailedLoader extends CacheLoader[Int, Option[Airline]] {
     override def load(airlineId: Int) = {
       AirlineSource.loadAirlineById(airlineId, true)
@@ -69,6 +76,3 @@ object AirlineCache {
 
 
 }
-
-
-

@@ -1,18 +1,11 @@
 package com.patson.init
 
-import java.nio.file.Paths
-import org.apache.pekko.NotUsed
-
 import scala.concurrent.Future
 import scala.util.{Failure, Random, Success}
-import org.apache.pekko.actor.ActorSystem
-import org.apache.pekko.stream.IOResult
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
-import scala.sys.process.ProcessImpl
 import scala.io.Source
-import org.apache.pekko.util.ByteString
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.Await
@@ -39,7 +32,7 @@ object GeoDataGenerator extends App {
       "AU"
 //    } else if (List("NU", "CK").contains(countryCode)) {
 //      "NZ"
-    } else if (List("PM", "WF", "GF", "GP", "MF", "MQ", "PM", "BL", "RE", "NC", "PF").contains(countryCode)) {
+    } else if (List("PM", "WF", "GF", "GP", "MF", "MQ", "PM", "BL", "RE", "NC", "PF", "MC", "YT").contains(countryCode)) {
       "FR"
     } else if (List("BQ").contains(countryCode)) {
       "NL"
@@ -54,9 +47,7 @@ object GeoDataGenerator extends App {
     }
   }
 
-  mainFlow
-
-  def mainFlow() {
+  def main() {
     val cities = AdditionalLoader.loadAdditionalCities()
 
     //make sure cities are saved first as we need the id for airport info
@@ -93,7 +84,6 @@ object GeoDataGenerator extends App {
             token
           }
         }
-
 
         val lighted = info(6) == "1"
 
@@ -143,7 +133,7 @@ object GeoDataGenerator extends App {
               patchRunways.foreach { patchRunway =>
                 list.find(_.code.equals(patchRunway.code)) match {
                   case Some(duplicate) =>
-                    println(s"Skipping patch runways for $iata as same code for runway $duplicate is already found for $patchRunway!")
+//                    println(s"Skipping patch runways for $iata as same code for runway $duplicate is already found for $patchRunway!")
                   case None =>
                     list += patchRunway
                 }
@@ -162,6 +152,9 @@ object GeoDataGenerator extends App {
 
   def getAirport() : Future[List[CsvAirport]] = {
     Future {
+      val airportCityMap: Map[String, String] = scala.io.Source.fromFile("fcairports.csv").getLines().map(_.split(",", -1)).map { tokens =>
+        (tokens(4), tokens(3))
+      }.toMap
       val airportNameOverrideMap: Map[String, String] = scala.io.Source.fromFile("airport-name-override.csv").getLines().map(_.split(",", -1)).map { tokens =>
         (tokens(1), tokens(4))
       }.toMap
@@ -170,10 +163,10 @@ object GeoDataGenerator extends App {
       val airportZoneList = scala.io.Source.fromFile("affinity-patch-list.csv").getLines().map(_.split(",", -1)).map { tokens =>
           (tokens(0),tokens(1))
         }.toList
-//      println(airportZoneList)
-      println("setting zones via country-data-2022.csv")
+
+      println("setting zones via country-data.csv")
       //csv = country-code,country-name,openness,gini,nominal-to-real-conversion-ratio,(5)zone,group1,lang1,group2,lang2,lang3
-      val countryZoneMap = scala.io.Source.fromFile("country-data-2022.csv").getLines().map(_.split(",", -1)).map { tokens =>
+      val countryZoneMap = scala.io.Source.fromFile("country-data.csv").getLines().map(_.split(",", -1)).map { tokens =>
         val innerString = List(
           if (tokens(5).isEmpty) "" else tokens(5),
           if (tokens(6).isEmpty) "" else tokens(6),
@@ -195,10 +188,11 @@ object GeoDataGenerator extends App {
         }
 
         val airportZones = airportZoneList.filter(_._1 == info(13)).map(zone => s"-${zone._2}")
-//        val updatedInnerString = if (airportZones.isEmpty) innerString else innerString + airportZones.mkString
         val zone = countryZoneMap.getOrElse(info(8), info(7)) + airportZones.mkString
 
-        val airportName = airportNameOverrideMap.getOrElse(info(8), info(3))
+        val iata = info(13)
+        val airportName = airportNameOverrideMap.getOrElse(iata, info(3))
+        val cityName = airportCityMap.getOrElse(iata, info(10))
 
         val airportSize =
           info(2) match {
@@ -210,7 +204,7 @@ object GeoDataGenerator extends App {
           }
 
         //0 - csvId, 2 - size, 3 - name, 4 - lat, 5 - long, 7 - zone, 8 - country, 10 - city, 11 - scheduled service, 12 - code1, 13- code2
-        result += CsvAirport(airport = new Airport(info(13), info(12), airportName, info(4).toDouble, info(5).toDouble, countryCodeConvert(info(8)), info(10), zone, airportSize, 0, 0, 0, 0, 0),
+        result += CsvAirport(airport = new Airport(iata, info(12), airportName, info(4).toDouble, info(5).toDouble, countryCodeConvert(info(8)), cityName, zone, airportSize, 0, 0, 0, 0, 0),
           csvAirportId = info(0).toInt, scheduledService = "yes".equals(info(11)))
       }
       result.toList
@@ -227,11 +221,13 @@ object GeoDataGenerator extends App {
     println(rawAirportResult.size + " airports")
     println(runwayResult.size + " solid runways")
     println(citites.size + " cities")
-    val airports = generateAirportData(rawAirportResult, runwayResult, citites)
-
+    val (airports, cityAirportRelationships) = generateAirportData(rawAirportResult, runwayResult, citites)
 
     AirportSource.deleteAllAirports()
     AirportSource.saveAirports(airports)
+    AirportSource.saveCityAirportRelationships(cityAirportRelationships)
+    
+    saveAirportRunways(rawAirportResult, runwayResult, airports)
 
     //patch features
     DestinationsPatcher.loadDestinations()
@@ -243,17 +239,17 @@ object GeoDataGenerator extends App {
 
 
 
-  def generateAirportData(rawAirportResult : List[CsvAirport], runwayResult : Map[Int, List[Runway]], cities : List[City]) : List[Airport] = {
+  def generateAirportData(rawAirportResult : List[CsvAirport], runwayResult : Map[Int, List[Runway]], cities : List[City]) : (List[Airport], Map[Int, List[(City, Double)]]) = {
     val removalAirportIatas = AdditionalLoader.loadRemovalAirportIatas()
 
-    println(s"Removal iatas")
-    removalAirportIatas.foreach(println)
+    println(s">> ${removalAirportIatas.size} removal iatas")
+//    removalAirportIatas.foreach(println)
 
     setAirportRunwayDetails(rawAirportResult, runwayResult)
 
     var airportResult = adjustAirportByRunway(rawAirportResult.filter { case(CsvAirport(airport, _, scheduledService)) =>
       airport.iata != "" && scheduledService && airport.size > 0 && !removalAirportIatas.contains(airport.iata)
-    }, runwayResult) //
+    }, runwayResult)
 
     airportResult = adjustAirportSize(airportResult)
 
@@ -261,11 +257,14 @@ object GeoDataGenerator extends App {
 
     airportResult = airportResult ++ additionalAirports
 
+    println(s"Sorting cities to airports!")
     val airportsSortedByLongitude = airportResult.sortBy(_.longitude)
     val citiesSortedByLongitude = cities.sortBy(_.longitude)
 
     var counter = 0;
     var progressCount = 0;
+
+    val airportCityRelationships = mutable.Map[String, ListBuffer[(City, Double)]]()
 
     for (city <- citiesSortedByLongitude) {
       //calculate max and min longitude that we should kick off the calculation
@@ -284,7 +283,9 @@ object GeoDataGenerator extends App {
       }
 
       if (potentialAirports.size == 1) {
-        potentialAirports(0)._1.addCityServed(city, 1)
+        val airport = potentialAirports.head._1
+        val relationships = airportCityRelationships.getOrElseUpdate(airport.iata, ListBuffer[(City, Double)]())
+        relationships += ((city, 1.0))
       } else if (potentialAirports.size > 1) {
 
         val dominateAirportSize : Int = potentialAirports.filter(_._2 <= 125).map(_._1).reduceLeftOption { (largestAirport, airport) =>
@@ -297,14 +298,16 @@ object GeoDataGenerator extends App {
 
         val airportWeights = validAirports.foldRight(List[(Airport, Int)]()) {
           case (Tuple2(airport, distance), airportWeightList) =>
-            val thisAirportWeight = (if (distance <= 25) 40 else if (distance <= 50) 25 else if (distance <= 100) 12 else if (distance <= 200) 2 else 1) * airport.size * airport.size
+            val thisAirportWeight = (if (distance <= 25) 250 else if (distance <= 50) 125 else if (distance <= 100) 50 else if (distance <= 200) 4 else 1) * airport.size * airport.size
             (airport, thisAirportWeight) :: airportWeightList
         }.sortBy(_._2).takeRight(3) //take the largest 3
 
         val totalWeight = airportWeights.foldRight(0)(_._2 + _)
 
         airportWeights.foreach {
-          case Tuple2(airport, weight) => airport.addCityServed(city, weight.toDouble / totalWeight)
+          case Tuple2(airport, weight) =>
+            val relationships = airportCityRelationships.getOrElseUpdate(airport.iata, ListBuffer[(City, Double)]())
+            relationships += ((city, weight.toDouble / totalWeight))
         }
       }
 
@@ -319,41 +322,52 @@ object GeoDataGenerator extends App {
       }
     }
 
+    println("Added all cities!")
+    val airportByIata = airportResult.groupBy(_.iata)
+    val cityAirportRelationships = airportCityRelationships.flatMap {
+      case (iata, relationships) =>
+        airportByIata.get(iata).map(airports => (airports.head.id, relationships.toList))
+    }.toMap
+
     println()
     //country-code,country-name,openness,gini,nominal-to-real-conversion-ratio,zone,group1,group2,lang1,lang2,lang3
-    println("loading country-data-2022.csv")
+    println("loading country-data.csv")
 
-    val nominalToRealRatioMap = scala.io.Source.fromFile("country-data-2022.csv").getLines().map(_.split(",", -1)).map { tokens =>
+    val nominalToRealRatioMap = scala.io.Source.fromFile("country-data.csv").getLines().map(_.split(",", -1)).map { tokens =>
       (tokens(0), if (tokens(4).isEmpty) 1.1 else tokens(4).toDouble)
     }.toMap
 
-    val giniMap = scala.io.Source.fromFile("country-data-2022.csv").getLines().map(_.split(",", -1)).map { tokens =>
+    val giniMap = scala.io.Source.fromFile("country-data.csv").getLines().map(_.split(",", -1)).map { tokens =>
       (tokens(0), if (tokens(3).isEmpty) 39.0 else tokens(3).toDouble)
     }.toMap
 
     println(s"Calculating incomes with gini: ${giniMap}")
 
-    val popOverrideMap : Map[String, (Int, Int, Int)] = scala.io.Source.fromFile("population_override.csv").getLines().map(_.split(",", -1)).map { tokens =>
-      (tokens(0), (tokens(4).toInt, if (tokens(5).isEmpty) 0 else tokens(5).toInt, tokens(2).toInt))
+    val popOverrideMap: Map[String, (Int, Int, Int)] = scala.io.Source.fromFile("population_override.csv").getLines().map(_.split(",", -1)).map { tokens =>
+      val basePopulation = if (tokens(4).isEmpty) 0 else tokens(4).toInt
+      val elitePopulation = if (tokens(5).isEmpty) 0 else tokens(5).toInt
+      val baseIncome = if (tokens(2).isEmpty) 0 else tokens(2).toInt
+      (tokens(0), (basePopulation, elitePopulation, baseIncome))
     }.toMap
-    println(s"manually set population override ${popOverrideMap}")
+    println(s">>> manually set population override ${popOverrideMap.size}")
 
     val airports = airportResult.map { airport =>
-      val power = airport.citiesServed.foldLeft(0.toLong) {
-        case (foldLong, Tuple2(city, weight)) => foldLong + (city.population.toLong * weight).toLong * city.income
+      val citiesServed = airportCityRelationships.getOrElse(airport.iata, ListBuffer[(City, Double)]())
+      val power = citiesServed.foldLeft(0.toLong) {
+        case (foldLong, (city, weight)) => foldLong + (city.population.toLong * weight).toLong * city.income
       }
-      val population = airport.citiesServed.foldLeft(0.toLong) {
-        case (foldLong, Tuple2(city, weight)) => foldLong + (city.population.toLong * weight).toLong
+      val population = citiesServed.foldLeft(0.toLong) {
+        case (foldLong, (city, weight)) => foldLong + (city.population.toLong * weight).toLong
       }
 
       if (popOverrideMap.contains(airport.iata)) {
-        val airportCopy = airport.copy(baseIncome = popOverrideMap.getOrElse(airport.iata, (0, 0, 0))._3, basePopulation = popOverrideMap.getOrElse(airport.iata, (0, 0, 0))._1, popMiddleIncome = popOverrideMap.getOrElse(airport.iata, (0, 0, 0))._1, popElite = popOverrideMap.getOrElse(airport.iata, (0, 0, 0))._2)
-        airportCopy.setRunways(airport.getRunways())
+        val airportCopy = airport.copy(baseIncome = popOverrideMap.getOrElse(airport.iata, (0, 0, 0))._3, basePopulation = popOverrideMap.getOrElse(airport.iata, (0, 0, 0))._1, basePopMiddleIncome = popOverrideMap.getOrElse(airport.iata, (0, 0, 0))._1, basePopElite = popOverrideMap.getOrElse(airport.iata, (0, 0, 0))._2)
+        // Runway data is now managed separately in the database
         airportCopy
       } else if (population == 0) {
         airport
       } else {
-        val nominalToRealRatio = nominalToRealRatioMap.getOrElse(airport.countryCode, 1.2)
+        val nominalToRealRatio = nominalToRealRatioMap.getOrElse(airport.countryCode, 1.0)
         val normalizedIncome = Math.max(1000, (power / population * nominalToRealRatio).toInt)
         /**
          * Inelegantly adding more inequality here to poor countries (except IN & ZA output is already very high) to create peaks in key cities
@@ -364,12 +378,12 @@ object GeoDataGenerator extends App {
         //https://en.wikipedia.org/wiki/List_of_countries_by_number_of_millionaires
         val underRepresentedCountries = List("ES", "PT", "GB", "FR", "BE", "NL", "LU", "CH", "DE", "AT", "DK", "NO", "SE", "FI", "IT", "GR", "MT", "CA", "CN", "HK", "MO", "TW", "KR", "JP", "MA", "NA", "AE")
         //https://www.henleyglobal.com/publications/wealthiest-cities
-        val nationalCenters = List("ALA","TAS","IKA","KHI","DEL","BOM","PEK","PVG","FNJ","ICN","GMP","HND","NRT","KIX","ITM","KUL","SGN","CGK","DPS","YYZ","YVR","SFO","MIA","FLL","PBI","MAD","BCN","LIS","LHR","LGW","LTN","EDI","CDG","ORY","CPH","ARN","FCO","CIA","MXP","BGY","LIN","BUD","ACC","KGL","LUN","MPM","NBO")
+        val nationalCenters = List("ALA","TAS","IKA","KHI","DEL","BOM","PVG","FNJ","ICN","GMP","HND","NRT","KIX","ITM","KUL","SGN","CGK","DPS","YYZ","YVR","SFO","MIA","FLL","PBI","MAD","BCN","LIS","LHR","LGW","LTN","EDI","CDG","ORY","CPH","ARN","FCO","CIA","MXP","BGY","LIN","BUD","ACC","KGL","LUN","MPM","NBO")
 
         val gini = if (normalizedIncome <= 4000 && airport.countryCode != "IN" && airport.countryCode != "ZA") {
-            giniMap.getOrElse(airport.countryCode, 69.0) + 14 //need to account for global inequality? output is better this way
+            giniMap.getOrElse(airport.countryCode, 69.0) + 17 //need to account for global inequality? output is better this way
           } else if (normalizedIncome <= 9000 && population <= 8_000_000 && airport.countryCode != "IN" && airport.countryCode != "ZA" ) {
-            giniMap.getOrElse(airport.countryCode, 69.0) + 8
+            giniMap.getOrElse(airport.countryCode, 69.0) + 12
           } else if (normalizedIncome < 6000 && population > 8_000_000 && airport.countryCode != "IN" && airport.countryCode != "ZA") {
             giniMap.getOrElse(airport.countryCode, 69.0) + 9
           } else if (normalizedIncome < 9000 && population > 8_000_000 && airport.countryCode != "IN" && airport.countryCode != "ZA") {
@@ -378,7 +392,7 @@ object GeoDataGenerator extends App {
             giniMap.getOrElse(airport.countryCode, 69.0) + 5
           } else if (nationalCenters.contains(airport.iata)) {
             giniMap.getOrElse(airport.countryCode, 69.0) + 6 //more inequality & wealth in national centers
-          } else if (List("HYD","BLR","MAA","PKX","SHA","CAN","SZX","MNL","BKK","CAI","ADD","MEX","YYC","SJC","JFK","EWR","LGA","IAD","IAH","LAS","LAX").contains(airport.iata)) {
+          } else if (List("HYD","BLR","MAA","PEK","PKX","SHA","CAN","SZX","MNL","BKK","CAI","ADD","MEX","YYC","SJC","JFK","EWR","LGA","IAD","IAH","LAS","LAX").contains(airport.iata)) {
             giniMap.getOrElse(airport.countryCode, 69.0) + 2.5
           } else {
             giniMap.getOrElse(airport.countryCode, 69.0)
@@ -402,30 +416,22 @@ object GeoDataGenerator extends App {
             ((elitePop + 389) * 11.9).toInt
           } else if (List("DOH", "SZG", "ACH", "BRN", "LUG", "INN", "MIA", "PER", "BNE", "OOL", "YYZ", "YVR").contains(airport.iata)) {
             ((elitePop + 289) * 4.9).toInt
-          } else if (List("NRT", "ITM", "KIX", "FUK", "CTS", "BSL", "VCE", "BZO", "TRN", "FLO", "BRU", "AKL", "CNS", "SJC", "SBA", "PBI", "XNA", "PSP", "HTO", "PBI", "HNL", "OGG", "KOA", "CPT", "SIN").contains(airport.iata)) {
+          } else if (List("NRT", "ITM", "KIX", "FUK", "CTS", "BSL", "ZRH", "VCE", "BZO", "TRN", "FLO", "BRU", "AKL", "CNS", "SJC", "SBA", "PBI", "XNA", "PSP", "HTO", "PBI", "HNL", "OGG", "KOA", "CPT", "SIN").contains(airport.iata)) {
             (elitePop + 179) * 3
-          } else if (List("HKG", "PEK", "PVG", "ARN", "ZRH", "MXP", "LIN", "BGY", "FCO", "SEA", "IAH", "ASE", "JAC", "YUL", "YYC", "TLV").contains(airport.iata)) {
+          } else if (List("HKG", "PEK", "PVG", "ARN", "OSL", "TRD", "MXP", "LIN", "BGY", "FCO", "SEA", "IAH", "ASE", "JAC", "YUL", "YYC", "TLV").contains(airport.iata)) {
             ((elitePop + 149) * 2.25).toInt
-          } else if (List("HND", "ICN", "MFM", "HGH", "PKX", "SHA", "BOM", "AUH", "LIS", "MAD", "BCN", "CPH", "FRA", "CDG", "AMS", "LHR", "LGW", "LTN", "STN", "BOS", "HOU", "SFO", "STS", "SNA", "BUR", "ISP", "HTO", "HPN", "HVN", "BDL").contains(airport.iata)) {
+          } else if (List("HND", "ICN", "MFM", "HGH", "PKX", "SHA", "BOM", "AUH", "LIS", "MAD", "BCN", "CPH", "FRA", "CDG", "AMS", "LHR", "LGW", "LTN", "STN", "SBH", "BLL", "AAL", "GOT", "MMX", "BGO", "SVG", "BOS", "HOU", "SFO", "STS", "SNA", "BUR", "ASP", "ISP", "HTO", "HPN", "HVN", "BDL").contains(airport.iata)) {
             ((elitePop + 99) * 1.5).toInt
-          } else if (elitePop > 0 && elitePop < 100 && underRepresentedCountries.contains(airport.countryCode)) {
+          } else if (elitePop > 0 && elitePop < 100 && underRepresentedCountries.contains(airport.countryCode) && airport.basePopulation > 5000) {
             Math.min((population * 0.6).toInt, Math.max(Random.nextInt(10) * 10, elitePop * 5))
-          } else if (elitePop > 0 && elitePop < 10) {
-            10
-          } else if(elitePop <= 1) {
+          } else if ( elitePop < 10) {
             0
           } else {
             elitePop
           }
 
-        val middleIncomePop = Math.max(0, -1 * elitePopAdjusted + Computation.populationAboveThreshold(normalizedIncome, population.toInt, gini, 30_000))
-        val airportCopy = airport.copy(baseIncome = normalizedIncome , basePopulation = population, popMiddleIncome = middleIncomePop, popElite = elitePopAdjusted)
-        //YIKE copy here does not copy everything, we need to manually look up what does updateAirport/saveAirport do and clone stuff here...
-        airportCopy.setRunways(airport.getRunways())
-        airport.citiesServed.foreach {
-          case (city, share) => airportCopy.addCityServed(city, share)
-        }
-        //don't have to copy feature here as they are generated later
+        val middleIncomePop = Math.max(0, -1 * elitePopAdjusted + Computation.populationAboveThreshold(normalizedIncome, population.toInt, gini, 31_500))
+        val airportCopy = airport.copy(baseIncome = normalizedIncome , basePopulation = population.toInt, basePopMiddleIncome = middleIncomePop, basePopElite = elitePopAdjusted)
         airportCopy
       }
 //    }.filter(_.population != 0).sortBy { airport =>
@@ -435,7 +441,9 @@ object GeoDataGenerator extends App {
 
     println(s"Calculated all airport pops & income")
 
-    airports
+    AirportStatsInit.initAirportStats()
+
+    (airports, cityAirportRelationships)
   }
 
 
@@ -450,8 +458,6 @@ object GeoDataGenerator extends App {
     } else {
       (resultLonInDegree, 2 * lonInDegree - resultLonInDegree)
     }
-    //val d = Math.acos(Math.sin(lat) * Math.sin(lat) + Math.cos(lat) * Math.cos(lat) * Math.cos(unknown - lon)) * 6371 //=ACOS(SIN(Lat1)*SIN(Lat2)+COS(Lat1)*COS(Lat2)*COS(Lon2-Lon1))*6371
-
   }
 
   case class CsvAirport(airport : Airport, csvAirportId : Int, scheduledService : Boolean)
@@ -460,8 +466,44 @@ object GeoDataGenerator extends App {
     csvAirports.foreach {
       case (CsvAirport(airport, csvId, _)) =>
         val runways = runwaysByCsvId.get(csvId).getOrElse(List.empty)
-        airport.setRunways(runways)
+        setRunwaysForAirport(airport, runways)
     }
+  }
+
+  def setRunwaysForAirport(airport: Airport, runways: List[Runway]): Unit = {
+    if (runways.nonEmpty) {
+      val maxRunwayLength = runways.sortBy(_.length).reverse.head.length
+      airport.runwayLength = maxRunwayLength.toInt
+    }
+    if (airport.runwayLength < Airport.MIN_RUNWAY_LENGTH) {
+      if (airport.name.contains("Heli")) {
+        airport.runwayLength = 10
+      } else {
+        airport.runwayLength = Airport.MIN_RUNWAY_LENGTH
+      }
+    }
+  }
+
+  def saveAirportRunways(rawAirportResult: List[CsvAirport], runwayResult: Map[Int, List[Runway]], airports: List[Airport]): Unit = {
+    // Create a mapping from IATA to Airport (with database ID)
+    val iataToAirport = airports.map(airport => airport.iata -> airport).toMap
+    
+    // Create a mapping from CSV ID to IATA
+    val csvIdToIata = rawAirportResult.map(csvAirport => csvAirport.csvAirportId -> csvAirport.airport.iata).toMap
+    
+    println("Saving airport runways...")
+    var savedCount = 0
+    
+    runwayResult.foreach { case (csvId, runways) =>
+      csvIdToIata.get(csvId).flatMap(iataToAirport.get) match {
+        case Some(airport) =>
+          AirportSource.saveAirportRunways(airport.id, runways)
+          savedCount += runways.size
+        case None =>
+      }
+    }
+    
+    println(s"Saved $savedCount runways for ${runwayResult.size} airports")
   }
 
   def adjustAirportByRunway(rawAirportResult : List[CsvAirport], runwayResult : Map[Int, List[Runway]]) : List[Airport] = {
@@ -483,7 +525,6 @@ object GeoDataGenerator extends App {
             }
 
             if (megaRunway > 0) {
-              println(rawAirport.name)
               3
             } else if (veryLongRunway > 0) {
               if (veryLongRunway > 1) { //2 very long runway
@@ -516,70 +557,34 @@ object GeoDataGenerator extends App {
   }
 
   def buildCountryData(airports : Seq[Airport], update : Boolean = false) {
-    val airportsByCountry : Map[String, Seq[Airport]] = airports.groupBy { airport => countryCodeConvert(airport.countryCode) }
+    val airportsByCountry : Map[String, Seq[Airport]] = airports.groupBy(_.countryCode)
 
-    val countryCodeToNameMap = scala.io.Source.fromFile("country-code.txt").getLines().map(_.split(",")).map { tokens =>
-      val countryCode = tokens(1)
-      val name = tokens(0)
+    val countryCodeToNameMap = scala.io.Source.fromFile("country-data.csv").getLines().map(_.split(",", -1)).map { tokens =>
+      val countryCode = tokens(0)
+      val name = tokens(1)
       (countryCode, name)
     }.toMap
 
-    val giniMap = scala.io.Source.fromFile("country-data-2022.csv").getLines().map(_.split(",", -1)).map { tokens =>
+    val giniMap = scala.io.Source.fromFile("country-data.csv").getLines().map(_.split(",", -1)).map { tokens =>
       (tokens(0), if(tokens(3).isEmpty) 39.0 else tokens(3).toDouble)
     }.toMap
 
-    val opennessMap = scala.io.Source.fromFile("country-data-2022.csv").getLines().map(_.split(",", -1)).map { tokens =>
+    val opennessMap = scala.io.Source.fromFile("country-data.csv").getLines().map(_.split(",", -1)).map { tokens =>
       (tokens(0), if(tokens(2).isEmpty) 4 else tokens(2).toInt)
     }.toMap
 
-//    val opennessMap : Map[String, Int] = scala.io.Source.fromFile("openness.csv").getLines().map(_.split(",(?=([^\"]*\"[^\"]*\")*[^\"]*$)", -1)).map { tokens =>
-//      val trimmedTokens = tokens.map { token : String =>
-//        if (token.startsWith("\"") && token.endsWith("\"")) {
-//          token.substring(1, token.length() - 1)
-//        } else {
-//          token
-//        }
-//      }
-//
-//      val countryCode3 = trimmedTokens(1)
-//      val opennessRanking : Option[Int] =
-//        trimmedTokens.drop(4).reverse.find { token => !token.isEmpty() } match {
-//          case Some(rankingString) =>
-//            try {
-//              Some(rankingString.toInt)
-//            } catch {
-//              case _ : NumberFormatException => None //ok just ignore
-//            }
-//          case None => None
-//        }
-//      codeMap.get(countryCode3) match {
-//        case Some(countryCode2) =>
-//          val opennessValue = opennessRanking.fold(0) { opennessRankingValue =>
-//            if (opennessRankingValue > 200) {
-//              0
-//            } else {
-//              (200 - opennessRankingValue) / 20 + 1
-//            }
-//          }
-//          Some((countryCode2, opennessValue))
-//        case None =>
-//          //println("cannot find matching country code for " + countryCode3)
-//          None
-//      }
-//    }.flatten.toMap
-
     val countries = ArrayBuffer[Country]()
-    println(airportsByCountry)
+//    println(airportsByCountry)
     airportsByCountry.foreach {
       case (countryCode, airports) =>
-        val totalAirportPopulation = airports.map {
-          _.population
+        val totalAirportPopulation: Long = airports.map {
+          _.basePopulation
         }.sum
         val averageIncome = if (totalAirportPopulation == 0) {
           0
         } else {
-          airports.map {
-            _.power
+          airports.map { airport =>
+            airport.baseIncome * airport.basePopulation.toLong
           }.sum / totalAirportPopulation
         }
         countries += Country(countryCode, countryCodeToNameMap(countryCode), totalAirportPopulation.toInt, averageIncome.toInt, opennessMap.getOrElse(countryCode,4), giniMap.getOrElse(countryCode,39.0))

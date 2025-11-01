@@ -13,7 +13,7 @@ import play.api.mvc._
 
 class ChristmasApplication @Inject()(cc: ControllerComponents) extends AbstractController(cc) {
 
-  val possibleAirports = cachedAirportsByPower.filter(_.size >=  SantaClausInfo.AIRPORT_SIZE_THRESHOLD).map(_.id) //only top 300 airports are valid targets
+  lazy val possibleAirports = AirportCache.getAllAirports().filter(_.size >=  SantaClausInfo.AIRPORT_SIZE_THRESHOLD).map(_.id) //only top 300 airports are valid targets
   /**
     * Returns whether this airport is a valid target for Santa claus, and whether this airline is eligble for playing finding santa claus
     *

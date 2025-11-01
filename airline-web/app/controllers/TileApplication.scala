@@ -27,21 +27,13 @@ class TileApplication @Inject()(cc: ControllerComponents) extends AbstractContro
     }
   }
 
-
-  
-  
-  val LOG_RANGE = 100 //load 100 weeks worth of alerts
-  
-  
   def getHeadquartersTiles(airlineId : Int) = Action { request =>
     AirlineCache.getAirline(airlineId) match {
-      case Some(airline) => Ok(Json.toJson(TileUtil.generateHeadquartersTiles(airline)))
+      case Some(airline) => Ok(Json.toJson(TileUtil.generateHeadquartersTiles(airline))).withHeaders(
+        ETAG -> s""""$currentCycle""""
+      )
       case None => NotFound(s"Airline with $airlineId is not found")
     }
 
   }
-  
-  
-
-  
 }

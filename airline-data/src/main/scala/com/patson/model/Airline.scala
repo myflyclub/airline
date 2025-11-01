@@ -1,17 +1,17 @@
 package com.patson.model
 
 import com.patson.data._
-import com.patson.model.AirlineType.AirlineType
 
+import java.util.concurrent.ThreadLocalRandom
 import java.util.{Calendar, Date}
 import scala.collection.mutable.ListBuffer
 import scala.collection.immutable.ListMap
 
-case class Airline(name: String, var airlineType: AirlineType.AirlineType = AirlineType.LEGACY, var id : Int = 0) extends IdObject {
+case class Airline(name: String, var airlineType: AirlineType = LegacyAirline, var id : Int = 0) extends IdObject {
   val airlineInfo = AirlineInfo(0, 0, 0, 0, 0, 0, 0)
   var allianceId : Option[Int] = None
   var bases : List[AirlineBase] = List.empty
-  var stats = AirlineStat(0, 0, 0, 0, 0, 0)
+  var stats = AirlineStat(0, 0, Period.WEEKLY, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 
   def setBalance(balance : Long) = {
     airlineInfo.balance = balance
@@ -33,24 +33,27 @@ case class Airline(name: String, var airlineType: AirlineType.AirlineType = Airl
     airlineInfo.reputation = reputation
   }
 
-  def setWeeklyDividends(weeklyDividends : Int) {
-    airlineInfo.weeklyDividends = weeklyDividends
-  }
-
   def setStockPrice(stockPrice: Double) {
     airlineInfo.stockPrice = stockPrice
   }
 
+  def setSharesOutstanding(sharesOutstanding: Int) {
+    airlineInfo.sharesOutstanding = sharesOutstanding
+  }
+
+  def doStockOp(isSellShares: Int = 1): (Double, Int, Long) = {
+    airlineInfo.sharesOutstanding += 1_000_000 * isSellShares
+    val balanceChange: Long = 1_000_000 * airlineInfo.stockPrice.toLong * isSellShares
+    val fee = StockModel.STOCK_BROKER_FEE_BASE + 1_000_000 * airlineInfo.stockPrice.toLong * StockModel.STOCK_BROKER_FEE.toLong
+    airlineInfo.stockPrice *= (1 - isSellShares * ThreadLocalRandom.current().nextDouble(StockModel.STOCK_BUYBACK_MIN_CHANGE, StockModel.STOCK_BUYBACK_MAX_CHANGE))
+    airlineInfo.balance += balanceChange - fee
+    AirlineSource.saveAirlineInfo(this)
+    AirlineSource.saveCashFlowItem(AirlineCashFlowItem(id, CashFlowType.BUY_BACK, balanceChange - fee))
+    (airlineInfo.stockPrice, airlineInfo.sharesOutstanding, airlineInfo.balance)
+  }
+
   def setStats(stats: AirlineStat) = {
     this.stats = stats
-  }
-
-  def setTourists(pax: Int) {
-    stats.tourists = pax
-  }
-
-  def setElites(pax: Int) {
-    stats.elites = pax
   }
 
   def removeCountryCode() = {
@@ -121,9 +124,9 @@ case class Airline(name: String, var airlineType: AirlineType.AirlineType = Airl
     AirlineGradeStockPrice.findGrade(stockPrice)
   }
 
-  def airlineGradeTourists: AirlineGrade = {
-    val t = stats.tourists
-    AirlineGradeTourists.findGrade(t)
+  def airlineGradeTouristsTravelers: AirlineGrade = {
+    val t = stats.total - stats.business - stats.elites
+    AirlineGradeTouristsTravelers.findGrade(t)
   }
 
   def airlineGradeElites: AirlineGrade = {
@@ -144,9 +147,9 @@ case class Airline(name: String, var airlineType: AirlineType.AirlineType = Airl
 
   def getReputation() = airlineInfo.reputation
 
-  def getWeeklyDividends() : Int = airlineInfo.weeklyDividends
-
   def getStockPrice() : Double = airlineInfo.stockPrice
+
+  def getSharesOutstanding() : Int = airlineInfo.sharesOutstanding
 
   def getDefaultAirlineCode() : String = {
     var code = name.split("\\s+").foldLeft("")((foldString, nameToken) => {
@@ -184,37 +187,9 @@ case class Airline(name: String, var airlineType: AirlineType.AirlineType = Airl
   val DELEGATE_PER_LEVEL = 3
   lazy val delegateCount = BASE_DELEGATE_COUNT +
     airlineGrade.level * DELEGATE_PER_LEVEL +
-    AirlineSource.loadAirlineBasesByAirline(id).flatMap(_.specializations).count(_.getType == BaseSpecializationType.DELEGATE) +
+//disabled currently    AirlineSource.loadAirlineBasesByAirline(id).flatMap(_.specializations).count(_.getType == BaseSpecializationType.DELEGATE) +
     delegateBoosts.map(_.amount).sum
   lazy val delegateBoosts = AirlineSource.loadAirlineModifierByAirlineId(id).filter(_.modifierType == AirlineModifierType.DELEGATE_BOOST).map(_.asInstanceOf[DelegateBoostAirlineModifier])
-}
-
-object AirlineType extends Enumeration {
-  type AirlineType = Value
-  val LEGACY, BEGINNER, NON_PLAYER, ULCC, LUXURY, REGIONAL, MEGA_HQ, NOSTALGIA = Value
-  val label: AirlineType => String = {
-    case LEGACY => "Legacy"
-    case NON_PLAYER => "Non-Player"
-    case ULCC => "Ultra Low-Cost"
-    case LUXURY => "Luxury"
-    case REGIONAL => "Regional Partner"
-    case MEGA_HQ => "Mega HQ"
-    case BEGINNER => "Beginner"
-    case NOSTALGIA => "Nostalgia"
-  }
-  def fromId(id: Int): AirlineType = id match {
-    case 0 => LEGACY
-    case 1 => BEGINNER
-    case 2 => NON_PLAYER
-    case 3 => ULCC
-    case 4 => LUXURY
-    case 5 => REGIONAL
-    case 6 => MEGA_HQ
-    case 7 => NOSTALGIA
-    case _ => throw new IllegalArgumentException("Invalid AirlineType ID: " + id)
-  }
-  val REGIONAL_MODEL_MAX_SIZE = 0.1 //used in web app to set allowed planes
-  val LUXURY_EXTRA_LOYALTY = 8
 }
 
 case class DelegateInfo(availableCount : Int, boosts : List[DelegateBoostAirlineModifier], busyDelegates: List[BusyDelegate]) {
@@ -231,39 +206,49 @@ case class DelegateInfo(availableCount : Int, boosts : List[DelegateBoostAirline
 
 }
 
-case class AirlineInfo(var balance : Long, var currentServiceQuality : Double, var weeklyDividends : Int, var stockPrice : Double, var targetServiceQuality : Int, var reputation : Double, var minimumRenewalBalance: Long, var countryCode : Option[String] = None, var airlineCode : String = "", var skipTutorial : Boolean = false, var initialized : Boolean = false)
+case class AirlineInfo(var balance : Long, var currentServiceQuality : Double, var stockPrice : Double, var sharesOutstanding : Int, var targetServiceQuality : Int, var reputation : Double, var minimumRenewalBalance: Long, var countryCode : Option[String] = None, var airlineCode : String = "", var skipTutorial : Boolean = false, var initialized : Boolean = false)
 
 object TransactionType extends Enumeration {
   type TransactionType = Value
-  val CAPITAL_GAIN, CREATE_LINK, PRIZE, DIVIDENDS = Value
+  val CAPITAL_GAIN, CREATE_LINK = Value
 }
 
 object OtherIncomeItemType extends Enumeration {
   type OtherBalanceItemType = Value
-  val NEGATIVE_CASH, LOAN_INTEREST, BASE_UPKEEP, OVERTIME_COMPENSATION, DIVIDENDS, LOUNGE_UPKEEP, LOUNGE_COST, LOUNGE_INCOME, ASSET_EXPENSE, ASSET_REVENUE, ADVERTISEMENT, DEPRECIATION, FUEL_PROFIT = Value
+  val LOAN_INTEREST, BASE_UPKEEP, OVERTIME_COMPENSATION, LOUNGE_UPKEEP, LOUNGE_COST, LOUNGE_INCOME, ASSET_EXPENSE, ASSET_REVENUE, ADVERTISEMENT, DEPRECIATION, FUEL_PROFIT = Value
 }
 
 object CashFlowType extends Enumeration {
   type CashFlowType = Value
-  val BASE_CONSTRUCTION, BUY_AIRPLANE, SELL_AIRPLANE, CREATE_LINK, FACILITY_CONSTRUCTION, OIL_CONTRACT, ASSET_TRANSACTION = Value
+  val BASE_CONSTRUCTION, BUY_AIRPLANE, SELL_AIRPLANE, CREATE_LINK, FACILITY_CONSTRUCTION, OIL_CONTRACT, ASSET_TRANSACTION, PRIZE, BUY_BACK = Value
 }
 
 object Period extends Enumeration {
   type Period = Value
-  val WEEKLY, MONTHLY, YEARLY = Value
+  val WEEKLY, QUARTER, YEAR = Value
+
+  def numberWeeks(period : Period.Value) = {
+    period match {
+      case WEEKLY => 1
+      case QUARTER => 12
+      case YEAR => 48
+    }
+  }
 }
 
 
 case class AirlineTransaction(airlineId : Int, transactionType : TransactionType.Value, amount : Long, var cycle : Int = 0)
-case class AirlineIncome(airlineId : Int, profit : Long = 0, revenue: Long = 0, expense: Long = 0, stockPrice: Double = 0, links : LinksIncome, transactions : TransactionsIncome, others : OthersIncome, period : Period.Value = Period.WEEKLY, var cycle : Int = 0) {
+case class AirlineIncome(airlineId : Int, profit : Long = 0, revenue: Long = 0, expense: Long = 0, stockPrice: Double = 0, totalValue: Long = 0, links : LinksIncome, transactions : TransactionsIncome, others : OthersIncome, period : Period.Value = Period.WEEKLY, var cycle : Int = 0) {
   /**
-   * Current income is expected to be MONTHLY/YEARLY. Adds parameter (WEEKLY income) to this current income object and return a new Airline income with period same as this object but cycle as the parameter
+   * Current income is expected to be QUARTER/YEAR. Adds parameter (WEEKLY income) to this current income object and return a new Airline income with period same as this object but cycle as the parameter
    */
   def update(income2 : AirlineIncome) : AirlineIncome = {
     AirlineIncome(airlineId, 
         profit = profit + income2.profit,
         revenue = revenue + income2.revenue,
         expense = expense + income2.expense,
+        stockPrice = (stockPrice + income2.stockPrice) / 2,
+        totalValue = ((totalValue + income2.totalValue).toDouble / 2).toLong,
         links = links.update(income2.links),
         transactions = transactions.update(income2.transactions),
         others = others.update(income2.others),
@@ -291,7 +276,7 @@ case class LinksIncome(airlineId : Int, profit : Long = 0, revenue : Long = 0, e
         cycle = income2.cycle)
   }
 }
-case class TransactionsIncome(airlineId : Int, profit : Long = 0, revenue: Long = 0, expense: Long = 0, capitalGain : Long = 0, createLink : Long = 0,  period : Period.Value = Period.WEEKLY, var cycle : Int = 0) {
+case class TransactionsIncome(airlineId : Int, profit : Long = 0, revenue: Long = 0, expense: Long = 0, capitalGain : Long = 0, createLink : Long = 0,  prize : Long = 0, buyBack : Long = 0, period : Period.Value = Period.WEEKLY, var cycle : Int = 0) {
   def update(income2 : TransactionsIncome) : TransactionsIncome = {
     TransactionsIncome(airlineId, 
         profit = profit + income2.profit,
@@ -299,11 +284,13 @@ case class TransactionsIncome(airlineId : Int, profit : Long = 0, revenue: Long 
         expense = expense + income2.expense,
         capitalGain = capitalGain + income2.capitalGain,
         createLink = createLink + income2.createLink,
+        prize = prize + income2.prize,
+        buyBack = buyBack + income2.buyBack,
         period = period,
         cycle = income2.cycle)
   }  
 }
-case class OthersIncome(airlineId : Int, profit : Long = 0, revenue: Long = 0, expense: Long = 0, loanInterest : Long = 0, baseUpkeep : Long = 0, overtimeCompensation : Long = 0, dividends : Long = 0, advertisement : Long = 0, loungeUpkeep : Long = 0, loungeCost : Long = 0, loungeIncome : Long = 0, assetExpense : Long = 0, assetRevenue : Long = 0, fuelProfit : Long = 0, depreciation : Long = 0, period : Period.Value = Period.WEEKLY, var cycle : Int = 0) {
+case class OthersIncome(airlineId : Int, profit : Long = 0, revenue: Long = 0, expense: Long = 0, loanInterest : Long = 0, baseUpkeep : Long = 0, overtimeCompensation : Long = 0, advertisement : Long = 0, loungeUpkeep : Long = 0, loungeCost : Long = 0, loungeIncome : Long = 0, assetExpense : Long = 0, assetRevenue : Long = 0, fuelProfit : Long = 0, depreciation : Long = 0, period : Period.Value = Period.WEEKLY, var cycle : Int = 0) {
   def update(income2 : OthersIncome) : OthersIncome = {
     OthersIncome(airlineId, 
         profit = profit + income2.profit,
@@ -312,7 +299,6 @@ case class OthersIncome(airlineId : Int, profit : Long = 0, revenue: Long = 0, e
         loanInterest = loanInterest + income2.loanInterest,
         baseUpkeep = baseUpkeep + income2.baseUpkeep,
         overtimeCompensation = overtimeCompensation + income2.overtimeCompensation,
-        dividends = dividends + income2.dividends,
         advertisement = advertisement + income2.advertisement,
         loungeUpkeep = loungeUpkeep + income2.loungeUpkeep,
         loungeCost = loungeCost + income2.loungeCost,
@@ -330,7 +316,7 @@ case class OthersIncome(airlineId : Int, profit : Long = 0, revenue: Long = 0, e
 case class AirlineCashFlowItem(airlineId : Int, cashFlowType : CashFlowType.Value, amount : Long, var cycle : Int = 0)
 case class AirlineCashFlow(airlineId : Int, cashFlow : Long = 0, operation : Long = 0, loanInterest : Long = 0, loanPrincipal : Long = 0, baseConstruction : Long = 0, buyAirplane : Long = 0, sellAirplane : Long = 0,  createLink : Long = 0, facilityConstruction : Long = 0, oilContract : Long = 0, assetTransactions : Long = 0, period : Period.Value = Period.WEEKLY, var cycle : Int = 0) {
 /**
-   * Current income is expected to be MONTHLY/YEARLY. Adds parameter (WEEKLY income) to this current income object and return a new Airline income with period same as this object but cycle as the parameter
+   * Current income is expected to be QUARTER/YEAR. Adds parameter (WEEKLY income) to this current income object and return a new Airline income with period same as this object but cycle as the parameter
    */
   def update(cashFlow2 : AirlineCashFlow) : AirlineCashFlow = {
     AirlineCashFlow(airlineId, 
@@ -358,6 +344,7 @@ object Airline {
   }
   val EQ_MAX : Double = 100 //employee quality
   val EQ_INTITIAL: Int = 35
+
 
   def resetAirline(airlineId : Int, newBalance : Long, resetExtendedInfo : Boolean = false) : Option[Airline] = {
     AirlineSource.loadAirlineById(airlineId, true) match {
@@ -409,7 +396,6 @@ object Airline {
         if (resetExtendedInfo) {
           airline.setReputation(0)
           airline.setInitialized(false)
-          AirportSource.deleteAirlineAppealsFromAllAirports(airlineId)
           LoyalistSource.deleteLoyalistsByAirline(airlineId)
         }
 
@@ -434,13 +420,13 @@ object Airline {
 case class AirlineGrade(level: Int, reputationCeiling: Double, reputationFloor: Double, description: String){
 
   val getModelFamilyLimit =  {
-    Math.max(2, Math.min(10, level))
+    Math.max(2, level)
   }
 }
 
 object AirlineGrades {
   val grades = List(
-    25 -> "Newcomer",
+    25 -> "Embryonic",
     50 -> "Sprout",
     75 -> "Fledgling",
     100 -> "Small Airline",
@@ -449,16 +435,18 @@ object AirlineGrades {
     175 -> "Networked Airline",
     200 -> "Major Airline",
     240 -> "Leading Airline",
-    280 -> "Skybound",
-    320 -> "Truly Ascending",
+    280 -> "Ascending",
+    320 -> "Skybound",
     360 -> "High Flyer",
     400 -> "Stratospheric",
-    500 -> "Sub-Orbital",
-    600 -> "Colossal",
-    700 -> "Titanic",
+    450 -> "Sub-Orbital",
+    500 -> "Orbital",
+    600 -> "Exospheric",
+    700 -> "Apogee",
     800 -> "Epic",
     900 -> "Ultimate",
-    1000 -> "Legendary",
+    1000 -> "Fabled",
+    1100 -> "Legendary",
     1200 -> "Mythic",
     1400 -> "Celestial",
     1600 -> "Empyrean",
@@ -470,150 +458,170 @@ object AirlineGrades {
     25 -> 0,
     50 -> 0,
     75 -> 1,
-    100 -> 2,
-    125 -> 3,
-    150 -> 4,
-    175 -> 5,
-    200 -> 6,
-    240 -> 7,
-    280 -> 8,
-    320 -> 10,
-    360 -> 14,
-    400 -> 16,
-    500 -> 18,
-    600 -> 20,
+    100 -> 1,
+    125 -> 1,
+    150 -> 2,
+    175 -> 3,
+    200 -> 4,
+    240 -> 5,
+    280 -> 6,
+    320 -> 7,
+    360 -> 8,
+    400 -> 10,
+    450 -> 13,
+    500 -> 16,
+    600 -> 19,
     700 -> 22,
     800 -> 24,
     900 -> 26,
     1000 -> 28,
-    1200 -> 30,
-    1400 -> 32,
-    1600 -> 33,
-    1800 -> 34,
-    2000 -> 35,
+    1100 -> 30,
+    1200 -> 32,
+    1400 -> 34,
+    1600 -> 36,
+    1800 -> 38,
+    2000 -> 40,
   )
 
   def findTaxRate(reputation: Double) : Int = {
     taxRate.find(_._1 > reputation).getOrElse(taxRate.last)._2
   }
 
-  def findGrade(reputation: Double): AirlineGrade = {
-    val indexedGrades = grades.zipWithIndex
-    val (gradeInfo, index) = indexedGrades.find(_._1._1 > reputation).getOrElse(indexedGrades.last)
-    val reputationCeiling = gradeInfo._1.toDouble
-    val description = gradeInfo._2
-
-    val reputationFloor = index match {
-      case 0 => 0.0
-      case _ => grades(index - 1)._1.toDouble // Key from the previous entry
+  def findGrade(value: Double): AirlineGrade = {
+    val thresholds = grades.map(_._1.toDouble)
+    val descriptions = grades.map(_._2)
+    val idx = thresholds.indexWhere(_ > value)
+    if (idx == -1) {
+      // Above top level: use last grade, ceiling is infinity
+      if (grades.isEmpty) {
+        AirlineGrade(1, Double.MaxValue, 0.0, "Unknown")
+      } else {
+        val lastIdx = grades.length - 1
+        val floor = thresholds(lastIdx)
+        AirlineGrade(lastIdx + 1, Double.MaxValue, floor, descriptions(lastIdx))
+      }
+    } else {
+      val floor = if (idx == 0) 0.0 else thresholds(idx - 1)
+      val ceiling = thresholds(idx)
+      AirlineGrade(idx + 1, ceiling, floor, descriptions(idx))
     }
-
-    AirlineGrade(index + 1, reputationCeiling, reputationFloor, description)
   }
 }
 
 object AirlineGradeStockPrice {
-  val grades = List(
-    0.01 -> "n/a",
-    0.03 -> "Worthless",
-    0.05 -> "Basically Worthless",
-    0.09 -> "Toilet Paper",
-    0.16 -> "Penny Stock",
-    0.28 -> "Penny Stock",
-    0.47 -> "Bargain Bin",
-    0.86 -> "Bargain Bin",
-    1.37 -> "Promising",
-    2.3 -> "Promising",
-    3.9 -> "Speculator's Pick",
-    6.7 -> "Speculator's Pick",
-    11.4 -> "Analyst Hold Pick",
-    19.0 -> "Analyst Buy Pick",
-    33.0 -> "Analyst Buy Pick",
-    56.0 -> "Blue Chip Beauty",
-    95.0 -> "Blue Chip Beauty",
-    160.0 -> "Russell 2000 Company",
-    270.0 -> "Russell 2000 Company",
-    460.0 -> "S&P 500 Company",
-    800.0 -> "S&P 500 Company",
-    1360.0 -> "Money Printing Epic",
-    2300.0 -> "Wall Street Legend",
-    2900.0 -> "Flying Cash Cow"
+  val grades: List[(Double, String)] = List(
+    0.7 -> "Toilet Paper",
+    1.2 -> "Penny Stock",
+    3.5 -> "Bargain?",
+    7.0 -> "Promising",
+    16.0 -> "On the Radar",
+    40.0 -> "Industry Disruptor",
+    75.0 -> "Blue Chip Beauty",
+    125.0 -> "Flying Cash Cow",
+    215.0 -> "Russell 2000 Company",
+    375.0 -> "Megacorporation",
+    625.0 -> "S&P 500 Company",
+    1075.0 -> "Wall Street Legend",
+    1725.0 -> "Aerial Singularity"
   )
 
-  def findGrade(stockPrice: Double): AirlineGrade = {
-    val indexedGrades = grades.zipWithIndex
-    val (gradeInfo, index) = indexedGrades.find(_._1._1 > stockPrice).getOrElse(indexedGrades.last)
-    val ceiling = gradeInfo._1
-    val description = gradeInfo._2
-
-    val floor = index match {
-      case 0 => 0.0
-      case _ => grades(index - 1)._1.toDouble // Key from the previous entry
+  def findGrade(value: Double): AirlineGrade = {
+    val thresholds = grades.map(_._1)
+    val descriptions = grades.map(_._2)
+    val idx = thresholds.indexWhere(_ > value)
+    if (idx == -1) {
+      // Above top level: use last grade, ceiling is infinity
+      if (grades.isEmpty) {
+        // Fallback for empty grades list (defensive)
+        AirlineGrade(1, Double.MaxValue, 0.0, "Unknown")
+      } else {
+        val lastIdx = grades.length - 1
+        val floor = thresholds(lastIdx)
+        AirlineGrade(lastIdx + 1, Double.MaxValue, floor, descriptions(lastIdx))
+      }
+    } else {
+      val floor = if (idx == 0) 0.0 else thresholds(idx - 1)
+      val ceiling = thresholds(idx)
+      AirlineGrade(idx + 1, ceiling, floor, descriptions(idx))
     }
-
-    AirlineGrade(index, ceiling, floor, description)
   }
 }
 
 object AirlineGradeElites {
   val grades = List(
-    100 -> "Deformed Plastic",
-    450 -> "Plywood",
-    1650 -> "Iron",
-    4400 -> "Stainless Steel",
-    8000 -> "Aluminum",
-    12800 -> "Nickel",
-    17400 -> "Silver",
-    22000 -> "Gold",
-    28000 -> "Palladium",
-    34000 -> "Rhenium",
-    40000 -> "Painite",
-    46000 -> "Rat Fur"
+    100 -> "Nothing",
+    450 -> "Paper",
+    1650 -> "Plastic",
+    4400 -> "Iron",
+    8000 -> "Steel",
+    12800 -> "Aluminum",
+    17400 -> "Nickel",
+    22000 -> "Copper",
+    27000 -> "Gold",
+    32000 -> "Platinum",
+    37000 -> "Rhenium",
+    42000 -> "Painite",
+    47000 -> "Rat Fur"
   )
 
-  def findGrade(pax: Double): AirlineGrade = {
-    val indexedGrades = grades.zipWithIndex
-    val (gradeInfo, index) = indexedGrades.find(_._1._1 > pax).getOrElse(indexedGrades.last)
-    val ceiling = gradeInfo._1.toDouble
-    val description = gradeInfo._2
-
-    val floor = index match {
-      case 0 => 0.0
-      case _ => grades(index - 1)._1.toDouble // Key from the previous entry
+  def findGrade(value: Int): AirlineGrade = {
+    val thresholds = grades.map(_._1.toDouble)
+    val descriptions = grades.map(_._2)
+    val idx = thresholds.indexWhere(_ > value)
+    if (idx == -1) {
+      // Above top level: use last grade, ceiling is infinity
+      if (grades.isEmpty) {
+        // Fallback for empty grades list (defensive)
+        AirlineGrade(1, Double.MaxValue, 0.0, "Unknown")
+      } else {
+        val lastIdx = grades.length - 1
+        val floor = thresholds(lastIdx)
+        AirlineGrade(lastIdx + 1, Double.MaxValue, floor, descriptions(lastIdx))
+      }
+    } else {
+      val floor = if (idx == 0) 0.0 else thresholds(idx - 1)
+      val ceiling = thresholds(idx)
+      AirlineGrade(idx + 1, ceiling, floor, descriptions(idx))
     }
-
-    AirlineGrade(index, ceiling, floor, description)
   }
 }
 
-object AirlineGradeTourists {
+object AirlineGradeTouristsTravelers {
   val grades = List(
-    1000 -> "Unknown",
-    4000 -> "Discount Disaster",
-    15000 -> "Leisure Loser",
-    42000 -> "Semi Bargain Bin",
-    84000 -> "Package Deal Pal",
-    134000 -> "Resort Runner",
-    188000 -> "Bargain Bin Bonanza",
-    250000 -> "Deal Seeker Favorite",
-    320000 -> "Detours Delight",
-    390000 -> "Cheapo Champion",
-    460000 -> "Budget Behemoth",
-    540000 -> "Penny Pinchers' Paradise"
+    1500 -> "Discount Disaster",
+    6000 -> "Leisure Loser",
+    22500 -> "Semi Bargain Bin",
+    63000 -> "Holiday Hauler",
+    126000 -> "Package Deal Pal",
+    201000 -> "Resort Runner",
+    282000 -> "Deal Seeker Favorite",
+    375000 -> "Bargain Bin Bonanza",
+    480000 -> "Detours Delight",
+    585000 -> "Cheapo Champion",
+    690000 -> "Penny Pitchers' Paradise",
+    780000 -> "Budget Behemoth",
+    900000 -> "Low-Cost Leviathan"
   )
 
-  def findGrade(pax: Double): AirlineGrade = {
-    val indexedGrades = grades.zipWithIndex
-    val (gradeInfo, index) = indexedGrades.find(_._1._1 > pax).getOrElse(indexedGrades.last)
-    val ceiling = gradeInfo._1.toDouble
-    val description = gradeInfo._2
-
-    val floor = index match {
-      case 0 => 0.0
-      case _ => grades(index - 1)._1.toDouble // Key from the previous entry
+  def findGrade(value: Int): AirlineGrade = {
+    val thresholds = grades.map(_._1.toDouble)
+    val descriptions = grades.map(_._2)
+    val idx = thresholds.indexWhere(_ > value)
+    if (idx == -1) {
+      // Above top level: use last grade, ceiling is infinity
+      if (grades.isEmpty) {
+        // Fallback for empty grades list (defensive)
+        AirlineGrade(1, Double.MaxValue, 0.0, "Unknown")
+      } else {
+        val lastIdx = grades.length - 1
+        val floor = thresholds(lastIdx)
+        AirlineGrade(lastIdx + 1, Double.MaxValue, floor, descriptions(lastIdx))
+      }
+    } else {
+      val floor = if (idx == 0) 0.0 else thresholds(idx - 1)
+      val ceiling = thresholds(idx)
+      AirlineGrade(idx + 1, ceiling, floor, descriptions(idx))
     }
-
-    AirlineGrade(index, ceiling, floor, description)
   }
 }
 

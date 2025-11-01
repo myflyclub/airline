@@ -5,6 +5,7 @@ import com.patson.model.{Airline, Airport, Country}
 import com.patson.model.event._
 import com.patson.util.AirportCache
 import controllers.AuthenticationObject.AuthenticatedAirline
+
 import javax.inject.Inject
 import play.api.libs.json._
 import play.api.mvc._
@@ -51,6 +52,9 @@ class OlympicsApplication @Inject()(cc: ControllerComponents) extends AbstractCo
     val allOlympics : List[Olympics] = EventSource.loadEvents().filter(_.eventType == EventType.OLYMPICS).map(_.asInstanceOf[Olympics])
 
     Ok(Json.toJson(allOlympics))
+      .withHeaders(
+        ETAG -> s""""$currentCycle""""
+      )
   }
 
   def getOlympicsDetails(eventId : Int) = Action {
@@ -116,6 +120,9 @@ class OlympicsApplication @Inject()(cc: ControllerComponents) extends AbstractCo
     }
 
     Ok(result)
+      .withHeaders(
+        ETAG -> s""""$currentCycle""""
+      )
   }
 
   def getOlympicsAirlineVotes(airlineId : Int, eventId : Int) = AuthenticatedAirline(airlineId) { request =>
@@ -142,7 +149,6 @@ class OlympicsApplication @Inject()(cc: ControllerComponents) extends AbstractCo
     Ok(result)
   }
 
-  val PASSENGER_AWARD_CLAIM_DURATION = 52 //52 weeks
   def getOlympicsAirlinePassengerDetails(airlineId : Int, eventId : Int) = AuthenticatedAirline(airlineId) { request =>
     var result = Json.obj()
 
@@ -245,7 +251,7 @@ class OlympicsApplication @Inject()(cc: ControllerComponents) extends AbstractCo
         EventSource.loadOlympicsAirlineGoal(eventId, airlineId) match {
           case Some(goal) =>
             if (totalScore >= goal) {
-              if (olympics.startCycle + olympics.duration + PASSENGER_AWARD_CLAIM_DURATION < currentCycle) {
+              if (olympics.startCycle + olympics.duration * 2 < currentCycle) {
                 Left("Cannot redeem reward, it has already been expired")
               } else if (olympics.isActive(currentCycle)) {
                 Left("Cannot yet claim reward, olympics still active")
@@ -284,6 +290,9 @@ class OlympicsApplication @Inject()(cc: ControllerComponents) extends AbstractCo
         EventSource.saveOlympicsAirlineVote(eventId, OlympicsAirlineVote(request.user, airportPrecedences.toList))
       }
       Ok(precedenceJson)
+        .withHeaders(
+          ETAG -> s""""$currentCycle""""
+        )
     }
   }
 
@@ -360,6 +369,9 @@ class OlympicsApplication @Inject()(cc: ControllerComponents) extends AbstractCo
       case None =>
     }
     Ok(result)
+      .withHeaders(
+        ETAG -> s""""$currentCycle""""
+      )
   }
 
   def getOlympicsVoteRewardOptions(airlineId : Int, eventId : Int) = AuthenticatedAirline(airlineId) { request =>

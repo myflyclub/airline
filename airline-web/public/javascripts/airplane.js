@@ -5,27 +5,46 @@ var selectedModelId
 var selectedModel
 var closedAirplaneModals = []
 var currentAirplaneLoadCall
+var isAirplaneSelectionMode = false; // Toggles between selection and details view
+var storeSelectedAirplaneIds = [];
 
-function loadAirplaneModels() {
-	loadedModelsById = {}
-	$.ajax({
-		type: 'GET',
-		url: "airlines/" + activeAirline.id + "/airplane-models",
-	    contentType: 'application/json; charset=utf-8',
-	    dataType: 'json',
-	    async: false,
-	    success: function(models) {
-	    	$.each(models, function( key, model ) {
-	    		loadedModelsById[model.id] = model
-	  		});
-	    },
-        error: function(jqXHR, textStatus, errorThrown) {
-	            console.log(JSON.stringify(jqXHR));
-	            console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
-	    }
-	});
+async function loadAirplaneModels(airlineId) {
+  if (!airlineId) {
+    airlineId = activeAirline.id
+  }
+  try {
+    // 1. Fetch static and dynamic models concurrently
+    const [staticRes, dynamicRes] = await Promise.all([
+      fetch('/airplane-models'),
+      fetch(`/airlines/${airlineId}/airplane-models`)
+    ]);
+
+    if (!staticRes.ok || !dynamicRes.ok) {
+      throw new Error('Network request failed.');
+    }
+
+    const [staticModels, discountModels] = await Promise.all([
+      staticRes.json(),
+      dynamicRes.json()
+    ]);
+
+    // 2. Create a lookup map for dynamic data by model ID
+    const discountsById = new Map(
+      discountModels.map(model => [model.id, model])
+    );
+
+    // 3. Merge static models with their dynamic data
+    loadedModelsById = staticModels.reduce((acc, model) => {
+      const { id, ...dynamicData } = discountsById.get(model.id) || {};
+      acc[model.id] = { ...model, ...dynamicData };
+      return acc;
+    }, {});
+
+  } catch (error) {
+    console.error("Failed to load airplane models:", error);
+    return {}; // Return empty object on failure
+  }
 }
-
 
 //load model info on airplanes that matches the model ID
 function loadAirplaneModelOwnerInfoByModelId(modelId) {
@@ -100,10 +119,6 @@ function loadAirplaneModelOwnerInfo() {
 	});
 }
 
-function showLoyalistHistoryModal() {
-    $("#loyalistHistoryModal").fadeIn(500)
-}
-
 function updateAirplaneModelTable(sortProperty, sortOrder) {
     if (!sortProperty && !sortOrder) {
         var selectedSortHeader = $('#airplaneModelSortHeader .cell.selected')
@@ -113,29 +128,50 @@ function updateAirplaneModelTable(sortProperty, sortOrder) {
 	//sort the list
 	loadedModelsOwnerInfo.sort(sortByProperty(sortProperty, sortOrder == "ascending"))
 
-	//filter
-    rangeRequirement = $('#AMTFrange').val()
-    capacityRequirement = $('#AMTFcapacity').val()
-    runwayRequirement = $('#AMTFrunway').val()
-    //console.log(rangeRequirement, capacityRequirement, runwayRequirement)
-	const modelsFiltered = loadedModelsOwnerInfo.filter(airplane => {
-        return (
-            airplane.capacity >= capacityRequirement &&
-            airplane.runwayRequirement <= runwayRequirement &&
-            airplane.range >= rangeRequirement
-        );
-    });
-
 	var airplaneModelTable = $("#airplaneModelTable")
 	airplaneModelTable.children("div.table-row").remove()
+
+    var availableOptions = {
+		"family": {},
+		"airplaneType": {},
+		"capacity": {},
+		"quality": {},
+		"range": {},
+		"runwayRequirement": {},
+	};
+
+    const state = tableFilterState.getTableState('aircraft');
+
+     //used for pricing calculation
+    const {rangeRequirement, airportFromSizeRequirement, airportToSizeRequirement} = airplaneModelCalculator()
 	
-	
-	$.each(modelsFiltered, function(index, modelOwnerInfo) {
+	$.each(loadedModelsOwnerInfo, function(index, modelOwnerInfo) {
 		var row = $("<div class='table-row clickable' data-model-id='" + modelOwnerInfo.id + "' onclick='selectAirplaneModel(loadedModelsById[" + modelOwnerInfo.id + "])'></div>")
 		var stars = $("<div class='cell' align='right'>").append(getGradeStarsImgs(modelOwnerInfo.quality)).append("</div>")
 		var capacity = modelOwnerInfo.capacity
-        modelOwnerInfo.costPerPax = calcCostPerPax(modelOwnerInfo, rangeRequirement)
+        modelOwnerInfo.costPerPax = calcCostPerPax(modelOwnerInfo, rangeRequirement, airportFromSizeRequirement, airportToSizeRequirement)
         modelOwnerInfo.trips = calcFreq(modelOwnerInfo, rangeRequirement)
+
+        // Collect filter options
+        availableOptions.family[modelOwnerInfo.family] = modelOwnerInfo.family;
+        availableOptions.airplaneType[modelOwnerInfo.airplaneType] = modelOwnerInfo.airplaneType;
+        availableOptions.capacity[modelOwnerInfo.capacity] = Number(modelOwnerInfo.capacity);
+        availableOptions.quality[modelOwnerInfo.quality] = Number(modelOwnerInfo.quality);
+        availableOptions.range[modelOwnerInfo.range] = Number(modelOwnerInfo.range);
+        availableOptions.runwayRequirement[modelOwnerInfo.runwayRequirement] = modelOwnerInfo.runwayRequirement;
+
+        let isFiltered = false;
+		Object.entries(state.selectedColumnFilter).forEach(([property, filterValues]) => {
+			if (!Array.isArray(filterValues) || filterValues.length < 1) {
+				return;
+			}
+			if (!filterValues.includes(String(modelOwnerInfo[property]))) {
+				isFiltered = true;
+			}
+		});
+		if (isFiltered) {
+			return; // skip rendering this row
+		}
 
 		if (modelOwnerInfo.isFavorite) {
 		    row.append("<div class='cell'>" + modelOwnerInfo.name + "<img src='assets/images/icons/heart.png' height='10px'></div>")
@@ -156,7 +192,7 @@ function updateAirplaneModelTable(sortProperty, sortOrder) {
 		row.append("<div class='cell' align='right'>" + modelOwnerInfo.runwayRequirement + " m</div>")
 		row.append("<div class='cell' align='right'>" + modelOwnerInfo.assignedAirplanes.length + "/" + modelOwnerInfo.availableAirplanes.length + "/" + modelOwnerInfo.constructingAirplanes.length + "</div>")
 		row.append("<div class='cell' align='right'>" + modelOwnerInfo.total + "</div>")
-		row.append("<div class='cell' align='right'>$" + (modelOwnerInfo.costPerPax).toFixed(1) + "</div>")
+		row.append("<div class='cell' align='right'>$" + (modelOwnerInfo.costPerPax).toFixed() + "</div>")
 		
 		if (selectedModelId == modelOwnerInfo.id) {
 			row.addClass("selected")
@@ -164,6 +200,34 @@ function updateAirplaneModelTable(sortProperty, sortOrder) {
 		}
 		airplaneModelTable.append(row)
 	});
+
+	updateColumnFilterOptions(availableOptions, 'aircraft');
+}
+
+function updateAirplaneModelCalculator() {
+    if (selectedAircraftTab = 'market') {
+        updateAirplaneModelTable() //refresh the table which triggers the calculator update
+    } else {
+        airplaneModelCalculator();
+    }
+}
+
+function airplaneModelCalculator() {
+    const rangeRequirement = document.getElementById("AMC_distance").value
+    const airportFromSizeRequirement = document.getElementById("AMC_airportFromSize").value || 0
+    const airportToSizeRequirement = document.getElementById("AMC_airportToSize").value || 0
+    // amc_age = document.getElementById("AMC_age").value || 0
+
+    document.getElementById("AMC_airportFromSizeLabel").innerText = airportFromSizeRequirement
+    document.getElementById("AMC_airportToSizeLabel").innerText = airportToSizeRequirement
+
+    if (selectedModel) {
+        const costPerPax = calcCostPerPax(selectedModel, rangeRequirement, airportFromSizeRequirement, airportToSizeRequirement)
+        document.getElementById("AMC_pricePax").innerText = `Estimated cost per pax: $${costPerPax.toFixed(2)}`
+    } else {
+        document.getElementById("AMC_pricePax").innerText = `-`
+    }
+    return {rangeRequirement, airportFromSizeRequirement, airportToSizeRequirement};
 }
 
 function calcFreq(airplane, distance) {
@@ -174,7 +238,7 @@ function calcFreq(airplane, distance) {
     return Math.floor(gameConstants.aircraft.maxFlightMin / ((flightTime + airplane.turnaroundTime) * 2));
 }
 
-function calcCostPerPax(airplane, distance) {
+function calcCostPerPax(airplane, distance, airportSizeFrom, airportSizeTo) {
     const MAX_FLIGHT_MIN = gameConstants.aircraft.maxFlightMin;
     const FUEL_UNIT_COST = gameConstants.linkCosts.fuelCost
 
@@ -191,12 +255,14 @@ function calcCostPerPax(airplane, distance) {
     const fuelCost = frequency * calcFuelBurn(airplane, distance) * FUEL_UNIT_COST;
     const fuelTax = fuelCost * (activeAirline.fuelTaxRate / 100);
 
-    const cost = (fuelCost + fuelTax + depreciationRate) / (airplane.capacity * frequency);
+    const airportFees = calcAirportFees(airplane, airportSizeFrom, airportSizeTo) * frequency;
+
+    const cost = (fuelCost + fuelTax + depreciationRate + airportFees) / (airplane.capacity * frequency);
     return cost;
 }
 
 function calcFlightTime(airplaneModel, distance) {
-  let timeToCruise = gameConstants.aircraft.timeToCruise[airplaneModel.airplaneType] ?? gameConstants.aircraft.timeToCruise.Other
+  let timeToCruise = gameConstants.aircraft.timeToCruise[airplaneModel.airplaneType] ?? Math.sqrt(airplaneModel.capacity) + 10;
   return parseInt(timeToCruise + distance * 60 / airplaneModel.speed);
 }
 
@@ -206,6 +272,13 @@ function calcFuelBurn(airplane, distance){
     const distanceFactor = 1 + 0.1 * Math.pow(flightTime / 60, gameConstants.linkCosts.fuelDistanceExponent);
     const fuelBurn = airplane.capacity * distanceFactor * (airplane.ascentBurn * loadFactor + airplane.cruiseBurn * distance / 800);
     return fuelBurn;
+}
+
+function calcAirportFees(airplane, airportSizeFrom, airportSizeTo){
+    const baseSlotFee = (airportSize) => (airplane.airplaneType === 'helicopter') ? 2 : gameConstants.airportFees.airportSize[airportSize - 1]; //index airportSize to array index
+    const perSeatFee = (airportSize) => airportSize - 1;
+    const multiplier = gameConstants.airportFees.airplaneType[airplane.airplaneType]
+    return baseSlotFee(airportSizeFrom) * multiplier + baseSlotFee(airportSizeTo) * multiplier + perSeatFee(airportSizeFrom) * airplane.capacity + perSeatFee(airportSizeTo) * airplane.capacity;
 }
 
 function updateUsedAirplaneTable(sortProperty, sortOrder) {
@@ -432,13 +505,14 @@ function promptBuyAirplane(modelId, condition, price, deliveryTime, explicitHome
                     //start from the default
                     var index = (i + defaultIndex) % result.configurations.length
                     var option = result.configurations[index]
-                    var barDiv = $("<div style='width : 100%' class='configuration-option'></div>")
+                    var barDiv = $(`<div id='configuration-${option.id}' class='configuration-option' style="max-height:32px;"></div>`)
+                    
                     $("#buyAirplaneModal .configuration-options").append(barDiv)
                     barDiv.data("configurationId", option.id)
                     if (i != 0) { //if not the matching one, hide by default
                         barDiv.hide()
                     }
-                    plotSeatConfigurationBar(barDiv, option, model.capacity, result.spaceMultipliers)
+                    plotSeatConfigurationBar(`configuration-${option.id}`, option, model.capacity, result.spaceMultipliers)
                 }
                 if (result.configurations.length == 1) { //then hide the arrows buttons
                     $("#buyAirplaneModal .seatConfiguration .button").hide()
@@ -524,6 +598,29 @@ function sellAirplane(airplaneId) {
 	});
 }
 
+function sellUnassignedPlanes() {
+	$.ajax({
+		type: 'DELETE',
+		url: "airlines/" + activeAirline.id + "/airplanes/sell-unassigned",
+	    contentType: 'application/json; charset=utf-8',
+	    dataType: 'json',
+	    success: function(response) {
+	        refreshPanels(activeAirline.id)
+	    	showAirplaneCanvas()
+	    },
+        error: function(jqXHR, textStatus, errorThrown) {
+	            console.log(JSON.stringify(jqXHR));
+	            console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
+	    },
+        beforeSend: function() {
+             $('body .loadingSpinner').show()
+         },
+         complete: function(){
+             $('body .loadingSpinner').hide()
+         }
+	});
+}
+
 function replaceAirplane(airplaneId) {
 	var airlineId = activeAirline.id
 	var url = "airlines/" + airlineId + "/airplanes/" + airplaneId
@@ -580,7 +677,7 @@ function buyUsedAirplane(airplaneId, homeAirportId, configurationId) {
 
 
 function updateModelInfo(modelId) {
-	loadAirplaneModels()
+	// loadAirplaneModels()
 	model = loadedModelsById[modelId]
 	var $stars = $(getGradeStarsImgs(model.quality))
 	$('#airplaneModelDetails .selectedModel').val(modelId)
@@ -637,7 +734,6 @@ function selectAirplaneModel(model) {
 	$("#airplaneCanvas #airplaneModelTable div[data-model-id='" + model.id +"']").addClass("selected")
 	
 	loadUsedAirplanes(model)
-
 
 	//show basic airplane model details
 	//model = loadedModels[modelId]
@@ -712,7 +808,8 @@ function selectAirplaneModel(model) {
 	loadAirplaneModelStats(model)
 
 	$('#airplaneCanvas #airplaneModelDetail').fadeIn(200)
-
+    
+    airplaneModelCalculator()
 }
 
 function getDiscountsTooltip(discounts) {
@@ -964,9 +1061,43 @@ function addAirplaneInventoryDivByBase(containerDiv, modelId, compareKey, compar
     containerDiv.append(airplanesDiv)
 }
 
+function togglePlaneSelect() {
+    if (isAirplaneSelectionMode) {
+        $('.isAirplane').removeClass('selected')
+        storeSelectedAirplaneIds = []
+    }
+    isAirplaneSelectionMode = !isAirplaneSelectionMode;
+}
+
+function handleAirplaneClick(event, airplaneId, element) {
+    if (isAirplaneSelectionMode) {
+        planeSelect(event, element);
+    } else {
+        loadOwnedAirplaneDetails(airplaneId, element, refreshBaseAfterAirplaneUpdate);
+    }
+}
+
+function planeSelect(event, element) {
+    var airplaneId = element.data('airplaneid');
+
+    if (element.hasClass('selected')) {
+        // It's already selected, so unselect it.
+        element.removeClass('selected');
+        var index = storeSelectedAirplaneIds.indexOf(airplaneId);
+        if (index > -1) {
+            storeSelectedAirplaneIds.splice(index, 1);
+        }
+    } else {
+        element.addClass('selected');
+        if (!storeSelectedAirplaneIds.includes(airplaneId)) {
+            storeSelectedAirplaneIds.push(airplaneId);
+        }
+    }
+}
+
 
 function addAirplaneHangarDivByModel($containerDiv, modelInfo) {
-    var $airplanesDiv = $("<div style= 'width : 100%; height : 70px; overflow: auto;'></div>")
+    var $airplanesDiv = $("<div style='width: 100%; height: 88px; overflow: auto;'></div>")
 
     var allAirplanes = $.merge($.merge($.merge([], modelInfo.assignedAirplanes), modelInfo.availableAirplanes), modelInfo.constructingAirplanes)
     //group by base Id
@@ -992,7 +1123,7 @@ function addAirplaneHangarDivByModel($containerDiv, modelInfo) {
         var $airplanesByBaseDiv = $("<div style='width : 100%;'><div style='float: left; width: 35px;'>" + airportIata + ":</div></div>")
         $.each(airplanes, function( index, airplane ) {
             var airplaneId = airplane.id
-            var li = $("<div style='float: left;' class='clickable' onclick='loadOwnedAirplaneDetails(" + airplaneId + ", $(this), showAirplaneCanvas)'></div>").appendTo($airplanesByBaseDiv)
+            var li = $("<div style='float: left;' data-airplaneId='" + airplaneId + "' class='clickable isAirplane' onclick='handleAirplaneClick(event, " + airplaneId + ", $(this))'></div>").appendTo($airplanesByBaseDiv)
             var airplaneIcon = getAirplaneIcon(airplane, gameConstants.aircraft.conditionBad)
             li.append(airplaneIcon)
         })
@@ -1175,7 +1306,6 @@ function onAirplaneSwapDrop(event, currentAirplaneId, refreshFunction) {
 }
 
 function onAirplaneDragStart(event, airplaneId, isAssigned) {
-  //event.dataTransfer.setData("text", airplaneId);
   event.dataTransfer.setData("airplane-id", airplaneId);
   if (isAssigned) {
     event.dataTransfer.setData("airplane-assigned", "true"); //do not set anything if it's not assigned
@@ -1188,9 +1318,9 @@ function closeAllAndStoreAirplaneModals() {
 
 function loadOwnedAirplaneDetails(airplaneId, selectedItem, closeCallback, disableChangeHome) {
 	//highlight the selected model
-//	if (selectedItem) {
-//	    selectedItem.addClass("selected")
-//    }
+	if (selectedItem) {
+	    selectedItem.addClass("selected")
+   }
 	
 	var airlineId = activeAirline.id 
 	$("#actionAirplaneId").val(airplaneId)
@@ -1304,7 +1434,7 @@ function loadOwnedAirplaneDetails(airplaneId, selectedItem, closeCallback, disab
                             matchingIndex = 0
                         }
 
-                        plotSeatConfigurationBar($('#ownedAirplaneDetailModal .configurationBar'), configuration, airplane.capacity, result.spaceMultipliers)
+                        plotSeatConfigurationBar('ownedAirplaneDetailModal-configurationBar', configuration, airplane.capacity, result.spaceMultipliers)
 
                         if (result.configurations.length <= 1) { //then cannot change
                             $("#ownedAirplaneDetail .configuration-edit-button").hide()
@@ -1320,13 +1450,15 @@ function loadOwnedAirplaneDetails(airplaneId, selectedItem, closeCallback, disab
                                 //start from the matching one
                                 var index = (i + matchingIndex) % result.configurations.length
                                 var option = result.configurations[index]
-                                var barDiv = $("<div style='width : 100%' class='configuration-option'></div>")
+                                // make the configuration div id unique per option so multiple configs render correctly
+                                var barDiv = $(`<div id='configuration-${airplaneId}-${option.id}' class='configuration-option' style="height:16px; width: 100%;"></div>`)
                                 $("#ownedAirplaneDetail .configuration-options").append(barDiv)
                                 barDiv.data("configurationId", option.id)
                                 if (i != 0) { //if not the matching one, hide by default
                                     barDiv.hide()
                                 }
-                                plotSeatConfigurationBar(barDiv, option, airplane.capacity, result.spaceMultipliers)
+                                // use the unique id above when plotting so ChartUtils targets the correct element
+                                plotSeatConfigurationBar(`configuration-${airplaneId}-${option.id}`, option, airplane.capacity, result.spaceMultipliers)
                             }
                             $("#ownedAirplaneDetail .configuration-view .edit").show()
                         }
@@ -1418,8 +1550,8 @@ function showAirplaneCanvas(restoreClosedModals) {
 	setActiveDiv($("#airplaneCanvas"))
 	highlightTab($('.airplaneCanvasTab'))
 
-    var $selectedTab = $("#airplaneCanvas .detailsSelection.selected")
-    selectAirplaneTab($selectedTab)
+    var $selectedAircraftTab = $("#airplaneCanvas .detailsSelection.selected")
+    selectAirplaneTab($selectedAircraftTab)
 
     $("#ownedAirplaneDetailModal").data("reloadFunction", function() {
         $("#ownedAirplaneDetailModal").data("hasChange", true) //so closing this modal always force update. it's hard to detect whether there was any change before the reload...
@@ -1454,24 +1586,26 @@ function hideAirplaneModelTableFilters() {
     $("#airplaneModelTableFilters").hide()
 }
 
-function selectAirplaneTab($selectedTab) {
-    $selectedTab.siblings().removeClass('selected')
-    $selectedTab.addClass('selected')
-    var selectedType = $selectedTab.data('type')
+let selectedAircraftTab = 'hangar';
+
+function selectAirplaneTab($selectedAircraftTab) {
+    $selectedAircraftTab.siblings().removeClass('selected')
+    $selectedAircraftTab.addClass('selected')
+    selectedAircraftTab = $selectedAircraftTab.data('type')
 
     hideAirplaneModelTableFilters()
 
     loadAirplaneModels()
     loadAirplaneModelOwnerInfo()
-    if (selectedType === 'market') {
+    if (selectedAircraftTab === 'market') {
       showAirplaneMarket()
       showAirplaneModelTableFilters()
-      selectedModelId = null
-    } else if (selectedType === 'hangar') {
+    //   selectedModelId = null
+    } else if (selectedAircraftTab === 'hangar') {
       showAirplaneHangar()
     }
 
-    var selectedDetails = $('#airplaneCanvas div.detailsGroup').children('.details.' + selectedType)
+    var selectedDetails = $('#airplaneCanvas div.detailsGroup').children('.details.' + selectedAircraftTab)
     selectedDetails.siblings().hide()
     selectedDetails.show()
 }
@@ -1590,10 +1724,25 @@ function populateHangarByModel($container) {
         }
     )
 
+    // sell all planes button
+    const totalAvailableAirplanes = Object.values(sorted).reduce(
+      (sum, entry) => sum + entry.availableAirplanes.length,
+      0
+    );
+    if (totalAvailableAirplanes > 0) {
+        const btn = document.getElementById('sellUnassignedPlanes');
+        btn.textContent = `Sell All ${totalAvailableAirplanes} Unused Planes`
+        btn.disabled = false;
+    } else {
+    const btn = document.getElementById('sellUnassignedPlanes');
+        btn.disabled = true;
+        btn.textContent = `No Unused Planes to Sell`
+    }
+
     $.each(sorted, function(index, modelOwnerInfo) {
         if (modelOwnerInfo.totalOwned > 0) {
             var modelId = modelOwnerInfo.id
-            var $inventoryDiv = $("<div style='min-width : 300px; min-height : 85px; flex: 1;' class='section clickable'></div>")
+            var $inventoryDiv = $("<div style='min-width: 300px; min-height: 100px; flex: 1;' class='section pb-2 clickable'></div>")
             if (!modelOwnerInfo.isFullLoad) {
                 loadAirplaneModelOwnerInfoByModelId(modelId) //refresh to get the utility rate
             }
@@ -1762,7 +1911,6 @@ function promptSetFavorite() {
 }
 
 function confirmSetFavorite() {
-    var airlineId = activeAirline.id
     var model = $('#setFavoriteModal').data("model")
     $.ajax({
             type: 'PUT',
@@ -1801,4 +1949,72 @@ function getAssignedAirplanesCount(compareKey, compareValue, modelId) {
         }
     });
     return count
+}
+
+function promptSwapModels() {
+    if (!selectedModel) {
+        console.warn("No model selected for swap");
+        return;
+    }
+
+    $('#swapAirplaneModal').fadeIn(200)
+
+    // Build select options for models of matching size
+    var selectElement = document.getElementById('swapAirplaneModalSelect');
+    selectElement.innerHTML = '';
+    var defaultOption = document.createElement('option');
+    defaultOption.value = '';
+    defaultOption.textContent = 'Select a model...';
+    selectElement.appendChild(defaultOption);
+
+    // Iterate through loadedModelsById object
+    for (var modelId in loadedModelsById) {
+        if (!Object.prototype.hasOwnProperty.call(loadedModelsById, modelId)) continue;
+        var model = loadedModelsById[modelId];
+        if (model.size <= selectedModel.size + 0.01) {
+            var option = document.createElement('option');
+            option.value = model.id;
+            option.textContent = model.name;
+            selectElement.appendChild(option);
+        }
+    }
+}
+
+function processSwapModels() {
+    var newModelId = $('#swapAirplaneModalSelect').val();
+    
+    if (!newModelId) {
+        console.warn("No model selected for swap");
+        return;
+    }
+
+    if (!storeSelectedAirplaneIds || storeSelectedAirplaneIds.length === 0) {
+        console.warn("No airplanes selected for swap");
+        return;
+    }
+    
+    var airlineId = activeAirline.id;
+    var swapData = {
+        airplaneIds: storeSelectedAirplaneIds,
+        newModelId: parseInt(newModelId),
+        isEstimate: true
+    };
+    
+    $.ajax({
+        type: 'POST',
+        url: '/airlines/' + airlineId + '/swap-model',
+        contentType: 'application/json; charset=utf-8',
+        dataType: 'json',
+        data: JSON.stringify(swapData),
+        success: function(result) {
+            console.log("Swap models result:", result);
+//            closeModal($('#swapAirplaneModal'));
+            // Refresh the airplane canvas to show updated models
+            showAirplaneCanvas();
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            console.log(JSON.stringify(jqXHR));
+            console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
+        }
+    });
 }

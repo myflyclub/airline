@@ -4,7 +4,7 @@ case class ReputationBreakdowns(breakdowns : List[ReputationBreakdown]) {
   val total = breakdowns.map(_.value).sum
 }
 
-case class ReputationBreakdown(reputationType : ReputationType.Value, value : Double)
+case class ReputationBreakdown(reputationType: ReputationType.Value, value: Double, quantityValue: Long)
 
 
 object ReputationType extends Enumeration {
@@ -15,16 +15,44 @@ object ReputationType extends Enumeration {
     val label: String
   }
 
-  val MILESTONE_PASSENGERS = new AbstractReputationType {
-    override val label = "Milestone Passenger Miles"
+  val MILESTONE_PASSENGER_KM = new AbstractReputationType {
+    override val label = "Milestone Passenger KM"
   }
 
-  val MILESTONE_COUNTRIES = new AbstractReputationType {
-    override val label = "Milestone Countries Served"
+  val MILESTONE_DESTINATIONS = new AbstractReputationType {
+    override val label = "Milestone Destinations"
+  }
+
+  val MILESTONE_LINK_COUNT = new AbstractReputationType {
+    override val label = "Number of links"
+  }
+
+  val MILESTONE_CODESHARES = new AbstractReputationType {
+    override val label = "Milestone Codeshares"
+  }
+
+  val MILESTONE_BUSINESS = new AbstractReputationType {
+    override val label = "Milestone Business Passengers"
   }
 
   val MILESTONE_AIRCRAFT_TYPES = new AbstractReputationType {
     override val label = "Milestone Aircraft Types"
+  }
+
+  val MILESTONE_ON_TIME = new AbstractReputationType {
+    override val label = "Milestone On-Time Departures"
+  }
+
+  val MILESTONE_LEADER_POINTS = new AbstractReputationType {
+    override val label = "Milestone Leaderboard Points"
+  }
+
+  val MILESTONE_LOAN = new AbstractReputationType {
+    override val label = "Milestone Loan Size"
+  }
+
+  val MILESTONE_BASES = new AbstractReputationType {
+    override val label = "Milestone Bases"
   }
 
   val AIRPORT_LOYALIST_RANKING = new AbstractReputationType {
@@ -32,7 +60,7 @@ object ReputationType extends Enumeration {
   }
 
   val TOURISTS = new AbstractReputationType {
-    override val label = "Tourists ticketed"
+    override val label = "Tourists & Travelers ticketed"
   }
 
   val ELITES = new AbstractReputationType {
@@ -44,11 +72,7 @@ object ReputationType extends Enumeration {
   }
 
   val LEADERBOARD_BONUS = new AbstractReputationType {
-    override val label = "Leaderboard Bonus"
-  }
-
-  val ALLIANCE_BONUS = new AbstractReputationType {
-    override val label = "Alliance Bonus"
+    override val label = "Leaderboards"
   }
 }
 

@@ -1557,8 +1557,6 @@ GNV,2287,Asphalt,11/29
 GNY,3988,Asphalt,04/22
 GNZ,1525,Asphalt,06/24
 GOA,2915,Asphalt,10/28
-GOH,893,Asphalt,05/23
-GOH,930,Asphalt,04/22
 GOI,3430,Asphalt,08/26
 GOJ,2510,Asphalt,18L/36R
 GOJ,2805,Concrete,18R/36L
@@ -3742,7 +3740,6 @@ REG,1700,Asphalt,11/29
 REG,2000,Asphalt,15/33
 REL,2560,Concrete,07/25
 REN,2500,Concrete,08/26
-REP,2550,Concrete,05/23
 RES,2770,Asphalt,3/21
 RET,880,Asphalt,03/21
 REU,2454,Asphalt,07/25
@@ -5326,7 +5323,15 @@ XIQ,10,Asphalt,1/1
 AOQ,10,Asphalt,1/1
 QFG,10,Asphalt,1/1
 QOQ,10,Asphalt,1/1
-EN4,10,Asphalt,1/1
-CB9,10,Asphalt,1/1
+END,10,Asphalt,1/1
+ENX,10,Asphalt,1/1
+CBC,10,Asphalt,1/1
 MCM,10,Asphalt,1/1
-CB7,10,Asphalt,1/1
+CXH,10,Asphalt,1/1
+LFP,10,Asphalt,1/1
+ENR,10,Asphalt,1/1
+GLW,10,Asphalt,1/1
+SDB,10,Asphalt,1/1
+SIH,10,Asphalt,1/1
+SWB,10,Asphalt,1/1
+PZE,10,Asphalt,1/1

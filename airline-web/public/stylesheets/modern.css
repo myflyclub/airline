@@ -18,12 +18,12 @@ html {
 	--placeholderBlurColorDark: #111518;
 }
 html[data-theme="dark"] {
-	--section-background-image: linear-gradient(#111a, #111a);
+	--section-background-image: linear-gradient(#111111ec, #111d);
 	--shadow-1: inset 0 0 2px rgba(255, 255, 255, 0.6);
 	--shadow-2: inset 0 0 2px rgba(255, 255, 255, 0.6);
-	--background-1: #101010c4;
-	--background-2: #505050A0;
-	--background-3: #505050A0;
+	--background-1: #303030;
+	--background-2: #707070;
+	--background-3: #505050;
 	--background-section: #111111;
 	--input-background: #aaa3;
 	--color-1: #ccc;
@@ -80,7 +80,7 @@ div.button:active:not([class*="disabled"]), button.button:hover:not([class*="dis
 	border-color: #ccc;
 }
 .gm-style-iw .gm-style-iw-d {
-    overflow: hidden !important;
+    overflow: visible !important;
 }
 .gm-style-iw[style*="padding-bottom: 0px"] {
     padding-bottom: 12px !important
@@ -101,8 +101,6 @@ div.button:active:not([class*="disabled"]), button.button:hover:not([class*="dis
 	position: absolute;
 	top: -1px;
 	right: -1px;
-	padding-left: 4px;
-	padding-right: 4px;
 	border-radius: 0 0 0 8px;
 }
 #topBar > :first-child {
@@ -110,10 +108,8 @@ div.button:active:not([class*="disabled"]), button.button:hover:not([class*="dis
 	position: absolute;
 	top: -1px;
 	left: -1px;
-	padding-right: 8px;
-	padding-left: 6px;
 	border-radius: 0 0 6px 0;
-	padding-block: 10px;
+    padding: 10px 14px;
 }
 div#topBar {
 	box-shadow: none;
@@ -274,7 +270,7 @@ html[data-theme="dark"] :is(.gm-fullscreen-control img, .gmnoprint div button im
 #linksCanvas .mainPanel {
     width: 50%;
 }
-#sidePanel {
+.mapOverlayPanel {
 	padding-left: 0px;
 	padding-right: 48px;
 	box-sizing: border-box;
@@ -284,7 +280,7 @@ html[data-theme="dark"] :is(.gm-fullscreen-control img, .gmnoprint div button im
 	right: 0;
 	top: 12px;
 }
-#sidePanel > * {
+.mapOverlayPanel > * {
 	pointer-events: auto;
 }
 .modelIllustration {
@@ -293,7 +289,7 @@ html[data-theme="dark"] :is(.gm-fullscreen-control img, .gmnoprint div button im
 .officeCanvasRightGroup .section {
     padding: 16px 4px 4px 4px;
 }
-#linksCanvas #sidePanel {
+#linksCanvas .mapOverlayPanel {
     position: unset;
     padding: 0;
 /* the div moves in the tree! */
@@ -413,9 +409,8 @@ html[data-theme="dark"] :is(.gm-fullscreen-control img, .gmnoprint div button im
         top: 0px;
         right: 0px;
         border-radius: 0 0 0 6px;
-        padding-block: 5px
     }
-    #sidePanel {
+    .mapOverlayPanel {
         width: calc(100vw - 48px);
         margin-top: 50vh;
         padding-right: 40px;
@@ -430,21 +425,6 @@ html[data-theme="dark"] :is(.gm-fullscreen-control img, .gmnoprint div button im
     #map {
         height: 75%;
     }
-}
-/* Always show map, kinda broken *
-#worldMapCanvas {
-	opacity: 1 !important
-}
-#worldMapCanvas.active {
-	position: unset !important;
-}
-#worldMapCanvas:not(.active) {
-	display: block !important;
-	position: fixed !important;
-}/**/
-select option {
-	background: var(--background-1);
-	color: var(--color-1)
 }
 /* chat */
 .chat-history ul > :last-child {

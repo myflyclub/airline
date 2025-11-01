@@ -93,6 +93,9 @@ p {
 	line-height: 1.2;
 	font-size: 12px;
 }
+p + p {
+    margin-top: 4px;
+}
 h1 {
 	font-family: "Inter", Verdana, Arial, sans-serif;
 	line-height: 1.1em;

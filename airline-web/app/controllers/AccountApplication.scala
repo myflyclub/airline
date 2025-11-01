@@ -138,20 +138,17 @@ class AccountApplication @Inject()(cc: ControllerComponents) extends AbstractCon
         println(errors)
         BadRequest(html.passwordReset(errors))
       }, 
-      userInput => {
+      userInput =>
           UserSource.loadResetUser(userInput.token) match {
-            case Some(username) => {
+            case Some(username) =>
               println("Resetting user for " + username)
               Authentication.createUserSecret(username, userInput.password)
               UserSource.deleteResetUser(userInput.token)
               Redirect("/")
-            }
-            case None => {
+            case None =>
               println("TOKEN " + userInput.token)
               Forbidden
-            }
           }
-      }
     )
   }
   
