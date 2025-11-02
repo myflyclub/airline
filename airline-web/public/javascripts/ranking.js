@@ -49,7 +49,7 @@ function updateRankingTable(rankingType, rankings) {
         rankingTable = $('#eliteCountRank')
     } else if (rankingType == "CODESHARE_COUNT") {
         rankingTable = $('#codeshareCountRank')
-    } else if (rankingType == "STOCK_VALUE") {
+    } else if (rankingType == "STOCK_PRICE") {
         rankingTable = $('#stockRank')
     } else if (rankingType == "PASSENGER_QUALITY") {
         rankingTable = $('#passengerMileQualityRank')
@@ -113,6 +113,8 @@ function updateRankingTable(rankingType, rankings) {
         rankingTable = $('#allianceElitesRank')
     } else if (rankingType == "ALLIANCE_AIRPORT_REP") {
         rankingTable = $('#allianceAirportRank')
+    } else if (rankingType == "ALLIANCE_STOCKS") {
+    rankingTable = $('#allianceStockRank')
     } else if (rankingType == "ALLIANCE_LOUNGE") {
         rankingTable = $('#allianceLoungeRank')
     } else {

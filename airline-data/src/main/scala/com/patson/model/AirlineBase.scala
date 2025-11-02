@@ -13,7 +13,7 @@ case class AirlineBase(airline : Airline, airport : Airport, countryCode : Strin
 
   def calculateUpgradeCost (scale: Int = scale, airlineType: AirlineType = airline.airlineType): Long = {
     val adjustedScale = Math.min(12 + 0.2 * (scale - 12), Math.max(1, scale)) //for non-existing base, calculate as if the base is 1, cap at 12
-    val airportSizeDiscount =  (Math.max(4, airport.size).toDouble / 2) * 0.1
+    val airportSizeDiscount =  (Math.max(6, airport.size).toDouble / 2) * 0.1
     val baseCost = airport.rating.overallDifficulty * 105000
 
     if (headquarter && scale == 1) {

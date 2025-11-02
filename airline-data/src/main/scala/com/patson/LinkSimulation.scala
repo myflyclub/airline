@@ -178,8 +178,8 @@ object LinkSimulation {
   val cancellationCriticalThreshold = 0.05
   val DELAY_MAJOR_FEE = 0.2
   val TOOLTIP_DELAYS = List(
-    "Minor delays are those under 3 hours. Minor delays lower satisfaction but have no direct financial penalty.",
-    s"Major delays are those over 3 hours. Major delays not only lower satisfaction but airlines must pay ${DELAY_MAJOR_FEE * 100}% of ticket price in fees.",
+    "Minor delays lower satisfaction but have no direct financial penalty.",
+    s"Major delays not only lower satisfaction but airlines must pay ${DELAY_MAJOR_FEE * 100}% of ticket price in fees.",
     "Cancelled flights provide no revenue, and airlines must pay the ticket cost to rebook the customer on another airline, unless there was remaining capacity to rebook. If cancelled flights are likely, having excess capacity may be prudent.",
     "Aircraft age, modified by base specializations like hangars, and airport congestion are the two equal factors for causing delays and flight cancellations. Weather is randomly generated at each airport each cycle which may cause more delays when confounded with congestion and old aircraft."
   )

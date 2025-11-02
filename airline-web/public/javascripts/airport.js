@@ -757,6 +757,21 @@ function updateFacilityList(statistics) {
         hasLounges = true
     })
 
+    const element = document.getElementById("tooltip_lounge");
+    if (element) {
+        const ulElement = document.createElement('ul');
+        ulElement.classList.add('list-disc');
+
+        statistics.tooltipLounge.forEach(tooltipText => {
+            const liElement = document.createElement('li');
+            liElement.textContent = tooltipText;
+            ulElement.appendChild(liElement);
+        });
+
+        element.innerHTML = '';
+        element.appendChild(ulElement);
+    }
+
     populateNavigation($('#airportCanvas'))
 
     var emptyBaseRow = $("<div class='table-row'></div>")

@@ -1150,9 +1150,8 @@ object AirlineSource {
       breakdowns.breakdowns.foreach { breakdown =>
         preparedStatement.setInt(1, airlineId)
         preparedStatement.setString(2, breakdown.reputationType.toString)
-        preparedStatement.setDouble(3, math.min(breakdown.value, UnsignedIntMax))
-        preparedStatement.setDouble(4, breakdown.quantityValue)
-        preparedStatement.executeUpdate()
+        preparedStatement.setDouble(3, breakdown.value)
+        preparedStatement.setDouble(4, math.min(breakdown.quantityValue, UnsignedIntMax))
       }
       preparedStatement.close()
       connection.commit()

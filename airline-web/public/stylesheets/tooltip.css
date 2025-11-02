@@ -95,6 +95,8 @@
 
 .tooltip .list-disc li {
     display: list-item;
+    font-size: 13px;
+    font-family: sans-serif;
 }
 
 .tooltip:hover .tooltiptext {

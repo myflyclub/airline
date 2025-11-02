@@ -13,7 +13,7 @@ sealed trait AirlineType {
 case object LegacyAirline extends AirlineType {
   val id = 0
   val label = "Legacy"
-  override val airportRepRatio = 2
+  override val airportRepRatio = 1
   override val stockRepPerLevel = 75
   val description = List[String](
     "Earn reputation by being highly profitable and doing stock buy backs, increasing your stock price.",
@@ -24,7 +24,7 @@ case object LegacyAirline extends AirlineType {
 case object BeginnerAirline extends AirlineType {
   val id = 1
   val label = "Beginner"
-  override val airportRepRatio = 1
+  override val airportRepRatio = 2
   override val stockRepPerLevel = 75
   val description = List[String](
     "",
@@ -44,7 +44,7 @@ case object NonPlayerAirline extends AirlineType {
 case object DiscountAirline extends AirlineType {
   val id = 3
   val label = "Discount"
-  override val touristTravelerRepPerLevel = 75
+  override val touristTravelerRepPerLevel = 70
   override val stockRepPerLevel = 50
   val crewRatio = 0.4
   val description = List[String](
@@ -60,7 +60,7 @@ case object LuxuryAirline extends AirlineType {
   val label = "Luxury"
   val extraLoyalty = 12
   val staffFreqRatio = 0.5
-  override val elitesRepPerLevel = 75
+  override val elitesRepPerLevel = 70
   override val stockRepPerLevel = 50
   val description = List[String](
     "You can never add economy class!",

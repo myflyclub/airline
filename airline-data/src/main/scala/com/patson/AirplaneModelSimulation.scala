@@ -2,7 +2,7 @@ package com.patson
 
 import com.patson.data._
 import com.patson.data.airplane.ModelSource
-import com.patson.model.airplane.Model.Type.{JUMBO, LARGE, MEDIUM, PROPELLER_MEDIUM, PROPELLER_SMALL, REGIONAL, SMALL}
+import com.patson.model.airplane.Model.Type.{JUMBO, LARGE, MEDIUM, MEDIUM_XL, PROPELLER_MEDIUM, PROPELLER_SMALL, REGIONAL, REGIONAL_XL, SMALL}
 import com.patson.model.airplane._
 
 import scala.collection.mutable.ListBuffer
@@ -54,7 +54,7 @@ object AirplaneModelSimulation {
     discounts.toList
   }
 
-  val MAX_PRICE_DISCOUNT_PERCENTAGE = 2
+  val MAX_PRICE_DISCOUNT_PERCENTAGE = 30
   val CONSTRUCTION_TIME_DISCOUNT = 99
 
   val getModelLowDemandDiscountThreshold = (model: Model) => { //smaller model has higher threshold. as the volume is supposed to be higher
@@ -62,10 +62,11 @@ object AirplaneModelSimulation {
       case SMALL => 160
       case PROPELLER_SMALL => 160
       case PROPELLER_MEDIUM => 320
-      case REGIONAL => 500
-      case MEDIUM => 320
-      case LARGE => 160
-      case _ => 120
+      case REGIONAL => 600
+      case REGIONAL_XL => 600
+      case MEDIUM => 600
+      case LARGE => 180
+      case _ => 140
     }
   }
 

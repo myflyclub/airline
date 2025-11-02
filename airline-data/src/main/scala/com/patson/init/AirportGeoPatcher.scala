@@ -36,7 +36,14 @@ object AirportGeoPatcher extends App {
     }
     val runways : Map[Int, List[Runway]] = Await.result(GeoDataGenerator.getRunway(), Duration.Inf)
 
-    val cities = AdditionalLoader.loadAdditionalCities() //assuming cities are not changing and should not be updated
+    val cities = AdditionalLoader.loadAdditionalCities()
+    //make sure cities are saved first as we need the id for airport info
+    try {
+      CitySource.deleteAllCitites()
+      CitySource.saveCities(cities)
+    } catch {
+      case e : Throwable => e.printStackTrace()
+    }
 
     val (computedAirports, cityAirportRelationships) = GeoDataGenerator.generateAirportData(csvAirports, runways, cities)
 

@@ -1598,7 +1598,7 @@
 					  </div>
 					  <h4 class="inline-icons pt-4"><img src='@routes.Assets.versioned("images/icons/sofa.png")'> Airline Lounges<span class="tooltip">
                           <img class="info svg" loading="lazy" src="/assets/images/icons/information.svg">
-                          <span class="tooltiptext alignLeft" style="width: 400px;" id="tooltip_lounge"></span>
+                          <span class="tooltiptext alignLeft" style="width: 320px;" id="tooltip_lounge"></span>
                       </span></h4>
 					  <div id="airportDetailsLoungeList" style="width: 100%;" class="table data">
 						  <div class="table-header">
@@ -2667,40 +2667,26 @@
 									<div class="item">
 										<div class="i-label">Earnings per share<div class="tooltip">
                                             <img src="/assets/images/icons/information.svg">
-                                            <div class="tooltiptext below" style="width: 280px;">
-                                                <p>Earnings per share is the .</p>
-                                                <p>Cost include all flights expenses except fuel taxes, and includes base upkeep & base overtime cost.</p>
-                                                <p><i>RASK is our standard metric for comparing two airlines' costs, regardless of their reputation.</i></p>
-                                            </div>
+                                            <div id="tooltip_stock_eps" class="tooltiptext below" style="width: 280px;"></div>
                                         </div></div>
 										<div class="i-value eps"></div>
 									</div>
                                     <div class="item">
                                         <div class="i-label">Profit Available<br>Seat km<div class="tooltip">
                                             <img src="/assets/images/icons/information.svg">
-                                            <div class="tooltiptext below" style="width: 280px;">
-                                                <h4>Profit Available Seat KM</h4>
-                                                <p>PASM is the 2nd most weighted metric influencing stock price.</p>
-                                                <p>Note, cost and revenue per seat km are separated out in the chart above.<br>
-                                                    Costs include all flights expenses except fuel taxes, and includes base upkeep & base overtime cost.</p>
-                                            </div>
+                                            <div id="tooltip_stock_pask" class="tooltiptext below" style="width: 280px;"></div>
                                         </div></div>
                                         <div class="i-value">¢<span class="PASK"></span></div>
                                     </div>
-<!--									<div class="item">-->
-<!--										<div class="i-label">Revenue Available<br>Seat km</div>-->
-<!--										<div class="i-value">¢<span class="RASK"></span></div>-->
-<!--									</div>-->
-<!--									<div class="item">-->
-<!--										<div class="i-label">Cost Available<br>Seat km</div>-->
-<!--										<div class="i-value">¢<span class="CASK"></span></div>-->
-<!--									</div>-->
                                     <div class="item">
                                         <div class="i-label">Routes</div>
                                         <div class="i-value"><span class="link_count"></span></div>
                                     </div>
 									<div class="item">
-										<div class="i-label">Satisfaction</div>
+										<div class="i-label">Satisfaction<div class="tooltip">
+                                            <img src="/assets/images/icons/information.svg">
+                                            <div id="tooltip_satisfaction" class="tooltiptext below" style="width: 280px;"></div>
+                                        </div></div>
 										<div class="i-value"><span class="satisfaction"></span>%</div>
 									</div>
                                     <div class="item">
@@ -2714,7 +2700,7 @@
 												<p>On-time performance is modified by the condition each aircraft, maintenance hangars, and airport congestion.</p>
 											</div>
 										</div></div>
-										<div class="i-value on_time"></div>
+										<div class="i-value"><span class="on_time"></span>%</div>
 									</div>
                                     <div class="item">
                                         <div class="i-label">Cash on Hand<div class="tooltip">
@@ -2723,7 +2709,7 @@
                                                 <p>Investors do not like companies sitting on cash and would prefer to see it returned to shareholders (through stock buybacks).</p>
                                             </div>
                                         </div></div>
-                                        <div class="i-value"><span class="cash"></span> months</div>
+                                        <div class="i-value"><span class="months_cash_on_hand"></span> months</div>
                                     </div>
                                     <div class="item">
                                         <div class="i-label">Leading Airline<div class="tooltip">
@@ -3201,13 +3187,22 @@
 
 
 				<div id="rankingCanvas" class="canvas" style="display: none; width: 100%; flex-direction: column">
-					<div class="section" style="width: 100%;height: min-content;flex-shrink: 0;"><p><i>All rankings are best per airline, of at least 60 reputation. Prizes are rewarded in reputation.</i></p></div>
+					<div class="section" style="width: 100%;height: min-content;flex-shrink: 0;"><p><i>Alliance rankings reward all airlines in the alliance.</i></p></div>
                     <div class="two-up-grid">
                         <div class="table data section tight rankingTable" id="allianceAirportRank">
                             <div class="table-header">
                                 <div class="cell" style="width: 7%">Rank</div>
                                 <div class="cell" style="width: 9%">Change</div>
                                 <div class="cell" style="width: 54%">Alliance Airport Reputation</div>
+                                <div class="cell" style="width: 22%" align="right">Total</div>
+                                <div class="cell" style="width: 9%" align="right">Prize</div>
+                            </div>
+                        </div>
+                        <div class="table data section tight rankingTable" id="allianceStockRank">
+                            <div class="table-header">
+                                <div class="cell" style="width: 7%">Rank</div>
+                                <div class="cell" style="width: 9%">Change</div>
+                                <div class="cell" style="width: 54%">Alliance Combined Market Cap</div>
                                 <div class="cell" style="width: 22%" align="right">Total</div>
                                 <div class="cell" style="width: 9%" align="right">Prize</div>
                             </div>
@@ -3249,6 +3244,7 @@
                             </div>
                         </div>
                     </div>
+                    <div class="section" style="width: 100%;height: min-content;flex-shrink: 0;"><p><i>All rankings are best per airline, of at least 60 reputation. Prizes are rewarded in reputation.</i></p></div>
                     <div class="two-up-grid">
 						<div class="table data section tight rankingTable" id="touristCountRank">
 							<div class="table-header">
@@ -3277,6 +3273,15 @@
 								<div class="cell" style="width: 9%" align="right">Prize</div>
 							</div>
 						</div>
+                        <div class="table data section tight rankingTable" id="stockRank">
+                            <div class="table-header">
+                                <div class="cell" style="width: 7%">Rank</div>
+                                <div class="cell" style="width: 9%">Change</div>
+                                <div class="cell" style="width: 54%">Highest Stock Price</div>
+                                <div class="cell" style="width: 22%" align="right">Price</div>
+                                <div class="cell" style="width: 9%" align="right">Prize</div>
+                            </div>
+                        </div>
 						<div class="table data section tight rankingTable" id="codeshareCountRank">
 							<div class="table-header">
 								<div class="cell" style="width: 7%">Rank</div>
@@ -3418,15 +3423,6 @@
 								<div class="cell" style="width: 9%">Change</div>
 								<div class="cell" style="width: 58%">Low Income Champion</div>
 								<div class="cell" style="width: 25%" align="right">Airports<br><small>$10k income or less</small></div>
-								<div class="cell" style="width: 9%" align="right">Prize</div>
-							</div>
-						</div>
-						<div class="table data section tight rankingTable" id="airlineProfitMarginRank">
-							<div class="table-header">
-								<div class="cell" style="width: 7%">Rank</div>
-								<div class="cell" style="width: 9%">Change</div>
-								<div class="cell" style="width: 58%">Highest Margins</div>
-								<div class="cell" style="width: 25%" align="right">Profit Margin</div>
 								<div class="cell" style="width: 9%" align="right">Prize</div>
 							</div>
 						</div>
@@ -4017,7 +4013,7 @@
 				<img width="20px" src='@routes.Assets.versioned("images/icons/population.svg")' style="margin-right: 5px;">
 				<span id="airportPopupPopulation"></span>
 			</div>
-            <div class="airportPopupItem tooltip-attr tooltip-attr-bottom" data-tooltip="Airport reputation.">
+            <div class="airportPopupItem tooltip-attr tooltip-attr-bottom" data-tooltip="Current airport reputation.">
                 <img width="20" src='@routes.Assets.versioned("images/icons/star-full.svg")' style="margin-right: 5px;">
                 <span id="airportPopupReputation"></span>
             </div>

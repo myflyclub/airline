@@ -80,6 +80,8 @@ object EventSimulation {
             AirportSource.deleteAirportFeature(airport.id, AirportFeatureType.OLYMPICS_PREPARATIONS)
             AirportSource.saveAirportFeature(airport.id, OlympicsInProgressFeature(1))
           }
+        case _ =>
+          // No action needed for other years
       }
     }
 

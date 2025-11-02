@@ -46,8 +46,8 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
               "elites" -> airline.stats.elites,
               "elitesDescription" -> airline.airlineGradeElites.description,
               "elitesLevel" -> airline.airlineGradeElites.level,
-              "ceg" -> airline.airlineGradeElites.reputationCeiling,
-              "stockFloor" -> airline.airlineGradeElites.reputationFloor
+              "elitesCeiling" -> airline.airlineGradeElites.reputationCeiling,
+              "elitesFloor" -> airline.airlineGradeElites.reputationFloor
             )
           ) else None,
 

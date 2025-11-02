@@ -82,6 +82,45 @@ object CashFlowSource {
     }
   }
   
+  def loadWeeklyCashFlowsByCycleRange(startCycle: Int, endCycle: Int): List[AirlineCashFlow] = {
+    val connection = Meta.getConnection()
+    val cashFlows = ListBuffer[AirlineCashFlow]()
+    try {
+      val queryString = new StringBuilder("SELECT * FROM " + CASH_FLOW_TABLE + 
+        " WHERE cycle >= ? AND cycle <= ? AND period = 0" +
+        " ORDER BY airline, cycle")
+      
+      val statement = connection.prepareStatement(queryString.toString())
+      statement.setInt(1, startCycle)
+      statement.setInt(2, endCycle)
+      val resultSet = statement.executeQuery()
+      
+      while (resultSet.next()) {
+        val airlineId = resultSet.getInt("airline")
+        val cashFlow = resultSet.getLong("cash_flow")
+        val operation = resultSet.getLong("operation")
+        val loanInterest = resultSet.getLong("loan_interest")
+        val loanPrincipal = resultSet.getLong("loan_principle")
+        val baseConstruction = resultSet.getLong("base_construction")
+        val buyAirplane = resultSet.getLong("buy_airplane")
+        val sellAirplane = resultSet.getLong("sell_airplane")
+        val createLink = resultSet.getLong("create_link")
+        val facilityConstruction = resultSet.getLong("facility_construction")
+        val oilContract = resultSet.getLong("oil_contract")
+        val assetTransactions = resultSet.getLong("asset_transactions")
+        val period = Period(resultSet.getInt("period"))
+        val cycle = resultSet.getInt("cycle")
+        
+        cashFlows += AirlineCashFlow(airlineId, cashFlow, operation, loanInterest, loanPrincipal, baseConstruction, buyAirplane, sellAirplane, createLink, facilityConstruction, oilContract, assetTransactions, period, cycle)
+      }
+      
+      statement.close()
+      cashFlows.toList
+    } finally {
+      connection.close()
+    }
+  }
+  
   def loadCashFlowByAirline(airlineId : Int, cycle: Int, period : Period.Value) : Option[AirlineCashFlow] = {
     val cashFlows = loadCashFlowByCriteria(List(("airline", airlineId), ("cycle", cycle), ("period", period.id)))
     if (cashFlows.length > 0) {

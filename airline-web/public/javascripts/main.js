@@ -334,18 +334,13 @@ function addCustomMapControls(map) {
     `)
 
   toggleAllianceBaseMapViewButton.index = 0
-//   toggleMapLightButton.index = 1
-//   toggleMapAnimationButton.index = 2
   toggleChampionButton.index = 3
   toggleMapChristmasButton.index = 5
 
 
   if ($("#map").height() > 500) {
     map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(toggleAllianceBaseMapViewButton[0]);
-    // map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(toggleMapLightButton[0]);
-    // map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(toggleMapAnimationButton[0]);
     map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(toggleChampionButton[0])
-    // map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(toggleHeatmapButton[0])
 
     if (christmasFlag) {
        map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(toggleMapChristmasButton[0]);
@@ -354,10 +349,7 @@ function addCustomMapControls(map) {
 
   } else {
     map.controls[google.maps.ControlPosition.LEFT_BOTTOM].push(toggleAllianceBaseMapViewButton[0])
-    // map.controls[google.maps.ControlPosition.LEFT_BOTTOM].push(toggleMapLightButton[0]);
-    // map.controls[google.maps.ControlPosition.LEFT_BOTTOM].push(toggleMapAnimationButton[0]);
     map.controls[google.maps.ControlPosition.LEFT_BOTTOM].push(toggleChampionButton[0])
-    //map.controls[google.maps.ControlPosition.LEFT_BOTTOM].push(toggleHeatmapButton[0])
 
     if (christmasFlag) {
        map.controls[google.maps.ControlPosition.LEFT_BOTTOM].push(toggleMapChristmasButton[0]);
@@ -367,7 +359,6 @@ function addCustomMapControls(map) {
 
 function addAirlineSpecificMapControls(map) {
     var toggleHeatmapButton = $('<div id="toggleMapHeatmapButton" class="googleMapIcon" onclick="toggleHeatmap()" align="center"  style="margin-bottom: 10px;"><span class="alignHelper"></span><img src="assets/images/icons/table-heatmap.png" title=\'toggle heatmap\' style="vertical-align: middle;"/></div>')
-
     toggleHeatmapButton.index = 4
 
     if ($("#map").height() > 500) {
