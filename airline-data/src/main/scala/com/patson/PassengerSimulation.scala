@@ -492,7 +492,7 @@ object PassengerSimulation {
               if (predecessorLink.from.id == passengerGroup.fromAirport.id || predecessorLink.to.id == passengerGroup.fromAirport.id) {
                 connectionCost = 0 //origin ground link only incurs link cost
               } else {
-                connectionCost = 240 //middle "leave the airport" ground connections are v expensive; note this has to be 2x expensive as other connection ground cost was free
+                connectionCost = 250 //middle "leave the airport" ground connections are v expensive; note this has to be 2x expensive as other connection ground cost was free
               }
             } else if (linkConsideration.link.transportType == TransportType.GENERIC_TRANSIT) {
               connectionCost = 0 //ground link is free, which may be destination (via ground) OR if there's then an additional flight connection it's caught above with a very expensive connection cost
@@ -500,7 +500,7 @@ object PassengerSimulation {
               val transferBaseDiscounts = transferBaseSpecializationDiscounts.get((linkConsideration.from.id, linkConsideration.link.airline.id))
               connectionCost = if (
                 transferBaseDiscounts.exists(_.paxType.contains(passengerGroup.passengerType))
-              ) 26 * TravelerTransferSpecialization.transferCostDiscount else 26
+              ) 24 * TravelerTransferSpecialization.transferCostDiscount else 24
 
               //now look at the frequency of the link arriving at this FromAirport and the link (current link) leaving this FromAirport. check frequency
               val frequency = Math.max(predecessorLink.frequencyByClass(predecessorLinkConsideration.linkClass), linkConsideration.link.frequencyByClass(linkConsideration.linkClass))

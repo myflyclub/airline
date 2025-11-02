@@ -24,7 +24,6 @@ object AirlineSimulation {
   val BOOKKEEPING_ENTRIES_COUNT = 25
 
   def airlineSimulation(cycle: Int, flightLinkResult: List[LinkConsumptionDetails], loungeResult: List[LoungeConsumptionDetails], airplanes: List[Airplane], paxStats: immutable.Map[Int, AirlinePaxStat]) = {
-    import AccumulationOps._
     val allAirlines = AirlineSource.loadAllAirlines(true).filter(_.getHeadQuarter().isDefined)
     val allLinks = LinkSource.loadAllLinks(LinkSource.FULL_LOAD)
     val allFlightLinksByAirlineId = allLinks.filter(_.transportType == TransportType.FLIGHT).map(_.asInstanceOf[Link]).groupBy(_.airline.id)
@@ -504,13 +503,6 @@ object AirlineSimulation {
         repLeaderboards = reputationBonusFromLeaderboards.toInt
       )
       allAirlineStats += airlineWeeklyStats
-      // Only add accumulated stats at the end of each period
-      if ((currentCycle + 1) % Period.numberWeeks(Period.QUARTER) == 0) {
-        allAirlineStats += computeAccumulatedValues(airlineWeeklyStats).find(_.period == Period.QUARTER).get
-      }
-      if ((currentCycle + 1) % Period.numberWeeks(Period.YEAR) == 0) {
-        allAirlineStats += computeAccumulatedValues(airlineWeeklyStats).find(_.period == Period.YEAR).get
-      }
       val stockPrice = if (isBankrupt) {
          0.0
       } else {
@@ -520,15 +512,21 @@ object AirlineSimulation {
 
       val airlineWeeklyIncome = AirlineIncome(airline.id, airlineProfit, airlineRevenue, airlineExpense, stockPrice, airlineValue.overall, linksIncome, transactionsIncome, othersIncome, cycle = currentCycle)
       allIncomes += airlineWeeklyIncome
-      allIncomes ++= computeAccumulatedValues(airlineWeeklyIncome)
 
       allCashFlows += airlineWeeklyCashFlow
-      allCashFlows ++= computeAccumulatedValues(airlineWeeklyCashFlow)
     }
     
     AirlineSource.saveAirlinesInfo(allAirlines)
 
     AirlineStatisticsSource.saveAirlineStats(allAirlineStats.toList)
+    
+    // Batch compute and save accumulated stats at period boundaries
+    if ((currentCycle + 1) % Period.numberWeeks(Period.QUARTER) == 0) {
+      computeAndSaveStats(currentCycle, allAirlines, Period.QUARTER)
+    }
+    if ((currentCycle + 1) % Period.numberWeeks(Period.YEAR) == 0) {
+      computeAndSaveStats(currentCycle, allAirlines, Period.YEAR)
+    }
 
     AirlineStatisticsSource.deleteStatsBefore(currentCycle - BOOKKEEPING_ENTRIES_COUNT, Period.WEEKLY)
     AirlineStatisticsSource.deleteStatsBefore(currentCycle - BOOKKEEPING_ENTRIES_COUNT * Period.numberWeeks(Period.QUARTER), Period.QUARTER)
@@ -538,14 +536,17 @@ object AirlineSimulation {
     cashFlows.foreach { //for balance it's safer to use adjust instead of setting it directly
       case(airline, cashFlow) => AirlineSource.adjustAirlineBalance(airline.id, cashFlow)
     }
+    
+    // Save weekly data first
     IncomeSource.saveIncomes(allIncomes.toList)
-
-    //purge previous entry of current year/month
-    if (currentCycle % Period.numberWeeks(Period.QUARTER) != 0) { //clear previous temp entry
-      IncomeSource.deleteIncomes(currentCycle - 1, Period.QUARTER)
+    CashFlowSource.saveCashFlows(allCashFlows.toList)
+    
+    // Batch compute and save accumulated data at period boundaries
+    if ((currentCycle + 1) % Period.numberWeeks(Period.QUARTER) == 0) {
+      computeAndSaveAccumulation(currentCycle, allAirlines, Period.QUARTER)
     }
-    if (currentCycle % Period.numberWeeks(Period.YEAR) != 0) { //clear previous temp entry
-      IncomeSource.deleteIncomes(currentCycle - 1, Period.YEAR)
+    if ((currentCycle + 1) % Period.numberWeeks(Period.YEAR) == 0) {
+      computeAndSaveAccumulation(currentCycle, allAirlines, Period.YEAR)
     }
 
     //purge old entries
@@ -553,16 +554,6 @@ object AirlineSimulation {
     IncomeSource.deleteIncomesBefore(currentCycle - BOOKKEEPING_ENTRIES_COUNT * Period.numberWeeks(Period.QUARTER), Period.QUARTER)
     IncomeSource.deleteIncomesBefore(currentCycle - BOOKKEEPING_ENTRIES_COUNT * Period.numberWeeks(Period.YEAR), Period.YEAR)
 
-    CashFlowSource.saveCashFlows(allCashFlows.toList)
-    //purge previous entry of current year/month
-    if (currentCycle % Period.numberWeeks(Period.QUARTER) != 0) { //clear previous temp entry
-      CashFlowSource.deleteCashFlows(currentCycle - 1, Period.QUARTER)
-    }
-    if (currentCycle % Period.numberWeeks(Period.YEAR) != 0) { //clear previous temp entry
-      CashFlowSource.deleteCashFlows(currentCycle - 1, Period.YEAR)
-    }
-
-    //purge old entries
     CashFlowSource.deleteCashFlowsBefore(currentCycle - BOOKKEEPING_ENTRIES_COUNT, Period.WEEKLY)
     CashFlowSource.deleteCashFlowsBefore(currentCycle - BOOKKEEPING_ENTRIES_COUNT * Period.numberWeeks(Period.QUARTER), Period.QUARTER)
     CashFlowSource.deleteCashFlowsBefore(currentCycle - BOOKKEEPING_ENTRIES_COUNT * Period.numberWeeks(Period.YEAR), Period.YEAR)
@@ -572,29 +563,131 @@ object AirlineSimulation {
     OilSource.deleteOilConsumptionHistoryBeforeCycle(currentCycle - 10)
   }
 
-  def computeAccumulatedValues[T](cycleValueList: T)(implicit ops: AccumulationOps.TypeClass[T]): List[T] = {
-    val currentWeek = MainSimulation.currentWeek
-    val airlineId = ops.airlineId(cycleValueList)
-    var result = List.empty[T]
-
-    def updateOrCreate(previousOption: Option[T], newPeriod: Period.Value): Option[T] = {
-      previousOption match {
-        case Some(previous) => Some(ops.update(previous, cycleValueList))
-        case None => Some(ops.copyWithPeriod(cycleValueList, newPeriod))
+  def computeAndSaveAccumulation(cycle: Int, allAirlines: List[Airline], period: Period.Value): Unit = {
+    val periodWeeks = Period.numberWeeks(period)
+    val startCycle = cycle - (cycle % periodWeeks) + 1
+    val endCycle = cycle
+    
+    // Batch load all weekly incomes and cash flows for all airlines in this period
+    val weeklyIncomesByAirline = IncomeSource.loadWeeklyIncomesByCycleRange(startCycle, endCycle).groupBy(_.airlineId)
+    val weeklyCashFlowsByAirline = CashFlowSource.loadWeeklyCashFlowsByCycleRange(startCycle, endCycle).groupBy(_.airlineId)
+    
+    val periodIncomes = scala.collection.mutable.ListBuffer[AirlineIncome]()
+    val periodCashFlows = scala.collection.mutable.ListBuffer[AirlineCashFlow]()
+    
+    allAirlines.foreach { airline =>
+      weeklyIncomesByAirline.get(airline.id).foreach { weeks =>
+        if (weeks.nonEmpty) {
+          val summed = weeks.reduce { (acc, week) =>
+            AirlineIncome(
+              airline.id,
+              profit = acc.profit + week.profit,
+              revenue = acc.revenue + week.revenue,
+              expense = acc.expense + week.expense,
+              stockPrice = acc.stockPrice,
+              totalValue = acc.totalValue,
+              links = acc.links.copy(
+                profit = acc.links.profit + week.links.profit,
+                revenue = acc.links.revenue + week.links.revenue,
+                expense = acc.links.expense + week.links.expense,
+                ticketRevenue = acc.links.ticketRevenue + week.links.ticketRevenue,
+                airportFee = acc.links.airportFee + week.links.airportFee,
+                fuelCost = acc.links.fuelCost + week.links.fuelCost,
+                fuelTax = acc.links.fuelTax + week.links.fuelTax,
+                crewCost = acc.links.crewCost + week.links.crewCost,
+                inflightCost = acc.links.inflightCost + week.links.inflightCost,
+                delayCompensation = acc.links.delayCompensation + week.links.delayCompensation,
+                maintenanceCost = acc.links.maintenanceCost + week.links.maintenanceCost,
+                loungeCost = acc.links.loungeCost + week.links.loungeCost,
+                depreciation = acc.links.depreciation + week.links.depreciation
+              ),
+              transactions = acc.transactions.copy(
+                profit = acc.transactions.profit + week.transactions.profit,
+                revenue = acc.transactions.revenue + week.transactions.revenue,
+                expense = acc.transactions.expense + week.transactions.expense,
+                capitalGain = acc.transactions.capitalGain + week.transactions.capitalGain,
+                createLink = acc.transactions.createLink + week.transactions.createLink
+              ),
+              others = acc.others.copy(
+                profit = acc.others.profit + week.others.profit,
+                revenue = acc.others.revenue + week.others.revenue,
+                expense = acc.others.expense + week.others.expense,
+                loanInterest = acc.others.loanInterest + week.others.loanInterest,
+                baseUpkeep = acc.others.baseUpkeep + week.others.baseUpkeep,
+                overtimeCompensation = acc.others.overtimeCompensation + week.others.overtimeCompensation,
+                advertisement = acc.others.advertisement + week.others.advertisement,
+                loungeUpkeep = acc.others.loungeUpkeep + week.others.loungeUpkeep,
+                loungeCost = acc.others.loungeCost + week.others.loungeCost,
+                loungeIncome = acc.others.loungeIncome + week.others.loungeIncome,
+                assetExpense = acc.others.assetExpense + week.others.assetExpense,
+                assetRevenue = acc.others.assetRevenue + week.others.assetRevenue,
+                fuelProfit = acc.others.fuelProfit + week.others.fuelProfit,
+                depreciation = acc.others.depreciation + week.others.depreciation
+              ),
+              period = period,
+              cycle = cycle
+            )
+          }
+          // Average stock price and total value across the period
+          val avgStockPrice = summed.stockPrice / weeks.length
+          val avgTotalValue = summed.totalValue / weeks.length
+          periodIncomes += summed.copy(stockPrice = avgStockPrice, totalValue = avgTotalValue)
+        }
+      }
+      
+      weeklyCashFlowsByAirline.get(airline.id).foreach { weeks =>
+        if (weeks.nonEmpty) {
+          val summed = weeks.reduce { (acc, week) =>
+            AirlineCashFlow(
+              airline.id,
+              cashFlow = acc.cashFlow + week.cashFlow,
+              operation = acc.operation + week.operation,
+              loanInterest = acc.loanInterest + week.loanInterest,
+              loanPrincipal = acc.loanPrincipal + week.loanPrincipal,
+              baseConstruction = acc.baseConstruction + week.baseConstruction,
+              buyAirplane = acc.buyAirplane + week.buyAirplane,
+              sellAirplane = acc.sellAirplane + week.sellAirplane,
+              createLink = acc.createLink + week.createLink,
+              facilityConstruction = acc.facilityConstruction + week.facilityConstruction,
+              oilContract = acc.oilContract + week.oilContract,
+              assetTransactions = acc.assetTransactions + week.assetTransactions,
+              period = period,
+              cycle = cycle
+            )
+          }
+          periodCashFlows += summed
+        }
       }
     }
-
-    // Only update quarter at the end of the quarter
-    if ((currentWeek + 1) % Period.numberWeeks(Period.QUARTER) == 0) {
-      val prev = if (currentWeek % Period.numberWeeks(Period.QUARTER) == 0) None else ops.loadPrevious(airlineId, currentWeek - 1, Period.QUARTER)
-      updateOrCreate(prev, Period.QUARTER).foreach(result ::= _)
+    
+    IncomeSource.saveIncomes(periodIncomes.toList)
+    CashFlowSource.saveCashFlows(periodCashFlows.toList)
+  }
+  
+  def computeAndSaveStats(cycle: Int, allAirlines: List[Airline], period: Period.Value): Unit = {
+    val periodWeeks = Period.numberWeeks(period)
+    val startCycle = cycle - (cycle % periodWeeks) + 1
+    val endCycle = cycle
+    
+    // Batch load all weekly stats for all airlines in this period
+    val weeklyStatsByAirline = AirlineStatisticsSource.loadAirlineStatsByCriteria(List(("period", 0))).filter { stat =>
+      stat.cycle >= startCycle && stat.cycle <= endCycle
+    }.groupBy(_.airlineId)
+    
+    val periodStats = scala.collection.mutable.ListBuffer[AirlineStat]()
+    
+    allAirlines.foreach { airline =>
+      weeklyStatsByAirline.get(airline.id).foreach { weeks =>
+        if (weeks.nonEmpty) {
+          val summed = weeks.reduce { (acc, week) =>
+            acc.update(week)
+          }
+          periodStats += summed.copy(period = period, cycle = cycle)
+        }
+      }
     }
-    // Only update period at the end of the period
-    if ((currentWeek + 1) % Period.numberWeeks(Period.YEAR) == 0) {
-      val prev = if (currentWeek % Period.numberWeeks(Period.YEAR) == 0) None else ops.loadPrevious(airlineId, currentWeek - 1, Period.YEAR)
-      updateOrCreate(prev, Period.YEAR).foreach(result ::= _)
-    }
-    result.reverse
+    
+    AirlineStatisticsSource.saveAirlineStats(periodStats.toList)
   }
 
   /**
@@ -633,7 +726,7 @@ object AirlineSimulation {
     val metricOnTime = StockModel.getMetricValue("on_time", stats.onTime) * sizeAdjust
     val metricCodeshares = StockModel.getMetricValue("codeshares", stats.codeshares)
     val metricLeaderboard = StockModel.getMetricValue("rep_leaderboards", stats.repLeaderboards)
-    val metricCash = StockModel.getMetricValue("cash", stats.cashOnHand)
+    val metricCash = StockModel.getMetricValue("months_cash_on_hand", stats.cashOnHand / 4)
     val metricInterest = StockModel.getMetricValue("interest", currentInterestRate) * sizeAdjust
 
     var newPrice = metricEPS

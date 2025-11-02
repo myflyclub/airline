@@ -87,6 +87,7 @@ object RankingSimulation {
     updatedRankings.put(RankingType.TOURIST_COUNT, getPaxRanking(airlineStats.map(stat => (stat._1, stat._2.tourists)).toMap, airlinesById, RankingType.TOURIST_COUNT))
     updatedRankings.put(RankingType.BUSINESS_COUNT, getPaxRanking(airlineStats.map(stat => (stat._1, stat._2.business)).toMap, airlinesById, RankingType.BUSINESS_COUNT))
     updatedRankings.put(RankingType.ELITE_COUNT, getPaxRanking(airlineStats.map(stat => (stat._1, stat._2.elites)).toMap, airlinesById, RankingType.ELITE_COUNT))
+    updatedRankings.put(RankingType.STOCK_PRICE, getStockRanking(airlinesById))
     updatedRankings.put(RankingType.CODESHARE_COUNT, getPaxRanking(airlineStats.map(stat => (stat._1, stat._2.codeshares)).toMap, airlinesById, RankingType.CODESHARE_COUNT))
     updatedRankings.put(RankingType.PASSENGER_SATISFACTION, getPassengerSFRanking(flightConsumptionsByAirline,airlinesById))
     updatedRankings.put(RankingType.PASSENGER_SPEED, getPassengerSpeedRanking(flightConsumptionsByAirline,airlinesById))
@@ -95,7 +96,6 @@ object RankingSimulation {
     updatedRankings.put(RankingType.UNIQUE_COUNTRIES, getCountriesRanking(linksByAirline, airlinesById))
     updatedRankings.put(RankingType.UNIQUE_IATA, getIataRanking(linksByAirline, airlinesById))
     updatedRankings.put(RankingType.STAFF_REPUTATION, getRepPerStaff(linksByAirline, airlinesById))
-    updatedRankings.put(RankingType.STOCK_PRICE, getStockRanking(airlinesById))
     updatedRankings.put(RankingType.LINK_PROFIT, getLinkProfitRanking(flightConsumptions, airlinesById))
     updatedRankings.put(RankingType.LINK_LOSS, getLinkLossRanking(flightConsumptions, airlinesById))
     updatedRankings.put(RankingType.LINKS_COUNT_LOSS, getLinksLossCountRanking(flightConsumptionsByAirline, airlinesById))
@@ -122,6 +122,7 @@ object RankingSimulation {
     updatedRankings.put(RankingType.ALLIANCE_ELITE, getAllianceEliteRanking(currentCycle))
     updatedRankings.put(RankingType.ALLIANCE_AIRPORT_REP, getAllianceAirportRepRanking(currentCycle))
     updatedRankings.put(RankingType.ALLIANCE_LOUNGE, getAllianceLoungeRanking(currentCycle))
+    updatedRankings.put(RankingType.ALLIANCE_STOCKS, getAllianceStockRanking(currentCycle))
 
     updatedRankings.toMap
   }
@@ -730,7 +731,7 @@ object RankingSimulation {
         entry = stats.alliance,
         ranking = index + 1,
         rankedValue = stats.travelerPax,
-        reputationPrize = reputationBonus(24, index)
+        reputationPrize = reputationBonus(18, index)
       )
     }.sortBy(_.ranking).take(20)
   }
@@ -746,7 +747,7 @@ object RankingSimulation {
         entry = stats.alliance,
         ranking = index + 1,
         rankedValue = stats.touristPax,
-        reputationPrize = reputationBonus(24, index)
+        reputationPrize = reputationBonus(18, index)
       )
     }.sortBy(_.ranking).take(20)
   }
@@ -762,7 +763,7 @@ object RankingSimulation {
         entry = stats.alliance,
         ranking = index + 1,
         rankedValue = stats.elitePax,
-        reputationPrize = reputationBonus(24, index)
+        reputationPrize = reputationBonus(18, index)
       )
     }.sortBy(_.ranking).take(20)
   }
@@ -778,7 +779,7 @@ object RankingSimulation {
         entry = stats.alliance,
         ranking = index + 1,
         rankedValue = BigDecimal(stats.airportRep).setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble,
-        reputationPrize = reputationBonus(24, index)
+        reputationPrize = reputationBonus(18, index)
       )
     }.sortBy(_.ranking).take(20)
   }
@@ -794,7 +795,7 @@ object RankingSimulation {
         entry = stats.alliance,
         ranking = index + 1,
         rankedValue = stats.loungeVisit,
-        reputationPrize = reputationBonus(24, index)
+        reputationPrize = reputationBonus(18, index)
       )
     }.sortBy(_.ranking).take(20)
   }
@@ -810,7 +811,7 @@ object RankingSimulation {
         entry = stats.alliance,
         ranking = index + 1,
         rankedValue = stats.airlineMarketCap,
-        reputationPrize = reputationBonus(24, index)
+        reputationPrize = reputationBonus(1, index)
       )
     }.sortBy(_.ranking).take(20)
   }

@@ -52,6 +52,12 @@ object RankingLeaderboardSource {
     try {
       connection.setAutoCommit(false)
 
+      // Delete any existing rankings for this cycle to handle re-runs after failures
+      val deleteStatement = connection.prepareStatement("DELETE FROM " + RANKING_LEADERBOARD_TABLE + " WHERE cycle = ?")
+      deleteStatement.setInt(1, cycle)
+      deleteStatement.executeUpdate()
+      deleteStatement.close()
+
       val insertStatement = connection.prepareStatement(
         "INSERT INTO " + RANKING_LEADERBOARD_TABLE + 
         " (cycle, ranking_type, key_hash, ranking_key, entry, ranking, ranked_value, movement, reputation_prize) VALUES(?,?,?,?,?,?,?,?,?)"

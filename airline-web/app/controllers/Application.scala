@@ -675,6 +675,8 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
       "olympics" -> JsArray(Olympics.TOOLTIP.map(JsString(_))),
       "delays" -> JsArray(LinkSimulation.TOOLTIP_DELAYS.map(JsString(_))),
       "congestion" -> JsArray(Airport.TOOLTIP_CONGESTION.map(JsString(_))),
+      "stock_eps" -> JsArray(StockModel.TOOLTIP_STOCK_EPS.map(JsString(_))),
+      "stock_pask" -> JsArray(StockModel.TOOLTIP_STOCK_PASK.map(JsString(_))),
     )
 
     Ok(tooltips)

@@ -1130,6 +1130,7 @@ function plotOpsChart(stats, period, container) {
     const onTimeData = [];
     const linkCountData = [];
     const epsData = [];
+    const monthsCashOnHand = [];
 
     stats.forEach(stat => {
         labels.push(getGameDate(stat.cycle));
@@ -1140,6 +1141,7 @@ function plotOpsChart(stats, period, container) {
         loadFactorData.push(stat.load_factor);
         onTimeData.push(stat.on_time);
         linkCountData.push(stat.link_count);
+        monthsCashOnHand.push(stat.months_cash_on_hand);
     });
 
     const config = {
@@ -1152,8 +1154,9 @@ function plotOpsChart(stats, period, container) {
                 { label: "CASK", data: caskData, borderColor: getChartColor('cask'), backgroundColor: getChartColor('cask'), yAxisID: 'y' },
                 { label: "Satisfaction", data: satisfactionData, borderColor: getChartColor('satisfaction'), backgroundColor: getChartColor('satisfaction'), yAxisID: 'y1' },
                 { label: "Load Factor", data: loadFactorData, borderColor: getChartColor('loadfactor'), backgroundColor: getChartColor('loadfactor'), yAxisID: 'y1' },
-                { label: "On Time", data: onTimeData, borderColor: getChartColor('ontime'), backgroundColor: getChartColor('ontime'), yAxisID: 'y1', hidden: true },
+                { label: "On Time", data: onTimeData, borderColor: getChartColor('ontime'), backgroundColor: getChartColor('ontime'), yAxisID: 'y1' },
                 { label: "Link Count", data: linkCountData, borderColor: getChartColor('linkCountData'), backgroundColor: getChartColor('linkCountData'), yAxisID: 'y2' },
+                { label: "Months of Cash", data: linkCountData, borderColor: getChartColor('monthsCashOnHand'), backgroundColor: getChartColor('monthsCashOnHand'), yAxisID: 'y3' },
             ]
         },
         options: {
@@ -1178,7 +1181,16 @@ function plotOpsChart(stats, period, container) {
                     display: false,
                     position: 'right',
                     title: { display: false },
-                    grid: { drawOnChartArea: false }
+                    grid: { drawOnChartArea: false },
+                    beginAtZero: true
+                },
+                y3: {
+                    type: 'linear',
+                    display: false,
+                    position: 'right',
+                    title: { display: false },
+                    grid: { drawOnChartArea: false },
+                    beginAtZero: true
                 }
             }
         }

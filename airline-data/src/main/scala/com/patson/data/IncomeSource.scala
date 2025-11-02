@@ -181,6 +181,87 @@ object IncomeSource {
     loadIncomeByCriteria(List(("cycle", cycle), ("period", 0)))
   }
   
+  def loadWeeklyIncomesByCycleRange(startCycle: Int, endCycle: Int): List[AirlineIncome] = {
+    val connection = Meta.getConnection()
+    val incomes = ListBuffer[AirlineIncome]()
+    try {
+      val queryString = new StringBuilder("SELECT i.*, l.*, t.*, o.* FROM " + INCOME_TABLE + " i" +
+        " JOIN " + LINKS_INCOME_TABLE + " l ON i.airline = l.airline AND i.period = l.period AND i.cycle = l.cycle" +
+        " JOIN " + TRANSACTIONS_INCOME_TABLE + " t ON i.airline = t.airline AND i.period = t.period AND i.cycle = t.cycle" +
+        " JOIN " + OTHERS_INCOME_TABLE + " o ON i.airline = o.airline AND i.period = o.period AND i.cycle = o.cycle" +
+        " WHERE i.cycle >= ? AND i.cycle <= ? AND i.period = 0" +
+        " ORDER BY i.airline, i.cycle")
+      
+      val statement = connection.prepareStatement(queryString.toString())
+      statement.setInt(1, startCycle)
+      statement.setInt(2, endCycle)
+      val resultSet = statement.executeQuery()
+      
+      while (resultSet.next()) {
+        val airlineId = resultSet.getInt("i.airline")
+        val totalProfit = resultSet.getLong("i.profit")
+        val totalRevenue = resultSet.getLong("i.revenue")
+        val totalExpense = resultSet.getLong("i.expense")
+        val stockPrice = resultSet.getDouble("i.stock_price")
+        val totalValue = resultSet.getLong("i.total_value")
+        val period = Period(resultSet.getInt("i.period"))
+        val cycle = resultSet.getInt("i.cycle")
+        
+        val linksBalance = LinksIncome(airlineId = resultSet.getInt("l.airline"),
+          profit = resultSet.getLong("l.profit"),
+          revenue = resultSet.getLong("l.revenue"),
+          expense = resultSet.getLong("l.expense"),
+          ticketRevenue = resultSet.getLong("l.ticket_revenue"),
+          airportFee = resultSet.getLong("l.airport_fee"),
+          fuelCost = resultSet.getLong("l.fuel_cost"),
+          fuelTax = resultSet.getLong("l.fuel_tax"),
+          crewCost = resultSet.getLong("l.crew_cost"),
+          inflightCost = resultSet.getLong("l.inflight_cost"),
+          delayCompensation = resultSet.getLong("l.delay_compensation"),
+          maintenanceCost = resultSet.getLong("l.maintenance_cost"),
+          loungeCost = resultSet.getLong("l.lounge_cost"),
+          depreciation = resultSet.getLong("l.depreciation"),
+          period = Period(resultSet.getInt("l.period")),
+          cycle = resultSet.getInt("l.cycle"))
+        
+        val transactionsBalance = TransactionsIncome(airlineId,
+          profit = resultSet.getLong("t.profit"),
+          revenue = resultSet.getLong("t.revenue"),
+          expense = resultSet.getLong("t.expense"),
+          capitalGain = resultSet.getLong("t.capital_gain"),
+          createLink = resultSet.getLong("t.create_link"),
+          buyBack = resultSet.getLong("t.buy_back"),
+          prize = resultSet.getLong("t.prize"),
+          period = Period(resultSet.getInt("t.period")),
+          cycle = resultSet.getInt("t.cycle"))
+        
+        val othersBalance = OthersIncome(airlineId,
+          profit = resultSet.getLong("o.profit"),
+          revenue = resultSet.getLong("o.revenue"),
+          expense = resultSet.getLong("o.expense"),
+          loanInterest = resultSet.getLong("o.loan_interest"),
+          baseUpkeep = resultSet.getLong("o.base_upkeep"),
+          overtimeCompensation = resultSet.getLong("o.overtime_compensation"),
+          advertisement = resultSet.getLong("o.advertisement"),
+          loungeUpkeep = resultSet.getLong("o.lounge_upkeep"),
+          loungeCost = resultSet.getLong("o.lounge_cost"),
+          loungeIncome = resultSet.getLong("o.lounge_income"),
+          assetExpense = resultSet.getLong("o.asset_expense"),
+          assetRevenue = resultSet.getLong("o.asset_revenue"),
+          fuelProfit = resultSet.getLong("o.fuel_profit"),
+          depreciation = resultSet.getLong("o.depreciation"),
+          period = Period(resultSet.getInt("o.period")),
+          cycle = resultSet.getInt("o.cycle"))
+        
+        incomes += AirlineIncome(airlineId, totalProfit, totalRevenue, totalExpense, stockPrice, totalValue, linksBalance, transactionsBalance, othersBalance, period, cycle)
+      }
+      
+      statement.close()
+      incomes.toList
+    } finally {
+      connection.close()
+    }
+  }
   
   def loadIncomeByCriteria(criteria : List[(String, Any)]) = {
     val connection = Meta.getConnection()

@@ -473,6 +473,7 @@ package object controllers {
         "satisfaction" -> JsNumber(BigDecimal(airlineStat.satisfaction * 100).setScale(2, RoundingMode.HALF_EVEN)),
         "load_factor" -> JsNumber(BigDecimal(airlineStat.loadFactor * 100).setScale(2, RoundingMode.HALF_EVEN)),
         "on_time" -> JsNumber(BigDecimal(airlineStat.onTime * 100).setScale(2, RoundingMode.HALF_EVEN)),
+        "months_cash_on_hand" -> JsNumber(airlineStat.cashOnHand / 4),
         "eps" -> JsNumber(airlineStat.eps),
         "link_count" -> JsNumber(airlineStat.linkCount),
         "rep_total" -> JsNumber(airlineStat.repTotal),

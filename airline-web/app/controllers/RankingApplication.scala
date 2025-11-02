@@ -128,7 +128,6 @@ class RankingApplication @Inject()(cc: ControllerComponents)(implicit ec: Execut
                   jsonAccumulator + (rankingType.toString -> rankingEntriesJson)
               }
 
-              // 3. Return result with correct ETag
               Ok(rankingJson).withHeaders(
                 CACHE_CONTROL -> "no-cache",
                 ETAG -> s""""$cycle""""

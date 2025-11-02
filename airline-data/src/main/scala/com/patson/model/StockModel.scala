@@ -8,18 +8,27 @@ object StockModel {
   val STOCK_BROKER_FEE_BASE = 750_000
   val STOCK_BUYBACK_MIN_CHANGE = 0.03
   val STOCK_BUYBACK_MAX_CHANGE = 0.12
+  val TOOLTIP_STOCK_EPS = List(
+    "Earnings per share is the primary metric with a 6x weight.",
+    "Increasing your revenue and decreasing the shares outstanding will cause EPS to go up."
+  )
+  val TOOLTIP_STOCK_PASK = List(
+    "Profit per Available Seat KM is the second most important metric with a 3x weight.",
+    "Increase your Profit per Available Seat KM, or",
+    "Lower your CASK – which includes all flight costs except fuel taxes and also includes base upkeep and base overtime.",
+  )
 
   val allMetrics: Map[String, StockMetric] = Map(
-    "eps" ->          StockMetric(24, 0.0, 25.0),
-    "pask" ->         StockMetric(12, 0.03, 0.07),
-    "satisfaction" -> StockMetric(4, 0.5, 0.95),
-    "link_count" ->   StockMetric(4, 50, 400),
-    "on_time" ->      StockMetric(4, 0.7, 0.98),
-    "airport" ->      StockMetric(4, 5, 500),
-    "codeshares" ->   StockMetric(4, 100, 100000),
-    "rep_leaderboards" ->  StockMetric(4, 0, 200),
-    "cash" ->         StockMetric(4, 48, 12),
-    "interest" ->     StockMetric(4, 0.19, 0)
+    "eps" ->                  StockMetric(24, 0.0, 25.0),
+    "pask" ->                 StockMetric(12, 0.03, 0.07),
+    "satisfaction" ->         StockMetric(4, 0.5, 0.95),
+    "link_count" ->           StockMetric(4, 50, 400),
+    "on_time" ->              StockMetric(4, 0.7, 0.98),
+    "airport" ->              StockMetric(4, 5, 500),
+    "codeshares" ->           StockMetric(4, 100, 100000),
+    "rep_leaderboards" ->     StockMetric(4, 0, 200),
+    "months_cash_on_hand" ->  StockMetric(4, 48, 12),
+    "interest" ->             StockMetric(4, 0.19, 0)
   )
 
   /**

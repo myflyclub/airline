@@ -105,6 +105,7 @@ AKL,|NZ|Indian
 AKL,|NZ|Samoan
 AKL,Dairy
 AKL,Logistics APAC
+AKL,Polynesia
 AKL,TV / movies
 AKN,Arctic fishing
 AKU,Cotton
@@ -195,7 +196,7 @@ APL,Agriculture
 APL,Cotton
 APN,Maple syrup
 APW,Polynesia
-AQ0,Academia
+AQ0,Polar research
 AQG,Copper
 AQP,Copper
 AQP,Spirits
@@ -249,7 +250,6 @@ AUH,Islamic finance
 AUH,Marine
 AUH,Oil refining
 AUH,Water
-AKL,Polynesia
 AUS,|US|Durango & Zacatecas
 AUS,|US|Pakistani
 AUS,Academia
@@ -402,12 +402,12 @@ BJV,Francophonie|
 BJV,Polish|
 BJX,Apparel
 BJX,Footwear
+BKI,Chinese tourism|
 BKI,Indian Ocean fishing
 BKI,Korean Vacay x2|
 BKI,Offshore oil
 BKI,Spices / Tropical Ag
 BKI,Textiles
-BKI,Chinese tourism|
 BKK,|TH|Chinese
 BKK,Belt & Road|
 BKK,CPG & Retail
@@ -583,8 +583,8 @@ BVA,|FR|Polish
 BVA,|FR|Serbian
 BVA,|FR|Tunisian x2
 BVA,Aerospace
-BVA,Software
 BVA,L'Hexagone Hop
+BVA,Software
 BVB,Petrobras
 BVC,Dutch|
 BVE,Offshore oil
@@ -630,8 +630,8 @@ CAN,Machinery
 CAN,Sinopec
 CAN,Software
 CAY,CC|
-CAY,Loves French Antilles|
 CAY,L'Hexagone Hop
+CAY,Loves French Antilles|
 CAY,Space
 CAZ,Copper FIFO
 CBB,|AR|Bolivian
@@ -644,6 +644,7 @@ CCJ,|OM|Malayali
 CCJ,|SA|Malayali
 CCJ,Spices / Tropical Ag
 CCJ,Sunni|
+CCK,Malay|
 CCP,|CL|Venezuelan
 CCP,Heavy industry
 CCP,Paper & furniture
@@ -667,11 +668,11 @@ CDG,Advertising & media
 CDG,Autos
 CDG,Eurozone banking
 CDG,Investment banking
+CDG,L'Hexagone Hop
 CDG,Luxury goods
 CDG,Nuclear energy
 CDG,Professional services
 CDG,Software
-CDG,L'Hexagone Hop
 CDT,|ES|Romanian
 CDV,Alaska Milk Run
 CEB,|CA|Filipino
@@ -737,6 +738,7 @@ CGP,Apparel
 CGP,Fabrics
 CGP,Heavy industry
 CGP,Tea
+CGQ,Autos
 CGQ,Fabrics
 CGQ,Nickel
 CGQ,Zinc Eurasia
@@ -748,9 +750,9 @@ CHA,Whiskey
 CHC,|NZ|Indian
 CHC,|NZ|Samoan
 CHC,Agribusiness
-CHC,Antarctic research
 CHC,Dairy
 CHC,Logistics APAC
+CHC,Polar research
 CHG,Autos
 CHO,Academia
 CHQ,Anglophone|
@@ -776,8 +778,8 @@ CJB,Textiles
 CJB,Titanium
 CJC,Copper
 CJC,Gemstones
-CJC,Water
 CJC,Science megastructure
+CJC,Water
 CJJ,Computers
 CJJ,Electronics
 CJS,Electronics
@@ -880,7 +882,7 @@ COS,Evangelicalism
 COU,Soybeans
 COV,Logistics EU Med
 COV,Mediterranean Ag
-CPC,Antarctic research
+CPC,Polar research
 CPD,Oil fracking
 CPE,Pemex
 CPH,|DK|Turkish
@@ -1084,9 +1086,9 @@ DME,Nuclear energy
 DME,PDVSA
 DME,Regional banking APAC
 DME,Russian Vacay x2|
-DMK,Autos
 DMK,|TH|Chinese
 DMK,Appliances
+DMK,Autos
 DMK,Chinese tourism|
 DMK,Rice
 DMM,|SA|Bangladeshi
@@ -1175,6 +1177,7 @@ DUS,Steel
 DUT,Arctic fishing
 DVL,Grain Belt
 DVO,|CA|Filipino
+DVO,|GU|Filipino
 DVO,|IE|Filipino
 DVO,|IT|Filipino
 DVO,|SA|Filipino
@@ -1224,12 +1227,12 @@ EDI,Golf
 EDI,Life sciences
 EDI,Loves Alps|
 EDI,Whiskey
-EG1,Academia
-EG9,Academia
-EGA,Anglophone
+EG1,Polar research
+EG9,Polar research
+EGA,Anglophone|
 EGO,Iron ore
-EGR,Academia
-EGR,Anglophone
+EGR,Anglophone|
+EGR,Polar research
 EH1,Equinor
 EIN,CPG & Retail
 EIN,Dairy
@@ -1320,8 +1323,8 @@ FCO,Eurozone banking
 FCO,Logistics EU Med
 FCO,Luxury goods
 FCO,Oil
-FDF,Loves French Antilles|
 FDF,L'Hexagone Hop
+FDF,Loves French Antilles|
 FDF,Rum
 FEZ,|FR|Moroccan
 FEZ,|NL|Moroccan
@@ -1384,8 +1387,8 @@ FSD,Regional banking US
 FSD,Soybeans
 FSM,Cotton
 FSP,Atlantic Fishing
-FSP,Loves French Antilles|
 FSP,L'Hexagone Hop
+FSP,Loves French Antilles|
 FSZ,Appliances
 FSZ,Machinery
 FTE,Mountaineering
@@ -1534,6 +1537,7 @@ GUA,Apparel
 GUA,Evangelicalism
 GUA,Latifundia Legacy
 GUB,Seafood
+GUM,|GU|Filipino
 GUM,Japanese|
 GUM,Korean|
 GUM,Micronesia
@@ -1658,6 +1662,7 @@ HIA,Electronics
 HIB,Iron ore
 HIJ,Auto parts
 HIJ,Steel
+HIR,Melanesia
 HJJ,Zinc Eurasia
 HKG,Advertising & media
 HKG,Cantonese|
@@ -1968,6 +1973,8 @@ JAX,|US|Filipino
 JAX,Logistics NAC
 JAX,Regional banking US
 JAX,US military
+JBK,Coal CN
+JBK,Grain Belt
 JBQ,Sugar
 JBR,Rice
 JDZ,Ceramics
@@ -2435,6 +2442,7 @@ LLF,Rare earths
 LLW,Agriculture
 LLW,Peanuts
 LLW,Tobacco
+LMP,Mediterranean marine
 LNK,Academia
 LNK,Oil fracking
 LNO,Nickel
@@ -2507,8 +2515,8 @@ LYI,Agriculture
 LYI,Peanuts
 LYP,Cotton
 LYP,Fabrics
-LYR,Academia
 LYR,Loves Arctic|
+LYR,Polar research
 LYS,|FR|Algerian x2
 LYS,|FR|Armenian
 LYS,|FR|Moroccan
@@ -2601,9 +2609,9 @@ MDE,Horticulture
 MDE,Logistics LATAM
 MDE,Puente Aéreo x2
 MDE,Textiles
+MDL,Belt & Road|
 MDL,Jade
 MDL,Monsoon Ag
-MDL,Belt & Road|
 MDN,Rubber
 MDN,Tropical fishing
 MDQ,Atlantic Fishing
@@ -2725,6 +2733,7 @@ MMX,CPG & Retail
 MMX,Nuclear energy
 MMX,Vodka
 MNL,|CA|Filipino
+MNL,|GU|Filipino
 MNL,|IE|Filipino
 MNL,|IT|Filipino
 MNL,|SA|Filipino
@@ -2989,7 +2998,7 @@ NSK,Rosneft
 NSK,Vodka
 NSK,Zinc Eurasia
 NSN,Seafood
-NSP,Anglophone
+NSP,Anglophone|
 NTE,Marine
 NTE,Renewables
 NTE,Shipbuilding
@@ -3012,8 +3021,8 @@ NVT,Marine
 NWI,Wind energy
 NYM,Rosneft
 NYT,Dark economy
-NZF,Academia
-NZF,Anglophone
+NZF,Anglophone|
+NZF,Polar research
 NZH,Logistics CIS
 OAK,|US|Filipino
 OAK,|US|Vietnamese
@@ -3100,9 +3109,9 @@ ORY,|FR|Tunisian x2
 ORY,Academia
 ORY,Aerospace
 ORY,Apparel
+ORY,L'Hexagone Hop
 ORY,Luxury goods
 ORY,Spirits
-ORY,L'Hexagone Hop
 OSL,|NO|Somali
 OSL,Aluminum
 OSL,Loves Spain|
@@ -3199,7 +3208,7 @@ PER,Uranium
 PER,Water
 PES,Paper & furniture
 PET,|BR|Polish
-PET,Antarctic research
+PET,Polar research
 PEW,|PK|Afghan
 PEW,Drug trafficking
 PEW,Pashto|
@@ -3280,6 +3289,7 @@ PNH,|KH|Indonesian
 PNH,Apparel
 PNH,Dark Economy
 PNH,Spices / Tropical Ag
+PNI,Micronesia
 PNK,|ID|Chinese
 PNK,Monsoon Ag
 PNK,Rubber
@@ -3340,8 +3350,8 @@ PSR,Mediterranean Ag
 PTF,Surfing
 PTG,Copperbelt
 PTG,Diamonds
-PTP,Loves French Antilles|
 PTP,L'Hexagone Hop
+PTP,Loves French Antilles|
 PTU,Platinum
 PTY,Copper
 PTY,Global logistics
@@ -3356,8 +3366,8 @@ PUJ,Francophonie|
 PUJ,German|
 PUJ,Polish|
 PUN,Back office
-PUQ,Antarctic research
 PUQ,Mountaineering
+PUQ,Polar research
 PUQ,Sheep
 PUQ,Viticulture
 PUS,|JP|Korean
@@ -3407,13 +3417,14 @@ PZU,Logistics MEA
 PZU,Oil refining
 QAB,Academia
 QAB,Hispanic|
-QAO,Academia
+QAO,Polar research
 QAO,Russian|
 QRO,Aerospace
 QRO,Appliances
 QRO,Poultry
 QRW,Oil
 QSZ,Sunni|
+RAB,Melanesia
 RAI,Lusophone|
 RAJ,Peanuts
 RAK,|FR|Moroccan
@@ -3534,8 +3545,8 @@ RUH,|SA|Pakistani
 RUH,Islamic finance
 RUH,Logistics MEA
 RUH,Water
-RUN,Sugar
 RUN,L'Hexagone Hop
+RUN,Sugar
 RUT,Dairy
 RVE,Latifundia Legacy
 RVN,Anglophone|
@@ -3582,8 +3593,8 @@ SBA,SoCal NoCal
 SBA,US military
 SBD,|US|Guerrero & Oaxaca
 SBD,SoCal NoCal
-SBH,Loves French Antilles|
 SBH,L'Hexagone Hop
+SBH,Loves French Antilles|
 SBL,Gemstones
 SBN,Academia
 SBT,Gazprom
@@ -3646,8 +3657,9 @@ SEA,Software
 SEN,Loves Alps|
 SEU,Conservation
 SFA,Water
-SFG,Loves French Antilles|
 SFG,L'Hexagone Hop
+SFG,Loves French Antilles|
+SFJ,Polar research
 SFJ,Santa
 SFN,Grain Belt
 SFO,|US|Bengali
@@ -3792,6 +3804,7 @@ SOF,Apparel
 SOF,Back office
 SOF,Loves Kavala x2|
 SOF,Software
+SON,Melanesia
 SON,Seafood
 SOQ,Nickel
 SOU,UFOs
@@ -4015,6 +4028,7 @@ TKD,Manganese
 TKD,Offshore oil
 TKG,Geothermal
 TKG,Space
+TKK,Micronesia
 TKU,Boreal
 TKU,Swedish|
 TLE,Indian Ocean fishing
@@ -4060,8 +4074,8 @@ TOF,Gazprom
 TOS,Atlantic Fishing
 TOS,Equinor
 TOS,Finnish|
+TOS,Polar research
 TOS,Renewables
-TOS,US military
 TOY,Rice
 TPA,Back office
 TPA,Golf
@@ -4201,14 +4215,14 @@ UPG,Offshore oil
 UPG,Tropical fishing
 UPN,|US|Jalisco & Michoacán
 URA,Oil
+URC,Belt & Road|
 URC,Cotton
 URC,PetroChina
 URC,Sunni|
 URC,Wind energy
-URC,Belt & Road|
 URT,Rubber
-USH,Antarctic research
 USH,Mountaineering
+USH,Polar research
 USK,Russian Vacay x2|
 USN,Auto parts
 USN,Copper
@@ -4405,8 +4419,8 @@ YAK,Alaska Milk Run
 YAM,Machinery
 YAP,Micronesia
 YAP,Seafood
-YAQ,Academia
-YAQ,Anglophone
+YAQ,Anglophone|
+YAQ,Polar research
 YBC,Aluminum
 YBC,Boreal
 YBC,Francophonie|
@@ -4418,8 +4432,8 @@ YBP,PetroChina
 YBR,Grain Belt
 YBR,Ranching
 YBY,Oil fracking
-YCB,Academia
 YCB,Canadian Arctic 
+YCB,Polar research
 YCD,Northwest Passage
 YCD,Spirituality
 YCG,Horticulture
@@ -4432,9 +4446,9 @@ YEG,Oil fracking
 YEI,Appliances
 YEI,Auto parts
 YEV,Canadian Arctic 
+YFB,Canadian Arctic 
 YFB,Loves Arctic|
 YFB,Santa
-YFB,Canadian Arctic 
 YGP,Francophonie|
 YHM,|CA|Chinese
 YHM,Logistics NAC
@@ -4478,10 +4492,10 @@ YNZ,Agriculture
 YNZ,Auto parts
 YOW,|CA|Filipino
 YOW,Bureaucracy
+YOW,Canadian Arctic 
 YOW,Defense
 YOW,Loves Cancun x2|
 YOW,NA Capitols|
-YOW,Canadian Arctic 
 YPE,Oil fracking
 YPR,Coal seam gas
 YPR,Northwest Passage
@@ -4489,9 +4503,9 @@ YPY,Boreal
 YQB,Aluminum
 YQB,Francophonie|
 YQB,Loves Cancun x2|
+YQB,Loves French Antilles|
 YQB,Maple syrup
 YQB,Software
-YQB,Loves French Antilles|
 YQG,Auto parts
 YQL,Coal seam gas
 YQL,Ranching
@@ -4547,7 +4561,7 @@ YVR,Forestry
 YVR,Life sciences
 YVR,Software
 YVR,TV / movies
-YW9,Academia
+YW9,Polar research
 YWB,Nickel
 YWB,Platinum
 YWG,Agribusiness
@@ -4570,11 +4584,11 @@ YXU,Loves Cancun x2|
 YXU,Rare earths
 YXU,Renewables
 YXX,Grain Belt
+YXY,Canadian Arctic 
 YXY,Gold
 YXY,Loves Arctic|
 YXY,Loves Cancun x2|
 YXY,Uranium
-YXY,Canadian Arctic 
 YYB,Boreal
 YYC,|CA|Chinese
 YYC,|CA|Filipino
@@ -4607,9 +4621,9 @@ YYZ,Life sciences
 YYZ,Loves Cancun x2|
 YYZ,Nuclear energy
 YYZ,Software
+YZF,Canadian Arctic 
 YZF,Gold FIFO
 YZF,Loves Arctic|
-YZF,Canadian Arctic 
 YZP,Boreal
 YZT,Northwest Passage
 YZV,Aluminum
@@ -4658,3 +4672,20 @@ ZUH,Wind energy
 ZYI,Baijiu
 ZYL,Fabrics
 ZYL,Tea
+,
+,
+,
+,
+,
+,
+,
+,
+,
+PER,Aussie Outliers
+XCH,Aussie Outliers
+CCK,Aussie Outliers
+SYD,Aussie Outliers
+CBR,Aussie Outliers
+NLK,Aussie Outliers
+LDH,Aussie Outliers
+SYD,Aussie Outliers
