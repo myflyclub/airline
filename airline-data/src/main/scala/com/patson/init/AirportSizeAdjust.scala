@@ -31,7 +31,7 @@ object AirportSizeAdjust {
         "FRA" -> 9,
         "MAD" -> 9,
         "LAX" -> 9,
-        "JFK" -> 8,
+        "JFK" -> 9,
         "PEK" -> 9,
         "DEL" -> 8,//should be a 9 but it gets too big
         "ICN" -> 9,
@@ -281,6 +281,7 @@ object AirportSizeAdjust {
         "TCZ" -> 3,
         "BSD" -> 3,
         "JBK" -> 3,
+        "LGZ" -> 2,
         //https://en.wikipedia.org/wiki/List_of_the_busiest_airports_in_Colombia
         "BOG" -> 8,
         "CLO" -> 6,
