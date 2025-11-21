@@ -168,14 +168,7 @@ object LinkSimulation {
    * - cancellations are calculated before booking (pathfinding is the final journey, maybe not what was originally booked).
    * - lower load factor reduces cancellation costs as we assume passengers were rebooked onto different flight
    * - delays primarily influence satisfaction ... cancellations are very expensive
-   * - 20% of flights have a delay
    */
-  val minorDelayNormalThreshold = 0.3
-  val majorDelayNormalThreshold = 0.1
-  val cancellationNormalThreshold = 0.03
-  val minorDelayCriticalThreshold = 0.5
-  val majorDelayCriticalThreshold = 0.2
-  val cancellationCriticalThreshold = 0.05
   val DELAY_MAJOR_FEE = 0.2
   val TOOLTIP_DELAYS = List(
     "Minor delays lower satisfaction but have no direct financial penalty.",
@@ -588,7 +581,7 @@ object LinkSimulation {
         val localDemandMet = fromPax.toDouble / airportStats.baselineDemand
         val localTravelRate = Airport.travelRate(localDemandMet, airport.size)
         val percentGlobally = allPax.toDouble / worldStats.totalPax
-        val rep = Math.max(1.5, BigDecimal(Math.pow(localTravelRate, 1.35) * percentGlobally * Airport.GLOBAL_AIRPORT_REPUTATION_POOL).setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble)
+        val rep = Math.max(airport.size, BigDecimal(Math.pow(localTravelRate, 1.35) * percentGlobally * Airport.GLOBAL_AIRPORT_REPUTATION_POOL).setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble)
         AirportStatisticsUpdate(
           airport.id,
           fromPax,
