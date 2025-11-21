@@ -1,9 +1,6 @@
 var uiThemeList = ["classic", "modern", "modern-lite"]
 
 function changeUITheme(theme){
-    if (isMobileDevice()) {
-        return;
-    }
 	if (!uiThemeList.includes(theme)) {
 		return;
 	}	
@@ -19,9 +16,6 @@ function changeUITheme(theme){
 }
 
 function loadTheme() {
-    if (isMobileDevice()) {
-        return;
-    }
 	if (!localStorage.getItem("UITheme")) {
 		localStorage.setItem("UITheme", "modern-lite")
 	}

@@ -3,7 +3,7 @@ function showAirportAssets(airport) {
 
   $.ajax({
   		type: 'GET',
-  		url: "airports/" + airport.id + "/assets",
+  		url: "/airports/" + airport.id + "/assets",
   		contentType: 'application/json; charset=utf-8',
   		dataType: 'json',
   	    success: function(assets) {
@@ -26,7 +26,7 @@ function showAirportAssets(airport) {
                 $assetDiv.append($title)
                 var $assetImageDiv = $('<div style="position: relative;"></div>')
                 var $assetImage = $('<img style="max-width:100%">')
-                $assetImage.attr('src', 'assets/images/airport-assets/' + asset.assetType + '.png')
+                $assetImage.attr('src', '/assets/images/airport-assets/' + asset.assetType + '.png')
                 $assetImageDiv.append($assetImage)
 
 
@@ -39,14 +39,14 @@ function showAirportAssets(airport) {
 
                     $assetImageDiv.append($airlineLogo)
 
-                    var fullStarSource = "assets/images/icons/star-full.svg"
-                    var halfStarSource = "assets/images/icons/star-half.svg"
+                    var fullStarSource = "/assets/images/icons/star-full.svg"
+                    var halfStarSource = "/assets/images/icons/star-half.svg"
                     var $levelBar = getHalfStepImageBarByValue(fullStarSource, halfStarSource, 1, asset.level).css({ 'position' : 'absolute', 'bottom' : '0', 'right' : '0'})
                     $assetImageDiv.append($levelBar)
                 }
 
                 if (asset.status === "UNDER_CONSTRUCTION") {
-                    var $constructionLogo = $('<img src="assets/images/icons/construction.gif">')
+                    var $constructionLogo = $('<img src="/assets/images/icons/construction.gif">')
                     $constructionLogo.attr('title', asset.name + " is under construction")
                     $constructionLogo.css('position', 'absolute')
                     $constructionLogo.css('bottom', '0')
@@ -89,7 +89,7 @@ function downgradeAsset(asset) {
 }
 
 function buildOrModifyAsset(asset, downgrade) {
-	var url = "airlines/" + activeAirline.id + (downgrade ? "/airport-asset/downgrade/" : "/airport-asset/") + asset.id
+	var url = "/airlines/" + activeAirline.id + (downgrade ? "/airport-asset/downgrade/" : "/airport-asset/") + asset.id
 	var assetData = {
 			"name" : $("#airportAssetDetailsModal .assetNameInput").val(),
 			}
@@ -127,7 +127,7 @@ function buildOrModifyAsset(asset, downgrade) {
 
 
 function sellAsset(asset) {
-	var url = "airlines/" + activeAirline.id + "/airport-asset/" + asset.id
+	var url = "/airlines/" + activeAirline.id + "/airport-asset/" + asset.id
     	$.ajax({
     		type: 'DELETE',
     		url: url,
@@ -156,7 +156,7 @@ function sellAsset(asset) {
 
 function showAssetModal(asset) {
     $('#airportAssetDetailsModal').data('asset', asset)
-    $('#airportAssetDetailsModal img.assetImage').attr('src', 'assets/images/airport-assets/' + asset.assetType + '.png')
+    $('#airportAssetDetailsModal img.assetImage').attr('src', '/assets/images/airport-assets/' + asset.assetType + '.png')
     var owned = asset.airline && activeAirline && activeAirline.id == asset.airline.id
     $('#airportAssetDetailsModal .name').text(asset.name)
     $('#airportAssetDetailsModal .assetName').text(asset.name)
@@ -185,8 +185,8 @@ function showAssetModal(asset) {
 
     if (asset.level) {
         $('#airportAssetDetailsModal .assetLevel').empty()
-        var fullStarSource = "assets/images/icons/star.png"
-        var halfStarSource = "assets/images/icons/star-half.png"
+        var fullStarSource = "/assets/images/icons/star.png"
+        var halfStarSource = "/assets/images/icons/star-half.png"
         $("#airportAssetDetailsModal .assetLevel").append(getHalfStepImageBarByValue(fullStarSource, halfStarSource, 1, asset.level).css({ 'display' : 'inline-block', 'vertical-align' : 'text-bottom'}))
     } else {
         $('#airportAssetDetailsModal .assetLevel').text('-')
@@ -303,14 +303,14 @@ function showAssetModal(asset) {
                     var $row = $("<div class='table-row'></div>")
 
                     $row.append("<div class='cell'>" + assetDetails.level + "</div>")
-                    var $boostImage = $('<img src="assets/images/icons/airport-features/' + entry.boostType + '.png" style="vertical-align: middle;">')
+                    var $boostImage = $('<img src="/assets/images/icons/airport-features/' + entry.boostType + '.png" style="vertical-align: middle;">')
                     var $cell = $("<div class='cell'></div>")
                     $cell.append($boostImage)
                     $cell.append('<span>' + entry.label + '</span>')
                     $row.append($cell)
                     $row.append("<div class='cell' align='right'>???</div>")
                     $row.append("<div class='cell' align='right'>???</div>")
-                    $row.append('<div class="cell"><img src="assets/images/icons/construction.gif" style="vertical-align: middle;"></div>')
+                    $row.append('<div class="cell"><img src="/assets/images/icons/construction.gif" style="vertical-align: middle;"></div>')
                     $('#airportAssetDetailsModal .airportBoostHistoryTable .table-header').after($row)
                 })
             }
@@ -332,7 +332,7 @@ function showAssetModal(asset) {
             if (typeof assetDetails.revenue !== 'undefined') {
                 $('#airportAssetDetailsModal .assetRevenue').text('$' + commaSeparateNumber(assetDetails.revenue))
             }
-            var fullStarSource = "assets/images/icons/star.png"
+            var fullStarSource = "/assets/images/icons/star.png"
             var $performanceBar = getHalfStepImageBarByValue(fullStarSource, null, 0.5, assetDetails.performanceApprox).css({ 'display' : 'inline-block', 'vertical-align' : 'text-bottom'})
             $('#airportAssetDetailsModal .assetPerformance').append($performanceBar)
 
@@ -384,7 +384,7 @@ function refreshBoostHistory(history, baseBoosts) {
         var $row = $("<div class='table-row'></div>")
 
         $row.append("<div class='cell'>" + entry.level + "</div>")
-        var $boostImage = $('<img src="assets/images/icons/airport-features/' + entry.boostType + '.png" style="vertical-align: middle;">')
+        var $boostImage = $('<img src="/assets/images/icons/airport-features/' + entry.boostType + '.png" style="vertical-align: middle;">')
         var $cell = $("<div class='cell'></div>")
         $cell.append($boostImage)
         $cell.append('<span>' + entry.label + '</span>')
@@ -402,7 +402,7 @@ function refreshBoostHistory(history, baseBoosts) {
         var $row = $("<div class='table-row'></div>")
 
         $row.append("<div class='cell'>Base</div>")
-        var $boostImage = $('<img src="assets/images/icons/airport-features/' + entry.boostType + '.png" style="vertical-align: middle;">')
+        var $boostImage = $('<img src="/assets/images/icons/airport-features/' + entry.boostType + '.png" style="vertical-align: middle;">')
         var $cell = $("<div class='cell'></div>")
         $cell.append($boostImage)
         $cell.append('<span>' + entry.label + '</span>')
@@ -442,7 +442,7 @@ function getUpgradeFactorIcon(value) {
         icon = "smiley-cry.png"
         description = "Terrible"
     }
-    $icon.attr('src', 'assets/images/icons/' + icon)
+    $icon.attr('src', '/assets/images/icons/' + icon)
     $icon.attr('title', description)
     return $icon
 }

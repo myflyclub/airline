@@ -14,7 +14,7 @@ function showLogCanvas() {
 }
 
 function loadAllLogs() {
-	var url = "airlines/" + activeAirline.id + "/logs"
+	var url = "/airlines/" + activeAirline.id + "/logs"
 	$('.selfNote.rejection').hide()
 	loadedLogs = []
 
@@ -36,7 +36,7 @@ function loadAllLogs() {
 }
 
 function loadAllAlerts() {
-	var url = "airlines/" + activeAirline.id + "/alerts"
+	var url = "/airlines/" + activeAirline.id + "/alerts"
 
 	loadedAlerts = []
 
@@ -79,7 +79,6 @@ function updateLogTable(sortProperty, sortOrder) {
                 showAirportDetails(log.properties.airportId)
             })
             row.attr("data-link", "airport")
-            populateNavigation(row)
         }
 
 		logTable.append(row)
@@ -99,7 +98,7 @@ function updateAlertTable(sortProperty, sortOrder) {
 	loadedAlerts.sort(sortByProperty(sortProperty, sortOrder == "ascending"))
 
 	$.each(loadedAlerts, function(index, alert) {
-		var row = $("<div class='table-row clickable'  onclick=' showLinksDetails(); refreshLinkDetails(" + alert.targetId + ");'></div>")
+		var row = $("<div class='table-row clickable'  onclick=' showLinksCanvas(); refreshLinkDetails(" + alert.targetId + ");'></div>")
 		row.append("<div class='cell'>" + getCycleDeltaText(alert.cycleDelta) + "</div>")
 		row.append("<div class='cell'>" + alert.categoryText + "</div>")
 		row.append("<div class='cell'>" + alert.duration + " week(s)</div>")
@@ -136,7 +135,7 @@ function toggleAlertTableSortOrder(sortHeader) {
 
 
 function putSelfNote() {
-	var url = "airlines/" + activeAirline.id + "/log/self-note"
+	var url = "/airlines/" + activeAirline.id + "/log/self-note"
 
 	$.ajax({
 		type: 'POST',

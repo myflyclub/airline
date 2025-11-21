@@ -1,7 +1,3 @@
-var map
-var airportMap
-var markers
-var baseMarkers = []
 var activeAirline
 var activeUser
 var selectedLink
@@ -13,15 +9,9 @@ var polylines = []
 var gameConstants
 var notes = {}
 
-$( document ).ready(function() {
-  $('#tutorialHtml').load('assets/html/tutorial.html')
-  $('#noticeHtml').load('assets/html/notice.html', initNotices)
-  populateNavigation()
-  history.replaceState({"onclickFunction" : "showWorldMap()"}, null, "/") //set the initial state
-
-	window.addEventListener('orientationchange', refreshMobileLayout)
-
-    loadOilPrices();
+function airlineInit() {
+  $('#tutorialHtml').load('/assets/html/tutorial.html')
+  $('#noticeHtml').load('/assets/html/notice.html', initNotices)
 
     if ($.cookie('sessionActive')) {
         loadUser(false)
@@ -31,15 +21,16 @@ $( document ).ready(function() {
         showAbout();
         refreshWallpaper()
     }
-
+    
     registerEscape()
     updateAirlineColors()
     initTabGroup()
+
+    loadOilPrices();
     getGameConstants()
-
     populateTooltips()
-    checkAutoplaySettings()
 
+    window.addEventListener('orientationchange', refreshMobileLayout)
     mobileCheck()
 
 	if ($("#floatMessage").val()) {
@@ -50,27 +41,27 @@ $( document ).ready(function() {
 	});
 
 	$('#chattext').jemoji({
-    folder : 'assets/images/emoji/'
+    folder : '/assets/images/emoji/'
   });
 
-  Splitting();
-})
-
-async function getGameConstants() {
-  const url = "game/constants";
-  try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`Response status: ${response.status}`);
-    }
-
-    gameConstants = await response.json();
-  } catch (error) {
-    console.error(error.message);
-  }
+//   Splitting(); are we using this?
 }
 
-$(window).on('focus', function() {
+async function getGameConstants() {
+    const url = "/game/constants";
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`Response status: ${response.status}`);
+        }
+
+        gameConstants = await response.json();
+    } catch (error) {
+        console.error(error.message);
+    }
+}
+
+$(window).on('focus', function () {
     if (selectedAirlineId) {
         checkWebSocket(selectedAirlineId)
     }
@@ -81,7 +72,7 @@ function registerEscape() {
 
     for (let i = 0; i < modals.length; i++) {
         const modal = modals[i];
-        modal.addEventListener('click', function(event) {
+        modal.addEventListener('click', function (event) {
             // 'event.target' is the specific element that was clicked; if the clicked element is the modal itself (and not a child element), hide the modal.
             if (event.target === modal) {
                 closeModal($(modal));
@@ -89,8 +80,8 @@ function registerEscape() {
         });
     }
 
-    $(document).keyup(function(e) {
-         if (e.key === "Escape") { // escape key maps to keycode `27`
+    $(document).keyup(function (e) {
+        if (e.key === "Escape") { // escape key maps to keycode `27`
             var $topModal = $(".modal:visible").last()
             if ($topModal.length > 0) {
                 closeModal($topModal)
@@ -123,7 +114,6 @@ function refreshMobileLayout() {
 	}
 	delete(map)
 	//yike, what if we miss something...the list below is kinda random
-	//initMap()
     addMarkers()
 	if (activeAirline) {
 	    updateLinksInfo()
@@ -167,66 +157,85 @@ function refreshLoginBar() {
 }
 
 
-function loadUser(isLogin) {
-    var ajaxCall = {
-        type: "POST",
-        url: "login",
-        success: function (user) {
-            if (user) {
-                closeAbout()
-                activeUser = user
-                $.cookie('sessionActive', 'true');
-                $("#loginUserName").val("")
-                $("#loginPassword").val("")
-
-                if (isLogin) {
-                    showFloatMessage("Successfully logged in")
-                    showAnnoucement()
-                }
-                loadAirportsDynamic();
-                refreshWallpaper()
-                refreshLoginBar()
-                addMarkers()
-                showUserSpecificElements();
-                updateChatTabs()
-                initAdminActions()
-            }
-            if (user.airlineIds.length > 0) {
-                selectAirline(user.airlineIds[0])
-                loadAirplaneModels(user.airlineIds[0])
-                addAirlineSpecificMapControls(map)
-                initPrompts()
-                updateAirlineLabelColors()
-            }
-            loadAllCountries() //load country after airline
-            $('.button.login').removeClass('loading')
-
-        },
-        error: function (jqXHR, textStatus, errorThrown) {
-            if (jqXHR.status == 401) {
-                showFloatMessage("Incorrect username or password")
-            } else if (jqXHR.status == 400) {
-                showFloatMessage("Session expired. Please log in again")
-            } else if (jqXHR.status == 403) {
-                showFloatMessage("You have been banned for violating the game rules. Please contact admins on Discord for assistance.")
-            } else {
-                showFloatMessage("Error logging in, error code " + jqXHR.status + ". Please try again. Contact admins on Discord if the issue persists.")
-                console.log(JSON.stringify(jqXHR));
-                console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
-            }
-            $('.button.login').removeClass('loading')
-        }
+async function loadUser(isLogin) {
+    // Build headers (include JSON accept and optional Basic auth for login)
+    const headers = {
+        'Accept': 'application/json'
     }
+
     if (isLogin) {
-        var userName = $("#loginUserName").val()
-        var password = $("#loginPassword").val()
-        ajaxCall.headers = {
-            "Authorization": "Basic " + btoa(userName + ":" + password)
-        }
-
+        const userName = $("#loginUserName").val()
+        const password = $("#loginPassword").val()
+        headers['Authorization'] = 'Basic ' + btoa(userName + ':' + password)
     }
 
-    return $.ajax(ajaxCall);
+    try {
+        const response = await fetch('/login', {
+            method: 'POST',
+            headers: headers,
+            credentials: 'same-origin'
+        })
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                showFloatMessage('Incorrect username or password')
+            } else if (response.status === 400) {
+                showFloatMessage('Session expired. Please log in again')
+            } else if (response.status === 403) {
+                showFloatMessage('You have been banned for violating the game rules. Please contact admins on Discord for assistance.')
+            } else {
+                showFloatMessage('Error logging in, error code ' + response.status + ". Please try again. Contact admins on Discord if the issue persists.")
+                // try to log response body for debugging
+                const text = await response.text().catch(() => null)
+                if (text) console.log(text)
+                console.log('Fetch error: ' + response.status + ' : ' + response.statusText)
+            }
+            $('.button.login').removeClass('loading')
+            throw new Error('Login failed: ' + response.status)
+        }
+
+        const user = await response.json()
+
+        if (user) {
+            closeAbout()
+            activeUser = user
+            $.cookie('sessionActive', 'true');
+            $("#loginUserName").val("")
+            $("#loginPassword").val("")
+
+            if (isLogin) {
+                showFloatMessage('Successfully logged in')
+                showAnnoucement()
+            }
+            loadAirportsDynamic();
+            refreshWallpaper()
+            refreshLoginBar()
+            addMarkers()
+            showUserSpecificElements();
+            initAdminActions()
+        }
+
+        if (user && user.airlineIds && user.airlineIds.length > 0) {
+            selectAirline(user.airlineIds[0])
+            await loadAirplaneModels(user.airlineIds[0])
+            addAirlineSpecificMapControls(map)
+            initPrompts()
+            updateAirlineLabelColors()
+        }
+
+        loadAllCountries() //load country after airline
+        $('.button.login').removeClass('loading')
+
+        return user
+    } catch (err) {
+        // network or other unexpected errors
+        if (err && err.message && err.message.indexOf('Login failed:') === -1) {
+            showFloatMessage('Error logging in, please try again. Contact admins on Discord if the issue persists.')
+            console.error(err)
+        }
+        $('.button.login').removeClass('loading')
+        throw err
+    }
 }
 
 function passwordLogin(e) {
@@ -240,20 +249,11 @@ function login()  {
     loadUser(true)
 }
 
-function onGoogleLogin(googleUser) {
-	var profile = googleUser.getBasicProfile();
-    console.log('ID: ' + profile.getId()); // Do not send to your backend! Use an ID token instead.
-	console.log('Name: ' + profile.getName());
-	console.log('Image URL: ' + profile.getImageUrl());
-	console.log('Email: ' + profile.getEmail()); // This is null if the 'email' scope is not present.
-	loginType='plain'
-}
-
 function logout() {
 	$.ajax
 	({
 	  type: "POST",
-	  url: "logout",
+	  url: "/logout",
 	  async: false,
 	  success: function(message) {
 	    	console.log(message)
@@ -287,133 +287,45 @@ function hideUserSpecificElements() {
 	$('.topBarDetails').parent().addClass('hide-empty') //hack to avoid empty floating div for modern layout
 }
 
-
-function initMap() {
-	initStyles()
-  map = new google.maps.Map(document.getElementById('map'), {
-	center: {lat: 20, lng: 150.644},
-   	zoom : 2,
-   	minZoom : 2,
-   	gestureHandling: 'greedy',
-   	styles: getMapStyles(),
-	mapTypeId: getMapTypes(),
-   	restriction: {
-                latLngBounds: { north: 85, south: -85, west: -180, east: 180 },
-              }
-  });
-
-  google.maps.event.addListener(map, 'zoom_changed', function() {
-	    var zoom = map.getZoom();
-	    // iterate over markers and call setVisible
-	    $.each(markers, function( key, marker ) {
-	        marker.setVisible(isShowMarker(marker, zoom));
-	    })
-  });
-
-  google.maps.event.addListener(map, 'maptypeid_changed', function() {
-		var mapType = map.getMapTypeId();
-		$.cookie('currentMapTypes', mapType);
-  });
-
-  addCustomMapControls(map)
-}
-
-function addCustomMapControls(map) {
-//			<div id="toggleMapChristmasButton" class="googleMapIcon" onclick="toggleChristmasMarker()" align="center" style="display: none; margin-bottom: 10px;"><span class="alignHelper"></span><img src='@routes.Assets.versioned("images/icons/bauble.png")' title='Merry Christmas!' style="vertical-align: middle;"/></div>-->
-//			<div id="toggleMapAnimationButton" class="googleMapIcon" onclick="toggleMapAnimation()" align="center" style="display: none; margin-bottom: 10px;"><span class="alignHelper"></span><img src='@routes.Assets.versioned("images/icons/arrow-step-over.png")' title='toggle flight marker animation' style="vertical-align: middle;"/></div>-->
-//			<div id="toggleMapLightButton" class="googleMapIcon" onclick="toggleMapLight()" align="center" style="display: none;"><span class="alignHelper"></span><img src='@routes.Assets.versioned("images/icons/switch.png")' title='toggle dark/light themed map' style="vertical-align: middle;"/></div>-->
-   var toggleMapChristmasButton = $('<div id="toggleMapChristmasButton" class="googleMapIcon" onclick="toggleChristmasMarker()" align="center" style="display: none; margin-bottom: 10px;"><span class="alignHelper"></span><img src="assets/images/icons/bauble.png" title=\'Merry Christmas!\' style="vertical-align: middle;"/></div>')
-//    var toggleMapAnimationButton = $('<div id="toggleMapAnimationButton" class="googleMapIcon" onclick="toggleMapAnimation()" align="center" style="margin-bottom: 10px;"><span class="alignHelper"></span><img src="assets/images/icons/arrow-step-over.png" title=\'toggle flight marker animation\' style="vertical-align: middle;"/></div>')
-   var toggleChampionButton = $('<div id="toggleChampionButton" class="googleMapIcon" onclick="toggleChampionMap()" align="center"  style="margin-bottom: 10px;"><span class="alignHelper"></span><img src="assets/images/icons/crown.png" title=\'toggle champion\' style="vertical-align: middle;"/></div>')
-//    var toggleMapLightButton = $('<div id="toggleMapLightButton" class="googleMapIcon" onclick="toggleMapLight()" align="center" style="margin-bottom: 10px;"><span class="alignHelper"></span><img src="assets/images/icons/switch.png" title=\'toggle dark/light themed map\' style="vertical-align: middle;"/></div>')
-   var toggleAllianceBaseMapViewButton = $(`
-        <div id="toggleAllianceBaseMapViewButton" class="googleMapIcon" onclick="toggleAllianceBaseMapViewButton()" align="center" style="margin-bottom: 10px;">
-            <span class="alignHelper"></span>
-            <img src="assets/images/icons/puzzle.png" title=\'Toggle alliance bases\' style="vertical-align: middle;"/>
-        </div>
-    `)
-
-  toggleAllianceBaseMapViewButton.index = 0
-  toggleChampionButton.index = 3
-  toggleMapChristmasButton.index = 5
+// function LinkHistoryControl(controlDiv, map) {
+//     // Set CSS for the control border.
+//     var controlUI = document.createElement('div');
+//     controlUI.style.backgroundColor = '#fff';
+//     controlUI.style.border = '2px solid #fff';
+//     controlUI.style.borderRadius = '3px';
+//     controlUI.style.boxShadow = ' 0px 1px 4px -1px rgba(0,0,0,.3)';
+//     //controlUI.style.cursor = 'pointer';
+//     controlUI.style.marginBottom = '22px';
+//     controlUI.style.textAlign = 'center';
+//     controlUI.title = 'Click to recenter the map';
+//     controlUI.style.padding = '8px';
+//     controlUI.style.margin= '10px';
+//     controlUI.style.verticalAlign = 'middle';
+//     controlDiv.appendChild(controlUI);
 
 
-  if ($("#map").height() > 500) {
-    map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(toggleAllianceBaseMapViewButton[0]);
-    map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(toggleChampionButton[0])
+//     $(controlUI).append("<img src='/assets/images/icons/24-arrow-180.png' class='button' onclick='toggleLinkHistoryView(false)'  title='Toggle passenger history view'/>")
+//     // Set CSS for the control interior.
+//     $(controlUI).append("<span id='linkHistoryText' style='color: rgb(86, 86, 86); font-family: Roboto, Arial, sans-serif; font-size: 11px;'></span>");
 
-    if (christmasFlag) {
-       map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(toggleMapChristmasButton[0]);
-       toggleMapChristmasButton.show()
-    }
+//     $(controlUI).append("<img src='/assets/images/icons/24-arrow.png' class='button' onclick='toggleLinkHistoryView(false)'  title='Toggle passenger history view'/>")
 
-  } else {
-    map.controls[google.maps.ControlPosition.LEFT_BOTTOM].push(toggleAllianceBaseMapViewButton[0])
-    map.controls[google.maps.ControlPosition.LEFT_BOTTOM].push(toggleChampionButton[0])
+//     // Setup the click event listeners: simply set the map to Chicago.
+//     controlUI.addEventListener('click', function() {
+//       map.setCenter(chicago);
+//     });
 
-    if (christmasFlag) {
-       map.controls[google.maps.ControlPosition.LEFT_BOTTOM].push(toggleMapChristmasButton[0]);
-    }
-  }
-}
-
-function addAirlineSpecificMapControls(map) {
-    var toggleHeatmapButton = $('<div id="toggleMapHeatmapButton" class="googleMapIcon" onclick="toggleHeatmap()" align="center"  style="margin-bottom: 10px;"><span class="alignHelper"></span><img src="assets/images/icons/table-heatmap.png" title=\'toggle heatmap\' style="vertical-align: middle;"/></div>')
-    toggleHeatmapButton.index = 4
-
-    if ($("#map").height() > 500) {
-        map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].insertAt(3, toggleHeatmapButton[0])
-     } else {
-        map.controls[google.maps.ControlPosition.LEFT_BOTTOM].insertAt(3, toggleHeatmapButton[0])
-    }
-}
-
-function LinkHistoryControl(controlDiv, map) {
-    // Set CSS for the control border.
-    var controlUI = document.createElement('div');
-    controlUI.style.backgroundColor = '#fff';
-    controlUI.style.border = '2px solid #fff';
-    controlUI.style.borderRadius = '3px';
-    controlUI.style.boxShadow = ' 0px 1px 4px -1px rgba(0,0,0,.3)';
-    //controlUI.style.cursor = 'pointer';
-    controlUI.style.marginBottom = '22px';
-    controlUI.style.textAlign = 'center';
-    controlUI.title = 'Click to recenter the map';
-    controlUI.style.padding = '8px';
-    controlUI.style.margin= '10px';
-    controlUI.style.verticalAlign = 'middle';
-    controlDiv.appendChild(controlUI);
-
-
-    $(controlUI).append("<img src='assets/images/icons/24-arrow-180.png' class='button' onclick='toggleLinkHistoryView(false)'  title='Toggle passenger history view'/>")
-    // Set CSS for the control interior.
-    $(controlUI).append("<span id='linkHistoryText' style='color: rgb(86, 86, 86); font-family: Roboto, Arial, sans-serif; font-size: 11px;'></span>");
-
-    $(controlUI).append("<img src='assets/images/icons/24-arrow.png' class='button' onclick='toggleLinkHistoryView(false)'  title='Toggle passenger history view'/>")
-
-    // Setup the click event listeners: simply set the map to Chicago.
-    controlUI.addEventListener('click', function() {
-      map.setCenter(chicago);
-    });
-
-  }
+//   }
 
 
 function updateAllPanels(airlineId) {
 	updateAirlineInfo(airlineId)
-
-//	if (activeAirline) {
-//		if (christmasFlag) {
-//		    printConsole("Breaking news - Santa went missing!!! Whoever finds Santa will be rewarded handsomely! He could be hiding in one of the size 6 or above airports! View the airport page to track him down!", true, true)
-//		}
-//
-//	}
 }
 
 function refreshPanels(airlineId) {
 	$.ajax({
 		type: 'GET',
-		url: "airlines/" + airlineId,
+		url: "/airlines/" + airlineId,
 	    contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
 	    async: false,
@@ -427,7 +339,7 @@ function refreshPanels(airlineId) {
             } else {
                 activeAirline = airline
             }
-	    	refreshTopBar(airline)
+	    	refreshTopBar(activeAirline)
 	    	if ($("#worldMapCanvas").is(":visible")) {
 	    		refreshLinks()
 	    	}
@@ -512,7 +424,7 @@ function showWorldMap() {
     $('#searchCanvas').hide();
 	setActiveDiv($('#worldMapCanvas'));
 	highlightTab($('.worldMapCanvasTab'))
-	// $('#sidePanel').appendTo($('#worldMapCanvas'))
+	$('#sidePanel').appendTo($('#worldMapCanvas'))
 	if (selectedLink) {
 		selectLinkFromMap(selectedLink, !activeAirportPopupInfoWindow) //do not refocus if there's a popup, stay where it is
 	}
@@ -536,7 +448,7 @@ function showAnnoucement() {
 	var modal = $('#announcementModal')
 	// Get the <span> element that closes the modal
 	$('#announcementContainer').empty()
-	$('#announcementContainer').load('assets/html/announcement.html')
+	$('#announcementContainer').load('/assets/html/announcement.html')
 
 	modal.fadeIn(1000)
 }
@@ -545,7 +457,7 @@ async function populateTooltips() {
     /**
      * Populate tooltips from server-side data, looks for id "tooltip_{objKey}"
      */
-    const url = "game/tooltips";
+    const url = "/game/tooltips";
     try {
         const response = await fetch(url);
         if (!response.ok) {
@@ -579,7 +491,7 @@ async function populateTooltips() {
         var htmlSource = $(this).data("html")
         if (htmlSource) { //then load the html, otherwise leave it alone (older tooltips)
             $(this).empty()
-            $(this).load("assets/html/tooltip/" + htmlSource + ".html")
+            $(this).load("/assets/html/tooltip/" + htmlSource + ".html")
         }
     })
 
@@ -645,7 +557,7 @@ function promptSelection(question, choices, targetFunction) {
 
 
 function updateAirlineColors() {
-	var url = "colors"
+	var url = "/colors"
     $.ajax({
 		type: 'GET',
 		url: url,
@@ -666,7 +578,7 @@ function updateAirlineLabelColors(callback) {
     airlineLabelColors = {}
     $.ajax({
             type: 'GET',
-            url: "airlines/" + activeAirline.id + "/airline-label-colors",
+            url: "/airlines/" + activeAirline.id + "/airline-label-colors",
             contentType: 'application/json; charset=utf-8',
             dataType: 'json',
             success: function(result) {
@@ -695,36 +607,10 @@ function assignAirlineColors(dataSet, colorProperty) {
 	})
 }
 
-function populateNavigation(parent) { //change all the tabs to do fake url
-    if (!parent) {
-        parent = $(":root")
-    }
-
-    parent.find('[data-link]').andSelf().filter('[data-link]').each(function() {
-        $(this).off('click.nav')
-
-        var path = $(this).data("link") != "/" ? ("nav-" + $(this).data("link")) : "/"
-
-        var onbackFunction = $(this).attr("onback") //prefer onback function, so we can pass a flag
-        if (onbackFunction !== undefined) {
-            $(this).on('click.nav', function() {
-                history.pushState({ "onbackFunction" : onbackFunction}, null, path);
-            })
-        } else {
-            var onclickFunction = $(this).attr("onclick")
-
-            $(this).on('click.nav', function() {
-                history.pushState({ "onclickFunction" : onclickFunction}, null, path);
-            })
-        }
-    })
-}
-
 let tabGroupState = {}
 
 function setMobileToggleState(isOpen) {
     const $btn = $('#mobileTabToggle');
-    if ($btn.length === 0) return;
     $btn.attr('aria-expanded', !!isOpen);
     $btn.toggleClass('open', !!isOpen);
     // Toggle inline icons
@@ -738,13 +624,17 @@ function showTabGroup() {
         tabGroupState.hideTimeout = undefined
     }
     $('#tabGroup').fadeIn(200)
+    setMobileToggleState(true)
 }
 
 function hideTabGroup(waitDuration) {
     if (tabGroupState.hideTimeout) {
         clearTimeout(tabGroupState.hideTimeout)
     }
-    var timeout = setTimeout(() => $('#tabGroup').fadeOut(500), waitDuration ? waitDuration : 2000)
+    var timeout = setTimeout(() => {
+        $('#tabGroup').fadeOut(500);
+        setMobileToggleState(false);
+    }, waitDuration ? waitDuration : 2000)
     tabGroupState.hideTimeout = timeout
 }
 
@@ -799,11 +689,10 @@ function initTabGroup() {
         }
     )
 
-    // Mobile circular toggle button
     const $toggle = $('#mobileTabToggle');
     if ($toggle.length) {
         // initialize icon state
-        setMobileToggleState($('#tabGroup').is(':visible'))
+        // setMobileToggleState($('#tabGroup').is(':visible'))
         $toggle.on('click', function() {
             const isOpen = $('#tabGroup').is(':visible');
             if (isOpen) {
@@ -812,25 +701,10 @@ function initTabGroup() {
                 setMobileToggleState(false)
             } else {
                 showTabGroup()
-                setMobileToggleState(true)
                 hideTabGroup(5000) // auto-hide after a while
             }
         })
     }
-}
-
-function checkAutoplaySettings() {
-    var autoplayEnabled = true
-    if (localStorage.getItem("autoplay")){
-      autoplayEnabled = localStorage.getItem("autoplay") === 'true'
-    } else {
-      localStorage.setItem('autoplay', autoplayEnabled)
-    }
-    $('input.autoplay').prop('checked', autoplayEnabled)
-}
-
-function toggleAutoplay() {
-    localStorage.setItem('autoplay', $('input.autoplay').is(':checked'))
 }
 
 window.addEventListener('popstate', function(e) {

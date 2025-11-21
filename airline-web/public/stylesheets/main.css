@@ -109,6 +109,10 @@ body {
 	background-size: cover;
 }
 
+canvas {
+    overflow: visible;
+}
+
 a {
     font-size: inherit;
     color: var(--text-color);
@@ -214,6 +218,10 @@ h1, h2, h3, h4, h5, h6, .font-display {
     display: flex;
     flex-direction: column;
     gap: 8px;
+}
+
+.max-w-screen-nav {
+    max-width: calc(100vw - 60px);
 }
 
 .two-up-grid {
@@ -426,7 +434,6 @@ body.christmas {
 
 .menubar {
 	top: 0px;
-	min-height: 40px;
 	width: 100%;
 	z-index: 999;
 	background-image: var(--menubar-background-image);
@@ -1017,12 +1024,9 @@ div.divider {
     padding: 0;
 }
 
-
 a.selected,:not(.button):not(.no-highlight) > a:hover, span.selected, .clickable:hover:not(.cell), .clickable.selected:not(.cell) {
 	border-radius: 3px 3px 3px 3px;
-	background: #72ad5f;  /* fallback for old browsers */
-    background: -webkit-linear-gradient(#72ad5f, #90be81);  /* Chrome 10-25, Safari 5.1-6 */
-    background: linear-gradient(#72ad5f, #90be81); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+    background: linear-gradient(#cdcfe8, #9899c4);
     box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
 }
 
@@ -1189,12 +1193,11 @@ div.future {
 .modal-content {
     position: relative;
     z-index: 11;
-    margin: 10% auto; /* 15% from the top and centered */
-    max-width: 98%;
+    margin: 15% auto 0;
+    max-width: 96% !important;
     width: 100%;
     display: block;
-    overflow-x: visible;
-    overflow-y: hidden;
+    overflow: hidden;
 }
 
 
@@ -1468,9 +1471,11 @@ button:disabled {
     position: absolute;
     left: 0;
     right: 0;
+    top: 28px;
     margin: auto;
     z-index: 11;
     cursor: pointer;
+    transition: all 600ms;
 }
 
 .reputationStars {
@@ -1859,6 +1864,8 @@ i, .italic {
 .rounded-none { border-radius: 0px !important; }
 .overflow-x-auto { overflow-x: auto !important; }
 .overflow-y-auto { overflow-x: auto !important; }
+.overflow-x-clip { overflow-x: clip !important; }
+.overflow-y-clip { overflow-y: clip !important; }
 .flex-align-center {
     display: flex;
     align-items: center;
@@ -1903,10 +1910,7 @@ i, .italic {
     gap: 1rem;
     box-sizing: border-box;
 }
-.flex-container-width-half.gap-2 > div, .flex-container-width-half.gap-2 > button {
-    flex: 1 1 calc(50% - 0.5rem);
-}
-.flex-container-width-half > div, .flex-container-width-half > button {
+.flex-container-width-half > div, .flex-container-width-half > button, .flex-container-width-half.gap-2 > a {
     flex: 1 1 calc(50% - 1rem);
     box-sizing: border-box;
     margin: 0 auto;
@@ -1951,6 +1955,9 @@ i, .italic {
 }
 .items-end {
     align-items: flex-end;
+}
+.items-center {
+    align-items: center;
 }
 .center {
     margin: 12px auto;

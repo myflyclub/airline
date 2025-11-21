@@ -498,9 +498,7 @@ object PassengerSimulation {
               connectionCost = 0 //ground link is free, which may be destination (via ground) OR if there's then an additional flight connection it's caught above with a very expensive connection cost
             } else {
               val transferBaseDiscounts = transferBaseSpecializationDiscounts.get((linkConsideration.from.id, linkConsideration.link.airline.id))
-              connectionCost = if (
-                transferBaseDiscounts.exists(_.paxType.contains(passengerGroup.passengerType))
-              ) 24 * TravelerTransferSpecialization.transferCostDiscount else 24
+              connectionCost = if (transferBaseDiscounts.exists(_.paxType.contains(passengerGroup.passengerType))) 24 * TravelerTransferSpecialization.transferCostDiscount else 24
 
               //now look at the frequency of the link arriving at this FromAirport and the link (current link) leaving this FromAirport. check frequency
               val frequency = Math.max(predecessorLink.frequencyByClass(predecessorLinkConsideration.linkClass), linkConsideration.link.frequencyByClass(linkConsideration.linkClass))
@@ -510,7 +508,7 @@ object PassengerSimulation {
               } else if (frequency < 14) {
                 connectionCost += 65 + (14 - frequency) * 10 //$135 @ 7; $75 @ 13
               } else if (frequency <= 49) {
-                connectionCost += (98 - frequency * 2) //$70 @ 14
+                connectionCost += (98 - frequency * 2) //$70 @ 14; $56 @ 21; $42 @ 28
               }
 
               val previousLinkAirlineId = predecessorLink.airline.id

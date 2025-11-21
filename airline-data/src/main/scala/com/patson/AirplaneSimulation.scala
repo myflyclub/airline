@@ -124,7 +124,6 @@ object AirplaneSimulation {
              val newSellPlane = existingSellPlane + sellValue
 
              if ((newCost <= airlinesByid(airplane.owner.id).getBalance()) && (airlinesByid(airplane.owner.id).getBalance() - newCost >= airlinesByid(airplane.owner.id).getMinimumRenewalBalance())) {
-               println("auto renewing " + airplane)
                val lossOnSelling = sellValue - airplane.value
                val gainOnDiscount = originalModel.price - adjustedModel.price
                val newCapitalGain = existingCapitalGain + lossOnSelling + gainOnDiscount

@@ -20,7 +20,7 @@ package object controllers {
   implicit val ec: ExecutionContext = ExecutionContext.global
   implicit val actorSystem: ActorSystem = ActorSystem("patson-web-app-system")
   implicit val order: Double.IeeeOrdering.type = Ordering.Double.IeeeOrdering
-  val currentApiVersion = "v4.1" // Update this when schema changes
+  val currentApiVersion = "v4.1.1" // Update this when schema changes
   val currentCycle: Int = CycleSource.loadCycle()
 
   implicit object AirlineFormat extends Format[Airline] {
@@ -609,7 +609,7 @@ package object controllers {
   /**
    * Static airport data for first load
    */
-  object AirportMapWrite extends Writes[Airport] {
+  object AirportMapWrites extends Writes[Airport] {
     def writes(airport: Airport): JsValue = {
       var airportObject = Json.obj(
         "id" -> airport.id,

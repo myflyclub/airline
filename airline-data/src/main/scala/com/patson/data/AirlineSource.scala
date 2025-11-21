@@ -1112,7 +1112,7 @@ object AirlineSource {
         val breakdown = ReputationBreakdown(
           ReputationType.withName(resultSet.getString("reputation_type")),
           resultSet.getDouble("rep_value"),
-          resultSet.getInt("quantity_value"),
+          resultSet.getLong("quantity_value"),
         )
         if (breakdown.quantityValue > 0) {
           result.append(breakdown)

@@ -56,7 +56,7 @@ function showBanner() {
 
     $.ajax({
             type: 'GET',
-            url: "banner",
+            url: "/banner",
             contentType: 'application/json; charset=utf-8',
             dataType: 'json',
             success: function(result) {
@@ -177,8 +177,8 @@ function showResearchPreloaded() {
     document.querySelector('#searchCanvas div.titlesContainer [data-search-type="research"]').classList.add('selected')
     const fromId = $('#planLinkFromAirportId').val() > 0 ? $('#planLinkFromAirportId').val() : activeAirline.headquarterAirport.airportId;
     const toId = $('#airportPopupId').val();
-    const from = getAirportById(fromId);
-    const to = getAirportById(toId);
+    const from = getAirportByAttribute(fromId);
+    const to = getAirportByAttribute(toId);
     showSearchCanvas(0);
     researchFlight(fromId, toId);
 
@@ -279,7 +279,7 @@ function searchRoute(fromAirportId, toAirportId) {
                                 <div style='width: 50%;'>
                                     <div style='display: flex; align-items: center;'>
                                         ${getAirportText(link.fromAirportCity, link.fromAirportIata)}
-                                        <img src='assets/images/icons/arrow.png' style='margin: 0 5px;'>
+                                        <img src='/assets/images/icons/arrow.png' style='margin: 0 5px;'>
                                         ${getAirportText(link.toAirportCity, link.toAirportIata)}
                                     </div>
                                     <div><i>${link.airplaneModelName ? link.airplaneModelName : "-"}</i></div>
@@ -442,10 +442,10 @@ function getDeltaSpan(delta) {
     var span = $('<span></span>')
     var displayValue
     if (delta < 0) {
-        span.append('<img src="assets/images/icons/12px/arrow-270-red.png">')
+        span.append('<img src="/assets/images/icons/12px/arrow-270-red.png">')
         displayValue = delta * -1
     } else {
-        span.append('<img src="assets/images/icons/12px/arrow-090.png">')
+        span.append('<img src="/assets/images/icons/12px/arrow-090.png">')
         displayValue = delta
     }
     span.append('<span>' + displayValue + '</span>')
@@ -497,14 +497,14 @@ function toggleTableSortOrder(sortHeader, updateTableFunction) {
 
 
 var linkFeatureIconsLookup = {
-    "WIFI" : { "description" : "WIFI", "icon" : "assets/images/icons/wi-fi-zone.png"},
-    "BEVERAGE_SERVICE" : { "description" : "Beverage and snack services", "icon" : "assets/images/icons/cup.png"},
-    "HOT_MEAL_SERVICE" : { "description" : "Hot meal services", "icon" : "assets/images/icons/plate-cutlery.png"},
-    "PREMIUM_DRINK_SERVICE" : { "description" : "Premium drink services", "icon" : "assets/images/icons/glass.png"},
-    "IFE" : { "description" : "In-flight entertainment", "icon" : "assets/images/icons/media-player-phone-horizontal.png"},
-    "GAME" : { "description" : "Video game system", "icon" : "assets/images/icons/controller.png"},
-    "POSH" : { "description" : "Luxurious", "icon" : "assets/images/icons/diamond.png"},
-    "POWER_OUTLET" : { "description" : "Power outlet", "icon" : "assets/images/icons/plug.png"}
+    "WIFI" : { "description" : "WIFI", "icon" : "/assets/images/icons/wi-fi-zone.png"},
+    "BEVERAGE_SERVICE" : { "description" : "Beverage and snack services", "icon" : "/assets/images/icons/cup.png"},
+    "HOT_MEAL_SERVICE" : { "description" : "Hot meal services", "icon" : "/assets/images/icons/plate-cutlery.png"},
+    "PREMIUM_DRINK_SERVICE" : { "description" : "Premium drink services", "icon" : "/assets/images/icons/glass.png"},
+    "IFE" : { "description" : "In-flight entertainment", "icon" : "/assets/images/icons/media-player-phone-horizontal.png"},
+    "GAME" : { "description" : "Video game system", "icon" : "/assets/images/icons/controller.png"},
+    "POSH" : { "description" : "Luxurious", "icon" : "/assets/images/icons/diamond.png"},
+    "POWER_OUTLET" : { "description" : "Power outlet", "icon" : "/assets/images/icons/plug.png"}
 }
 
 function toggleSearchLinkDetails(containerDiv) {
@@ -1055,15 +1055,13 @@ function populateResearchHeader(result) {
     loadAirportImage(fromAirportId, researchResult.find('img.fromAirport'));
     loadAirportImage(toAirportId, researchResult.find('img.toAirport'));
 
-    researchResult.find(".fromAirportText").text(fromAirportText).attr("onclick", `showAirportDetails(${fromAirportId})`);
+    researchResult.find(".fromAirportText").text(fromAirportText).attr("href", `/airport/${fromAirportCountryCode}`);
     researchResult.find(".fromAirport .population").text(commaSeparateNumber(fromAirportPopulation));
     researchResult.find(".fromAirport .income").text("$" + commaSeparateNumber(fromAirportIncome));
 
-    researchResult.find(".toAirportText").text(toAirportText).attr("onclick", `showAirportDetails(${toAirportId})`);
+    researchResult.find(".toAirportText").text(toAirportText).attr("href", `/airport/${toAirportCountryCode}`);
     researchResult.find(".toAirport .population").text(commaSeparateNumber(toAirportPopulation));
     researchResult.find(".toAirport .income").text("$" + commaSeparateNumber(toAirportIncome));
-
-    populateNavigation(researchResult);
 
     researchResult.find(".relationship").html(`${getCountryFlagImg(fromAirportCountryCode)}&nbsp;vs&nbsp;${getCountryFlagImg(toAirportCountryCode)}${getCountryRelationshipDescription(mutualRelationship)}`);
     researchResult.find(".affinities").text(affinity);

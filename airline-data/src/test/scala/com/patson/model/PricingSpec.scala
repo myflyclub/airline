@@ -51,5 +51,16 @@ class PricingSpec(_system: ActorSystem) extends TestKit(_system) with ImplicitSe
 //      Pricing.computeStandardPrice(10000, FlightCategory.INTERNATIONAL, ECONOMY).shouldBe((750 * Pricing.INTERNATIONAL_PRICE_MULTIPLIER).toInt)
 //      Pricing.computeStandardPrice(14000, FlightCategory.INTERNATIONAL, ECONOMY).shouldBe((950 * Pricing.INTERNATIONAL_PRICE_MULTIPLIER).toInt)
     }
+    "compare pricing of two 500km routes vs one 1000km route".in {
+      val twoShortRoutes = 2 * Pricing.computeStandardPrice(2500, FlightCategory.DOMESTIC, ECONOMY, PassengerType.BUSINESS, 0)
+      val oneLongRoute = Pricing.computeStandardPrice(5000, FlightCategory.DOMESTIC, ECONOMY, PassengerType.BUSINESS, 0)
+      val priceDifference = twoShortRoutes - oneLongRoute
+      
+      println(s"Two 500km routes: $twoShortRoutes")
+      println(s"One 1000km route: $oneLongRoute")
+      println(s"Price difference: $priceDifference")
+
+      assert(twoShortRoutes > oneLongRoute)
+    }
   }
 }

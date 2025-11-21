@@ -330,8 +330,8 @@ object NegotiationUtil {
 
     val existingLinkCancellationValue = if (existingLinkOption.nonEmpty) {
       val emptyLink = newLink.copy(capacity = LinkClassValues(0,0,0), frequency = 0)
-      val (_, toAirportRequirements) = getNegotiationRequirements(emptyLink, existingLinkOption, airline, airlineLinks)
-      val refund = delegateRefund(toAirportRequirements.map(_.value).sum * (1 - totalToDiscount))
+      val (fromAirportRequirements, toAirportRequirements) = getNegotiationRequirements(emptyLink, existingLinkOption, airline, airlineLinks)
+      val refund = delegateRefund(toAirportRequirements.map(_.value).sum * (1 - totalToDiscount) + fromAirportRequirements.map(_.value).sum * (1 - totalFromDiscount))
       Some(refund)
     } else {
       None

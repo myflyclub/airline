@@ -14,6 +14,7 @@ import play.api.mvc._
 
 import java.util.Random
 import javax.inject.Inject
+import scala.collection.mutable
 import scala.collection.mutable.{ListBuffer, Set}
 import scala.math.BigDecimal.RoundingMode
 
@@ -85,7 +86,8 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
     }
   }
 
-  def index = Action {
+  // path parameter is captured but ignored - page.js handles routing
+  def index(path: String = "") = Action { implicit request =>
     implicit lazy val config = configuration
     Ok(views.html.index(""))
   }
@@ -127,7 +129,7 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
    * Static airport data
    */
   def getAirportsStatic() = Action {
-    Ok(Json.toJson(AirportCache.getAllAirports())(Writes.list(AirportMapWrite)))
+    Ok(Json.toJson(AirportCache.getAllAirports())(Writes.list(AirportMapWrites)))
       .withHeaders(
         CACHE_CONTROL -> "public, max-age=2419200",
         ETAG -> s""""$currentApiVersion"""", // Use version as ETag
@@ -315,9 +317,12 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
               flightsFromThisAirport.filter(_.key.airline.id == 0).groupBy(_.key.toAirport).view.mapValues(_.map(_.passengers).sum).toMap ++
                 flightsToThisAirport.filter(_.key.airline.id == 0).groupBy(_.key.fromAirport).view.mapValues(_.map(_.passengers).sum).toMap
 
-            val links = LinkSource.loadFlightLinksByFromAirport(airportId) ++ LinkSource.loadFlightLinksByToAirport(airportId)
+            val linksFrom = LinkSource.loadFlightLinksByFromAirport(airportId)
+            val links = linksFrom ++ LinkSource.loadFlightLinksByToAirport(airportId)
 
-            val airlineStats = links.groupBy(_.airline.id).map { case (airlineId, airlineLinks) =>
+            val airlineStats = links.filter { link =>
+              linksFrom.map(_.airline.id).contains(link.airline.id) //only need airlines with from links
+            }.groupBy(_.airline.id).map { case (airlineId, airlineLinks) =>
               val linkCount = airlineLinks.size
               val avgDistance = (airlineLinks.map { link =>
                 link.distance * link.frequency
@@ -329,6 +334,10 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
               (airlineId, (airlineType, airlineSlogan, avgDistance, avgFrequency, linkCount))
             }
 
+            val aircraftStats = links.flatMap(link =>
+              link.getAssignedModel().map(model => model.name -> link.capacity.total)
+            ).toMap
+
             val flightFrequency = links.map(_.frequency).sum
             val linkAvgDistance = (links.map(_.distance).sum.toDouble / links.size).toInt
             val linksCapacity = links.map(_.capacity.total).sum
@@ -337,11 +346,13 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
               link.to.countryCode != link.from.countryCode
             }.map(_.capacity.total).sum.toDouble / linksCapacity * 100).toInt
 
-            val servedCountries = Set[String]()
-            val servedAirports = Set[Airport]()
+            val servedCountries = mutable.Set[String]()
+            val servedAirports = mutable.Set[Airport]()
+            val airlineCount = mutable.Set[Int]()
             links.foreach { link =>
               servedCountries.add(link.from.countryCode)
               servedCountries.add(link.to.countryCode)
+              airlineCount.add(link.airline.id)
               if (link.from.id != airportId) {
                 servedAirports.add(link.from)
               } else {
@@ -366,7 +377,7 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
                 Json.obj(
                   "connectedCountryCount" -> servedCountries.size,
                   "connectedAirportCount" -> (servedAirports.size), //do not count itself
-                  "airlineCount" -> airlineStats.size,
+                  "airlineCount" -> airlineCount.size,
                   "linkCount" -> links.size,
                   "linkAvgDistance" -> linkAvgDistance,
                   "linkCountByAirline" -> airlineStats.foldLeft(Json.arr()) {
@@ -383,6 +394,7 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
                   "airlinePremiumPax" -> statisticsPremiumPaxByAirline,
                   "airlineOrigin" -> statisticsOriginPaxByAirline,
                   //          "airlineDestination" -> statisticsDestinationPaxByAirline,
+                  "aircraftStats" -> aircraftStats,
                   "totalSeats" -> Json.toJson(linksCapacity),
                   "linksLF" -> Json.toJson(linksLF),
                   "linksIntl" -> Json.toJson(linksIntl)
@@ -593,7 +605,7 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
     Ok(Json.toJson(linksByOtherAirport.toList.sortBy(_._2.map(_.futureCapacity().total).sum).reverse.map {
       case (otherAirport, links) =>
         Json.obj(
-          "remoteAirport" -> Json.toJson(otherAirport)(AirportSimpleWrites),
+          "remoteAirport" -> Json.toJson(otherAirport)(AirportMapWrites),
           "capacity" -> links.map(_.futureCapacity()).foldLeft(LinkClassValues.getInstance())((x, y) => x + y),
           "frequency" -> links.map(_.futureFrequency()).sum,
           "operators" -> Json.toJson(links.sortBy(_.futureCapacity().total).reverse.map { link =>

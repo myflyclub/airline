@@ -57,7 +57,7 @@ var loadedCampaigns = []
 function updateCampaignTable() {
     $.ajax({
         type: 'GET',
-        url: "airlines/" + activeAirline.id + "/campaigns?fullLoad=true",
+        url: "/airlines/" + activeAirline.id + "/campaigns?fullLoad=true",
         contentType: 'application/json; charset=utf-8',
         dataType: 'json',
         success: function(result) {
@@ -155,7 +155,7 @@ function createCampaign() {
     var assignedDelegateCount = $delegateSection.data('assignedDelegateCount')
     $.ajax({
         type: 'POST',
-        url: "airlines/" + activeAirline.id + "/campaigns",
+        url: "/airlines/" + activeAirline.id + "/campaigns",
         contentType: 'application/json; charset=utf-8',
         data:  JSON.stringify({
          'delegateCount' : assignedDelegateCount,
@@ -180,7 +180,7 @@ function updateCampaign() {
     var assignedDelegateCount = $delegateSection.data('assignedDelegateCount')
     $.ajax({
         type: 'POST',
-        url: "airlines/" + activeAirline.id + "/campaigns",
+        url: "/airlines/" + activeAirline.id + "/campaigns",
         contentType: 'application/json; charset=utf-8',
         data:  JSON.stringify({
          'delegateCount' : assignedDelegateCount,
@@ -207,7 +207,7 @@ function deleteCampaign() {
     promptConfirm("Do you want to delete this campaign at " + getAirportText(airport.city, airport.iata), function() {
         $.ajax({
             type: 'DELETE',
-            url: "airlines/" + activeAirline.id + "/campaigns/" + $('#campaignModal').data('selectedCampaign').id,
+            url: "/airlines/" + activeAirline.id + "/campaigns/" + $('#campaignModal').data('selectedCampaign').id,
             contentType: 'application/json; charset=utf-8',
             dataType: 'json',
             success: function(result) {
@@ -336,7 +336,7 @@ function refreshCampaign() {
     $('#campaignModal span.radius').text(radius)
     $.ajax({
         type: 'GET',
-        url: "airlines/" + activeAirline.id + "/campaign-airports/" + selectedAirportId + "?radius=" + radius,
+        url: "/airlines/" + activeAirline.id + "/campaign-airports/" + selectedAirportId + "?radius=" + radius,
         contentType: 'application/json; charset=utf-8',
         dataType: 'json',
         success: function(result) {

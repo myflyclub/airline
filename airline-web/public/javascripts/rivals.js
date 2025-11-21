@@ -9,7 +9,6 @@ function showRivalsCanvas(selectedAirline) {
 	highlightTab($('.rivalsCanvasTab'))
 	$('#rivalDetails').hide()
 	loadAllRivals(selectedAirline)
-	populateNavigation($("#rivalsCanvas"))
 }
 
 function toggleHideInactive(flagValue) {
@@ -25,13 +24,11 @@ function toggleHideNonPlayerAirlines(flagValue) {
 }
 
 function loadAllRivals(selectedAirline = null, hideInactive = true) {
-	var getUrl = "airlines?loginStatus=true&hideInactive=" + hideInactive
-
 	loadedRivals = []
 	loadedRivalsById = {}
 	$.ajax({
 		type: 'GET',
-		url: getUrl,
+		url: `/airlines?loginStatus=true&hideInactive=${hideInactive}`,
 	    contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
 	    success: function(airlines) {
@@ -95,7 +92,7 @@ function updateRivalsTable(sortProperty, sortOrder, selectedAirline) {
 
 		row.append("<div class='cell'><img src='" + getStatusLogo(airline.loginStatus) + "' title='" + getStatusTitle(airline.loginStatus) + "' style='vertical-align:middle;'/>")
 		var $nameDiv = $("<div class='cell' style='vertical-align:unset;'>" + getAirlineSpan(airline.id, airline.name) + getUserLevelImg(airline.userLevel) + getAdminImg(airline.adminStatus) + getUserModifiersSpan(airline.userModifiers) + getAirlineModifiersSpan(airline.airlineModifiers)
-				+ (airline.type == "Non-Player" ? "<img src='assets/images/icons/robot.png' title='AI' style='vertical-align:middle;'/>" : "") + "</div>").appendTo(row)
+				+ (airline.type == "Non-Player" ? "<img src='/assets/images/icons/robot.png' title='AI' style='vertical-align:middle;'/>" : "") + "</div>").appendTo(row)
 		addAirlineTooltip($nameDiv, airline.id, airline.slogan, airline.name)
 		if (airline.headquartersAirportName) {
 			row.append("<div class='cell'>" + getCountryFlagImg(airline.countryCode) + getAirportText(airline.headquartersCity, airline.headquartersAirportIata) + "</div>")
@@ -121,13 +118,13 @@ function updateRivalsTable(sortProperty, sortOrder, selectedAirline) {
 
 function getStatusLogo(status) {
     if (status == 0) {
-      return "assets/images/icons/12px/status-green.png"
+      return "/assets/images/icons/12px/status-green.png"
     } else if (status == 1) {
-      return "assets/images/icons/12px/status-yellow.png"
+      return "/assets/images/icons/12px/status-yellow.png"
     } else if (status == 2) {
-      return "assets/images/icons/12px/status-orange.png"
+      return "/assets/images/icons/12px/status-orange.png"
     } else {
-      return "assets/images/icons/12px/status-grey.png"
+      return "/assets/images/icons/12px/status-grey.png"
     }
 }
 
@@ -262,7 +259,7 @@ function updateRivalBasicsDetails(airlineId) {
 	$("#rivalsCanvas .airlineGrade").attr('title', rival.gradeDescription)
 
 	$("#rivalsCanvas .alliance").data("link", "alliance")
-	populateNavigation($("#rivalsCanvas .alliance"))
+
 	if (rival.allianceName) {
 		$("#rivalsCanvas .alliance").text(rival.allianceName)
 		$("#rivalsCanvas .alliance").addClass("clickable")
@@ -282,7 +279,7 @@ function updateRivalFormerNames(airlineId) {
 
 	$.ajax({
 		type: 'GET',
-		url: "airlines/" + airlineId + "/former-names",
+		url: "/airlines/" + airlineId + "/former-names",
 	    contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
 	    success: function(result) {
@@ -310,7 +307,7 @@ function updateRivalFleet(airlineId) {
 
 	$.ajax({
 		type: 'GET',
-		url: "airlines/" + airlineId + "/fleet",
+		url: "/airlines/" + airlineId + "/fleet",
 	    contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
 	    success: function(result) {
@@ -329,7 +326,6 @@ function updateRivalFleet(airlineId) {
 	            console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
 	    }
 	});
-
 }
 
 
@@ -338,7 +334,7 @@ function updateRivalChampionedAirportsDetails(airlineId) {
 
 	$.ajax({
 		type: 'GET',
-		url: "airlines/" + airlineId + "/championed-airports",
+		url: "/airlines/" + airlineId + "/championed-airports",
 	    contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
 	    success: function(championedInfo) {
@@ -349,8 +345,6 @@ function updateRivalChampionedAirportsDetails(airlineId) {
                 row.append("<div class='cell'>" + championDetails.reputationBoost + "</div>")
                 $('#rivalChampionedAirportsList').append(row)
             })
-
-            populateNavigation($('#rivalChampionedAirportsList'))
 	    },
         error: function(jqXHR, textStatus, errorThrown) {
 	            console.log(JSON.stringify(jqXHR));
@@ -365,7 +359,7 @@ function updateRivalCountriesAirlineTitles(airlineId) {
 
 	$.ajax({
 		type: 'GET',
-		url: "airlines/" + airlineId + "/country-airline-titles",
+		url: "/airlines/" + airlineId + "/country-airline-titles",
 	    contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
 	    success: function(titles) {
@@ -413,10 +407,9 @@ function showRivalMap() {
     rivalMapAirlineId = airlineId
 	var paths = []
 
-    var getUrl = "airlines/" + airlineId + "/links"
 	$.ajax({
 		type: 'GET',
-		url: getUrl,
+		url: "/airlines/" + airlineId + "/links",
 		contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
 	    success: function(links) {
@@ -467,7 +460,7 @@ function showRivalMap() {
 
     $.ajax({
     		type: 'GET',
-    		url: "airlines/" + airlineId + "/bases",
+    		url: "/airlines/" + airlineId + "/bases",
     	    contentType: 'application/json; charset=utf-8',
     	    dataType: 'json',
     	    success: function(bases) {
