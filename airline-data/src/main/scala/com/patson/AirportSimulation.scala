@@ -341,23 +341,5 @@ object AirportSimulation {
       }
     }
   }
-
-//  private[patson] val getPenalty : Seq[LinkConsumptionDetails] => Double = consumptionDetails => {
-//      //add penalty for delays and cancellation
-//      val totalCapacity = consumptionDetails.map { _.link.capacity.total }.sum
-//      if (totalCapacity > 0) {
-//        val totalMinorDelayCapacity = consumptionDetails.filter(_.link.frequency > 0).map { linkConsumption => linkConsumption.link.capacity.total * linkConsumption.link.minorDelayCount / linkConsumption.link.frequency }.sum
-//        val totalMajorDelayCapacity = consumptionDetails.filter(_.link.frequency > 0).map { linkConsumption => linkConsumption.link.capacity.total * linkConsumption.link.majorDelayCount / linkConsumption.link.frequency}.sum
-//        val totalCancellationCapacity = consumptionDetails.filter(_.link.frequency > 0).map { linkConsumption => linkConsumption.link.capacity.total * linkConsumption.link.cancellationCount / linkConsumption.link.frequency}.sum
-//
-//        val minorDelayPercentage = totalMinorDelayCapacity.toDouble / totalCapacity
-//        val majorDelayPercentage = totalMajorDelayCapacity.toDouble / totalCapacity
-//        val cancellationPercentage = totalCancellationCapacity.toDouble / totalCapacity
-//
-//        minorDelayPercentage * LOYALTY_DECREMENT_BY_MINOR_DELAY + majorDelayPercentage * LOYALTY_DECREMENT_BY_MAJOR_DELAY + cancellationPercentage * LOYALTY_DECREMENT_BY_CANCELLATION
-//      } else {
-//        0
-//      }
-//  }
   
 }

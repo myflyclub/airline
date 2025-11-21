@@ -90,6 +90,20 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
     }
   }
 
+  object OwnedAirlineSimpleWrites extends Writes[Airline] {
+    def writes(airline: Airline): JsValue = {
+      Json.obj(
+        "id" -> airline.id,
+        "balance" -> airline.airlineInfo.balance,
+        "reputation" -> BigDecimal(airline.airlineInfo.reputation).setScale(2, BigDecimal.RoundingMode.HALF_EVEN),
+        "fuelTaxRate" -> airline.fuelTaxRate,
+        "serviceQuality" -> airline.airlineInfo.currentServiceQuality,
+        "targetServiceQuality" -> airline.airlineInfo.targetServiceQuality,
+        "skipTutorial" -> airline.isSkipTutorial,
+      )
+    }
+  }
+
   implicit object AirlineWithUserWrites extends Writes[(Airline, User, Option[LoginStatus.Value], Option[Alliance], List[AirlineModifier], Boolean)] {
     def writes(entry: (Airline, User, Option[LoginStatus.Value], Option[Alliance], List[AirlineModifier], Boolean)): JsValue = {
       val (airline, user, loginStatus, alliance, airlineModifiers, isCurrentUserAdmin) = entry
@@ -219,12 +233,16 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
 
   def getAirline(airlineId: Int, extendedInfo: Boolean) = AuthenticatedAirline(airlineId) { request =>
     val airline = request.user
-    var airlineJson = Json.toJson(airline)(OwnedAirlineWrites).asInstanceOf[JsObject]
-    AirlineSource.loadAirlineHeadquarter(airlineId).foreach { headquarter =>
-      airlineJson = airlineJson + ("headquarterAirport" -> Json.toJson(headquarter))
+    var airlineJson: JsObject = if (extendedInfo) {
+      Json.toJson(airline)(OwnedAirlineWrites).asInstanceOf[JsObject]
+    } else {
+      Json.toJson(airline)(OwnedAirlineSimpleWrites).asInstanceOf[JsObject]
     }
-    val bases = AirlineSource.loadAirlineBasesByAirline(airlineId)
     if (extendedInfo) {
+      val bases = AirlineSource.loadAirlineBasesByAirline(airlineId)
+      AirlineSource.loadAirlineHeadquarter(airlineId).foreach { headquarter =>
+        airlineJson = airlineJson + ("headquarterAirport" -> Json.toJson(headquarter))
+      }
       val reputationBreakdowns = AirlineSource.loadReputationBreakdowns(airlineId)
       airlineJson = airlineJson + ("baseAirports" -> Json.toJson(bases)) + ("reputationBreakdowns" -> Json.toJson(reputationBreakdowns)) +
         ("delegatesInfo" -> Json.toJson(airline.getDelegateInfo()))

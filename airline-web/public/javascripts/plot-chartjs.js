@@ -3,6 +3,9 @@ const chartColors = {
     economy: "#57A34B",
     business: "#4E79A7",
     first: "#D6B018",
+    economyEmpty: "#346935",
+    businessEmpty: "#36466D",
+    firstEmpty: "#7A6925",
     cancelled: "#D66061",
     empty: "#DDDFDF",
     tourist: "#fbfe66ff",
@@ -188,6 +191,7 @@ function preparePieData(dataSource, keyName = null, valueName = null, thresholdF
     });
 
     let otherTotal = 0;
+    const normalEntries = [];
 
     Object.entries(dataSource).forEach(([key, dataEntry]) => {
         const keyLabel = (keyName && valueName) ? dataEntry[keyName] : key;
@@ -200,16 +204,27 @@ function preparePieData(dataSource, keyName = null, valueName = null, thresholdF
             return;
         }
 
-        labels.push(prettyLabel(keyLabel));
-        data.push(dataValue);
-
+        // determine background color for this entry
+        let bgColor;
         if (dataEntry.color) {
-            backgroundColors.push(dataEntry.color);
+            bgColor = dataEntry.color;
         } else if (Object.prototype.hasOwnProperty.call(chartColors, keyLabel.replace(/\s+/g, '').toLowerCase())) {
-            backgroundColors.push(chartColors[keyLabel.replace(/\s+/g, '').toLowerCase()]);
+            bgColor = chartColors[keyLabel.replace(/\s+/g, '').toLowerCase()];
         } else {
-            backgroundColors.push(colorFromString(keyLabel));
+            bgColor = colorFromString(keyLabel);
         }
+
+        normalEntries.push({ label: prettyLabel(keyLabel), value: dataValue, color: bgColor });
+    });
+
+    // Sort normal entries by value descending (largest first)
+    normalEntries.sort((a, b) => b.value - a.value);
+
+    // Fill arrays from sorted normal entries
+    normalEntries.forEach(entry => {
+        labels.push(entry.label);
+        data.push(entry.value);
+        backgroundColors.push(entry.color);
     });
 
     if (otherTotal > 0) {
@@ -434,7 +449,7 @@ function plotLinkProfit(linkConsumptions, id, plotUnit = plotUnitEnum.MONTH) {
 
     const maxMark = plotUnit.maxWeek;
 
-    linkConsumptions.forEach((linkConsumption) => {
+    linkConsumptions.length > 0 && linkConsumptions.forEach((linkConsumption) => {
         const mark = getGameDate(linkConsumption.cycle);
         if (profitByMark[mark] === undefined) {
             profitByMark[mark] = linkConsumption.profit;
@@ -515,7 +530,7 @@ function plotLinkProfit(linkConsumptions, id, plotUnit = plotUnitEnum.MONTH) {
 }
 
 function plotLinkConsumption(linkConsumptions, ridershipId, revenueId, priceId, plotUnit = plotUnitEnum.MONTH) {
-    const cancelledSeatsData = [];
+    const cancelledSeatsData = {};
     const soldSeatsData = {};
     const revenueByClass = {};
     const priceByClass = {};
@@ -540,6 +555,7 @@ function plotLinkConsumption(linkConsumptions, ridershipId, revenueId, priceId, 
         ];
 
         availableClasses.forEach((cls) => {
+            cancelledSeatsData[cls] = [];
             soldSeatsData[cls] = [];
             revenueByClass[cls] = [];
             priceByClass[cls] = [];
@@ -550,20 +566,15 @@ function plotLinkConsumption(linkConsumptions, ridershipId, revenueId, priceId, 
             const mark = getGameDate(linkConsumption.cycle);
             category.push(mark.toString());
 
-            // Cancelled seats (sum of all classes)
-            const cancelledSeats = availableClasses.reduce(
-                (sum, cls) => sum + (linkConsumption.cancelledSeats?.[cls] || 0),
-                0
-            );
-            cancelledSeatsData.push(cancelledSeats);
-
             // Per-class data
             availableClasses.forEach((cls) => {
                 const sold = linkConsumption.soldSeats?.[cls] || 0;
+                const cancelled = linkConsumption.cancelledSeats?.[cls] || 0;
                 const price = linkConsumption.price?.[cls] || 0;
                 const capacity = linkConsumption.capacity?.[cls] || 0;
-                const empty = capacity - sold - (linkConsumption.cancelledSeats?.[cls] || 0);
+                const empty = capacity - sold - cancelled;
 
+                cancelledSeatsData[cls].push(cancelled);
                 soldSeatsData[cls].push(sold);
                 revenueByClass[cls].push(price * sold);
                 priceByClass[cls].push(price);
@@ -572,43 +583,42 @@ function plotLinkConsumption(linkConsumptions, ridershipId, revenueId, priceId, 
         });
 
         // Ridership Chart
+        const ridershipDatasets = [];
+
+        availableClasses.forEach((cls) => {
+            // Sold
+            ridershipDatasets.push({
+                label: `Sold ${cls}`,
+                data: soldSeatsData[cls],
+                backgroundColor: chartColors[cls] || "#888",
+                fill: true,
+                pointStyle: false,
+            });
+
+            // Empty
+            ridershipDatasets.push({
+                label: `Empty ${cls}`,
+                data: emptySeatsData[cls],
+                backgroundColor: (chartColors[cls] ? chartColors[cls + "Empty"] : getChartColor('empty', "#bbbbbb33")),
+                fill: true,
+                pointStyle: false,
+            });
+
+            // Cancelled
+            ridershipDatasets.push({
+                label: `Cancelled ${cls}`,
+                data: cancelledSeatsData[cls],
+                backgroundColor: getChartColor('cancelled', "#D46A6A"),
+                fill: true,
+                pointStyle: false,
+            });
+        });
+
         const ridershipConfig = {
             type: "line",
             data: {
                 labels: category,
-                datasets: [
-                    {
-                        label: "Cancelled Seats",
-                        data: cancelledSeatsData,
-                        backgroundColor: getChartColor('cancelled', "#D46A6A"),
-                        borderColor: getChartColor('cancelled', "#D46A6A"),
-                        fill: true,
-                        pointStyle: false,
-                        cubicInterpolationMode: 'monotone',
-                        tension: 0.2
-                    },
-                    ...availableClasses.map((cls) => ({
-                        label: `Sold ${cls}`,
-                        data: soldSeatsData[cls],
-                        backgroundColor: chartColors[cls] || "#888",
-                        borderColor: chartColors[cls] || "#888",
-                        fill: true,
-                        pointStyle: false,
-                        cubicInterpolationMode: 'monotone',
-                        tension: 0.2
-                    })),
-                    ...availableClasses.map((cls) => ({
-                        label: `Empty ${cls}`,
-                        data: emptySeatsData[cls],
-                        backgroundColor: (chartColors[cls] ? chartColors[cls] + "66" : getChartColor('empty', "#bbbbbb33")),
-                        borderColor: getChartColor('cancelledBorder', "#ff0000"),
-                        borderWidth: 1,
-                        fill: true,
-                        pointStyle: false,
-                        cubicInterpolationMode: 'monotone',
-                        tension: 0.2
-                    })),
-                ],
+                datasets: ridershipDatasets,
             },
             options: {
                 maintainAspectRatio: false,
@@ -932,8 +942,10 @@ function toggleLinkEventBar(chart, cycle, on) {
  * @param {string|null} valueName - The property name for values in data entries
  * @param {boolean} hasLegend - Whether to display the legend
  */
-function plotPie(dataSource, currentKey = null, container, keyName, valueName, hasLegend = false) {
+function plotPie(dataSource, currentKey = null, container, keyName = null, valueName = null, hasLegend = false) {
     const { labels, data, backgroundColors } = preparePieData(dataSource, keyName, valueName, 0.01);
+
+    const total = data.reduce((sum, value) => sum + value, 0);
 
     const config = {
         type: 'pie',
@@ -955,7 +967,16 @@ function plotPie(dataSource, currentKey = null, container, keyName, valueName, h
             borderWidth: 1,
             hoverOffset: 12,
             plugins: {
-                legend: { display: hasLegend }
+                legend: { display: hasLegend },
+                tooltip: {
+                    callbacks: {
+                        label: function (tooltipItem) {
+                            const value = tooltipItem.parsed;
+                            const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                            return ' ' + value.toLocaleString() + ' (' + percentage + '%)';
+                        }
+                    }
+                }
             }
         }
     };

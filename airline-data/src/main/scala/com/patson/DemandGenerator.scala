@@ -22,7 +22,7 @@ object DemandGenerator {
   val HIGH_INCOME_RATIO_FOR_BOOST = 0.7 //at what percent of high income does demand change
   val PRICE_DISCOUNT_PLUS_MULTIPLIER = 1.05 //multiplier on base price
   val PRICE_LAST_MIN_MULTIPLIER = 1.14
-  val PRICE_LAST_MIN_DEAL_MULTIPLIER = 0.9
+  val PRICE_LAST_MIN_DEAL_MULTIPLIER = 0.88
   val HUB_AIRPORTS_MAX_RADIUS = 1400
 //  val launchDemandFactor: Double = if (CycleSource.loadCycle() <= 1) 1.0 else Math.min(1, (50 + CycleSource.loadCycle().toDouble / 24) / 100)
   val launchDemandFactor: Double = 1.0
@@ -89,7 +89,7 @@ object DemandGenerator {
    * 2) reduce demand under minDistance (if not island or high affinity)
    */
   val localityMinDistanceMap = Map(
-      "default" -> 350,
+      "default" -> 325,
       "CA" -> 400,
       "US" -> 400,
       "DO" -> 100,
@@ -103,7 +103,7 @@ object DemandGenerator {
       "PA" -> 200,
       "CO" -> 200,
       "PE" -> 250,
-      "BR" -> 350,
+      "BR" -> 325,
       "AR" -> 350,
       "ET" -> 210,
       "KE" -> 220,
@@ -112,9 +112,9 @@ object DemandGenerator {
       "ZA" -> 300,
       "IS" -> 100,
       "GB" -> 400,
-      "NL" -> 450,
+      "NL" -> 400,
       "BE" -> 450,
-      "DE" -> 400,
+      "DE" -> 350,
       "IT" -> 320,
       "PL" -> 400,
       "NO" -> 300,
@@ -274,6 +274,7 @@ object DemandGenerator {
     } else {
       val minDistance = if (GameConstants.isIsland(fromAirport.iata)) 25 else localityMinDistanceMap.getOrElse(fromAirport.countryCode, localityMinDistanceMap("default"))
       val maxDistance = minDistance * 4 + 275 * isIsolatedMultiplier
+      //mostly trying to generate a base of domestic demand (also is more performant), but in smaller markets do int'l
       val intlCountries = List("AE","AL","AM","AT","AZ","BD","BY","BE","BJ","BT","BA","BI","BW","CH","CW","CZ","DE","DJ","DM","EE","GB","GE","GM","GH","GD","GN","GY","HK","HR","HU","IE","IL","JM","JO","KI","KW","KG","LV","LS","LR","LI","LT","LU","MO","MT","MD","MK","NA","NL","PR","QA","RW","RS","SG","SK","SI","SR","SY","SX","SZ","TJ","UY","UZ","VU")
       val intlAirports = List("TPE","KHH")
       val isDomestic = if (intlCountries.contains(fromAirport.countryCode) || intlAirports.contains(fromAirport.iata)) false else true

@@ -811,7 +811,7 @@ object RankingSimulation {
         entry = stats.alliance,
         ranking = index + 1,
         rankedValue = stats.airlineMarketCap,
-        reputationPrize = reputationBonus(1, index)
+        reputationPrize = reputationBonus(18, index)
       )
     }.sortBy(_.ranking).take(20)
   }

@@ -446,7 +446,7 @@ object AirlineSimulation {
 
       if (airline.airlineType.airportRepRatio > 0) {
         val reputationByAirportChampions = airportChampionsByAirlineId.get(airline.id) match {
-          case Some(airportChampions) => airportChampions.map(_.reputationBoost).sum * airline.airlineType.airportRepRatio
+          case Some(airportChampions) => (airportChampions.map(_.reputationBoost).sum * airline.airlineType.airportRepRatio * 100).toInt.toDouble / 100
           case None => 0
         }
         reputationBreakdowns.append(ReputationBreakdown(ReputationType.AIRPORT_LOYALIST_RANKING, reputationByAirportChampions, reputationByAirportChampions.toInt))
@@ -464,7 +464,7 @@ object AirlineSimulation {
 
       if (airline.airlineType.stockRepPerLevel > 0) {
         val reputationByStockPrice = airline.airlineType.stockRepPerLevel * airline.airlineGradeStockPrice.level
-        reputationBreakdowns.append(ReputationBreakdown(ReputationType.STOCK_PRICE, reputationByStockPrice, airline.getStockPrice().toInt))
+        reputationBreakdowns.append(ReputationBreakdown(ReputationType.STOCK_PRICE, reputationByStockPrice, airline.getStockPrice().toLong))
       }
 
       //set reputation

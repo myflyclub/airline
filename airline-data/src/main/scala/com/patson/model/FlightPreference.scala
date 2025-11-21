@@ -9,7 +9,7 @@ import java.util.concurrent.ThreadLocalRandom
  * When a link contains certain properties that the "Flight preference" likes/hates, it might reduce (if like) or increase (if hate) the "perceived price"  
  */
 abstract class FlightPreference(homeAirport : Airport) {
-  val COST_BASIS = 0.95
+  val COST_BASIS = 0.9
   def computeCost(baseCost : Double, link : Transport, linkClass : LinkClass) : Double
   def preferredLinkClass : LinkClass
   def getPreferenceType : FlightPreferenceType.Value
@@ -278,7 +278,7 @@ case class LastMinutePreference(homeAirport : Airport, preferredLinkClass: LinkC
     1.0
   }
   def computeCost(baseCost: Double, link : Transport, linkClass : LinkClass) : Double = {
-    val noise = 0.85 + getFlatTopBellRandom(0.3, 0.3)
+    val noise = 0.8 + getFlatTopBellRandom(0.3, 0.3)
     val finalCost = baseCost * noise
     Math.max(1, finalCost)
   }
@@ -324,14 +324,14 @@ case class AppealPreference(homeAirport : Airport, preferredLinkClass : LinkClas
 
   override val connectionCostRatio = {
     if (loyaltyRatio > 1) {
-      1.8
+      1.6
     } else {
       1.2
     }
   }
 
   def computeCost(baseCost: Double, link : Transport, linkClass : LinkClass) : Double = {
-    val noise = 0.85 + getFlatTopBellRandom(0.3, 0.3)
+    val noise = 0.8 + getFlatTopBellRandom(0.3, 0.3)
     val finalCost = baseCost * noise
     Math.max(1, finalCost)
   }
