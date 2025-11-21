@@ -89,7 +89,7 @@ function removeCustomWallpaper() {
     activeUser.hasWallpaper = false
     $.ajax({
         type: 'DELETE',
-        url: "users/" + activeUser.id + "/wallpaper",
+        url: "/users/" + activeUser.id + "/wallpaper",
         contentType: 'application/json; charset=utf-8',
         dataType: 'json',
         success: function() {

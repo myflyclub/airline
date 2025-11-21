@@ -83,7 +83,7 @@ function showAirplaneQuickSummary($trigger, airplane) {
 function buildHqWithProfile() {
     $.ajax({
             type: 'PUT',
-            url: "airlines/" + activeAirline.id + "/profiles/" + $('#profileId').val() + "?airportId=" + activeAirportId,
+            url: "/airlines/" + activeAirline.id + "/profiles/" + $('#profileId').val() + "?airportId=" + activeAirportId,
             data: { } ,
     		contentType: 'application/json; charset=utf-8',
             dataType: 'json',

@@ -1,5 +1,4 @@
 var historyFlightMarkers = []
-//var flightMarkerAnimations = []
 var historyPaths = {}
 
 function showLinkHistoryView() {
@@ -29,8 +28,8 @@ function showLinkHistoryView() {
 	$("#linkHistoryControlPanel .routeList").empty()
 	$("#linkHistoryControlPanel").data("showForward", true)
 	var link = loadedLinksById[selectedLink]
-	var forwardLinkDescription = "<div style='display: flex; align-items: center;' class='clickable selected' onclick='toggleLinkHistoryDirection(true, $(this))'>" + getAirportText(link.fromAirportCity, link.fromAirportCode) + "<img src='assets/images/icons/arrow.png'>" + getAirportText(link.toAirportCity, link.toAirportCode) + "</div>"
-    var backwardLinkDescription = "<div style='display: flex; align-items: center;' class='clickable' onclick='toggleLinkHistoryDirection(false, $(this))'>" + getAirportText(link.toAirportCity, link.toAirportCode) + "<img src='assets/images/icons/arrow.png'>" + getAirportText(link.fromAirportCity, link.fromAirportCode) + "</div>"
+	var forwardLinkDescription = "<div style='display: flex; align-items: center;' class='clickable selected' onclick='toggleLinkHistoryDirection(true, $(this))'>" + getAirportText(link.fromAirportCity, link.fromAirportCode) + "<img src='/assets/images/icons/arrow.png'>" + getAirportText(link.toAirportCity, link.toAirportCode) + "</div>"
+    var backwardLinkDescription = "<div style='display: flex; align-items: center;' class='clickable' onclick='toggleLinkHistoryDirection(false, $(this))'>" + getAirportText(link.toAirportCity, link.toAirportCode) + "<img src='/assets/images/icons/arrow.png'>" + getAirportText(link.fromAirportCity, link.fromAirportCode) + "</div>"
 
     $("#linkHistoryControlPanel .routeList").append(forwardLinkDescription)
     $("#linkHistoryControlPanel .routeList").append(backwardLinkDescription)
@@ -52,7 +51,7 @@ function loadLinkHistory(linkId) {
     var cycleDelta = $('#linkHistoryControlPanel').data('cycleDelta')
     $("#linkHistoryControlPanel .transitAirlineList").empty()
 
-    var url = "airlines/" + activeAirline.id + "/related-link-consumption/" + linkId + "?cycleDelta=" + cycleDelta +
+    var url = "/airlines/" + activeAirline.id + "/related-link-consumption/" + linkId + "?cycleDelta=" + cycleDelta +
     "&economy=" + $("#linkHistoryControlPanel .showEconomy").is(":checked") +
     "&business=" + $("#linkHistoryControlPanel .showBusiness").is(":checked") +
     "&first=" + $("#linkHistoryControlPanel .showFirst").is(":checked")
@@ -165,7 +164,7 @@ function hideLinkHistoryView() {
 	$("#linkHistoryControlPanel").hide()
 
 	if ($('.exitPaxMap').data("fromLinkCanvas")) {
-	    showLinksDetails()
+	    showLinksCanvas()
 	}
 }
 
@@ -243,107 +242,6 @@ function clearHistoryFlightMarkers() {
 }
 var historyFlightMarkerAnimation
 
-function animateHistoryFlightMarkers(framesPerAnimation) {
-    var currentStep = 0
-    var currentFrame = 0
-    var animationInterval = 50
-    historyFlightMarkerAnimation = window.setInterval(function() {
-        $.each(historyFlightMarkers[currentStep], function(index, marker) {
-            if (!marker.isActive) {
-                marker.isActive = true
-                marker.elapsedDuration = 0
-                marker.setPosition(marker.from)
-                marker.setMap(map)
-            } else  {
-                marker.elapsedDuration += 1
-
-                if (marker.elapsedDuration == marker.totalDuration) { //arrived
-                    marker.isActive = false
-                    //console.log("next departure " + marker.nextDepartureFrame)
-                } else {
-                    var newPosition = google.maps.geometry.spherical.interpolate(marker.from, marker.to, marker.elapsedDuration / marker.totalDuration)
-                    marker.setPosition(newPosition)
-                }
-            }
-  		})
-  		if (currentFrame == framesPerAnimation) {
-      	   fadeOutMarkers(historyFlightMarkers[currentStep], animationInterval)
-  		   currentStep = (++ currentStep) % historyFlightMarkers.length
-           currentFrame = 0
-        } else {
-           currentFrame ++
-        }
-    }, animationInterval)
-
-}
-
-function fadeOutMarkers(markers, animationInterval) {
-    var opacity = 1.0
-    var animation = window.setInterval(function () {
-        if (opacity <= 0) {
-            $.each(markers, function(index, marker) {
-                marker.setMap(null)
-                marker.setOpacity(1)
-            })
-            window.clearInterval(animation)
-        } else {
-            $.each(markers, function(index, marker) {
-                marker.setOpacity(opacity)
-            })
-            opacity -= 0.1
-        }
-    }, animationInterval)
-}
-
-
-function drawHistoryFlightMarker(line, framesPerAnimation, totalPassengers) {
-	if (currentAnimationStatus) {
-		var from = line.getPath().getAt(0)
-		var to = line.getPath().getAt(1)
-		var icon
-        if (totalPassengers > 200) {
-	       icon = "dot-5.png"
-        } else if (totalPassengers > 100) {
-           icon = "dot-4.png"
-        } else if (totalPassengers > 50) {
-           icon = "dot-3.png"
-        } else if (totalPassengers > 25) {
-           icon = "dot-2.png"
-        } else {
-           icon = "dot-1.png"
-        }
-
-		var image = {
-	        url: "assets/images/markers/" + icon,
-	        origin: new google.maps.Point(0, 0),
-	        anchor: new google.maps.Point(6, 6),
-	    };
-
-        var marker = new google.maps.Marker({
-            position: from,
-            from : from,
-            to : to,
-            icon : image,
-            elapsedDuration : 0,
-            totalDuration : framesPerAnimation,
-            isActive: false,
-            clickable: false
-        });
-
-        //flightMarkers.push(marker)
-        var step = line.step
-        var historyFlightMarkersOfThisStep = historyFlightMarkers[step]
-        if (!historyFlightMarkersOfThisStep) {
-            historyFlightMarkersOfThisStep = []
-            historyFlightMarkers[step] = historyFlightMarkersOfThisStep
-        }
-        historyFlightMarkersOfThisStep.push(marker)
-	}
-}
-
-
-
-
 function showLinkHistory() {
     var showAlliance = $("#linkHistoryControlPanel .showAlliance").is(":checked")
     var showOther = $("#linkHistoryControlPanel .showOther").is(":checked")
@@ -362,10 +260,10 @@ function showLinkHistory() {
 
     $("#linkHistoryControlPanel img.prev").prop("onclick", null).off("click");
     if (disablePrev) {
-        $('#linkHistoryControlPanel img.prev').attr("src", "assets/images/icons/arrow-180-grey.png")
+        $('#linkHistoryControlPanel img.prev').attr("src", "/assets/images/icons/arrow-180-grey.png")
         $('#linkHistoryControlPanel img.prev').removeClass('clickable')
     } else {
-        $('#linkHistoryControlPanel img.prev').attr("src", "assets/images/icons/arrow-180.png")
+        $('#linkHistoryControlPanel img.prev').attr("src", "/assets/images/icons/arrow-180.png")
         $('#linkHistoryControlPanel img.prev').addClass('clickable')
         $("#linkHistoryControlPanel img.prev").click(function() {
             $("#linkHistoryControlPanel").data('cycleDelta', $("#linkHistoryControlPanel").data('cycleDelta') - 1)
@@ -375,11 +273,11 @@ function showLinkHistory() {
 
     $("#linkHistoryControlPanel img.next").prop("onclick", null).off("click");
     if (disableNext) {
-        $('#linkHistoryControlPanel img.next').attr("src", "assets/images/icons/arrow-grey.png")
+        $('#linkHistoryControlPanel img.next').attr("src", "/assets/images/icons/arrow-grey.png")
         $('#linkHistoryControlPanel img.next').removeClass('clickable')
         $("#linkHistoryControlPanel img.next").prop("onclick", null).off("click");
     } else {
-        $('#linkHistoryControlPanel img.next').attr("src", "assets/images/icons/arrow.png")
+        $('#linkHistoryControlPanel img.next').attr("src", "/assets/images/icons/arrow.png")
         $('#linkHistoryControlPanel img.next').addClass('clickable')
         $("#linkHistoryControlPanel img.next").click(function() {
             $("#linkHistoryControlPanel").data('cycleDelta', $("#linkHistoryControlPanel").data('cycleDelta') + 1)
@@ -456,13 +354,8 @@ function showLinkHistory() {
                 historyPath.setOptions({strokeColor: "#888888"})
             }
 
-
             if (historyPath.watched) {
                 highlightPath(historyPath)
-            }
-
-            if (showAnimation) {
-                drawHistoryFlightMarker(historyPath, framesPerAnimation, totalPassengers)
             }
 
             historyPath.setMap(map)
@@ -474,9 +367,5 @@ function showLinkHistory() {
             historyPath.shadowPath.setMap(null)
          }
     })
-    if (showAnimation) {
-        animateHistoryFlightMarkers(framesPerAnimation)
-    }
-
 }
 

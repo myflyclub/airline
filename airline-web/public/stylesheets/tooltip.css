@@ -33,7 +33,7 @@
     transition: opacity 0.3s;
     text-shadow: none;
     font-weight: normal;
-    max-width: 95vw;
+    max-width: 45vw;
     box-shadow: var(--table-header-shadow);
 }
 
@@ -97,6 +97,7 @@
     display: list-item;
     font-size: 13px;
     font-family: sans-serif;
+
 }
 
 .tooltip:hover .tooltiptext {

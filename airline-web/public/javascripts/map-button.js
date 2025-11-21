@@ -3,6 +3,6 @@
 
 function createMapButton(map, text, onclickAction, id) {
     // Set CSS for the control border.
-    var div = jQuery('<div id="' + id + '" class="googleMapButton button" onclick="' + onclickAction + '" style="align="center"><span class="alignHelper"></span><img src="assets/images/icons/arrow-return.png" style="vertical-align: middle; padding-right: 5px"/>' + text + '</div>')
+    var div = jQuery('<div id="' + id + '" class="googleMapButton button" onclick="' + onclickAction + '" style="align="center"><span class="alignHelper"></span><img src="/assets/images/icons/arrow-return.png" style="vertical-align: middle; padding-right: 5px"/>' + text + '</div>')
     return div
 }

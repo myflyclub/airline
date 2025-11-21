@@ -16,6 +16,9 @@ html {
 
 	--placeholderBlurColorLight: #c0c5d0;
 	--placeholderBlurColorDark: #111518;
+
+    --mobile-header-height: 28px;
+    --mobile-header-more-height: 40px;
 }
 html[data-theme="dark"] {
 	--section-background-image: linear-gradient(#111111ec, #111d);
@@ -38,14 +41,6 @@ html[data-ui-light-mode="true"] {
     background-color: var(--background-1);
 }
 
-/* sections broken with backdrop-filter */
-/* broken tooltips */
-/*
-.airportCanvasLeftGroup > :first-child .section {
-	backdrop-filter: none !important;
-	background: var(--placeholderBlurColorLight)/* << This color should be taken from one of the sections that have backdrop-filter */
-}
-*/
 html[data-theme="dark"] .airportCanvasLeftGroup > :first-child .section {
 	background: var(--placeholderBlurColorDark)/* << This color should be taken from one of the sections that have backdrop-filter */
 }
@@ -56,7 +51,7 @@ html[data-theme="dark"] .airportCanvasLeftGroup > :first-child .section {
 .tooltiptext[style="text-transform: none; top: 0px; width: 350px; white-space: nowrap;"] {
 	width: fit-content !important
 }
-/**/
+
 .tooltiptext::after {
 	display: none
 }
@@ -118,9 +113,6 @@ div#topBar {
 	position: fixed !important;
 	background: none;
 	backdrop-filter: none !important;
-}
-#live-chat {
-	left: -4px !important;
 }
 /* disable screen dimming on some modals */
 @media screen and (min-width: 640px) {
@@ -264,143 +256,127 @@ html[data-theme="dark"] :is(.gm-fullscreen-control img, .gmnoprint div button im
 	top: 0px !important;
 	position: fixed !important
 }
-#hideRivalMapButton {
-	top: 48px !important
+@media only screen and (min-device-width : 640px) {
+    #hideRivalMapButton {
+        top: 48px !important
+    }
+    #linksCanvas .mainPanel {
+        width: 50%;
+    }
+    .mapOverlayPanel {
+        padding-left: 0px;
+        padding-right: 48px;
+        box-sizing: border-box;
+        pointer-events: none;
+        border-radius: 8px !important;
+        position: absolute;
+        right: 0;
+        top: 12px;
+    }
+    .mapOverlayPanel > * {
+        pointer-events: auto;
+    }
+    .modelIllustration {
+        margin: 0 -8px;
+    }
+    .officeCanvasRightGroup .section {
+        padding: 16px 4px 4px 4px;
+    }
+    #linksCanvas .mapOverlayPanel {
+        position: unset;
+        padding: 0;
+    /* the div moves in the tree! */
+    }
+    #map .gmnoprint[role="menubar"] {
+        position: fixed !important;
+        top: 40px !important;
+        left: 44px !important;
+        width: 100px;
+    }
+    #map .gmnoprint[role="menubar"] > :first-child {
+        border-radius: 8px 8px 0 0 !important;
+    }
+    #map .gmnoprint[role="menubar"] > :last-child {
+        border-radius: 0 0 8px 8px !important;
+    }
+    #map .gmnoprint[role="menubar"] > * {
+        transition: all 0.2s !important;
+        /* width: 100px; */
+        /* height: 40px !important; */
+    }
+    #map .gmnoprint[role="menubar"] > * button {
+        width: 100px;
+        padding: 0px !important
+    }
+    #map .gmnoprint[role="menubar"] > *:hover {
+        background: var(--background-2) !important
+    }
+    #map .gmnoprint[role="menubar"] > *:hover:active {
+        background: var(--background-1) !important
+    }
+    #map .gmnoprint[role="menubar"] ul:has(.ssQIHO-checkbox-menu-item) {
+        position: relative !important;
+        border-radius: 4px !important;
+        filter: invert(.9);
+        box-shadow: 0 5px 5px 0 #fff4 !important
+    }
+    #map .gmnoprint[role="menubar"] ul:has(.ssQIHO-checkbox-menu-item) {
+        left: 100% !important;
+        top: -100% !important;
+    }
+    .gm-fullscreen-control {
+        margin: 4px 10px !important;
+        position: fixed !important;
+        top: 48px !important;
+        border-radius: 8px !important;
+        box-shadow: var(--shadow-2) !important;
+    }
+    /* zoom buttons */
+    #map div[style="user-select: none; box-shadow: rgba(0, 0, 0, 0.3) 0px 1px 4px -1px; border-radius: 2px; cursor: pointer; background-color: rgb(255, 255, 255); width: 40px; height: 81px;"] {
+        position: fixed !important;
+        top: 102px !important;
+        border-radius: 8px !important;
+        box-shadow: var(--shadow-2) !important;
+    }
+    #map div[style="user-select: none; box-shadow: rgba(0, 0, 0, 0.3) 0px 1px 4px -1px; border-radius: 2px; cursor: pointer; background-color: rgb(255, 255, 255); width: 40px; height: 81px;"] > * {
+        border-radius: 6px !important;
+        max-height: 36px !important;
+        max-width: 36px !important;
+        margin-top: 2px !important;
+        margin-left: 2px !important
+    }
+    #map .googleMapIcon {
+        position: fixed !important;
+        border-radius: 8px;
+        box-shadow: var(--shadow-2) !important;
+    }
+    #map #toggleMapHeatmapButton {
+        top: 190px
+    }
+    #map #toggleChampionButton {
+        top: 236px
+    }
+    #map #toggleMapAnimationButton {
+        top: 283px
+    }
+    #map #toggleMapLightButton {
+        top: 330px
+    }
+    #map #toggleAllianceBaseMapViewButton {
+        top: 377px
+    }
+    #map .gm-svpc {
+        position: fixed !important;
+        top: 136px !important;
+        left: 50px !important;
+        box-shadow: var(--shadow-2) !important;
+        border-radius: 8px !important
+    }
 }
-#linksCanvas .mainPanel {
-    width: 50%;
-}
-.mapOverlayPanel {
-	padding-left: 0px;
-	padding-right: 48px;
-	box-sizing: border-box;
-	pointer-events: none;
-	border-radius: 8px !important;
-	position: absolute;
-	right: 0;
-	top: 12px;
-}
-.mapOverlayPanel > * {
-	pointer-events: auto;
-}
-.modelIllustration {
-    margin: 0 -8px;
-}
-.officeCanvasRightGroup .section {
-    padding: 16px 4px 4px 4px;
-}
-#linksCanvas .mapOverlayPanel {
-    position: unset;
-    padding: 0;
-/* the div moves in the tree! */
-}
-#map .gmnoprint[role="menubar"] {
-	position: fixed !important;
-	top: 40px !important;
-	left: 44px !important;
-	width: 100px;
-}
-#map .gmnoprint[role="menubar"] > :first-child {
-	border-radius: 8px 8px 0 0 !important;
-}
-#map .gmnoprint[role="menubar"] > :last-child {
-	border-radius: 0 0 8px 8px !important;
-}
-#map .gmnoprint[role="menubar"] > * {
-	transition: all 0.2s !important;
-	/* width: 100px; */
-	/* height: 40px !important; */
-}
-#map .gmnoprint[role="menubar"] > * button {
-	width: 100px;
-	padding: 0px !important
-}
-#map .gmnoprint[role="menubar"] > *:hover {
-	background: var(--background-2) !important
-}
-#map .gmnoprint[role="menubar"] > *:hover:active {
-	background: var(--background-1) !important
-}
-#map .gmnoprint[role="menubar"] ul:has(.ssQIHO-checkbox-menu-item) {
-	position: relative !important;
-	border-radius: 4px !important;
-	filter: invert(.9);
-	box-shadow: 0 5px 5px 0 #fff4 !important
-}
-#map .gmnoprint[role="menubar"] ul:has(.ssQIHO-checkbox-menu-item) {
-	left: 100% !important;
-	top: -100% !important;
-}
-.gm-fullscreen-control {
-    margin: 4px 10px !important;
-	position: fixed !important;
-	top: 48px !important;
-	border-radius: 8px !important;
-	box-shadow: var(--shadow-2) !important;
-}
-/* zoom buttons */
-#map div[style="user-select: none; box-shadow: rgba(0, 0, 0, 0.3) 0px 1px 4px -1px; border-radius: 2px; cursor: pointer; background-color: rgb(255, 255, 255); width: 40px; height: 81px;"] {
-	position: fixed !important;
-	top: 102px !important;
-	border-radius: 8px !important;
-	box-shadow: var(--shadow-2) !important;
-}
-#map div[style="user-select: none; box-shadow: rgba(0, 0, 0, 0.3) 0px 1px 4px -1px; border-radius: 2px; cursor: pointer; background-color: rgb(255, 255, 255); width: 40px; height: 81px;"] > * {
-	border-radius: 6px !important;
-	max-height: 36px !important;
-	max-width: 36px !important;
-	margin-top: 2px !important;
-	margin-left: 2px !important
-}
-#map .googleMapIcon {
-    position: fixed !important;
-    border-radius: 8px;
-    box-shadow: var(--shadow-2) !important;
-}
-#map #toggleMapHeatmapButton {
-	top: 190px
-}
-#map #toggleChampionButton {
-	top: 236px
-}
-#map #toggleMapAnimationButton {
-	top: 283px
-}
-#map #toggleMapLightButton {
-	top: 330px
-}
-#map #toggleAllianceBaseMapViewButton {
-	top: 377px
-}
-#map .gm-svpc {
-	position: fixed !important;
-	top: 136px !important;
-	left: 50px !important;
-	box-shadow: var(--shadow-2) !important;
-	border-radius: 8px !important
-}
-/* Mobile */
-.extendedTopBarDetails {
-    position: absolute;
-    z-index: 100000;
-    height: 40px;
-    box-shadow: var(--shadow-1)
-}
-#topBar > .mobileOnly {
-    background-color: var(--background-1);
-    border-bottom-right-radius: 6px;
-    height: 40px;
-}
-#moreTopBarTab li {
-    border: none !important;
-    box-shadow: var(--shadow-1) !important;
-}
-#map {
-	height: 100% !important;
-}
+
 @media screen and (max-width: 640px) {
     #topBar {
-        height: 40px
+        height: var(--mobile-header-height);
     }
     #tabGroup {
         display: block;
@@ -412,12 +388,7 @@ html[data-theme="dark"] :is(.gm-fullscreen-control img, .gmnoprint div button im
     }
     .mapOverlayPanel {
         width: calc(100vw - 48px);
-        margin-top: 50vh;
-        padding-right: 40px;
-        padding-left: 0px;
-    }
-    #live-chat {
-        left: 0% !important;
+        padding: 0px;
     }
     .mainPanel {
         height: 100%;
@@ -433,8 +404,6 @@ html[data-theme="dark"] :is(.gm-fullscreen-control img, .gmnoprint div button im
 }
 .chat-history ul > :first-child {
     border-radius: 6px 6px 0 0
-}
-.chat-history {
 }
 .ctabs > li {
     box-shadow: var(--shadow-1) !important;

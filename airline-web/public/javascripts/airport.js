@@ -3,23 +3,19 @@ var airportLinkPaths = {}
 var activeAirport
 var activeAirportId
 var activeAirportPopupInfoWindow
-var airportMapMarkers = []
-var airportMapCircle
 var targetBase
 var airportBaseScale
 /**
- * Find an airport object by id.
- * returns the first matching airport object or null if not found.
- *
- * @param {(number|string)} id
- * @returns {Object|null}
+ * Find an airport object any attribute
+ * 
+ * todo: refactor airports to be a map for O(1) iata lookup
  */
-function getAirportById(id) {
+function getAirportByAttribute(key, attribute = 'id') {
     if (typeof airports === 'undefined' || !Array.isArray(airports)) return null;
     for (let i = 0; i < airports.length; i++) {
         const a = airports[i];
         if (!a) continue;
-        if (a.id == id) return a; //intentionally using == for type coercion
+        if (a[attribute] === key) return a;
     }
     return null;
 }
@@ -86,7 +82,7 @@ async function showAirportDetails(airportId) {
  * Airport view update
  */
 function updateAirportDetails(airport) {
-    loadAndUpdateAirportImage(airport.id);
+    ! isMobileDevice() && loadAndUpdateAirportImage(airport.id);
     updateAllTextNodes('.airportName', airport.name);
     updateAllTextNodes('.airportCityName', airport.city);
     updateAllTextNodes('.airportSize', airport.size);
@@ -111,9 +107,9 @@ function updateAirportDetails(airport) {
             $('.airportLoyaltyBonusTrigger').hide()
         }
 
-        const fullHeartSource = "assets/images/icons/heart.png"
-        const halfHeartSource = "assets/images/icons/heart-half.png"
-        const emptyHeartSource = "assets/images/icons/heart-empty.png"
+        const fullHeartSource = "/assets/images/icons/heart.png"
+        const halfHeartSource = "/assets/images/icons/heart-half.png"
+        const emptyHeartSource = "/assets/images/icons/heart-empty.png"
 
         const $container = $("#airportCanvas .airportLoyalty")
         $container.empty()
@@ -127,6 +123,21 @@ function updateAirportDetails(airport) {
     notesAirport.value = airportNote?.note || '';
 
     populateBaseDetailsModal(airport.isDomesticAirport ? "Domestic" : "");
+
+    const element = document.getElementById("tooltip_lounge");
+    if (element) {
+        const ulElement = document.createElement('ul');
+        ulElement.classList.add('list-disc');
+
+        airport.tooltipLounge.forEach(tooltipText => {
+            const liElement = document.createElement('li');
+            liElement.textContent = tooltipText;
+            ulElement.appendChild(liElement);
+        });
+
+        element.innerHTML = '';
+        element.appendChild(ulElement);
+    }
 
     var $runwayTable = $('#airportDetails .runwayTable')
     $runwayTable.children('.table-row').remove()
@@ -164,7 +175,7 @@ if (activeAirline) {
     $('#airportBaseDetails').show()
     $.ajax({
         type: 'GET',
-        url: "airlines/" + activeAirline.id + "/bases/" + airport.id,
+        url: "/airlines/" + activeAirline.id + "/bases/" + airport.id,
         contentType: 'application/json; charset=utf-8',
         dataType: 'json',
         success: function (baseDetails) {
@@ -173,7 +184,7 @@ if (activeAirline) {
 
             populateBaseUpkeepModal(baseDetails.targetBase)
             const baseType = targetBase.headquarter ? "Headquarters" : "Base"
-            const upkeepByLevel = baseDetails.targetBase.upkeepByLevel
+            // const upkeepByLevel = baseDetails.targetBase.upkeepByLevel
 
             const countryTitle = loadedCountriesByCode[airport.countryCode].CountryTitle
             updateAirlineTitle(countryTitle, $("#airportCanvas img.airlineTitleIcon"), $("#airportCanvas .airlineTitle"))
@@ -226,7 +237,7 @@ if (activeAirline) {
                     $('#airportDetailsBaseDelegatesRequired').empty()
                     var $delegatesSpan = $('<span style="display: flex;"></span>')
                     for (i = 0; i < targetBase.delegatesRequired; i++) {
-                        var $delegateIcon = $('<img src="assets/images/icons/user-silhouette-available.png"/>')
+                        var $delegateIcon = $('<img src="/assets/images/icons/user-silhouette-available.png"/>')
                         $delegatesSpan.append($delegateIcon)
                     }
                     $('#airportDetailsBaseDelegatesRequired').append($delegatesSpan)
@@ -323,14 +334,13 @@ if (activeAirline) {
 } else {
     $('#airportBaseDetails').hide()
 }
-populateNavigation($('#airportCanvas'))
 }
 
 
 function updateAirportChampionDetails(airport) {
     $('#airportDetailsChampionList').children('div.table-row').remove()
 
-    var url = "airports/" + airport.id + "/champions"
+    var url = "/airports/" + airport.id + "/champions"
     if (activeAirline) {
         url += "?airlineId=" + activeAirline.id
     }
@@ -343,7 +353,7 @@ function updateAirportChampionDetails(airport) {
             document.getElementById('maxRep').textContent = result.maxRep;
             var champions = result.champions
             $(champions).each(function (index, championDetails) {
-                var row = $("<div class='table-row clickable' data-link='rival' onclick=\"showRivalsCanvas('" + championDetails.airlineId + "');\"></div>")
+                var row = $("<div class='table-row clickable' onclick='navigateTo(/rivals/" + championDetails.airlineId + "'></div>")
                 var icon = getRankingImg(championDetails.ranking)
                 row.append("<div class='cell'>" + icon + "</div>")
                 row.append("<div class='cell'>" + getAirlineSpan(championDetails.airlineId, championDetails.airlineName) + "</div>")
@@ -367,7 +377,7 @@ function updateAirportChampionDetails(airport) {
             })
 
             if (result.currentAirline) {
-                var row = $("<div class='table-row clickable' data-link='rival' onclick=\"showRivalsCanvas('" + result.currentAirline.airlineId + "');\"></div>")
+                var row = $("<div class='table-row clickable' onclick='navigateTo(/rivals/" + linkConsumption.id + "'></div>")
                 row.append("<div class='cell'>" + result.currentAirline.ranking + "</div>")
                 row.append("<div class='cell'>" + getAirlineSpan(result.currentAirline.airlineId, result.currentAirline.airlineName) + "</div>")
                 row.append("<div class='cell' style='text-align: right'>" + commaSeparateNumber(result.currentAirline.amount) + "</div>")
@@ -391,8 +401,6 @@ function updateAirportChampionDetails(airport) {
                 $('#airportDetailsChampionList').append(row)
             }
 
-            populateNavigation($('#airportDetailsChampionList'))
-
             if ($(champions).length == 0) {
                 var row = $("<div class='table-row'></div>")
                 row.append("<div class='cell'>-</div>")
@@ -411,32 +419,7 @@ function updateAirportChampionDetails(airport) {
 
 }
 
-function initAirportMap() { //only called once, see https://stackoverflow.com/questions/10485582/what-is-the-proper-way-to-destroy-a-map-instance
-    airportMap = new google.maps.Map(document.getElementById('airportMap'), {
-        //center: {lat: airport.latitude, lng: airport.longitude},
-        //zoom : 6,
-        minZoom: 2,
-        maxZoom: 9,
-        //	   	scrollwheel: false,
-        //	    navigationControl: false,
-        //	    mapTypeControl: false,
-        //	    scaleControl: false,
-        //	    draggable: false,
-        gestureHandling: 'greedy',
-        fullscreenControl: false,
-        streetViewControl: false,
-        zoomControl: true,
-        styles: getMapStyles()
-    });
 
-    if (christmasFlag) {
-        //<div id="santaClausButton" class="googleMapIcon glow" onclick="showSantaClausAttemptStatus()" align="center" style="display: none; margin-bottom: 10px;"><span class="alignHelper"></span><img src='@routes.Assets.versioned("images/markers/christmas/santa-hat.png")' title='Santa, where are you?' style="vertical-align: middle;"/></div>-->
-        var santaClausButton = $('<div id="santaClausButton" class="googleMapIcon glow" onclick="showSantaClausAttemptStatus()" align="center" style="margin-bottom: 10px;"><span class="alignHelper"></span><img src="assets/images/markers/christmas/santa-hat.png" title=\'Santa, where are you!\' style="vertical-align: middle;"/></div>')
-
-        santaClausButton.index = 1
-        airportMap.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(santaClausButton[0]);
-    }
-}
 
 function checkForAirportUpdate(airport) {
     if (!airportsLatestData || !airportsLatestData.boosts) {
@@ -472,8 +455,8 @@ function loadAirportImages(fromAirportId, toAirportId) {
 }
 
 function loadAirportImage(airportId, $imgContainer) {
-    var url = "airports/" + airportId + "/images"
-    var genericImageUrl = "assets/images/background/town.png"
+    var url = "/airports/" + airportId + "/images"
+    var genericImageUrl = "/assets/images/background/town.png"
     $imgContainer.attr('src', genericImageUrl)
     $imgContainer.addClass('blur')
 
@@ -512,7 +495,7 @@ function loadAirportImage(airportId, $imgContainer) {
  * @param {Int} airportId 
  */
 function loadAndUpdateAirportImage(airportId) {
-    var url = "airports/" + airportId + "/images";
+    var url = "/airports/" + airportId + "/images";
 
     fetch(url, {
         method: 'GET',
@@ -559,7 +542,6 @@ function populateAirportDetails(airport) {
     loadAirportStatistics(airport)
     loadGenericTransits()
     updateAirportLoyalistDetails(airport)
-    showAirportAssets(airport)
     updateAirportCities(airport)
     updateAirportDestinations(airport)
 
@@ -587,6 +569,7 @@ function loadAirportStatistics(airportStatistics) {
     plotPie(airportStatistics.airlinePax, activeAirline ? activeAirline.name : "", "airlineTotalPie", "airlineName", "passengers")
     plotPie(airportStatistics.airlineOrigin, activeAirline ? activeAirline.name : "", "airlineOriginPie", "airlineName", "passengers")
     plotPie(airportStatistics.airlinePremiumPax, activeAirline ? activeAirline.name : "", "airlinePremiumPie", "airlineName", "passengers")
+    plotPie(airportStatistics.aircraftStats, "", "airportModelPie")
 
 
     document.getElementById('airportTravelRate').innerText = airportStatistics.travelRate + "%"
@@ -612,7 +595,7 @@ function loadAirportStatistics(airportStatistics) {
 function loadGenericTransits() {
     $.ajax({
         type: 'GET',
-        url: "airports/" + activeAirportId + "/generic-transits",
+        url: "/airports/" + activeAirportId + "/generic-transits",
         contentType: 'application/json; charset=utf-8',
         dataType: 'json',
         success: function (transits) {
@@ -697,7 +680,7 @@ function updateFacilityList(statistics) {
     var hasBases = false
     var hasLounges = false
     $.each(statistics.bases, function (index, base) {
-        var row = $("<div class='table-row clickable' data-link='rival'></div>")
+        var row = $("<div class='table-row clickable' onClick='navigateTo(/rivals/" + base.airlineId + "'></div>")
         let airlineTooltip = "";
         let linkCount = 0;
         let avgFreq = 0;
@@ -741,7 +724,7 @@ function updateFacilityList(statistics) {
 
     $.each(statistics.lounges, function (index, loungeStats) {
         var lounge = loungeStats.lounge
-        var row = $("<div class='table-row clickable' data-link='rival'></div>")
+        var row = $("<div class='table-row clickable' onClick='navigateTo(/rivals/" + lounge.airlineId + "'></div>")
         row.append("<div class='cell'>" + getAllianceOrAirlineLogoImg(lounge.allianceId, lounge.airlineId) + htmlEncode(lounge.airlineName) + "</div>")
         row.append("<div class='cell'>" + lounge.name + "</div>")
         row.append("<div class='cell' style='text-align: right;'>" + lounge.level + "</div>")
@@ -756,23 +739,6 @@ function updateFacilityList(statistics) {
         $('#airportDetailsLoungeList').append(row)
         hasLounges = true
     })
-
-    const element = document.getElementById("tooltip_lounge");
-    if (element) {
-        const ulElement = document.createElement('ul');
-        ulElement.classList.add('list-disc');
-
-        statistics.tooltipLounge.forEach(tooltipText => {
-            const liElement = document.createElement('li');
-            liElement.textContent = tooltipText;
-            ulElement.appendChild(liElement);
-        });
-
-        element.innerHTML = '';
-        element.appendChild(ulElement);
-    }
-
-    populateNavigation($('#airportCanvas'))
 
     var emptyBaseRow = $("<div class='table-row'></div>")
     emptyBaseRow.append("<div class='cell'>-</div>")
@@ -801,112 +767,10 @@ function updateFacilityList(statistics) {
     }
 }
 /**
- * Map view init
- */
-function addMarkers() {
-    markers = undefined
-    var infoWindow = new google.maps.InfoWindow({
-        maxWidth: 250
-    })
-    var originalOpacity = 0.7
-    currentZoom = map.getZoom()
-
-    google.maps.event.addListener(infoWindow, 'closeclick', function () {
-        if (infoWindow.marker) {
-            infoWindow.marker.setOpacity(originalOpacity)
-        }
-    });
-
-    var resultMarkers = {}
-    for (i = 0; i < airports.length; i++) {
-        var position = { lat: airports[i].latitude, lng: airports[i].longitude };
-        var icon = getAirportIcon(airports[i])
-
-        var marker = new google.maps.Marker({
-            position: position,
-            map: map,
-            title: airports[i].name,
-            airportName: airports[i].name,
-            opacity: originalOpacity,
-            airport: airports[i],
-            icon: icon,
-            originalIcon: icon, //so we can flip back and forth
-        });
-
-        var zIndex = airports[i].size * 10;
-        zIndex += Math.min(10, Math.floor(airports[i].population / 1000000));
-        zIndex += airports[i].isOrangeAirport || airports[i].isGateway ? 15 : 0
-        marker.setZIndex(zIndex); //major airport should have higher index
-
-        marker.addListener('click', function () {
-            infoWindow.close();
-            if (infoWindow.marker && infoWindow.marker != this) {
-                infoWindow.marker.setOpacity(originalOpacity)
-            }
-
-            activeAirport = this.airport
-
-            if (activeAirline) {
-                updateBaseInfo(this.airport.id)
-            }
-            $("#airportPopupName").text(this.airport.name)
-            let $opennessIcon = $(getOpennessSpan(loadedCountriesByCode[this.airport.countryCode].openness, this.airport.size, this.airport.isDomesticAirport, this.airport.isGateway, true))
-            $("#airportPopupCustomsIcon").html()
-            $("#airportPopupIata").text(this.airport.iata)
-            $("#airportPopupCity").html(this.airport.city + "&nbsp;" + getCountryFlagImg(this.airport.countryCode)) + $opennessIcon
-            $("#airportPopupPopulation").text(commaSeparateNumber(this.airport.population))
-            $("#airportPopupIncomeLevel").text("$" + commaSeparateNumber(this.airport.income))
-            const cycleData = airportsLatestData && airportsLatestData.champions ? airportsLatestData.champions[this.airport.id] : null
-            const rep = cycleData ? cycleData.reputation : "-"
-            const travelRate = cycleData ? cycleData.travelRate : "-"
-            $("#airportPopupMaxRunwayLength").html(this.airport.runwayLength + "m")
-            $("#airportPopupSize").text(this.airport.size)
-            $("#airportPopupTravelRate").html(travelRate + "%")
-            $("#airportPopupReputation").html(rep)
-            this.airport.hasOwnProperty("features") ? $("#airportPopupIcons").html(this.airport.features.map(updateFeatures)) : $("#airportPopupIcons").html("");
-
-            $("#airportPopupId").val(this.airport.id)
-            var popup = $("#airportPopup").clone()
-            //   populateNavigation(popup)
-            popup.show()
-            infoWindow.setContent(popup[0])
-            infoWindow.open(map, this);
-            infoWindow.marker = this
-
-            activeAirportPopupInfoWindow = infoWindow
-
-            if (activeAirline) {
-                if (!activeAirline.headquarterAirport) {
-                    $("#planToAirportButton").hide()
-                } else {
-                    $("#planToAirportButton").show()
-                }
-            } else {
-                $("#planToAirportButton").hide()
-            }
-
-        });
-
-        marker.addListener('mouseover', function (event) {
-            this.setOpacity(0.9)
-        })
-        marker.addListener('mouseout', function (event) {
-            if (infoWindow.marker != this) {
-                this.setOpacity(originalOpacity)
-            }
-        })
-
-        marker.setVisible(isShowMarker(marker, currentZoom))
-        resultMarkers[airports[i].id] = marker
-    }
-    //now assign it to markers to indicate that it's ready
-    markers = resultMarkers
-}
-/**
  * Helper function for features, map & airport views
  */
 function updateFeatures(feature) {
-    const image = `<img width='16' height='16' src='assets/images/icons/airport-features/${feature.type}.png' title='${feature.title}'>`;
+    const image = `<img width='16' height='16' src='/assets/images/icons/airport-features/${feature.type}.png' title='${feature.title}'>`;
     const strength = feature.strength > 0 ? `<p>${feature.strength}</p>` : "";
     return `<div class='feature'>${image}${strength}</div>`;
 }
@@ -916,19 +780,7 @@ function planToAirportFromInfoWindow() {
     planToAirport($('#airportPopupId').val(), $('#airportPopupName').text())
 }
 
-function removeMarkers() {
-    $.each(markers, function (key, marker) {
-        marker.setMap(null)
-    });
-    markers = {}
-}
 
-function isShowMarker(marker, zoom) {
-    if (championMapMode && !marker.championIcon) {
-        return false
-    }
-    return (marker.isBase) || ((zoom >= 4) && (zoom + marker.airport.size / 2 >= 7.5)) //start showing size >= 7 at zoom 4
-}
 
 function updateBaseInfo(airportId) {
     $("#buildHeadquarterButton").hide()
@@ -955,7 +807,7 @@ function updateBaseInfo(airportId) {
 }
 
 function updateAirportLoyalistDetails(airport) {
-    var url = "airports/" + airport.id + "/loyalist-data"
+    var url = "/airports/" + airport.id + "/loyalist-data"
     var $table = $('#airportCanvas .loyalistDelta')
     $table.find('.table-row').remove()
 
@@ -974,7 +826,7 @@ function updateAirportLoyalistDetails(airport) {
                 var airlineName = deltaEntry.airlineName
                 var airlineId = deltaEntry.airlineId
                 var deltaText = (deltaEntry.passengers >= 0) ? ("+" + deltaEntry.passengers) : deltaEntry.passengers
-                var $row = $('<div class="table-row clickable" data-link="rival"><div class="cell">' + getAirlineSpan(airlineId, airlineName) + '</div><div class="cell" style="text-align:right">' + deltaText + '</div></div>')
+                var $row = $('<div class="table-row clickable" onClick="navigateTo(/rivals/' + deltaEntry.airlineId + '"><div class="cell">' + getAirlineSpan(airlineId, airlineName) + '</div><div class="cell" style="text-align:right">' + deltaText + '</div></div>')
                 $row.click(function () {
                     showRivalsCanvas(deltaEntry.airlineId)
                 })
@@ -985,7 +837,6 @@ function updateAirportLoyalistDetails(airport) {
 
             plotPie(currentData, activeAirline ? activeAirline.name : null, "loyalistPie", "airlineName", "amount")
             plotLoyalistHistoryChart(result.history, "loyalistHistoryChart")
-            populateNavigation($('#airportCanvas'))
         },
         error: function (jqXHR, textStatus, errorThrown) {
             console.log(JSON.stringify(jqXHR));
@@ -998,183 +849,12 @@ function showLoyalistHistoryModal() {
     $("#loyalistHistoryModal").fadeIn(500)
 }
 
-//function updateBuildBaseButton(airportZone) { //check if the zone already has base
-//	for (i = 0; i < activeAirline.baseAirports.length; i++) {
-//	  if (activeAirline.baseAirports[i].airportZone == airportZone) {
-//		  return //no 2nd base in the zone but different country for now
-//	  }
-//	}
-//	
-//	//$("#buildBaseButton").show()
-//}
-
-var championMapMode = false
-var contestedMarkers = []
-
-function toggleChampionMap() {
-    var zoom = map.getZoom();
-    championMapMode = !championMapMode
-    const champions = airportsLatestData.champions;
-    $.each(markers, function (index, marker) {
-        if (championMapMode) {
-            if (champions && champions[marker.airport.id]) {
-                marker.previousIcon = marker.icon
-                marker.previousTitle = marker.title
-
-                const champ = champions[marker.airport.id];
-
-                const championIcon = '/airlines/' + champ.championAirlineId + '/logo'
-                marker.championIcon = championIcon
-                marker.setIcon(championIcon)
-                var title = marker.title + " - " + champ.championAirlineName
-                google.maps.event.clearListeners(marker, 'mouseover');
-                google.maps.event.clearListeners(marker, 'mouseout');
-                if (champ.contested) {
-                    addContestedMarker(marker)
-                    title += " (contested by " + champ.contested + ")"
-                }
-                marker.setTitle(title)
-            } else {
-                marker.setVisible(false)
-            }
-        } else {
-
-            if (marker.championIcon) {
-                marker.setTitle(marker.previousTitle)
-                marker.setIcon(marker.previousIcon)
-            }
-            while (contestedMarkers.length > 0) {
-                var contestedMarker = contestedMarkers.pop()
-                contestedMarker.setMap(null)
-            }
-            marker.setVisible(isShowMarker(marker, zoom))
-            updateAirportMarkers(activeAirline)
-        }
-    })
-}
-
-function addContestedMarker(airportMarker) {
-    var contestedMarker = new google.maps.Marker({
-        position: airportMarker.getPosition(),
-        map,
-        title: "Contested",
-        icon: { anchor: new google.maps.Point(-5, 15), url: "assets/images/icons/fire.svg" },
-        zIndex: 500
-    });
-    //marker.setVisible(isShowMarker(airportMarker, zoom))
-    contestedMarker.bindTo("visible", airportMarker)
-    contestedMarker.setZIndex(airportMarker.getZIndex() + 1)
-    contestedMarkers.push(contestedMarker)
-}
-
-
-function updateAirportBaseMarkers(newBaseAirports, relatedFlightPaths) {
-    //reset baseMarkers
-    $.each(baseMarkers, function (index, marker) {
-        marker.setIcon(marker.originalIcon)
-        marker.isBase = false
-        marker.setVisible(isShowMarker(marker, map.getZoom()))
-        marker.baseInfo = undefined
-        google.maps.event.clearListeners(marker, 'mouseover');
-        google.maps.event.clearListeners(marker, 'mouseout');
-
-    })
-    baseMarkers = []
-    var headquarterMarkerIcon = $("#map").data("headquarterMarker")
-    var baseMarkerIcon = $("#map").data("baseMarker")
-    var baseAllianceIcon = $("#map").data("baseAllianceMarker")
-    var baseAllianceHQIcon = $("#map").data("baseAlliancehqMarker")
-
-    $.each(newBaseAirports, function (key, baseAirport) {
-        if (!baseAirport) return;
-        var marker = markers[baseAirport.airportId]
-
-        if (baseAirport.airlineId !== activeAirline.id) {
-            if (baseAirport.headquarter) {
-                marker.setIcon(baseAllianceHQIcon)
-            } else {
-                marker.setIcon(baseAllianceIcon)
-            }
-        }
-
-        else {
-            if (baseAirport.headquarter) {
-                marker.setIcon(headquarterMarkerIcon)
-            } else {
-                marker.setIcon(baseMarkerIcon)
-            }
-        }
-        marker.setZIndex(999)
-        marker.isBase = true
-        marker.setVisible(true)
-        marker.baseInfo = baseAirport
-        var originalOpacity = marker.getOpacity()
-        marker.addListener('mouseover', function (event) {
-            $.each(relatedFlightPaths, function (linkId, pathEntry) {
-                var path = pathEntry.path
-                var link = pathEntry.path.link
-                if (!$(path).data("originalOpacity")) {
-                    $(path).data("originalOpacity", path.strokeOpacity)
-                }
-                if (link.fromAirportId != baseAirport.airportId || link.airlineId != baseAirport.airlineId) {
-                    path.setOptions({ strokeOpacity: 0.1 })
-                } else {
-                    path.setOptions({ strokeOpacity: 0.8 })
-                }
-            })
-        })
-        marker.addListener('mouseout', function (event) {
-            $.each(relatedFlightPaths, function (linkId, pathEntry) {
-                var path = pathEntry.path
-                var originalOpacity = $(path).data("originalOpacity")
-                if (originalOpacity !== undefined) {
-                    path.setOptions({ strokeOpacity: originalOpacity })
-                }
-            })
-        })
-
-        baseMarkers.push(marker)
-    })
-
-    return baseMarkers
-}
-
-function updateAirportMarkers(airline) { //set different markers for head quarter and bases
-    if (!markers) { //markers not ready yet, wait
-        setTimeout(function () { updateAirportMarkers(airline) }, 500)
-    } else {
-        if (airline) {
-            updateAirportBaseMarkers(airline.baseAirports, flightPaths)
-        } else {
-            updateAirportBaseMarkers([])
-        }
-    }
-}
-
-//airport links view
-function toggleAirportLinksView() {
-    clearAirportLinkPaths() //clear previous ones if exist
-    deselectLink()
-
-    toggleAirportLinks(activeAirport)
-}
-
-function closeAirportInfoPopup() {
-    if (activeAirportPopupInfoWindow) {
-        activeAirportPopupInfoWindow.close(map)
-        if (activeAirportPopupInfoWindow.marker) {
-            activeAirportPopupInfoWindow.marker.setOpacity(0.7)
-        }
-        activeAirportPopupInfoWindow = undefined
-    }
-}
-
 function toggleAirportLinks(airport) {
     clearAllPaths()
     closeAirportInfoPopup()
     $.ajax({
         type: 'GET',
-        url: "airports/" + airport.id + "/links",
+        url: "/airports/" + airport.id + "/links",
         contentType: 'application/json; charset=utf-8',
         dataType: 'json',
         success: function (linksByRemoteAirport) {
@@ -1219,126 +899,6 @@ function toggleAirportLinks(airport) {
     });
 }
 
-
-function drawAirportLinkPath(localAirport, details) {
-    var remoteAirport = details.remoteAirport
-    var from = new google.maps.LatLng({ lat: localAirport.latitude, lng: localAirport.longitude })
-    var to = new google.maps.LatLng({ lat: remoteAirport.latitude, lng: remoteAirport.longitude })
-    var pathKey = remoteAirport.id
-
-    var totalCapacity = details.capacity.total
-
-    var opacity
-    if (totalCapacity < 2000) {
-        opacity = 0.2 + totalCapacity / 2000 * (0.6)
-    } else {
-        opacity = 0.8
-    }
-
-    var airportLinkPath = new google.maps.Polyline({
-        geodesic: true,
-        strokeColor: "#DC83FC",
-        strokeOpacity: opacity,
-        strokeWeight: 2,
-        path: [from, to],
-        zIndex: 1100,
-        map: map,
-    });
-
-    var fromAirport = getAirportText(localAirport.city, localAirport.iata)
-    var toAirport = getAirportText(remoteAirport.city, remoteAirport.iata)
-
-
-    shadowPath = new google.maps.Polyline({
-        geodesic: true,
-        strokeColor: "#DC83FC",
-        strokeOpacity: 0.0001,
-        strokeWeight: 25,
-        path: [from, to],
-        zIndex: 401,
-        fromAirport: fromAirport,
-        fromCountry: localAirport.countryCode,
-        toAirport: toAirport,
-        toCountry: remoteAirport.countryCode,
-        details: details,
-        map: map,
-    });
-    polylines.push(airportLinkPath)
-    polylines.push(shadowPath)
-
-    airportLinkPath.shadowPath = shadowPath
-
-    var infowindow;
-    shadowPath.addListener('mouseover', function (event) {
-        highlightPath(airportLinkPath, false)
-        $("#airportLinkPopupFrom").html(getCountryFlagImg(this.fromCountry) + this.fromAirport)
-        $("#airportLinkPopupTo").html(getCountryFlagImg(this.toCountry) + this.toAirport)
-        $("#airportLinkPopupCapacity").text(toLinkClassValueString(this.details.capacity) + "(" + this.details.frequency + ")")
-        $("#airportLinkOperators").empty()
-        $.each(this.details.operators, function (index, operator) {
-            var $operatorDiv = $('<div></div>')
-            $operatorDiv.append(getAirlineLogoSpan(operator.airlineId, operator.airlineName))
-            $operatorDiv.append('<span>' + operator.frequency + '&nbsp;flight(s) weekly&nbsp;' + toLinkClassValueString(operator.capacity) + '</span>')
-            $("#airportLinkOperators").append($operatorDiv)
-        })
-
-
-        infowindow = new google.maps.InfoWindow({
-            maxWidth: 400
-        });
-        var popup = $("#airportLinkPopup").clone()
-        popup.show()
-        infowindow.setContent(popup[0])
-
-        infowindow.setPosition(event.latLng);
-        infowindow.open(map);
-    })
-    shadowPath.addListener('mouseout', function (event) {
-        unhighlightPath(airportLinkPath)
-        infowindow.close()
-    })
-
-    airportLinkPaths[pathKey] = airportLinkPath
-}
-
-function clearAirportLinkPaths() {
-    $.each(airportLinkPaths, function (key, airportLinkPath) {
-        airportLinkPath.setMap(null)
-        airportLinkPath.shadowPath.setMap(null)
-    })
-
-    airportLinkPaths = {}
-}
-
-
-function hideAirportLinksView() {
-    clearAirportLinkPaths()
-    updateLinksInfo() //redraw all flight paths
-
-    $("#topAirportLinksPanel").hide();
-}
-
-function getAirportIcon(airportInfo) {
-    var largeAirportMarkerIcon = $("#map").data("largeAirportMarker")
-    var mediumAirportMarkerIcon = $("#map").data("mediumAirportMarker")
-    var smallAirportMarkerIcon = $("#map").data("smallAirportMarker")
-    var gatewayAirportMarkerIcon = $("#map").data("gatewayAirportMarker")
-    var domesticAirportMarkerIcon = $("#map").data("domesticAirportMarker")
-
-    if (airportInfo.isGateway) {
-        icon = gatewayAirportMarkerIcon
-    } else if (airportInfo.isOrangeAirport) {
-        icon = domesticAirportMarkerIcon
-    } else if (airportInfo.size <= 3) {
-        icon = smallAirportMarkerIcon
-    } else if (airportInfo.size <= 6) {
-        icon = mediumAirportMarkerIcon
-    } else {
-        icon = largeAirportMarkerIcon
-    }
-    return icon
-}
-
 function hideAppealBreakdown() {
     $('#appealBonusDetailsTooltip').hide()
 }
@@ -1365,7 +925,7 @@ function showSpecializationModal() {
     $container.empty()
     $.ajax({
         type: 'GET',
-        url: "airlines/" + activeAirline.id + "/bases/" + activeAirportId + "/specialization-info",
+        url: "/airlines/" + activeAirline.id + "/bases/" + activeAirportId + "/specialization-info",
         contentType: 'application/json; charset=utf-8',
         dataType: 'json',
         success: function (info) {
@@ -1433,7 +993,7 @@ function confirmSpecializations() {
     var defaultCooldown = $('#baseSpecializationModal').data("defaultCooldown")
     promptConfirm("Changes can only be made every " + defaultCooldown + " weeks, confirm?", function () {
         var airlineId = activeAirline.id
-        var url = "airlines/" + airlineId + "/bases/" + activeAirportId + "/specializations"
+        var url = "/airlines/" + airlineId + "/bases/" + activeAirportId + "/specializations"
         var selectedSpecializations = []
         $('#baseSpecializationModal .option.active').each(function (index) {
             selectedSpecializations.push($(this).data('id'))
@@ -1481,10 +1041,7 @@ function showGenericTransitModal() {
 }
 
 
-let _toggleState_AllianceBaseMapView = false;
-
 async function toggleAllianceBaseMapViewButton(state) {
-
     let alliancesDetails;
     let allianceBases;
     let alliancesId;

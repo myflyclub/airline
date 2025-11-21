@@ -2,9 +2,6 @@
 #	This file defines all application routes (Higher priority routes first)
 #	~~~~
 
-#	Home	page
-GET		/							controllers.Application.index
-GET		/test						controllers.Application.test
 GET		/chat						controllers.ChatApplication.chatSocket
 
 #Web Socket management
@@ -266,5 +263,35 @@ GET  /favicon.ico        controllers.Assets.at(path="/public/images/icons", file
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file    controllers.Assets.versioned(path="/public", file: Asset)
 
-#front-end fake links...use redirect instead of telling them not found
-GET /nav-*any       controllers.Application.redirect(path : String = "/", any)
+# Client-side routes
+GET     /map/                           controllers.Application.index(path = "/")
+GET     /map/*path                      controllers.Application.index(path)
+GET     /airport/                       controllers.Application.index(path = "/")
+GET     /airport/*path                  controllers.Application.index(path)
+GET     /flights/                       controllers.Application.index(path = "/")
+GET     /flights/*path                  controllers.Application.index(path)
+GET     /search/                        controllers.Application.index(path = "/")
+GET     /search/*path                   controllers.Application.index(path)
+GET     /hangar/                        controllers.Application.index(path = "/")
+GET     /hangar/*path                   controllers.Application.index(path)
+GET     /aircraft/                      controllers.Application.index(path = "/")
+GET     /aircraft/*path                 controllers.Application.index(path)
+GET     /office/                        controllers.Application.index(path = "/")
+GET     /office/*path                   controllers.Application.index(path)
+GET     /champions/                     controllers.Application.index(path = "/")
+GET     /champions/*path                controllers.Application.index(path)
+GET     /bank/                          controllers.Application.index(path = "/")
+GET     /bank/*path                     controllers.Application.index(path)
+GET     /oil/                           controllers.Application.index(path = "/")
+GET     /oil/*path                      controllers.Application.index(path)
+GET     /rivals/                        controllers.Application.index(path = "/")
+GET     /rivals/*path                   controllers.Application.index(path)
+GET     /alliance/                      controllers.Application.index(path = "/")
+GET     /alliance/*path                 controllers.Application.index(path)
+GET     /country/                       controllers.Application.index(path = "/")
+GET     /country/*path                  controllers.Application.index(path)
+GET     /log/                           controllers.Application.index(path = "/")
+GET     /log/*path                      controllers.Application.index(path)
+GET     /olympics/                      controllers.Application.index(path = "/")
+GET     /olympics/*path                 controllers.Application.index(path)
+GET		/							    controllers.Application.index(path = "/")

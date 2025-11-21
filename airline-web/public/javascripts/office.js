@@ -56,7 +56,7 @@ function showOfficeCanvas() {
 function updateCampaignSummary() {
     $.ajax({
         type: 'GET',
-        url: "airlines/" + activeAirline.id + "/campaigns?fullLoad=false",
+        url: "/airlines/" + activeAirline.id + "/campaigns?fullLoad=false",
         contentType: 'application/json; charset=utf-8',
         dataType: 'json',
         success: function(result) {
@@ -84,7 +84,7 @@ function updateCampaignSummary() {
 function updateAirlineAssets() {
     $.ajax({
         type: 'GET',
-        url: "airlines/" + activeAirline.id + "/airport-assets",
+        url: "/airlines/" + activeAirline.id + "/airport-assets",
         contentType: 'application/json; charset=utf-8',
         dataType: 'json',
         success: function(result) {
@@ -131,7 +131,7 @@ function updateAirlineBases() {
         $('#officeCanvas .bases').children('.table-row').remove()
 
     var airlineId = activeAirline.id
-    	var url = "airlines/" + airlineId + "/office-capacity"
+    	var url = "/airlines/" + airlineId + "/office-capacity"
         $.ajax({
     		type: 'GET',
     		url: url,
@@ -141,10 +141,10 @@ function updateAirlineBases() {
     	    	 $(activeAirline.baseAirports).each(function(index, base) {
                     var row = $("<div class='table-row clickable' data-link='airport' onclick='showAirportDetails(" + base.airportId+ ")'></div>")
                     if (base.headquarter) {
-                        row.append($("<div class='cell'><img src='assets/images/icons/building-hedge.png' class='pr-1'><span style='font-size: 130%;vertical-align: top;'>" + base.scale + "</span></div><div class='cell'>" + getCountryFlagImg(base.countryCode) + base.city + " " + base.airportCode + "</div>"))
+                        row.append($("<div class='cell'><img src='/assets/images/icons/building-hedge.png' class='pr-1'><span style='font-size: 130%;vertical-align: top;'>" + base.scale + "</span></div><div class='cell'>" + getCountryFlagImg(base.countryCode) + base.city + " " + base.airportCode + "</div>"))
 
                     } else {
-                        row.append($("<div class='cell'><img src='assets/images/icons/building-low.png' class='pr-1'><span style='font-size: 130%;vertical-align: top;'>" + base.scale + "</span></div><div class='cell'>" + getCountryFlagImg(base.countryCode) + base.city + " " + base.airportCode + "</div>"))
+                        row.append($("<div class='cell'><img src='/assets/images/icons/building-low.png' class='pr-1'><span style='font-size: 130%;vertical-align: top;'>" + base.scale + "</span></div><div class='cell'>" + getCountryFlagImg(base.countryCode) + base.city + " " + base.airportCode + "</div>"))
                     }
                     var capacityInfo = officeCapacity[base.airportId]
                     var required = (capacityInfo.staffCapacity < capacityInfo.currentStaffRequired) ? "<span class='fatal'>" + capacityInfo.currentStaffRequired.toFixed(1) + "</span>" : capacityInfo.currentStaffRequired.toFixed(1)
@@ -175,7 +175,6 @@ function updateAirlineBases() {
                 if (!activeAirline.baseAirports || activeAirline.baseAirports.length == 0) {
                     $('#officeCanvas .bases').append("<div class='table-row'><div class='cell'></div></div>")
                 }
-                populateNavigation($('#officeCanvas .bases'))
     	    },
             error: function(jqXHR, textStatus, errorThrown) {
     	            console.log(JSON.stringify(jqXHR));
@@ -386,7 +385,7 @@ function updateAirlineDetails() {
       rulesList.appendChild(listItem);
   });
   typeDescriptionEl.appendChild(rulesList);
-  
+
   if (airline.hasOwnProperty('stock')) {
     airline.tempStockPrice ??= airline.stock.stockPrice;
     const brokerFee = gameConstants.stockConsts.brokerFeeBase + airline.stock.stockPrice * gameConstants.stockConsts.brokerFee * 1000000;
@@ -443,7 +442,7 @@ function loadSheets() {
 
 	$.ajax({
 		type: 'GET',
-		url: "airlines/" + airlineId + "/finances",
+		url: "/airlines/" + airlineId + "/finances",
 	    contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
 	    success: function(data) {
@@ -753,7 +752,7 @@ function updateAirlineReputationSheet(airlineReputation) {
 
 function setTargetServiceQuality(targetServiceQuality) {
 	var airlineId = activeAirline.id
-	var url = "airlines/" + airlineId + "/target-service-quality"
+	var url = "/airlines/" + airlineId + "/target-service-quality"
 	if (!checkTargetServiceQualityInput(targetServiceQuality)) { //if invalid, then return
 	    return;
 	}
@@ -794,7 +793,7 @@ function checkTargetServiceQualityInput(input) {
 
 function setMinimumRenewalBalance(minimumRenewalBalance) {
 	var airlineId = activeAirline.id
-	var url = "airlines/" + airlineId + "/minimum-renewal-balance"
+	var url = "/airlines/" + airlineId + "/minimum-renewal-balance"
 	if (!checkEditMinimumRenewalBalanceInput(minimumRenewalBalance)) { //if invalid, then return
 	    return;
 	}
@@ -837,7 +836,7 @@ function checkEditMinimumRenewalBalanceInput(input) {
 
 function setAirplaneRenewal(threshold) {
 	var airlineId = activeAirline.id
-	var url = "airlines/" + airlineId + "/airplane-renewal"
+	var url = "/airlines/" + airlineId + "/airplane-renewal"
 	var data
 	if (threshold) {
 		data = { "threshold" : parseInt(threshold) }
@@ -907,7 +906,7 @@ function validateAirlineCode(airlineCode) {
 
 function setAirlineCode(airlineCode) {
 	var airlineId = activeAirline.id
-	var url = "airlines/" + airlineId + "/airline-code"
+	var url = "/airlines/" + airlineId + "/airline-code"
     var data = { "airlineCode" : airlineCode }
 	$.ajax({
 		type: 'PUT',
@@ -950,7 +949,7 @@ function editAirlineName() {
 
 function validateAirlineName(airlineName) {
     var airlineId = activeAirline.id
-    var url = "airlines/" + airlineId + "/airline-name"
+    var url = "/airlines/" + airlineId + "/airline-name"
     var data = { "airlineName" : airlineName }
     $.ajax({
         type: 'PUT',
@@ -978,7 +977,7 @@ function validateAirlineName(airlineName) {
 function confirmAirlineRename(airlineName) {
     promptConfirm("Change airline name to <b>" + airlineName + "</b>? Can only rename every 30 days.", function() {
         var airlineId = activeAirline.id
-        var url = "airlines/" + airlineId + "/airline-name"
+        var url = "/airlines/" + airlineId + "/airline-name"
         var data = { "airlineName" : airlineName }
         $.ajax({
             type: 'PUT',
@@ -1014,13 +1013,13 @@ function loadLogoTemplates() {
 	$('#logoTemplates').empty()
 	$.ajax({
 		type: 'GET',
-		url: "logos/templates",
+		url: "/logos/templates",
 	    contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
 	    success: function(templates) {
 	    	//group by period
 	    	$.each(templates, function(index, templateIndex) {
-	    		$('#logoTemplates').append('<div style="padding: 3px; margin: 3px; float: left;" class="clickable" onclick="selectLogoTemplate(' + templateIndex + ')"><img src="logos/templates/' + templateIndex + '"></div>')
+	    		$('#logoTemplates').append('<div style="padding: 3px; margin: 3px; float: left;" class="clickable" onclick="selectLogoTemplate(' + templateIndex + ')"><img src="/logos/templates/' + templateIndex + '"></div>')
 	    	})
 
 
@@ -1050,7 +1049,7 @@ function generateLogoPreview() {
 	var color1 = $('#logoModal .picker.color1').val()
     var color2 = $('#logoModal .picker.color2').val()
 
-	var url = "logos/preview?templateIndex=" + logoTemplate + "&color1=" + encodeURIComponent(color1) + "&color2=" + encodeURIComponent(color2)
+	var url = "/logos/preview?templateIndex=" + logoTemplate + "&color1=" + encodeURIComponent(color1) + "&color2=" + encodeURIComponent(color2)
 	$('#logoPreview').empty();
 	$('#logoPreview').append('<img src="' + url + '">')
 }
@@ -1060,7 +1059,7 @@ function setAirlineLogo() {
 	var color1 = $('#logoModal .picker.color1').val()
     var color2 = $('#logoModal .picker.color2').val()
 
-	var url = "airlines/" + activeAirline.id + "/set-logo?templateIndex=" + logoTemplate + "&color1=" + encodeURIComponent(color1) + "&color2=" + encodeURIComponent(color2)
+	var url = "/airlines/" + activeAirline.id + "/set-logo?templateIndex=" + logoTemplate + "&color1=" + encodeURIComponent(color1) + "&color2=" + encodeURIComponent(color2)
     $.ajax({
 		type: 'GET',
 		url: url,
@@ -1077,7 +1076,7 @@ function setAirlineLogo() {
 }
 
 function setAirlineColor(color) {
-	var url = "airlines/" + activeAirline.id + "/set-color?color=" + encodeURIComponent(color)
+	var url = "/airlines/" + activeAirline.id + "/set-color?color=" + encodeURIComponent(color)
     $.ajax({
 		type: 'GET',
 		url: url,
@@ -1136,7 +1135,7 @@ function updateLogoUpload() {
 }
 
 function updateLiveryInfo() {
-    $('#officeCanvas img.livery').attr('src', 'airlines/' + activeAirline.id + "/livery?dummy=" + Math.random())
+    $('#officeCanvas img.livery').attr('src', '/airlines/' + activeAirline.id + "/livery?dummy=" + Math.random())
 }
 
 function showUploadLivery() {
@@ -1183,7 +1182,7 @@ function updateLiveryUpload() {
 }
 
 function deleteLivery() {
-    var url = "airlines/" + activeAirline.id + "/livery"
+    var url = "/airlines/" + activeAirline.id + "/livery"
     $.ajax({
 		type: 'DELETE',
 		url: url,
@@ -1200,7 +1199,7 @@ function deleteLivery() {
 }
 
 function saveSlogan() {
-    var url = "airlines/" + activeAirline.id + "/slogan"
+    var url = "/airlines/" + activeAirline.id + "/slogan"
     $.ajax({
 		type: 'PUT',
 		url: url,
@@ -1220,7 +1219,7 @@ function saveSlogan() {
 }
 
 function loadSlogan(callback) {
-    var url = "airlines/" + activeAirline.id + "/slogan"
+    var url = "/airlines/" + activeAirline.id + "/slogan"
     $.ajax({
 		type: 'GET',
 		url: url,
@@ -1262,7 +1261,7 @@ function updateServiceFundingDetails() {
 	$('#fundingProjection').text('...')
 	$.ajax({
 		type: 'GET',
-		url: "airlines/" + activeAirline.id + "/service-funding-projection",
+		url: "/airlines/" + activeAirline.id + "/service-funding-projection",
 	    contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
 	    success: function(result) {
@@ -1293,7 +1292,7 @@ function editAirplaneRenewal() {
 function updateAirplaneRenewalDetails() {
 	$.ajax({
 		type: 'GET',
-		url: "airlines/" + activeAirline.id + "/airplane-renewal",
+		url: "/airlines/" + activeAirline.id + "/airplane-renewal",
 	    contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
 	    success: function(airplaneRenewal) {
@@ -1319,7 +1318,7 @@ function updateChampionedCountriesDetails() {
 
     	$.ajax({
     		type: 'GET',
-    		url: "airlines/" + activeAirline.id + "/championed-countries",
+    		url: "/airlines/" + activeAirline.id + "/championed-countries",
     	    contentType: 'application/json; charset=utf-8',
     	    dataType: 'json',
     	    success: function(championedCountries) {
@@ -1330,8 +1329,6 @@ function updateChampionedCountriesDetails() {
     	    		row.append("<div class='cell'>" + getCountryFlagImg(country.countryCode) + country.name + "</div>")
     	    		$('#championedCountriesList').append(row)
     	    	})
-
-    	    	populateNavigation($('#championedCountriesList'))
 
     	    	if ($(championedCountries).length == 0) {
     	    		var row = $("<div class='table-row'></div>")
@@ -1353,7 +1350,7 @@ function updateChampionedAirportsDetails() {
 
 	$.ajax({
 		type: 'GET',
-		url: "airlines/" + activeAirline.id + "/championed-airports",
+		url: "/airlines/" + activeAirline.id + "/championed-airports",
 	    contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
 	    success: function(championedAirports) {
@@ -1365,8 +1362,6 @@ function updateChampionedAirportsDetails() {
 	    		row.append("<div class='cell' style='text-align: right;'>" + championDetails.reputationBoost + "</div>")
 	    		$('#championedAirportsList').append(row)
 	    	})
-
-	    	populateNavigation($('#championedAirportsList'))
 
 	    	if ($(championedAirports).length == 0) {
 	    		var row = $("<div class='table-row'></div>")
@@ -1433,7 +1428,7 @@ function selectSheet(tab, sheet) {
 
 function updateResetAirlineInfo() {
 	var airlineId = activeAirline.id
-	var url = "airlines/" + airlineId + "/reset-consideration"
+	var url = "/airlines/" + airlineId + "/reset-consideration"
     $.ajax({
 		type: 'GET',
 		url: url,
@@ -1479,7 +1474,7 @@ function updateResetAirlineInfo() {
 function resetAirline(keepAssets) {
 	$.ajax({
 		type: 'GET',
-		url: "airlines/" + activeAirline.id + "/reset?keepAssets=" + keepAssets,
+		url: "/airlines/" + activeAirline.id + "/reset?keepAssets=" + keepAssets,
 	    contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
 	    success: function() {

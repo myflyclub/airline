@@ -6,13 +6,10 @@ function showRankingCanvas() {
 }
 
 function loadRanking() {
-    var airlineId = activeAirline ? activeAirline.id : null
-    var url = activeAirline ? "rankings/" + airlineId : "rankings"
-
     $('#rankingCanvas .table').hide() //hide all tables until they are loaded
     $.ajax({
         type: 'GET',
-        url: url,
+        url: activeAirline ? "/rankings/" + activeAirline.id : "rankings",
         contentType: 'application/json; charset=utf-8',
         dataType: 'json',
         success: function (allRankings) {
@@ -154,7 +151,7 @@ function getRankingRow(ranking) {
         var entry = getAirlineSpan(ranking.airlineId, ranking.airlineName)
         if (ranking.rankInfo) {
             if (ranking.rankInfo.from && ranking.rankInfo.to) {
-                entry += ' : ' + "<span style='vertical-align:bottom'>" + getAirportSpan(ranking.rankInfo.from) + "<img style='vertical-align:bottom; margin:0 3px;' src='assets/images/icons/12px/arrow-double.png'/>" + getAirportSpan(ranking.rankInfo.to) + "</span>"
+                entry += ' : ' + "<span style='vertical-align:bottom'>" + getAirportSpan(ranking.rankInfo.from) + "<img style='vertical-align:bottom; margin:0 3px;' src='/assets/images/icons/12px/arrow-double.png'/>" + getAirportSpan(ranking.rankInfo.to) + "</span>"
             } else {
                 entry += ' : ' + ranking.rankInfo
             }

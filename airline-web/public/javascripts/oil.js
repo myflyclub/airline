@@ -12,7 +12,7 @@ function showOilCanvas() {
 }
 
 function loadOilPrices() {
-	var url = "oil-prices"
+	var url = "/oil-prices"
 	$.ajax({
 		type: 'GET',
 		url: url,
@@ -29,7 +29,7 @@ function loadOilPrices() {
 }
 
 function loadOilDetails() {
-	var url = "airlines/" + activeAirline.id + "/oil-details"
+	var url = "/airlines/" + activeAirline.id + "/oil-details"
 	$.ajax({
 		type: 'GET',
 		url: url,
@@ -77,7 +77,7 @@ function loadOilConsumptionHistoryTable(entries) {
 }
 
 function loadOilContractConsideration(volume, duration) {
-	var url = "airlines/" + activeAirline.id + "/oil-contract-consideration?volume=" + volume + "&duration=" + duration
+	var url = "/airlines/" + activeAirline.id + "/oil-contract-consideration?volume=" + volume + "&duration=" + duration
 	$.ajax({
 		type: 'GET',
 		url: url,
@@ -104,7 +104,7 @@ function loadOilContractConsideration(volume, duration) {
 }
 
 function addOilContract(volume, duration) {
-	var url = "airlines/" + activeAirline.id + "/sign-oil-contract?volume=" + volume + "&duration=" + duration
+	var url = "/airlines/" + activeAirline.id + "/sign-oil-contract?volume=" + volume + "&duration=" + duration
 	$.ajax({
 		type: 'GET',
 		url: url,
@@ -124,7 +124,7 @@ function addOilContract(volume, duration) {
 
 
 function loadExistingOilContracts() {
-	var url = "airlines/" + activeAirline.id + "/oil-contracts"
+	var url = "/airlines/" + activeAirline.id + "/oil-contracts"
 	loadedContracts = {}
 	$.ajax({
 		type: 'GET',
@@ -143,7 +143,7 @@ function loadExistingOilContracts() {
 }
 
 function editOilInventoryPolicy() {
-	var url = "airlines/" + activeAirline.id + "/oil-inventory-options"
+	var url = "/airlines/" + activeAirline.id + "/oil-inventory-options"
 	loadedContracts = {}
 	$.ajax({
 		type: 'GET',
@@ -160,9 +160,9 @@ function editOilInventoryPolicy() {
 	    		row.append("<div class='cell'>" + option.description + "</div>")
 	    		row.append("<div class='cell' align='right'>" + '$' + commaSeparateNumber(option.price) + "</div>")
 	    		if (!result.rejection) {
-	    			row.append("<div class='cell' align='right'><img src='assets/images/icons/tick.png' title='Pick this policy' class='button' onclick='setOilInventoryPolicy(" + option.id + ")'/></div>")
+	    			row.append("<div class='cell' align='right'><img src='/assets/images/icons/tick.png' title='Pick this policy' class='button' onclick='setOilInventoryPolicy(" + option.id + ")'/></div>")
 	    		} else {
-	    			row.append("<div class='cell' align='right'><img src='assets/images/icons/prohibition.png' class='button' title='" + result.rejection + "' onclick='exitOilInventoryPolicy()'/></div>")
+	    			row.append("<div class='cell' align='right'><img src='/assets/images/icons/prohibition.png' class='button' title='" + result.rejection + "' onclick='exitOilInventoryPolicy()'/></div>")
 	    		}
 	    		
 	    		table.append(row)
@@ -193,7 +193,7 @@ function exitOilInventoryPolicy() {
 }
 
 function setOilInventoryPolicy(optionId) {
-	var url = "airlines/" + activeAirline.id + "/set-oil-inventory-option?optionId=" + optionId
+	var url = "/airlines/" + activeAirline.id + "/set-oil-inventory-option?optionId=" + optionId
 	$.ajax({
 		type: 'GET',
 		url: url,
@@ -228,9 +228,9 @@ function updateExistingContractsTable() {
 		row.append("<div class='cell' align='right'>" + '$' + commaSeparateNumber(contract.terminationPenalty) + "</div>")
 		row.append("<div class='cell' align='right'>" + contract.remainingDuration + " week(s)</div>")
 		if (!contract.rejection) {
-			row.append("<div class='cell'><img src='assets/images/icons/cross.png' title='Terminate contract' class='button' onclick='terminateContract(" + contract.id + ")'/></div>")
+			row.append("<div class='cell'><img src='/assets/images/icons/cross.png' title='Terminate contract' class='button' onclick='terminateContract(" + contract.id + ")'/></div>")
 		} else {
-			row.append("<div class='cell'><img src='assets/images/icons/cross-grey.png' title='" + contract.rejection + "'/></div>")
+			row.append("<div class='cell'><img src='/assets/images/icons/cross-grey.png' title='" + contract.rejection + "'/></div>")
 		}
 		
 		contractsTable.append(row)
@@ -250,7 +250,7 @@ function updateExistingContractsTable() {
 }
 
 function terminateContract(contractId) {
-	var url = "airlines/" + activeAirline.id + "/oil-contracts/" + contractId
+	var url = "/airlines/" + activeAirline.id + "/oil-contracts/" + contractId
 	$.ajax({
 		type: 'DELETE',
 		url: url,

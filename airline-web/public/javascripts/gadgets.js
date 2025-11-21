@@ -216,13 +216,13 @@ function getGradeStarsImgs(value, width = 16) {
 	const fullStars = Math.floor(value / 2)
 	let html = ""
 	for (let i = 0 ; i < fullStars; i ++) {
-		html += `<img width='${width}' src='assets/images/icons/star-full.svg'/>`
+		html += `<img width='${width}' src='/assets/images/icons/star-full.svg'/>`
 	}
 	if (halfStar) {
-		html += `<img width='${width}' src='assets/images/icons/star-half.svg'/>`
+		html += `<img width='${width}' src='/assets/images/icons/star-half.svg'/>`
 	}
 	for (let i = 0 ; i < 5 - fullStars - halfStar; i ++) {
-		html += `<img width='${width}' src='assets/images/icons/star-empty.svg'/>`
+		html += `<img width='${width}' src='/assets/images/icons/star-empty.svg'/>`
 	}
 	return html
 }
@@ -242,7 +242,7 @@ function getCountryFlagImg(countryCode, height = "11px") {
 }
 
 function getCountryFlagUrl(countryCode) {
-    return countryCode ? `assets/images/flags/${countryCode}.svg` : '';
+    return countryCode ? `/assets/images/flags/${countryCode}.svg` : ``;
 }
 
 function getAirlineLogoImg(airlineId) {
@@ -254,9 +254,28 @@ function getAllianceLogoImg(allianceId) {
 }
 
 function getAllianceOrAirlineLogoImg(allianceId, airlineId) {
-    var allianceSrc = "/alliances/" + allianceId + "/logo"
-    var airlineSrc = "/airlines/" + airlineId + "/logo"
-    return "<img class='logo-alliance' loading='lazy' src='" + allianceSrc + "' onerror=\"this.onerror=null;this.src='" + airlineSrc + "';this.className='logo';\"/>"
+    let allianceSrc = "/alliances/" + allianceId + "/logo"
+    let airlineSrc = "/airlines/" + airlineId + "/logo"
+
+    let img = document.createElement('img');
+    img.className = 'logo';
+    img.loading = 'lazy';
+    img.src = airlineSrc;
+
+    // Preload alliance image and swap on success
+    let preload = new Image();
+    preload.onload = function() {
+        try {
+            img.src = allianceSrc;
+            img.className = 'logo-alliance';
+        } catch (e) {
+            // swallow
+        }
+    };
+    preload.onerror = function() { /* swallow network errors */ };
+    preload.src = allianceSrc;
+
+    return img;
 }
 
 function getAirlineLabelSpan(airlineId, airlineName) {
@@ -293,13 +312,13 @@ function getUserLevelImg(level) {
 	var levelTitle
 	var levelIcon
 	if (level == 1) {
-		levelIcon = "assets/images/icons/medal-bronze-premium.png"
+		levelIcon = "/assets/images/icons/medal-bronze-premium.png"
 		levelTitle = "Patreon : Bronze"
 	} else if (level == 2) {
-		levelIcon = "assets/images/icons/medal-silver-premium.png"
+		levelIcon = "/assets/images/icons/medal-silver-premium.png"
 		levelTitle = "Patreon : Silver"
 	} else if (level == 3) {
-		levelIcon = "assets/images/icons/medal-red-premium.png"
+		levelIcon = "/assets/images/icons/medal-red-premium.png"
 		levelTitle = "Patreon : Gold"
 	}
 
@@ -315,7 +334,7 @@ function getAdminImg(adminStatus) {
 		return ""
 	}
 
-	var	levelIcon = "assets/images/icons/star.png"
+	var	levelIcon = "/assets/images/icons/star.png"
     var levelTitle = "Game Admin"
 
 	if (levelIcon) {
@@ -333,11 +352,11 @@ function getUserModifiersSpan(modifiers) {
     var result = ""
     $.each(modifiers, function(index, modifier) {
         if (modifier == "WARNED") {
-           result += "<span><img src='assets/images/icons/exclamation.png' title='" + modifier + "' style='vertical-align:middle;'/></span>"
+           result += "<span><img src='/assets/images/icons/exclamation.png' title='" + modifier + "' style='vertical-align:middle;'/></span>"
         } else if (modifier == "CHAT_BANNED") {
-           result += "<span><img src='assets/images/icons/mute.png' title='" + modifier + "' style='vertical-align:middle;'/></span>"
+           result += "<span><img src='/assets/images/icons/mute.png' title='" + modifier + "' style='vertical-align:middle;'/></span>"
         } else if (modifier == "BANNED") {
-           result += "<span><img src='assets/images/icons/prohibition.png' title='" + modifier + "' style='vertical-align:middle;'/></span>"
+           result += "<span><img src='/assets/images/icons/prohibition.png' title='" + modifier + "' style='vertical-align:middle;'/></span>"
         } else {
            result += "<span>" + modifier + "</span>"
         }
@@ -353,9 +372,9 @@ function getAirlineModifiersSpan(modifiers) {
     var result = ""
     $.each(modifiers, function(index, modifier) {
         if (modifier == "NERFED") {
-           result += "<span><img src='assets/images/icons/ghost.png' title='" + modifier + "' style='vertical-align:middle;'/></span>"
+           result += "<span><img src='/assets/images/icons/ghost.png' title='" + modifier + "' style='vertical-align:middle;'/></span>"
         } else if (modifier == "BANNER_LOYALTY_BOOST") {
-            result += "<span><img src='assets/images/icons/megaphone.png' title='Banner contest winner!' style='vertical-align:middle;'/></span>"
+            result += "<span><img src='/assets/images/icons/megaphone.png' title='Banner contest winner!' style='vertical-align:middle;'/></span>"
         }
 //        } else { //let's no show modifiers that are not listed for now. since they could be common
 //           result += "<span>" + modifier + "</span>"
@@ -367,19 +386,19 @@ function getRankingImg(ranking, limitToTop3 = false) {
 	var rankingIcon
 	var rankingTitle
 	if (ranking == 1) {
-		rankingIcon = "assets/images/icons/crown.png"
+		rankingIcon = "/assets/images/icons/crown.png"
 		rankingTitle = "1st place"
 	} else if (ranking == 2) {
-		rankingIcon = "assets/images/icons/crown-silver.png"
+		rankingIcon = "/assets/images/icons/crown-silver.png"
 		rankingTitle = "2nd place"
 	} else if (ranking == 3) {
-		rankingIcon = "assets/images/icons/crown-bronze.png"
+		rankingIcon = "/assets/images/icons/crown-bronze.png"
     	rankingTitle = "3rd place"
 	} else if (ranking <= 10 && limitToTop3 !== true) {
-		rankingIcon = "assets/images/icons/trophy-" + ranking + ".png"
+		rankingIcon = "/assets/images/icons/trophy-" + ranking + ".png"
 		rankingTitle = ranking + "th place"
 	} else if (ranking <= 20 && limitToTop3 !== true) {
-		rankingIcon = "assets/images/icons/counter-" + ranking + ".png"
+		rankingIcon = "/assets/images/icons/counter-" + ranking + ".png"
         rankingTitle = ranking + "th place"
 	}
 
@@ -388,6 +407,15 @@ function getRankingImg(ranking, limitToTop3 = false) {
 	} else {
 		return "";
 	}
+}
+
+function toHoursAndMinutes(totalMinutes) {
+	const hours = Math.floor(totalMinutes / 60);
+	const minutes = totalMinutes % 60;
+	if(minutes < 10) {
+		return { hours, minutes: "0" + minutes };
+	}
+	return { hours, minutes };
 }
 
 function getDurationText(duration) {
@@ -428,7 +456,7 @@ function getOpennessIcon(openness, size=null, isDomesticAirport=false, isGateway
 		description = "No International to International Transfers"
 		icon = "globe--exclamation.png"
 	}
-	return "<img src='assets/images/icons/" + icon + "' title='" + description + "'/>"
+	return "<img src='/assets/images/icons/" + icon + "' title='" + description + "'/>"
 }
 
 function getOpennessSpan(openness, size=null, isDomesticAirport=false, isGateway=false, iconOnly=false) {
@@ -447,7 +475,7 @@ function getOpennessSpan(openness, size=null, isDomesticAirport=false, isGateway
 		description = "No International to International Connections"
 		icon = "globe--exclamation.png"
 	}
-	return iconOnly ? "<img src='assets/images/icons/" + icon + "' title='" + description + "'/>" : "" + description + "&nbsp;<img src='assets/images/icons/" + icon + "'/>"
+	return iconOnly ? "<img src='/assets/images/icons/" + icon + "' title='" + description + "'/>" : "" + description + "&nbsp;<img src='/assets/images/icons/" + icon + "'/>"
 }
 
 function scrollToRow($matchingRow, $container) {
@@ -769,10 +797,6 @@ function enableButton(button) {
         }
     })
 
-
-    //remove tooltip
-
-
     if (isTouchDevice()) {
         $(button).find(".touchTitle").remove()
     } else {
@@ -928,11 +952,25 @@ function getGameDate(cycle, period = "WEEKLY", hasUnits = false) {
         return `${remainderUnit}${remainder}${seperator}${periodUnit}${periods - 1} - ${remainderUnit}${remainder}${seperator}${periodUnit}${periods}`;
     }
 }
-
+/**
+ * Updates all text nodes matching the selector
+ * @param {string} selector 
+ * @param {string} updateText 
+ */
 function updateAllTextNodes(selector, updateText) {
     document.querySelectorAll(selector).forEach(el => {
         el.textContent = updateText;
     });
+}
+/**
+ * Creates a DOM element from an HTML string.
+ * @param {string} html - The HTML string to parse.
+ * @returns {HTMLElement | null} The first element created from the string.
+ */
+function htmlToElement(html) {
+    const template = document.createElement('template');
+    template.innerHTML = html.trim();
+    return template.content.firstElementChild;
 }
 
 /**

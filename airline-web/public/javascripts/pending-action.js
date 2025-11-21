@@ -3,12 +3,12 @@ function handlePendingActions(pendingActions) {
     $.each(pendingActions, function(index, pendingAction) {
         if (pendingAction === 'OLYMPICS_VOTE') {
             var $pendingActionDiv = $('<div style="position: absolute; right: -5px; bottom: -5px; height: 20px; width: 20px;" class="pendingAction"></div>').appendTo($('.left-tab .tab-icon[data-link="event"]'))
-            var $icon = $('<img src="assets/images/icons/exclamation.png">')
+            var $icon = $('<img src="/assets/images/icons/exclamation.png">')
             $icon.attr('title', "Olympics Voting Active")
             $pendingActionDiv.append($icon)
         } else if (pendingAction === 'ALLIANCE_PENDING_APPLICATION') {
             var $pendingActionDiv = $('<div style="position: absolute; right: -5px; bottom: -5px; height: 20px; width: 20px;" class="pendingAction"></div>').appendTo($('.left-tab .tab-icon[data-link="alliance"]'))
-            var $icon = $('<img src="assets/images/icons/exclamation.png">')
+            var $icon = $('<img src="/assets/images/icons/exclamation.png">')
             $icon.attr('title', "Pending Application")
             $pendingActionDiv.append($icon)
         }
@@ -19,7 +19,7 @@ function checkPendingActions() {
     if (activeAirline) {
         $.ajax({
             type: 'GET',
-            url: "broadcaster-direct/trigger-prompts-check/" + activeAirline.id,
+            url: "/broadcaster-direct/trigger-prompts-check/" + activeAirline.id,
             contentType: 'application/json; charset=utf-8',
             dataType: 'json',
             success: function(dummy) {

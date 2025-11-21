@@ -270,7 +270,7 @@ function roundToNearest(value, nearest) {
     return Math.round(value / nearest) * nearest;
 }
 
-function createDynamicBuckets(column, rows, bucketCount = 8) {
+function createDynamicBuckets(column, rows, bucketCount = 9) {
     // Get all numeric values from the keys of the 'rows' object
     const values = Object.keys(rows).map(key => parseInt(key)).filter(val => !isNaN(val));
 
@@ -325,7 +325,7 @@ function createDynamicBuckets(column, rows, bucketCount = 8) {
             // e.g. lastProcessedMax=20 (rp=10). potentialMin=21. roundToNearest(21,10)=20.
             // So, bucketMin (20) <= lastProcessedMax (20). Needs to jump to 30.
             if (bucketMin <= lastProcessedMax) {
-                bucketMin = lastProcessedMax + roundingPrecision;
+                bucketMin = lastProcessedMax + 1;
             }
         }
 

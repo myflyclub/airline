@@ -1,5 +1,5 @@
 function buildFacility(facility, levelChange) {
-	var url = "airlines/" + activeAirline.id + "/facilities/" + activeAirportId 
+	var url = "/airlines/" + activeAirline.id + "/facilities/" + activeAirportId 
 	var facilityData = { 
 			"airportId" : parseInt(activeAirportId),
 			"airlineId" : activeAirline.id,
@@ -48,7 +48,7 @@ function updateFacilityIcons(airport) {
 	$('#airportDetailsFacilities').empty()
 	$.ajax({
 		type: 'GET',
-		url: "airlines/" + activeAirline.id + "/facilities/" + airport.id,
+		url: "/airlines/" + activeAirline.id + "/facilities/" + airport.id,
 	    contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
 	    success: function(facilityDetails) {
@@ -56,13 +56,13 @@ function updateFacilityIcons(airport) {
 	    		var imageUrl
 	    		var imageTitle
     			if (facilityDetails.lounge.status == 'ACTIVE') {
-    				imageUrl = 'assets/images/icons/sofa.png'
+    				imageUrl = '/assets/images/icons/sofa.png'
 					imageTitle = 'Active Lounge Level ' + facilityDetails.lounge.level + " - " + facilityDetails.lounge.name 	
     			} else if (facilityDetails.lounge.level > 0) {
-    				imageUrl = 'assets/images/icons/sofa-grey.png'
+    				imageUrl = '/assets/images/icons/sofa-grey.png'
     				imageTitle = 'Inactive Lounge Level ' + facilityDetails.lounge.level + " - " + facilityDetails.lounge.name
     			} else {
-    				imageUrl = 'assets/images/icons/sofa-grey.png'
+    				imageUrl = '/assets/images/icons/sofa-grey.png'
     				imageTitle = 'No Active Lounge'
     			}
     			
@@ -91,7 +91,7 @@ function showLoungeModal(currentFacility) {
 
 	$.ajax({
 		type: 'POST',
-		url: "airlines/" + activeAirline.id + "/facility-consideration/" + currentFacility.airportId,
+		url: "/airlines/" + activeAirline.id + "/facility-consideration/" + currentFacility.airportId,
 		contentType: 'application/json; charset=utf-8',
 	    data: JSON.stringify(facitlityData),
 	    dataType: 'json',
@@ -208,10 +208,10 @@ function showFacilityModal(currentFacility) {
 function getLevelStarsImgs(level, maxLevel) {
 	var html = ""
 	for (i = 0 ; i < level; i ++) {
-		html += "<img src='assets/images/icons/star.png'/>"
+		html += "<img src='/assets/images/icons/star.png'/>"
 	}
 	for (i = 0 ; i < maxLevel - level; i ++) {
-		html += "<img src='assets/images/icons/star-empty.png'/>"
+		html += "<img src='/assets/images/icons/star-empty.png'/>"
 	}
 	return html
 }

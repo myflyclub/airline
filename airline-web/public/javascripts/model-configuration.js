@@ -11,7 +11,7 @@ function showAirplaneModelConfigurations(modelId) {
     var airlineId = activeAirline.id
     $.ajax({
         type: 'GET',
-        url: "airlines/" + airlineId + "/configurations?modelId=" + modelId,
+        url: "/airlines/" + airlineId + "/configurations?modelId=" + modelId,
         contentType: 'application/json; charset=utf-8',
         dataType: 'json',
         success: function(result) {
@@ -68,7 +68,7 @@ function showAirplaneModelConfigurationsModal(modelConfigurationInfo) {
 
     for (i = 0 ; i < modelConfigurationInfo.maxConfigurationCount - modelConfigurationInfo.configurations.length; i ++) { //pad the rest with empty div
         var configurationDiv = $("<div style='width : 98%; min-height : 130px; position: relative;' class='config'></div>")
-        var promptDiv = ("<div style='position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);'><button class='button' onclick='toggleNewConfiguration(selectedModel, " + (modelConfigurationInfo.configurations.length == 0 ? "true" : "false") + ")'><img src='assets/images/icons/24px/plus.png' title='Add new configuration'><div style='float:right'><h3 class='pl-2'>Add New Configuration</h3></div></span></div>")
+        var promptDiv = ("<div style='position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);'><button class='button' onclick='toggleNewConfiguration(selectedModel, " + (modelConfigurationInfo.configurations.length == 0 ? "true" : "false") + ")'><img src='/assets/images/icons/24px/plus.png' title='Add new configuration'><div style='float:right'><h3 class='pl-2'>Add New Configuration</h3></div></span></div>")
 
         configurationDiv.append(promptDiv)
         $("#modelConfigurationModal .configContainer").append(configurationDiv)
@@ -118,7 +118,7 @@ function saveConfiguration(configuration) {
 
     $.ajax({
             type: 'PUT',
-            url: "airlines/" + airlineId + "/configurations?modelId=" + configuration.model.id + "&configurationId=" + configuration.id + "&economy=" + configuration.economy + "&business=" + configuration.business + "&first=" + configuration.first + "&isDefault=" + configuration.isDefault,
+            url: "/airlines/" + airlineId + "/configurations?modelId=" + configuration.model.id + "&configurationId=" + configuration.id + "&economy=" + configuration.economy + "&business=" + configuration.business + "&first=" + configuration.first + "&isDefault=" + configuration.isDefault,
             contentType: 'application/json; charset=utf-8',
             dataType: 'json',
             success: function(result) {
@@ -136,7 +136,7 @@ function deleteConfiguration(configuration) {
 
     $.ajax({
             type: 'DELETE',
-            url: "airlines/" + airlineId + "/configurations/" + configuration.id,
+            url: "/airlines/" + airlineId + "/configurations/" + configuration.id,
             contentType: 'application/json; charset=utf-8',
             dataType: 'json',
             success: function(result) {
@@ -155,7 +155,7 @@ function onAirplaneIconConfigurationDrop(event, configurationId) {
   if (airplaneId) {
     $.ajax({
               type: 'PUT',
-              url: "airlines/" + activeAirline.id + "/airplanes/" + airplaneId + "/configuration/" + configurationId,
+              url: "/airlines/" + activeAirline.id + "/airplanes/" + airplaneId + "/configuration/" + configurationId,
               contentType: 'application/json; charset=utf-8',
               dataType: 'json',
               async: false,

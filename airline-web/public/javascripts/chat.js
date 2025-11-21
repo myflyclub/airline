@@ -3,7 +3,7 @@ var firstAllianceMessageId = -1
 var firstGeneralMessageId = -1
 
 function updateChatTabs() {
-	if (activeUser.allianceName && activeUser.allianceRole != 'APPLICANT') {
+	if (activeUser && activeUser.allianceName && activeUser.allianceRole != 'APPLICANT') {
 		$("#allianceChatTab").text(activeUser.allianceName)
 		$("#allianceChatTab").data('roomId', activeUser.allianceId)
 		$("#allianceChatTab").show()
@@ -293,7 +293,7 @@ function handleScrollChatTop() {
   //$(this).css('overflow', 'hidden')
 
   if (!$chatTab.find('.loading').length){ //scrolled to top and not already loading
-     var $loadingDiv = $("<div class='loading'><img src='assets/images/icons/spinning-wheel.gif'></div>")
+     var $loadingDiv = $("<div class='loading'><img src='/assets/images/icons/spinning-wheel.gif'></div>")
      $chatTab.prepend($loadingDiv)
      //scrolled to top
      var activeRoomId = parseInt($('#live-chat .tab-link.current').data('roomId'))
@@ -410,7 +410,7 @@ function ackChatId() {
 
 
 
-emojify.setConfig({img_dir : 'assets/images/emoji'});
+emojify.setConfig({img_dir : '/assets/images/emoji'});
 
 function adjustScroll() {
     //if (!$('#scroll_lockc').is(":checked")) {
@@ -436,11 +436,11 @@ function replaceImg(input, prefix, scrollToBottom) {
                 img.attr("src", img.data("src"))
                 img.removeData("src")
             } else {
-                img.attr("src", "assets/images/icons/cross-grey.png")
+                img.attr("src", "/assets/images/icons/cross-grey.png")
                 img.data("src", src)
             }
         })
-        //img.attr("src", "assets/images/emoji/banana.png")
+        //img.attr("src", "/assets/images/emoji/banana.png")
 
         if (scrollToBottom) {
             img.on('load', function() {

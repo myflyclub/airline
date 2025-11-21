@@ -103,7 +103,7 @@ function updateHeatmap(airlineId) {
     var heatmapType = $('input[name=heatmapType]:checked', '#heatmapControlPanel').val()
     $.ajax({
         type: 'GET',
-        url: "airlines/" + airlineId + "/heatmap-data?heatmapType=" + heatmapType + "&cycleDelta=" + cycleDelta,
+        url: "/airlines/" + airlineId + "/heatmap-data?heatmapType=" + heatmapType + "&cycleDelta=" + cycleDelta,
         contentType: 'application/json; charset=utf-8',
         dataType: 'json',
         success: function(result) {

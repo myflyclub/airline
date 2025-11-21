@@ -9,7 +9,7 @@ function showEventCanvas() {
 }
 
 function loadAllOlympics() {
-	var url = "event/olympics"
+	var url = "/event/olympics"
 	
 	loadedOlympicsEvents = []
 
@@ -79,7 +79,7 @@ function loadOlympicsDetails(row) {
 
     $.ajax({
     		type: 'GET',
-    		url: "event/olympics/" + eventId,
+    		url: "/event/olympics/" + eventId,
     	    contentType: 'application/json; charset=utf-8',
     	    dataType: 'json',
     	    success: function(details) {
@@ -148,7 +148,7 @@ function loadOlympicsDetails(row) {
 
                     $.ajax({
                         type: 'GET',
-                        url: "event/olympics/" + eventId + "/airlines/" + activeAirline.id + "/votes",
+                        url: "/event/olympics/" + eventId + "/airlines/" + activeAirline.id + "/votes",
                         contentType: 'application/json; charset=utf-8',
                         dataType: 'json',
                         success: function(votes) {
@@ -191,10 +191,10 @@ function loadOlympicsDetails(row) {
 
                 if (event.currentYear) { //then it's active
                     var highlightClass = "img.year" + event.currentYear
-                    $("#olympicsDetails img.yearStatus").attr("src", "assets/images/icons/12px/status-grey.png")
-                    $("#olympicsDetails").find(highlightClass).attr("src", "assets/images/icons/12px/status-green.png")
+                    $("#olympicsDetails img.yearStatus").attr("src", "/assets/images/icons/12px/status-grey.png")
+                    $("#olympicsDetails").find(highlightClass).attr("src", "/assets/images/icons/12px/status-green.png")
                 } else {
-                    $("#olympicsDetails img.yearStatus").attr("src", "assets/images/icons/12px/status-grey.png") //all grey
+                    $("#olympicsDetails img.yearStatus").attr("src", "/assets/images/icons/12px/status-grey.png") //all grey
                 }
 
     	    	$("#olympicsDetails").fadeIn(200)
@@ -210,7 +210,7 @@ function populateGoalAndAirlineStats(event) {
     var eventId = event.id
      $.ajax({
         type: 'GET',
-        url: "event/olympics/" + eventId + "/airlines/" + activeAirline.id + "/passenger-details",
+        url: "/event/olympics/" + eventId + "/airlines/" + activeAirline.id + "/passenger-details",
         contentType: 'application/json; charset=utf-8',
         dataType: 'json',
         success: function(result) {
@@ -283,9 +283,6 @@ function populateCityVoteModal(candidates, votes, votingActive) {
         })
     })
 
-    $.each(olympicsMapElements, function() { this.setMap(null)})
-    olympicsMapElements = []
-
     table.find(".number-button").each(function(index) {
         var airportId = candidates[index].id
         $(this).data("airportId", airportId)
@@ -297,11 +294,6 @@ function populateCityVoteModal(candidates, votes, votingActive) {
             $(this).removeData("precedence")
         }
     })
-
-//    $.each(olympicsVoteMaps, function(index, map) {
-//        var candidateInfo = candidates[index]
-//        populateOlympicsCityMap(map, candidateInfo)
-//    })
 }
 
 function refreshCityVoteModalButtons() {
@@ -326,72 +318,7 @@ function refreshCityVoteModalButtons() {
 }
 
 var currentVotePrecedence = 1
-
-var olympicsMapElements = []
 var candidateCount
-
-function populateOlympicsCityMap(map, candidateInfo) {
-    var principalAirport = candidateInfo
-    if (principalAirport.latitude > 45 || principalAirport.latitude < -45) {
-        map.setZoom(6)
-    } else {
-        map.setZoom(7)
-    }
-    map.setCenter({lat: principalAirport.latitude, lng: principalAirport.longitude}); //this would eventually trigger an idle
-
-    var airportMapCircle = new google.maps.Circle({
-                center: {lat: principalAirport.latitude, lng: principalAirport.longitude},
-                radius: 80000, //in meter
-                strokeColor: "#32CF47",
-                strokeOpacity: 0.2,
-                strokeWeight: 2,
-                fillColor: "#32CF47",
-                fillOpacity: 0.3,
-                map: map
-            });
-    olympicsMapElements.push(airportMapCircle)
-
-    $.each(candidateInfo.affectedAirports, function(index, airport) {
-        var icon = getAirportIcon(airport)
-        var position = {lat: airport.latitude, lng: airport.longitude};
-          var marker = new google.maps.Marker({
-                position: position,
-                map: map,
-                airport: airport,
-                icon : icon
-              });
-
-            var infowindow
-           	marker.addListener('mouseover', function(event) {
-           		$("#olympicAirportPopup .airportName").text(airport.name + "(" + airport.iata + ")")
-           		infowindow = new google.maps.InfoWindow({
-           		       maxWidth : 800,
-                       disableAutoPan : true
-                 });
-                 var popup = $("#olympicAirportPopup").clone()
-                 popup.show()
-                 infowindow.setContent(popup[0])
-
-
-           		infowindow.open(map, marker);
-           	})
-           	marker.addListener('mouseout', function(event) {
-           		infowindow.close()
-           		infowindow.setMap(null)
-           	})
-           	olympicsMapElements.push(marker)
-
-     })
-
-
-
-    google.maps.event.addListenerOnce(map, 'idle', function() {
-        setTimeout(function() { //set a timeout here, otherwise it might not render part of the map...
-            map.setCenter({lat: principalAirport.latitude, lng: principalAirport.longitude}); //this would eventually trigger an idle
-            google.maps.event.trigger(map, 'resize'); //this refreshes the map
-        }, 2000);
-    });
-}
 
 function voteOlympicsCity(numberButton) {
     var airportId = numberButton.data("airportId")
@@ -442,13 +369,6 @@ function initVoteLayout(table, candidateCount) {
 var olympicsVoteMaps
 function initOlympicsVoteMaps(mapDivs) { //only called once, see https://stackoverflow.com/questions/10485582/what-is-the-proper-way-to-destroy-a-map-instance
     olympicsVoteMaps = []
-//    for (i = 0 ; i < mapDivs.length; i ++) {
-//        olympicsVoteMaps.push(new google.maps.Map(mapDivs[i][0], {
-//                        gestureHandling: 'none',
-//                        disableDefaultUI: true,
-//                        styles: getMapStyles()
-//                    }))
-//    }
 }
 
 
@@ -479,7 +399,7 @@ function confirmOlympicsVotes() {
     var eventId = $("#olympicsDetails").data("eventId")
 	$.ajax({
 		type: 'PUT',
-		url: "event/olympics/" + eventId + "/airlines/" + activeAirline.id + "/votes",
+		url: "/event/olympics/" + eventId + "/airlines/" + activeAirline.id + "/votes",
 	    data: JSON.stringify(data),
 	    contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
@@ -537,7 +457,7 @@ function updateEventRewardModal(rewardCategory) {
 
     $.ajax({
     		type: 'GET',
-    		url: "event/" + eventId + "/airline/" + activeAirline.id + "/reward/" + rewardCategory,
+    		url: "/event/" + eventId + "/airline/" + activeAirline.id + "/reward/" + rewardCategory,
     	    contentType: 'application/json; charset=utf-8',
     	    async: false,
     	    dataType: 'json',
@@ -581,7 +501,7 @@ function showEventRewardOptionsTable(eventId, rewardOptions) {
 function pickEventReward(eventId, categoryId, optionId) {
 	$.ajax({
         type: 'PUT',
-        url: "event/" + eventId + "/airline/" + activeAirline.id + "/reward/category/" + categoryId + "/option/" + optionId,
+        url: "/event/" + eventId + "/airline/" + activeAirline.id + "/reward/category/" + categoryId + "/option/" + optionId,
         contentType: 'application/json; charset=utf-8',
         dataType: 'json',
         success: function(result) {
@@ -601,7 +521,7 @@ function showOlympicsRankingModal() {
     $("#olympicsRankingsModal .table-row").remove()
      $.ajax({
             type: 'GET',
-            url: "event/olympics/" + eventId + "/airlines/" + activeAirline.id + "/ranking",
+            url: "/event/olympics/" + eventId + "/airlines/" + activeAirline.id + "/ranking",
             contentType: 'application/json; charset=utf-8',
             async: false,
             dataType: 'json',
