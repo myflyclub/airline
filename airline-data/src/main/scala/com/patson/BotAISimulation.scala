@@ -1361,7 +1361,7 @@ object BotAISimulation {
       try {
         val sellValue = (airplane.value * 0.8).toLong // 80% of current value
         AirlineSource.adjustAirlineBalance(airline.id, sellValue)
-        AirplaneSource.deleteAirplane(airplane.id)
+        AirplaneSource.deleteAirplane(airplane.id, None)
         soldCount += 1
         println(s"    🚨 [EMERGENCY] Sold ${airplane.model.name} for $$${sellValue}")
       } catch {
