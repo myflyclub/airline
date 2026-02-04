@@ -183,34 +183,7 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
     def writes(entries: Seq[LinkExtendedInfo]): JsValue = {
       val features = entries.map { entry =>
         val link = entry.link
-        val properties = Json.obj(
-          "id" -> link.id,
-          "fromAirportId" -> link.from.id,
-          "toAirportId" -> link.to.id,
-          "fromAirportCode" -> link.from.iata,
-          "toAirportCode" -> link.to.iata,
-          "fromAirportCity" -> link.from.city,
-          "toAirportCity" -> link.to.city,
-          "fromLongitude" -> link.from.longitude,
-          "fromLatitude" -> link.from.latitude,
-          "toLongitude" -> link.to.longitude,
-          "toLatitude" -> link.to.latitude,
-          "airlineId" -> link.airline.id,
-          "airlineName" -> link.airline.name,
-          "distance" -> link.distance,
-          "frequency" -> link.frequency,
-          "capacity" -> Json.toJson(link.capacity),
-          "rawQuality" -> link.rawQuality,
-          "computedQuality" -> link.computedQuality(),
-          "profit" -> entry.profit,
-          "revenue" -> entry.revenue,
-          "passengers" -> Json.toJson(entry.soldSeats),
-          "capacityHistory" -> Json.toJson(entry.capacityHistory),
-          "cancelledSeats" -> Json.toJson(entry.cancelledSeats),
-          "satisfaction" -> entry.satisfaction,
-          "lastUpdate" -> entry.lastUpdate.getTimeInMillis,
-          "currentStaffRequired" -> entry.currentStaffRequired
-        )
+        val properties = Json.toJson(entry).asInstanceOf[JsObject]
 
         Json.obj(
           "type" -> "Feature",

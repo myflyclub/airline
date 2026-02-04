@@ -91,11 +91,7 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
     implicit lazy val config = configuration
     Ok(views.html.index(""))
   }
-
-  def test = Action {
-    Ok(views.html.test())
-  }
-
+  
   def getCurrentCycle() = Action { request =>
     request.headers.get(IF_NONE_MATCH) match {
       case Some(etag) if etag == s""""$currentCycle"""" =>
