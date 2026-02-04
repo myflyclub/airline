@@ -651,6 +651,103 @@ package object controllers {
       airportObject
     }
   }
+
+  /**
+   * GeoJSON FeatureCollection for airports (for MapLibre)
+   */
+  object AirportsGeoJsonWrites extends Writes[List[Airport]] {
+    def writes(airports: List[Airport]): JsValue = {
+      val features = airports.map { airport =>
+        var properties = Json.obj(
+          "id" -> airport.id,
+          "name" -> airport.name,
+          "iata" -> airport.iata,
+          "city" -> airport.city,
+          "size" -> airport.size,
+          "countryCode" -> airport.countryCode,
+          "population" -> airport.basePopulation,
+          "income" -> airport.baseIncome,
+          "runwayLength" -> airport.runwayLength
+        )
+
+        if (airport.isGateway()) {
+          properties = properties + ("isGateway" -> JsBoolean(true))
+        }
+        if (airport.isDomesticAirport()) {
+          properties = properties + ("isDomesticAirport" -> JsBoolean(true))
+        }
+        if (airport.isOrangeAirport) {
+          properties = properties + ("isOrangeAirport" -> JsBoolean(true))
+        }
+        if (airport.getFeatures().nonEmpty) {
+          properties = properties + (
+            "features" -> JsArray(airport.getFeatures().sortBy(_.featureType.id).map { airportFeature =>
+              Json.obj("type" -> airportFeature.featureType.toString(), "strength" -> airportFeature.strength, "title" -> airportFeature.getDescription)
+            })
+          )
+        }
+
+        Json.obj(
+          "type" -> "Feature",
+          "id" -> airport.id,
+          "geometry" -> Json.obj(
+            "type" -> "Point",
+            "coordinates" -> Json.arr(airport.longitude, airport.latitude)
+          ),
+          "properties" -> properties
+        )
+      }
+
+      Json.obj(
+        "type" -> "FeatureCollection",
+        "features" -> JsArray(features)
+      )
+    }
+  }
+
+  /**
+   * GeoJSON FeatureCollection for links/routes (for MapLibre)
+   */
+  object LinksGeoJsonWrites extends Writes[List[Link]] {
+    def writes(links: List[Link]): JsValue = {
+      val features = links.map { link =>
+        val properties = Json.obj(
+          "id" -> link.id,
+          "fromAirportId" -> link.from.id,
+          "toAirportId" -> link.to.id,
+          "fromAirportCode" -> link.from.iata,
+          "toAirportCode" -> link.to.iata,
+          "fromAirportCity" -> link.from.city,
+          "toAirportCity" -> link.to.city,
+          "airlineId" -> link.airline.id,
+          "airlineName" -> link.airline.name,
+          "distance" -> link.distance,
+          "frequency" -> link.frequency,
+          "rawQuality" -> link.rawQuality,
+          "computedQuality" -> link.computedQuality()
+        )
+
+        Json.obj(
+          "type" -> "Feature",
+          "id" -> link.id,
+          "geometry" -> Json.obj(
+            "type" -> "LineString",
+            "coordinates" -> Json.arr(
+              Json.arr(link.from.longitude, link.from.latitude),
+              Json.arr(link.to.longitude, link.to.latitude)
+            )
+          ),
+          "properties" -> properties
+        )
+      }
+
+      Json.obj(
+        "type" -> "FeatureCollection",
+        "features" -> JsArray(features)
+      )
+    }
+  }
+
   /**
    * Extended static airport data
    */

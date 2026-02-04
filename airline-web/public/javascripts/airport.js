@@ -5,17 +5,33 @@ var activeAirportId
 var activeAirportPopupInfoWindow
 var targetBase
 var airportBaseScale
+var _toggleState_AllianceBaseMapView = false
 /**
- * Find an airport object any attribute
- * 
- * todo: refactor airports to be a map for O(1) iata lookup
+ * Find an airport by id (O(1) lookup)
+ */
+function getAirportById(id) {
+    return window.airportsById?.[id] || null;
+}
+
+/**
+ * Find an airport by IATA code (O(1) lookup)
+ */
+function getAirportByIata(iata) {
+    return window.airportsByIata?.[iata] || null;
+}
+
+/**
+ * Find an airport by any attribute
+ * Uses O(1) maps for id/iata, falls back to search for other attributes
  */
 function getAirportByAttribute(key, attribute = 'id') {
-    if (typeof airports === 'undefined' || !Array.isArray(airports)) return null;
-    for (let i = 0; i < airports.length; i++) {
-        const a = airports[i];
-        if (!a) continue;
-        if (a[attribute] === key) return a;
+    if (attribute === 'id') return getAirportById(key);
+    if (attribute === 'iata') return getAirportByIata(key);
+
+    // Fallback for other attributes - iterate through the map values
+    if (!window.airportsById) return null;
+    for (const airport of Object.values(window.airportsById)) {
+        if (airport[attribute] === key) return airport;
     }
     return null;
 }
@@ -775,9 +791,11 @@ function updateFeatures(feature) {
     return `<div class='feature'>${image}${strength}</div>`;
 }
 
-function planToAirportFromInfoWindow() {
-    closeAirportInfoPopup();
-    planToAirport($('#airportPopupId').val(), $('#airportPopupName').text())
+function planToAirportFromInfoWindow(airportId, airportName) {
+    AirlineMap.closeAirportInfoPopup();
+    const id = airportId || $('#airportPopupId').val();
+    const name = airportName || $('#airportPopupName').text();
+    planToAirport(id, name);
 }
 
 
@@ -850,8 +868,8 @@ function showLoyalistHistoryModal() {
 }
 
 function toggleAirportLinks(airport) {
-    clearAllPaths()
-    closeAirportInfoPopup()
+    AirlineMap.clearAllPaths()
+    AirlineMap.closeAirportInfoPopup()
     $.ajax({
         type: 'GET',
         url: "/airports/" + airport.id + "/links",
@@ -860,7 +878,7 @@ function toggleAirportLinks(airport) {
         success: function (linksByRemoteAirport) {
             $("#topAirportLinksPanel .topDestinations .table-row").remove()
             $.each(linksByRemoteAirport, function (index, entry) {
-                drawAirportLinkPath(airport, entry)
+                AirlineMap.drawAirportLinkPath(airport, entry)
                 //populate top 5 destinations
                 if (index < 5) {
                     var $destinationRow = $('<div class="table-row"></div>')
@@ -1060,11 +1078,11 @@ async function toggleAllianceBaseMapViewButton(state) {
     }
 
     //if on turn off toggleState = false
-    if (!toggleState) return updateAirportMarkers(activeAirline);
+    if (!toggleState) return AirlineMap.updateAirportMarkers(activeAirline);
 
     // if off turn on toggleState = ture
     try {
-        const res = await fetch(`alliances/${alliancesId}/details`)
+        const res = await fetch(`/alliances/${alliancesId}/details`)
         if (!res.ok) throw new Error('Fetch not okay');
         if (res.status !== 200) throw new Error('Fetch not 200')
         alliancesDetails = await res.json()
@@ -1085,7 +1103,7 @@ async function toggleAllianceBaseMapViewButton(state) {
     }
 
     if (allianceBases) {
-        updateAirportBaseMarkers(allianceBases, [], true)
+        AirlineMap.updateAirportBaseMarkers(allianceBases, [], true)
     }
 }
 

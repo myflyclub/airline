@@ -402,8 +402,8 @@ var rivalMapAirlineId
 
 function showRivalMap() {
     var airlineId = $('#rivalDetails').data("airlineId")
-	clearAllPaths()
-	deselectLink()
+	AirlineMap.clearAllPaths()
+	AirlineMap.deselectLink()
     rivalMapAirlineId = airlineId
 	var paths = []
 
@@ -414,7 +414,7 @@ function showRivalMap() {
 	    dataType: 'json',
 	    success: function(links) {
 	    	$.each(links, function(index, link) {
-                    var path = drawFlightPath(link, "#DC83FC")
+                    var path = AirlineMap.drawFlightPath(link, "#DC83FC")
                     paths.push(path)
                     //remove on click add on hover
                     google.maps.event.clearInstanceListeners(path.shadow);
@@ -464,7 +464,7 @@ function showRivalMap() {
     	    contentType: 'application/json; charset=utf-8',
     	    dataType: 'json',
     	    success: function(bases) {
-    	    	updateAirportBaseMarkers(bases, paths)
+    	    	AirlineMap.updateAirportBaseMarkers(bases, paths)
     	    },
     	    error: function(jqXHR, textStatus, errorThrown) {
     	            console.log(JSON.stringify(jqXHR));
@@ -480,16 +480,16 @@ function showRivalMap() {
     switchMap()
     $("#worldMapCanvas").data("initCallback", function() { //if go back to world map, re-init the map
     	map.controls[google.maps.ControlPosition.TOP_CENTER].clear()
-    	clearAllPaths()
-        updateAirportMarkers(activeAirline)
+    	AirlineMap.clearAllPaths()
+        AirlineMap.updateAirportMarkers(activeAirline)
         updateLinksInfo() //redraw all flight paths
     })
 }
 
 function hideRivalMap() {
 	map.controls[google.maps.ControlPosition.TOP_CENTER].clear()
-	clearAllPaths()
-	updateAirportBaseMarkers([]) //revert base markers
+	AirlineMap.clearAllPaths()
+	AirlineMap.updateAirportBaseMarkers([]) //revert base markers
 	rivalMapAirlineId = undefined
 	setActiveDiv($("#rivalsCanvas"))
 }

@@ -3,16 +3,16 @@ const SCRIPT_BASE_PATH = `${location.origin}/assets/javascripts/`;
 
 const CORE_LIBS = [
     'https://cdnjs.cloudflare.com/ajax/libs/page.js/1.11.6/page.js',
-    `https://maps.googleapis.com/maps/api/js?v=weekly&key=${window.googleMapKey}&libraries=geometry,drawing,visualization`
+    'https://unpkg.com/maplibre-gl@5.17.0/dist/maplibre-gl.js'
 ];
 
 const APP_REQUIRED_SCRIPTS = [
-    'gadgets.js', 'map.js', 'map-style.js', 'map-button.js', 'main.js', 'prompt.js',
+    'gadgets.js', 'main.js', 'prompt.js',
     'routes.js', 'color.js', 'plot-chartjs.js', 'airport.js',
     'airplane.js', 'model-configuration.js', 'airline.js', 'delegate.js',
     'country.js', 'office.js', 'ranking.js', 'bank.js', 'admin.js',
     'oil.js', 'rivals.js', 'alliance.js', 'event.js', 'search.js',
-    'profile.js', 'settings.js', 'pending-action.js', 'about.js',
+    'profile.js', 'settings.js', 'pending-action.js',
     'local-storage.js', 'table-utils.js', 'websocket.js', 'christmas.js'
 ].map(s => SCRIPT_BASE_PATH + s);
 
@@ -23,8 +23,8 @@ const ANGULAR_DEPENDENT_SCRIPTS = [
 ].map(s => SCRIPT_BASE_PATH + s);
 
 const DEFERRED_SCRIPTS = [
-    'heatmap.js', 'link-history.js', 'confetti.js', 'departures.js', 'campaign.js',
-    'log.js', 'mobile.js', 'ui-theme.js', 'chat-popup.js', 'tiles.js', 'facility.js',
+    'link-history.js', 'confetti.js', 'departures.js', 'campaign.js',
+    'log.js', 'mobile.js', 'chat-popup.js', 'tiles.js', 'facility.js',
 ].map(s => SCRIPT_BASE_PATH + s);
 
 /**
@@ -40,6 +40,21 @@ function loadScript(src) {
         script.onload = () => resolve(src);
         script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
         document.head.appendChild(script);
+    });
+}
+
+/**
+ * Loads a stylesheet dynamically and returns a promise.
+ * @param {string} href - The URL of the stylesheet to load.
+ * @returns {Promise<string>} A promise that resolves with the href on success.
+ */
+function loadStylesheet(href) {
+    return new Promise((resolve) => {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = href;
+        link.onload = () => resolve(href);
+        document.head.appendChild(link);
     });
 }
 
@@ -63,6 +78,24 @@ async function loadAirportsData() {
             throw new Error(`Network response was not ok: ${response.status} ${response.statusText}`);
         }
         airports = await response.json();
+
+        // Set GeoJSON globally for map rendering
+        window.airports = airports;
+
+        // Build O(1) lookup maps from GeoJSON features
+        window.airportsById = {};
+        window.airportsByIata = {};
+        if (airports.features) {
+            for (const feature of airports.features) {
+                const props = feature.properties;
+                // Add coordinates from geometry to properties for convenience
+                props.longitude = feature.geometry.coordinates[0];
+                props.latitude = feature.geometry.coordinates[1];
+                window.airportsById[props.id] = props;
+                window.airportsByIata[props.iata] = props;
+            }
+        }
+
         return airports;
     } catch (error) {
         console.error('Failed to load airports:', error);
@@ -71,19 +104,42 @@ async function loadAirportsData() {
 }
 
 /**
- * Polls to check if google.maps is available.
+ * Polls to check if MapLibre GL is available.
  */
-function waitForGoogleMaps() {
+function waitForMapLibre() {
     return new Promise((resolve) => {
-        const checkMaps = () => {
-            if (window.google && window.google.maps) {
+        const checkMapLibre = () => {
+            if (window.maplibregl) {
                 resolve();
             } else {
-                setTimeout(checkMaps, 100);
+                setTimeout(checkMapLibre, 100);
             }
         };
-        checkMaps();
+        checkMapLibre();
     });
+}
+
+/**
+ * Load and initialize the map module.
+ */
+async function initMapModule() {
+    // Import the map module
+    const mapModule = await import('./map/index.js');
+
+    // Initialize the map
+    const mapInstance = mapModule.initializeMap();
+
+    // Wait for map to be ready, then add markers
+    if (mapInstance) {
+        mapInstance.on('load', () => {
+            // airports is now GeoJSON FeatureCollection
+            if (airports && airports.features && airports.features.length > 0) {
+                mapModule.addMarkers(airports);
+            }
+        });
+    }
+
+    return mapModule;
 }
 
 /**
@@ -124,9 +180,13 @@ async function initializeApp() {
         await requiredAssetsPromise;
         console.log('✓ Core assets loaded (Airports, Libs, App Scripts)');
 
-        await waitForGoogleMaps();
-        console.log('✓ Google Maps ready');
-        initMap();
+        await waitForMapLibre();
+        await loadStylesheet('https://unpkg.com/maplibre-gl@5.17.0/dist/maplibre-gl.css');
+        console.log('✓ MapLibre GL ready');
+
+        // Initialize map module
+        await initMapModule();
+        console.log('✓ Map module initialized');
 
         // If a session cookie exists, restore the user session before initializing the UI
         try {
@@ -159,7 +219,7 @@ async function initializeApp() {
         // Load Angular, then its dependent scripts, then bootstrap
         await loadScript(ANGULAR_LIB);
         console.log('✓ AngularJS loaded');
-        
+
         await loadScriptsParallel(ANGULAR_DEPENDENT_SCRIPTS);
         console.log('✓ Angular-dependent scripts loaded (chat, confetti)');
 

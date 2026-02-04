@@ -1,5 +1,5 @@
 var historyFlightMarkers = []
-var historyPaths = {}
+var historyFlightMarkerAnimation = null
 
 function showLinkHistoryView() {
     fromLinkCanvas = $('#linksCanvas').is(":visible")
@@ -20,7 +20,7 @@ function showLinkHistoryView() {
 			}
 		}
 	})
-	clearAllPaths() //clear all flight paths
+	AirlineMap.clearAllPaths() //clear all flight paths
 
     //populate control panel
 	$("#linkHistoryControlPanel .transitAirlineList .table-row").remove()
@@ -41,11 +41,9 @@ function showLinkHistoryView() {
 }
 
 function loadLinkHistory(linkId) {
-    $.each(historyPaths, function(index, path) { //clear all history path
-        path.setMap(null)
-        path.shadowPath.setMap(null)
-    })
-    historyPaths = {}
+    // Clear history paths (managed by map module state)
+    AirlineMap.clearHistoryPaths()
+
 	var linkInfo = loadedLinksById[linkId]
     var airlineNamesById = {}
     var cycleDelta = $('#linkHistoryControlPanel').data('cycleDelta')
@@ -68,7 +66,7 @@ function loadLinkHistory(linkId) {
             if (!jQuery.isEmptyObject(linkHistory)) {
                 $.each(linkHistory.relatedLinks, function(step, relatedLinksOnStep) {
                     $.each(relatedLinksOnStep, function(key, relatedLink) {
-                        drawLinkHistoryPath(relatedLink, false, linkId, step)
+                        AirlineMap.drawLinkHistoryPath(relatedLink, false, linkId, step)
                         if (linkInfo.fromAirportId != relatedLink.fromAirportId || linkInfo.toAirportId != relatedLink.toAirportId || linkInfo.airlineId != linkInfo.airlineId) { //transit should not count the selected link
                             airlineNamesById[relatedLink.airlineId] = relatedLink.airlineName
                             if (!forwardTransitPaxByAirlineId[relatedLink.airlineId]) {
@@ -81,7 +79,7 @@ function loadLinkHistory(linkId) {
                 })
                 $.each(linkHistory.invertedRelatedLinks, function(step, relatedLinksOnStep) {
                     $.each(relatedLinksOnStep, function(key, relatedLink) {
-                        drawLinkHistoryPath(relatedLink, true, linkId, step)
+                        AirlineMap.drawLinkHistoryPath(relatedLink, true, linkId, step)
                         if (linkInfo.fromAirportId != relatedLink.toAirportId || linkInfo.toAirportId != relatedLink.fromAirportId || linkInfo.airlineId != linkInfo.airlineId) { //transit should not count the selected link
                             airlineNamesById[relatedLink.airlineId] = relatedLink.airlineName
                             if (!backwardTransitPaxByAirlineId[relatedLink.airlineId]) {
@@ -153,12 +151,10 @@ function toggleLinkHistoryDirection(showForward, routeDiv) {
 }
 
 function hideLinkHistoryView() {
-	$.each(historyPaths, function(index, path) {
-	    path.setMap(null)
-	})
-    historyPaths = {}
+    // Clear history paths via map module
+    AirlineMap.clearHistoryPaths()
 
-	clearHistoryFlightMarkers()
+	AirlineMap.clearHistoryFlightMarkers()
 	updateLinksInfo() //redraw all flight paths
 
 	$("#linkHistoryControlPanel").hide()
@@ -168,69 +164,13 @@ function hideLinkHistoryView() {
 	}
 }
 
-function drawLinkHistoryPath(link, inverted, watchedLinkId, step) {
-	var from = new google.maps.LatLng({lat: link.fromLatitude, lng: link.fromLongitude})
-	var to = new google.maps.LatLng({lat: link.toLatitude, lng: link.toLongitude})
-	var pathKey = link.fromAirportId + "|"  + link.toAirportId + "|" + inverted
-
-	var lineSymbol = {
-	    path: google.maps.SymbolPath.FORWARD_OPEN_ARROW
-	};
-
-	var isWatchedLink = link.linkId == watchedLinkId
-
-	var relatedPath
-	if (!historyPaths[pathKey]) {
-		relatedPath = new google.maps.Polyline({
-			 geodesic: true,
-		     strokeColor: "#DC83FC",
-		     strokeOpacity: 0.8,
-		     strokeWeight: 2,
-		     path: [from, to],
-		     icons: [{
-			      icon: lineSymbol,
-			      offset: '50%'
-			    }],
-		     zIndex : 1100,
-		     inverted : inverted,
-		     watched : isWatchedLink,
-		     step : step
-		});
-
-		shadowPath = new google.maps.Polyline({
-			 geodesic: true,
-		     strokeOpacity: 0.0001,
-		     strokeWeight: 25,
-		     path: [from, to],
-		     zIndex : 401,
-		     inverted : inverted,
-		     link : link,
-		     thisAirlinePassengers : 0,
-		     thisAlliancePassengers : 0,
-		     otherAirlinePassengers : 0
-		});
-
-		relatedPath.shadowPath = shadowPath
-
-		historyPaths[pathKey] = relatedPath
-	} else {
-		relatedPath = historyPaths[pathKey]
-	}
-
-	if (link.airlineId == activeAirline.id) {
-		relatedPath.shadowPath.thisAirlinePassengers += link.passenger
-	} else if (currentAirlineAllianceMembers.length > 0 && $.inArray(link.airlineId, currentAirlineAllianceMembers) != -1) {
-		relatedPath.shadowPath.thisAlliancePassengers += link.passenger
-	} else {
-		relatedPath.shadowPath.otherAirlinePassengers += link.passenger
-	}
-}
 
 function clearHistoryFlightMarkers() {
     $.each(historyFlightMarkers, function(index, markersOnAStep) {
         $.each(markersOnAStep, function(index, marker) {
-        //window.clearInterval(marker.animation)
-    	    marker.setMap(null)
+            if (marker.remove) {
+                marker.remove() // MapLibre marker
+            }
         })
     })
     historyFlightMarkers = []
@@ -240,7 +180,6 @@ function clearHistoryFlightMarkers() {
         historyFlightMarkerAnimation = null
     }
 }
-var historyFlightMarkerAnimation
 
 function showLinkHistory() {
     var showAlliance = $("#linkHistoryControlPanel .showAlliance").is(":checked")
@@ -294,78 +233,105 @@ function showLinkHistory() {
 
     var framesPerAnimation = 50
     clearHistoryFlightMarkers()
+
+    // Update history paths visibility based on filter settings
     $.each(historyPaths, function(key, historyPath) {
-        if (((showForward && !historyPath.inverted) || (!showForward && historyPath.inverted))  //match direction
-        && (historyPath.shadowPath.thisAirlinePassengers > 0
-         || (showAlliance && historyPath.shadowPath.thisAlliancePassengers > 0)
-         || (showOther && historyPath.shadowPath.otherAirlinePassengers))) {
-            var totalPassengers = historyPath.shadowPath.thisAirlinePassengers + historyPath.shadowPath.thisAlliancePassengers + historyPath.shadowPath.otherAirlinePassengers
-            if (totalPassengers < 100) {
-                var newOpacity = 0.2 + totalPassengers / 100 * (historyPath.strokeOpacity - 0.2)
-                if (!historyPath.watched) {
-                    historyPath.setOptions({strokeOpacity : newOpacity})
-                }
-            }
-            var infowindow;
-            historyPath.shadowPath.addListener('mouseover', function(event) {
-                var link = this.link
+        var shouldShow = ((showForward && !historyPath.inverted) || (!showForward && historyPath.inverted)) &&
+            (historyPath.thisAirlinePassengers > 0 ||
+             (showAlliance && historyPath.thisAlliancePassengers > 0) ||
+             (showOther && historyPath.otherAirlinePassengers > 0))
 
-                $("#linkHistoryPopupFrom").html(getCountryFlagImg(link.fromCountryCode) + getAirportText(link.fromAirportCity, link.fromAirportCode))
-                $("#linkHistoryPopupTo").html(getCountryFlagImg(link.toCountryCode) + getAirportText(link.toAirportCity, link.toAirportCode))
-                $("#linkHistoryThisAirlinePassengers").text(this.thisAirlinePassengers)
-                if (showAlliance) {
-                    $("#linkHistoryThisAlliancePassengers").text(this.thisAlliancePassengers)
-                    $("#linkHistoryThisAlliancePassengers").closest(".table-row").show()
-                } else {
-                    $("#linkHistoryThisAlliancePassengers").closest(".table-row").hide()
-                }
-                if (showOther) {
-                    $("#linkHistoryOtherAirlinePassengers").text(this.otherAirlinePassengers)
-                    $("#linkHistoryOtherAirlinePassengers").closest(".table-row").show()
-                 } else {
-                    $("#linkHistoryOtherAirlinePassengers").closest(".table-row").hide()
-                 }
-
-                infowindow = new google.maps.InfoWindow({
-                     maxWidth : 400});
-
-                var popup = $("#linkHistoryPopup").clone()
-    			popup.show()
-                infowindow.setContent(popup[0])
-
-                infowindow.setPosition(event.latLng);
-                infowindow.open(map);
-
-                highlightPath(historyPath, false)
-            })
-            historyPath.shadowPath.addListener('mouseout', function(event) {
-                infowindow.close()
-                if (!historyPath.watched) { //do not unhighlight if it's watched link
-                    unhighlightPath(historyPath)
-                }
-            })
-
-
-            if (historyPath.shadowPath.thisAirlinePassengers > 0) {
-                historyPath.setOptions({strokeColor: "#DC83FC"})
-            } else if (showAlliance && historyPath.shadowPath.thisAlliancePassengers > 0) {
-                historyPath.setOptions({strokeColor: "#E28413"})
+        if (shouldShow) {
+            var totalPassengers = historyPath.thisAirlinePassengers + historyPath.thisAlliancePassengers + historyPath.otherAirlinePassengers
+            if (totalPassengers < 100 && !historyPath.watched) {
+                historyPath.opacity = 0.2 + totalPassengers / 100 * (0.8 - 0.2)
             } else {
-                historyPath.setOptions({strokeColor: "#888888"})
+                historyPath.opacity = 0.8
             }
 
-            if (historyPath.watched) {
-                highlightPath(historyPath)
+            // Set color based on passenger type
+            if (historyPath.thisAirlinePassengers > 0) {
+                historyPath.color = "#DC83FC"
+            } else if (showAlliance && historyPath.thisAlliancePassengers > 0) {
+                historyPath.color = "#E28413"
+            } else {
+                historyPath.color = "#888888"
             }
 
-            historyPath.setMap(map)
-            historyPath.shadowPath.setMap(map)
-            polylines.push(historyPath)
-            polylines.push(historyPath.shadowPath)
-         } else {
-            historyPath.setMap(null)
-            historyPath.shadowPath.setMap(null)
-         }
+            historyPath.visible = true
+        } else {
+            historyPath.visible = false
+        }
     })
+
+    // Refresh history routes display via the map module
+    refreshHistoryRoutesDisplay()
 }
 
+var historyPopupHandlersInitialized = false
+
+function initHistoryPopupHandlers() {
+    if (historyPopupHandlersInitialized || !map) return
+
+    // Ensure the history routes layers exist
+    AirlineMap.ensureHistoryRoutesLayers()
+
+    const clickLayerId = AirlineMap.getHistoryRoutesClickLayerId()
+    if (!clickLayerId) return
+
+    // Add popup on hover
+    map.on('mouseenter', clickLayerId, function(e) {
+        map.getCanvas().style.cursor = 'pointer'
+
+        if (e.features.length > 0) {
+            const props = e.features[0].properties
+
+            $("#linkHistoryPopupFrom").html(getCountryFlagImg(props.fromCountryCode) + getAirportText(props.fromAirportCity, props.fromAirportCode))
+            $("#linkHistoryPopupTo").html(getCountryFlagImg(props.toCountryCode) + getAirportText(props.toAirportCity, props.toAirportCode))
+            $("#linkHistoryThisAirlinePassengers").text(props.thisAirlinePassengers)
+
+            var showAlliance = $("#linkHistoryControlPanel .showAlliance").is(":checked")
+            var showOther = $("#linkHistoryControlPanel .showOther").is(":checked")
+
+            if (showAlliance) {
+                $("#linkHistoryThisAlliancePassengers").text(props.thisAlliancePassengers)
+                $("#linkHistoryThisAlliancePassengers").closest(".table-row").show()
+            } else {
+                $("#linkHistoryThisAlliancePassengers").closest(".table-row").hide()
+            }
+            if (showOther) {
+                $("#linkHistoryOtherAirlinePassengers").text(props.otherAirlinePassengers)
+                $("#linkHistoryOtherAirlinePassengers").closest(".table-row").show()
+            } else {
+                $("#linkHistoryOtherAirlinePassengers").closest(".table-row").hide()
+            }
+
+            var popup = $("#linkHistoryPopup").clone()
+            popup.show()
+
+            new maplibregl.Popup({ closeButton: false, closeOnClick: false })
+                .setLngLat(e.lngLat)
+                .setDOMContent(popup[0])
+                .addTo(map)
+        }
+    })
+
+    map.on('mouseleave', clickLayerId, function() {
+        map.getCanvas().style.cursor = ''
+        // Remove popup
+        const popups = document.getElementsByClassName('maplibregl-popup')
+        if (popups.length) {
+            popups[0].remove()
+        }
+    })
+
+    historyPopupHandlersInitialized = true
+}
+
+function refreshHistoryRoutesDisplay() {
+    // Initialize popup handlers once
+    initHistoryPopupHandlers()
+
+    // Delegate rendering to the map module
+    AirlineMap.showLinkHistory()
+}

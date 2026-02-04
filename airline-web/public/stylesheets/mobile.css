@@ -92,7 +92,7 @@
         width: 100% !important;
     }
 
-    .googleMapIcon, .gmnoprint, .gm-fullscreen-control {
+    .mapIcon {
         display: none;
     }
 

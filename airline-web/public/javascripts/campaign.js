@@ -1,7 +1,4 @@
 function showCampaignModal() {
-//    if (airlineId) {
-//        updateHeatmap(airlineId)
-//    }
     updateCampaignTable()
     var $locationSearchInput = $('#campaignModal .searchInput input')
 
@@ -10,14 +7,7 @@ function showCampaignModal() {
     })
 
     if (!campaignMap) {
-     campaignMap = new google.maps.Map($('#campaignModal .campaignMap')[0], {
-                                              //gestureHandling: 'none',
-                                              disableDefaultUI: true,
-                                              scrollwheel: false,
-                                              draggable: true,
-                                              panControl: true,
-                                              styles: getMapStyles()
-                                          })
+        initCampaignMap()
     }
 
     updateAirlineDelegateStatus($('#campaignModal div.delegateStatus'), function(delegateInfo) {
@@ -28,6 +18,102 @@ function showCampaignModal() {
     $('#campaignModal .draftCampaign').hide()
     $('#campaignModal').data('closeCallback', updateCampaignSummary)
     $('#campaignModal').fadeIn(500)
+}
+
+function initCampaignMap() {
+    const container = $('#campaignModal .campaignMap')[0]
+    if (!container) return
+
+    // Get the current style from the main map module
+    const currentStyle = typeof getCurrentStyle === 'function' ? getCurrentStyle() : 'dark'
+    const style = currentStyle === 'light' ? getCampaignMapLightStyle() : getCampaignMapDarkStyle()
+
+    campaignMap = new maplibregl.Map({
+        container: container,
+        style: style,
+        center: [0, 0],
+        zoom: 2,
+        interactive: true,
+        scrollZoom: false,
+        attributionControl: false
+    })
+
+    // Add navigation control
+    campaignMap.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
+}
+
+function getCampaignMapDarkStyle() {
+    return {
+        version: 8,
+        sources: {
+            protomaps: {
+                type: 'vector',
+                url: `https://api.protomaps.com/tiles/v4.json?key=${window.protomapsKey}`,
+            }
+        },
+        glyphs: 'https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf',
+        layers: [
+            { id: 'background', type: 'background', paint: { 'background-color': '#10141b' } },
+            { id: 'earth', type: 'fill', source: 'protomaps', 'source-layer': 'earth', paint: { 'fill-color': '#1c232c' } },
+            { id: 'water', type: 'fill', source: 'protomaps', 'source-layer': 'water', paint: { 'fill-color': '#10141b' } },
+            { id: 'boundaries', type: 'line', source: 'protomaps', 'source-layer': 'boundaries', filter: ['==', ['get', 'pmap:kind'], 'country'], paint: { 'line-color': '#343c4a', 'line-width': 1 } },
+            {
+                id: 'labels',
+                type: 'symbol',
+                source: 'protomaps',
+                'source-layer': 'places',
+                filter: ['==', ['get', 'pmap:kind'], 'country'],
+                layout: {
+                    'text-field': ['coalesce', ['get', 'name:en'], ['get', 'name']],
+                    'text-font': ['Noto Sans Regular'],
+                    'text-size': 12,
+                    'text-allow-overlap': true
+                },
+                paint: {
+                    'text-color': '#8e96a0',
+                    'text-halo-color': '#10141b',
+                    'text-halo-width': 1
+                }
+            }
+        ]
+    }
+}
+
+function getCampaignMapLightStyle() {
+    return {
+        version: 8,
+        sources: {
+            protomaps: {
+                type: 'vector',
+                url: `https://api.protomaps.com/tiles/v4.json?key=${window.protomapsKey}`,
+            }
+        },
+        glyphs: 'https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf',
+        layers: [
+            { id: 'background', type: 'background', paint: { 'background-color': '#ccd3d3' } },
+            { id: 'earth', type: 'fill', source: 'protomaps', 'source-layer': 'earth', paint: { 'fill-color': '#f0f0f0' } },
+            { id: 'water', type: 'fill', source: 'protomaps', 'source-layer': 'water', paint: { 'fill-color': '#ccd3d3' } },
+            { id: 'boundaries', type: 'line', source: 'protomaps', 'source-layer': 'boundaries', filter: ['==', ['get', 'pmap:kind'], 'country'], paint: { 'line-color': '#ffffff', 'line-width': 1 } },
+            {
+                id: 'labels',
+                type: 'symbol',
+                source: 'protomaps',
+                'source-layer': 'places',
+                filter: ['==', ['get', 'pmap:kind'], 'country'],
+                layout: {
+                    'text-field': ['coalesce', ['get', 'name:en'], ['get', 'name']],
+                    'text-font': ['Noto Sans Regular'],
+                    'text-size': 12,
+                    'text-allow-overlap': true
+                },
+                paint: {
+                    'text-color': '#5c5c5c',
+                    'text-halo-color': '#ffffff',
+                    'text-halo-width': 1
+                }
+            }
+        ]
+    }
 }
 
 function toggleDraftCampaign() {
@@ -227,78 +313,158 @@ function deleteCampaign() {
 
 
 var campaignMap
-var campaignMapElements = []
+var campaignMapMarkers = []
+var campaignMapCircle = null
+var campaignPopup = null
 
 function populateCampaignMap(principalAirport, campaignArea, candidateArea, radius) {
-    $.each(campaignMapElements, function() { this.setMap(null)})
-    campaignMapElements = []
+    // Clear existing markers and circle
+    campaignMapMarkers.forEach(marker => marker.remove())
+    campaignMapMarkers = []
 
-    //+ 200 to include candidate area * 1000 to convert to meters, * 2 to convert to diameter, * 1.2 to make in a slight bigger than what needs to be
-    var zoom = getGoogleZoomLevel((radius + 200) * 1000 * 2 * 1.2, $('#campaignModal .campaignMap'), principalAirport.latitude)
-    campaignMap.setZoom(zoom)
+    if (campaignMapCircle && campaignMap.getSource('campaign-circle')) {
+        campaignMap.removeLayer('campaign-circle-fill')
+        campaignMap.removeLayer('campaign-circle-outline')
+        campaignMap.removeSource('campaign-circle')
+    }
 
-    campaignMap.setCenter({lat: principalAirport.latitude, lng: principalAirport.longitude}); //this would eventually trigger an idle
+    // Calculate zoom level to fit the radius
+    // MapLibre uses different zoom calculation than Google Maps
+    const radiusKm = (radius + 200) * 1.2
+    const zoom = getMapLibreZoomForRadius(radiusKm, principalAirport.latitude)
 
-    var airportMapCircle = new google.maps.Circle({
-                center: {lat: principalAirport.latitude, lng: principalAirport.longitude},
-                radius: radius * 1000, //in meter
-                strokeColor: "#32CF47",
-                strokeOpacity: 0.2,
-                strokeWeight: 2,
-                fillColor: "#32CF47",
-                fillOpacity: 0.3,
-                map: campaignMap
-            });
-    campaignMapElements.push(airportMapCircle)
-    populateCampaignAirportMarkers(campaignMap, campaignArea, true)
-    populateCampaignAirportMarkers(campaignMap, candidateArea, false)
-    google.maps.event.addListenerOnce(campaignMap, 'idle', function() {
-        setTimeout(function() { //set a timeout here, otherwise it might not render part of the map...
-            campaignMap.setCenter({lat: principalAirport.latitude, lng: principalAirport.longitude}); //this would eventually trigger an idle
-            google.maps.event.trigger(campaignMap, 'resize'); //this refreshes the map
-            console.log('resize')
-        }, 2000);
-    });
+    campaignMap.flyTo({
+        center: [principalAirport.longitude, principalAirport.latitude],
+        zoom: zoom,
+        duration: 500
+    })
+
+    // Add circle as GeoJSON source
+    const circleGeoJSON = createCircleGeoJSON(
+        principalAirport.longitude,
+        principalAirport.latitude,
+        radius * 1000 // convert to meters
+    )
+
+    campaignMap.addSource('campaign-circle', {
+        type: 'geojson',
+        data: circleGeoJSON
+    })
+
+    campaignMap.addLayer({
+        id: 'campaign-circle-fill',
+        type: 'fill',
+        source: 'campaign-circle',
+        paint: {
+            'fill-color': '#32CF47',
+            'fill-opacity': 0.3
+        }
+    })
+
+    campaignMap.addLayer({
+        id: 'campaign-circle-outline',
+        type: 'line',
+        source: 'campaign-circle',
+        paint: {
+            'line-color': '#32CF47',
+            'line-width': 2,
+            'line-opacity': 0.5
+        }
+    })
+
+    campaignMapCircle = true
+
+    // Add airport markers
+    populateCampaignAirportMarkers(campaignArea, true)
+    populateCampaignAirportMarkers(candidateArea, false)
 }
 
-function populateCampaignAirportMarkers(campaignMap, airports, hasCoverage) {
-    $.each(airports, function(index, airport) {
-        var icon
-        if (hasCoverage) {
-            icon = getAirportIcon(airport)
-        } else {
-            icon = $("#map").data("disabledAirportMarker")
+function createCircleGeoJSON(lng, lat, radiusMeters) {
+    const points = 64
+    const coords = []
+    const earthRadius = 6371000 // meters
+
+    for (let i = 0; i <= points; i++) {
+        const angle = (i / points) * 2 * Math.PI
+        const dx = radiusMeters * Math.cos(angle)
+        const dy = radiusMeters * Math.sin(angle)
+
+        const newLat = lat + (dy / earthRadius) * (180 / Math.PI)
+        const newLng = lng + (dx / earthRadius) * (180 / Math.PI) / Math.cos(lat * Math.PI / 180)
+
+        coords.push([newLng, newLat])
+    }
+
+    return {
+        type: 'Feature',
+        geometry: {
+            type: 'Polygon',
+            coordinates: [coords]
         }
-        var position = {lat: airport.latitude, lng: airport.longitude};
-          var marker = new google.maps.Marker({
-                position: position,
-                map: campaignMap,
-                airport: airport,
-                icon : icon
-              });
+    }
+}
 
-            var infowindow
-           	marker.addListener('mouseover', function(event) {
-           		$("#campaignAirportPopup .airportName").text(getAirportText(airport.city, airport.iata))
-           		$("#campaignAirportPopup .airportPopulation").text(airport.population)
-           		infowindow = new google.maps.InfoWindow({
-           		       disableAutoPan : true
-                 });
+function getMapLibreZoomForRadius(radiusKm, latitude) {
+    // Calculate zoom level to fit a given radius in the map view
+    const mapWidth = $('#campaignModal .campaignMap').width() || 300
+    const metersPerPixel = radiusKm * 1000 * 2 / mapWidth
+    const zoom = Math.log2(40075016.686 * Math.cos(latitude * Math.PI / 180) / metersPerPixel / 256)
+    return Math.min(Math.max(zoom - 0.5, 1), 15)
+}
 
-                 var popup = $("#campaignAirportPopup").clone()
-                 popup.show()
-                 infowindow.setContent(popup[0])
+function populateCampaignAirportMarkers(airports, hasCoverage) {
+    $.each(airports, function(index, airport) {
+        // Create marker element
+        const el = document.createElement('div')
+        el.className = 'campaign-airport-marker'
+        el.style.width = '20px'
+        el.style.height = '20px'
+        el.style.backgroundSize = 'contain'
+        el.style.backgroundRepeat = 'no-repeat'
+        el.style.cursor = 'pointer'
 
+        if (hasCoverage) {
+            el.style.backgroundImage = `url(${getAirportIcon(airport)})`
+        } else {
+            el.style.backgroundImage = `url(${$("#map").data("disabledAirportMarker")})`
+            el.style.opacity = '0.5'
+        }
 
-           		infowindow.open(campaignMap, marker);
-           	})
-           	marker.addListener('mouseout', function(event) {
-           		infowindow.close()
-           		infowindow.setMap(null)
-           	})
-           	campaignMapElements.push(marker)
+        const marker = new maplibregl.Marker({ element: el })
+            .setLngLat([airport.longitude, airport.latitude])
+            .addTo(campaignMap)
 
-     })
+        // Add hover popup
+        el.addEventListener('mouseenter', function() {
+            $("#campaignAirportPopup .airportName").text(getAirportText(airport.city, airport.iata))
+            $("#campaignAirportPopup .airportPopulation").text(airport.population)
+
+            const popupContent = $("#campaignAirportPopup").clone()
+            popupContent.show()
+
+            if (campaignPopup) {
+                campaignPopup.remove()
+            }
+
+            campaignPopup = new maplibregl.Popup({
+                closeButton: false,
+                closeOnClick: false,
+                offset: 10
+            })
+                .setLngLat([airport.longitude, airport.latitude])
+                .setDOMContent(popupContent[0])
+                .addTo(campaignMap)
+        })
+
+        el.addEventListener('mouseleave', function() {
+            if (campaignPopup) {
+                campaignPopup.remove()
+                campaignPopup = null
+            }
+        })
+
+        campaignMapMarkers.push(marker)
+    })
 }
 
 var MIN_CAMPAIGN_RADIUS = 100
@@ -341,7 +507,6 @@ function refreshCampaign() {
         dataType: 'json',
         success: function(result) {
             populateCampaignMap(result.principalAirport, result.area, result.candidateArea, radius)
-            //var campaign = $('#campaignModal').data('selectedCampaign')
             updateCampaignDetails(result)
             $('#campaignModal .draftCampaign').hide()
             $('#campaignModal .campaignDetails').fadeIn(500)

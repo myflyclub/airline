@@ -44,7 +44,7 @@ function airlineInit() {
     folder : '/assets/images/emoji/'
   });
 
-//   Splitting(); are we using this?
+  initializeMapSearch();
 }
 
 async function getGameConstants() {
@@ -86,7 +86,7 @@ function registerEscape() {
             if ($topModal.length > 0) {
                 closeModal($topModal)
             } else {
-                closeAirportInfoPopup()
+                AirlineMap.closeAirportInfoPopup()
             }
         }
     });
@@ -114,10 +114,10 @@ function refreshMobileLayout() {
 	}
 	delete(map)
 	//yike, what if we miss something...the list below is kinda random
-    addMarkers()
+    AirlineMap.addMarkers()
 	if (activeAirline) {
 	    updateLinksInfo()
-	    updateAirportMarkers(activeAirline)
+	    AirlineMap.updateAirportMarkers(activeAirline)
     }
 }
 
@@ -210,7 +210,7 @@ async function loadUser(isLogin) {
             loadAirportsDynamic();
             refreshWallpaper()
             refreshLoginBar()
-            addMarkers()
+            AirlineMap.addMarkers()
             showUserSpecificElements();
             initAdminActions()
         }
@@ -218,7 +218,7 @@ async function loadUser(isLogin) {
         if (user && user.airlineIds && user.airlineIds.length > 0) {
             selectAirline(user.airlineIds[0])
             await loadAirplaneModels(user.airlineIds[0])
-            addAirlineSpecificMapControls(map)
+            AirlineMap.addAirlineSpecificMapControls(map)
             initPrompts()
             updateAirlineLabelColors()
         }

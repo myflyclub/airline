@@ -40,8 +40,10 @@ function updateAirlineInfo(airlineId) {
             const airlineType = airline.type.replace(" ", "") || 'standard'
             document.body.classList.add(`airlineType-${airlineType}`);
 	    	updateLinksInfo()
-	    	updateAirportMarkers(airline)
+	    	AirlineMap.updateAirportMarkers(airline)
 	    	updateAirlineLogo()
+	    	// Center map on HQ after airline loads
+	    	AirlineMap.centerOnHQ(airline)
 	    },
 	    error: function(jqXHR, textStatus, errorThrown) {
 	            console.log(JSON.stringify(jqXHR));
@@ -190,7 +192,7 @@ function downgradeBase() {
 
 //remove and re-add all the links
 function updateLinksInfo() {
-    clearAllPaths()
+    AirlineMap.clearAllPaths()
 
     if (activeAirline) {
         var url = "/airlines/" + activeAirline.id + "/links-details"
@@ -201,12 +203,21 @@ function updateLinksInfo() {
             contentType: 'application/json; charset=utf-8',
             dataType: 'json',
             async: false,
-            success: function (links) {
-                $.each(links, function (key, link) {
-                    drawFlightPath(link)
-                });
-                updateLoadedLinks(links);
-                updateAirportMarkers(activeAirline)
+            success: function (data) {
+                // Check if response is GeoJSON format
+                if (data.type === 'FeatureCollection' && data.features) {
+                    AirlineMap.setRoutesFromGeoJSON(data);
+                    // Extract link properties for updateLoadedLinks
+                    const links = data.features.map(f => f.properties);
+                    updateLoadedLinks(links);
+                } else {
+                    // Legacy array format
+                    $.each(data, function (key, link) {
+                        AirlineMap.drawFlightPath(link)
+                    });
+                    updateLoadedLinks(data);
+                }
+                AirlineMap.updateAirportMarkers(activeAirline)
             },
             error: function (jqXHR, textStatus, errorThrown) {
                 console.log(JSON.stringify(jqXHR));
@@ -225,11 +236,20 @@ function refreshLinks(forceRedraw) {
         url: url,
         contentType: 'application/json; charset=utf-8',
         dataType: 'json',
-        success: function (links) {
-            $.each(links, function (key, link) {
-                refreshFlightPath(link, forceRedraw)
-            });
-            updateLoadedLinks(links);
+        success: function (data) {
+            // Check if response is GeoJSON format
+            if (data.type === 'FeatureCollection' && data.features) {
+                // For refresh, we just update the routes GeoJSON
+                AirlineMap.setRoutesFromGeoJSON(data);
+                const links = data.features.map(f => f.properties);
+                updateLoadedLinks(links);
+            } else {
+                // Legacy array format
+                $.each(data, function (key, link) {
+                    refreshFlightPath(link, forceRedraw)
+                });
+                updateLoadedLinks(data);
+            }
         },
         error: function (jqXHR, textStatus, errorThrown) {
             console.log(JSON.stringify(jqXHR));
@@ -573,7 +593,6 @@ function planLink(fromAirport, toAirport, isRefresh) {
                 type: 'POST',
                 url: url,
                 data: { 'airlineId' : parseInt(airlineId), 'fromAirportId': parseInt(fromAirport), 'toAirportId' : parseInt(toAirport)} ,
-    //			contentType: 'application/json; charset=utf-8',
                 dataType: 'json',
                 success: function(linkInfo) {
                     updatePlanLinkInfo(linkInfo, isRefresh)
@@ -774,9 +793,9 @@ function updatePlanLinkInfo(linkInfo, isRefresh) {
 	}
 	//unhighlight the existing path if any
 	if (selectedLink) {
-		unhighlightLink(selectedLink)
+		AirlineMap.unhighlightLink(selectedLink)
 		if (!linkInfo.existingLink || linkInfo.existingLink.id != selectedLink) {
-			deselectLink()
+			AirlineMap.deselectLink()
 		}
 	}
 
@@ -784,10 +803,10 @@ function updatePlanLinkInfo(linkInfo, isRefresh) {
 		//create a temp path
 		var tempLink = {fromLatitude : linkInfo.fromAirportLatitude, fromLongitude : linkInfo.fromAirportLongitude, toLatitude : linkInfo.toAirportLatitude, toLongitude : linkInfo.toAirportLongitude}
 		//set the temp path
-		tempPath = drawFlightPath(tempLink, '#2658d3')
-		highlightPath(tempPath.path, false)
+		tempPath = AirlineMap.drawFlightPath(tempLink, '#2658d3')
+		AirlineMap.highlightPath(tempPath.path, false)
 	} else {
-		highlightLink(linkInfo.existingLink.id, false)
+		AirlineMap.highlightLink(linkInfo.existingLink.id, false)
 	}
 
 	var initialPrice = {}
@@ -1509,7 +1528,7 @@ function deleteLink() {
 	    	$("#linkDetails").fadeOut(200)
 	    	updateLinksInfo()
 	    	updateAirlineInfo(activeAirline.id)
-	    	deselectLink()
+	    	AirlineMap.deselectLink()
 
 	    	if ($('#linksCanvas').is(':visible')) { //reload the links table then
 		    	loadLinksTable()
@@ -1588,8 +1607,8 @@ function cancelPlanLink() {
 
 function removeTempPath() {
 	if (tempPath) {
-		unhighlightPath(tempPath.path)
-		clearPathEntry(tempPath)
+		AirlineMap.unhighlightPath(tempPath.path)
+		AirlineMap.clearPathEntry(tempPath)
 		tempPath = undefined
 	}
 }
@@ -1770,9 +1789,9 @@ function updateLinksTable(sortProperty, sortOrder) {
 
 function selectLinkFromMap(linkId, refocus) {
 	refocus = refocus || false
-	unhighlightLink(selectedLink)
+	AirlineMap.unhighlightLink(selectedLink)
 	selectedLink = linkId
-	highlightLink(linkId, refocus)
+	AirlineMap.highlightLink(linkId, refocus)
 
 	//update link details panel
 	refreshLinkDetails(linkId)
@@ -2833,7 +2852,7 @@ function refreshSavedLink(savedLink) {
 		//remove temp path
 		removeTempPath()
 		//draw flight path
-		var newPath = drawFlightPath(savedLink)
+		var newPath = AirlineMap.drawFlightPath(savedLink)
 		selectLinkFromMap(savedLink.id, false)
 	}
 	setActiveDiv($('#linkDetails'))

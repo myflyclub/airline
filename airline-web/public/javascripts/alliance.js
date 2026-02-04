@@ -98,7 +98,7 @@ function loadAllAlliances(selectedAllianceId) {
 	loadedAlliancesById = {}
 	$.ajax({
 		type: 'GET',
-		url: selectedAllianceId ? `/alliances&selectedAllianceId=${selectedAllianceId}` : `/alliances`,
+		url: `/alliances`,
 	    contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
 	    async: false,

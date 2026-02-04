@@ -129,7 +129,7 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
    * Static airport data
    */
   def getAirportsStatic() = Action {
-    Ok(Json.toJson(AirportCache.getAllAirports())(Writes.list(AirportMapWrites)))
+    Ok(Json.toJson(AirportCache.getAllAirports())(AirportsGeoJsonWrites))
       .withHeaders(
         CACHE_CONTROL -> "public, max-age=2419200",
         ETAG -> s""""$currentApiVersion"""", // Use version as ETag

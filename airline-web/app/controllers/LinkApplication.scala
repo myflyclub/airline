@@ -176,6 +176,63 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
     }
   }
 
+  /**
+   * GeoJSON FeatureCollection for links with extended info (profit, revenue, etc.)
+   */
+  object LinksExtendedGeoJsonWrites extends Writes[Seq[LinkExtendedInfo]] {
+    def writes(entries: Seq[LinkExtendedInfo]): JsValue = {
+      val features = entries.map { entry =>
+        val link = entry.link
+        val properties = Json.obj(
+          "id" -> link.id,
+          "fromAirportId" -> link.from.id,
+          "toAirportId" -> link.to.id,
+          "fromAirportCode" -> link.from.iata,
+          "toAirportCode" -> link.to.iata,
+          "fromAirportCity" -> link.from.city,
+          "toAirportCity" -> link.to.city,
+          "fromLongitude" -> link.from.longitude,
+          "fromLatitude" -> link.from.latitude,
+          "toLongitude" -> link.to.longitude,
+          "toLatitude" -> link.to.latitude,
+          "airlineId" -> link.airline.id,
+          "airlineName" -> link.airline.name,
+          "distance" -> link.distance,
+          "frequency" -> link.frequency,
+          "capacity" -> Json.toJson(link.capacity),
+          "rawQuality" -> link.rawQuality,
+          "computedQuality" -> link.computedQuality(),
+          "profit" -> entry.profit,
+          "revenue" -> entry.revenue,
+          "passengers" -> Json.toJson(entry.soldSeats),
+          "capacityHistory" -> Json.toJson(entry.capacityHistory),
+          "cancelledSeats" -> Json.toJson(entry.cancelledSeats),
+          "satisfaction" -> entry.satisfaction,
+          "lastUpdate" -> entry.lastUpdate.getTimeInMillis,
+          "currentStaffRequired" -> entry.currentStaffRequired
+        )
+
+        Json.obj(
+          "type" -> "Feature",
+          "id" -> link.id,
+          "geometry" -> Json.obj(
+            "type" -> "LineString",
+            "coordinates" -> Json.arr(
+              Json.arr(link.from.longitude, link.from.latitude),
+              Json.arr(link.to.longitude, link.to.latitude)
+            )
+          ),
+          "properties" -> properties
+        )
+      }
+
+      Json.obj(
+        "type" -> "FeatureCollection",
+        "features" -> JsArray(features)
+      )
+    }
+  }
+
   implicit object LinkWithDirectionWrites extends Writes[LinkConsideration] {
     def writes(linkWithDirection : LinkConsideration): JsValue = {
       JsObject(List(
@@ -496,7 +553,7 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
       } else {
         LinkSource.loadFlightLinksByToAirportAndAirlineId(toAirportId, airlineId)
       }
-    Ok(Json.toJson(links)).withHeaders(
+    Ok(Json.toJson(links)(LinksGeoJsonWrites)).withHeaders(
       ACCESS_CONTROL_ALLOW_ORIGIN -> "*"
     )
   }
@@ -522,7 +579,7 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
         link.getCurrentOfficeStaffRequired
       )
     }
-    Ok(Json.toJson(linksWithProfit)).withHeaders(
+    Ok(Json.toJson(linksWithProfit)(LinksExtendedGeoJsonWrites)).withHeaders(
       ACCESS_CONTROL_ALLOW_ORIGIN -> "*"
     )
   }

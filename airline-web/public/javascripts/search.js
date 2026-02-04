@@ -171,12 +171,12 @@ function searchAction(fromAirportId, toAirportId) {
     }
 }
 
-function showResearchPreloaded() {
-    removeTempPath();
+function showResearchPreloaded(fromAirportId, toAirportId) {
+    AirlineMap.removeTempPath();
     document.querySelector('#searchCanvas div.titlesContainer .selected').classList.remove('selected')
     document.querySelector('#searchCanvas div.titlesContainer [data-search-type="research"]').classList.add('selected')
-    const fromId = $('#planLinkFromAirportId').val() > 0 ? $('#planLinkFromAirportId').val() : activeAirline.headquarterAirport.airportId;
-    const toId = $('#airportPopupId').val();
+    const fromId = fromAirportId || ($('#planLinkFromAirportId').val() > 0 ? $('#planLinkFromAirportId').val() : activeAirline.headquarterAirport.airportId);
+    const toId = toAirportId || $('#airportPopupId').val();
     const from = getAirportByAttribute(fromId);
     const to = getAirportByAttribute(toId);
     showSearchCanvas(0);
@@ -185,7 +185,8 @@ function showResearchPreloaded() {
     //create a temp path
     var tempLink = {fromLatitude: from.latitude, fromLongitude: from.longitude, toLatitude: to.latitude, toLongitude: to.longitude}
     //set the temp path
-    tempPath = drawFlightPath(tempLink, '#3b94e6')
+    tempPath = AirlineMap.drawFlightPath(tempLink, '#3b94e6')
+    AirlineMap.highlightPath(tempPath.path, false)
 
     document.querySelector('#searchCanvas .searchInput .fromAirport').value = from.iata;
     document.querySelector('#searchCanvas .searchInput .toAirport').value = to.iata;
@@ -519,7 +520,7 @@ function getLinkFeatureIconsDiv(features) {
     var featureIconsDiv = $("<div></div>")
     $.each(features, function(index, feature) {
         var featureInfo = linkFeatureIconsLookup[feature]
-        var icon = $("<img src='" + featureInfo.icon + "' title='" + featureInfo.description + "' style='margin: 2px;'>")
+        var icon = $("<img src='" + featureInfo.icon + "' class='tooltip-attr' data-tooltip='" + featureInfo.description + "' style='margin: 2px;'>")
          featureIconsDiv.append(icon)
     })
 
@@ -652,11 +653,11 @@ function searchChange(input) {
 
 function searchKeyUp(event, input) {
     var resultContainer = input.closest('div.searchInput').siblings('div.searchResult')
-    if (event.keyCode == 38) {
-        changeSelection(-1, resultContainer)
-    } else if (event.keyCode == 40) {
-        changeSelection(1, resultContainer)
-    } else if (event.keyCode == 13) { //enter
+    if (event.key === 'ArrowUp' || event.keyCode == 38) {
+        navigateSearchResults(-1, resultContainer, 'div.searchResultEntry')
+    } else if (event.key === 'ArrowDown' || event.keyCode == 40) {
+        navigateSearchResults(1, resultContainer, 'div.searchResultEntry')
+    } else if (event.key === 'Enter' || event.keyCode == 13) {
         confirmSelection(input)
     }
 }
@@ -730,27 +731,43 @@ function clickSelection(selectionDiv) {
     confirmSelection(input)
 }
 
+/**
+ * Shared keyboard navigation for search result lists.
+ * Works with both jQuery elements and vanilla DOM elements.
+ * @param {number} indexChange - Direction to move (-1 for up, 1 for down)
+ * @param {Element|jQuery} container - The results container
+ * @param {string} itemSelector - CSS selector for result items (default: '.searchResultEntry')
+ */
+function navigateSearchResults(indexChange, container, itemSelector = '.searchResultEntry') {
+    const isJQuery = container.jquery !== undefined;
+    const items = isJQuery
+        ? container.find(itemSelector).toArray()
+        : container.querySelectorAll(itemSelector);
+
+    if (items.length === 0) return;
+
+    const selectedSelector = itemSelector + '.selected';
+    const selected = isJQuery
+        ? container.find(selectedSelector)[0]
+        : container.querySelector(selectedSelector);
+
+    let currentIndex = Array.from(items).indexOf(selected);
+    if (currentIndex === -1) currentIndex = 0;
+
+    currentIndex += indexChange;
+    if (currentIndex < 0) currentIndex = 0;
+    if (currentIndex >= items.length) currentIndex = items.length - 1;
+
+    // Remove selected from all, add to new
+    items.forEach(item => item.classList.remove('selected'));
+    if (items[currentIndex]) {
+        items[currentIndex].classList.add('selected');
+    }
+}
+
+// Legacy wrapper for existing code
 function changeSelection(indexChange, resultContainer) {
-    var currentIndex = resultContainer.find("div.searchResultEntry.selected").index()
-//    if (typeof resultContainer.data('selectedIndex') !== 'undefined') {
-//        currentIndex = resultContainer.data("selectedIndex")
-//    } else {
-//        currentIndex = 0
-//    }
-
-    currentIndex += indexChange
-    var currentEntries = resultContainer.find("div.searchResultEntry")
-    if (currentIndex < 0) {
-        currentIndex = 0
-    } else if (currentIndex >= currentEntries.length) {
-        currentIndex = currentEntries.length - 1
-    }
-
-    currentEntries.removeClass("selected")
-    if (currentEntries[currentIndex]) {
-        $(currentEntries[currentIndex]).addClass("selected")
-    }
- //   resultContainer.data("selectedIndex", currentIndex)
+    navigateSearchResults(indexChange, resultContainer, 'div.searchResultEntry');
 }
 
 function numberInputFocusOut(input) {
@@ -774,7 +791,13 @@ let searchState = {};
  */
 const searchConfigs = {
     airport: {
-        dataSource: () => airports,
+        dataSource: () => {
+            // airports is GeoJSON - extract properties from features
+            if (airports?.features) {
+                return airports.features.map(f => f.properties);
+            }
+            return [];
+        },
         searchFields: [
             { field: 'city', exactScore: 100, partialScore: 50 },
             { field: 'iata', exactScore: 200, partialScore: 80 },
@@ -1219,5 +1242,153 @@ function updateNavigationArrows($titlesContainer, animated) {
         } else {
             $titlesContainer.find('div.right').fadeIn(duration)
         }
+    }
+}
+
+/**
+ * Initialize map search functionality.
+ * Attaches event handlers to the #mapSearch elements for finding airports.
+ */
+function initializeMapSearch() {
+    const container = document.getElementById('mapSearch');
+    const searchWrapper = document.getElementById('mapSearchWrapper');
+    const input = document.getElementById('mapSearchInput');
+
+    if (!container || !searchWrapper || !input) {
+        console.warn('Map search elements not found');
+        return;
+    }
+
+    // Check if already initialized
+    if (searchWrapper.querySelector('.mapSearchResults')) {
+        return;
+    }
+
+    // Create results dropdown
+    const resultsDiv = document.createElement('div');
+    resultsDiv.className = 'mapSearchResults';
+    resultsDiv.style.display = 'none';
+
+    searchWrapper.appendChild(resultsDiv);
+
+    // Track selected result
+    let selectedAirport = null;
+
+    // Handle input changes
+    input.addEventListener('input', function() {
+        const phrase = this.value.trim();
+        selectedAirport = null;
+
+        if (phrase.length < 2) {
+            resultsDiv.style.display = 'none';
+            resultsDiv.innerHTML = '';
+            return;
+        }
+
+        // Search airports using existing search infrastructure
+        const results = searchCachedData('airport', phrase);
+
+        resultsDiv.innerHTML = '';
+
+        if (results.length === 0) {
+            resultsDiv.innerHTML = '<div class="mapSearchNoResults">No airports found</div>';
+            resultsDiv.style.display = 'block';
+            return;
+        }
+
+        results.forEach((airport, index) => {
+            const item = document.createElement('div');
+            item.className = 'mapSearchResultItem';
+            if (index === 0) item.classList.add('selected');
+
+            const text = getAirportTextEntry(airport);
+            item.innerHTML = highlightText(text, phrase);
+            item.dataset.airportId = airport.airportId;
+
+            item.addEventListener('click', function() {
+                selectMapSearchResult(airport, input, resultsDiv);
+            });
+
+            item.addEventListener('mouseenter', function() {
+                resultsDiv.querySelectorAll('.mapSearchResultItem.selected').forEach(el => el.classList.remove('selected'));
+                this.classList.add('selected');
+            });
+
+            resultsDiv.appendChild(item);
+        });
+
+        resultsDiv.style.display = 'block';
+    });
+
+    // Handle keyboard navigation using shared function
+    input.addEventListener('keydown', function(e) {
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            navigateSearchResults(1, resultsDiv, '.mapSearchResultItem');
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            navigateSearchResults(-1, resultsDiv, '.mapSearchResultItem');
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            const selectedItem = resultsDiv.querySelector('.mapSearchResultItem.selected');
+            if (selectedItem) {
+                const airportId = parseInt(selectedItem.dataset.airportId);
+                const airport = searchCachedData('airport', input.value.trim())
+                    .find(a => a.airportId === airportId);
+                if (airport) {
+                    selectMapSearchResult(airport, input, resultsDiv);
+                }
+            }
+        } else if (e.key === 'Escape') {
+            resultsDiv.style.display = 'none';
+            input.blur();
+        }
+    });
+
+    // Hide results when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!container.contains(e.target)) {
+            resultsDiv.style.display = 'none';
+        }
+    });
+
+    // Show results when focusing if there's text
+    input.addEventListener('focus', function() {
+        if (this.value.trim().length >= 2 && resultsDiv.children.length > 0) {
+            resultsDiv.style.display = 'block';
+        }
+    });
+
+    // Map search submit
+    const submitBtn = document.getElementById('mapSearchSubmit');
+    if (submitBtn) {
+        submitBtn.addEventListener('click', function() {
+            const selectedItem = resultsDiv.querySelector('.mapSearchResultItem.selected');
+            if (selectedItem) {
+                const airportId = parseInt(selectedItem.dataset.airportId);
+                const airport = searchCachedData('airport', input.value.trim()).find(a => a.airportId === airportId);
+                if (airport) {
+                    selectMapSearchResult(airport, input, resultsDiv);
+                }
+            }
+        });
+    }
+}
+
+/**
+ * Handle selection of an airport from map search results.
+ * @param {Object} airport
+ * @param {HTMLElement} input
+ * @param {HTMLElement} resultsDiv
+ */
+function selectMapSearchResult(airport, input, resultsDiv) {
+    input.value = getAirportShortText(airport);
+    resultsDiv.style.display = 'none';
+
+    // Get airport coordinates - airportsById has coords added during load
+    const airportData = window.airportsById?.[airport.airportId];
+    if (airportData && window.AirlineMap) {
+        AirlineMap.flyTo(airportData.longitude, airportData.latitude, 8);
+        AirlineMap.showAirportPopup(airportData, {lat: airportData.latitude, lng: airportData.longitude});
     }
 }
