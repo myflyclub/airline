@@ -42,7 +42,6 @@ function updateAirlineInfo(airlineId) {
 	    	updateLinksInfo()
 	    	AirlineMap.updateAirportMarkers(airline)
 	    	updateAirlineLogo()
-	    	// Center map on HQ after airline loads
 	    	AirlineMap.centerOnHQ(airline)
 	    },
 	    error: function(jqXHR, textStatus, errorThrown) {
@@ -75,33 +74,9 @@ function refreshTopBar(airline) {
     refreshTopBarOilPrice()
 }
 
-function loadAirlines() {
-	$.ajax({
-		type: 'GET',
-		url: "/airlines",
-	    contentType: 'application/json; charset=utf-8',
-	    dataType: 'json',
-	    success: function(airlines) {
-	    	$.each(airlines, function( key, airline ) {
-	    		var optionItem = $("<option></option>").attr("value", airline.id).text(airline.name)
-	    		$("#airlineOption").append(optionItem);
-	  		});
-
-	    	if ($("#airlineOption option:first")) {
-	    		selectAirline($("#airlineOption option:first").val())
-	    	}
-
-	    },
-        error: function(jqXHR, textStatus, errorThrown) {
-	            console.log(JSON.stringify(jqXHR));
-	            console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
-	    }
-	});
-}
-
 function selectAirline(airlineId) {
 	initWebSocket(airlineId)
-	updateAllPanels(airlineId)
+	updateAirlineInfo(airlineId)
 	loadAndWatchAirlineNotes()
 }
 
@@ -143,7 +118,7 @@ function buildBase(isHeadquarter, scale) {
 	    data: JSON.stringify(baseData),
 	    dataType: 'json',
 	    success: function() {
-            updateAllPanels(activeAirline.id)
+            updateAirlineInfo(activeAirline.id)
 	    	showWorldMap()
 	    },
         error: function(jqXHR, textStatus, errorThrown) {
@@ -162,7 +137,7 @@ function deleteBase() {
 	    contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
 	    success: function() {
-	    	updateAllPanels(activeAirline.id)
+	    	updateAirlineInfo(activeAirline.id)
 	    	showWorldMap()
 	    },
         error: function(jqXHR, textStatus, errorThrown) {
@@ -180,7 +155,7 @@ function downgradeBase() {
 		url: url,
 	    contentType: 'application/json; charset=utf-8',
 	    success: function() {
-	    	updateAllPanels(activeAirline.id)
+	    	updateAirlineInfo(activeAirline.id)
 	    	showWorldMap()
 	    },
         error: function(jqXHR, textStatus, errorThrown) {
@@ -1632,7 +1607,11 @@ function loadLinksTable() {
 		url: url,
 	    contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
-	    success: function(links) {
+	    success: function(data) {
+            var links = data;
+            if (data.type === 'FeatureCollection' && data.features) {
+                links = data.features.map(f => f.properties);
+            }
 	    	updateLoadedLinks(links);
 	    	$.each(links, function(key, link) {
                 link.profitMargin = link.revenue > 0 ? link.profit / link.revenue : 0
@@ -1808,6 +1787,9 @@ function selectLinkFromTable(row, linkId) {
 }
 
 function updateLoadedLinks(links) {
+    if (links && links.type === 'FeatureCollection' && links.features) {
+        links = links.features.map(f => f.properties);
+    }
 	var previousOrder = {}
 	if (loadedLinks) {
 		$.each(loadedLinks, function(index, link) {

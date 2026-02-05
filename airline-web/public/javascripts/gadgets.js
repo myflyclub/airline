@@ -39,7 +39,7 @@ function generateImageBarWithRowSize(imageEmpty, imageFill, count, containerDiv,
 	}
 
 	for (i = 0 ; i < count ; i ++) {
-		var image = $("<img width='16px' height='auto' class='button'>")
+		var image = $("<img width='16px' height='auto' class='img-button'>")
 		image.attr("src", imageEmpty)
 
 		image.data('index', i)

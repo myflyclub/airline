@@ -56,7 +56,7 @@ function createRouteLayer(sourceId, layerId, options = {}) {
 const flightRoutes = createRouteLayer('flight-routes', 'flight-routes-layer', { clickLayer: true, hoverWidth: true });
 const airportLinks = createRouteLayer('airport-links', 'airport-links-layer', { clickLayer: true, clickWidth: 25 });
 const allianceRoutes = createRouteLayer('alliance-routes', 'alliance-routes-layer', {});
-const historyRoutes = createRouteLayer('history-routes', 'history-routes-layer', {});
+const historyRoutes = createRouteLayer('history-routes', 'history-routes-layer', { clickLayer: true, clickWidth: 25 });
 
 /**
  * Get link color based on profit and revenue.
@@ -371,7 +371,6 @@ export function highlightPath(linkId, refocus = false) {
     highlightedLinkId = linkId;
     const link = pathEntry.link;
 
-    // Pan to the path start if requested
     if (refocus && link) {
         state.map.flyTo({
             center: [link.fromLongitude, link.fromLatitude],
@@ -379,7 +378,6 @@ export function highlightPath(linkId, refocus = false) {
         });
     }
 
-    // Update opacity for highlighted state
     pathEntry.opacity = getPathOpacity('highlight');
     refreshRoutesGeoJSON();
 
@@ -695,6 +693,7 @@ export function drawLinkHistoryPath(link, inverted, watchedLinkId, step) {
 
 /**
  * Show link history paths with filtering.
+ * Call this after setting visible/color/opacity on historyPaths entries.
  */
 export function showLinkHistory() {
     // This function is called after all history paths are drawn
@@ -703,17 +702,53 @@ export function showLinkHistory() {
 }
 
 /**
+ * Get the history routes layer ID for event binding.
+ */
+export function getHistoryRoutesClickLayerId() {
+    return `${historyRoutes.layerId}-click`;
+}
+
+/**
+ * Ensure history routes layers exist.
+ */
+export function ensureHistoryRoutesLayers() {
+    historyRoutes.ensure();
+}
+
+/**
  * Refresh history routes GeoJSON.
  */
 function refreshHistoryRoutesGeoJSON() {
     if (!state.map) return;
-    const features = Object.entries(state.historyPaths).map(([key, pathData]) => ({
-        type: 'Feature',
-        properties: { color: pathData.color, opacity: pathData.opacity, inverted: pathData.inverted,
-            watched: pathData.watched, thisAirlinePassengers: pathData.thisAirlinePassengers,
-            thisAlliancePassengers: pathData.thisAlliancePassengers, otherAirlinePassengers: pathData.otherAirlinePassengers },
-        geometry: pathData.geometry
-    }));
+    const features = [];
+
+    Object.entries(state.historyPaths).forEach(([key, pathData]) => {
+        // Skip paths marked as not visible
+        if (pathData.visible === false) return;
+
+        const link = pathData.link;
+        features.push({
+            type: 'Feature',
+            properties: {
+                color: pathData.color,
+                opacity: pathData.opacity,
+                inverted: pathData.inverted,
+                watched: pathData.watched,
+                thisAirlinePassengers: pathData.thisAirlinePassengers,
+                thisAlliancePassengers: pathData.thisAlliancePassengers,
+                otherAirlinePassengers: pathData.otherAirlinePassengers,
+                // Airport details for popups
+                fromAirportCode: link?.fromAirportCode,
+                fromAirportCity: link?.fromAirportCity,
+                fromCountryCode: link?.fromCountryCode,
+                toAirportCode: link?.toAirportCode,
+                toAirportCity: link?.toAirportCity,
+                toCountryCode: link?.toCountryCode
+            },
+            geometry: pathData.geometry
+        });
+    });
+
     historyRoutes.refresh(features);
 }
 

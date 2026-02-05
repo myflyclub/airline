@@ -12,26 +12,6 @@ function initPrompts() {
         promptInterval = undefined
     }
     activePrompt = undefined
-//    if (activeAirline.headquarterAirport && !activeAirline.initialized) {
-//      $.ajax({
-//            type: 'GET',
-//            url: "/airlines/" + activeAirline.id + "/profiles",
-//            data: { } ,
-//            contentType: 'application/json; charset=utf-8',
-//            dataType: 'json',
-//            success: function(profiles) {
-//                $.each(profiles, function(index, profile) {
-//                       //populate profile
-//                })
-//                queuePrompt('chooseProfile')
-//            },
-//            error: function(jqXHR, textStatus, errorThrown) {
-//                    console.log(JSON.stringify(jqXHR));
-//                    console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
-//            }
-//        });
-//
-//    }
 
     $('.tab-icon').bind('click.tutorial', function() {
         var pageId = $(this).data('link')
@@ -205,7 +185,7 @@ function queueTutorial(tutorial) {
 }
 
 function checkTutorial(flowId) {
-    if (activeUser && !activeAirline.skipTutorial) {
+    if (activeUser && activeAirline && !activeAirline.skipTutorial) {
         if (flowId === "worldMap" || flowId === "/") {
             if (!activeAirline.headquarterAirport) {
                 queueTutorial("tutorialWelcome")

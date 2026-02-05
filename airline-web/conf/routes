@@ -10,8 +10,8 @@ GET		/wsWithActor						controllers.WebsocketApplication.wsWithActor
 GET		 /game/constants			  controllers.Application.getGameRules()
 GET		 /game/tooltips			  controllers.Application.getTooltips()
 
-POST	 /login							  controllers.UserApplication.login
-POST	 /logout						  controllers.UserApplication.logout
+POST	 /user-login							  controllers.UserApplication.login
+POST	 /user-logout						  controllers.UserApplication.logout
 GET      /current-cycle                   controllers.Application.getCurrentCycle()
 GET      /cache-stats                     controllers.Application.getCacheStats()
 GET      /cache-clear                     controllers.Application.clearCache()
@@ -59,9 +59,6 @@ GET		 /airlines/:airlineId/downgradeBase/:airportId  controllers.AirlineApplicat
 GET      /airlines/:airlineId/bases/:airportId/specialization-info  controllers.AirlineApplication.getBaseSpecializationInfo(airlineId: Int, airportId : Int)
 PUT      /airlines/:airlineId/bases/:airportId/specializations  controllers.AirlineApplication.setBaseSpecializations(airlineId: Int, airportId : Int)
 GET		 /airlines/:airlineId/link-consumptions/:linkId	  controllers.LinkApplication.getLinkConsumption(airlineId : Int, linkId: Int, cycleCount : Int ?= 1)
-#PUT		 /airlines/:airlineId/watched-link 				controllers.LinkApplication.setWatchedLink(airlineId: Int, linkId: Int)
-#GET		 /airlines/:airlineId/watched-link 				controllers.LinkApplication.getWatchedLink(airlineId: Int)
-#GET		 /airlines/:airlineId/link-history 				controllers.LinkApplication.getLinkHistory(airlineId: Int)
 GET		 /airlines/:airlineId/related-link-consumption/:linkId		controllers.LinkApplication.getRelatedLinkConsumption(airlineId: Int, linkId: Int, cycleDelta : Int, selfOnly : Boolean ?= false,  economy : Boolean ?= true,  business : Boolean ?= true,  first : Boolean ?= true)
 GET		 /airlines/:airlineId/link-composition/:linkId		controllers.LinkApplication.getLinkComposition(airlineId: Int, linkId: Int)
 GET		 /airlines/:airlineId/link-rival-history/:linkId		controllers.LinkApplication.getLinkRivalHistory(airlineId: Int, linkId: Int, cycleCount : Int ?= 1)
@@ -150,7 +147,6 @@ GET		 /airlines/:airlineId/remove-alliance-member/:targetAirlineId  controllers.
 GET		 /airlines/:airlineId/accept-alliance-member/:targetAirlineId  controllers.AllianceApplication.addToAlliance(airlineId : Int, targetAirlineId : Int)
 GET		 /airlines/:airlineId/promote-alliance-member/:targetAirlineId  controllers.AllianceApplication.promoteMember(airlineId : Int, targetAirlineId : Int)
 GET		 /airlines/:airlineId/demote-alliance-member/:targetAirlineId  controllers.AllianceApplication.demoteMember(airlineId : Int, targetAirlineId : Int)
-
 
 GET	 	 /airport-asset/:assetId	      controllers.AirportAssetApplication.getAirportAssetDetailsWithoutAirline(assetId : Int)
 
@@ -264,6 +260,8 @@ GET  /favicon.ico        controllers.Assets.at(path="/public/images/icons", file
 GET     /assets/*file    controllers.Assets.versioned(path="/public", file: Asset)
 
 # Client-side routes
+GET     /login/                         controllers.Application.index(path = "/")
+GET     /logout/                        controllers.Application.index(path = "/")
 GET     /map/                           controllers.Application.index(path = "/")
 GET     /map/*path                      controllers.Application.index(path)
 GET     /airport/                       controllers.Application.index(path = "/")

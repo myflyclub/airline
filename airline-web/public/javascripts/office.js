@@ -1478,7 +1478,7 @@ function resetAirline(keepAssets) {
 	    contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
 	    success: function() {
-	    	updateAllPanels(activeAirline.id)
+	    	updateAirlineInfo(activeAirline.id)
 	    	selectedLink = undefined
 	    	showWorldMap()
 	    },

@@ -19,7 +19,7 @@ var websocket;
 var selectedAirlineId
 
 function checkWebSocket(selectedAirlineId) {
-    if (websocket.readyState === WebSocket.CLOSED) {
+    if (!websocket || websocket.readyState === WebSocket.CLOSED) {
         connectWebSocket(selectedAirlineId)
     }
 }
@@ -53,7 +53,7 @@ function onMessage(evt) { //right now the message is just the cycle #, so refres
 		updateTime(json.cycle, json.fraction, json.cycleDurationEstimation)
 	} else if (json.messageType == "cycleCompleted") {
 		if (selectedAirlineId) {
-			updateAllPanels(selectedAirlineId)
+			updateAirlineInfo(selectedAirlineId)
 		}
 	} else if (json.messageType == "broadcastMessage") {
         queuePrompt("broadcastMessagePopup", json.message)

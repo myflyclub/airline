@@ -6,66 +6,7 @@ var currentCycle
 var airlineColors = {}
 var airlineLabelColors = {}
 var polylines = []
-var gameConstants
 var notes = {}
-
-function airlineInit() {
-  $('#tutorialHtml').load('/assets/html/tutorial.html')
-  $('#noticeHtml').load('/assets/html/notice.html', initNotices)
-
-    if ($.cookie('sessionActive')) {
-        loadUser(false)
-    } else {
-        hideUserSpecificElements()
-        refreshLoginBar()
-        showAbout();
-        refreshWallpaper()
-    }
-    
-    registerEscape()
-    updateAirlineColors()
-    initTabGroup()
-
-    loadOilPrices();
-    getGameConstants()
-    populateTooltips()
-
-    window.addEventListener('orientationchange', refreshMobileLayout)
-    mobileCheck()
-
-	if ($("#floatMessage").val()) {
-		showFloatMessage($("#floatMessage").val())
-	}
-	$(window).scroll(function(){
-  		$('#floatBackButton').animate({top: ($(window).scrollTop() + 100) + "px" },{queue: false, duration: 350});
-	});
-
-	$('#chattext').jemoji({
-    folder : '/assets/images/emoji/'
-  });
-
-  initializeMapSearch();
-}
-
-async function getGameConstants() {
-    const url = "/game/constants";
-    try {
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error(`Response status: ${response.status}`);
-        }
-
-        gameConstants = await response.json();
-    } catch (error) {
-        console.error(error.message);
-    }
-}
-
-$(window).on('focus', function () {
-    if (selectedAirlineId) {
-        checkWebSocket(selectedAirlineId)
-    }
-})
 
 function registerEscape() {
     const modals = document.getElementsByClassName('modal')
@@ -96,9 +37,7 @@ function registerEscape() {
 function mobileCheck() {
 	if (isMobileDevice()) { //assume it's a less powerful device
 		refreshMobileLayout()
-
-		//turn off animation by default
-		currentAnimationStatus = false
+		currentAnimationStatus = false //turn off animation by default
 	}
 }
 
@@ -112,13 +51,8 @@ function refreshMobileLayout() {
     } else {
         $("#reputationLevel").show()
 	}
-	delete(map)
-	//yike, what if we miss something...the list below is kinda random
-    AirlineMap.addMarkers()
-	if (activeAirline) {
-	    updateLinksInfo()
-	    AirlineMap.updateAirportMarkers(activeAirline)
-    }
+    updateLinksInfo()
+    AirlineMap.updateAirportMarkers(activeAirline)
 }
 
 function showFloatMessage(message, timeout) {
@@ -144,184 +78,6 @@ function showFloatMessage(message, timeout) {
 	});
 }
 
-function refreshLoginBar() {
-	if (!activeUser) {
-		$("#loginDiv").show();
-		$("#logoutDiv").hide();
-	} else {
-		$("#currentUserName").empty()
-		$("#currentUserName").append(activeUser.userName + getUserLevelImg(activeUser.level))
-		$("#logoutDiv").show();
-        $("#loginDiv").hide();
-	}
-}
-
-
-async function loadUser(isLogin) {
-    // Build headers (include JSON accept and optional Basic auth for login)
-    const headers = {
-        'Accept': 'application/json'
-    }
-
-    if (isLogin) {
-        const userName = $("#loginUserName").val()
-        const password = $("#loginPassword").val()
-        headers['Authorization'] = 'Basic ' + btoa(userName + ':' + password)
-    }
-
-    try {
-        const response = await fetch('/login', {
-            method: 'POST',
-            headers: headers,
-            credentials: 'same-origin'
-        })
-
-        if (!response.ok) {
-            if (response.status === 401) {
-                showFloatMessage('Incorrect username or password')
-            } else if (response.status === 400) {
-                showFloatMessage('Session expired. Please log in again')
-            } else if (response.status === 403) {
-                showFloatMessage('You have been banned for violating the game rules. Please contact admins on Discord for assistance.')
-            } else {
-                showFloatMessage('Error logging in, error code ' + response.status + ". Please try again. Contact admins on Discord if the issue persists.")
-                // try to log response body for debugging
-                const text = await response.text().catch(() => null)
-                if (text) console.log(text)
-                console.log('Fetch error: ' + response.status + ' : ' + response.statusText)
-            }
-            $('.button.login').removeClass('loading')
-            throw new Error('Login failed: ' + response.status)
-        }
-
-        const user = await response.json()
-
-        if (user) {
-            closeAbout()
-            activeUser = user
-            $.cookie('sessionActive', 'true');
-            $("#loginUserName").val("")
-            $("#loginPassword").val("")
-
-            if (isLogin) {
-                showFloatMessage('Successfully logged in')
-                showAnnoucement()
-            }
-            loadAirportsDynamic();
-            refreshWallpaper()
-            refreshLoginBar()
-            AirlineMap.addMarkers()
-            showUserSpecificElements();
-            initAdminActions()
-        }
-
-        if (user && user.airlineIds && user.airlineIds.length > 0) {
-            selectAirline(user.airlineIds[0])
-            await loadAirplaneModels(user.airlineIds[0])
-            AirlineMap.addAirlineSpecificMapControls(map)
-            initPrompts()
-            updateAirlineLabelColors()
-        }
-
-        loadAllCountries() //load country after airline
-        $('.button.login').removeClass('loading')
-
-        return user
-    } catch (err) {
-        // network or other unexpected errors
-        if (err && err.message && err.message.indexOf('Login failed:') === -1) {
-            showFloatMessage('Error logging in, please try again. Contact admins on Discord if the issue persists.')
-            console.error(err)
-        }
-        $('.button.login').removeClass('loading')
-        throw err
-    }
-}
-
-function passwordLogin(e) {
-	if (e.keyCode === 13) {  //checks whether the pressed key is "Enter"
-		login()
-	}
-}
-
-function login()  {
-    $('.button.login').addClass('loading')
-    loadUser(true)
-}
-
-function logout() {
-	$.ajax
-	({
-	  type: "POST",
-	  url: "/logout",
-	  async: false,
-	  success: function(message) {
-	    	console.log(message)
-	    	activeUser = null
-	    	activeAirline = null
-	    	airlineLabelColors = {}
-	    	hideUserSpecificElements()
-	    	$.removeCookie('sessionActive')
-	    	//refreshLoginBar()
-	    	//showFloatMessage("Successfully logged out")
-	    	location.reload();
-	    },
-	    error: function(jqXHR, textStatus, errorThrown) {
-	            console.log(JSON.stringify(jqXHR));
-	            console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
-	    }
-	});
-
-	removeMarkers()
-}
-
-function showUserSpecificElements() {
-	$('.user-specific-tab').show()
-	$('.topBarDetails').show()
-	$('.topBarDetails').parent().removeClass('hide-empty') //hack to avoid empty floating div for modern layout
-}
-
-function hideUserSpecificElements() {
-	$('.user-specific-tab').hide()
-	$('.topBarDetails').hide()
-	$('.topBarDetails').parent().addClass('hide-empty') //hack to avoid empty floating div for modern layout
-}
-
-// function LinkHistoryControl(controlDiv, map) {
-//     // Set CSS for the control border.
-//     var controlUI = document.createElement('div');
-//     controlUI.style.backgroundColor = '#fff';
-//     controlUI.style.border = '2px solid #fff';
-//     controlUI.style.borderRadius = '3px';
-//     controlUI.style.boxShadow = ' 0px 1px 4px -1px rgba(0,0,0,.3)';
-//     //controlUI.style.cursor = 'pointer';
-//     controlUI.style.marginBottom = '22px';
-//     controlUI.style.textAlign = 'center';
-//     controlUI.title = 'Click to recenter the map';
-//     controlUI.style.padding = '8px';
-//     controlUI.style.margin= '10px';
-//     controlUI.style.verticalAlign = 'middle';
-//     controlDiv.appendChild(controlUI);
-
-
-//     $(controlUI).append("<img src='/assets/images/icons/24-arrow-180.png' class='button' onclick='toggleLinkHistoryView(false)'  title='Toggle passenger history view'/>")
-//     // Set CSS for the control interior.
-//     $(controlUI).append("<span id='linkHistoryText' style='color: rgb(86, 86, 86); font-family: Roboto, Arial, sans-serif; font-size: 11px;'></span>");
-
-//     $(controlUI).append("<img src='/assets/images/icons/24-arrow.png' class='button' onclick='toggleLinkHistoryView(false)'  title='Toggle passenger history view'/>")
-
-//     // Setup the click event listeners: simply set the map to Chicago.
-//     controlUI.addEventListener('click', function() {
-//       map.setCenter(chicago);
-//     });
-
-//   }
-
-
-function updateAllPanels(airlineId) {
-	updateAirlineInfo(airlineId)
-}
-
 function refreshPanels(airlineId) {
 	$.ajax({
 		type: 'GET',
@@ -330,15 +86,10 @@ function refreshPanels(airlineId) {
 	    dataType: 'json',
 	    async: false,
 	    success: function(airline) {
-            // merge returned fields into existing activeAirline instead of replacing the whole object
-            if (activeAirline && typeof activeAirline === 'object') {
-                // shallow merge: only replace keys present in the response
-                Object.keys(airline).forEach(function(key) {
-                    activeAirline[key] = airline[key]
-                })
-            } else {
-                activeAirline = airline
-            }
+            // shallow merge: only replace keys present in the response
+            Object.keys(airline).forEach(function(key) {
+                activeAirline[key] = airline[key]
+            })
 	    	refreshTopBar(activeAirline)
 	    	if ($("#worldMapCanvas").is(":visible")) {
 	    		refreshLinks()
@@ -607,112 +358,3 @@ function assignAirlineColors(dataSet, colorProperty) {
 	})
 }
 
-let tabGroupState = {}
-
-function setMobileToggleState(isOpen) {
-    const $btn = $('#mobileTabToggle');
-    $btn.attr('aria-expanded', !!isOpen);
-    $btn.toggleClass('open', !!isOpen);
-    // Toggle inline icons
-    $btn.find('.icon-open').css('display', isOpen ? 'none' : 'inline-block');
-    $btn.find('.icon-close').css('display', isOpen ? 'inline-block' : 'none');
-}
-
-function showTabGroup() {
-    if (tabGroupState.hideTimeout) {
-        clearTimeout(tabGroupState.hideTimeout)
-        tabGroupState.hideTimeout = undefined
-    }
-    $('#tabGroup').fadeIn(200)
-    setMobileToggleState(true)
-}
-
-function hideTabGroup(waitDuration) {
-    if (tabGroupState.hideTimeout) {
-        clearTimeout(tabGroupState.hideTimeout)
-    }
-    var timeout = setTimeout(() => {
-        $('#tabGroup').fadeOut(500);
-        setMobileToggleState(false);
-    }, waitDuration ? waitDuration : 2000)
-    tabGroupState.hideTimeout = timeout
-}
-
-function initTabGroup() {
-    $("#tabGroup .tab-icon").on('mouseenter touchstart', function() {
-        $(this).closest('.left-tab').find('.label').show();
-    });
-
-    $("#tabGroup .tab-icon").on('mouseleave touchend', function() {
-        $(this).closest('.left-tab').find('.label').hide();
-    });
-
-    $("#canvas").on('touchstart', function(e) {
-        var swipe = e.originalEvent.touches,
-        startX = swipe[0].pageX;
-        startY = swipe[0].pageY;
-        $(this).on('touchmove', function(e) {
-            var contact = e.originalEvent.touches,
-            endX = contact[0].pageX,
-            endY = contact[0].pageY,
-            distanceX = endX - startX;
-            distanceY = endY - startY
-            if (Math.abs(distanceX) > Math.abs(distanceY) && distanceX > 30 && $('#main')[0].scrollLeft == 0) {
-                showTabGroup()
-                hideTabGroup(5000)
-            }
-        })
-        .one('touchend', function() {
-            $(this).off('touchmove touchend');
-        });
-    });
-
-    $("#tabGroupCue").on('mouseenter touchstart',
-        function() {
-            showTabGroup()
-        }
-    )
-    $("#tabGroupCue").on('mouseleave touchend',
-        function() {
-             hideTabGroup(5000)
-        }
-    )
-
-    $("#tabGroup").on('mouseenter touchstart',
-        function() {
-            showTabGroup()
-        }
-    )
-    $("#tabGroup").on('mouseleave touchend',
-        function() {
-             hideTabGroup()
-        }
-    )
-
-    const $toggle = $('#mobileTabToggle');
-    if ($toggle.length) {
-        // initialize icon state
-        // setMobileToggleState($('#tabGroup').is(':visible'))
-        $toggle.on('click', function() {
-            const isOpen = $('#tabGroup').is(':visible');
-            if (isOpen) {
-                if (tabGroupState.hideTimeout) { clearTimeout(tabGroupState.hideTimeout) }
-                $('#tabGroup').stop(true, true).fadeOut(300)
-                setMobileToggleState(false)
-            } else {
-                showTabGroup()
-                hideTabGroup(5000) // auto-hide after a while
-            }
-        })
-    }
-}
-
-window.addEventListener('popstate', function(e) {
-    if (e.state) {
-        if (e.state.onbackFunction) {
-            eval(e.state.onbackFunction) //onback has higher precedence
-        } else if (e.state.onclickFunction) {
-            eval(e.state.onclickFunction)
-        }
-    }
-});

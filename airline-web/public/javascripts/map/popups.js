@@ -110,17 +110,10 @@ export function showAirportPopup(airport, lngLat) {
     popupElement.querySelector('#airportPopupSize').textContent = airport.size;
     popupElement.querySelector('#airportPopupTravelRate').textContent = travelRate + '%';
     popupElement.querySelector('#airportPopupReputation').textContent = rep;
-
     const flagImg = typeof getCountryFlagImg === 'function' ? getCountryFlagImg(airport.countryCode) : '';
     popupElement.querySelector('#airportPopupCity').innerHTML = `${airport.city}&nbsp;${flagImg}${opennessSpan}`;
     popupElement.querySelector('#airportPopupMaxRunwayLength').textContent = airport.runwayLength + 'm';
-
-    // Handle icons/features
-    const iconsEl = popupElement.querySelector('#airportPopupIcons');
-    if (iconsEl && airport.features && typeof updateFeatures === 'function') {
-        // updateFeatures returns HTML strings, so use innerHTML
-        iconsEl.innerHTML += airport.features.map(updateFeatures).join('');
-    }
+    popupElement.querySelector('#airportPopupIcons').innerHTML = (airport.features && Array.isArray(airport.features)) ? airport.features.map(updateFeatures).join('') : "";
 
     popupElement.querySelector('#viewAirportButton').href = `/airport/${airport.iata}`;
     

@@ -6,12 +6,12 @@
 // Import all modules
 import { state, pathOpacityByStyle } from './state.js';
 import { initMap, getMap, centerOnHQ, addControl, removeControl, hasSource, hasLayer, addSource, addLayer, removeLayer, removeSource, setSourceData, on, off, setCursor, flyTo } from './core.js';
-import { initStyles, getMapStyle, getCurrentStyle, toggleMapLight, getPathOpacity } from './styles.js';
+import { initStyles, getMapStyle, getCurrentStyle, toggleMapLight, updateMapStyle, getPathOpacity } from './styles.js';
 import { createGreatCircleGeometry } from './geodesic.js';
 import { initMarkers, addMarkers, removeMarkers, updateAirportBaseMarkers, updateAirportMarkers, toggleChampionMap } from './markers.js';
 import { initRoutes, drawFlightPath, refreshFlightPath, getLinkColor, highlightPath, unhighlightPath, highlightLink, unhighlightLink, clearAllPaths, clearPathEntry, drawTempPath, removeTempPath, drawAirportLinkPath, clearAirportLinkPaths, drawAllianceLink, drawLinkHistoryPath, showLinkHistory, clearHistoryPaths, setRoutesFromGeoJSON, getHistoryRoutesClickLayerId, ensureHistoryRoutesLayers } from './routes.js';
 import { showAirportPopup, closeAirportPopup, closeAirportInfoPopup, showLinkPopup, showAirportLinkPopup, showAllianceBasePopup, showLinkHistoryPopup, closePopup, closeAlliancePopups, closeAllianceLinkPopup } from './popups.js';
-import { initDefaultControls, addExitButton, removeExitButton, createMapButton, addAirlineSpecificMapControls, clearTopCenterControls } from './controls.js';
+import { addMapControls, addExitButton, removeExitButton, createMapButton, clearTopCenterControls } from './controls.js';
 import { updateHeatmap, clearHeatmap, toggleHeatmap, showHeatmap, closeHeatmap, updateHeatmapArrows, initHeatmapControls } from './heatmap.js';
 
 /**
@@ -23,7 +23,6 @@ function initializeMap() {
         mapInstance.on('load', () => {
             initMarkers();
             initRoutes();
-            initDefaultControls();
             initHeatmapControls();
         });
     }
@@ -50,6 +49,7 @@ const AirlineMap = {
     getMapStyle,
     getCurrentStyle,
     toggleMapLight,
+    updateMapStyle,
 
     // Markers
     addMarkers,
@@ -145,7 +145,7 @@ const AirlineMap = {
     },
     removeExitButton,
     createMapButton,
-    addAirlineSpecificMapControls,
+    addMapControls,
     clearTopCenterControls,
 
     // Utility - link deselection
