@@ -11,40 +11,37 @@ function toggleSettings() {
 
 var wallpaperTemplates = [
     {
-        "background" : "#20222a"
+        "background" : "var(--fallback-background)"
     },
     {
-        "background" : "rgb(86, 91, 151)"
+        "background" : "linear-gradient(to bottom, rgba(40, 49, 77, 0.8) 30%, rgba(29, 35, 71, 0.8) 50%, rgba(19, 25, 28, 0.8) 80%, rgba(15, 14, 14, .8) 100%), url(/assets/images/background/pixel_city_1.gif)"
     },
     {
-        "background" : "linear-gradient(to bottom, rgba(40, 49, 77, 0.8) 30%, rgba(29, 35, 71, 0.8) 50%, rgba(19, 25, 28, 0.8) 80%, rgba(15, 14, 14, .8) 100%), url(assets/images/background/pixel_city_1.gif)"
+        "background" : "linear-gradient(to bottom, rgba(40, 49, 77, 0.2) 30%, rgba(29, 35, 71, 0.2) 50%, rgba(19, 25, 28, 0.2) 80%, rgba(15, 14, 14, .2) 100%), url(/assets/images/background/pixel_city_2.gif)"
     },
     {
-        "background" : "linear-gradient(to bottom, rgba(40, 49, 77, 0.2) 30%, rgba(29, 35, 71, 0.2) 50%, rgba(19, 25, 28, 0.2) 80%, rgba(15, 14, 14, .2) 100%), url(assets/images/background/pixel_city_2.gif)"
+        "background" : "linear-gradient(to bottom, rgba(40, 49, 77, 0.2) 30%, rgba(29, 35, 71, 0.2) 50%, rgba(19, 25, 28, 0.2) 80%, rgba(15, 14, 14, .2) 100%), url(/assets/images/background/pixel_city_3.gif)"
     },
     {
-        "background" : "linear-gradient(to bottom, rgba(40, 49, 77, 0.2) 30%, rgba(29, 35, 71, 0.2) 50%, rgba(19, 25, 28, 0.2) 80%, rgba(15, 14, 14, .2) 100%), url(assets/images/background/pixel_city_3.gif)"
+        "background" : "linear-gradient(to bottom, rgba(40, 49, 77, 0.2) 30%, rgba(29, 35, 71, 0.2) 50%, rgba(19, 25, 28, 0.2) 80%, rgba(15, 14, 14, .2) 100%), url(/assets/images/background/pixel_city_4.gif)"
     },
     {
-        "background" : "linear-gradient(to bottom, rgba(40, 49, 77, 0.2) 30%, rgba(29, 35, 71, 0.2) 50%, rgba(19, 25, 28, 0.2) 80%, rgba(15, 14, 14, .2) 100%), url(assets/images/background/pixel_city_4.gif)"
-    },
-    {
-        "background" : "linear-gradient(to bottom, rgba(40, 49, 77, 0.8) 30%, rgba(29, 35, 71, 0.8) 50%, rgba(19, 25, 28, 0.8) 80%, rgba(15, 14, 14, .8) 100%), url(assets/images/background/airport.jpg)"
+        "background" : "linear-gradient(to bottom, rgba(40, 49, 77, 0.8) 30%, rgba(29, 35, 71, 0.8) 50%, rgba(19, 25, 28, 0.8) 80%, rgba(15, 14, 14, .8) 100%), url(/assets/images/background/airport.jpg)"
     }
 
 ]
 
 function changeWallpaper() {
     var wallpaperIndex = 0
-    if ($.cookie('wallpaperIndex')) {
-        wallpaperIndex = parseInt($.cookie('wallpaperIndex'))
+    if (localStorage.getItem('wallpaperIndex')) {
+        wallpaperIndex = parseInt(localStorage.getItem('wallpaperIndex'))
     }
 
     if (activeUser && activeUser.hasWallpaper) {
         removeCustomWallpaper()
     }
     wallpaperIndex = (wallpaperIndex + 1) % wallpaperTemplates.length
-    $.cookie('wallpaperIndex', wallpaperIndex, { expires: 9999 })
+    localStorage.setItem('wallpaperIndex', wallpaperIndex)
     refreshWallpaper()
 }
 
@@ -55,9 +52,10 @@ function refreshWallpaper() {
             "background" : "url(users/" + activeUser.id + "/wallpaper)"
         }
     } else {
+        const body = document.querySelector("body");
         var wallpaperIndex = 0
-        if ($.cookie('wallpaperIndex')) {
-            wallpaperIndex = parseInt($.cookie('wallpaperIndex'))
+        if (localStorage.getItem('wallpaperIndex')) {
+            wallpaperIndex = parseInt(localStorage.getItem('wallpaperIndex'))
             if (wallpaperIndex >= wallpaperTemplates.length) {
                 wallpaperIndex = 0
             }
@@ -67,10 +65,15 @@ function refreshWallpaper() {
         } else { //somehow an index that does not exist, might happen when wallpaper list switches
             template = wallpaperTemplates[0]
         }
-        if (wallpaperIndex < 4) {
-            $("body").css("image-rendering", "pixelated")
+        if (wallpaperIndex === 0) {
+            body.removeAttribute('style');
+            body.style.backgroundColor = template.background;
+        } else if (wallpaperIndex < 4) {
+            body.style.background = template.background;
+            body.style.imageRendering = "pixelated";
         } else {
-            $("body").css("image-rendering", "auto")
+            body.style.background = template.background;
+            body.style.imageRendering = "auto";
         }
     }
 

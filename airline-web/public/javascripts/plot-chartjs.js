@@ -716,7 +716,7 @@ function plotLinkConsumption(linkConsumptions, ridershipId, revenueId, priceId, 
                             maxTicksLimit: 6
                         },
                         grid: {
-                            color: 'rgba(54, 54, 54, 0.6)',
+                            color: 'rgba(54, 54, 54, 0.7)',
                             lineWidth: 1
                         }
                     },
@@ -1411,7 +1411,7 @@ function plotRivalHistoryChart(allRivalLinkConsumptions, priceContainer, linkCla
             scales: {
                 y: {
                     grid: {
-                        color: 'rgba(54, 54, 54, 0.6)',
+                        color: 'rgba(54, 54, 54, 0.7)',
                         lineWidth: 1
                     },
                     type: 'logarithmic',
@@ -1420,7 +1420,7 @@ function plotRivalHistoryChart(allRivalLinkConsumptions, priceContainer, linkCla
                 },
                 x: {
                     grid: {
-                        color: 'rgba(54, 54, 54, 0.6)',
+                        color: 'rgba(54, 54, 54, 0.7)',
                         lineWidth: 1
                     },
                 }

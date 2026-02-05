@@ -10,8 +10,7 @@
 }
 
 #live-chat header {
-	background: var(--chat-background);
-	backdrop-filter: var(--backdrop-filter);
+	background: var(--background-1);
 	border-radius: 5px 5px 0 0;
 	color: var(--text-color);
 	cursor: pointer;
@@ -141,7 +140,6 @@
 
 .chat {
 	background: var(--chat-current-background);
-	backdrop-filter: var(--backdrop-filter);
 }
 
 .chat-history {

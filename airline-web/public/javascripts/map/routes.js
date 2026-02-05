@@ -27,8 +27,8 @@ function createRouteLayer(sourceId, layerId, options = {}) {
             layout: options.layout || { 'line-cap': 'round', 'line-join': 'round' },
             paint: options.paint || {
                 'line-color': ['get', 'color'],
-                'line-width': options.hoverWidth ? ['case', ['boolean', ['feature-state', 'hover'], false], 4, 2] : 2,
-                'line-opacity': ['get', 'opacity']
+                'line-width': options.hoverWidth ? ['case', ['boolean', ['feature-state', 'hover'], false], 2, 1.5] : 1.5,
+                'line-opacity': ['case', ['boolean', ['feature-state', 'hover'], false], 0.9, ['get', 'opacity']]
             }
         });
         if (clickLayerId) {
@@ -54,9 +54,9 @@ function createRouteLayer(sourceId, layerId, options = {}) {
 
 // Create route layer instances
 const flightRoutes = createRouteLayer('flight-routes', 'flight-routes-layer', { clickLayer: true, hoverWidth: true });
-const airportLinks = createRouteLayer('airport-links', 'airport-links-layer', { clickLayer: true, clickWidth: 25 });
+const airportLinks = createRouteLayer('airport-links', 'airport-links-layer', { clickLayer: true, clickWidth: 10 });
 const allianceRoutes = createRouteLayer('alliance-routes', 'alliance-routes-layer', {});
-const historyRoutes = createRouteLayer('history-routes', 'history-routes-layer', { clickLayer: true, clickWidth: 25 });
+const historyRoutes = createRouteLayer('history-routes', 'history-routes-layer', { clickLayer: true, clickWidth: 10 });
 
 /**
  * Get link color based on profit and revenue.
@@ -255,17 +255,25 @@ function ensureRoutesLayers() {
 function setupRouteInteractions() {
     if (!state.map) return;
 
-    on('mouseenter', flightRoutes.clickLayerId, (e) => {
+    // Use mousemove to continuously check closest feature
+    on('mousemove', flightRoutes.clickLayerId, (e) => {
         setCursor('pointer');
         if (e.features.length > 0) {
-            const linkId = e.features[0].properties.id;
-            const featureId = e.features[0].id;
-            if (hoveredRouteId !== null) {
-                state.map.setFeatureState({ source: flightRoutes.sourceId, id: hoveredRouteId }, { hover: false });
+            // Features are sorted by distance, first is closest
+            const closestFeature = e.features[0];
+            const linkId = closestFeature.properties.id;
+            const featureId = closestFeature.id;
+
+            // Only update if hovering a different route
+            if (hoveredRouteId !== featureId) {
+                if (hoveredRouteId !== null) {
+                    state.map.setFeatureState({ source: flightRoutes.sourceId, id: hoveredRouteId }, { hover: false });
+                    if (highlightedLinkId && !state.selectedLink) unhighlightPath(highlightedLinkId);
+                }
+                hoveredRouteId = featureId;
+                state.map.setFeatureState({ source: flightRoutes.sourceId, id: hoveredRouteId }, { hover: true });
+                highlightPath(linkId, false);
             }
-            hoveredRouteId = featureId;
-            state.map.setFeatureState({ source: flightRoutes.sourceId, id: hoveredRouteId }, { hover: true });
-            highlightPath(linkId, false);
         }
     });
 

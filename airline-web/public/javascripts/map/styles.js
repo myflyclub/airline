@@ -1,6 +1,6 @@
 /**
  * Map styling module using Protomaps tiles.
- * Provides dark and light themes with cookie persistence.
+ * Provides dark and light themes with localStorage persistence.
  */
 
 import { state, pathOpacityByStyle } from './state.js';
@@ -167,12 +167,11 @@ const darkTheme = createTheme('dark');
 const lightTheme = createTheme('light');
 
 /**
- * Initialize styles from cookie or default.
+ * Initialize styles from localStorage or default.
  */
 export function initStyles() {
-    const savedStyle = getCookie('currentMapStyles');
-    state.currentStyles = savedStyle || 'dark';
-    if (!savedStyle) setCookie('currentMapStyles', state.currentStyles);
+    const theme = localStorage.getItem("theme");
+    state.currentStyles = theme === 'dark' ? 'dark' : 'light';
 }
 
 /**
@@ -193,8 +192,18 @@ export function getCurrentStyle() {
  * Toggle between dark and light map styles.
  */
 export function toggleMapLight() {
-    state.currentStyles = state.currentStyles === 'dark' ? 'light' : 'dark';
-    setCookie('currentMapStyles', state.currentStyles);
+    const newStyle = state.currentStyles === 'dark' ? 'light' : 'dark';
+    updateMapStyle(newStyle);
+}
+
+/**
+ * Update the map style to a specific theme.
+ * @param {string} theme - 'dark' or 'light'
+ */
+export function updateMapStyle(theme) {
+    if (state.currentStyles === theme) return;
+    
+    state.currentStyles = theme;
 
     if (state.map) {
         state.map.setStyle(getMapStyle());
@@ -211,17 +220,4 @@ export function toggleMapLight() {
  */
 export function getPathOpacity(type = 'normal') {
     return pathOpacityByStyle[state.currentStyles][type];
-}
-
-// Cookie helpers
-function getCookie(name) {
-    if (typeof $ !== 'undefined' && $.cookie) return $.cookie(name);
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    return parts.length === 2 ? decodeURIComponent(parts.pop().split(';').shift()) : null;
-}
-
-function setCookie(name, value) {
-    if (typeof $ !== 'undefined' && $.cookie) $.cookie(name, value);
-    else document.cookie = `${name}=${encodeURIComponent(value)}; path=/`;
 }

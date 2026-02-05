@@ -285,7 +285,6 @@ class SearchControl extends CustomControl {
     _buildUI() {
         this._container.id = 'mapSearch';
         this._container.className = 'maplibregl-ctrl';
-        this._container.style.cssText = 'margin-top: 36px; margin-left: 0px;';
 
         const wrapper = document.createElement('div');
         wrapper.id = 'mapSearchWrapper';
@@ -469,6 +468,9 @@ function selectMapSearchResult(airport, input, resultsDiv) {
  */
 export function addSearchControl(position = 'top-left') {
     if (!state.map) return;
+
+    // Remove existing search control first
+    removeControlByKey('search');
 
     const control = new SearchControl({
         placeholder: 'Go to airport...'

@@ -28,11 +28,11 @@ export const state = {
 export const pathOpacityByStyle = {
     dark: {
         highlight: 0.9,
-        normal: 0.5
+        normal: 0.4
     },
     light: {
         highlight: 1.0,
-        normal: 0.8
+        normal: 0.5
     }
 };
 

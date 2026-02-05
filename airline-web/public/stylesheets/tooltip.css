@@ -21,7 +21,7 @@
 .tooltip .tooltiptext {
     visibility: hidden;
     background-color: var(--tooltip-background-color);
-    color: #fff;
+    color: var(--text-color);
     border-radius: 6px;
     padding: 16px;
     margin-bottom: 0.5rem;
@@ -39,7 +39,7 @@
 
 .customTooltip .tooltiptext {
     background-color: rgba(0, 0, 0, 0.8);
-    color: #fff;
+    color: var(--text-color);
     border-radius: 6px;
     padding: 10px 10px;
     z-index: 1;
@@ -49,7 +49,7 @@
 
 }
 .tooltiptext h4 {
-    color: #fff;
+    color: var(--text-color);
 }
 
 .tooltip .tooltiptext.alignLeft {
@@ -105,10 +105,9 @@
     opacity: 1;
 }
 
-/* Simpler tooltip that's a a pure text data attr (replacing using title) */
+/* Simpler tooltip that's a a pure text data attr (replace title with data-tooltip) */
 .tooltip-attr {
   position: relative; /* Required for positioning the tooltip */
-  cursor: pointer;    /* Show a pointer on hover */
 }
 
 .tooltip-attr::after {
@@ -139,4 +138,5 @@
 
 .tooltip-attr-bottom::after {
     left: 0;
+    bottom: -8px;
 }

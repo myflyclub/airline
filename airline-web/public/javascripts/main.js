@@ -35,10 +35,31 @@ function registerEscape() {
 
 
 function mobileCheck() {
-	if (isMobileDevice()) { //assume it's a less powerful device
+	if (isMobileDevice()) {
 		refreshMobileLayout()
 		currentAnimationStatus = false //turn off animation by default
-	}
+        registernavPrimaryToggle()
+	} else {
+        $("#navPrimaryToggle").hide()
+    }
+}
+
+function registernavPrimaryToggle() {
+    $('#navPrimaryToggle').off('click').on('click', function() {
+        const nav = $('#navPrimary');
+        const isExpanded = $(this).attr('aria-expanded') === 'true';
+
+        $(this).attr('aria-expanded', !isExpanded);
+        nav.toggleClass('active');
+
+        if (!isExpanded) {
+            $(this).find('.icon-open').hide();
+            $(this).find('.icon-close').show();
+        } else {
+            $(this).find('.icon-open').show();
+            $(this).find('.icon-close').hide();
+        }
+    });
 }
 
 function isMobileDevice() {
