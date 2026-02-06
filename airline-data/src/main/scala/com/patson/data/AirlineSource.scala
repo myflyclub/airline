@@ -1135,6 +1135,7 @@ object AirlineSource {
       preparedStatement.setInt(1, airlineId)
       preparedStatement.executeUpdate()
       preparedStatement.close()
+      connection.commit()
     } finally {
       connection.close()
     }
@@ -1146,13 +1147,23 @@ object AirlineSource {
     try {
       connection.setAutoCommit(false)
 
-      val preparedStatement = connection.prepareStatement(s"REPLACE INTO $AIRLINE_REPUTATION_BREAKDOWN(airline, reputation_type, rep_value, quantity_value) VALUES(?,?,?,?)")
+      val deleteStatement = connection.prepareStatement(s"DELETE FROM $AIRLINE_REPUTATION_BREAKDOWN WHERE airline = ?")
+      deleteStatement.setInt(1, airlineId)
+      deleteStatement.executeUpdate()
+      deleteStatement.close()
+
+      val preparedStatement = connection.prepareStatement(s"INSERT INTO $AIRLINE_REPUTATION_BREAKDOWN(airline, reputation_type, rep_value, quantity_value) VALUES(?,?,?,?)")
       breakdowns.breakdowns.foreach { breakdown =>
         preparedStatement.setInt(1, airlineId)
         preparedStatement.setString(2, breakdown.reputationType.toString)
         preparedStatement.setDouble(3, breakdown.value)
-        preparedStatement.setDouble(4, math.min(breakdown.quantityValue, UnsignedIntMax))
+        if (breakdown.quantityValue < 0 || breakdown.quantityValue > UnsignedIntMax) {
+          println(s"Reputation breakdown quantity value ${breakdown.quantityValue} for airline $airlineId type ${breakdown.reputationType} is out of range, clamping it")
+        }
+        preparedStatement.setLong(4, math.max(0, math.min(breakdown.quantityValue, UnsignedIntMax)))
+        preparedStatement.addBatch()
       }
+      preparedStatement.executeBatch()
       preparedStatement.close()
       connection.commit()
     } finally {

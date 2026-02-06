@@ -3,15 +3,18 @@
  * @returns {boolean} true if session exists, false otherwise
  */
 function checkSessionGuard() {
-    // Use $.cookie if available (consistent with rest of app), fallback to document.cookie
-    let sessionVal;
-    if (typeof $ !== 'undefined' && $.cookie) {
-        sessionVal = $.cookie('sessionActive');
-    } else {
+    // Check localStorage first, then fallback to cookie (for server-side set cookies)
+    let sessionActive = localStorage.getItem('sessionActive') === 'true';
+    
+    if (!sessionActive) {
         const match = document.cookie.match(/(?:^|; )sessionActive=([^;]*)/);
-        sessionVal = match ? decodeURIComponent(match[1]) : null;
+        const sessionVal = match ? decodeURIComponent(match[1]) : null;
+        sessionActive = sessionVal === true || sessionVal === 'true' || sessionVal === '1';
+        
+        if (sessionActive) { // Migrate to localStorage
+             localStorage.setItem('sessionActive', 'true');
+        }
     }
-    const sessionActive = sessionVal === true || sessionVal === 'true' || sessionVal === '1';
 
     console.log('✓ Session check:', sessionActive);
     return sessionActive;
@@ -19,8 +22,7 @@ function checkSessionGuard() {
 
 function initializeRoutes() {
     page('*', (ctx, next) => {
-        const sessionVal = (typeof $ !== 'undefined' && $.cookie) ? $.cookie('sessionActive') : null;
-        const isLoggedIn = sessionVal === true || sessionVal === 'true' || sessionVal === '1';
+        const isLoggedIn = checkSessionGuard();
 
         if (!isLoggedIn && ctx.path !== '/login/') {
             page.redirect('/login/');
@@ -42,8 +44,7 @@ function initializeRoutes() {
     page('/', () => {
         document.title = `MFC Airline Game`;
         // If logged in, show map; otherwise redirect to login
-        const sessionVal = (typeof $ !== 'undefined' && $.cookie) ? $.cookie('sessionActive') : null;
-        const isLoggedIn = sessionVal === true || sessionVal === 'true' || sessionVal === '1';
+        const isLoggedIn = checkSessionGuard();
         if (isLoggedIn) {
             showWorldMap();
         } else {
@@ -74,9 +75,7 @@ function initializeRoutes() {
         AirlineMap.showAirportPopup(airport, {lat: airport.latitude, lng: airport.longitude});
     });
 
-    page('/search/:iata?', (ctx) => {
-        const iata = ctx.params.iata ?? null;
-        document.title = iata ? `${iata.toUpperCase()} Search` : 'Search';
+    page('/search/', (ctx) => {
         showSearchCanvas();
     });
 

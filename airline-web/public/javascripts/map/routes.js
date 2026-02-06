@@ -721,6 +721,28 @@ export function getHistoryRoutesClickLayerId() {
  */
 export function ensureHistoryRoutesLayers() {
     historyRoutes.ensure();
+    if (state.map && !hasLayer('history-routes-arrows')) {
+        addLayer({
+            id: 'history-routes-arrows',
+            type: 'symbol',
+            source: historyRoutes.sourceId,
+            layout: {
+                'symbol-placement': 'line',
+                'symbol-spacing': 150,
+                'text-field': '➤',
+                'text-size': 12,
+                'text-font': ['Noto Sans Regular'],
+                'text-keep-upright': false,
+                'text-rotation-alignment': 'map',
+                'text-allow-overlap': true,
+                'text-ignore-placement': true
+            },
+            paint: {
+                'text-color': ['get', 'color'],
+                'text-opacity': ['get', 'opacity']
+            }
+        });
+    }
 }
 
 /**
@@ -735,6 +757,23 @@ function refreshHistoryRoutesGeoJSON() {
         if (pathData.visible === false) return;
 
         const link = pathData.link;
+        let geometry = pathData.geometry;
+        
+        if (pathData.inverted) {
+            // Reverse geometry for symbol-placement: line to point in correct direction
+            if (geometry.type === 'LineString') {
+                geometry = {
+                    type: 'LineString',
+                    coordinates: [...geometry.coordinates].reverse()
+                };
+            } else if (geometry.type === 'MultiLineString') {
+                geometry = {
+                    type: 'MultiLineString',
+                    coordinates: geometry.coordinates.map(line => [...line].reverse()).reverse()
+                };
+            }
+        }
+
         features.push({
             type: 'Feature',
             properties: {
@@ -753,7 +792,7 @@ function refreshHistoryRoutesGeoJSON() {
                 toAirportCity: link?.toAirportCity,
                 toCountryCode: link?.toCountryCode
             },
-            geometry: pathData.geometry
+            geometry: geometry
         });
     });
 

@@ -41,7 +41,6 @@
 		  src="https://code.jquery.com/jquery-migrate-3.4.1.min.js"
 		  integrity="sha256-UnTxHm+zKuDPLfufgEMnKGXDl6fEIjtM+n1Q6lL73ok="
 		  crossorigin="anonymous"></script>
-    <script src='@routes.Assets.versioned("javascripts/libs/jquery.cookie.js")'></script>
 
     <script src='@routes.Assets.versioned("javascripts/libs/reconnecting-websocket.min.js")'></script>
 	<script src='@routes.Assets.versioned("javascripts/jemoji/jemoji.js")' defer></script>
@@ -54,8 +53,7 @@
 	<script type="text/javascript" src='@routes.Assets.versioned("progress-bar/progress-bar.js")' defer></script>
 	  <link rel="stylesheet" href='@routes.Assets.versioned("progress-bar/progress-bar.css")' type="text/css" />
 
-	<script type="text/javascript" src='@routes.Assets.versioned("jquery-upload-file/jquery.uploadfile.min.js")' defer></script>
-	<link rel="stylesheet" href='@routes.Assets.versioned("jquery-upload-file/uploadfile.css")' type="text/css" />
+
 
 	  <link rel="stylesheet" href="/assets/firework/firework.css">
 	  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
@@ -238,7 +236,7 @@
             <div style="display: none; position: fixed; top: 0px; width: 15px; height: 100%; z-index: 2; background-color: transparent;" id="tabGroupCue">
             </div>
 
-        <button id="navPrimaryToggle" title="Toggle mobile nav collapse" class="mobileOnly" aria-controls="navPrimary" aria-expanded="false" style="display: none;">
+        <button id="navPrimaryToggle" title="Toggle mobile nav collapse" aria-controls="navPrimary" aria-expanded="false" style="display: none;">
             <span class="icon-open" aria-hidden="true" style="display: inline-block;">
                 <span style="display:block; width: 20px; height: 2px; background-color: var(--text-color); border-radius:2px; margin-bottom:3px;"></span>
                 <span style="display:block; width: 20px; height: 2px; background-color: var(--text-color); border-radius:2px; margin-bottom:3px;"></span>
@@ -1040,29 +1038,29 @@
                                 <div id="historySearchResult" class="section" style="height: 100px; overflow-y: auto; flex-grow: 1;">
                                     <div class="table data" style="height: 20px; width: 100%; min-width: 700px;">
                                         <div class="table-header sortHeader">
-                                            <div class="cell clickable" style="width: 8%" data-sort-property="cycleDelta" data-sort-order="decending">Cycle</div>
-                                            <div class="cell clickable" style="width: 14%" data-sort-property="airlineName" data-sort-order="ascending">Airline</div>
-                                            <div class="cell clickable" style="width: 16%" data-sort-property="fromAirportIata" data-sort-order="descending">From Airport</div>
-                                            <div class="cell clickable" style="width: 16%" data-sort-property="toAirportIata" data-sort-order="descending">To Airport</div>
-                                            <div class="cell clickable" style="width: 12%" data-sort-property="model" data-sort-order="ascending">Model</div>
-                                            <div class="cell clickable" style="width: 8%" align="right" data-sort-property="capacityTotal" data-sort-order="ascending">Capacity (Freq.)</div>
-                                            <div class="cell clickable" style="width: 8%" align="right" data-sort-property="capacityDeltaTotal" data-sort-order="descending">Cap Chg.</div>
-                                            <div class="cell" style="width: 15%">Price</div>
-                                            <div class="cell" style="width: 15%">Price Chg.</div>
+                                            <div class="cell clickable" style="width: 7%" data-sort-property="cycleDelta" data-sort-order="decending">Cycle</div>
+                                            <div class="cell clickable" style="width: 12%" data-sort-property="airlineName" data-sort-order="ascending">Airline</div>
+                                            <div class="cell clickable" style="width: 15%" data-sort-property="fromAirportIata" data-sort-order="descending">From Airport</div>
+                                            <div class="cell clickable" style="width: 15%" data-sort-property="toAirportIata" data-sort-order="descending">To Airport</div>
+                                            <div class="cell clickable" style="width: 10%" data-sort-property="model" data-sort-order="ascending">Model</div>
+                                            <div class="cell clickable" style="width: 7%" align="right" data-sort-property="capacityTotal" data-sort-order="ascending">Capacity (Freq.)</div>
+                                            <div class="cell clickable" style="width: 7%" align="right" data-sort-property="capacityDeltaTotal" data-sort-order="descending">Cap Chg.</div>
+                                            <div class="cell" style="width: 14%">Price</div>
+                                            <div class="cell" style="width: 14%">Price Chg.</div>
                                         </div>
                                     </div>
                                     <div style="height: calc(100% - 20px - 20px);  width: 100%; min-width: 700px; overflow-y: auto;">
                                         <div class="table data linkHistorySearchTable" style="width: 100%; table-layout: fixed; min-width: 700px;">
                                             <div class="table-header">
-                                                <div class="cell" style="width: 8%; border-bottom: none;"></div>
+                                                <div class="cell" style="width: 7%; border-bottom: none;"></div>
+                                                <div class="cell" style="width: 12%; border-bottom: none;"></div>
+                                                <div class="cell" style="width: 15%; border-bottom: none;"></div>
+                                                <div class="cell" style="width: 15%; border-bottom: none;"></div>
+                                                <div class="cell" style="width: 10%; border-bottom: none;"></div>
+                                                <div class="cell" style="width: 7%; border-bottom: none;"></div>
+                                                <div class="cell" style="width: 7%; border-bottom: none;"></div>
                                                 <div class="cell" style="width: 14%; border-bottom: none;"></div>
-                                                <div class="cell" style="width: 16%; border-bottom: none;"></div>
-                                                <div class="cell" style="width: 16%; border-bottom: none;"></div>
-                                                <!--										<div class="cell" style="width: 12%; border-bottom: none;"></div>-->
-                                                <div class="cell" style="width: 8%; border-bottom: none;"></div>
-                                                <div class="cell" style="width: 8%; border-bottom: none;"></div>
-                                                <div class="cell" style="width: 15%; border-bottom: none;"></div>
-                                                <div class="cell" style="width: 15%; border-bottom: none;"></div>
+                                                <div class="cell" style="width: 14%; border-bottom: none;"></div>
                                             </div>
                                         </div>
                                     </div>
@@ -1794,7 +1792,7 @@
 	<!--   			end country canvas -->
 				<div id="airplaneCanvas"  class="canvas" style="height: 100%; display: none;">
 					<div class="mainPanel airplaneCanvasLeftGroup" style="position: relative;">
-						<div class="table" style="width: 30%; margin-top: 8px; margin-left: 12px;">
+						<div class="table" style="width: 30%;  margin-left: 12px;">
 							<div class="table-header">
 								<div class="cell detailsSelection" style="border-radius: 5px 0 0 0"><a href="/hangar/">Hangar</a></div>
                                 <div class="cell detailsSelection" style="border-radius: 0 5px 0 0"><a href="/aircraft/">Market</a></div>
@@ -1805,6 +1803,7 @@
 								<div class="market details table-container-x">
 									<div class="no-highlight">
 										<a class="px-2 py-1 inline-block" title="Show / Hide Filter Row" onclick="toggleAircraftTableFilterRow()"><img src="/assets/images/icons/funnel.png" style="vertical-align: text-bottom" class="img-button"></a>
+                                        <input type="checkbox" id="toggleHideForbiddenPlanes"/><span class="label">Show all (forbidden) aircraft</span>
 									</div>
 									<div class="table data" style="height: 20px; min-width: 1180px;">
 										<div class="table-header" id="airplaneModelSortHeader">
@@ -1943,9 +1942,10 @@
                                                 <a>✅</a>
                                             </div>
                                             <button id="sellUnassignedPlanes" class="button" type="submit" onclick="promptConfirm('Sell all unused planes?', sellUnassignedPlanes)">Sell All Unused Planes</button>
-                                            <button class="button" type="submit" onclick="promptSwapModels()">Swap Selected Aircraft Model</button>
+                                            <button class="button" type="submit" onclick="promptSwapModels()">Aircraft Model Swap</button>
                                         </div>
                                     </div>
+                                    <p class="text-right info pr-3 pb-2" id="promptSwapModelsWarning">Select aircraft of one model to initiate swap</p>
 								</div>
 							</div>
 						</div>
@@ -2074,9 +2074,9 @@
 										<div class="label">Total in Circulation:</div>
 										<div class="value total"></div>
 									</div>
-									<div class="table-row aircraftNote">
-										<div class="label">Note:</div>
-										<div class="warning note"></div>
+                                    <div class="table-row">
+										<div class="label">Purchasable:</div>
+										<div class="value canPurchase"></div>
 									</div>
 									<input type="hidden" class="selectedModel"/>
 								</div>
@@ -2290,7 +2290,7 @@
 							</div>
 
 							<div class="pt-8">
-								<h4>Milestones <i class="opacity-70 very-small">at last week</i></h4>
+								<h4>Milestones <i class="opacity-70 very-small">@@ last week</i></h4>
 								<div id="milestones" class="container-cols-180px py-2"></div>
 							</div>
 						</div>
@@ -4179,8 +4179,21 @@
 				<li class="label" style="padding: 5px;">- Logo should be 24px wide and 12px tall</li>
 			</ul>
 			<div class="uploadPanel" style="display:none" >
-		    	<div class="fileuploader">Upload</div>
-		    	<div class="warning" style="display:none;"></div>
+				<input type="file" class="logoInput" accept="image/png" style="display:none;">
+				<div class="file-drop-zone clickable" onclick="$(this).siblings('.logoInput').click()">
+					<div class="preview-container" style="display:none; margin-bottom: 10px;">
+						<img class="logo-preview" style="max-width: 100%; height: auto; border: 1px solid var(--border-color);">
+					</div>
+					<div class="upload-prompt">
+						<img src="/assets/images/icons/image--plus.png" style="vertical-align: middle; margin-right: 5px;">
+						<span>Click or drag logo here (PNG, 24x12 recommended)</span>
+					</div>
+				</div>
+				<div class="warning" style="display:none; margin-top: 10px;"></div>
+				<div class="actions" style="margin-top: 15px; text-align: center; display:none;">
+					<button type="button" class="button uploadButton">Upload</button>
+					<button type="button" class="button btn-secondary" onclick="resetLogoUpload($(this).closest('.uploadPanel'))">Cancel</button>
+				</div>
 		    </div>
 		    <div class="uploadForbidden" style="display:none" >
 		    	<div class="warning"></div>
@@ -4197,8 +4210,21 @@
               <li class="label" style="padding: 5px;">- Logo should be 48px wide and 24px tall</li>
           </ul>
           <div class="uploadPanel" style="display:none" >
-              <div class="fileuploader">Upload</div>
-              <div class="warning" style="display:none;"></div>
+              <input type="file" class="logoInput" accept="image/png" style="display:none;">
+              <div class="file-drop-zone clickable" onclick="$(this).siblings('.logoInput').click()">
+                  <div class="preview-container" style="display:none; margin-bottom: 10px;">
+                      <img class="logo-preview" style="max-width: 100%; height: auto; border: 1px solid var(--border-color);">
+                  </div>
+                  <div class="upload-prompt">
+                      <img src="/assets/images/icons/image--plus.png" style="vertical-align: middle; margin-right: 5px;">
+                      <span>Click or drag logo here (PNG, 48x24 recommended)</span>
+                  </div>
+              </div>
+              <div class="warning" style="display:none; margin-top: 10px;"></div>
+              <div class="actions" style="margin-top: 15px; text-align: center; display:none;">
+                  <button type="button" class="button uploadButton">Upload</button>
+                  <button type="button" class="button btn-secondary" onclick="resetLogoUpload($(this).closest('.uploadPanel'))">Cancel</button>
+              </div>
           </div>
           <div class="uploadForbidden" style="display:none" >
               <div class="warning"></div>
@@ -4215,8 +4241,21 @@
 			  <li class="label" style="padding: 5px;">- Image should not be larger than 1MB</li>
 		  </ul>
 		  <div class="uploadPanel" style="display:none" >
-			  <div class="fileuploader">Upload</div>
-			  <div class="warning" style="display:none;"></div>
+			  <input type="file" class="logoInput" accept="image/png" style="display:none;">
+			  <div class="file-drop-zone clickable" onclick="$(this).siblings('.logoInput').click()">
+				  <div class="preview-container" style="display:none; margin-bottom: 10px;">
+					  <img class="logo-preview" style="max-width: 100%; height: auto; border: 1px solid var(--border-color);">
+				  </div>
+				  <div class="upload-prompt">
+					  <img src="/assets/images/icons/image--plus.png" style="vertical-align: middle; margin-right: 5px;">
+					  <span>Click or drag livery here (PNG recommended)</span>
+				  </div>
+			  </div>
+			  <div class="warning" style="display:none; margin-top: 10px;"></div>
+			  <div class="actions" style="margin-top: 15px; text-align: center; display:none;">
+				  <button type="button" class="button uploadButton">Upload</button>
+				  <button type="button" class="button btn-secondary" onclick="resetLogoUpload($(this).closest('.uploadPanel'))">Cancel</button>
+			  </div>
 		  </div>
 		  <div class="uploadForbidden" style="display:none" >
 			  <div class="warning"></div>
@@ -4710,9 +4749,9 @@
 		  <div style="clear:both; margin-bottom:10px;"></div>
 		  <div style="width: 100%;" class="existingLink table data">
 			  <div class='table-header'>
-				  <div class="cell" style="width: 40%;">Attribute</div>
-				  <div class="cell" style="width: 30%;"><h5>Existing</h5></div>
-				  <div class="cell" style="width: 30%;"><h5>New Settings</h5></div>
+				  <div class="cell" style="width: 30%;">Attribute</div>
+				  <div class="cell" style="width: 35%;"><h5>Existing</h5></div>
+				  <div class="cell" style="width: 35%;"><h5>New Settings</h5></div>
 			  </div>
 			  <div class="table-row">
 				  <div class="cell"><p>Airplane Model:</p></div>
@@ -5111,34 +5150,124 @@
 	</div>
 
   <div id="swapAirplaneModal" class="modal">
-      <div class="modal-content" style="max-width: 480px;">
+      <div class="modal-content" style="max-width: 900px; width: 95vw;">
           <span class="close" onclick="closeModal($('#swapAirplaneModal'))">&times;</span>
           <h4 style="margin-bottom: 10px;">Swap airplane model from <span class="modelName"></span></h4>
-          <select class="select-css" id="swapAirplaneModalSelect" onchange="">
-          </select>
-          <div class="modelIllustration" style="width:100%; position: relative; max-width: 500px;">
-              <picture>
-                  <source srcset="" type="image/webp">
-                  <img src='' style="width: 100%;">
-              </picture>
-              <div class="label" style="right: 0px; bottom: 0px; position: absolute; font-style: italic;"><a href='#' target="_blank" style="font-size: 85%;">livery by GOM63, outline by Norebbo or MED</a></div>
+          
+          <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+              <div style="flex: 1.5; min-width: 300px;">
+                  <select class="select-css" id="swapAirplaneModalSelect" onchange="processSwapModels(true)" style="width: 100%; margin-bottom: 15px;">
+                  </select>
+                  
+                  <div class="table data" style="width: 100%;">
+                      <div class="table-row">
+                          <div class="label">Airplane Ids:</div>
+                          <div class="value airplaneIds"></div>
+                      </div>
+                      <div class="table-row">
+                          <div class="label">Capacity Change (per plane):</div>
+                          <div class="value capacityChange"></div>
+                      </div>
+                      <div class="table-row">
+                          <div class="label">Turnaround Diff:</div>
+                          <div class="value turnaroundDiff"></div>
+                      </div>
+                      <div class="table-row">
+                          <div class="label">Range Diff:</div>
+                          <div class="value rangeDiff"></div>
+                      </div>
+                      <div class="table-row">
+                          <div class="label">Speed Diff:</div>
+                          <div class="value speedDiff"></div>
+                      </div>
+                      <div class="table-row envelope-range-row" style="display: none;">
+                          <div class="label">Required Range:</div>
+                          <div class="value envelopeDistance"></div>
+                      </div>
+                      <div class="table-row envelope-runway-row" style="display: none;">
+                          <div class="label">Required Runway:</div>
+                          <div class="value">
+                              <span class="envelopeRunway"></span>
+                              <span class="envelopeCustoms" title="International flight at domestic airport restriction" style="display: none;">
+                                  <img src="/assets/images/icons/exclamation-red.png" style="vertical-align: middle; height: 14px;">
+                              </span>
+                          </div>
+                      </div>
+                      <div class="table-row">
+                          <div class="label">Delivery Time:</div>
+                          <div class="value delivery"></div>
+                      </div>
+                      <div class="table-row totalPrice">
+                          <div class="label">Total cost:</div>
+                          <div class="value cost"></div>
+                      </div>
+                  </div>
+                  <div style="margin-top: 15px;">
+                      <button type="button" class="button add" onclick="processSwapModels(false)">Sell, purchase, and assign new aircraft</button>
+                      <button type="button" class="button" onclick="closeModal($('#swapAirplaneModal'))">Cancel</button>
+                  </div>
+                  <p id="swapError" class="error" style="display: none; margin-top: 10px;"></p>
+                  <p class="text-right info pr-3 pt-2" id="promptSwapModelsWarning"></p>
+              </div>
+              
+              <div style="flex: 1; min-width: 250px; border-left: 1px solid #ddd; padding-left: 20px;" class="stats-comparison">
+                  <div class="old-model-stats">
+                      <h5>Current: <span class="oldModelName"></span></h5>
+                      <div class="modelIllustration" style="width:100%; position: relative;">
+                          <picture>
+                              <source srcset="" type="image/webp">
+                              <img src='' style="width: 100%;">
+                          </picture>
+                      </div>
+                      <div class="table data small" style="width: 100%;">
+                          <div class="table-row">
+                              <div class="label">Cost:</div>
+                              <div class="value oldPrice"></div>
+                          </div>
+                          <div class="table-row">
+                              <div class="label">Range:</div>
+                              <div class="value oldRange"></div>
+                          </div>
+                          <div class="table-row">
+                              <div class="label">Ascent Fuel:</div>
+                              <div class="value oldAscent"></div>
+                          </div>
+                          <div class="table-row">
+                              <div class="label">Cruise Fuel:</div>
+                              <div class="value oldCruise"></div>
+                          </div>
+                      </div>
+                  </div>
+                  
+                  <div class="new-model-stats" style="margin-top: 20px; display: none;">
+                      <h5>New: <span class="newModelName"></span></h5>
+                      <div class="modelIllustration" style="width:100%; position: relative;">
+                          <picture>
+                              <source srcset="" type="image/webp">
+                              <img src='' style="width: 100%;">
+                          </picture>
+                      </div>
+                      <div class="table data small" style="width: 100%;">
+                          <div class="table-row">
+                              <div class="label">Cost:</div>
+                              <div class="value newPrice"></div>
+                          </div>
+                          <div class="table-row">
+                              <div class="label">Range:</div>
+                              <div class="value newRange"></div>
+                          </div>
+                          <div class="table-row">
+                              <div class="label">Ascent Fuel:</div>
+                              <div class="value newAscent"></div>
+                          </div>
+                          <div class="table-row">
+                              <div class="label">Cruise Fuel:</div>
+                              <div class="value newCruise"></div>
+                          </div>
+                      </div>
+                  </div>
+              </div>
           </div>
-          <div class="table" style="width: 100%;">
-              <div class="table-row">
-                  <div class="label">Airplane Ids:</div>
-                  <div class="value airplaneIds"></div>
-              </div>
-              <div class="table-row">
-                  <div class="label">Delivery Time:</div>
-                  <div class="value delivery"></div>
-              </div>
-              <div class="table-row totalPrice">
-                  <div class="label">Total cost:</div>
-                  <div class="value cost"></div>
-              </div>
-          </div>
-          <button type="button" class="button add" onclick="processSwapModels()">Sell, purchase, and assign new aircraft</button>
-          <button type="button" class="button" onclick="closeModal($('#swapAirplaneModal'))")>Cancel</button>
       </div>
   </div>
 
@@ -5796,9 +5925,22 @@
 					  <h5>Custom Wallpaper</h5>
 				  </div>
 				  <div class="cell" style="vertical-align:middle; text-align:center;">
-					  <div>
-						  <div class="fileuploader"></div>
-						  <div class="warning" style="display:none;"></div>
+					  <div class="uploadPanel">
+						  <input type="file" class="logoInput" accept="image/png,image/gif,image/jpeg" style="display:none;">
+						  <div class="file-drop-zone clickable" onclick="$(this).siblings('.logoInput').click()">
+							  <div class="preview-container" style="display:none; margin-bottom: 10px;">
+								  <img class="logo-preview" style="max-width: 100%; height: auto; border: 1px solid var(--border-color);">
+							  </div>
+							  <div class="upload-prompt">
+								  <img src="/assets/images/icons/image--plus.png" style="vertical-align: middle; margin-right: 5px;">
+								  <span>Click or drag image here (PNG/JPG/GIF)</span>
+							  </div>
+						  </div>
+						  <div class="warning" style="display:none; margin-top: 10px;"></div>
+						  <div class="actions" style="margin-top: 15px; text-align: center; display:none;">
+							  <button type="button" class="button uploadButton">Upload</button>
+							  <button type="button" class="button btn-secondary" onclick="resetLogoUpload($(this).closest('.uploadPanel'))">Cancel</button>
+						  </div>
 					  </div>
 				  </div>
 			  </div>

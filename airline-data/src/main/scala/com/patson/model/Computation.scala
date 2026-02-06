@@ -266,23 +266,28 @@ def constructAffinityText(fromZone : String, toZone : String, fromCountry : Stri
   }
 
   val SATISFACTION_MAX_PRICE_RATIO_THRESHOLD: Double = 0.7 //at 100% satisfaction is <= this threshold
-  private val SATISFACTION_MIN_PRICE_RATIO_THRESHOLD = LINK_COST_TOLERANCE_FACTOR //0% satisfaction >= this threshold ... +0.01 so, there will be at least some satisfaction even at the LINK_COST_TOLERANCE_FACTOR
+  private val SATISFACTION_MIN_PRICE_RATIO_THRESHOLD = LINK_COST_TOLERANCE_FACTOR //0% satisfaction >= this threshold
 
   /**
    * Satisfaction is calculated after seats are booked – delays and LF don't directly impact whether passengers book.
    *
-   * (Current implicit assumptions of parameters in parentheses)
-   *
    * @param cost perceived price
    * @param standardPrice standard link price (for given distance)
-   * @param crowdedPercent 0-1 load factor (not seat-capacity adjusted) where 1 is 100% full and decreases/increases satisfaction by 25%
-   * @param delayPercent 0-1 delay percentage, where 0 is no delays, 0.5 is some delays / flights cancelled, 1 is all flights cancelled
+   * @param crowdedPercent 0-1 load factor where 0.8 is neutral, 0.0 gives +25% bonus, 1.0 gives -25% penalty
+   * @param onTimeRatio 0-1 on-time ratio from getDelayRatio, where 1 is all on-time (best), 0 is all cancelled (worst)
    * @return 0 (not satisfied at all) to 1 (fully satisfied)
    */
-  def computePassengerSatisfaction(cost: Double, standardPrice: Int, crowdedPercent: Double, delayPercent: Double): Double = {
+  def computePassengerSatisfaction(cost: Double, standardPrice: Int, crowdedPercent: Double, onTimeRatio: Double): Double = {
     val ratio = cost / standardPrice
     val satisfaction = (SATISFACTION_MIN_PRICE_RATIO_THRESHOLD - ratio) / (SATISFACTION_MIN_PRICE_RATIO_THRESHOLD - SATISFACTION_MAX_PRICE_RATIO_THRESHOLD)
-    Math.min(1.0, Math.max(0.0, satisfaction * (1.0 - delayPercent * 0.5) * (1.35 - crowdedPercent * 0.35)))
+    // onTimeRatio: 1.0 = all on-time (25% bonus), 0.0 = all cancelled (0 satisfaction)
+    // crowdedPercent: 0.8 = neutral, 0.0 = +25% bonus, 1.0 = -25% penalty
+    val crowdModifier = if (crowdedPercent <= 0.8) {
+      1.0 + (0.8 - crowdedPercent) * 0.125  // bonus for low LF (0.8 * 0.125 = 0.1 at LF=0)
+    } else {
+      1.0 - (crowdedPercent - 0.8) * 1.15    // penalty for high LF (0.2 * 1.25 = 0.1 at LF=1)
+    }
+    Math.min(1.0, Math.max(0.0, satisfaction * (1.3 * onTimeRatio) * crowdModifier))
   }
   val TOOLTIP_SATISFACTION = List(
     s"If a passenger has more than ${SATISFACTION_MAX_PRICE_RATIO_THRESHOLD * 100}% satisfaction they may become your loyalist.",

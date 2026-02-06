@@ -5,7 +5,7 @@ import com.patson.model.FlightCategory.FlightCategory
 /**
  * Cost base model
  *
- * rates at 400, 2000, 4000, 7000, ∞
+ * rates at 400, 2000, 4000, 8000, ∞
  */
 object Pricing {
   val modifierBrackets: Map[LinkClass, List[(Int, Double)]] = Map(

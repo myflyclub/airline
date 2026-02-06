@@ -23,31 +23,6 @@ object PassengerSimulation {
       .toMap
   }
   
-  def testFlow() = {
-
-    val demand = DemandGenerator.computeDemand(0, Map(0 -> AirportStatistics(0,0,0,0.0,0.0,0.0)))
-    println("DONE with demand total demand: " + demand.foldLeft(0) {
-      case(holder, (_, _, demandValue)) =>  
-        holder + demandValue
-    })
-
-    val links = LinkSource.loadAllLinks(LinkSource.FULL_LOAD)
-
-    println("Consumption result: ")
-    val soldLinks = links.filter{ link => link.getTotalSoldSeats > 0  }.map { link =>
-      (link, link.getTotalSoldSeats)
-      }.sortBy {
-        case (_, soldSeats) => soldSeats 
-      }
-      
-    soldLinks.foreach{ case(link, soldSeats) => println(link.airline.name + "($" + link.price + "; recommend $" + link.standardPrice(ECONOMY, PassengerType.TRAVELER) + ") " + soldSeats  + " : " + link.from.name + " => " + link.to.name) }
-    println("seats sold: " + soldLinks.foldLeft(0) {
-      case (holder, (link, soldSeats)) => holder + soldSeats
-    })
-    
-    //test
-    //findShortestRoute(airportGroups(0)(0), airportGroups(4)(0), links.toList)
-  }
   case class PassengerConsumptionResult(consumptionByRoutes: Map[(PassengerGroup, Airport, Route), Int], missedDemand: Map[(PassengerGroup, Airport), Int], worldStats: WorldStatistics)
 
   def passengerConsume[T <: Transport](demand : List[(PassengerGroup, Airport, Int)], links : List[T]) : PassengerConsumptionResult = {
@@ -251,10 +226,15 @@ object PassengerSimulation {
     }.sum
     println("Total tickets sold " + totalTicketsSold)
 
+    val totalEmptySeats = links.filter(_.transportType == TransportType.FLIGHT).map(_.getTotalAvailableSeats).sum
+    println("Total empty seats " + totalEmptySeats)
+    val loadFactor = if (totalTicketsSold + totalEmptySeats > 0) totalTicketsSold.toDouble / (totalTicketsSold + totalEmptySeats) else 0
+    println(f"Global load factor $loadFactor%.2f")
+
     val missedPax = missedDemandChunks.asScala.map(_._3).sum
     println("Total missed pax " + missedPax)
 
-    val worldStatistics = WorldStatistics(currentCycle, Period.WEEKLY, totalTicketsSold, missedPax)
+    val worldStatistics = WorldStatistics(currentCycle, Period.WEEKLY, totalTicketsSold, missedPax, loadFactor)
     WorldStatisticsSource.saveWorldStats(List(worldStatistics))
 
     //collapse it now
@@ -265,8 +245,6 @@ object PassengerSimulation {
         accumulatorMap.updated(key, currentCount + passengerCount)
     }
 
-    println("Collapsed consumption map size: " + collapsedMap.size)
-
     val missedMap = missedDemandChunks.asScala.foldLeft(Map[(PassengerGroup, Airport), Int]()) {
       case (accumulatorMap, (passengerGroup, toAirport, passengerCount)) =>
         val key = (passengerGroup, toAirport)
@@ -274,14 +252,12 @@ object PassengerSimulation {
         accumulatorMap.updated(key, currentCount + passengerCount)
     }
 
-    println("Total missed chunks " + missedDemandChunks.size)
-
     PassengerConsumptionResult(collapsedMap, missedMap, worldStatistics)
   }
 
-  val LINK_COST_TOLERANCE_FACTOR = 0.95 //used by computePassengerSatisfaction
+  val LINK_COST_TOLERANCE_FACTOR = 1.0 //used by computePassengerSatisfaction
   val LINK_DISTANCE_TOLERANCE_FACTOR = 1.6
-  val ROUTE_DISTANCE_TOLERANCE_FACTOR = 2.75
+  val ROUTE_DISTANCE_TOLERANCE_FACTOR = 3.25
 
 
   object RouteRejectionReason extends Enumeration {

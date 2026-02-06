@@ -34,17 +34,17 @@ function showSearchCanvas(historyAirline) {
 
     initializeHistorySearch()
 
-    if (historyAirline > 0) {
+    if (historyAirline && (typeof historyAirline === 'object' || historyAirline > 0)) {
         refreshSearchDiv('history');
 
         // Update state and UI for the provided airline
-        const airlineId = historyAirline.id;
-        const airlineText = getAirlineTextEntry(historyAirline, false);
+        const airlineId = typeof historyAirline === 'object' ? historyAirline.id : historyAirline;
+        const airlineText = typeof historyAirline === 'object' ? getAirlineTextEntry(historyAirline, false) : historyAirline;
         historySearchState.airline = { id: airlineId, text: airlineText };
         $('#searchCanvas div.historySearch input.airline').data('selectedId', airlineId).val(airlineText);
 
         searchLinkHistory()
-    } else if (historyAirline == 0) {
+    } else if (historyAirline === 0) {
         refreshSearchDiv('research');
     } else {
         refreshSearchDiv('route');
@@ -200,7 +200,7 @@ function searchRoute(fromAirportId, toAirportId) {
         return;
     }
 
-    const url = `search-route/${fromAirportId}/${toAirportId}`;
+    const url = `/search-route/${fromAirportId}/${toAirportId}`;
 
     $.ajax({
         type: 'GET',
@@ -328,7 +328,7 @@ function searchRoute(fromAirportId, toAirportId) {
 
 
 function searchLinkHistory() {
-    const url = "search-link-history";
+    const url = "/search-link-history";
     const searchData = {};
 
     if (historySearchState.from.id) {
@@ -395,7 +395,7 @@ function updateLinkHistoryTable(sortProperty, sortOrder) {
         row.append("<div class='cell'>" + getAirlineLogoImg(link.airlineId) + link.airlineName + "</div>")
 		row.append("<div class='cell'>" + getCountryFlagImg(link.fromCountryCode) + getAirportText(link.fromAirportCity, link.fromAirportIata) + "</div>")
 		row.append("<div class='cell'>" + getCountryFlagImg(link.toCountryCode) + getAirportText(link.toAirportCity, link.toAirportIata) + "</div>")
-//		row.append("<div class='cell'>" + link.airplaneModelName + "</div>")
+		row.append("<div class='cell'>" + link.airplaneModelName + "</div>")
 		$("<div class='cell' align='right'></div>").appendTo(row).append(getCapacitySpan(link.capacity, link.frequency))
 		$("<div class='cell' align='right'></div>").appendTo(row).append(getCapacityDeltaSpan(link.capacityDelta))
 		$("<div class='cell'></div>").appendTo(row).text(toLinkClassValueString(link.price, '$'))
@@ -406,7 +406,7 @@ function updateLinkHistoryTable(sortProperty, sortOrder) {
 	});
 
 	if (loadedData.length == 0) {
-		var row = $("<div class='table-row'><div class='cell'>-</div><div class='cell'>-</div><div class='cell'>-</div><div class='cell'>-</div><div class='cell'>-</div><div class='cell'>-</div><div class='cell'>-</div><div class='cell'>-</div></div>")
+		var row = $("<div class='table-row'><div class='cell'>-</div><div class='cell'>-</div><div class='cell'>-</div><div class='cell'>-</div><div class='cell'>-</div><div class='cell'>-</div><div class='cell'>-</div><div class='cell'>-</div><div class='cell'>-</div></div>")
 		linkHistoryTable.append(row)
 	}
 }
@@ -1035,7 +1035,7 @@ function researchFlight(fromAirportId, toAirportId) {
         return;
     }
 
-    const url = `research-link/${fromAirportId}/${toAirportId}`;
+    const url = `/research-link/${fromAirportId}/${toAirportId}`;
 
     $.ajax({
         type: 'GET',
@@ -1130,10 +1130,10 @@ function populateResearchLinksTable(links, consumptions, basePrice) {
 function populateResearchDemandTables(result) {
     const { fromAirportIata, toAirportIata, fromDemands, toDemands } = result;
 
-    $('#researchSearchResult .fromDemandHeading').text(`Demand From ${fromAirportIata}`);
+    $('#researchSearchResult .fromDemandHeading').text(`Demand from ${fromAirportIata} to ${toAirportIata}`);
     buildDemandsTable(fromDemands, "fromDemand");
 
-    $('#researchSearchResult .toDemandHeading').text(`Demand To ${toAirportIata}`);
+    $('#researchSearchResult .toDemandHeading').text(`Demand to ${fromAirportIata} from ${toAirportIata}`);
     buildDemandsTable(toDemands, "toDemand");
 }
 

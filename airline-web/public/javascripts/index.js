@@ -280,10 +280,8 @@ async function initializeApp() {
             } catch (err) {
                 // Only redirect on auth errors (session invalid/expired)
                 if (err.message && err.message.includes('Session restore failed')) {
-                    console.warn('Session invalid, redirecting to login:', err);
-                    $.removeCookie('sessionActive', { path: '/' });
-                    hideUserSpecificElements();
-                    window.location.replace('/login/');
+                    localStorage.removeItem('sessionActive');
+                    document.cookie = "sessionActive=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
                     return;
                 }
                 // Other errors - log but continue (user is still logged in)

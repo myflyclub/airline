@@ -50,7 +50,7 @@ async function loginFromPage() {
         const user = await response.json();
 
         if (user) {
-            $.cookie('sessionActive', 'true', { path: '/' });
+            localStorage.setItem('sessionActive', 'true');
             $('#loginPageUserName').val('');
             $('#loginPagePassword').val('');
 
@@ -91,6 +91,7 @@ async function loadUser() {
                 // Session expired or invalid
                 console.log('Session restore failed: ' + response.status)
             }
+            logout();
             throw new Error('Session restore failed: ' + response.status)
         }
 
@@ -122,10 +123,10 @@ async function doPostLoginSetup(user) {
     $('#chattext').jemoji({
         folder: '/assets/images/emoji/'
     });
-    mobileCheck();
     hideLoginPage();
-    showUserSpecificElements();
-    refreshWallpaper();
+    $('.topBarDetails').show()
+    $('#navPrimary').show()
+	$('#navPrimaryToggle').show()
     showAnnoucement();
     registerEscape();
     populateTooltips();
@@ -134,6 +135,9 @@ async function doPostLoginSetup(user) {
 
     AirlineMap.addMapControls();
     AirlineMap.addMarkers();
+
+    mobileCheck();
+    refreshWallpaper();
 
     // Airline-specific setup
     if (user.airlineIds && user.airlineIds.length > 0) {
@@ -169,8 +173,11 @@ function logout() {
 	    	activeUser = null
 	    	activeAirline = null
 	    	airlineLabelColors = {}
-	    	hideUserSpecificElements()
-	    	$.removeCookie('sessionActive', { path: '/' })
+            $('.topBarDetails').hide()
+	    	$('#navPrimary').hide()
+	        $('#navPrimaryToggle').hide()
+	    	localStorage.removeItem('sessionActive')
+            document.cookie = "sessionActive=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
 	    	showFloatMessage("Successfully logged out")
 	    	window.location.replace('/login/');
 	    },
@@ -182,15 +189,13 @@ function logout() {
 }
 
 function showUserSpecificElements() {
-	$('.topBarDetails').show()
+	
 	// $('.topBarDetails').parent().removeClass('hide-empty') //hack to avoid empty floating div for modern layout
-	$('#navPrimary').show()
-	$('#mobileTabToggle').show()
+	
 }
 
 function hideUserSpecificElements() {
-	$('.topBarDetails').hide()
+	
 	// $('.topBarDetails').parent().addClass('hide-empty') //hack to avoid empty floating div for modern layout
-	$('#navPrimary').hide()
-	$('#mobileTabToggle').hide()
+	
 }

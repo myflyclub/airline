@@ -36,7 +36,6 @@ object LinkSimulation {
     val allAirportStats = AirportStatisticsSource.loadAllAirportStats()
     val airportStatsLookup: immutable.Map[Int, AirportStatistics] = allAirportStats.map(stats => stats.airportId -> stats).toMap
 
-    //val demand = Await.result(DemandGenerator.computeDemand(), Duration.Inf)''
     val demand = DemandGenerator.computeDemand(cycle, airportStatsLookup)
     println("DONE with demand total demand: " + demand.foldLeft(0) {
       case(holder, (_, _, demandValue)) =>  
@@ -185,8 +184,8 @@ object LinkSimulation {
         }.toList
 
         if (flightSchedule.nonEmpty) {
-          val congestionFromAirport = allAirportStats.get(link.from.id).map(_.congestion).getOrElse(0.2) * 70 + airportWeather.getOrElse(link.from.id, 0.2) * 35
-          val congestionToAirport = allAirportStats.get(link.to.id).map(_.congestion).getOrElse(0.2) * 70 + airportWeather.getOrElse(link.to.id, 0.2) * 35
+          val congestionFromAirport = allAirportStats.get(link.from.id).map(_.congestion).getOrElse(0.2) * 70 + airportWeather.getOrElse(link.from.id, 0.2) * 3
+          val congestionToAirport = allAirportStats.get(link.to.id).map(_.congestion).getOrElse(0.2) * 70 + airportWeather.getOrElse(link.to.id, 0.2) * 3
 
           val hangarCountFrom = link.from.getAirlineBase(link.airline.id).map(_.specializations.count(_.getType == BaseSpecializationType.HANGAR)).getOrElse(0)
           val hangarCountTo = link.to.getAirlineBase(link.airline.id).map(_.specializations.count(_.getType == BaseSpecializationType.HANGAR)).getOrElse(0)
@@ -204,9 +203,9 @@ object LinkSimulation {
               } else if (airplaneDecay < 100 - Airplane.CRITICAL_CONDITION &&
                 congestionFromAirport < Airport.CONGESTION_HIGH &&
                 congestionToAirport < Airport.CONGESTION_HIGH) {
-                (0.16, 0.04, 0.01)  // Moderate risk tier
+                (0.3, 0.08, 0.01)  // Moderate risk tier
               } else {
-                (0.52, 0.15, 0.05)  // High risk tier
+                (0.8, 0.18, 0.04)  // High risk tier
               }
 
             // Linear scaling based on risk score 0-1 range)
@@ -215,9 +214,9 @@ object LinkSimulation {
 //            println(s"$minorDelayBase, $majorDelayBase, $cancellationBase, $riskMultiplier")
 
             // Calculate final probabilities
-            val minorDelayChance = Math.min(0.85, minorDelayBase * scaledRisk)
+            val minorDelayChance = Math.min(0.9, minorDelayBase * scaledRisk)
             val majorDelayChance = Math.min(0.4, majorDelayBase * scaledRisk)
-            val cancellationChance = Math.min(0.25, cancellationBase * scaledRisk)
+            val cancellationChance = Math.min(0.2, cancellationBase * scaledRisk)
 
             // Roll for each outcome
             val rand = scala.util.Random.nextDouble()
@@ -507,7 +506,7 @@ object LinkSimulation {
   def generateFlightStatistics(consumptionResult: immutable.Map[(PassengerGroup, Airport, Route), Int], cycle: Int, flightMovementsByAirport: List[(Airport, Int)], airportStatsLookup: immutable.Map[Int, AirportStatistics], worldStats: WorldStatistics): (List[LinkStatistics], List[AirportStatisticsUpdate], List[CountryMarketShare]) = {
     val airportCongestion: immutable.Map[Int, Double] = flightMovementsByAirport.map {
       case (airport, movements) =>
-        airport.id -> BigDecimal(movements.toDouble / (700 + airport.size * 950)).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble
+        airport.id -> BigDecimal(movements.toDouble / (1000 + airport.size * 950)).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble
     }.toMap
 
     val flightStatsBuilder = mutable.Map.empty[LinkStatisticsKey, (Int, Int)]
@@ -578,10 +577,11 @@ object LinkSimulation {
     } else {
       airportStats.map { case (airport, (fromPax, allPax)) =>
         val airportStats = airportStatsLookup.getOrElse(airport.id, AirportStatistics(airport.id, 100, 100, 0.0, 0.0, 0.0))
+        val smallAirportBoost = 2 - (10 - airport.size).toDouble / 10.0
         val localDemandMet = fromPax.toDouble / airportStats.baselineDemand
-        val localTravelRate = Airport.travelRate(localDemandMet, airport.size)
+        val localTravelRate = Airport.travelRate(fromPax, airportStats.baselineDemand, airport.size)
         val percentGlobally = allPax.toDouble / worldStats.totalPax
-        val rep = Math.max(airport.size, BigDecimal(Math.pow(localTravelRate, 1.35) * percentGlobally * Airport.GLOBAL_AIRPORT_REPUTATION_POOL).setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble)
+        val rep = Math.max(airport.size, BigDecimal(Math.pow(localTravelRate, smallAirportBoost) * percentGlobally * Airport.GLOBAL_AIRPORT_REPUTATION_POOL).setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble)
         AirportStatisticsUpdate(
           airport.id,
           fromPax,
@@ -608,7 +608,7 @@ object LinkSimulation {
 //
 //    airportStatsOpt match {
 //      case Some(airportStats) if airportStats.baselineDemand > 0 =>
-//        (allPaxUsingAirport.toDouble / ticketSoldGlobally) * Airport.travelRate(paxFromThisAirport.toDouble / airportStats.baselineDemand, airportSize)
+//        (allPaxUsingAirport.toDouble / ticketSoldGlobally) * Airport.travelRate(paxFromThisAirport.toDouble / (0.8 * airportStats.baselineDemand), airportSize)
 //      case _ => 0.0 // Handle missing airport stats or zero baseline demand
 //    }
 //  }

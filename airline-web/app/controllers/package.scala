@@ -20,7 +20,7 @@ package object controllers {
   implicit val ec: ExecutionContext = ExecutionContext.global
   implicit val actorSystem: ActorSystem = ActorSystem("patson-web-app-system")
   implicit val order: Double.IeeeOrdering.type = Ordering.Double.IeeeOrdering
-  val currentApiVersion = "v4.1.1" // Update this when schema changes
+  val currentApiVersion = "v4.1.5" // Update this when schema changes
   val currentCycle: Int = CycleSource.loadCycle()
 
   implicit object AirlineFormat extends Format[Airline] {
@@ -467,12 +467,12 @@ package object controllers {
         "traveler" -> JsNumber(traveler),
         "total" -> JsNumber(airlineStat.total),
         "codeshares" -> JsNumber(airlineStat.codeshares),
-        "RASK" -> JsNumber(BigDecimal(airlineStat.RASK * 100).setScale(2, RoundingMode.HALF_EVEN)),
-        "CASK" -> JsNumber(BigDecimal(airlineStat.CASK * 100).setScale(2, RoundingMode.HALF_EVEN)),
-        "PASK" -> JsNumber(BigDecimal((airlineStat.RASK - airlineStat.CASK) * 100).setScale(2, RoundingMode.HALF_EVEN)),
-        "satisfaction" -> JsNumber(BigDecimal(airlineStat.satisfaction * 100).setScale(2, RoundingMode.HALF_EVEN)),
-        "load_factor" -> JsNumber(BigDecimal(airlineStat.loadFactor * 100).setScale(2, RoundingMode.HALF_EVEN)),
-        "on_time" -> JsNumber(BigDecimal(airlineStat.onTime * 100).setScale(2, RoundingMode.HALF_EVEN)),
+        "RASK" -> JsNumber(BigDecimal(airlineStat.RASK).setScale(4, RoundingMode.HALF_EVEN)),
+        "CASK" -> JsNumber(BigDecimal(airlineStat.CASK).setScale(4, RoundingMode.HALF_EVEN)),
+        "PASK" -> JsNumber(BigDecimal(airlineStat.RASK - airlineStat.CASK).setScale(4, RoundingMode.HALF_EVEN)),
+        "satisfaction" -> JsNumber(BigDecimal(airlineStat.satisfaction).setScale(4, RoundingMode.HALF_EVEN)),
+        "load_factor" -> JsNumber(BigDecimal(airlineStat.loadFactor).setScale(4, RoundingMode.HALF_EVEN)),
+        "on_time" -> JsNumber(BigDecimal(airlineStat.onTime).setScale(4, RoundingMode.HALF_EVEN)),
         "months_cash_on_hand" -> JsNumber(airlineStat.cashOnHand / 4),
         "eps" -> JsNumber(airlineStat.eps),
         "link_count" -> JsNumber(airlineStat.linkCount),
@@ -1009,8 +1009,6 @@ package object controllers {
 
   val allAirplaneModels = ModelSource.loadAllModels()
 
-  val regionalAirplaneModels = allAirplaneModels.filter(_.airplaneTypeSize < RegionalAirline.modelMaxSize)
-  
   val allCountryRelationships = CountrySource.getCountryMutualRelationships()
 
   object LoginStatus extends Enumeration {

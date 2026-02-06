@@ -1823,9 +1823,9 @@ function showLinkComposition(linkId) {
 
 	    	updateTopCountryComposition(result.homeCountry, "#passengerCompositionByHomeCountryTable")
 	    	updateTopCountryComposition(result.destinationCountry, "#passengerCompositionByDestinationCountryTable")
-	    	updatePassengerTypeComposition(result.passengerType)
-	    	updatePreferredClassComposition(result.preferredLinkClass)
-	    	updatePreferenceTypeComposition(result.preferenceType)
+	    	updatePassengerTypeComposition(result.paxTypeSatisfaction)
+	    	updatePreferredClassComposition(result.linkClassSatisfaction)
+	    	updatePreferenceTypeComposition(result.preferenceSatisfaction)
             updateTopAirportComposition($('#linkCompositionModal div.topHomeAirports'), result.homeAirports)
             updateTopAirportComposition($('#linkCompositionModal div.topDestinationAirports'), result.destinationAirports)
             $('#linkCompositionModal').fadeIn(200)

@@ -469,9 +469,6 @@ object AirlineSimulation {
 
       //set reputation
       val finalBreakdowns = ReputationBreakdowns(reputationBreakdowns.toList)
-      if (airline.id == 30) {
-        println(finalBreakdowns)
-      }
       AirlineSource.updateReputationBreakdowns(airline.id, finalBreakdowns)
       val beginnerAirlineCeiling = if (airline.airlineType == BeginnerAirline) 250 else Int.MaxValue
       var targetReputation = Math.min(beginnerAirlineCeiling, finalBreakdowns.total)
