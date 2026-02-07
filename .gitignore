@@ -9,3 +9,20 @@
 /.bash_history
 /airline-data/.bsp
 *.sql
+
+# V2 Backend
+backend/__pycache__/
+backend/app/__pycache__/
+backend/app/**/__pycache__/
+backend/*.db
+backend/.env
+__pycache__/
+*.pyc
+*.pyo
+flightforge.db
+
+# V2 Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+node_modules/
