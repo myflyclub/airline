@@ -26,5 +26,19 @@ services:
       - backend
     restart: unless-stopped
 
+  admin:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile
+    ports:
+      - "9001:9001"
+    environment:
+      - DATABASE_URL=sqlite:///./flightforge.db
+    volumes:
+      - db-data:/app
+    depends_on:
+      - backend
+    restart: unless-stopped
+
 volumes:
   db-data:

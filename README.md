@@ -1,151 +1,233 @@
-An opensource airline game. 
+# FlightForge V2
 
-Forked from https://www.airline-club.com/
-Live at https://flightforge.app/
+An open-source airline simulation game. Build and manage your own airline empire — create routes, purchase aircraft, manage finances, and compete on a world map with real airport data.
 
+**Live at**: [https://flightforge.app/](https://flightforge.app/)
+**Forked from**: [Airline Club](https://www.airline-club.com/)
 
-![Screenshot 1](https://user-images.githubusercontent.com/2895902/74759887-5a966380-522e-11ea-9e54-2252af63d5ea.gif)
+## V2 Tech Stack
+
+| Component | Technology |
+|-----------|-----------|
+| **Backend** | Python 3.12 + FastAPI + SQLAlchemy |
+| **Frontend** | React 19 + TypeScript + Vite |
+| **Styling** | Tailwind CSS |
+| **Maps** | React-Leaflet + OpenStreetMap |
+| **Database** | SQLite (dev) / PostgreSQL (prod) |
+| **Auth** | JWT (python-jose + bcrypt) |
+| **Admin Panel** | FastAPI + Jinja2 (port 9001) |
+| **Real-time** | FastAPI WebSocket |
 
 ## Dependencies
-- Java openjdk 11
-- MySQL 8
-- Sbt
 
-## Setup
-1. Create MySQL database matching values defined [here](https://github.com/patsonluk/airline/blob/master/airline-data/src/main/scala/com/patson/data/Constants.scala#L184).
-1. Define sbt JVM minimum resoures by setting `export SBT_OPTS="-Xms2g -Xmx8g"` in your CLI. Depending how you're running Java, you may need to enable more memory elsewhere too.
-1. Navigate to `airline-data` and run `sbt publishLocal`. If you see [encoding error](https://github.com/patsonluk/airline/issues/267), add character-set-server=utf8mb4 to your /etc/my.cnf and restart mysql. it's a unicode characters issue, see https://stackoverflow.com/questions/10957238/incorrect-string-value-when-trying-to-insert-utf-8-into-mysql-via-jdbc
-1. In `airline-data`, run `sbt run`, 
-    1. Then, choose the one that runs `MainInit`. It will take awhile to init everything.
-1. Set `google.mapKey` in [`application.conf`](https://github.com/patsonluk/airline/blob/master/airline-web/conf/application.conf#L69) with your google map API key value. Be careful with setting budget and limit, google gives some free credit but it CAN go over and you might get charged!
-1. For the "Flight search" function to work, install elastic search 7.x, see https://www.elastic.co/guide/en/elasticsearch/reference/current/install-elasticsearch.html . For windows, I recommand downloading the zip archive and just unzip it - the MSI installer did not work on my PC
-1. For airport image search and email service for user pw reset - refer to https://github.com/patsonluk/airline/blob/master/airline-web/README
-1. Now run the background simulation by staying in `airline-data`, run `sbt run`, select option `MainSimulation`. It should run the background simulation.
-1. Open another terminal, navigate to `airline-web`, run the web server by `sbt run`
-1. The application should be accessible at `localhost:9000`
+- Python 3.11+
+- Node.js 20+
+- npm 10+
 
-## Alternate Docker Setup (Recommended)
+## Quick Start
 
-**See [DOCKER_GUIDE.md](DOCKER_GUIDE.md) for detailed instructions and troubleshooting.**
+### 1. Backend Setup
 
-### Quick Start
-1. Install Docker & Docker-compose
-2. Run `cp docker-compose.override.yaml.dist docker-compose.override.yaml` and edit ports if needed
-3. Start the stack: `docker compose up -d`
-4. Wait for all containers to be healthy: `docker compose ps`
-5. Initialize and start the application:
+```bash
+cd backend
 
-   **⚡ Fast (Optimized - Recommended):**
-   ```bash
-   docker compose exec airline-app bash /home/airline/start-all-fast.sh
-   ```
-   - Smart initialization - skips unnecessary steps
-   - Checks if database already has data
-   - Only runs `publishLocal` if needed
-   - **Startup time**: 30-60 seconds on subsequent runs
-   - **Savings**: 2-5 minutes compared to standard startup!
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+# venv\Scripts\activate   # Windows
 
-   **🐢 Standard (More Stable - First Time Use):**
-   ```bash
-   docker compose exec airline-app bash /home/airline/start-all.sh
-   ```
-   - Always runs full initialization
-   - Always cleans and recompiles
-   - Always runs database migration
-   - **Startup time**: 3-6 minutes every time
-   - **Use when**: First time setup, or if fast version has issues
+# Install dependencies
+pip install -r requirements.txt
 
-6. The application will be accessible at:
-   - 🌐 **Main App**: http://localhost:9000
-   - 📊 **Admin Panel**: http://localhost:9001
+# Run the server (auto-seeds airport data on first run)
+uvicorn app.main:app --reload --port 8000
+```
 
-### What's Improved?
-- ✅ **Reliable initialization** - No more spotty behavior! The init script now properly waits for MySQL and retries with exponential backoff
-- ✅ **Smart caching** - Fast startup skips unnecessary compilation if artifacts exist
-- ✅ **Database detection** - Automatically detects if initialization is needed
-- ✅ **Health checks** - Containers wait for dependencies to be ready
-- ✅ **Automated startup** - One command to init and start everything
-- ✅ **Better error messages** - Clear feedback when things go wrong
-- ✅ **Utility scripts** - Check status, troubleshoot issues easily
+The backend will:
+- Create the SQLite database automatically
+- Load 82,797 airports from the CSV data on first boot
+- Seed 24 aircraft models (from ATR-42 to A380)
+- Serve the API at `http://localhost:8000`
+- Auto-generate API docs at `http://localhost:8000/docs`
 
-### When to Use Each Version
+### 2. Frontend Setup
 
-**Use Fast Version (`start-all-fast.sh`)** when:
-- ✅ Database is already initialized
-- ✅ You've already run setup once
-- ✅ You're restarting after code changes
-- ✅ You want quick development iteration
-- ✅ Running daily/regular startups
+```bash
+cd frontend
 
-**Use Standard Version (`start-all.sh`)** when:
-- ✅ First time setup
-- ✅ Database is corrupted or empty
-- ✅ Fast version encounters errors
-- ✅ You want to ensure clean state
-- ✅ Major version upgrades
+# Install dependencies
+npm install
 
-### Manual Step-by-Step (if you prefer)
-1. Open shell: `docker compose exec airline-app bash`
-2. Run initialization: `bash init-data.sh` (robust retry logic - no more spotty behavior!)
-3. Start backend (separate terminal): `bash start-data.sh`
-4. Start frontend (separate terminal): `bash start-web.sh`
-5. Access at http://localhost:9000
+# Start development server
+npm run dev
+```
 
+The frontend runs at `http://localhost:5173` and proxies API calls to the backend.
 
-## Nginx Proxy w/ Cloudflare HTTPS
+### 3. Admin Panel Setup
 
-In Cloudflare go to your domain and then SSL/TLS > Origin Server. Click Create Certificate > Generate private key and CSR with Cloudflare > Drop down choose ECC > Create
+```bash
+cd admin
 
-Save your Origin Certificate and your Private Key to a file. Example:
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate
 
-Orgin Certificate: domain.com.crt
+# Install dependencies
+pip install -r requirements.txt
 
-Private Key: domain.com.key
+# Run the admin panel on port 9001
+uvicorn app:app --reload --port 9001
+```
 
-Example nginx virtualhost conf file:
+The admin panel is accessible at `http://localhost:9001`.
+
+## Docker Setup
+
+```bash
+# Start everything
+docker compose -f docker-compose.v2.yaml up -d
+```
+
+| Service | Port | URL |
+|---------|------|-----|
+| Backend API | 8000 | http://localhost:8000 |
+| Frontend | 5173 | http://localhost:5173 |
+| Admin Panel | 9001 | http://localhost:9001 |
+
+## Project Structure
 
 ```
+FlightForge/
+├── backend/                  # FastAPI backend
+│   ├── app/
+│   │   ├── main.py          # App entry point + startup
+│   │   ├── config.py        # Settings & environment
+│   │   ├── database.py      # SQLAlchemy setup
+│   │   ├── models/          # Database models
+│   │   │   ├── airport.py   # Airport, Runway, AirportFeature
+│   │   │   ├── airline.py   # Airline, AirlineBase, Loan, FinancialRecord
+│   │   │   ├── aircraft.py  # AircraftModel, Aircraft
+│   │   │   ├── route.py     # Route, RouteAssignment, RouteStatistics
+│   │   │   └── user.py      # User
+│   │   ├── routers/         # API endpoints
+│   │   │   ├── auth.py      # Register, login, JWT
+│   │   │   ├── airports.py  # Airport CRUD + search + map data
+│   │   │   ├── airlines.py  # Airline CRUD + bases + loans
+│   │   │   ├── aircraft.py  # Fleet management + marketplace
+│   │   │   ├── routes.py    # Route CRUD + pricing + assignments
+│   │   │   └── websocket.py # Real-time chat & notifications
+│   │   ├── schemas/         # Pydantic request/response models
+│   │   ├── services/
+│   │   │   └── simulation.py # Game cycle simulation engine
+│   │   └── utils/
+│   │       ├── auth.py      # JWT + password hashing
+│   │       └── data_loader.py # CSV airport importer + aircraft seeder
+│   ├── data/
+│   │   └── airports.csv     # 82,797 real-world airports
+│   └── requirements.txt
+├── frontend/                 # React frontend
+│   ├── src/
+│   │   ├── App.tsx          # Router + auth guard
+│   │   ├── components/
+│   │   │   ├── Auth/        # Login/register page
+│   │   │   ├── Layout/      # Sidebar + app layout
+│   │   │   └── Map/         # Interactive airport map
+│   │   ├── pages/
+│   │   │   ├── MapPage.tsx       # World map with airport search
+│   │   │   ├── DashboardPage.tsx # Airline overview + creation
+│   │   │   ├── FleetPage.tsx     # Fleet management
+│   │   │   ├── RoutesPage.tsx    # Route network management
+│   │   │   ├── FinancesPage.tsx  # Balance, loans, net worth
+│   │   │   ├── AirportsPage.tsx  # Airport directory
+│   │   │   └── MarketplacePage.tsx # Aircraft catalog
+│   │   ├── hooks/useAuth.ts      # Auth state management
+│   │   ├── services/api.ts       # API client
+│   │   └── types/index.ts        # TypeScript type definitions
+│   ├── package.json
+│   └── vite.config.ts
+├── admin/                    # Admin panel (port 9001)
+│   ├── app.py               # FastAPI admin API + dashboard
+│   ├── templates/
+│   │   └── dashboard.html   # Single-page admin UI
+│   └── requirements.txt
+└── airline-data/             # Legacy V1 data files (reference)
+    ├── airports.csv          # Source airport coordinate data
+    ├── runways.csv
+    └── destinations.csv
+```
+
+## Features
+
+### Player Features
+- **World Map** — Interactive Leaflet map with 82K+ real airports, search, and route visualization
+- **Airline Management** — Create and manage your airline with custom name, code, and branding
+- **Fleet Management** — Purchase from 24 real aircraft models (ATR-42 to A380), manage condition and assignments
+- **Route Network** — Create routes with auto-calculated distance and suggested pricing across 4 fare classes
+- **Finances** — Track balance, take loans, monitor cash flow
+- **Airport Browser** — Search and filter airports by size, country, name, or IATA code
+
+### Admin Features (port 9001)
+- **Server Monitoring** — Real-time CPU, memory, disk, and network metrics with color-coded alerts
+- **User Management** — Search users, view details, ban/unban accounts
+- **Airline Administration** — View all airlines, inspect routes/fleet/bases, reset or delete airlines
+- **Database Statistics** — Airport counts, fleet size, route network overview
+- **Game Control** — View current cycle, trigger simulation turns manually
+- **System Alerts** — Automatic warnings for resource thresholds
+
+## API Documentation
+
+With the backend running, visit:
+- **Swagger UI**: http://localhost:8000/docs
+- **ReDoc**: http://localhost:8000/redoc
+
+## Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `DATABASE_URL` | `sqlite:///./flightforge.db` | Database connection string |
+| `SECRET_KEY` | (built-in dev key) | JWT signing key — **change in production** |
+| `CORS_ORIGINS` | `["http://localhost:5173"]` | Allowed CORS origins |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | `1440` | JWT token lifetime |
+
+## Nginx Reverse Proxy
+
+Example nginx config for production with Cloudflare HTTPS:
+
+```nginx
 server {
+    listen 443 ssl http2;
+    server_name flightforge.app;
 
-  listen 443 ssl http2;
-  listen [::] ssl http2;
-  server_name domain.com;
+    ssl_certificate     /etc/ssl/flightforge.app.crt;
+    ssl_certificate_key /etc/ssl/flightforge.app.key;
 
-  ssl_certificate      /usr/local/nginx/conf/ssl/domain.com/domain.com.crt;
-  ssl_certificate_key  /usr/local/nginx/conf/ssl/domain.com/domain.com.key;
+    # Frontend
+    location / {
+        proxy_pass http://localhost:5173;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+    }
 
-  add_header X-Frame-Options SAMEORIGIN;
-  add_header X-Xss-Protection "1; mode=block" always;
-  add_header X-Content-Type-Options "nosniff" always;
-  add_header Referrer-Policy "strict-origin-when-cross-origin";
+    # Backend API
+    location /api {
+        proxy_pass http://localhost:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
 
-  access_log /home/nginx/domains/domain.com/log/access.log combined buffer=256k flush=5m;
-  error_log /home/nginx/domains/domain.com/log/error.log;
-
-  location /assets  {
-    alias    /home/airline/airline-web/public/;
-    access_log on;
-    expires 30d;
-  }
-
-  location / {
-    proxy_pass http://localhost:9000;
-    proxy_pass_header Content-Type;
-    proxy_read_timeout     60;
-    proxy_connect_timeout  60;
-    proxy_redirect         off;
-
-    # Allow the use of websockets
-    proxy_http_version 1.1;
-    proxy_set_header Upgrade $http_upgrade;
-    proxy_set_header Connection 'upgrade';
-    proxy_set_header Host $host;
-    proxy_cache_bypass $http_upgrade;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-  }
-
+    # WebSocket
+    location /ws {
+        proxy_pass http://localhost:8000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+    }
 }
 ```
 
 ## Attribution
-1. Some icons by [Yusuke Kamiyamane](http://p.yusukekamiyamane.com/). Licensed under a [Creative Commons Attribution 3.0 License](http://creativecommons.org/licenses/by/3.0/)
+- Airport data sourced from [OurAirports](https://ourairports.com/)
+- Some icons by [Yusuke Kamiyamane](http://p.yusukekamiyamane.com/) — [CC BY 3.0](http://creativecommons.org/licenses/by/3.0/)

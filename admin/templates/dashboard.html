@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlightForge Admin Panel</title>
+    <style>
+        :root {
+            --bg-primary: #020617;
+            --bg-card: #0f172a;
+            --bg-card-hover: #1e293b;
+            --bg-input: #1e293b;
+            --border: #334155;
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent: #0ea5e9;
+            --accent-hover: #38bdf8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #6366f1;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, system-ui, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.5;
+        }
+
+        /* Header */
+        .header {
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+        .header h1 span { color: var(--accent); }
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* Navigation */
+        .nav {
+            display: flex;
+            gap: 0.25rem;
+            padding: 0.75rem 1.5rem;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            overflow-x: auto;
+        }
+        .nav button {
+            padding: 0.5rem 1rem;
+            border: none;
+            background: none;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            cursor: pointer;
+            border-radius: 0.5rem;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+        .nav button:hover { color: var(--text-primary); background: var(--bg-input); }
+        .nav button.active { color: var(--accent); background: rgba(14,165,233,0.1); }
+
+        /* Content */
+        .content { padding: 1.5rem; max-width: 1400px; margin: 0 auto; }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+        }
+        .card h2 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--text-primary);
+        }
+        .card h3 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+        }
+
+        /* Grid */
+        .grid-4 { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1rem; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+        /* Stat boxes */
+        .stat-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 1rem 1.25rem;
+        }
+        .stat-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+        .stat-value { font-size: 1.75rem; font-weight: 700; margin-top: 0.25rem; }
+        .stat-value.accent { color: var(--accent); }
+        .stat-value.success { color: var(--success); }
+        .stat-value.warning { color: var(--warning); }
+        .stat-value.danger { color: var(--danger); }
+
+        /* Progress bars */
+        .progress-bar {
+            background: var(--bg-input);
+            border-radius: 0.5rem;
+            height: 0.5rem;
+            margin-top: 0.5rem;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            border-radius: 0.5rem;
+            transition: width 0.5s ease;
+        }
+        .progress-fill.green { background: var(--success); }
+        .progress-fill.yellow { background: var(--warning); }
+        .progress-fill.red { background: var(--danger); }
+
+        /* Tables */
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        th {
+            text-align: left;
+            padding: 0.6rem 0.75rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid var(--border);
+        }
+        td {
+            padding: 0.6rem 0.75rem;
+            border-bottom: 1px solid rgba(51,65,85,0.5);
+            color: var(--text-secondary);
+        }
+        tr:hover td { background: rgba(14,165,233,0.03); }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 0.15rem 0.5rem;
+            border-radius: 9999px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .badge-green { background: rgba(16,185,129,0.15); color: var(--success); }
+        .badge-red { background: rgba(239,68,68,0.15); color: var(--danger); }
+        .badge-yellow { background: rgba(245,158,11,0.15); color: var(--warning); }
+        .badge-blue { background: rgba(14,165,233,0.15); color: var(--accent); }
+        .badge-purple { background: rgba(99,102,241,0.15); color: var(--info); }
+
+        /* Buttons */
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-primary { background: var(--accent); color: white; }
+        .btn-primary:hover { background: var(--accent-hover); }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-danger:hover { background: #dc2626; }
+        .btn-sm { padding: 0.3rem 0.6rem; font-size: 0.75rem; }
+
+        /* Inputs */
+        input[type="text"], input[type="search"] {
+            padding: 0.5rem 0.75rem;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            outline: none;
+            width: 100%;
+        }
+        input:focus { border-color: var(--accent); }
+
+        /* Alerts */
+        .alert {
+            padding: 0.6rem 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .alert-ok { background: rgba(16,185,129,0.1); color: var(--success); border: 1px solid rgba(16,185,129,0.2); }
+        .alert-warning { background: rgba(245,158,11,0.1); color: var(--warning); border: 1px solid rgba(245,158,11,0.2); }
+        .alert-critical { background: rgba(239,68,68,0.1); color: var(--danger); border: 1px solid rgba(239,68,68,0.2); }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 200;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            max-width: 700px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        .modal-close:hover { color: var(--text-primary); }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-top: 1rem;
+            align-items: center;
+        }
+        .pagination button {
+            padding: 0.4rem 0.8rem;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+        .pagination button:hover { background: var(--bg-card-hover); color: var(--text-primary); }
+        .pagination button:disabled { opacity: 0.4; cursor: not-allowed; }
+        .pagination span { font-size: 0.8rem; color: var(--text-muted); }
+
+        /* Tab sections */
+        .section { display: none; }
+        .section.active { display: block; }
+
+        .monospace { font-family: 'JetBrains Mono', 'Fira Code', monospace; }
+        .text-right { text-align: right; }
+        .mt-1 { margin-top: 0.5rem; }
+        .mb-1 { margin-bottom: 0.5rem; }
+        .flex-between { display: flex; justify-content: space-between; align-items: center; }
+        .gap-2 { gap: 0.5rem; }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <h1><span>Flight</span>Forge <span style="font-weight:400;font-size:0.85rem;color:var(--text-muted)">Admin v2</span></h1>
+        <div class="header-right">
+            <div id="alert-indicator"></div>
+            <span id="clock"></span>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav" id="nav">
+        <button class="active" onclick="showSection('overview')">Overview</button>
+        <button onclick="showSection('monitoring')">Server Monitor</button>
+        <button onclick="showSection('users')">Users</button>
+        <button onclick="showSection('airlines')">Airlines</button>
+        <button onclick="showSection('database')">Database</button>
+        <button onclick="showSection('game')">Game Control</button>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+
+        <!-- ======== OVERVIEW ======== -->
+        <div id="section-overview" class="section active">
+            <div id="alerts-container" class="mb-1"></div>
+            <div class="grid-4" id="overview-stats"></div>
+            <div class="grid-2" style="margin-top:1rem">
+                <div class="card">
+                    <h2>Top Airlines</h2>
+                    <table>
+                        <thead><tr><th>Airline</th><th>Code</th><th class="text-right">Balance</th><th class="text-right">Rep</th></tr></thead>
+                        <tbody id="top-airlines-body"></tbody>
+                    </table>
+                </div>
+                <div class="card">
+                    <h2>Busiest Routes</h2>
+                    <table>
+                        <thead><tr><th>Route</th><th>Airline</th><th class="text-right">Dist</th><th class="text-right">Freq</th></tr></thead>
+                        <tbody id="busiest-routes-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ======== SERVER MONITORING ======== -->
+        <div id="section-monitoring" class="section">
+            <div class="grid-4" id="resource-cards"></div>
+            <div class="grid-2" style="margin-top:1rem">
+                <div class="card">
+                    <h2>System Info</h2>
+                    <div id="system-info"></div>
+                </div>
+                <div class="card">
+                    <h2>Alerts</h2>
+                    <div id="monitor-alerts"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ======== USERS ======== -->
+        <div id="section-users" class="section">
+            <div class="card">
+                <div class="flex-between mb-1">
+                    <h2>User Management</h2>
+                    <div style="display:flex;gap:0.5rem;align-items:center">
+                        <input type="search" id="user-search" placeholder="Search users..." style="width:250px" oninput="debounceUserSearch()">
+                    </div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th><th>Username</th><th>Email</th><th>Status</th><th>Admin</th><th>Airlines</th><th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="users-body"></tbody>
+                </table>
+                <div class="pagination" id="user-pagination"></div>
+            </div>
+        </div>
+
+        <!-- ======== AIRLINES ======== -->
+        <div id="section-airlines" class="section">
+            <div class="card">
+                <h2>All Airlines</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th><th>Name</th><th>Code</th><th>Owner</th>
+                            <th class="text-right">Balance</th><th class="text-right">Rep</th>
+                            <th>Routes</th><th>Fleet</th><th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="airlines-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ======== DATABASE ======== -->
+        <div id="section-database" class="section">
+            <div class="grid-4" id="db-stats"></div>
+            <div class="card" style="margin-top:1rem">
+                <h2>Route Network</h2>
+                <div id="route-overview"></div>
+            </div>
+        </div>
+
+        <!-- ======== GAME CONTROL ======== -->
+        <div id="section-game" class="section">
+            <div class="grid-3">
+                <div class="card">
+                    <h2>Game Cycle</h2>
+                    <div id="cycle-info"></div>
+                    <button class="btn btn-primary mt-1" onclick="triggerTurn()">Trigger Turn</button>
+                </div>
+                <div class="card">
+                    <h2>Recent Airlines</h2>
+                    <div id="recent-airlines"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Detail Modal -->
+    <div class="modal-overlay" id="user-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="modal-title">User Details</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div id="modal-content"></div>
+        </div>
+    </div>
+
+    <!-- Airline Detail Modal -->
+    <div class="modal-overlay" id="airline-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="airline-modal-title">Airline Details</h2>
+                <button class="modal-close" onclick="closeAirlineModal()">&times;</button>
+            </div>
+            <div id="airline-modal-content"></div>
+        </div>
+    </div>
+
+<script>
+// ======== State ========
+let currentSection = 'overview';
+let userPage = 1;
+let userSearch = '';
+let userSearchTimer = null;
+
+// ======== Navigation ========
+function showSection(name) {
+    currentSection = name;
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.getElementById('section-' + name).classList.add('active');
+    document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+    refreshSection(name);
+}
+
+function refreshSection(name) {
+    if (name === 'overview') { loadOverview(); loadAlerts(); }
+    if (name === 'monitoring') { loadResources(); loadAlerts(); }
+    if (name === 'users') loadUsers();
+    if (name === 'airlines') loadAirlines();
+    if (name === 'database') { loadDbStats(); loadRouteOverview(); }
+    if (name === 'game') loadGameInfo();
+}
+
+// ======== Helpers ========
+function fmt(n) { return n != null ? Number(n).toLocaleString() : '0'; }
+function fmtMoney(n) { return '$' + (n / 1e6).toFixed(1) + 'M'; }
+function progressClass(pct) { return pct >= 85 ? 'red' : pct >= 60 ? 'yellow' : 'green'; }
+
+async function api(path, opts) {
+    const res = await fetch('/api/' + path, opts);
+    return res.json();
+}
+
+// ======== Clock ========
+function updateClock() {
+    document.getElementById('clock').textContent = new Date().toLocaleTimeString();
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ======== Alerts ========
+async function loadAlerts() {
+    const data = await api('alerts');
+    const container = document.getElementById('alerts-container');
+    const monitor = document.getElementById('monitor-alerts');
+    const indicator = document.getElementById('alert-indicator');
+    let html = '';
+    let hasIssue = false;
+
+    data.alerts.forEach(a => {
+        const icon = a.level === 'ok' ? '&#10003;' : a.level === 'warning' ? '&#9888;' : '&#10007;';
+        html += `<div class="alert alert-${a.level}">${icon} ${a.message}</div>`;
+        if (a.level !== 'ok') hasIssue = true;
+    });
+
+    if (container) container.innerHTML = html;
+    if (monitor) monitor.innerHTML = html;
+    indicator.innerHTML = hasIssue
+        ? '<span class="badge badge-red">Issues</span>'
+        : '<span class="badge badge-green">Healthy</span>';
+}
+
+// ======== Overview ========
+async function loadOverview() {
+    const [stats, dbStats, activity] = await Promise.all([
+        api('stats'),
+        api('database/stats'),
+        api('game/activity'),
+    ]);
+
+    document.getElementById('overview-stats').innerHTML = `
+        <div class="stat-box"><div class="stat-label">Total Users</div><div class="stat-value accent">${fmt(stats.total_users)}</div></div>
+        <div class="stat-box"><div class="stat-label">Active Airlines</div><div class="stat-value success">${fmt(dbStats.active_airlines)}</div></div>
+        <div class="stat-box"><div class="stat-label">Active Routes</div><div class="stat-value warning">${fmt(dbStats.active_routes)}</div></div>
+        <div class="stat-box"><div class="stat-label">Total Aircraft</div><div class="stat-value accent">${fmt(dbStats.active_aircraft)}</div></div>
+    `;
+
+    // Top airlines
+    let topHtml = '';
+    (activity.top_airlines || []).forEach(a => {
+        topHtml += `<tr>
+            <td style="color:var(--text-primary)">${a.name}</td>
+            <td><span class="monospace" style="color:var(--accent)">${a.airline_code}</span></td>
+            <td class="text-right">${fmtMoney(a.balance)}</td>
+            <td class="text-right">${Number(a.reputation).toFixed(1)}</td>
+        </tr>`;
+    });
+    document.getElementById('top-airlines-body').innerHTML = topHtml || '<tr><td colspan="4" style="color:var(--text-muted)">No airlines yet</td></tr>';
+
+    // Busiest routes
+    let routeHtml = '';
+    (activity.busiest_routes || []).forEach(r => {
+        routeHtml += `<tr>
+            <td><span class="monospace" style="color:var(--accent)">${r.from_iata}</span> &rarr; <span class="monospace" style="color:var(--accent)">${r.to_iata}</span></td>
+            <td>${r.airline_name}</td>
+            <td class="text-right">${fmt(r.distance)} mi</td>
+            <td class="text-right">${r.frequency}x</td>
+        </tr>`;
+    });
+    document.getElementById('busiest-routes-body').innerHTML = routeHtml || '<tr><td colspan="4" style="color:var(--text-muted)">No routes yet</td></tr>';
+}
+
+// ======== Server Resources ========
+async function loadResources() {
+    const data = await api('server/resources');
+    const c = data;
+
+    document.getElementById('resource-cards').innerHTML = `
+        <div class="stat-box">
+            <div class="stat-label">CPU Usage</div>
+            <div class="stat-value ${progressClass(c.cpu.percent)}">${c.cpu.percent}%</div>
+            <div style="font-size:0.75rem;color:var(--text-muted)">${c.cpu.cores} cores @ ${c.cpu.frequency_mhz} MHz</div>
+            <div class="progress-bar"><div class="progress-fill ${progressClass(c.cpu.percent)}" style="width:${c.cpu.percent}%"></div></div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-label">Memory</div>
+            <div class="stat-value ${progressClass(c.memory.percent)}">${c.memory.percent}%</div>
+            <div style="font-size:0.75rem;color:var(--text-muted)">${c.memory.used_gb} / ${c.memory.total_gb} GB</div>
+            <div class="progress-bar"><div class="progress-fill ${progressClass(c.memory.percent)}" style="width:${c.memory.percent}%"></div></div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-label">Disk</div>
+            <div class="stat-value ${progressClass(c.disk.percent)}">${c.disk.percent}%</div>
+            <div style="font-size:0.75rem;color:var(--text-muted)">${c.disk.used_gb} / ${c.disk.total_gb} GB</div>
+            <div class="progress-bar"><div class="progress-fill ${progressClass(c.disk.percent)}" style="width:${c.disk.percent}%"></div></div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-label">Network I/O</div>
+            <div class="stat-value accent">${c.network.bytes_sent_gb} GB</div>
+            <div style="font-size:0.75rem;color:var(--text-muted)">Sent: ${c.network.bytes_sent_gb} GB | Recv: ${c.network.bytes_recv_gb} GB</div>
+        </div>
+    `;
+
+    document.getElementById('system-info').innerHTML = `
+        <table>
+            <tr><td>Platform</td><td>${c.system.platform}</td></tr>
+            <tr><td>Python</td><td>${c.system.python_version}</td></tr>
+            <tr><td>Uptime</td><td>${c.system.uptime_hours} hours</td></tr>
+            <tr><td>Processes</td><td>${c.system.process_count}</td></tr>
+            <tr><td>Boot Time</td><td>${new Date(c.system.boot_time).toLocaleString()}</td></tr>
+            <tr><td>Swap</td><td>${c.swap.used_gb} / ${c.swap.total_gb} GB (${c.swap.percent}%)</td></tr>
+        </table>
+    `;
+}
+
+// ======== Users ========
+function debounceUserSearch() {
+    clearTimeout(userSearchTimer);
+    userSearchTimer = setTimeout(() => {
+        userSearch = document.getElementById('user-search').value;
+        userPage = 1;
+        loadUsers();
+    }, 500);
+}
+
+async function loadUsers() {
+    const params = new URLSearchParams({ page: userPage, per_page: 50 });
+    if (userSearch) params.set('search', userSearch);
+    const data = await api('users?' + params);
+
+    let html = '';
+    (data.users || []).forEach(u => {
+        const statusBadge = u.is_active
+            ? '<span class="badge badge-green">Active</span>'
+            : '<span class="badge badge-red">Banned</span>';
+        const adminBadge = u.is_admin ? '<span class="badge badge-purple">Admin</span>' : '';
+        const airlines = (u.airlines || []).map(a => `<span class="badge badge-blue">${a.airline_code}</span>`).join(' ');
+
+        html += `<tr>
+            <td class="monospace">${u.id}</td>
+            <td style="color:var(--text-primary);font-weight:500">${u.username}</td>
+            <td>${u.email}</td>
+            <td>${statusBadge}</td>
+            <td>${adminBadge}</td>
+            <td>${airlines || '<span style="color:var(--text-muted)">None</span>'}</td>
+            <td>
+                <button class="btn btn-sm btn-primary" onclick="viewUser(${u.id})">View</button>
+                ${u.is_active
+                    ? `<button class="btn btn-sm btn-danger" onclick="banUser(${u.id})">Ban</button>`
+                    : `<button class="btn btn-sm" style="background:var(--success);color:white" onclick="unbanUser(${u.id})">Unban</button>`
+                }
+            </td>
+        </tr>`;
+    });
+    document.getElementById('users-body').innerHTML = html || '<tr><td colspan="7" style="color:var(--text-muted)">No users found</td></tr>';
+
+    // Pagination
+    const pages = data.pages || 1;
+    let pagHtml = `<button ${userPage <= 1 ? 'disabled' : ''} onclick="userPage--;loadUsers()">Prev</button>`;
+    pagHtml += `<span>Page ${userPage} of ${pages} (${data.total} total)</span>`;
+    pagHtml += `<button ${userPage >= pages ? 'disabled' : ''} onclick="userPage++;loadUsers()">Next</button>`;
+    document.getElementById('user-pagination').innerHTML = pagHtml;
+}
+
+async function viewUser(id) {
+    const data = await api('users/' + id);
+    document.getElementById('modal-title').textContent = data.username || 'User ' + id;
+
+    let html = `
+        <table>
+            <tr><td><strong>ID</strong></td><td>${data.id}</td></tr>
+            <tr><td><strong>Username</strong></td><td>${data.username}</td></tr>
+            <tr><td><strong>Email</strong></td><td>${data.email}</td></tr>
+            <tr><td><strong>Active</strong></td><td>${data.is_active ? '<span class="badge badge-green">Yes</span>' : '<span class="badge badge-red">No</span>'}</td></tr>
+            <tr><td><strong>Admin</strong></td><td>${data.is_admin ? '<span class="badge badge-purple">Yes</span>' : 'No'}</td></tr>
+            <tr><td><strong>Created</strong></td><td>${data.created_at || 'N/A'}</td></tr>
+            <tr><td><strong>Last Login</strong></td><td>${data.last_login || 'Never'}</td></tr>
+        </table>
+    `;
+
+    if (data.airlines && data.airlines.length > 0) {
+        html += '<h3 style="margin-top:1rem">Airlines</h3><table><thead><tr><th>Name</th><th>Code</th><th>Balance</th><th>Reputation</th><th>Type</th></tr></thead><tbody>';
+        data.airlines.forEach(a => {
+            html += `<tr>
+                <td>${a.name}</td>
+                <td class="monospace" style="color:var(--accent)">${a.airline_code}</td>
+                <td>${fmtMoney(a.balance)}</td>
+                <td>${Number(a.reputation || 0).toFixed(1)}</td>
+                <td><span class="badge badge-blue">${a.airline_type}</span></td>
+            </tr>`;
+        });
+        html += '</tbody></table>';
+    }
+
+    document.getElementById('modal-content').innerHTML = html;
+    document.getElementById('user-modal').classList.add('open');
+}
+
+function closeModal() { document.getElementById('user-modal').classList.remove('open'); }
+
+async function banUser(id) {
+    if (!confirm('Ban this user?')) return;
+    await api('admin/ban-user/' + id, { method: 'POST' });
+    loadUsers();
+}
+async function unbanUser(id) {
+    if (!confirm('Unban this user?')) return;
+    await api('admin/unban-user/' + id, { method: 'POST' });
+    loadUsers();
+}
+
+// ======== Airlines ========
+async function loadAirlines() {
+    const data = await api('airlines/all');
+    let html = '';
+    (data.airlines || []).forEach(a => {
+        const activeBadge = a.is_active
+            ? '<span class="badge badge-green">Active</span>'
+            : '<span class="badge badge-red">Inactive</span>';
+        html += `<tr>
+            <td class="monospace">${a.id}</td>
+            <td style="color:var(--text-primary);font-weight:500">${a.name}</td>
+            <td class="monospace" style="color:var(--accent)">${a.airline_code}</td>
+            <td>${a.owner_name || '<span style="color:var(--text-muted)">None</span>'}</td>
+            <td class="text-right">${fmtMoney(a.balance)}</td>
+            <td class="text-right">${Number(a.reputation || 0).toFixed(1)}</td>
+            <td>${a.route_count}</td>
+            <td>${a.aircraft_count}</td>
+            <td>
+                <button class="btn btn-sm btn-primary" onclick="viewAirline(${a.id})">View</button>
+                <button class="btn btn-sm" style="background:var(--warning);color:white" onclick="resetAirline(${a.id},'${a.name}')">Reset</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteAirline(${a.id},'${a.name}')">Delete</button>
+            </td>
+        </tr>`;
+    });
+    document.getElementById('airlines-body').innerHTML = html || '<tr><td colspan="9" style="color:var(--text-muted)">No airlines</td></tr>';
+}
+
+async function viewAirline(id) {
+    const data = await api('airlines/' + id + '/detail');
+    if (data.error) { alert(data.error); return; }
+
+    document.getElementById('airline-modal-title').textContent = data.name + ' (' + data.airline_code + ')';
+
+    let html = `
+        <div class="grid-3" style="margin-bottom:1rem">
+            <div class="stat-box"><div class="stat-label">Balance</div><div class="stat-value success">${fmtMoney(data.balance)}</div></div>
+            <div class="stat-box"><div class="stat-label">Reputation</div><div class="stat-value accent">${Number(data.reputation || 0).toFixed(1)}</div></div>
+            <div class="stat-box"><div class="stat-label">Service Quality</div><div class="stat-value warning">${Number(data.service_quality || 0).toFixed(1)}</div></div>
+        </div>
+    `;
+
+    if (data.bases && data.bases.length > 0) {
+        html += '<h3>Bases</h3><table><thead><tr><th>IATA</th><th>Airport</th><th>City</th><th>Type</th><th>Scale</th></tr></thead><tbody>';
+        data.bases.forEach(b => {
+            html += `<tr><td class="monospace" style="color:var(--accent)">${b.iata}</td><td>${b.airport_name}</td><td>${b.city || ''}</td><td><span class="badge badge-blue">${b.base_type}</span></td><td>${b.scale}</td></tr>`;
+        });
+        html += '</tbody></table>';
+    }
+
+    if (data.routes && data.routes.length > 0) {
+        html += '<h3 style="margin-top:1rem">Routes (top 20)</h3><table><thead><tr><th>Route</th><th>Dist</th><th>Freq</th><th>Econ $</th><th>Bus $</th><th>Quality</th></tr></thead><tbody>';
+        data.routes.forEach(r => {
+            html += `<tr>
+                <td><span class="monospace" style="color:var(--accent)">${r.from_iata}</span> &rarr; <span class="monospace" style="color:var(--accent)">${r.to_iata}</span></td>
+                <td>${fmt(r.distance)} mi</td>
+                <td>${r.frequency}x</td>
+                <td>$${r.price_economy}</td>
+                <td>$${r.price_business}</td>
+                <td>${r.raw_quality}</td>
+            </tr>`;
+        });
+        html += '</tbody></table>';
+    }
+
+    if (data.fleet && data.fleet.length > 0) {
+        html += '<h3 style="margin-top:1rem">Fleet</h3><table><thead><tr><th>Aircraft</th><th>Count</th><th>Avg Condition</th></tr></thead><tbody>';
+        data.fleet.forEach(f => {
+            html += `<tr><td>${f.model_name}</td><td>${f.count}</td><td>${f.avg_condition}%</td></tr>`;
+        });
+        html += '</tbody></table>';
+    }
+
+    document.getElementById('airline-modal-content').innerHTML = html;
+    document.getElementById('airline-modal').classList.add('open');
+}
+
+function closeAirlineModal() { document.getElementById('airline-modal').classList.remove('open'); }
+
+async function resetAirline(id, name) {
+    if (!confirm(`Reset airline "${name}"? This will delete all routes, aircraft, and bases, and reset balance to $50M.`)) return;
+    const data = await api('admin/reset-airline/' + id, { method: 'POST' });
+    alert(data.message || data.error);
+    loadAirlines();
+}
+
+async function deleteAirline(id, name) {
+    if (!confirm(`PERMANENTLY DELETE airline "${name}"? This cannot be undone!`)) return;
+    if (!confirm(`Are you absolutely sure? "${name}" will be gone forever.`)) return;
+    const data = await api('admin/delete-airline/' + id, { method: 'DELETE' });
+    alert(data.message || data.error);
+    loadAirlines();
+}
+
+// ======== Database ========
+async function loadDbStats() {
+    const data = await api('database/stats');
+    document.getElementById('db-stats').innerHTML = `
+        <div class="stat-box"><div class="stat-label">Airports</div><div class="stat-value accent">${fmt(data.total_airports)}</div><div style="font-size:0.75rem;color:var(--text-muted)">${fmt(data.large_airports)} large, ${fmt(data.medium_airports)} medium</div></div>
+        <div class="stat-box"><div class="stat-label">Airlines</div><div class="stat-value success">${fmt(data.active_airlines)}</div><div style="font-size:0.75rem;color:var(--text-muted)">${fmt(data.total_airlines)} total</div></div>
+        <div class="stat-box"><div class="stat-label">Aircraft</div><div class="stat-value warning">${fmt(data.active_aircraft)}</div><div style="font-size:0.75rem;color:var(--text-muted)">${fmt(data.total_aircraft)} total, ${fmt(data.aircraft_models)} models</div></div>
+        <div class="stat-box"><div class="stat-label">Database Size</div><div class="stat-value accent">${data.db_size_mb} MB</div><div style="font-size:0.75rem;color:var(--text-muted)">${fmt(data.total_loans)} active loans, ${fmt(data.airline_bases)} bases</div></div>
+    `;
+}
+
+async function loadRouteOverview() {
+    const data = await api('routes/overview');
+    let html = `
+        <div class="grid-4" style="margin-bottom:1rem">
+            <div class="stat-box"><div class="stat-label">Active Routes</div><div class="stat-value accent">${fmt(data.total_routes)}</div></div>
+            <div class="stat-box"><div class="stat-label">Total Distance</div><div class="stat-value success">${fmt(data.total_distance)} mi</div></div>
+            <div class="stat-box"><div class="stat-label">Avg Frequency</div><div class="stat-value warning">${data.avg_frequency}x/wk</div></div>
+            <div class="stat-box"><div class="stat-label">Avg Distance</div><div class="stat-value accent">${fmt(data.avg_distance)} mi</div></div>
+        </div>
+    `;
+    if (data.busiest_airports && data.busiest_airports.length > 0) {
+        html += '<h3>Busiest Airports</h3><table><thead><tr><th>IATA</th><th>Airport</th><th class="text-right">Routes</th></tr></thead><tbody>';
+        data.busiest_airports.forEach(a => {
+            html += `<tr><td class="monospace" style="color:var(--accent)">${a.iata}</td><td>${a.name}</td><td class="text-right">${a.route_count}</td></tr>`;
+        });
+        html += '</tbody></table>';
+    }
+    document.getElementById('route-overview').innerHTML = html;
+}
+
+// ======== Game Control ========
+async function loadGameInfo() {
+    const [cycle, activity] = await Promise.all([
+        api('game/cycle'),
+        api('game/activity'),
+    ]);
+
+    document.getElementById('cycle-info').innerHTML = `
+        <div class="stat-box" style="margin-bottom:0.5rem">
+            <div class="stat-label">Current Cycle</div>
+            <div class="stat-value accent">${cycle.cycle}</div>
+            <div style="font-size:0.85rem;color:var(--text-muted)">Week ${cycle.week}, Year ${cycle.year}</div>
+        </div>
+    `;
+
+    let recentHtml = '';
+    (activity.recent_airlines || []).forEach(a => {
+        recentHtml += `<div style="display:flex;justify-content:space-between;padding:0.4rem 0;border-bottom:1px solid var(--border)">
+            <span>${a.name} <span class="monospace" style="color:var(--accent)">${a.airline_code}</span></span>
+            <span style="color:var(--success)">${fmtMoney(a.balance)}</span>
+        </div>`;
+    });
+    document.getElementById('recent-airlines').innerHTML = recentHtml || '<div style="color:var(--text-muted)">No airlines yet</div>';
+}
+
+async function triggerTurn() {
+    if (!confirm('Trigger a game turn? This will advance the simulation cycle.')) return;
+    const data = await api('admin/trigger-turn', { method: 'POST' });
+    alert(data.message);
+    loadGameInfo();
+}
+
+// ======== Auto-refresh ========
+setInterval(() => {
+    if (currentSection === 'monitoring') loadResources();
+    loadAlerts();
+}, 5000);
+
+setInterval(() => {
+    if (currentSection === 'overview') loadOverview();
+}, 60000);
+
+// ======== Init ========
+loadOverview();
+loadAlerts();
+</script>
+</body>
+</html>
