@@ -1,6 +1,6 @@
 package controllers
 
-import com.patson.data.{AirlineSource, AllianceSource, CycleSource, FileSource, LinkSource, UserSource}
+import com.patson.data.{AirlineSource, AllianceSource, CycleSource, LinkSource, UserSource}
 import com.patson.model.AllianceEvent._
 import com.patson.model.AllianceRole._
 import com.patson.model.AllianceStatus._
@@ -232,18 +232,7 @@ class AllianceApplication @Inject()(cc: ControllerComponents) extends AbstractCo
   }
 
   def getAllianceLogo(allianceId: Int) = Action { request =>
-    try {
-      val logos = FileSource.loadLogos("alliance")
-      logos.get(allianceId) match {
-        case Some(logoBytes) =>
-          Ok(logoBytes).as("image/png")
-        case None =>
-          NotFound("Alliance logo not found")
-      }
-    } catch {
-      case e: Exception =>
-        InternalServerError(s"Failed to load logo: ${e.getMessage}")
-    }
+    Ok(LogoUtil.getAllianceLogo(allianceId)).as("image/png")
   }
 
 
@@ -646,11 +635,9 @@ class AllianceApplication @Inject()(cc: ControllerComponents) extends AbstractCo
       case None =>
         NotFound(s"Alliance with id $allianceId is not found")
       case Some(alliance) =>
-        // Check if alliance is established
         if (alliance.status != ESTABLISHED) {
           BadRequest("Cannot save logo for a non-established alliance")
         } else {
-          // Check if the current airline is a leader
           val isAdmin = alliance.members.exists(member =>
             member.airline.id == request.user.id && AllianceRole.isAdmin(member.role)
           )
@@ -658,24 +645,27 @@ class AllianceApplication @Inject()(cc: ControllerComponents) extends AbstractCo
           if (!isAdmin) {
             Forbidden("Only alliance leaders can save alliance logos")
           } else {
-            // Extract logo data from request body (multipart form data)
             request.body.asMultipartFormData.map { data =>
               data.file("logoFile").map { logoFile =>
-                try {
-                  val logoBytes = java.nio.file.Files.readAllBytes(logoFile.ref.path)
-                  FileSource.saveLogo(allianceId, "alliance", logoBytes)
-                  Ok(Json.obj("success" -> JsString("File uploaded")))
-                } catch {
-                  case e: IllegalArgumentException =>
-                    Ok(Json.obj("error" -> JsString(e.getMessage)))
-                  case e: Exception =>
-                    Ok(Json.obj("error" -> JsString(s"Failed to save logo: ${e.getMessage}")))
+                val logoPath = logoFile.ref.path
+                LogoUtil.validateUpload(logoPath) match {
+                  case Some(rejection) =>
+                    BadRequest(Json.obj("error" -> JsString(rejection)))
+                  case None =>
+                    try {
+                      val logoBytes = java.nio.file.Files.readAllBytes(logoPath)
+                      LogoUtil.saveAllianceLogo(allianceId, logoBytes)
+                      Ok(Json.obj("success" -> JsString("File uploaded")))
+                    } catch {
+                      case e: IllegalArgumentException =>
+                        BadRequest(Json.obj("error" -> JsString(e.getMessage)))
+                    }
                 }
               }.getOrElse {
-                Ok(Json.obj("error" -> JsString("Cannot find uploaded file")))
+                BadRequest(Json.obj("error" -> JsString("Cannot find uploaded file")))
               }
             }.getOrElse {
-              Ok(Json.obj("error" -> JsString("Invalid request format")))
+              BadRequest(Json.obj("error" -> JsString("Invalid request format")))
             }
           }
         }

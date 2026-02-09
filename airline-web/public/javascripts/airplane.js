@@ -141,6 +141,15 @@ async function showAirplaneCanvas(selectedAircraftTab = 'hangar', airplaneModel 
     if (selectedAircraftTab === 'market') {
         document.querySelector('.details.market').style.display = 'block';
         document.querySelector('.details.hangar').style.display = 'none';
+        
+        const $hideForbidden = $('#toggleHideForbiddenPlanes');
+        if (!$hideForbidden.data('listener-attached')) {
+            $hideForbidden.on('change', function() {
+                updateAirplaneModelTable();
+            });
+            $hideForbidden.data('listener-attached', true);
+        }
+
         updateAirplaneModelTable();
         showAirplaneModelTableFilters()
     } else {
@@ -189,7 +198,13 @@ function updateAirplaneModelTable(sortProperty, sortOrder) {
      //used for pricing calculation
     const {rangeRequirement, airportFromSizeRequirement, airportToSizeRequirement} = airplaneModelCalculator()
 	
+    const hideForbidden = $('#hideForbiddenPlanes').is(':checked');
+
 	$.each(loadedModelsOwnerInfo, function(index, modelOwnerInfo) {
+        if (hideForbidden && modelOwnerInfo.rejection) {
+            return;
+        }
+
 		var row = $("<div class='table-row clickable' data-model-id='" + modelOwnerInfo.id + "' onclick='selectAirplaneModel(loadedModelsById[" + modelOwnerInfo.id + "])'></div>")
 		var stars = $("<div class='cell' align='right'>").append(getGradeStarsImgs(modelOwnerInfo.quality)).append("</div>")
 		var capacity = modelOwnerInfo.capacity
@@ -756,18 +771,13 @@ function updateModelInfo(modelId) {
 		$('#airplaneModelDetails .delivery').addClass('warning')
 		$('#airplaneModelDetails .add').text('Place Order')
 	}
-
-	if (model.quality === 10) {
-	    $('.aircraft-note').show()
-	    $('.aircraftNote .note').text('Five star aircraft can only have premium seats.')
-	} else {
-	    $('.aircraftNote').hide()
-	}
 	
 	if (model.rejection) {
 		disableButton($('#airplaneModelDetails .add'), model.rejection)
+		$('#airplaneModelDetails .canPurchase').text(model.rejection)
 	} else {
 		enableButton($('#airplaneModelDetails .add'))
+		$('#airplaneModelDetails .canPurchase').text('✓')
 	}
 }
 
@@ -852,8 +862,10 @@ function selectAirplaneModel(model) {
 
 	if (model.rejection) {
 		disableButton($('#airplaneCanvas .add'), model.rejection)
+		$('#airplaneCanvas .canPurchase').text(model.rejection)
 	} else {
 		enableButton($('#airplaneCanvas .add'))
+		$('#airplaneCanvas .canPurchase').text('✓')
 	}
 	loadAirplaneModelStats(model)
 
@@ -1938,10 +1950,73 @@ function getAssignedAirplanesCount(compareKey, compareValue, modelId) {
 }
 
 function promptSwapModels() {
-    if (!selectedModel) {
-        console.warn("No model selected for swap");
+    if (storeSelectedAirplaneIds.length < 1) {
+        const infoEl = document.getElementById('promptSwapModelsWarning');
+        if (infoEl) infoEl.innerText = "No aircraft selected for swap";
         return;
     }
+
+    let modelId = null;
+    for (const airplaneId of storeSelectedAirplaneIds) {
+        let foundModelId = null;
+        for (const model of loadedModelsOwnerInfo) {
+            const allAirplanes = [...model.assignedAirplanes, ...model.availableAirplanes, ...model.constructingAirplanes];
+            if (allAirplanes.some(a => a.id === airplaneId)) {
+                foundModelId = model.id;
+                break;
+            }
+        }
+        
+        if (foundModelId === null) {
+            console.error("Could not find model for airplane ID " + airplaneId);
+            continue;
+        }
+
+        if (modelId === null) {
+            modelId = foundModelId;
+        } else if (modelId !== foundModelId) {
+             const infoEl = document.getElementById('promptSwapModelsWarning');
+             if (infoEl) infoEl.innerText = "Selected aircraft must all be of the same model";
+             return;
+        }
+    }
+
+    if (modelId === null) return;
+
+    const storeSelectedAirplaneIdsModelId = modelId;
+    const selectedAirplaneModel = loadedModelsById[storeSelectedAirplaneIdsModelId];
+
+    $('#swapAirplaneModal .modelName').text(selectedAirplaneModel.name);
+    $('#swapAirplaneModal .airplaneIds').text(storeSelectedAirplaneIds.join(', '));
+    
+    // Populate old model stats
+    $('#swapAirplaneModal .oldModelName').text(selectedAirplaneModel.name);
+    $('#swapAirplaneModal .oldPrice').text("$" + commaSeparateNumber(selectedAirplaneModel.price));
+    $('#swapAirplaneModal .oldRange').text(selectedAirplaneModel.range + " km");
+    $('#swapAirplaneModal .oldAscent').text(selectedAirplaneModel.ascentBurn);
+    $('#swapAirplaneModal .oldCruise').text(selectedAirplaneModel.cruiseBurn);
+    
+    if (selectedAirplaneModel.imageUrl) {
+        const imageLocation = '/assets/images/airplanes/' + selectedAirplaneModel.name.replace(/\s+/g, '-').toLowerCase() + '.webp'
+        const fallbackLocation = '/assets/images/airplanes/' + selectedAirplaneModel.name.replace(/\s+/g, '-').toLowerCase() + '.png'
+        $('#swapAirplaneModal .old-model-stats .modelIllustration source').attr('srcset', imageLocation)
+        $('#swapAirplaneModal .old-model-stats .modelIllustration img').attr('src', fallbackLocation)
+    }
+
+    // Reset new model stats
+    $('#swapAirplaneModal .new-model-stats').hide();
+    $('#swapAirplaneModal .capacityChange').text('-');
+    $('#swapAirplaneModal .turnaroundDiff').text('-');
+    $('#swapAirplaneModal .rangeDiff').text('-');
+    $('#swapAirplaneModal .speedDiff').text('-');
+    $('#swapAirplaneModal .envelopeDistance').text('-');
+    $('#swapAirplaneModal .envelopeRunway').text('-');
+    $('#swapAirplaneModal .envelopeCustoms').hide();
+    $('#swapAirplaneModal .envelope-range-row').hide();
+    $('#swapAirplaneModal .envelope-runway-row').hide();
+    $('#swapAirplaneModal #swapError').hide().text('');
+    $('#swapAirplaneModal .cost').text('-');
+    $('#swapAirplaneModal .delivery').text('-');
 
     $('#swapAirplaneModal').fadeIn(200)
 
@@ -1954,10 +2029,11 @@ function promptSwapModels() {
     selectElement.appendChild(defaultOption);
 
     // Iterate through loadedModelsById object
-    for (var modelId in loadedModelsById) {
-        if (!Object.prototype.hasOwnProperty.call(loadedModelsById, modelId)) continue;
-        var model = loadedModelsById[modelId];
-        if (model.size <= selectedModel.size + 0.01) {
+    for (var mId in loadedModelsById) {
+        if (!Object.prototype.hasOwnProperty.call(loadedModelsById, mId)) continue;
+        var model = loadedModelsById[mId];
+        // Same or smaller size
+        if (model.size <= selectedAirplaneModel.size + 0.01) {
             var option = document.createElement('option');
             option.value = model.id;
             option.textContent = model.name;
@@ -1966,12 +2042,55 @@ function promptSwapModels() {
     }
 }
 
-function processSwapModels() {
+function processSwapModels(isEstimate = true) {
     var newModelId = $('#swapAirplaneModalSelect').val();
     
     if (!newModelId) {
         console.warn("No model selected for swap");
+        $('#swapAirplaneModal .new-model-stats').hide();
         return;
+    }
+
+    const newModel = loadedModelsById[newModelId];
+    // Find the old model from the modal title or store it
+    const oldModelName = $('#swapAirplaneModal .oldModelName').text();
+    const oldModel = getAirplaneModelByAttribute(oldModelName, 'name');
+
+    if (isEstimate && newModel) {
+        // Update new model stats and illustration
+        $('#swapAirplaneModal .newModelName').text(newModel.name);
+        $('#swapAirplaneModal .newPrice').text("$" + commaSeparateNumber(newModel.price));
+        $('#swapAirplaneModal .newRange').text(newModel.range + " km");
+        $('#swapAirplaneModal .newAscent').text(newModel.ascentBurn);
+        $('#swapAirplaneModal .newCruise').text(newModel.cruiseBurn);
+
+        if (newModel.imageUrl) {
+            const imageLocation = '/assets/images/airplanes/' + newModel.name.replace(/\s+/g, '-').toLowerCase() + '.webp'
+            const fallbackLocation = '/assets/images/airplanes/' + newModel.name.replace(/\s+/g, '-').toLowerCase() + '.png'
+            $('#swapAirplaneModal .new-model-stats .modelIllustration source').attr('srcset', imageLocation)
+            $('#swapAirplaneModal .new-model-stats .modelIllustration img').attr('src', fallbackLocation)
+        }
+        $('#swapAirplaneModal .new-model-stats').show();
+
+        // Calculate differences
+        if (oldModel) {
+            const capDiff = newModel.capacity - oldModel.capacity;
+            const turnDiff = newModel.turnaroundTime - oldModel.turnaroundTime;
+            const rangeDiff = newModel.range - oldModel.range;
+            const speedDiff = newModel.speed - oldModel.speed;
+            
+            const capDiffText = (capDiff > 0 ? "+" : "") + capDiff;
+            $('#swapAirplaneModal .capacityChange').text(capDiffText).css('color', capDiff >= 0 ? (capDiff > 0 ? 'green' : '') : 'red');
+            
+            const turnDiffText = (turnDiff > 0 ? "+" : "") + turnDiff + " mins";
+            $('#swapAirplaneModal .turnaroundDiff').text(turnDiffText).css('color', turnDiff <= 0 ? (turnDiff < 0 ? 'green' : '') : 'red');
+
+            const rangeDiffText = (rangeDiff > 0 ? "+" : "") + rangeDiff + " km";
+            $('#swapAirplaneModal .rangeDiff').text(rangeDiffText).css('color', rangeDiff >= 0 ? (rangeDiff > 0 ? 'green' : '') : 'red');
+
+            const speedDiffText = (speedDiff > 0 ? "+" : "") + speedDiff + " km/h";
+            $('#swapAirplaneModal .speedDiff').text(speedDiffText).css('color', speedDiff >= 0 ? (speedDiff > 0 ? 'green' : '') : 'red');
+        }
     }
 
     if (!storeSelectedAirplaneIds || storeSelectedAirplaneIds.length === 0) {
@@ -1983,7 +2102,7 @@ function processSwapModels() {
     var swapData = {
         airplaneIds: storeSelectedAirplaneIds,
         newModelId: parseInt(newModelId),
-        isEstimate: true
+        isEstimate: isEstimate
     };
     
     $.ajax({
@@ -1994,13 +2113,55 @@ function processSwapModels() {
         data: JSON.stringify(swapData),
         success: function(result) {
             console.log("Swap models result:", result);
-//            closeModal($('#swapAirplaneModal'));
-            // Refresh the airplane canvas to show updated models
-            showAirplaneCanvas();
+            $('#swapAirplaneModal #swapError').hide();
+            if (isEstimate) {
+                const costDiff = result.costDifference;
+                $('#swapAirplaneModal .cost').text("$" + commaSeparateNumber(costDiff)).css('color', costDiff > 0 ? 'red' : (costDiff < 0 ? 'green' : ''));
+                $('#swapAirplaneModal .delivery').text(result.buyCost > 0 ? "Instant (Trade-in)" : "-");
+                
+                if (result.envelope && result.envelope.maxDistance > 0) {
+                    $('#swapAirplaneModal .envelope-range-row').show();
+                    $('#swapAirplaneModal .envelope-runway-row').show();
+                    $('#swapAirplaneModal .envelopeDistance').text(result.envelope.maxDistance + " km");
+                    $('#swapAirplaneModal .envelopeRunway').text(result.envelope.minRunway + " m");
+                    if (result.envelope.hasCustomsRestriction) {
+                        $('#swapAirplaneModal .envelopeCustoms').show().attr('title', "International flight at domestic airport restriction (Max capacity: " + result.envelope.customsMaxCapacity + ")");
+                    } else {
+                        $('#swapAirplaneModal .envelopeCustoms').hide();
+                    }
+
+                    // Color coding for range and runway if they fail (though backend should have thrown 400, but good for visualization)
+                    const newModel = loadedModelsById[parseInt($('#swapAirplaneModalSelect').val())];
+                    if (newModel) {
+                        $('#swapAirplaneModal .envelopeDistance').css('color', newModel.range < result.envelope.maxDistance ? 'red' : '');
+                        $('#swapAirplaneModal .envelopeRunway').css('color', newModel.runwayRequirement > result.envelope.minRunway ? 'red' : '');
+                        if (result.envelope.hasCustomsRestriction && newModel.capacity > result.envelope.customsMaxCapacity) {
+                             $('#swapAirplaneModal .envelopeCustoms img').attr('src', '/assets/images/icons/exclamation-red.png');
+                        }
+                    }
+                } else {
+                    $('#swapAirplaneModal .envelope-range-row').hide();
+                    $('#swapAirplaneModal .envelope-runway-row').hide();
+                }
+
+                if (costDiff > activeAirline.balance) {
+                     disableButton($('#swapAirplaneModal .add'), "Not enough cash");
+                } else {
+                     enableButton($('#swapAirplaneModal .add'));
+                }
+            } else {
+                closeModal($('#swapAirplaneModal'));
+                // Refresh the airplane canvas to show updated models
+                showAirplaneCanvas();
+            }
         },
         error: function(jqXHR, textStatus, errorThrown) {
             console.log(JSON.stringify(jqXHR));
             console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
+            const errorMsg = jqXHR.responseText || "Error processing swap";
+            $('#swapAirplaneModal #swapError').text(errorMsg).show();
+            const infoEl = document.getElementById('promptSwapModelsWarning');
+            if (infoEl) infoEl.innerText = errorMsg;
         }
     });
 }

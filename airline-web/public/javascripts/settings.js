@@ -86,8 +86,6 @@ function refreshWallpaper() {
 
 }
 
-var wallpaperUploaderObj
-
 function removeCustomWallpaper() {
     activeUser.hasWallpaper = false
     $.ajax({
@@ -106,10 +104,6 @@ function removeCustomWallpaper() {
 }
 
 function updateCustomWallpaperPanel() {
-    if (wallpaperUploaderObj) {
-        wallpaperUploaderObj.reset()
-    }
-
     if (!activeUser) {
         $('#settingsModal .customWallpaper').hide()
     } else {
@@ -117,35 +111,15 @@ function updateCustomWallpaperPanel() {
         $('#settingsModal .customWallpaper .warning').hide()
 
         if (activeUser.level >= 0) {
-            wallpaperUploaderObj = $("#settingsModal .customWallpaper .fileuploader").uploadFile({
-                        url:"users/" + activeUser.id + "/wallpaper",
-                        multiple:false,
-                        dragDrop:false,
-                        acceptFiles:"image/png,image/gif,image/jpg",
-                        fileName:"wallpaperFile",
-                        maxFileSize:2 * 1024 * 1024,
-                        onSuccess:function(files,data,xhr,pd)
-                        {
-                            if (data.success) {
-                                $('#settingsModal .customWallpaper .warning').hide()
-                                wallpaperUploaderObj.reset()
-                                activeUser.hasWallpaper = true
-                                refreshWallpaper()
-                            } else if (data.error) {
-                                $('#settingsModal .customWallpaper .warning').text(data.error)
-                                $('#settingsModal .customWallpaper .warning').show()
-                            }
-
-                        }
-                    });
+            $('#settingsModal .customWallpaper .uploadPanel').show()
+            initLogoUpload($("#settingsModal .customWallpaper .uploadPanel"), "users/" + activeUser.id + "/wallpaper", "wallpaperFile", function(data) {
+                activeUser.hasWallpaper = true
+                refreshWallpaper()
+            });
         } else {
               $('#settingsModal .customWallpaper .warning').text("Feature is only avaiable to Patreons")
               $('#settingsModal .customWallpaper .warning').show()
+              $('#settingsModal .customWallpaper .uploadPanel').hide()
         }
     }
-
-
-
-
-
 }

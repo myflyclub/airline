@@ -39,27 +39,57 @@ function mobileCheck() {
 		refreshMobileLayout()
 		currentAnimationStatus = false //turn off animation by default
         registernavPrimaryToggle()
+        registerMobileGestures()
 	} else {
         $("#navPrimaryToggle").hide()
     }
 }
 
+function setNavPrimaryState(expand) {
+    const nav = $('#navPrimary');
+    const toggle = $('#navPrimaryToggle');
+
+    toggle.attr('aria-expanded', expand);
+    nav.toggleClass('active', expand);
+
+    if (expand) {
+        toggle.find('.icon-open').hide();
+        toggle.find('.icon-close').show();
+    } else {
+        toggle.find('.icon-open').show();
+        toggle.find('.icon-close').hide();
+    }
+}
+
 function registernavPrimaryToggle() {
     $('#navPrimaryToggle').off('click').on('click', function() {
-        const nav = $('#navPrimary');
         const isExpanded = $(this).attr('aria-expanded') === 'true';
-
-        $(this).attr('aria-expanded', !isExpanded);
-        nav.toggleClass('active');
-
-        if (!isExpanded) {
-            $(this).find('.icon-open').hide();
-            $(this).find('.icon-close').show();
-        } else {
-            $(this).find('.icon-open').show();
-            $(this).find('.icon-close').hide();
-        }
+        setNavPrimaryState(!isExpanded);
     });
+}
+
+function registerMobileGestures() {
+    let touchstartX = 0;
+    let touchstartXPercent = 0;
+
+    document.addEventListener('touchstart', function(event) {
+        touchstartX = event.changedTouches[0].clientX;
+        touchstartXPercent = touchstartX / window.innerWidth;
+    }, { passive: true });
+
+    document.addEventListener('touchend', function(event) {
+        const touchendX = event.changedTouches[0].clientX;
+        const deltaX = touchendX - touchstartX;
+        const threshold = 50; // minimum distance for swipe
+
+        if (Math.abs(deltaX) > threshold) {
+            if (deltaX > 0) { // Swipe right
+                setNavPrimaryState(true);
+            } else if (touchstartXPercent < 0.2) { // Swipe left starting from left 20%
+                setNavPrimaryState(false);
+            }
+        }
+    }, { passive: true });
 }
 
 function isMobileDevice() {
@@ -366,6 +396,110 @@ function updateAirlineLabelColors(callback) {
                     console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
             }
     });
+}
+
+function initLogoUpload($panel, uploadUrl, fileName, successCallback) {
+    const $input = $panel.find('.logoInput');
+    const $dropZone = $panel.find('.file-drop-zone');
+    const $previewContainer = $panel.find('.preview-container');
+    const $previewImg = $panel.find('.logo-preview');
+    const $prompt = $panel.find('.upload-prompt');
+    const $warning = $panel.find('.warning');
+    const $actions = $panel.find('.actions');
+    const $uploadBtn = $panel.find('.uploadButton');
+
+    // Reset
+    resetLogoUpload($panel);
+
+    // File selection handler
+    $input.off('change').on('change', function(e) {
+        handleFileSelect(e.target.files[0]);
+    });
+
+    // Drag and drop handlers
+    $dropZone.off('dragover dragenter').on('dragover dragenter', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $(this).addClass('drag-over');
+    });
+
+    $dropZone.off('dragleave drop').on('dragleave drop', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $(this).removeClass('drag-over');
+        if (e.type === 'drop') {
+            handleFileSelect(e.originalEvent.dataTransfer.files[0]);
+        }
+    });
+
+    function handleFileSelect(file) {
+        if (!file) return;
+
+        if (!file.type.startsWith('image/')) {
+            showError("Please select an image file.");
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            $previewImg.attr('src', e.target.result);
+            $previewContainer.show();
+            $prompt.hide();
+            $actions.show();
+            $warning.hide();
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function showError(msg) {
+        $warning.text(msg).show();
+    }
+
+    $uploadBtn.off('click').on('click', function() {
+        const file = $input[0].files[0] || (typeof $dropZone.data('file') !== 'undefined' ? $dropZone.data('file') : null);
+        if (!file && !$input[0].files[0]) {
+            showError("Please select a file first.");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append(fileName, $input[0].files[0] || $dropZone.data('file'));
+
+        $uploadBtn.prop('disabled', true).text('Uploading...');
+
+        fetch(uploadUrl, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => { throw new Error(err.error || 'Upload failed'); });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                successCallback(data);
+            } else {
+                showError(data.error || "Upload failed");
+            }
+        })
+        .catch(error => {
+            showError(error.message);
+        })
+        .finally(() => {
+            $uploadBtn.prop('disabled', false).text('Upload');
+        });
+    });
+}
+
+function resetLogoUpload($panel) {
+    $panel.find('.logoInput').val('');
+    $panel.find('.preview-container').hide();
+    $panel.find('.logo-preview').attr('src', '');
+    $panel.find('.upload-prompt').show();
+    $panel.find('.actions').hide();
+    $panel.find('.warning').hide();
 }
 
 function assignAirlineColors(dataSet, colorProperty) {

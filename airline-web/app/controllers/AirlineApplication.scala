@@ -1035,52 +1035,47 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
   def setLogo(airlineId: Int, templateIndex: Int, color1: String, color2: String) = AuthenticatedAirline(airlineId) { request =>
     val logo = LogoGenerator.generateLogo(templateIndex, Color.decode(color1).getRGB, Color.decode(color2).getRGB)
     LogoUtil.saveLogo(airlineId, logo)
-    println("Updated logo for airline " + request.user)
     Ok(Json.obj())
   }
 
   def uploadLogo(airlineId: Int) = AuthenticatedAirline(airlineId) { request =>
     if (request.user.getReputation() < 40) {
-      Ok(Json.obj("error" -> JsString("Cannot upload img at current reputation"))) //have to send ok as the jquery plugin's error cannot read the response
+      Forbidden(Json.obj("error" -> JsString("Cannot upload img at current reputation")))
     } else {
       request.body.asMultipartFormData.map { data =>
 
         val logoFile = data.file("logoFile").get.ref.path
         LogoUtil.validateUpload(logoFile) match {
           case Some(rejection) =>
-            Ok(Json.obj("error" -> JsString(rejection))) //have to send ok as the jquery plugin's error cannot read the response
+            BadRequest(Json.obj("error" -> JsString(rejection)))
           case None =>
             val data = Files.readAllBytes(logoFile)
             LogoUtil.saveLogo(airlineId, data)
-
-            println("Uploaded logo for airline " + request.user)
             Ok(Json.obj("success" -> JsString("File uploaded")))
         }
       }.getOrElse {
-        Ok(Json.obj("error" -> JsString("Cannot find uploaded contents"))) //have to send ok as the jquery plugin's error cannot read the response
+        BadRequest(Json.obj("error" -> JsString("Cannot find uploaded contents")))
       }
     }
   }
 
   def uploadLivery(airlineId: Int) = AuthenticatedAirline(airlineId) { request =>
     if (request.user.getReputation() < 40) {
-      Ok(Json.obj("error" -> JsString("Cannot upload img at current reputation"))) //have to send ok as the jquery plugin's error cannot read the response
+      Forbidden(Json.obj("error" -> JsString("Cannot upload img at current reputation")))
     } else {
       request.body.asMultipartFormData.map { data =>
 
         val file = data.file("liveryFile").get.ref.path
         LiveryUtil.validateUpload(file) match {
           case Some(rejection) =>
-            Ok(Json.obj("error" -> JsString(rejection))) //have to send ok as the jquery plugin's error cannot read the response
+            BadRequest(Json.obj("error" -> JsString(rejection)))
           case None =>
             val data = Files.readAllBytes(file)
             LiveryUtil.saveLivery(airlineId, data)
-
-            println("Uploaded livery for airline " + request.user)
             Ok(Json.obj("success" -> JsString("File uploaded")))
         }
       }.getOrElse {
-        Ok(Json.obj("error" -> JsString("Cannot find uploaded contents"))) //have to send ok as the jquery plugin's error cannot read the response
+        BadRequest(Json.obj("error" -> JsString("Cannot find uploaded contents")))
       }
     }
   }
@@ -1091,7 +1086,9 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
   }
 
   def getLivery(airlineId: Int) = Action {
-    Ok(LiveryUtil.getLivery(airlineId)).as("image/png").withHeaders(
+    val liveryBytes = LiveryUtil.getLivery(airlineId)
+    val contentType = LiveryUtil.getLiveryContentType(airlineId)
+    Ok(liveryBytes).as(contentType).withHeaders(
       ETAG -> s""""$currentCycle""""
     )
   }
@@ -1119,7 +1116,6 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
   def setColor(airlineId: Int, color: String) = AuthenticatedAirline(airlineId) { request =>
     val decodedColor = Color.decode(color) //just for validation
     AirlineSource.saveColor(airlineId, color)
-    println("Updated color for airline " + request.user)
     Ok(Json.obj())
   }
 

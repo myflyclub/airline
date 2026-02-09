@@ -7,7 +7,7 @@ import play.api.mvc._
 import play.api.libs.json.Writes
 import com.patson.model.{Airline, User, UserStatus}
 import play.api.libs.json._
-import com.patson.data.{AllianceSource, IpSource, SettingsSource, UserSource, UserUuidSource}
+import com.patson.data.{AllianceSource, IpSource, UserSource, UserUuidSource}
 import com.patson.util.AllianceCache
 
 import java.util.UUID
@@ -70,7 +70,7 @@ class UserApplication @Inject()(cc: ControllerComponents) extends AbstractContro
       println(s"Banned user ${request.user.userName} tried to login")
       Forbidden("User is banned")
     } else {
-      val result = Json.toJson(request.user).asInstanceOf[JsObject] + ("hasWallpaper" -> JsBoolean(SettingsSource.hasWallpaper(request.user.id)))
+      val result = Json.toJson(request.user).asInstanceOf[JsObject]
 
       val uuid : String = request.cookies.get("uuid").map(_.value).getOrElse {
         val newUuid = UUID.randomUUID().toString

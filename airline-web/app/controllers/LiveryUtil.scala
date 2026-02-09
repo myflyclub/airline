@@ -1,27 +1,31 @@
 package controllers
 
-import com.patson.data.AirlineSource
+import com.patson.data.FileSource
 
 import java.io.ByteArrayOutputStream
 import java.nio.file.Path
-import java.util.Base64
 import java.util.concurrent.TimeUnit
 import javax.imageio.ImageIO
 
 object LiveryUtil {
   import com.google.common.cache.{CacheBuilder, CacheLoader, LoadingCache}
-  val liveries : LoadingCache[Int, Option[Array[Byte]]] = CacheBuilder.newBuilder.maximumSize(100).expireAfterAccess(10, TimeUnit.MINUTES).build(new LiveryLoader())
-  val blank = getBlankImage(1, 1)
+  val liveries: LoadingCache[Int, Option[Array[Byte]]] = CacheBuilder.newBuilder.maximumSize(100).expireAfterAccess(10, TimeUnit.MINUTES).build(new LiveryLoader())
+  val blank: Array[Byte] = getBlankImage(1, 1)
 
-  //val imageHeight = 12
-  val MAX_SIZE = 1 * 1024 * 1024
-  
-  def getLivery(airlineId : Int) : Array[Byte] = {
+  val MAX_SIZE = 2 * 1024 * 1024
+  val MAX_WIDTH = 600
+  val MAX_HEIGHT = 300
+  val ALLOWED_TYPES: Set[String] = Set(FileSource.CONTENT_TYPE_JPEG, FileSource.CONTENT_TYPE_WEBP)
+
+  def getLivery(airlineId: Int): Array[Byte] = {
     liveries.get(airlineId).getOrElse(blank)
   }
 
-  def getBlankImage(width : Int, height : Int) = {
-    import javax.imageio.ImageIO
+  def getLiveryContentType(airlineId: Int): String = {
+    liveries.get(airlineId).map(FileSource.detectContentType).getOrElse(FileSource.CONTENT_TYPE_PNG)
+  }
+
+  def getBlankImage(width: Int, height: Int): Array[Byte] = {
     import java.awt.Color
     import java.awt.image.BufferedImage
     val singlePixelImage = new BufferedImage(1, 1, BufferedImage.TYPE_4BYTE_ABGR)
@@ -32,39 +36,54 @@ object LiveryUtil {
     ImageIO.write(singlePixelImage, "png", outputStream)
     outputStream.toByteArray
   }
-  
-  def saveLivery(airlineId : Int, livery : Array[Byte]) = {
-    AirlineSource.saveLivery(airlineId, livery)
-    liveries.put(airlineId, Some(livery)) //update cache
+
+  def saveLivery(airlineId: Int, livery: Array[Byte]): Unit = {
+    FileSource.saveImage(airlineId, "livery", livery,
+      maxBytes = MAX_SIZE,
+      allowedContentTypes = ALLOWED_TYPES,
+      maxWidth = MAX_WIDTH, maxHeight = MAX_HEIGHT)
+    liveries.put(airlineId, Some(livery))
   }
 
-  def deleteLivery(airlineId : Int) = {
-    AirlineSource.deleteLivery(airlineId)
+  def deleteLivery(airlineId: Int): Unit = {
+    FileSource.deleteLogo("livery", airlineId)
     liveries.invalidate(airlineId)
   }
-  
-  def validateUpload(liveryFile : Path) : Option[String] = {
-    val imageFile = liveryFile.toFile
-    val image = ImageIO.read(imageFile)
-    println("Livery upload " + image.getHeight + " X " + image.getWidth + s" Size ${imageFile.length()}")
-    if (imageFile.length() > MAX_SIZE) {
-      Some(s"Image should be with $MAX_SIZE bytes")
-    } else {
+
+  def validateUpload(liveryFile: Path): Option[String] = {
+    try {
+      val imageFile = liveryFile.toFile
+      if (imageFile.length() > MAX_SIZE) {
+        return Some(s"Image must be under ${MAX_SIZE / 1024 / 1024}MB")
+      }
+
+      val bytes = java.nio.file.Files.readAllBytes(liveryFile)
+      val contentType = FileSource.detectContentType(bytes)
+      if (!ALLOWED_TYPES.contains(contentType)) {
+        return Some(s"Livery must be JPG or WebP format (got $contentType)")
+      }
+
+      val image = ImageIO.read(imageFile)
+      if (image == null) {
+        return Some("Cannot read image file")
+      }
+      if (image.getWidth > MAX_WIDTH || image.getHeight > MAX_HEIGHT) {
+        return Some(s"Livery must be at most ${MAX_WIDTH}x${MAX_HEIGHT} pixels (got ${image.getWidth}x${image.getHeight})")
+      }
+
       None
+    } catch {
+      case e: Exception => Some(s"Error validating livery: ${e.getMessage}")
     }
   }
 
-
-
-
-
-  def invalidateAirlineLivery(airlineId : Int) = {
+  def invalidateAirlineLivery(airlineId: Int): Unit = {
     liveries.invalidate(airlineId)
   }
 
   class LiveryLoader extends CacheLoader[Int, Option[Array[Byte]]] {
-    override def load(airlineId: Int) = {
-      AirlineSource.loadLivery(airlineId)
+    override def load(airlineId: Int): Option[Array[Byte]] = {
+      FileSource.loadLogo("livery", airlineId)
     }
   }
 }

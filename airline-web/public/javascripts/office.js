@@ -7,9 +7,6 @@ var officeSheetPage = 0;
 var officeAirlineStatsPage = 0
 var officePeriod;
 
-var logoUploaderObj;
-var liveryUploaderObj;
-
 var companyValue = 0;
 
 const minPositiveLog = 0.2 //manually defined lower bound for log 
@@ -713,7 +710,7 @@ function updateAirlineOpSheet(opsData) {
         Object.keys(opsData).forEach((key) => {
             const element = document.querySelector(`#opsSheet .${key}`);
             if (element) {
-                element.textContent = commaSeparateNumber(opsData[key]);
+                element.textContent = opsData[key] < 1 ? commaSeparateNumber(opsData[key] * 100) : commaSeparateNumber(opsData[key]);
 
                 // Color code based on stock metrics
                 if (gameConstants && gameConstants.stockMetrics && gameConstants.stockMetrics[key.toLowerCase()]) {
@@ -1017,9 +1014,8 @@ function loadLogoTemplates() {
 	    contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
 	    success: function(templates) {
-	    	//group by period
 	    	$.each(templates, function(index, templateIndex) {
-	    		$('#logoTemplates').append('<div style="padding: 3px; margin: 3px; float: left;" class="clickable" onclick="selectLogoTemplate(' + templateIndex + ')"><img src="/logos/templates/' + templateIndex + '"></div>')
+	    		$('#logoTemplates').append('<div style="padding: 2px;" class="clickable" onclick="selectLogoTemplate(' + templateIndex + ')"><img style="width:48px;height:24px;border: 1px solid var(--border-color);" src="/logos/templates/' + templateIndex + '"></div>')
 	    	})
 
 
@@ -1049,9 +1045,12 @@ function generateLogoPreview() {
 	var color1 = $('#logoModal .picker.color1').val()
     var color2 = $('#logoModal .picker.color2').val()
 
-	var url = "/logos/preview?templateIndex=" + logoTemplate + "&color1=" + encodeURIComponent(color1) + "&color2=" + encodeURIComponent(color2)
+	var url = "/logos/templates/" + logoTemplate + "?color1=" + encodeURIComponent(color1) + "&color2=" + encodeURIComponent(color2) + "&dummy=" + Math.random()
+	if (logoTemplate >= 0) {
+	    url = "/logos/preview?templateIndex=" + logoTemplate + "&color1=" + encodeURIComponent(color1) + "&color2=" + encodeURIComponent(color2) + "&dummy=" + Math.random()
+	}
 	$('#logoPreview').empty();
-	$('#logoPreview').append('<img src="' + url + '">')
+	$('#logoPreview').append('<img style="width:128px;height:auto;border: 1px solid var(--border-color);" src="' + url + '">')
 }
 
 function setAirlineLogo() {
@@ -1108,30 +1107,10 @@ function showUploadLogo() {
 
 
 function updateLogoUpload() {
-	$('#uploadLogoModal .uploadPanel .warning').hide()
-	if (logoUploaderObj) {
-		logoUploaderObj.reset()
-	}
-
-	logoUploaderObj = $("#uploadLogoModal .uploadPanel .fileuploader").uploadFile({
-		url:"airlines/" + activeAirline.id + "/logo",
-		multiple:false,
-		dragDrop:false,
-		acceptFiles:"image/png",
-		fileName:"logoFile",
-		maxFileSize:100*1024,
-		onSuccess:function(files,data,xhr,pd)
-		{
-			if (data.success) {
-				$('#uploadLogoModal .uploadPanel .warning').hide()
-				closeModal($('#uploadLogoModal'))
-				updateAirlineLogo()
-			} else if (data.error) {
-				$('#uploadLogoModal .uploadPanel .warning').text(data.error)
-				$('#uploadLogoModal .uploadPanel .warning').show()
-			}
-		}
-	});
+    initLogoUpload($("#uploadLogoModal .uploadPanel"), "/airlines/" + activeAirline.id + "/logo", "logoFile", function(data) {
+        closeModal($('#uploadLogoModal'))
+        updateAirlineLogo()
+    });
 }
 
 function updateLiveryInfo() {
@@ -1154,31 +1133,10 @@ function showUploadLivery() {
 
 
 function updateLiveryUpload() {
-	$('#uploadLiveryModal .uploadPanel .warning').hide()
-	if (liveryUploaderObj) {
-		liveryUploaderObj.reset()
-	}
-
-	liveryUploaderObj = $("#uploadLiveryModal .uploadPanel .fileuploader").uploadFile({
-		url:"airlines/" + activeAirline.id + "/livery",
-		multiple:false,
-		dragDrop:false,
-		acceptFiles:"image/png",
-		fileName:"liveryFile",
-		maxFileSize:1 * 1024 * 1024,
-		onSuccess:function(files,data,xhr,pd)
-		{
-			if (data.success) {
-				$('#uploadLiveryModal .uploadPanel .warning').hide()
-				closeModal($('#uploadLiveryModal'))
-				updateLiveryInfo()
-			} else if (data.error) {
-				$('#uploadLiveryModal .uploadPanel .warning').text(data.error)
-				$('#uploadLiveryModal .uploadPanel .warning').show()
-			}
-
-		}
-	});
+    initLogoUpload($("#uploadLiveryModal .uploadPanel"), "/airlines/" + activeAirline.id + "/livery", "liveryFile", function(data) {
+        closeModal($('#uploadLiveryModal'))
+        updateLiveryInfo()
+    });
 }
 
 function deleteLivery() {

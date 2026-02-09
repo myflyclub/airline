@@ -1,66 +1,97 @@
 package controllers
 
 import java.nio.file.Path
-
-import com.patson.data.AirlineSource
+import com.patson.data.FileSource
 import javax.imageio.ImageIO
 
 object LogoUtil {
-  // Make initialization lazy and defensive: any failure while loading from DB or resources
-  // should not blow up the class initializer (which causes NoClassDefFoundError).
-  lazy val logos: scala.collection.mutable.Map[Int, Array[Byte]] = {
-    try {
-      collection.mutable.Map(AirlineSource.loadLogos().toSeq: _*)
-    } catch {
-      case e: Throwable =>
-        // avoid failing class init; fall back to empty cache
-        e.printStackTrace()
-        collection.mutable.Map.empty[Int, Array[Byte]]
-    }
-  }
+  private val logoCache = com.google.common.cache.CacheBuilder.newBuilder()
+    .maximumSize(1000)
+    .expireAfterWrite(10, java.util.concurrent.TimeUnit.MINUTES)
+    .build[java.lang.Integer, Array[Byte]]()
+
+  private val allianceLogoCache = com.google.common.cache.CacheBuilder.newBuilder()
+    .maximumSize(200)
+    .expireAfterWrite(10, java.util.concurrent.TimeUnit.MINUTES)
+    .build[java.lang.Integer, Array[Byte]]()
 
   lazy val blank: Array[Byte] = loadResourceSafely("/logo/blank.png").getOrElse(Array.emptyByteArray)
-
   lazy val rat: Array[Byte] = loadResourceSafely("/logo/bot-rat-logo.png").getOrElse(blank)
+  lazy val local: Array[Byte] = loadResourceSafely("/logo/bot-localConnection-logo.png").getOrElse(blank)
 
-  val imageHeight = 12
-  val imageWidth = 24
-  
-  def getLogo(airlineId : Int) : Array[Byte]= {
-    if (airlineId < 30) {
+  val imageHeight = 64
+  val imageWidth = 128
+
+  def getLogo(airlineId: Int): Array[Byte] = {
+    if (airlineId == 0) {
+      local
+    } else if (airlineId > 0 && airlineId < 30) {
       rat
     } else {
-      logos.get(airlineId) match {
-        case Some(logo) => logo
+      val cached = logoCache.getIfPresent(airlineId)
+      if (cached != null) {
+        return cached
+      }
+
+      FileSource.loadLogo("airline", airlineId) match {
+        case Some(logo) =>
+          logoCache.put(airlineId, logo)
+          logo
         case None => blank
       }
     }
   }
-  
-  def saveLogo(airlineId : Int, logo : Array[Byte]) = {
-    AirlineSource.saveLogo(airlineId, logo)
-    logos.put(airlineId, logo) //update cache
+
+  def saveLogo(airlineId: Int, logo: Array[Byte]): Unit = {
+    FileSource.saveImage(airlineId, "airline", logo,
+      allowedContentTypes = Set(FileSource.CONTENT_TYPE_PNG),
+      exactWidth = imageWidth, exactHeight = imageHeight)
+    logoCache.put(airlineId, logo)
   }
-  
-  def validateUpload(logoFile : Path) : Option[String] = {
-    val imageInputStream = ImageIO.createImageInputStream(logoFile.toFile)
-    val readers = ImageIO.getImageReaders(imageInputStream)
-    if (!readers.hasNext) {
-      return Some("Cannot identify image format")
-    }
-    val reader = readers.next();
-    val format = reader.getFormatName
-    if (!format.equalsIgnoreCase("png")) {
-      return Some(s"Invalid image format: $format")
+
+  def getAllianceLogo(allianceId: Int): Array[Byte] = {
+    val cached = allianceLogoCache.getIfPresent(allianceId)
+    if (cached != null) {
+      return cached
     }
 
-    val image = ImageIO.read(logoFile.toFile)
-    if (image.getHeight() != imageHeight || image.getWidth() != imageWidth) {
-      return Some("Image should be " + imageWidth + "px wide and " + imageHeight + "px tall")
+    FileSource.loadLogo("alliance", allianceId) match {
+      case Some(logo) =>
+        allianceLogoCache.put(allianceId, logo)
+        logo
+      case None => blank
     }
-    return None
   }
-  
+
+  def saveAllianceLogo(allianceId: Int, logo: Array[Byte]): Unit = {
+    FileSource.saveImage(allianceId, "alliance", logo,
+      allowedContentTypes = Set(FileSource.CONTENT_TYPE_PNG),
+      exactWidth = imageWidth, exactHeight = imageHeight)
+    allianceLogoCache.put(allianceId, logo)
+  }
+
+  def validateUpload(logoFile: Path): Option[String] = {
+    try {
+      val bytes = java.nio.file.Files.readAllBytes(logoFile)
+      val contentType = FileSource.detectContentType(bytes)
+      if (contentType != FileSource.CONTENT_TYPE_PNG) {
+        return Some(s"Logo must be PNG format (got $contentType)")
+      }
+
+      val image = ImageIO.read(logoFile.toFile)
+      if (image == null) {
+        return Some("Cannot read image file")
+      }
+      if (image.getWidth != imageWidth || image.getHeight != imageHeight) {
+        return Some(s"Logo must be exactly ${imageWidth}x${imageHeight} pixels (got ${image.getWidth}x${image.getHeight})")
+      }
+
+      None
+    } catch {
+      case e: Exception => Some(s"Error validating logo: ${e.getMessage}")
+    }
+  }
+
   private def loadResourceSafely(path: String): Option[Array[Byte]] = {
     val isOpt = Option(play.Environment.simple().resourceAsStream(path))
     isOpt.flatMap { is =>
@@ -81,23 +112,5 @@ object LogoUtil {
         try is.close() catch { case _: Throwable => }
       }
     }
-  }
-  
-  def getBlankLogo() = {
-    val is = play.Environment.simple().resourceAsStream("/logo/blank.png")
-
-    val targetArray = new Array[Byte](is.available());
-    is.read(targetArray);
-
-    targetArray
-  }
-
-  def getRatLogo() = {
-    val is = play.Environment.simple().resourceAsStream("/logo/bot-rat-logo.png")
-
-    val targetArray = new Array[Byte](is.available());
-    is.read(targetArray);
-
-    targetArray
   }
 }

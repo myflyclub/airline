@@ -829,7 +829,7 @@
 								<div class="warningList">
 								</div>
 								<div class="overtimeCompensation warning" style="display: flex; align-items: center;">
-									<img src='@routes.Assets.versioned("/images/icons/exclamation-red-frame.png")'>&nbsp;
+									<img src='/assets/images/icons/exclamation-red-frame.png'>&nbsp;
 									Exceeding operation capacity of current base. Extra overtime compensation of&nbsp;
 									$<span class="amount"></span>&nbsp;
 									will be charged per week for this change.
@@ -922,7 +922,7 @@
 				   </div>
 
                     <div id="searchCanvas" class="canvas flex-col sidePanel mapOverlayPanel" style="display: none;">
-                        <div style="height: 98%; display: flex; flex-flow: column;" class="section mainSection">
+                        <div class="section mainSection">
                             <div style="width: 100%; min-height: 80px;" class="titlesContainer">
                                 <div class="titleNavigation">
                                     <div style="float:left;" class="left" onclick="titleNavigate($(this), -1)"><img class='button' src='@routes.Assets.versioned("/images/icons/24px/arrow-180.png")' style="opacity: 0.8"></div>
@@ -3801,9 +3801,9 @@
 						<div style="height: 60px;">
 							<h4>Add Self Note</h4>
 							<input type="text" class="selfNote" size="50" maxlength="100">
-							<img src='@routes.Assets.versioned("/images/icons/plus-button.png")' class="clickable" onclick="putSelfNote()" style="vertical-align: text-bottom;">
+							<img src='/assets/images/icons/plus-button.png' class="clickable" onclick="putSelfNote()" style="vertical-align: text-bottom;">
 							<div class="selfNote rejection" style="display: none;">
-								<img src='@routes.Assets.versioned("/images/icons/exclamation-red-frame.png")' style="vertical-align: text-bottom;"><span class="reason"></span>
+								<img src='/assets/images/icons/exclamation-red-frame.png' style="vertical-align: text-bottom;"><span class="reason"></span>
 							</div>
 						</div>
 						<h4>Logs</h4>
@@ -4152,7 +4152,7 @@
 	  <div class="modal-content"  style="width : 480px;">
 	    <span class="close" onclick="closeModal($('#logoModal'))">&times;</span>
 	    <h4>Logo Templates</h4>
-	    <div id="logoTemplates"></div>
+	    <div id="logoTemplates" class="flex-row flex-wrap pb-4"></div>
 	    <div style="clear:both;"></div>
 	    <input type="hidden" id="logoTemplateIndex"/>
 	    <div>
@@ -4161,8 +4161,8 @@
 		<div>
 	        Color 2 : <input type="color" class="picker color2">
 	    </div>
-	    <h4>Preview</h4>
-	    <div id="logoPreview" style="height: 30px">
+	    <h4 class="pt-2">Preview</h4>
+	    <div id="logoPreview" class="pb-2">
 	    </div>
 
 	    <button type="button" class="button confirmationButton" onclick="closeModal($('#logoModal')); setAirlineLogo();">Confirm</button>
@@ -4175,18 +4175,18 @@
 			<span class="close" onclick="closeModal($('#uploadLogoModal'))">&times;</span>
 			<h4>Upload Own Logo</h4>
 			<ul>
-				<li class="label" style="padding: 5px;">- Logo should be in png format</li>
-				<li class="label" style="padding: 5px;">- Logo should be 24px wide and 12px tall</li>
+				<li class="label" style="padding: 5px;">- Logo should be in jpg format</li>
+				<li class="label" style="padding: 5px;">- Logo should be 128px wide and 64px tall</li>
 			</ul>
 			<div class="uploadPanel" style="display:none" >
-				<input type="file" class="logoInput" accept="image/png" style="display:none;">
+				<input type="file" class="logoInput" accept="image/jpg" style="display:none;">
 				<div class="file-drop-zone clickable" onclick="$(this).siblings('.logoInput').click()">
 					<div class="preview-container" style="display:none; margin-bottom: 10px;">
 						<img class="logo-preview" style="max-width: 100%; height: auto; border: 1px solid var(--border-color);">
 					</div>
 					<div class="upload-prompt">
 						<img src="/assets/images/icons/image--plus.png" style="vertical-align: middle; margin-right: 5px;">
-						<span>Click or drag logo here (PNG, 24x12 recommended)</span>
+						<span>Click or drag logo here (JPG, 128x64 recommended)</span>
 					</div>
 				</div>
 				<div class="warning" style="display:none; margin-top: 10px;"></div>
@@ -5926,14 +5926,14 @@
 				  </div>
 				  <div class="cell" style="vertical-align:middle; text-align:center;">
 					  <div class="uploadPanel">
-						  <input type="file" class="logoInput" accept="image/png,image/gif,image/jpeg" style="display:none;">
+						  <input type="file" class="logoInput" accept="image/jpg, image/jpeg" style="display:none;">
 						  <div class="file-drop-zone clickable" onclick="$(this).siblings('.logoInput').click()">
 							  <div class="preview-container" style="display:none; margin-bottom: 10px;">
 								  <img class="logo-preview" style="max-width: 100%; height: auto; border: 1px solid var(--border-color);">
 							  </div>
 							  <div class="upload-prompt">
 								  <img src="/assets/images/icons/image--plus.png" style="vertical-align: middle; margin-right: 5px;">
-								  <span>Click or drag image here (PNG/JPG/GIF)</span>
+								  <span>Click or drag jpg image here</span>
 							  </div>
 						  </div>
 						  <div class="warning" style="display:none; margin-top: 10px;"></div>
@@ -6010,10 +6010,10 @@
           </ul>
           <h5 class="pt-2">Performance Metrics</h5>
           <ul class="pl-4 list-disc">
-              <li><b>Passenger Experience</b>: Affects flight quality. Aircraft quality upgrades are generally the cheapest way to increase quality</li>
-              <li><b>Ascent Burn</b>: Fuel per passenger during takeoff; critical for short-haul routes as it applies to every flight</li>
-              <li><b>Cruise Burn</b>: Fuel per passenger per 800km of flight distance</li>
-              <li><b>Speed</b>: Faster aircraft command premium fares. However smaller aircraft reach cruise altitude quicker, giving them an edge on very short routes</li>
+              <li><b>Passenger Experience</b>: Affects flight quality. Aircraft quality upgrades are generally the cheapest way to increase quality.</li>
+              <li><b>Ascent Burn</b>: Fuel per passenger during takeoff; critical for short-haul routes as it applies to every flight.</li>
+              <li><b>Cruise Burn</b>: Fuel per passenger per 800km of flight distance, modified by load factor – i.e. fewer passengers per capacity lowers long distance fuel costs.</li>
+              <li><b>Speed</b>: Faster aircraft command premium fares. However smaller aircraft reach cruise altitude quicker, giving them an edge on very short routes.</li>
           </ul>
           <h5 class="pt-2">Cost Metrics</h5>
           <ul class="pl-4 list-disc">

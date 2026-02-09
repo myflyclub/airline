@@ -697,34 +697,11 @@ function showUploadLogoAlliance() {
 }
 
 function updateLogoUploadAlliance() {
-	$('#uploadLogoModalAlliance .uploadPanel .warning').hide()
-	if (logoUploaderObj) {
-		logoUploaderObj.reset()
-	}
+	const $panel = $('#uploadLogoModalAlliance .uploadPanel');
+	const uploadUrl = "/airlines/" + activeAirline.id + "/set-alliance-logo/" + activeAirline.allianceId;
 
-	logoUploaderObj = $("#uploadLogoModalAlliance .uploadPanel .fileuploader").uploadFile({
-		url: "/airlines/" +  activeAirline.id + "/set-alliance-logo/" +  activeAirline.allianceId,
-		multiple:false,
-		dragDrop:false,
-		acceptFiles:"image/png",
-		fileName:"logoFile",
-		maxFileSize:100*1024,
-		onSuccess:function(files,data,xhr,pd)
-		{
-			if (data.success) {
-				$('#uploadLogoModalAlliance .uploadPanel .warning').hide()
-				closeModal($('#uploadLogoModalAlliance'))
-				updateAllianceLogo()
-			} else if (data.error) {
-				$('#uploadLogoModalAlliance .uploadPanel .warning').text(data.error)
-				$('#uploadLogoModalAlliance .uploadPanel .warning').show()
-			}
-		},
-		onError:function(files,status,errMsg,pd)
-		{
-			console.log("Alliance logo upload error:", status, errMsg)
-			$('#uploadLogoModalAlliance .uploadPanel .warning').text("Upload failed: " + errMsg)
-			$('#uploadLogoModalAlliance .uploadPanel .warning').show()
-		}
+	initLogoUpload($panel, uploadUrl, "logoFile", function(data) {
+		closeModal($('#uploadLogoModalAlliance'));
+		updateAllianceLogo();
 	});
 }
