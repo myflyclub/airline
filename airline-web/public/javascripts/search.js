@@ -15,14 +15,17 @@ resetHistorySearchState(); // Initial state reset
 function showSearchCanvas(historyAirline) {
     var titlesContainer = $("#searchCanvas div.titlesContainer")
     positionTitles(titlesContainer)
-    setActiveDiv($("#searchCanvas"))
+
+    // Ensure worldMapCanvas is the active top-level canvas
+    setActiveDiv($('#worldMapCanvas'))
+    // Show search overlay, hide sidePanel
+    showMapOverlay($('#searchCanvas'))
 	$("#searchCanvas").css("display", "flex")
-	highlightTab($('.searchCanvasTab'))
+
 	$("#routeSearchResult").empty()
 	if (isMobileDevice()) {
 	   $('#searchCanvas .banner').hide()
 	} else {
-        $('#map').fadeIn(200);
 	   showBanner()
     }
 	$("#historySearchResult .table-row").empty()
@@ -34,17 +37,17 @@ function showSearchCanvas(historyAirline) {
 
     initializeHistorySearch()
 
-    if (historyAirline > 0) {
+    if (historyAirline && (typeof historyAirline === 'object' || historyAirline > 0)) {
         refreshSearchDiv('history');
 
         // Update state and UI for the provided airline
-        const airlineId = historyAirline.id;
-        const airlineText = getAirlineTextEntry(historyAirline, false);
+        const airlineId = typeof historyAirline === 'object' ? historyAirline.id : historyAirline;
+        const airlineText = typeof historyAirline === 'object' ? getAirlineTextEntry(historyAirline, false) : historyAirline;
         historySearchState.airline = { id: airlineId, text: airlineText };
         $('#searchCanvas div.historySearch input.airline').data('selectedId', airlineId).val(airlineText);
 
         searchLinkHistory()
-    } else if (historyAirline == 0) {
+    } else if (historyAirline === 0) {
         refreshSearchDiv('research');
     } else {
         refreshSearchDiv('route');
@@ -171,12 +174,12 @@ function searchAction(fromAirportId, toAirportId) {
     }
 }
 
-function showResearchPreloaded() {
-    removeTempPath();
+function showResearchPreloaded(fromAirportId, toAirportId) {
+    AirlineMap.removeTempPath();
     document.querySelector('#searchCanvas div.titlesContainer .selected').classList.remove('selected')
     document.querySelector('#searchCanvas div.titlesContainer [data-search-type="research"]').classList.add('selected')
-    const fromId = $('#planLinkFromAirportId').val() > 0 ? $('#planLinkFromAirportId').val() : activeAirline.headquarterAirport.airportId;
-    const toId = $('#airportPopupId').val();
+    const fromId = fromAirportId || ($('#planLinkFromAirportId').val() > 0 ? $('#planLinkFromAirportId').val() : activeAirline.headquarterAirport.airportId);
+    const toId = toAirportId || $('#airportPopupId').val();
     const from = getAirportByAttribute(fromId);
     const to = getAirportByAttribute(toId);
     showSearchCanvas(0);
@@ -185,7 +188,8 @@ function showResearchPreloaded() {
     //create a temp path
     var tempLink = {fromLatitude: from.latitude, fromLongitude: from.longitude, toLatitude: to.latitude, toLongitude: to.longitude}
     //set the temp path
-    tempPath = drawFlightPath(tempLink, '#3b94e6')
+    tempPath = AirlineMap.drawFlightPath(tempLink, '#3b94e6')
+    AirlineMap.highlightPath(tempPath.path, false)
 
     document.querySelector('#searchCanvas .searchInput .fromAirport').value = from.iata;
     document.querySelector('#searchCanvas .searchInput .toAirport').value = to.iata;
@@ -199,7 +203,7 @@ function searchRoute(fromAirportId, toAirportId) {
         return;
     }
 
-    const url = `search-route/${fromAirportId}/${toAirportId}`;
+    const url = `/search-route/${fromAirportId}/${toAirportId}`;
 
     $.ajax({
         type: 'GET',
@@ -327,7 +331,7 @@ function searchRoute(fromAirportId, toAirportId) {
 
 
 function searchLinkHistory() {
-    const url = "search-link-history";
+    const url = "/search-link-history";
     const searchData = {};
 
     if (historySearchState.from.id) {
@@ -394,7 +398,7 @@ function updateLinkHistoryTable(sortProperty, sortOrder) {
         row.append("<div class='cell'>" + getAirlineLogoImg(link.airlineId) + link.airlineName + "</div>")
 		row.append("<div class='cell'>" + getCountryFlagImg(link.fromCountryCode) + getAirportText(link.fromAirportCity, link.fromAirportIata) + "</div>")
 		row.append("<div class='cell'>" + getCountryFlagImg(link.toCountryCode) + getAirportText(link.toAirportCity, link.toAirportIata) + "</div>")
-//		row.append("<div class='cell'>" + link.airplaneModelName + "</div>")
+		row.append("<div class='cell'>" + link.airplaneModelName + "</div>")
 		$("<div class='cell' align='right'></div>").appendTo(row).append(getCapacitySpan(link.capacity, link.frequency))
 		$("<div class='cell' align='right'></div>").appendTo(row).append(getCapacityDeltaSpan(link.capacityDelta))
 		$("<div class='cell'></div>").appendTo(row).text(toLinkClassValueString(link.price, '$'))
@@ -405,7 +409,7 @@ function updateLinkHistoryTable(sortProperty, sortOrder) {
 	});
 
 	if (loadedData.length == 0) {
-		var row = $("<div class='table-row'><div class='cell'>-</div><div class='cell'>-</div><div class='cell'>-</div><div class='cell'>-</div><div class='cell'>-</div><div class='cell'>-</div><div class='cell'>-</div><div class='cell'>-</div></div>")
+		var row = $("<div class='table-row'><div class='cell'>-</div><div class='cell'>-</div><div class='cell'>-</div><div class='cell'>-</div><div class='cell'>-</div><div class='cell'>-</div><div class='cell'>-</div><div class='cell'>-</div><div class='cell'>-</div></div>")
 		linkHistoryTable.append(row)
 	}
 }
@@ -519,7 +523,7 @@ function getLinkFeatureIconsDiv(features) {
     var featureIconsDiv = $("<div></div>")
     $.each(features, function(index, feature) {
         var featureInfo = linkFeatureIconsLookup[feature]
-        var icon = $("<img src='" + featureInfo.icon + "' title='" + featureInfo.description + "' style='margin: 2px;'>")
+        var icon = $("<img src='" + featureInfo.icon + "' class='tooltip-attr' data-tooltip='" + featureInfo.description + "' style='margin: 2px;'>")
          featureIconsDiv.append(icon)
     })
 
@@ -652,11 +656,11 @@ function searchChange(input) {
 
 function searchKeyUp(event, input) {
     var resultContainer = input.closest('div.searchInput').siblings('div.searchResult')
-    if (event.keyCode == 38) {
-        changeSelection(-1, resultContainer)
-    } else if (event.keyCode == 40) {
-        changeSelection(1, resultContainer)
-    } else if (event.keyCode == 13) { //enter
+    if (event.key === 'ArrowUp' || event.keyCode == 38) {
+        navigateSearchResults(-1, resultContainer, 'div.searchResultEntry')
+    } else if (event.key === 'ArrowDown' || event.keyCode == 40) {
+        navigateSearchResults(1, resultContainer, 'div.searchResultEntry')
+    } else if (event.key === 'Enter' || event.keyCode == 13) {
         confirmSelection(input)
     }
 }
@@ -730,27 +734,43 @@ function clickSelection(selectionDiv) {
     confirmSelection(input)
 }
 
+/**
+ * Shared keyboard navigation for search result lists.
+ * Works with both jQuery elements and vanilla DOM elements.
+ * @param {number} indexChange - Direction to move (-1 for up, 1 for down)
+ * @param {Element|jQuery} container - The results container
+ * @param {string} itemSelector - CSS selector for result items (default: '.searchResultEntry')
+ */
+function navigateSearchResults(indexChange, container, itemSelector = '.searchResultEntry') {
+    const isJQuery = container.jquery !== undefined;
+    const items = isJQuery
+        ? container.find(itemSelector).toArray()
+        : container.querySelectorAll(itemSelector);
+
+    if (items.length === 0) return;
+
+    const selectedSelector = itemSelector + '.selected';
+    const selected = isJQuery
+        ? container.find(selectedSelector)[0]
+        : container.querySelector(selectedSelector);
+
+    let currentIndex = Array.from(items).indexOf(selected);
+    if (currentIndex === -1) currentIndex = 0;
+
+    currentIndex += indexChange;
+    if (currentIndex < 0) currentIndex = 0;
+    if (currentIndex >= items.length) currentIndex = items.length - 1;
+
+    // Remove selected from all, add to new
+    items.forEach(item => item.classList.remove('selected'));
+    if (items[currentIndex]) {
+        items[currentIndex].classList.add('selected');
+    }
+}
+
+// Legacy wrapper for existing code
 function changeSelection(indexChange, resultContainer) {
-    var currentIndex = resultContainer.find("div.searchResultEntry.selected").index()
-//    if (typeof resultContainer.data('selectedIndex') !== 'undefined') {
-//        currentIndex = resultContainer.data("selectedIndex")
-//    } else {
-//        currentIndex = 0
-//    }
-
-    currentIndex += indexChange
-    var currentEntries = resultContainer.find("div.searchResultEntry")
-    if (currentIndex < 0) {
-        currentIndex = 0
-    } else if (currentIndex >= currentEntries.length) {
-        currentIndex = currentEntries.length - 1
-    }
-
-    currentEntries.removeClass("selected")
-    if (currentEntries[currentIndex]) {
-        $(currentEntries[currentIndex]).addClass("selected")
-    }
- //   resultContainer.data("selectedIndex", currentIndex)
+    navigateSearchResults(indexChange, resultContainer, 'div.searchResultEntry');
 }
 
 function numberInputFocusOut(input) {
@@ -774,7 +794,13 @@ let searchState = {};
  */
 const searchConfigs = {
     airport: {
-        dataSource: () => airports,
+        dataSource: () => {
+            // airports is GeoJSON - extract properties from features
+            if (airports?.features) {
+                return airports.features.map(f => f.properties);
+            }
+            return [];
+        },
         searchFields: [
             { field: 'city', exactScore: 100, partialScore: 50 },
             { field: 'iata', exactScore: 200, partialScore: 80 },
@@ -1012,7 +1038,7 @@ function researchFlight(fromAirportId, toAirportId) {
         return;
     }
 
-    const url = `research-link/${fromAirportId}/${toAirportId}`;
+    const url = `/research-link/${fromAirportId}/${toAirportId}`;
 
     $.ajax({
         type: 'GET',
@@ -1107,10 +1133,10 @@ function populateResearchLinksTable(links, consumptions, basePrice) {
 function populateResearchDemandTables(result) {
     const { fromAirportIata, toAirportIata, fromDemands, toDemands } = result;
 
-    $('#researchSearchResult .fromDemandHeading').text(`Demand From ${fromAirportIata}`);
+    $('#researchSearchResult .fromDemandHeading').text(`Demand from ${fromAirportIata} to ${toAirportIata}`);
     buildDemandsTable(fromDemands, "fromDemand");
 
-    $('#researchSearchResult .toDemandHeading').text(`Demand To ${toAirportIata}`);
+    $('#researchSearchResult .toDemandHeading').text(`Demand to ${fromAirportIata} from ${toAirportIata}`);
     buildDemandsTable(toDemands, "toDemand");
 }
 

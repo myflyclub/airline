@@ -252,11 +252,8 @@ object Meta {
     createCountryMarketShare(connection)
     createAirlineStats(connection)
     createCountryAirlineTitle(connection)
-    createAirlineLogo(connection)
-    createAirlineLivery(connection)
     createAirlineSlogan(connection)
     createAirlineNameHistory(connection)
-    createUserWallpaper(connection)
     createAirplaneRenewal(connection)
     createAirplaneConfiguration(connection)
     createAlliance(connection)
@@ -656,36 +653,6 @@ object Meta {
     statement.close()
   }
 
-  def createAirlineLogo(connection : Connection) {
-    var statement = connection.prepareStatement("DROP TABLE IF EXISTS " + AIRLINE_LOGO_TABLE)
-    statement.execute()
-    statement.close()
-
-    statement = connection.prepareStatement("CREATE TABLE " + AIRLINE_LOGO_TABLE + "(" +
-      "airline INTEGER, " +
-      "logo BLOB, " +
-      "PRIMARY KEY (airline)," +
-      "FOREIGN KEY(airline) REFERENCES " + AIRLINE_TABLE + "(id) ON DELETE CASCADE ON UPDATE CASCADE" +
-      ")")
-    statement.execute()
-    statement.close()
-  }
-
-  def createAirlineLivery(connection : Connection) {
-    var statement = connection.prepareStatement("DROP TABLE IF EXISTS " + AIRLINE_LIVERY_TABLE)
-    statement.execute()
-    statement.close()
-
-    statement = connection.prepareStatement("CREATE TABLE " + AIRLINE_LIVERY_TABLE + "(" +
-      "airline INTEGER, " +
-      "livery MEDIUMBLOB, " +
-      "PRIMARY KEY (airline)," +
-      "FOREIGN KEY(airline) REFERENCES " + AIRLINE_TABLE + "(id) ON DELETE CASCADE ON UPDATE CASCADE" +
-      ")")
-    statement.execute()
-    statement.close()
-  }
-
   def createAirlineSlogan(connection : Connection) {
     var statement = connection.prepareStatement("DROP TABLE IF EXISTS " + AIRLINE_SLOGAN_TABLE)
     statement.execute()
@@ -712,21 +679,6 @@ object Meta {
       "update_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP," +
       "PRIMARY KEY (airline,name,update_timestamp)," +
       "FOREIGN KEY(airline) REFERENCES " + AIRLINE_TABLE + "(id) ON DELETE CASCADE ON UPDATE CASCADE" +
-      ")")
-    statement.execute()
-    statement.close()
-  }
-
-  def createUserWallpaper(connection : Connection) {
-    var statement = connection.prepareStatement("DROP TABLE IF EXISTS " + USER_WALLPAPER_TABLE)
-    statement.execute()
-    statement.close()
-
-    statement = connection.prepareStatement("CREATE TABLE " + USER_WALLPAPER_TABLE + "(" +
-      "user INTEGER, " +
-      "wallpaper MEDIUMBLOB, " +
-      "PRIMARY KEY (user)," +
-      "FOREIGN KEY(user) REFERENCES " + USER_TABLE + "(id) ON DELETE CASCADE ON UPDATE CASCADE" +
       ")")
     statement.execute()
     statement.close()
@@ -2236,6 +2188,7 @@ object Meta {
       "period INTEGER, " +
       "total_pax INTEGER, " +
       "missed_pax INTEGER, " +
+      "load_factor DOUBLE, " +
       "PRIMARY KEY (week, period)" +
       ")"
     )

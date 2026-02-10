@@ -25,7 +25,7 @@ object AirportUtil {
     
     allAirports.sortBy(_.popMiddleIncome).map { airport =>
       val stats = AirportStatisticsSource.loadAirportStatsById(airport.id).getOrElse(AirportStatistics(0,0,0,0,0,0))
-      val travelRate = (Airport.travelRate(stats.travelRate, airport.size) * 100).toInt
+      val travelRate = (stats.travelRate * 100).toInt
       val congestion = if (stats.congestion < 0.2) None else Some((stats.congestion * 100).toInt)
       loyalistByAirportId.get(airport.id) match {
         case Some(loyalists) =>

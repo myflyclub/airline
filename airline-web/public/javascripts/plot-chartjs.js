@@ -716,7 +716,7 @@ function plotLinkConsumption(linkConsumptions, ridershipId, revenueId, priceId, 
                             maxTicksLimit: 6
                         },
                         grid: {
-                            color: 'rgba(54, 54, 54, 0.6)',
+                            color: 'rgba(54, 54, 54, 0.7)',
                             lineWidth: 1
                         }
                     },
@@ -1156,11 +1156,11 @@ function plotOpsChart(stats, period, container) {
     stats.forEach(stat => {
         labels.push(getGameDate(stat.cycle));
         epsData.push(stat.eps);
-        raskData.push(stat.RASK);
-        caskData.push(stat.CASK);
-        satisfactionData.push(stat.satisfaction);
-        loadFactorData.push(stat.load_factor);
-        onTimeData.push(stat.on_time);
+        raskData.push(stat.RASK * 100);
+        caskData.push(stat.CASK * 100);
+        satisfactionData.push(stat.satisfaction * 100);
+        loadFactorData.push(stat.load_factor * 100);
+        onTimeData.push(stat.on_time * 100);
         linkCountData.push(stat.link_count);
         monthsCashOnHand.push(stat.months_cash_on_hand);
     });
@@ -1411,7 +1411,7 @@ function plotRivalHistoryChart(allRivalLinkConsumptions, priceContainer, linkCla
             scales: {
                 y: {
                     grid: {
-                        color: 'rgba(54, 54, 54, 0.6)',
+                        color: 'rgba(54, 54, 54, 0.7)',
                         lineWidth: 1
                     },
                     type: 'logarithmic',
@@ -1420,7 +1420,7 @@ function plotRivalHistoryChart(allRivalLinkConsumptions, priceContainer, linkCla
                 },
                 x: {
                     grid: {
-                        color: 'rgba(54, 54, 54, 0.6)',
+                        color: 'rgba(54, 54, 54, 0.7)',
                         lineWidth: 1
                     },
                 }

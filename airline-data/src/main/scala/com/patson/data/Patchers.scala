@@ -124,7 +124,7 @@ object Patchers extends App {
   def patchAirlineLogos() {
     AirlineSource.loadAllAirlines(false).foreach { airline =>
       if (airline.id <= 250) {
-        AirlineSource.saveLogo(airline.id, LogoGenerator.generateRandomLogo())
+        FileSource.saveLogo(airline.id, "airline", LogoGenerator.generateRandomLogo())
       }
     }
   }

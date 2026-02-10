@@ -20,7 +20,7 @@ package object controllers {
   implicit val ec: ExecutionContext = ExecutionContext.global
   implicit val actorSystem: ActorSystem = ActorSystem("patson-web-app-system")
   implicit val order: Double.IeeeOrdering.type = Ordering.Double.IeeeOrdering
-  val currentApiVersion = "v4.1.1" // Update this when schema changes
+  val currentApiVersion = "v4.1.5" // Update this when schema changes
   val currentCycle: Int = CycleSource.loadCycle()
 
   implicit object AirlineFormat extends Format[Airline] {
@@ -467,12 +467,12 @@ package object controllers {
         "traveler" -> JsNumber(traveler),
         "total" -> JsNumber(airlineStat.total),
         "codeshares" -> JsNumber(airlineStat.codeshares),
-        "RASK" -> JsNumber(BigDecimal(airlineStat.RASK * 100).setScale(2, RoundingMode.HALF_EVEN)),
-        "CASK" -> JsNumber(BigDecimal(airlineStat.CASK * 100).setScale(2, RoundingMode.HALF_EVEN)),
-        "PASK" -> JsNumber(BigDecimal((airlineStat.RASK - airlineStat.CASK) * 100).setScale(2, RoundingMode.HALF_EVEN)),
-        "satisfaction" -> JsNumber(BigDecimal(airlineStat.satisfaction * 100).setScale(2, RoundingMode.HALF_EVEN)),
-        "load_factor" -> JsNumber(BigDecimal(airlineStat.loadFactor * 100).setScale(2, RoundingMode.HALF_EVEN)),
-        "on_time" -> JsNumber(BigDecimal(airlineStat.onTime * 100).setScale(2, RoundingMode.HALF_EVEN)),
+        "RASK" -> JsNumber(BigDecimal(airlineStat.RASK).setScale(4, RoundingMode.HALF_EVEN)),
+        "CASK" -> JsNumber(BigDecimal(airlineStat.CASK).setScale(4, RoundingMode.HALF_EVEN)),
+        "PASK" -> JsNumber(BigDecimal(airlineStat.RASK - airlineStat.CASK).setScale(4, RoundingMode.HALF_EVEN)),
+        "satisfaction" -> JsNumber(BigDecimal(airlineStat.satisfaction).setScale(4, RoundingMode.HALF_EVEN)),
+        "load_factor" -> JsNumber(BigDecimal(airlineStat.loadFactor).setScale(4, RoundingMode.HALF_EVEN)),
+        "on_time" -> JsNumber(BigDecimal(airlineStat.onTime).setScale(4, RoundingMode.HALF_EVEN)),
         "months_cash_on_hand" -> JsNumber(airlineStat.cashOnHand / 4),
         "eps" -> JsNumber(airlineStat.eps),
         "link_count" -> JsNumber(airlineStat.linkCount),
@@ -651,6 +651,103 @@ package object controllers {
       airportObject
     }
   }
+
+  /**
+   * GeoJSON FeatureCollection for airports (for MapLibre)
+   */
+  object AirportsGeoJsonWrites extends Writes[List[Airport]] {
+    def writes(airports: List[Airport]): JsValue = {
+      val features = airports.map { airport =>
+        var properties = Json.obj(
+          "id" -> airport.id,
+          "name" -> airport.name,
+          "iata" -> airport.iata,
+          "city" -> airport.city,
+          "size" -> airport.size,
+          "countryCode" -> airport.countryCode,
+          "population" -> airport.basePopulation,
+          "income" -> airport.baseIncome,
+          "runwayLength" -> airport.runwayLength
+        )
+
+        if (airport.isGateway()) {
+          properties = properties + ("isGateway" -> JsBoolean(true))
+        }
+        if (airport.isDomesticAirport()) {
+          properties = properties + ("isDomesticAirport" -> JsBoolean(true))
+        }
+        if (airport.isOrangeAirport) {
+          properties = properties + ("isOrangeAirport" -> JsBoolean(true))
+        }
+        if (airport.getFeatures().nonEmpty) {
+          properties = properties + (
+            "features" -> JsArray(airport.getFeatures().sortBy(_.featureType.id).map { airportFeature =>
+              Json.obj("type" -> airportFeature.featureType.toString(), "strength" -> airportFeature.strength, "title" -> airportFeature.getDescription)
+            })
+          )
+        }
+
+        Json.obj(
+          "type" -> "Feature",
+          "id" -> airport.id,
+          "geometry" -> Json.obj(
+            "type" -> "Point",
+            "coordinates" -> Json.arr(airport.longitude, airport.latitude)
+          ),
+          "properties" -> properties
+        )
+      }
+
+      Json.obj(
+        "type" -> "FeatureCollection",
+        "features" -> JsArray(features)
+      )
+    }
+  }
+
+  /**
+   * GeoJSON FeatureCollection for links/routes (for MapLibre)
+   */
+  object LinksGeoJsonWrites extends Writes[List[Link]] {
+    def writes(links: List[Link]): JsValue = {
+      val features = links.map { link =>
+        val properties = Json.obj(
+          "id" -> link.id,
+          "fromAirportId" -> link.from.id,
+          "toAirportId" -> link.to.id,
+          "fromAirportCode" -> link.from.iata,
+          "toAirportCode" -> link.to.iata,
+          "fromAirportCity" -> link.from.city,
+          "toAirportCity" -> link.to.city,
+          "airlineId" -> link.airline.id,
+          "airlineName" -> link.airline.name,
+          "distance" -> link.distance,
+          "frequency" -> link.frequency,
+          "rawQuality" -> link.rawQuality,
+          "computedQuality" -> link.computedQuality()
+        )
+
+        Json.obj(
+          "type" -> "Feature",
+          "id" -> link.id,
+          "geometry" -> Json.obj(
+            "type" -> "LineString",
+            "coordinates" -> Json.arr(
+              Json.arr(link.from.longitude, link.from.latitude),
+              Json.arr(link.to.longitude, link.to.latitude)
+            )
+          ),
+          "properties" -> properties
+        )
+      }
+
+      Json.obj(
+        "type" -> "FeatureCollection",
+        "features" -> JsArray(features)
+      )
+    }
+  }
+
   /**
    * Extended static airport data
    */
@@ -912,8 +1009,6 @@ package object controllers {
 
   val allAirplaneModels = ModelSource.loadAllModels()
 
-  val regionalAirplaneModels = allAirplaneModels.filter(_.airplaneTypeSize < RegionalAirline.modelMaxSize)
-  
   val allCountryRelationships = CountrySource.getCountryMutualRelationships()
 
   object LoginStatus extends Enumeration {

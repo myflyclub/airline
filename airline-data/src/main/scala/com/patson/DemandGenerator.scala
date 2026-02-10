@@ -1,6 +1,5 @@
 package com.patson
 
-import java.util.{ArrayList, Collections}
 import com.patson.data.{AirportSource, CountrySource, CycleSource, DestinationSource, EventSource, GameConstants}
 import com.patson.model.event.{EventType, Olympics}
 import com.patson.model.{PassengerType, _}
@@ -12,7 +11,6 @@ import scala.collection.mutable.ListBuffer
 import scala.collection.parallel.CollectionConverters._
 
 object DemandGenerator {
-
   val FIRST_CLASS_INCOME_MAX = 125_000
   val FIRST_CLASS_PERCENTAGE_MAX: Map[PassengerType.Value, Double] = Map(PassengerType.TRAVELER -> 0, PassengerType.BUSINESS -> 0.12, PassengerType.TOURIST -> 0, PassengerType.ELITE -> 1, PassengerType.OLYMPICS -> 0)
   val BUSINESS_CLASS_INCOME_MAX = 125_000
@@ -24,12 +22,7 @@ object DemandGenerator {
   val PRICE_LAST_MIN_MULTIPLIER = 1.14
   val PRICE_LAST_MIN_DEAL_MULTIPLIER = 0.88
   val HUB_AIRPORTS_MAX_RADIUS = 1400
-//  val launchDemandFactor: Double = if (CycleSource.loadCycle() <= 1) 1.0 else Math.min(1, (50 + CycleSource.loadCycle().toDouble / 24) / 100)
-  val launchDemandFactor: Double = 1.0
   val baseDemandChunkSize = 23
-  val cycle: Int = CycleSource.loadCycle()
-  val cyclePhaseLength = CycleSource.loadAndUpdateCyclePhase()
-  val baseRandom: Int = 5 + ThreadLocalRandom.current().nextInt(10)
 
   import scala.jdk.CollectionConverters._
 
@@ -45,9 +38,9 @@ object DemandGenerator {
     fromAirport != toAirport && (distance > MIN_DISTANCE || GameConstants.connectsIsland(fromAirport, toAirport) && distance > 25 || toAirport.hasFeature(AirportFeatureType.BUSH_HUB))
   }
 
-  def demandRandomizerByType(passengerType: PassengerType.Value, demand: Int): Int = {
+  def demandRandomizerByType(passengerType: PassengerType.Value, demand: Int, cycle: Int, cyclePhaseLength: Int): Int = {
     val randomizedDemand = if (passengerType == PassengerType.TOURIST) {
-      demandRandomizer(demand, cycle, cyclePhaseLength, 3, 24)
+      demandRandomizer(demand, cycle, cyclePhaseLength, 2, 24)
     } else if (passengerType == PassengerType.BUSINESS) {
       demandRandomizer(demand, cycle, cyclePhaseLength, 1, 12)
     } else { //traveler, elite
@@ -57,19 +50,27 @@ object DemandGenerator {
   }
 
   def demandRandomizer(demand: Int, cycle: Int, frequency: Int, amplitudeRatio: Int = 1, offset: Int = 0): Int = {
+    val baseSeasonalPct = 0.15  // The wave naturally swings +/- 15%
+    val noisePct = 0.03
     val rng = ThreadLocalRandom.current()
-    val sinValue = math.sin(2 * math.Pi * (cycle + offset) / frequency)
 
-    val random = demand * rng.nextDouble(-0.07, 0.07)
-    val amplitude = amplitudeRatio * math.max(8, demand * rng.nextDouble(0.11))
-    val adjustment = amplitude * sinValue + random
-    val newDemand = demand + adjustment.toInt
-    if (newDemand <= 0 || (newDemand < 10 && newDemand % 2 == 1)) {
-      0 //doing this to reduce the number of groups for the algo to process, subtracting 30
-    } else if (newDemand <= 15) {
-      newDemand + 3 //but then add 30 back... arbitrary but imperceptible
+    val amplitude = demand * baseSeasonalPct * amplitudeRatio
+
+    val sinValue = math.sin(2 * math.Pi * (cycle + offset) / frequency)
+    val seasonalAdjustment = amplitude * sinValue
+
+    val randomNoise = demand * rng.nextDouble(-noisePct, noisePct)
+    val rawNewDemand = Math.max(0, demand + seasonalAdjustment + randomNoise).toInt
+
+    val threshold = 10  // Remove some small passenger groups
+    if (rawNewDemand >= threshold) {
+      rawNewDemand
     } else {
-      newDemand
+      if (rng.nextDouble() < 0.40) {
+        (rawNewDemand * 2.3).toInt
+      } else {
+        0
+      }
     }
   }
 
@@ -83,196 +84,14 @@ object DemandGenerator {
    */
 
   /**
-   * min distance is used in two contexts:
-   * 1) find nearby domestic between minDistance and 4x minDistance
-   *    - standard catchment is 1200km
-   * 2) reduce demand under minDistance (if not island or high affinity)
-   */
-  val localityMinDistanceMap = Map(
-      "default" -> 325,
-      "CA" -> 400,
-      "US" -> 400,
-      "DO" -> 100,
-      "HT" -> 100,
-      "BZ" -> 100,
-      "HN" -> 100,
-      "CR" -> 100,
-      "GT" -> 100,
-      "NI" -> 200,
-      "HN" -> 200,
-      "PA" -> 200,
-      "CO" -> 200,
-      "PE" -> 250,
-      "BR" -> 325,
-      "AR" -> 350,
-      "ET" -> 210,
-      "KE" -> 220,
-      "TZ" -> 220,
-      "ZW" -> 220,
-      "ZA" -> 300,
-      "IS" -> 100,
-      "GB" -> 400,
-      "NL" -> 400,
-      "BE" -> 450,
-      "DE" -> 350,
-      "IT" -> 320,
-      "PL" -> 400,
-      "NO" -> 300,
-      "SE" -> 400,
-      "FI" -> 300,
-      "RU" -> 375,
-      "AE" -> 370,
-      "BA" -> 370,
-      "QA" -> 370,
-      "IQ" -> 50, //turn EBL into an island
-      "NP" -> 100,
-      "CN" -> 700, //HSR rail
-      "TW" -> 220,
-      "JP" -> 400,
-      "KR" -> 360,
-      "AU" -> 360,
-    )
-    val localityAdjustMap = Map(
-      "AO" -> 1.8,
-      "BI" -> 2.1,
-      "BF" -> 1.9,
-      "BJ" -> 2.2,
-      "BW" -> 2.1,
-      "CD" -> 1.4,
-      "CG" -> 1.6,
-      "CI" -> 1.6,
-      "CM" -> 1.8,
-      "CV" -> 2.1,
-      "DJ" -> 2.1,
-      "EG" -> 0.9,
-      "ER" -> 1.9,
-      "ET" -> 2.4,
-      "GA" -> 2.1,
-      "GH" -> 2.1,
-      "GM" -> 2.1,
-      "GN" -> 1.6,
-      "GW" -> 1.6,
-      "GQ" -> 2.2,
-      "KE" -> 2.1,
-      "KM" -> 2.1,
-      "LR" -> 1.7,
-      "LS" -> 2.4,
-      "ML" -> 1.7,
-      "MR" -> 1.7,
-      "MG" -> 1.6,
-      "MU" -> 2.0,
-      "MW" -> 2.1,
-      "MZ" -> 1.9,
-      "NA" -> 2.3,
-      "NE" -> 1.7,
-      "NG" -> 1.2,
-      "SC" -> 2.2,
-      "SD" -> 1.7,
-      "SL" -> 2.4,
-      "SN" -> 2.4,
-      "SO" -> 1.5,
-      "SS" -> 1.6,
-      "ST" -> 2.1,
-      "SZ" -> 2.1,
-      "TD" -> 1.6,
-      "TG" -> 1.6,
-      "TZ" -> 1.9,
-      "UG" -> 1.7,
-      "ZA" -> 2.1,
-      "ZM" -> 1.7,
-      "ZW" -> 1.6,
-
-      "AR" -> 1.4,
-      "BO" -> 2.2,
-      "BZ" -> 2.5,
-      "BR" -> 1.2,
-      "CL" -> 2.8,
-      "CO" -> 1.8,
-      "CR" -> 2.0,
-      "EC" -> 2.4,
-      "GY" -> 2.0,
-      "HN" -> 2.0,
-      "PE" -> 2.7,
-      "PA" -> 3.8,
-      "PY" -> 2.0,
-      "SV" -> 2.0,
-      "UY" -> 2.0,
-
-      "AE" -> 1.9,
-      "BA" -> 1.8,
-      "BD" -> 0.8,
-      "CN" -> 0.7,
-      "KR" -> 1.7,
-      "ID" -> 1.5,
-      "IL" -> 1.4,
-      "IN" -> 0.5,
-      "IR" -> 1.8,
-      "LK" -> 1.2,
-      "JP" -> 1.2,
-      "KW" -> 2.6,
-      "MY" -> 1.8,
-      "NP" -> 1.7,
-      "OM" -> 1.6,
-      "PH" -> 1.5,
-      "PK" -> 0.7,
-      "SA" -> 1.7,
-      "SG" -> 1.9,
-      "TH" -> 1.0,
-      "TR" -> 1.3,
-      "TW" -> 1.4,
-      "VN" -> 1.7,
-
-      "AU" -> 1.3,
-      "NZ" -> 1.9,
-
-      "AL" -> 1.3,
-      "AT" -> 1.2,
-      "BE" -> 1.1,
-      "CH" -> 1.6,
-      "CY" -> 1.3,
-      "CZ" -> 1.2,
-      "DE" -> 1.0,
-      "DK" -> 1.2,
-      "ES" -> 1.2,
-      "FI" -> 1.3,
-      "FR" -> 0.9,
-      "GB" -> 1.5,
-      "GR" -> 1.3,
-      "HU" -> 1.2,
-      "IE" -> 1.3,
-      "IS" -> 1.3,
-      "IT" -> 1.2,
-      "LU" -> 1.3,
-      "MT" -> 1.9,
-      "NL" -> 1.0,
-      "NO" -> 1.0,
-      "PL" -> 1.0,
-      "PT" -> 1.3,
-      "RO" -> 0.8,
-      "RS" -> 1.4,
-      "RU" -> 0.8,
-      "SE" -> 1.1,
-
-      "BM" -> 1.8,
-      "BS" -> 1.3,
-      "CA" -> 1.2,
-      "DO" -> 1.7,
-      "JM" -> 1.4,
-      "MX" -> 0.9,
-      "PR" -> 1.5,
-      "TT" -> 1.2,
-      "US" -> 1.0
-    )
-
-  /**
    * Hub airports are the most important nearby airports of a given airport
    */
-  def getHubAirports(fromAirport: Airport, isIsolatedMultiplier: Int): List[(Airport, Double)] = {
+  def getHubAirports(fromAirport: Airport, isIsolatedMultiplier: Int, cycle: Int): List[(Airport, Double)] = {
     val SKIP_AIRPORTS = List("PER", "KEF", "RUN" )
     if (SKIP_AIRPORTS.contains(fromAirport.iata)) {
       List.empty
     } else {
-      val minDistance = if (GameConstants.isIsland(fromAirport.iata)) 25 else localityMinDistanceMap.getOrElse(fromAirport.countryCode, localityMinDistanceMap("default"))
+      val minDistance = if (GameConstants.isIsland(fromAirport.iata)) 25 else DemandConstants.localityMinDistanceMap.getOrElse(fromAirport.countryCode, DemandConstants.localityMinDistanceMap("default"))
       val maxDistance = minDistance * 4 + 275 * isIsolatedMultiplier
       //mostly trying to generate a base of domestic demand (also is more performant), but in smaller markets do int'l
       val intlCountries = List("AE","AL","AM","AT","AZ","BD","BY","BE","BJ","BT","BA","BI","BW","CH","CW","CZ","DE","DJ","DM","EE","GB","GE","GM","GH","GD","GN","GY","HK","HR","HU","IE","IL","JM","JO","KI","KW","KG","LV","LS","LR","LI","LT","LU","MO","MT","MD","MK","NA","NL","PR","QA","RW","RS","SG","SK","SI","SR","SY","SX","SZ","TJ","UY","UZ","VU")
@@ -280,12 +99,12 @@ object DemandGenerator {
       val isDomestic = if (intlCountries.contains(fromAirport.countryCode) || intlAirports.contains(fromAirport.iata)) false else true
       val airports = Computation.getAirportWithinRange(fromAirport, maxDistance, minDistance, isDomestic)
       val numberDestinations = Math.min(22, (isIsolatedMultiplier + 1) * (fromAirport.size + 6))
-      percentagesHubAirports(airports, fromAirport, numberDestinations, isIsolatedMultiplier) //find important airports
+      percentagesHubAirports(airports, fromAirport, numberDestinations, isIsolatedMultiplier, cycle) //find important airports
     }
   }
 
-  def percentagesHubAirports(hubAirports: List[Airport], fromAirport: Airport, numberDestinations: Int, isIsolatedMultiplier: Int): List[(Airport, Double)] = {
-    val distanceFloor = if (isIsolatedMultiplier > 0) 0 else localityMinDistanceMap.getOrElse(fromAirport.countryCode, localityMinDistanceMap("default")).toDouble //island airports will fly to close airports
+  def percentagesHubAirports(hubAirports: List[Airport], fromAirport: Airport, numberDestinations: Int, isIsolatedMultiplier: Int, cycle: Int): List[(Airport, Double)] = {
+    val distanceFloor = if (isIsolatedMultiplier > 0) 0 else DemandConstants.localityMinDistanceMap.getOrElse(fromAirport.countryCode, DemandConstants.localityMinDistanceMap("default")).toDouble //island airports will fly to close airports
     if (hubAirports.isEmpty) {
       List.empty
     } else {
@@ -296,7 +115,7 @@ object DemandGenerator {
         val popPercent = Math.min(16 * (isIsolatedMultiplier + 1), airport.popMiddleIncome.toDouble / avgPopMiddleIncome) //pop weight at most 16x
         val distancePercent = 1 - Math.max(distanceFloor, Computation.calculateDistance(airport, fromAirport)).toDouble / avgDistance
         val variability = (airport.id + cycle + 2) % 4 / 4.0
-        val weightedScore = if (GameConstants.doesPairExist(fromAirport.iata, airport.iata, GameConstants.railLookupSet)) {
+        val weightedScore = if (DemandConstants.doesPairExist(fromAirport.iata, airport.iata, DemandConstants.railLookupSet)) {
           0
         } else Math.max(0, 0.7 * distancePercent + 0.2 * popPercent + 0.0 * variability * isIsolatedMultiplier) //todo: turn on
         (airport, weightedScore)
@@ -319,13 +138,13 @@ object DemandGenerator {
    * @param fromAirport
    * @return map[String IATA, Int demand]
    */
-  def generateHubAirportDemand(fromAirport: Airport): Map[String, LinkClassValues] = {
+  def generateHubAirportDemand(fromAirport: Airport, cycle: Int): Map[String, LinkClassValues] = {
     val isIsolatedMultiplier = if (fromAirport.getFeatures().exists(_.featureType == AirportFeatureType.ISOLATED_TOWN)){
       fromAirport.getFeatures().find(_.featureType == AirportFeatureType.ISOLATED_TOWN).get.strength
     } else {
       0
     }
-    val hubAirports: List[(Airport, Double)] = getHubAirports(fromAirport, isIsolatedMultiplier)
+    val hubAirports: List[(Airport, Double)] = getHubAirports(fromAirport, isIsolatedMultiplier, cycle)
 
     if (hubAirports.isEmpty) {
       Map.empty
@@ -352,6 +171,7 @@ object DemandGenerator {
   }
 
   def computeDemand(cycle: Int, airportStats: immutable.Map[Int, AirportStatistics]): List[(PassengerGroup, Airport, Int)] = {
+    val cyclePhaseLength = CycleSource.loadAndUpdateCyclePhase()
     println("Loading airports")
     val airports: List[Airport] = AirportSource.loadAllAirports(true).filter { airport =>
       airport.iata != "" && airport.popMiddleIncome > 0
@@ -362,7 +182,7 @@ object DemandGenerator {
 
     val computedDemandChunks = airports.par.flatMap { fromAirport =>
       val flightPreferencesPool = getFlightPreferencePoolOnAirport(fromAirport)
-      val hubAirportsDemands = generateHubAirportDemand(fromAirport)
+      val hubAirportsDemands = generateHubAirportDemand(fromAirport, cycle)
 
       // Generate chunks for demand to all other regular airports
       val regularDemandChunks = airports.flatMap { toAirport =>
@@ -375,10 +195,10 @@ object DemandGenerator {
 
           // Combine all chunks for this airport pair
           val travelerDemandValue = demand.travelerDemand + hubAirportsDemands.getOrElse(toAirport.iata, LinkClassValues.empty)
-          val travelerType = if (PassengerType.TRAVELER_SMALL_TOWN_CEILING > 100000) PassengerType.TRAVELER else PassengerType.TRAVELER_SMALL_TOWN
-          val travelerChunks = generateChunksForPassengerType(travelerDemandValue, fromAirport, toAirport, travelerType, flightPreferencesPool, airportStats)
-          val businessChunks = generateChunksForPassengerType(demand.businessDemand, fromAirport, toAirport, PassengerType.BUSINESS, flightPreferencesPool, airportStats)
-          val touristChunks = generateChunksForPassengerType(demand.touristDemand, fromAirport, toAirport, PassengerType.TOURIST, flightPreferencesPool, airportStats)
+          val travelerType = if (fromAirport.population > PassengerType.TRAVELER_SMALL_TOWN_CEILING) PassengerType.TRAVELER else PassengerType.TRAVELER_SMALL_TOWN
+          val travelerChunks = generateChunksForPassengerType(travelerDemandValue, fromAirport, toAirport, travelerType, flightPreferencesPool, airportStats, cycle, cyclePhaseLength)
+          val businessChunks = generateChunksForPassengerType(demand.businessDemand, fromAirport, toAirport, PassengerType.BUSINESS, flightPreferencesPool, airportStats, cycle, cyclePhaseLength)
+          val touristChunks = generateChunksForPassengerType(demand.touristDemand, fromAirport, toAirport, PassengerType.TOURIST, flightPreferencesPool, airportStats, cycle, cyclePhaseLength)
 
           travelerChunks ++ businessChunks ++ touristChunks
         } else {
@@ -389,7 +209,7 @@ object DemandGenerator {
       val eliteDemand = generateEliteDemand(fromAirport, destinationList).getOrElse(List.empty)
       val eliteDemandChunks = eliteDemand.flatMap {
         case (toAirport, (passengerType, demand)) =>
-          generateChunksForPassengerType(demand, fromAirport, toAirport, passengerType, flightPreferencesPool, airportStats)
+          generateChunksForPassengerType(demand, fromAirport, toAirport, passengerType, flightPreferencesPool, Map.empty, cycle, cyclePhaseLength) //pass empty map to bypass travelRate and randomizer
       }
 
       // Return all chunks originating from `fromAirport`
@@ -405,7 +225,7 @@ object DemandGenerator {
         val flightPreferencesPool = getFlightPreferencePoolOnAirport(fromAirport)
         toAirportsWithDemand.flatMap {
           case (toAirport, (passengerType, demand)) =>
-            generateChunksForPassengerType(demand, fromAirport, toAirport, passengerType, flightPreferencesPool, airportStats)
+            generateChunksForPassengerType(demand, fromAirport, toAirport, passengerType, flightPreferencesPool, Map.empty, cycle, cyclePhaseLength) //pass empty map to bypass travelRate and randomizer
         }
     }
     println(s"Generated ${eventDemandChunks.length} event demand chunks")
@@ -417,21 +237,20 @@ object DemandGenerator {
   /**
    * Helper function to generate all chunks for a specific passenger type's demand.
    */
-  def generateChunksForPassengerType(demand: LinkClassValues, fromAirport: Airport, toAirport: Airport, passengerType: PassengerType.Value, flightPreferencesPool: FlightPreferencePool, allAirportStats: immutable.Map[Int, AirportStatistics]): List[(PassengerGroup, Airport, Int)] = {
+  def generateChunksForPassengerType(demand: LinkClassValues, fromAirport: Airport, toAirport: Airport, passengerType: PassengerType.Value, flightPreferencesPool: FlightPreferencePool, allAirportStats: immutable.Map[Int, AirportStatistics], cycle: Int = 1, cyclePhaseLength : Int = 50): List[(PassengerGroup, Airport, Int)] = {
     if (demand.total <= 0) {
       List.empty
     } else {
       LinkClass.values.flatMap { linkClass =>
         //if there's no stats available, assume setup or testcase and generate unaltered demands
         val demandForClass = allAirportStats.get(fromAirport.id) match {
-          case Some(stats) if stats.baselineDemand > 0 => 
-            val travelRate = Airport.travelRate(stats.fromPax.toDouble / stats.baselineDemand, fromAirport.size)
-            demandRandomizerByType(passengerType, (demand(linkClass) * travelRate).toInt)
+          case Some(stats) if stats.baselineDemand > 0 =>
+            val travelRate = Airport.travelRate(stats.fromPax, stats.baselineDemand, fromAirport.size)
+            demandRandomizerByType(passengerType, (demand(linkClass) * travelRate).toInt, cycle, cyclePhaseLength)
           case _ =>
             demand(linkClass)
         }
         if (demandForClass > 0) {
-          // This helper breaks a single integer demand into chunks
           generateDemandChunks(demandForClass, fromAirport, toAirport, passengerType, linkClass, flightPreferencesPool)
         } else {
           List.empty
@@ -470,7 +289,7 @@ object DemandGenerator {
    * @param distance
    * @return
    */
-  def computeDemandWithPreferencesBetweenAirports(fromAirport: Airport, toAirport: Airport, affinity: Int, distance: Int): Map[(LinkClass, FlightPreference, PassengerType.Value), Int] = {
+  def computeDemandWithPreferencesBetweenAirports(fromAirport: Airport, toAirport: Airport, affinity: Int, distance: Int, cycle: Int): Map[(LinkClass, FlightPreference, PassengerType.Value), Int] = {
     if (!canHaveDemand(fromAirport, toAirport, Computation.calculateDistance(fromAirport, toAirport))) {
       Map.empty
     } else {
@@ -480,7 +299,7 @@ object DemandGenerator {
 
       val isDomestic = fromAirport.countryCode == toAirport.countryCode
       val fromHubAirportsDemands: Map[String, LinkClassValues] = if (isDomestic) {
-        generateHubAirportDemand(fromAirport)
+        generateHubAirportDemand(fromAirport, cycle)
       } else Map.empty
 
       def processLinkClassDemand(passengerType: PassengerType.Value, linkClassValues: LinkClassValues) = {
@@ -520,14 +339,14 @@ object DemandGenerator {
     //lower demand to (boosted) poor places, but not applied on tourists
     val toIncomeAdjust = Math.min(1.0, (toAirport.income.toDouble + 12_000) / 54_000)
 
-    val percentTraveler = Math.min(0.7, fromAirport.income.toDouble / 40_000)
+    val percentTraveler = Math.min(0.75, fromAirport.income.toDouble / 40_000)
 
     val demands = Map(PassengerType.TRAVELER -> demand * percentTraveler * toIncomeAdjust, PassengerType.BUSINESS -> (demand * (1 - percentTraveler - 0.1) * toIncomeAdjust), PassengerType.TOURIST -> demand * 0.1)
 
-    val localityAdjust = localityAdjustMap.getOrElse(fromAirport.countryCode, 1.2) * localityAdjustMap.getOrElse(toAirport.countryCode, 1.2)
-    val hasCompetingRail = if (GameConstants.doesPairExist(fromAirport.iata, toAirport.iata, GameConstants.railLookupSet)) 0.2 else 1
+    val localityAdjust = DemandConstants.localityAdjustMap.getOrElse(fromAirport.countryCode, 1.2) * DemandConstants.localityAdjustMap.getOrElse(toAirport.countryCode, 1.2)
+    val hasCompetingRail = if (DemandConstants.doesPairExist(fromAirport.iata, toAirport.iata, DemandConstants.railLookupSet)) 0.2 else 1
 
-    //add charm demand
+    //add charm demand and adjust for locality / competing rail 
     val featureAdjustedDemands = demands.map { case (passengerType, demand) =>
       val fromAdjustments = fromAirport.getFeatures().map(feature => feature.demandAdjustment(demand, passengerType, fromAirport.id, fromAirport, toAirport, affinity, distance))
       val toAdjustments = toAirport.getFeatures().map(feature => feature.demandAdjustment(demand, passengerType, toAirport.id, fromAirport, toAirport, affinity, distance))
@@ -572,7 +391,7 @@ object DemandGenerator {
    * compute raw demand, before classing it
    */
   private def computeRawDemandBetweenAirports(fromAirport: Airport, toAirport: Airport, affinity: Int, distance: Int): Int = {
-    val drivingDistance = 1.2 * localityMinDistanceMap.getOrElse(fromAirport.countryCode, localityMinDistanceMap("default"))
+    val drivingDistance = 1.2 * DemandConstants.localityMinDistanceMap.getOrElse(fromAirport.countryCode, DemandConstants.localityMinDistanceMap("default"))
     val distanceReducerExponent: Double =
       if (distance < drivingDistance && affinity < 6 && ! GameConstants.ISOLATED_COUNTRIES.contains(fromAirport.countryCode) && ! GameConstants.isIsland(fromAirport.iata) && ! GameConstants.isIsland(toAirport.iata)) {
         distance.toDouble / drivingDistance //don't apply to islands or business shuttle routes
@@ -605,7 +424,7 @@ object DemandGenerator {
         val adjustedDenominator = (minDenominator * logFactor)
         (fromPop / adjustedDenominator).toInt + 8
       }
-      Math.min(575, boost * (airportScale - 0.8)).toInt
+      Math.min(575, boost).toInt
     }
     val buffLowIncomeAirports = if (fromAirport.income <= 5000 && toAirport.income <= 8000 && distance <= 3000 && affinity >= 2 && (toAirport.size >= 4 || fromAirport.size >= 4)) addToVeryLowIncome(fromAirport.population, fromAirport.size) else 0
   
@@ -661,7 +480,7 @@ object DemandGenerator {
       val closeDestinations = destinationsByDistance.getOrElse("close", List.empty)
       val farAwayDestinations = destinationsByDistance.getOrElse("far", List.empty)
 
-      var numberDestinations = Math.ceil(launchDemandFactor * 0.65 * fromAirport.popElite / groupSize.toDouble).toInt
+      var numberDestinations = Math.ceil(0.6 * fromAirport.popElite / groupSize.toDouble).toInt
 
       while (numberDestinations >= 0) {
         val destination = if (numberDestinations % 2 == 1 && closeDestinations.length > 5) {

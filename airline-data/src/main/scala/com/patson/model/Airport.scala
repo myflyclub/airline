@@ -502,18 +502,27 @@ object Airport {
     Model.Type.SUPERSONIC -> 16.0,
   )
 
-  def travelRate(percentDemandMet: Double, airportSize: Int) : Double = {
+  def travelRate(fromPax: Int, baselineDemand: Int, airportSize: Int) : Double = {
+    val percentDemandMet = fromPax.toDouble / baselineDemand
     val baseTravelRate = airportSize match {
-      case 1 => 1.0
-      case 2 => 0.95
-      case 3 => 0.9
-      case 4 => 0.85
-      case 5 => 0.75
-      case 6 => 0.65
-      case 7 => 0.55
-      case _ => 0.45
+      case 7 => 0.2
+      case 6 => 0.3
+      case 5 => 0.4
+      case 4 => 0.5
+      case 3 => 0.65
+      case 2 => 0.8
+      case 1 => 0.95
+      case _ => 0.15
     }
-    Math.max(percentDemandMet, baseTravelRate)
+    val modified = if (percentDemandMet < 0.7) {
+      baseTravelRate + percentDemandMet
+    } else if (percentDemandMet < 2.0) {
+      val fadeFactor = (2.0 - percentDemandMet) / 1.3
+      (baseTravelRate * fadeFactor) + percentDemandMet
+    } else {
+      percentDemandMet
+    }
+    modified
   }
 
   /**

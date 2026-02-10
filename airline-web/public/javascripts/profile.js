@@ -89,7 +89,7 @@ function buildHqWithProfile() {
             dataType: 'json',
             success: function(result) {
                 closeModal($('#profilesModal'))
-                updateAllPanels(activeAirline.id)
+                updateAirlineInfo(activeAirline.id)
                 $('#planLinkFromAirportId').val(activeAirline.headquarterAirport.airportId)
                 loadAllCountries() //has a home country now, reload country info
                 showWorldMap()

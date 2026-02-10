@@ -179,7 +179,9 @@ class AirplaneApplication @Inject()(cc: ControllerComponents) extends AbstractCo
     val favoriteOption = ModelSource.loadFavoriteModelId(airlineId)
     val countsByModel: Map[Int, Int] = AirplaneSource.loadAirplaneModelCounts()
 
-    val modelsJson = discountsByModelId.map { case (modelId, discounts) =>
+    val modelsJson = allAirplaneModels.map { model =>
+      val modelId = model.id
+      val discounts = discountsByModelId.getOrElse(modelId, Nil)
       val discountsJson = JsObject(
         discounts.groupBy(_.discountType).toSeq.map { case (discountType, grouped) =>
           discountType.toString.toLowerCase -> Json.toJson(grouped.map { d =>
@@ -191,21 +193,25 @@ class AirplaneApplication @Inject()(cc: ControllerComponents) extends AbstractCo
         }
       )
       val total = countsByModel.getOrElse(modelId, 0).toInt
+      val rejection = getRejection(model, 1, request.user)
 
-      val baseJson = Json.obj(
+      var baseJson = Json.obj(
         "id" -> modelId,
         "discounts" -> discountsJson,
         "total" -> JsNumber(total)
       )
 
-      if (favoriteOption.isDefined && favoriteOption.get._1 == modelId) {
-        baseJson + ("isFavorite" -> JsBoolean(true))
-      } else {
-        baseJson
+      rejection.foreach { reason =>
+        baseJson = baseJson + ("rejection" -> JsString(reason))
       }
+
+      if (favoriteOption.isDefined && favoriteOption.get._1 == modelId) {
+        baseJson = baseJson + ("isFavorite" -> JsBoolean(true))
+      }
+      baseJson
     }
 
-    Ok(Json.toJson(modelsJson.toSeq))
+    Ok(Json.toJson(modelsJson))
   }
 
   def getRejections(models: List[Model], airline: Airline): Map[Model, Option[String]] = {
@@ -373,7 +379,6 @@ class AirplaneApplication @Inject()(cc: ControllerComponents) extends AbstractCo
       Ok(Json.toJson(airplanesWithLink))
     }
   }
-
 
   def getUsedAirplanes(airlineId: Int, modelId: Int) = AuthenticatedAirline(airlineId) { request =>
     ModelSource.loadModelById(modelId) match {
@@ -734,6 +739,8 @@ class AirplaneApplication @Inject()(cc: ControllerComponents) extends AbstractCo
             BadRequest("One or more airplanes not found")
           } else if (!airplanesToSwap.forall(_.owner.id == airlineId)) {
             BadRequest("Not all airplanes belong to this airline")
+          } else if (airplanesToSwap.map(_.model.id).distinct.size > 1) {
+            BadRequest("All airplanes must be of the same model")
           } else {
             // Validate all airplanes are ready and not sold
             val unreadyAirplanes = airplanesToSwap.filter(a => !a.isReady || a.isSold)
@@ -748,7 +755,7 @@ class AirplaneApplication @Inject()(cc: ControllerComponents) extends AbstractCo
                 val newModel = newModelOpt.get
                 var validationError: Option[String] = None
 
-                if (Model.Type.size(newModel.airplaneType) + 0.1 >= Model.Type.size(airplanesToSwap.head.model.airplaneType)) {
+                if (Model.Type.size(newModel.airplaneType) > Model.Type.size(airplanesToSwap.head.model.airplaneType)) {
                   val oldModel = airplanesToSwap.head.model
                   validationError = Some(s"Can only swap planes if they're of the same or smaller size-classification type, and ${newModel.name} is a ${newModel.airplaneType} whereas ${oldModel.name} is a ${oldModel.airplaneType}.")
                 }
@@ -756,23 +763,38 @@ class AirplaneApplication @Inject()(cc: ControllerComponents) extends AbstractCo
 
                 // Check for mixed aircraft on links: get all links where these airplanes are assigned
                 val airplaneIdSet = airplaneIds.toSet
-                val linksWithAssignedAirplanes = LinkSource.loadFlightLinksByCriteria(List(("airline", airlineId)), LinkSource.FULL_LOAD)
+                val allLinksWithAssignedAirplanes = LinkSource.loadFlightLinksByCriteria(List(("airline", airlineId)), LinkSource.FULL_LOAD)
+                val linksOfSwappingAirplanes = allLinksWithAssignedAirplanes.filter { link =>
+                  (link.getAssignedAirplanes().keys.map(_.id).toSet intersect airplaneIdSet).nonEmpty
+                }
                 
-                // Validate no mixed aircraft
-                for (link <- linksWithAssignedAirplanes if validationError.isEmpty) {
-                  val assignedAirplanes = link.getAssignedAirplanes()
-                  val assignedAirplaneIds = assignedAirplanes.keys.map(_.id).toSet
-                  
-                  // Check if any of our swapping airplanes are on this link
-                  val intersectingAirplanes = assignedAirplaneIds intersect airplaneIdSet
-                  if (intersectingAirplanes.nonEmpty) {
-                    // If some but not all assigned airplanes are being swapped, that's an error (mixed aircraft)
-                    if (intersectingAirplanes.size != assignedAirplaneIds.size) {
-                      validationError = Some(s"Cannot swap aircraft on link ${link.from.iata}-${link.to.iata}: would create mixed aircraft. All assigned airplanes on this link must be swapped together.")
-                    }
+                // 1. Mixed aircraft check
+                for (link <- linksOfSwappingAirplanes if validationError.isEmpty) {
+                  val assignedAirplaneIds = link.getAssignedAirplanes().keys.map(_.id).toSet
+                  if (!(assignedAirplaneIds subsetOf airplaneIdSet)) {
+                    validationError = Some(s"Cannot swap aircraft on link ${link.from.iata}-${link.to.iata}: would create mixed aircraft. All assigned airplanes on this link must be swapped together.")
                   }
                 }
 
+                // 2. Requirements envelope check
+                if (validationError.isEmpty && linksOfSwappingAirplanes.nonEmpty) {
+                  val maxDistance = linksOfSwappingAirplanes.map(_.distance).max
+                  val minRunwayAvailable = linksOfSwappingAirplanes.flatMap(l => List(l.from.runwayLength, l.to.runwayLength)).min
+                  
+                  if (newModel.range < maxDistance) {
+                    validationError = Some(s"New model ${newModel.name} has insufficient range (${newModel.range}km) for the longest existing route (${maxDistance}km).")
+                  } else if (newModel.runwayRequirement > minRunwayAvailable) {
+                    validationError = Some(s"New model ${newModel.name} requires ${newModel.runwayRequirement}m runway, but some airports on existing routes only have ${minRunwayAvailable}m.")
+                  } else {
+                    // Use abstracted validation for each link for thorough check (relationship, customs, etc.)
+                    for (link <- linksOfSwappingAirplanes if validationError.isEmpty) {
+                      val reasons = LinkApplication.validateModelForLink(newModel, request.user, link.from, link.to)
+                      if (reasons.nonEmpty) {
+                        validationError = Some(s"Cannot swap to ${newModel.name} for route ${link.from.iata}-${link.to.iata}: ${reasons.head}")
+                      }
+                    }
+                  }
+                }
 
                 if (validationError.isDefined) {
                   BadRequest(validationError.get)
@@ -788,15 +810,27 @@ class AirplaneApplication @Inject()(cc: ControllerComponents) extends AbstractCo
                   )
                   val totalBuyCost = newModelWithDiscounts.price.toLong * airplanesToSwap.length
 
-                  // If estimate mode, just return the cost difference
+                  // If estimate mode, just return the cost difference and envelope
                   if (isEstimate) {
                     val costDifference = totalBuyCost - totalSellValue
+                    val maxDistance = if (linksOfSwappingAirplanes.nonEmpty) linksOfSwappingAirplanes.map(_.distance).max else 0
+                    val maxRunwayRequired = if (linksOfSwappingAirplanes.nonEmpty) linksOfSwappingAirplanes.flatMap(l => List(l.from.runwayLength, l.to.runwayLength)).min else 0
+                    val hasCustomsRestriction = linksOfSwappingAirplanes.exists(l => Computation.getFlightCategory(l.from, l.to) == FlightCategory.INTERNATIONAL && (l.from.isDomesticAirport() || l.to.isDomesticAirport()))
+                    
                     Ok(Json.obj(
                       "sellValue" -> totalSellValue,
                       "buyCost" -> totalBuyCost,
                       "costDifference" -> costDifference,
-                      "isEstimate" -> true
+                      "isEstimate" -> true,
+                      "envelope" -> Json.obj(
+                        "maxDistance" -> maxDistance,
+                        "minRunway" -> maxRunwayRequired,
+                        "hasCustomsRestriction" -> hasCustomsRestriction,
+                        "customsMaxCapacity" -> DomesticAirportFeature.internationalMaxCapacity
+                      )
                     ))
+                  } else if (request.user.getBalance() < (totalBuyCost - totalSellValue)) {
+                    BadRequest(s"Insufficient balance to perform swap. Required: ${totalBuyCost - totalSellValue}, available: ${request.user.getBalance()}")
                   } else {
                     // Process the actual swap using batch operations
                     val airplanesToDelete = scala.collection.mutable.ListBuffer[Int]()
@@ -864,7 +898,7 @@ class AirplaneApplication @Inject()(cc: ControllerComponents) extends AbstractCo
                       }
 
                       // Update link assignments with new airplanes
-                      for (link <- linksWithAssignedAirplanes) {
+                      for (link <- linksOfSwappingAirplanes) {
                         val assignedAirplanes = link.getAssignedAirplanes()
                         val assignedAirplaneIds = assignedAirplanes.keys.map(_.id).toSet
                         
@@ -1020,4 +1054,26 @@ class AirplaneApplication @Inject()(cc: ControllerComponents) extends AbstractCo
     ))
   }
 
+}
+
+object AirplaneApplication {
+
+  def validateModelForAirline(model: Model, airline: Airline): List[String] = {
+    val reasons = ListBuffer[String]()
+
+    val relationship = AirlineCountryRelationship.getAirlineCountryRelationship(model.countryCode, airline).relationship
+    if (!model.purchasableWithRelationship(relationship)) {
+      reasons += s"Airline relationship with ${model.manufacturer.name} (${model.countryCode}) is insufficient to operate ${model.name}."
+    }
+
+    if (model.quality == 10 && airline.airlineType != LuxuryAirline) {
+      reasons += s"Only luxury airlines can purchase 5 star aircraft."
+    }
+
+    if (airline.airlineType == RegionalAirline && model.airplaneTypeSize > RegionalAirline.modelMaxSize) {
+      reasons += s"Regional airline cannot purchase this plane type."
+    }
+
+    reasons.toList
+  }
 }

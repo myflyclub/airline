@@ -10,21 +10,21 @@ import scala.jdk.CollectionConverters._
 
 class LogoApplication @Inject()(cc: ControllerComponents) extends AbstractController(cc) {
 
-  val templates : Map[Int, Array[Byte]] = LogoGenerator.getTemplates.asScala.map { case (key, value) => (key.intValue, value) }.toMap
-  
-
   def getTemplates() = Action {
-     Ok(Json.toJson(templates.keySet.toList.sorted))
+     val templateIndices: List[Int] = (0 until LogoGenerator.getTemplateCount()).toList
+     Ok(Json.toJson(templateIndices))
        .withHeaders(
          CACHE_CONTROL -> "public, max-age=2419200",
-         ETAG -> s""""$currentApiVersion"""", // Use version as ETag
+         ETAG -> s""""$currentApiVersion"""",
          EXPIRES -> java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME
            .format(java.time.ZonedDateTime.now().plusWeeks(4))
        )
   }
-  
+
   def getTemplate(id : Int) = Action {
-     Ok(templates(id)).as("image/bmp")
+     // Generate a template preview using standard colors (Black and White)
+     val bytes = LogoGenerator.generateLogo(id, Color.BLACK.getRGB, Color.WHITE.getRGB)
+     Ok(bytes).as("image/png")
   }
   
   def getPreview(templateIndex : Int, color1 : String, color2 : String) = Action {

@@ -193,7 +193,7 @@ abstract class FlightPreference(homeAirport : Airport) {
     }
     val maxDiscount = flightDurationSensitivity * -1
     val finalDelta = Math.max(maxDiscount, flightDurationRatioDelta)
-    Math.min(2.0, 1 + finalDelta) //max 2x penalty
+    Math.min(1.6, 1 + finalDelta)
   }
 
   val frequencyAdjustRatio = (link : Transport, linkClass : LinkClass, paxType: PassengerType.Value) => {
@@ -234,7 +234,7 @@ abstract class FlightPreference(homeAirport : Airport) {
       val toLoungeLevel = toLounge.map(_.level).getOrElse(0)
 
       var newCost = Lounge.priceAdjust(cost, fromLoungeLevel, loungeLevelRequired)
-      newCost = Lounge.priceAdjust(cost, toLoungeLevel, loungeLevelRequired)
+      newCost = Lounge.priceAdjust(newCost, toLoungeLevel, loungeLevelRequired)
 
       Math.max(1, newCost)
     }

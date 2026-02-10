@@ -1,19 +1,32 @@
+/**
+ * This is the main entry point
+ * - routes.js handles routing after initialization
+ * - login.js handles login and session restoration
+ * - main.js has intial UI and various errata 
+ */
+
 let airports = null;
+let gameConstants = null;
+let postLoginScriptsLoaded = false;
 const SCRIPT_BASE_PATH = `${location.origin}/assets/javascripts/`;
 
 const CORE_LIBS = [
     'https://cdnjs.cloudflare.com/ajax/libs/page.js/1.11.6/page.js',
-    `https://maps.googleapis.com/maps/api/js?v=weekly&key=${window.googleMapKey}&libraries=geometry,drawing,visualization`
+    'https://unpkg.com/maplibre-gl@5.17.0/dist/maplibre-gl.js'
 ];
 
-const APP_REQUIRED_SCRIPTS = [
-    'gadgets.js', 'map.js', 'map-style.js', 'map-button.js', 'main.js', 'prompt.js',
-    'routes.js', 'color.js', 'plot-chartjs.js', 'airport.js',
-    'airplane.js', 'model-configuration.js', 'airline.js', 'delegate.js',
-    'country.js', 'office.js', 'ranking.js', 'bank.js', 'admin.js',
-    'oil.js', 'rivals.js', 'alliance.js', 'event.js', 'search.js',
-    'profile.js', 'settings.js', 'pending-action.js', 'about.js',
-    'local-storage.js', 'table-utils.js', 'websocket.js', 'christmas.js'
+// Scripts needed before login (UI basics, routing, login functionality)
+const PRE_LOGIN_SCRIPTS = [
+    'login.js', 'airline.js', 'gadgets.js', 'main.js', 'prompt.js',
+    'routes.js', 'color.js', 'settings.js', 'local-storage.js', 'websocket.js'
+].map(s => SCRIPT_BASE_PATH + s);
+
+// Scripts loaded after successful login (game features)
+const POST_LOGIN_SCRIPTS = [
+    'plot-chartjs.js', 'airport.js', 'airplane.js', 'model-configuration.js',
+    'delegate.js', 'country.js', 'office.js', 'ranking.js', 'christmas.js',
+    'bank.js', 'admin.js', 'oil.js', 'rivals.js', 'alliance.js', 'event.js',
+    'search.js', 'profile.js', 'pending-action.js', 'table-utils.js',
 ].map(s => SCRIPT_BASE_PATH + s);
 
 // AngularJS and scripts that depend on it
@@ -23,8 +36,8 @@ const ANGULAR_DEPENDENT_SCRIPTS = [
 ].map(s => SCRIPT_BASE_PATH + s);
 
 const DEFERRED_SCRIPTS = [
-    'heatmap.js', 'link-history.js', 'confetti.js', 'departures.js', 'campaign.js',
-    'log.js', 'mobile.js', 'ui-theme.js', 'chat-popup.js', 'tiles.js', 'facility.js',
+    'link-history.js', 'confetti.js', 'departures.js', 'campaign.js',
+    'log.js', 'mobile.js', 'chat-popup.js', 'tiles.js', 'facility.js',
 ].map(s => SCRIPT_BASE_PATH + s);
 
 /**
@@ -40,6 +53,21 @@ function loadScript(src) {
         script.onload = () => resolve(src);
         script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
         document.head.appendChild(script);
+    });
+}
+
+/**
+ * Loads a stylesheet dynamically and returns a promise.
+ * @param {string} href - The URL of the stylesheet to load.
+ * @returns {Promise<string>} A promise that resolves with the href on success.
+ */
+function loadStylesheet(href) {
+    return new Promise((resolve) => {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = href;
+        link.onload = () => resolve(href);
+        document.head.appendChild(link);
     });
 }
 
@@ -63,6 +91,24 @@ async function loadAirportsData() {
             throw new Error(`Network response was not ok: ${response.status} ${response.statusText}`);
         }
         airports = await response.json();
+
+        // Set GeoJSON globally for map rendering
+        window.airports = airports;
+
+        // Build O(1) lookup maps from GeoJSON features
+        window.airportsById = {};
+        window.airportsByIata = {};
+        if (airports.features) {
+            for (const feature of airports.features) {
+                const props = feature.properties;
+                // Add coordinates from geometry to properties for convenience
+                props.longitude = feature.geometry.coordinates[0];
+                props.latitude = feature.geometry.coordinates[1];
+                window.airportsById[props.id] = props;
+                window.airportsByIata[props.iata] = props;
+            }
+        }
+
         return airports;
     } catch (error) {
         console.error('Failed to load airports:', error);
@@ -70,20 +116,46 @@ async function loadAirportsData() {
     }
 }
 
-/**
- * Polls to check if google.maps is available.
- */
-function waitForGoogleMaps() {
+async function loadGameConstants() {
+    const url = "/game/constants";
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`Response status: ${response.status}`);
+        }
+
+        gameConstants = await response.json();
+    } catch (error) {
+        console.error(error.message);
+    }
+}
+
+function waitForMapLibre() {
     return new Promise((resolve) => {
-        const checkMaps = () => {
-            if (window.google && window.google.maps) {
+        const checkMapLibre = () => {
+            if (window.maplibregl) {
                 resolve();
             } else {
-                setTimeout(checkMaps, 100);
+                setTimeout(checkMapLibre, 100);
             }
         };
-        checkMaps();
+        checkMapLibre();
     });
+}
+
+async function initMapModule() {
+    const mapModule = await import('./map/index.js');
+    const mapInstance = mapModule.initializeMap();
+
+    if (mapInstance) {
+        mapInstance.on('load', () => {
+            if (airports && airports.features && airports.features.length > 0) {
+                mapModule.addMarkers(airports);
+            }
+        });
+    }
+
+    return mapModule;
 }
 
 /**
@@ -109,40 +181,29 @@ function bootstrapAngularJS() {
             } else {
                 reject(new Error('AngularJS not found on window object for bootstrap'));
             }
-        }, 0); // No 5-second delay needed
+        }, 0);
     });
 }
 
-async function initializeApp() {
+/**
+ * Load scripts that are only needed after login.
+ * This includes game features, Angular, and chat functionality.
+ */
+async function loadPostLoginScripts() {
+    if (postLoginScriptsLoaded) {
+        console.log('Post-login scripts already loaded');
+        return;
+    }
+
     try {
-        const requiredAssetsPromise = Promise.all([
-            loadAirportsData(),
-            loadScriptsParallel(CORE_LIBS),
-            loadScriptsParallel(APP_REQUIRED_SCRIPTS)
-        ]);
+        // Load post-login scripts
+        await loadScriptsParallel(POST_LOGIN_SCRIPTS);
+        console.log('✓ Post-login scripts loaded');
 
-        await requiredAssetsPromise;
-        console.log('✓ Core assets loaded (Airports, Libs, App Scripts)');
-
-        await waitForGoogleMaps();
-        console.log('✓ Google Maps ready');
-        initMap();
-
-        // If a session cookie exists, restore the user session before initializing the UI
-        try {
-            if (typeof $ !== 'undefined' && $.cookie && $.cookie('sessionActive')) {
-                await loadUser(false)
-                console.log('✓ User session restored')
-            }
-        } catch (err) {
-            // If session restore fails, continue initialization but log for debugging
-            console.warn('User session restore failed:', err)
-        }
-
-        airlineInit();
-        initializeRoutes();
-        console.log('✓ Main application initialized (Map & Airline)');
-
+        // Load deferred scripts in background
+        loadScriptsParallel(DEFERRED_SCRIPTS)
+            .then(() => console.log('✓ Deferred scripts loaded'))
+            .catch(err => console.warn('Deferred script loading failed', err));
 
         // Temporarily remove ng-app to prevent auto-bootstrap
         const ngAppElements = document.querySelectorAll('[ng-app]');
@@ -152,16 +213,12 @@ async function initializeApp() {
             element.removeAttribute('ng-app');
         });
 
-        loadScriptsParallel(DEFERRED_SCRIPTS)
-            .then(() => console.log('✓ Deferred scripts loaded'))
-            .catch(err => console.warn('Deferred script loading failed', err));
-
         // Load Angular, then its dependent scripts, then bootstrap
         await loadScript(ANGULAR_LIB);
         console.log('✓ AngularJS loaded');
-        
+
         await loadScriptsParallel(ANGULAR_DEPENDENT_SCRIPTS);
-        console.log('✓ Angular-dependent scripts loaded (chat, confetti)');
+        console.log('✓ Angular-dependent scripts loaded');
 
         // Restore ng-app attributes
         ngAppBackup.forEach(({ element, appName }) => {
@@ -170,12 +227,74 @@ async function initializeApp() {
 
         // Manually bootstrap
         await bootstrapAngularJS();
-        updateChatTabs();
+        if (typeof updateChatTabs === 'function') {
+            updateChatTabs();
+        }
         console.log('✓ AngularJS bootstrapped');
 
+        postLoginScriptsLoaded = true;
+    } catch (error) {
+        console.error('Failed to load post-login scripts:', error);
+        throw error;
+    }
+}
 
-        console.log('🎉 Application fully initialized');
+// Make loadPostLoginScripts available globally for login.js
+window.loadPostLoginScripts = loadPostLoginScripts;
 
+async function initializeApp() {
+    try {
+        // Load core libraries, pre-login scripts, and airport data in parallel
+        const requiredAssetsPromise = Promise.all([
+            loadAirportsData(),
+            loadGameConstants(),
+            loadScriptsParallel(CORE_LIBS),
+            loadScriptsParallel(PRE_LOGIN_SCRIPTS)
+        ]);
+
+        await requiredAssetsPromise;
+        console.log('✓ Core assets loaded (Airports, Libs, Pre-login Scripts)');
+
+        await waitForMapLibre();
+        await loadStylesheet('https://unpkg.com/maplibre-gl@5.17.0/dist/maplibre-gl.css');
+        console.log('✓ MapLibre GL ready');
+
+        // Initialize map module
+        await initMapModule();
+        console.log('✓ Map initialized');
+
+        // Early session guard - redirects to /login/ if on protected route without session
+        const hasSession = checkSessionGuard();
+
+        if (hasSession) {
+            // User is logged in - load post-login scripts first, then restore session
+            try {
+                await loadPostLoginScripts();
+            } catch (err) {
+                console.error('Failed to load post-login scripts:', err);
+            }
+
+            try {
+                await loadUser();
+                console.log('✓ User session restored');
+            } catch (err) {
+                // Only redirect on auth errors (session invalid/expired)
+                if (err.message && err.message.includes('Session restore failed')) {
+                    localStorage.removeItem('sessionActive');
+                    document.cookie = "sessionActive=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
+                    return;
+                }
+                // Other errors - log but continue (user is still logged in)
+                console.error('Error during session restore:', err);
+            }
+
+            // Initialize routes after post-login scripts are loaded
+            initializeRoutes();
+        } else {
+            // Not logged in - initialize routes (will show login page or redirect as needed)
+            initializeRoutes();
+        }
+        console.log('✓ Application initialized');
     } catch (error) {
         console.error('Application initialization failed:', error);
     }

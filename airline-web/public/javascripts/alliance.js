@@ -98,7 +98,7 @@ function loadAllAlliances(selectedAllianceId) {
 	loadedAlliancesById = {}
 	$.ajax({
 		type: 'GET',
-		url: selectedAllianceId ? `/alliances&selectedAllianceId=${selectedAllianceId}` : `/alliances`,
+		url: `/alliances`,
 	    contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
 	    async: false,
@@ -314,9 +314,9 @@ function updateAllianceBasicsDetails(allianceId) {
 
 
                                 if (entry.acceptRejection) {
-                                    $cell.append("<img src='/assets/images/icons/exclamation-circle.png' class='button disabled' title='Cannot accept member : " + entry.rejection + "'>")
+                                    $cell.append("<img src='/assets/images/icons/exclamation-circle.png' class='img-button disabled' title='Cannot accept member : " + entry.rejection + "'>")
                                 } else if (entry.acceptPrompt) {
-                                    var $icon = $("<img src='/assets/images/icons/tick.png' class='button' title='Accept Member'>")
+                                    var $icon = $("<img src='/assets/images/icons/tick.png' class='img-button' title='Accept Member'>")
                                     $icon.click(function(event) {
                                         event.stopPropagation()
                                         promptConfirm(entry.acceptPrompt, acceptAllianceMember, entry.airlineId)
@@ -325,7 +325,7 @@ function updateAllianceBasicsDetails(allianceId) {
                                 }
 
                                 if (!entry.promoteRejection && entry.promotePrompt) {
-                                    var $icon = $("<img src='/assets/images/icons/user-promote.png' class='button' title='Promote Member'>")
+                                    var $icon = $("<img src='/assets/images/icons/user-promote.png' class='img-button' title='Promote Member'>")
                                     $icon.click(function(event) {
                                         event.stopPropagation()
                                         promptConfirm(entry.promotePrompt, promoteAllianceMember, entry.airlineId)
@@ -333,7 +333,7 @@ function updateAllianceBasicsDetails(allianceId) {
                                     $cell.append($icon)
                                 }
                                 if (!entry.demoteRejection && entry.demotePrompt) {
-                                    var $icon = $("<img src='/assets/images/icons/user-demote.png' class='button' title='Demote Member'>")
+                                    var $icon = $("<img src='/assets/images/icons/user-demote.png' class='img-button' title='Demote Member'>")
                                     $icon.click(function(event) {
                                         event.stopPropagation()
                                         promptConfirm(entry.demotePrompt, demoteAllianceMember, entry.airlineId)
@@ -341,7 +341,7 @@ function updateAllianceBasicsDetails(allianceId) {
                                     $cell.append($icon)
                                 }
                                 if (!entry.removeRejection && entry.removePrompt) {
-                                    var $icon = $("<img src='/assets/images/icons/cross.png' class='button' title='Remove Member'>")
+                                    var $icon = $("<img src='/assets/images/icons/cross.png' class='img-button' title='Remove Member'>")
                                     $icon.click(function(event) {
                                         event.stopPropagation()
                                         promptConfirm(entry.removePrompt, removeAllianceMember, entry.airlineId)
@@ -697,34 +697,11 @@ function showUploadLogoAlliance() {
 }
 
 function updateLogoUploadAlliance() {
-	$('#uploadLogoModalAlliance .uploadPanel .warning').hide()
-	if (logoUploaderObj) {
-		logoUploaderObj.reset()
-	}
+	const $panel = $('#uploadLogoModalAlliance .uploadPanel');
+	const uploadUrl = "/airlines/" + activeAirline.id + "/set-alliance-logo/" + activeAirline.allianceId;
 
-	logoUploaderObj = $("#uploadLogoModalAlliance .uploadPanel .fileuploader").uploadFile({
-		url: "/airlines/" +  activeAirline.id + "/set-alliance-logo/" +  activeAirline.allianceId,
-		multiple:false,
-		dragDrop:false,
-		acceptFiles:"image/png",
-		fileName:"logoFile",
-		maxFileSize:100*1024,
-		onSuccess:function(files,data,xhr,pd)
-		{
-			if (data.success) {
-				$('#uploadLogoModalAlliance .uploadPanel .warning').hide()
-				closeModal($('#uploadLogoModalAlliance'))
-				updateAllianceLogo()
-			} else if (data.error) {
-				$('#uploadLogoModalAlliance .uploadPanel .warning').text(data.error)
-				$('#uploadLogoModalAlliance .uploadPanel .warning').show()
-			}
-		},
-		onError:function(files,status,errMsg,pd)
-		{
-			console.log("Alliance logo upload error:", status, errMsg)
-			$('#uploadLogoModalAlliance .uploadPanel .warning').text("Upload failed: " + errMsg)
-			$('#uploadLogoModalAlliance .uploadPanel .warning').show()
-		}
+	initLogoUpload($panel, uploadUrl, "logoFile", function(data) {
+		closeModal($('#uploadLogoModalAlliance'));
+		updateAllianceLogo();
 	});
 }

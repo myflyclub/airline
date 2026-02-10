@@ -2,7 +2,6 @@ package controllers
 
 import java.util.Calendar
 import com.patson.data._
-import com.patson.data.airplane.ModelSource
 import com.patson.model.airplane.{Airplane, LinkAssignment, LinkAssignments, Model}
 import com.patson.model.history.LinkChange
 import com.patson.model.negotiation.LinkNegotiationDiscount
@@ -22,7 +21,6 @@ import play.api.mvc.Security.AuthenticatedRequest
 import play.api.mvc._
 
 import java.util.concurrent.atomic.AtomicInteger
-import scala.collection.concurrent.TrieMap
 import scala.collection.immutable.ListMap
 import scala.collection.mutable.ListBuffer
 import scala.collection.{MapView, immutable, mutable}
@@ -176,6 +174,36 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
     }
   }
 
+  /**
+   * GeoJSON FeatureCollection for links with extended info (profit, revenue, etc.)
+   */
+  object LinksExtendedGeoJsonWrites extends Writes[Seq[LinkExtendedInfo]] {
+    def writes(entries: Seq[LinkExtendedInfo]): JsValue = {
+      val features = entries.map { entry =>
+        val link = entry.link
+        val properties = Json.toJson(entry).asInstanceOf[JsObject]
+
+        Json.obj(
+          "type" -> "Feature",
+          "id" -> link.id,
+          "geometry" -> Json.obj(
+            "type" -> "LineString",
+            "coordinates" -> Json.arr(
+              Json.arr(link.from.longitude, link.from.latitude),
+              Json.arr(link.to.longitude, link.to.latitude)
+            )
+          ),
+          "properties" -> properties
+        )
+      }
+
+      Json.obj(
+        "type" -> "FeatureCollection",
+        "features" -> JsArray(features)
+      )
+    }
+  }
+
   implicit object LinkWithDirectionWrites extends Writes[LinkConsideration] {
     def writes(linkWithDirection : LinkConsideration): JsValue = {
       JsObject(List(
@@ -267,13 +295,9 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
 
     //validate the model has the range
     val model = airplaneModels.toList(0)
-    if (model.range < incomingLink.distance) {
-      return BadRequest("Cannot insert link - model cannot reach that distance")
-    }
-
-    //validate the model is allowed for airport sizes
-    if (!incomingLink.from.allowsModel(model) || !incomingLink.to.allowsModel(model)) {
-      return BadRequest("Cannot insert link - airport size does not allow that!")
+    val validationReasons = LinkApplication.validateModelForLink(model, airline, incomingLink.from, incomingLink.to)
+    if (validationReasons.nonEmpty) {
+      return BadRequest("Cannot insert link - " + validationReasons.mkString(" "))
     }
 
     val flightMinutesRequiredPerFrequency = Computation.calculateFlightMinutesRequired(model, incomingLink.distance)
@@ -496,7 +520,7 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
       } else {
         LinkSource.loadFlightLinksByToAirportAndAirlineId(toAirportId, airlineId)
       }
-    Ok(Json.toJson(links)).withHeaders(
+    Ok(Json.toJson(links)(LinksGeoJsonWrites)).withHeaders(
       ACCESS_CONTROL_ALLOW_ORIGIN -> "*"
     )
   }
@@ -522,7 +546,7 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
         link.getCurrentOfficeStaffRequired
       )
     }
-    Ok(Json.toJson(linksWithProfit)).withHeaders(
+    Ok(Json.toJson(linksWithProfit)(LinksExtendedGeoJsonWrites)).withHeaders(
       ACCESS_CONTROL_ALLOW_ORIGIN -> "*"
     )
   }
@@ -610,26 +634,12 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
 
         val warnings = getWarnings(request.user, fromAirport, toAirport, existingLink.isEmpty)
 
-        val modelsWithinRange: List[Model] = if (airline.airlineType == RegionalAirline) {
-          regionalAirplaneModels.filter(_.range > distance)
-        } else {
-          allAirplaneModels.filter(_.range > distance)
-        }
-
-        val allManufacturingCountries = modelsWithinRange.map(_.countryCode).toSet
-        val countryRelations : immutable.Map[String, AirlineCountryRelationship] = allManufacturingCountries.map { countryCode =>
-          (countryCode, AirlineCountryRelationship.getAirlineCountryRelationship(countryCode, airline))
-        }.toMap
-        val modelsWithinRangeAndRelationship = modelsWithinRange.filter(model => model.purchasableWithRelationship(countryRelations(model.countryCode).relationship))
+        val allModels = allAirplaneModels
 
         val ownedAirplanesByModel = AirplaneSource.loadAirplanesByOwner(airlineId).groupBy(_.model)
-        val availableModels = modelsWithinRangeAndRelationship ++ ownedAirplanesByModel.keys.filter(_.range >= distance)
+        val candidateModels = (allModels ++ ownedAirplanesByModel.keys).distinct
 
-        val availableModelsAndCustoms = if (flightCategory == FlightCategory.INTERNATIONAL && fromAirport.isDomesticAirport() || flightCategory == FlightCategory.INTERNATIONAL && toAirport.isDomesticAirport()) {
-          availableModels.filter(_.capacity <= DomesticAirportFeature.internationalMaxCapacity)
-        } else {
-          availableModels
-        }
+        val availableModels = candidateModels.filter(model => LinkApplication.validateModelForLink(model, airline, fromAirport, toAirport).isEmpty)
 
         val airplanesAssignedToThisLink = new mutable.HashMap[Int, Int]()
 
@@ -642,9 +652,7 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
           }
         }
 
-        //available airplanes are either the ones that are already assigned to this link or have available flight minutes that is >= required minutes
-        //group airplanes by model, also add Int to indicated how many frequency is this airplane currently assigned to this link
-        val availableAirplanesByModel : immutable.Map[Model, List[(Airplane, Int)]] = availableModelsAndCustoms.map { model =>
+        val availableAirplanesByModel : immutable.Map[Model, List[(Airplane, Int)]] = availableModels.map { model =>
           val ownedAirplanesOfThisModel = ownedAirplanesByModel.getOrElse(model, List.empty)
           val flightMinutesRequired = Computation.calculateFlightMinutesRequired(model, distance)
           val availableAirplanesOfThisModel = ownedAirplanesOfThisModel.filter(airplane => (airplane.home.id == fromAirportId && airplane.availableFlightMinutes >= flightMinutesRequired) || airplanesAssignedToThisLink.isDefinedAt(airplane.id))
@@ -660,9 +668,7 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
 
         val planLinkInfoByModel = ListBuffer[ModelPlanLinkInfo]()
 
-        val sortedAirplanesByModel = ListMap(availableAirplanesByModel.filter {
-          case (model, _) => fromAirport.allowsModel(model) && toAirport.allowsModel(model)
-        }.toSeq.sortBy(_._1.range): _*)
+        val sortedAirplanesByModel = ListMap(availableAirplanesByModel.toSeq.sortBy(_._1.range): _*)
 
         sortedAirplanesByModel.foreach {
           case (model, airplaneList) =>
@@ -1538,6 +1544,32 @@ object LinkApplication {
     return candidate
   }
 
+  def validateModelForLink(model: Model, airline: Airline, fromAirport: Airport, toAirport: Airport): List[String] = {
+    val reasons = ListBuffer[String]()
+    val distance = Util.calculateDistance(fromAirport.latitude, fromAirport.longitude, toAirport.latitude, toAirport.longitude).toInt
+    if (model.range < distance) {
+      reasons += s"Model ${model.name} has insufficient range (${model.range}km) for distance ${distance}km."
+    }
+
+    if (model.runwayRequirement > fromAirport.runwayLength) {
+      reasons += s"Model ${model.name} requires ${model.runwayRequirement}m runway, but ${fromAirport.iata} only has ${fromAirport.runwayLength}m."
+    }
+    if (model.runwayRequirement > toAirport.runwayLength) {
+      reasons += s"Model ${model.name} requires ${model.runwayRequirement}m runway, but ${toAirport.iata} only has ${toAirport.runwayLength}m."
+    }
+
+    reasons ++ AirplaneApplication.validateModelForAirline(model, airline)
+
+    val flightCategory = Computation.getFlightCategory(fromAirport, toAirport)
+    if (flightCategory == FlightCategory.INTERNATIONAL && (fromAirport.isDomesticAirport() || toAirport.isDomesticAirport())) {
+      if (model.capacity > DomesticAirportFeature.internationalMaxCapacity) {
+        reasons += s"Model ${model.name} capacity (${model.capacity}) exceeds international flight limit for domestic airports (${DomesticAirportFeature.internationalMaxCapacity})."
+      }
+    }
+
+    reasons.toList
+  }
+
   // Helper function to calculate price
   private def calculateDemandPrice(distance: Int, flightCategory: FlightCategory.Value, linkClass: LinkClass, passengerType: PassengerType.Value, airportIncome: Int, preferenceType: FlightPreferenceType.Value): Int = {
     val basePrice = Pricing.computeStandardPrice(distance, flightCategory, linkClass, passengerType, airportIncome)
@@ -1562,8 +1594,9 @@ object LinkApplication {
   }
 
   def generateDemands(fromAirport: Airport, toAirport: Airport, affinity: Int, distance: Int, flightCategory: FlightCategory.Value): (JsArray, JsArray, LinkClassValues, LinkClassValues) = {
-    val fromDemand = DemandGenerator.computeDemandWithPreferencesBetweenAirports(fromAirport, toAirport, affinity, distance)
-    val toDemand = DemandGenerator.computeDemandWithPreferencesBetweenAirports(toAirport, fromAirport, affinity, distance)
+    val cycle = CycleSource.loadCycle()
+    val fromDemand = DemandGenerator.computeDemandWithPreferencesBetweenAirports(fromAirport, toAirport, affinity, distance, cycle)
+    val toDemand = DemandGenerator.computeDemandWithPreferencesBetweenAirports(toAirport, fromAirport, affinity, distance, cycle)
 
     // Group demands by type and preference, summing counts
     val fromDemandByTypeAndPreference = fromDemand.groupBy {

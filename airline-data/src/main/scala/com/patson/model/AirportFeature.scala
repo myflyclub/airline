@@ -7,6 +7,8 @@ import com.patson.data.{CycleSource, GameConstants}
 import com.patson.model.AirportFeatureType.{AirportFeatureType, BUSH_HUB, DOMESTIC_AIRPORT, ELITE_CHARM, FINANCIAL_HUB, GATEWAY_AIRPORT, INTERNATIONAL_HUB, ISOLATED_TOWN, OLYMPICS_IN_PROGRESS, OLYMPICS_PREPARATIONS, UNKNOWN, VACATION_HUB}
 import com.patson.model.IsolatedTownFeature.HUB_RANGE_BRACKETS
 
+import java.util.concurrent.ThreadLocalRandom
+
 abstract class AirportFeature {
   val MAX_STRENGTH = 100
   def strength : Int
@@ -73,7 +75,7 @@ sealed case class InternationalHubFeature(baseStrength : Int, boosts : List[Airp
         else 0.05
       val specialCountryModifier =
         if (List("GB").contains(fromAirport.countryCode) && fromAirport.countryCode != toAirport.countryCode) {
-          2.4
+          2.5
         } else if (List("AU","NZ","BE","NL","LU","DE","AT","CH","DK","SE","NO").contains(fromAirport.countryCode)) {
           2.2 //they travel a lot...
         } else if (fromAirport.zone.contains("EU")) {
@@ -117,7 +119,7 @@ sealed case class VacationHubFeature(baseStrength : Int, boosts : List[AirportBo
       val distanceModifier = if (distance < 400) {
         (distance - 25).toDouble / 400
       } else if (distance < 2000) {
-        1.02
+        1.0
       } else {
         Math.max(2000 / distance.toDouble, 0.2)
       }
@@ -129,7 +131,7 @@ sealed case class VacationHubFeature(baseStrength : Int, boosts : List[AirportBo
         else if (affinity == 1) 0.05
         else 0
       val specialCountryModifier =
-        if (List("CA","MX","NO","NZ","JP").contains(fromAirport.countryCode) && fromAirport.countryCode == toAirport.countryCode) {
+        if (List("CA","NO","NZ","JP").contains(fromAirport.countryCode) && fromAirport.countryCode == toAirport.countryCode) {
           2.2 //increase domestic tourism
         } else 1.0
 
@@ -147,37 +149,44 @@ sealed case class FinancialHubFeature(baseStrength : Int, boosts : List[AirportB
   override def demandAdjustment(rawDemand: Double, passengerType: PassengerType.Value, airportId: Int, fromAirport: Airport, toAirport: Airport, affinity: Int, distance: Int) : Int = {
     if (passengerType == PassengerType.BUSINESS) {
       val hasFeatureInBothAirports = fromAirport.hasFeature(AirportFeatureType.FINANCIAL_HUB) && toAirport.hasFeature(AirportFeatureType.FINANCIAL_HUB)
-      val doubleBonus = if (hasFeatureInBothAirports) 0.8 else 1.2
+
+      val matchOnlyTradeAffinities = 5
+      val tradeAffinity = Computation.affinityToSet(fromAirport.zone, toAirport.zone, matchOnlyTradeAffinities).length
+
       val charmStrength =
         if (hasFeatureInBothAirports) {
-          0.00026 * strengthFactor
+          0.0002 * strengthFactor
         } else if (toAirport.id == airportId) { //going to business center
-          0.00017 * strengthFactor
+          0.00015 * strengthFactor
         } else {
-          0.00003 * strengthFactor
+          0.00002 * strengthFactor //small outbound demand from hubs
         }
-      val distanceReducerExponent: Double =
+      val distanceReducerExponent: Double = {
         if (hasFeatureInBothAirports && distance < 500 && distance > 290) {
           1
         } else if (distance < 500) {
           distance.toDouble / 500
         } else if (distance > 4000) {
-          0.85 - distance.toDouble / 32000 * doubleBonus
+          0.85 - distance.toDouble / 32000
         } else if (distance > 1000) {
           1.05 - distance.toDouble / 20000
         } else {
           1
         }
+      }
       val airportAffinityMutliplier: Double =
         if (affinity >= 5) (affinity - 5) * 0.1 + 1.1 //domestic+
         else if (affinity == 4) 0.7
         else if (affinity == 3) 0.55
         else if (affinity == 2) 0.4
         else if (affinity == 1) 0.3
-        else if (affinity == 0) 0.2
+        else if (affinity == 0) 0.15
         else 0.1
 
-      Math.max(0, Math.pow(fromAirport.popMiddleIncome * charmStrength * airportAffinityMutliplier, distanceReducerExponent).toInt)
+      val baseDemand = Math.pow(fromAirport.popMiddleIncome * charmStrength * airportAffinityMutliplier, distanceReducerExponent)
+      val crushMultiplier = if (hasFeatureInBothAirports || tradeAffinity > 0) 1.2 else Math.min(1.0, (toAirport.size / 6.0) * (affinity / 5.0))
+
+      Math.max(0, (baseDemand * crushMultiplier).toInt)
     } else {
       0
     }
@@ -196,7 +205,7 @@ sealed case class DomesticAirportFeature() extends AirportFeature {
     if (fromAirport.countryCode == "CN") { //otherwise demand gets too big...
       0
     } else if (affinity >= 5) { //domestic and EU etc
-      (DemandGenerator.launchDemandFactor * rawDemand / 2.5).toInt
+      (rawDemand / 2.5).toInt
     } else {
        (-1 * rawDemand / 2).toInt
     }
@@ -234,8 +243,8 @@ sealed case class GatewayAirportFeature() extends AirportFeature {
       } else {
         0
       }
-    } else if (toAirport.id == airportId && fromAirport.countryCode == toAirport.countryCode && fromAirport.baseIncome <= 20000 && toAirport.hasFeature(AirportFeatureType.GATEWAY_AIRPORT) && ! List("IN","ZA").contains(fromAirport.countryCode)) {
-      Math.min(200, 5 + (rawDemand * 0.2).toInt) //add domestic demand to gateways, but not to rich / high-demand countries
+    } else if (toAirport.id == airportId && fromAirport.countryCode == toAirport.countryCode && fromAirport.baseIncome <= 20000 && toAirport.hasFeature(AirportFeatureType.GATEWAY_AIRPORT) && ! List("IN","ZA","CN").contains(fromAirport.countryCode)) {
+      Math.min(200, 7 + (rawDemand * 0.4).toInt) //add domestic demand to gateways, but not to rich / high-demand countries
     } else {
       0
     }
@@ -260,17 +269,16 @@ sealed case class IsolatedTownFeature(strength : Int) extends AirportFeature {
     if ((passengerType == PassengerType.TRAVELER || passengerType == PassengerType.TRAVELER_SMALL_TOWN) && fromAirport.hasFeature(AirportFeatureType.ISOLATED_TOWN) && affinity >= 2) {
       val affinityMod = affinity / 5.0
       val distanceMod = 1.0 - distance / boostRange.toDouble
+      val rng: Int = 5 + ThreadLocalRandom.current().nextInt(10)
 
       if (toAirport.isGateway() && fromAirport.zone.contains("CC") && distance <= boostRange * 0.7) {
-        (DemandGenerator.baseRandom * affinityMod * distanceMod).toInt
+        (rng * affinityMod * distanceMod).toInt //Increase Caribbean demand
+      } else if (toAirport.isGateway() && fromAirport.countryCode == toAirport.countryCode && List("GB", "NL", "DK", "GR", "JP", "ID", "PH", "MH", "PG", "RU").contains(fromAirport.countryCode)) {
+        (rng * 0.7).toInt //add demand from territories or islands back to Metropol
       } else if ((toAirport.hasFeature(AirportFeatureType.BUSH_HUB) || fromAirport.hasFeature(AirportFeatureType.BUSH_HUB)) && distance <= boostRange * 0.6 && affinity >= 4) {
-        (DemandGenerator.baseRandom * distanceMod * affinityMod * 1.2).toInt
+        (rng * distanceMod * affinityMod * 1.2).toInt //Create bush hub demand
       } else if (affinity >= 3 && rawDemand >= 1 && toAirport.size >= 4 && distance <= boostRange * 0.4) {
-        (DemandGenerator.baseRandom * affinityMod * distanceMod).toInt
-      } else if (toAirport.isGateway() && fromAirport.countryCode == toAirport.countryCode && List("GB", "NL", "GR", "JP", "ID", "PH", "MH", "PG").contains(fromAirport.countryCode)) {
-        (DemandGenerator.baseRandom * 0.5).toInt //add demand from territories or islands back to Metropol
-//      } else if (toAirport.isGateway() && fromAirport.countryCode == toAirport.countryCode && ! List("US","CA","BR","RU","CN","IN","AU").contains(fromAirport.countryCode)) {
-//        (DemandGenerator.baseRandom * distanceMod).toInt //add demand back to primary city, but not in very large countries where there may be many gateways
+        (rng * affinityMod * distanceMod).toInt
       } else {
         0
       }

@@ -1,24 +1,55 @@
-function initializeRoutes() {
+/**
+ * Check if user has valid session, redirect to /login/ if on protected route without session.
+ * @returns {boolean} true if session exists, false otherwise
+ */
+function checkSessionGuard() {
+    // Check localStorage first, then fallback to cookie (for server-side set cookies)
+    let sessionActive = localStorage.getItem('sessionActive') === 'true';
     
-    function getCookie(name) {
-        const match = document.cookie.match(new RegExp('(?:^|; )' + name.replace(/([.$?*|{}()\[\]()+^\\\\/])/g, '\\$1') + '=([^;]*)'));
-        return match ? decodeURIComponent(match[1]) : null;
-    }
-    // Early session check: if sessionActive cookie is missing/false, redirect to home login
-    const sessionVal = getCookie('sessionActive');
-    const sessionActive = sessionVal === true || sessionVal === 'true' || sessionVal === '1';
     if (!sessionActive) {
-        const currentPath = window.location.pathname || '/';
-        // Avoid redirect loop if already on home/login
-        if (currentPath !== '/' && currentPath !== '/login') {
-            window.location.replace('/');
-            return;
+        const match = document.cookie.match(/(?:^|; )sessionActive=([^;]*)/);
+        const sessionVal = match ? decodeURIComponent(match[1]) : null;
+        sessionActive = sessionVal === true || sessionVal === 'true' || sessionVal === '1';
+        
+        if (sessionActive) { // Migrate to localStorage
+             localStorage.setItem('sessionActive', 'true');
         }
     }
 
+    console.log('✓ Session check:', sessionActive);
+    return sessionActive;
+}
+
+function initializeRoutes() {
+    page('*', (ctx, next) => {
+        const isLoggedIn = checkSessionGuard();
+
+        if (!isLoggedIn && ctx.path !== '/login/') {
+            page.redirect('/login/');
+        } else {
+            next();
+        }
+    });
+
+    page('/login/', () => {
+        document.title = 'Login';
+        showLoginPage();
+    });
+
+    page('/logout/', () => {
+        document.title = 'Logout';
+        logout();
+    });
+
     page('/', () => {
-        document.title = 'MFC Map';
-        showWorldMap();
+        document.title = `MFC Airline Game`;
+        // If logged in, show map; otherwise redirect to login
+        const isLoggedIn = checkSessionGuard();
+        if (isLoggedIn) {
+            showWorldMap();
+        } else {
+            page.redirect('/login/');
+        }
     });
 
     page('/airport/:iata?', (ctx) => {
@@ -28,17 +59,23 @@ function initializeRoutes() {
         showAirportDetails(id);
     });
 
-    page('/map/:iata?', (ctx) => {
-        const iata = ctx.params.iata ?? null;
-        document.title = 'MFC Map';
+    page('/map/', () => {
+        document.title = `${activeAirline.name} route map`
         showWorldMap();
-        // Optionally focus on specific airport if needed
-        // focusMapOnAirport(iata);
+        $('#sidePanel').fadeOut(200);
     });
 
-    page('/search/:iata?', (ctx) => {
+    page('/map/:iata?', (ctx) => {
         const iata = ctx.params.iata ?? null;
-        document.title = iata ? `${iata.toUpperCase()} Search` : 'Search';
+        document.title = `${iata} | ${activeAirline.name} route map`
+        showWorldMap();
+        airports.getAirportByAttribute
+        const airport = getAirportByIata(iata.toUpperCase());
+        AirlineMap.flyTo(airport.longitude, airport.latitude);
+        AirlineMap.showAirportPopup(airport, {lat: airport.latitude, lng: airport.longitude});
+    });
+
+    page('/search/', (ctx) => {
         showSearchCanvas();
     });
 

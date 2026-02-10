@@ -39,7 +39,7 @@ function generateImageBarWithRowSize(imageEmpty, imageFill, count, containerDiv,
 	}
 
 	for (i = 0 ; i < count ; i ++) {
-		var image = $("<img width='16px' height='auto' class='button'>")
+		var image = $("<img width='16px' height='auto' class='img-button'>")
 		image.attr("src", imageEmpty)
 
 		image.data('index', i)
@@ -246,7 +246,7 @@ function getCountryFlagUrl(countryCode) {
 }
 
 function getAirlineLogoImg(airlineId) {
-	return "<img class='logo' loading='lazy' width='24px' height='12px' src='" + "/airlines/" + airlineId + "/logo'/>"
+	return "<img class='logo' loading='lazy' width='36px' height='auto' src='" + "/airlines/" + airlineId + "/logo'/>"
 }
 
 function getAllianceLogoImg(allianceId) {
@@ -654,6 +654,21 @@ function hideActiveDiv(activeDiv) {
 	}
 }
 
+/**
+ * Show a map overlay panel inside #worldMapCanvas, hiding any other visible overlay panels.
+ */
+function showMapOverlay(overlay) {
+    $('#worldMapCanvas > .mapOverlayPanel').not(overlay).hide();
+    overlay.fadeIn(200);
+}
+
+/**
+ * Hide all map overlay panels inside #worldMapCanvas.
+ */
+function hideMapOverlays() {
+    $('#worldMapCanvas > .mapOverlayPanel').fadeOut(200);
+}
+
 function toggleOnOff(element) {
 	if (element.is(":visible")){
 		element.fadeOut(200)
@@ -737,48 +752,6 @@ function disableButton(button, reason) {
         $(button).removeAttr("onclick") //remove on click function
     }
 }
-
-var googleZoomRatio = [
-    { 20 : 1128.497220 },
-    { 19 : 2256.994440 },
-    { 18 : 4513.988880 },
-    { 17 : 9027.977761 },
-    { 16 : 18055.955520 },
-    { 15 : 36111.911040 },
-    { 14 : 72223.822090 },
-    { 13 : 144447.644200 },
-    { 12 : 288895.288400 },
-    { 11 : 577790.576700 },
-    { 10 : 1155581.153000 },
-    { 9  : 2311162.307000 },
-    { 8  : 4622324.614000 },
-    { 7  : 9244649.227000 },
-    { 6  : 18489298.450000 },
-    { 5  : 36978596.910000 },
-    { 4  : 73957193.820000 },
-    { 3  : 147914387.600000 },
-    { 2  : 295828775.300000 },
-    { 1  : 591657550.500000 }
-]
-
-function getGoogleZoomLevel(distanceMeterAsMaxDimension, $container, latitude) {
-  var dimension = Math.min($container.width(), $container.height())
-  var result = 1
-  var adjustmentRatio = 5000 //just a relative number
-  $.each(googleZoomRatio, function(index, entry) {
-     var zoom = Object.keys(entry)[0];
-     var ratio = entry[zoom]
-     if (ratio * dimension > distanceMeterAsMaxDimension * adjustmentRatio) {
-        result = parseInt(zoom)
-        return false;
-     }
-  })
-  if (result <= 8 && result > 1 && (latitude > 45 || latitude < -45)) {
-    result -= 1
-  }
-  return result
-}
-
 
 function enableButton(button) {
     $(button).removeClass("disabled")

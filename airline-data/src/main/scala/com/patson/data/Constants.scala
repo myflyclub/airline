@@ -72,8 +72,6 @@ object Constants {
 
   val INCOME_TABLE = "income"
   val CASH_FLOW_TABLE = "cash_flow"
-  val AIRLINE_LOGO_TABLE = "airline_logo"
-  val AIRLINE_LIVERY_TABLE = "airline_livery"
   val AIRLINE_SLOGAN_TABLE = "airline_slogan"
   val AIRLINE_NAME_HISTORY_TABLE = "airline_name_history"
   val ALLIANCE_TABLE = "alliance"
@@ -148,7 +146,6 @@ object Constants {
   val COMPLETED_NOTICE_TABLE = "completed_notice"
   val TRACKING_NOTICE_TABLE = "tracking_notice"
   val ADMIN_LOG_TABLE = "admin_log"
-  val USER_WALLPAPER_TABLE = "user_wallpaper"
   val RANKING_LEADERBOARD_TABLE = "ranking_leaderboard"
 
   val NOTES_AIRLINE_TABLE = "notes_airline"

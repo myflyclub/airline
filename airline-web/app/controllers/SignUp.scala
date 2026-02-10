@@ -120,7 +120,7 @@ class SignUp @Inject()(cc: ControllerComponents)(ws: WSClient) extends AbstractC
 
           AirlineSource.saveAirplaneRenewal(newAirline.id, 40)
 
-          Redirect("/").withCookies(Cookie("sessionActive", "true", httpOnly = false)).withSession("userToken" -> SessionUtil.addUserId(user.id))
+          Redirect("/").withCookies(Cookie("sessionActive", "true", httpOnly = false, maxAge = Some(2592000))).withSession("userToken" -> SessionUtil.addUserId(user.id))
       }
     )
   }

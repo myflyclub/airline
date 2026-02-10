@@ -1,6 +1,6 @@
 //determines if the user has a set theme
 function detectColorScheme(){
-    var theme="dark";    //default to dark
+    var theme="light";    //default to light
 
     //local storage is used to override OS theme settings
     if(localStorage.getItem("theme")){
@@ -24,6 +24,7 @@ function switchTheme() {
 
     localStorage.setItem('theme', theme);
     document.documentElement.setAttribute('data-theme', theme);
+    window.AirlineMap.updateMapStyle(theme);
 }
 
 

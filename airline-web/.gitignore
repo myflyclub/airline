@@ -1,6 +1,7 @@
 logs
 target
 /.idea
+.bloop
 /.idea_modules
 /.classpath
 /.project

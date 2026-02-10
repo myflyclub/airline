@@ -1,14 +1,5 @@
 /* mobile (portrait) ----------- */
 @media only screen and (max-device-width : 640px) {
-    html {
-        --top-bar-background-color : #FFFFFF;
-    }
-    html[data-theme='dark'] {
-        --backdrop-filter: none;
-        --text-color: #DDDDDD;
-        --top-bar-background-color: rgba(0, 0, 0, 0.4);
-    }
-
     .mainPanel, #map {
         height: calc(100dvh - 34px);
         width: 100%;
@@ -17,7 +8,7 @@
         overflow: scroll !important;
     }
 
-    div.section, div.selectedSection, .modal-content {
+    div.section, .modal-content {
         padding: 8px;
     }
 
@@ -92,23 +83,8 @@
         width: 100% !important;
     }
 
-    .googleMapIcon, .gmnoprint, .gm-fullscreen-control {
+    .mapIcon {
         display: none;
-    }
-
-    #mobileTabToggle {
-        position: fixed;
-        bottom: 2px;
-        left: 2px;
-        z-index: 3;
-        width: 44px;
-        height: 44px;
-        border-radius: 4px;
-        border: 1px solid #AAA;
-        background: var(--top-bar-background-color);
-        display: flex;
-        align-items: center;
-        justify-content: center;
     }
 
     .moreRow {
@@ -121,7 +97,7 @@
     }
 
     .moreRow li, .extendedTopBarDetails {
-        background-color: var(--top-bar-background-color);
+        background-color: var(--background-1);
     }
 
     .moreRow li {
@@ -131,7 +107,7 @@
       border-bottom-left-radius: 6px;
       border-bottom-right-radius: 6px;
       padding: 0 30px;
-      border-top-color: var(--top-bar-background-color);
+      border-top-color: var(--background-1);
     }
 
     .moreRow li span {

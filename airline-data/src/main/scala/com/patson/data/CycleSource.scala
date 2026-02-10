@@ -47,7 +47,7 @@ object CycleSource {
    *
    * @return cycle phase length
    */
-  def loadAndUpdateCyclePhase(): Int = {
+  def loadAndUpdateCyclePhase(): Int = synchronized {
     val connection = Meta.getConnection()
     try {
       val preparedStatement = connection.prepareStatement("SELECT * FROM " + CYCLE_PHASE_TABLE)

@@ -818,94 +818,6 @@ object AirlineSource {
     }
   }
 
-  def saveLogo(airlineId : Int, airlineLogo : Array[Byte]) = {
-    val connection = Meta.getConnection()
-    val logoStream = new ByteArrayInputStream(airlineLogo)
-    try {    
-        val preparedStatement = connection.prepareStatement("REPLACE INTO " + AIRLINE_LOGO_TABLE + " VALUES(?, ?)")
-        preparedStatement.setInt(1, airlineId)
-        preparedStatement.setBlob(2, logoStream)
-        preparedStatement.executeUpdate()
-        
-        preparedStatement.close()
-
-    } finally {
-      connection.close()
-      logoStream.close()
-    }
-  }
-  
-  def loadLogos() : scala.collection.immutable.Map[Int, Array[Byte]] = {
-    val connection = Meta.getConnection()
-    try {    
-        val preparedStatement = connection.prepareStatement("SELECT * FROM " + AIRLINE_LOGO_TABLE)
-        val resultSet = preparedStatement.executeQuery()
-        val logos = new ListBuffer[(Int, Array[Byte])]()
-        
-        while (resultSet.next()) {
-          val blob = resultSet.getBlob("logo")
-          logos += Tuple2(resultSet.getInt("airline"), blob.getBytes(1, blob.length.toInt))
-          blob.free()
-        }
-        
-        resultSet.close()
-        preparedStatement.close()
-        
-        logos.toMap
-    } finally {
-      connection.close()
-    }
-  }
-
-  def saveLivery(airlineId : Int, livery : Array[Byte]) = {
-    val connection = Meta.getConnection()
-    val stream = new ByteArrayInputStream(livery)
-    try {
-      val preparedStatement = connection.prepareStatement("REPLACE INTO " + AIRLINE_LIVERY_TABLE + " VALUES(?, ?)")
-      preparedStatement.setInt(1, airlineId)
-      preparedStatement.setBlob(2, stream)
-      preparedStatement.executeUpdate()
-
-      preparedStatement.close()
-
-    } finally {
-      connection.close()
-      stream.close()
-    }
-  }
-
-  def deleteLivery(airlineId : Int) = {
-    val connection = Meta.getConnection()
-    try {
-      val preparedStatement = connection.prepareStatement(s"DELETE FROM $AIRLINE_LIVERY_TABLE WHERE airline = ?")
-      preparedStatement.setInt(1, airlineId)
-      preparedStatement.executeUpdate()
-
-      preparedStatement.close()
-
-    } finally {
-      connection.close()
-    }
-  }
-
-  def loadLivery(airlineId : Int) : Option[Array[Byte]] = {
-    val connection = Meta.getConnection()
-    try {
-      val preparedStatement = connection.prepareStatement(s"SELECT * FROM $AIRLINE_LIVERY_TABLE WHERE airline = ?")
-      preparedStatement.setInt(1, airlineId)
-      val resultSet = preparedStatement.executeQuery()
-      if (resultSet.next()) {
-        val blob = resultSet.getBlob("livery")
-        val result = Some(blob.getBytes(1, blob.length.toInt))
-        blob.free()
-        result
-      } else {
-        None
-      }
-    } finally {
-      connection.close()
-    }
-  }
 
   def saveSlogan(airlineId : Int, slogan : String) = {
     val connection = Meta.getConnection()
@@ -1135,6 +1047,7 @@ object AirlineSource {
       preparedStatement.setInt(1, airlineId)
       preparedStatement.executeUpdate()
       preparedStatement.close()
+      connection.commit()
     } finally {
       connection.close()
     }
@@ -1146,13 +1059,23 @@ object AirlineSource {
     try {
       connection.setAutoCommit(false)
 
-      val preparedStatement = connection.prepareStatement(s"REPLACE INTO $AIRLINE_REPUTATION_BREAKDOWN(airline, reputation_type, rep_value, quantity_value) VALUES(?,?,?,?)")
+      val deleteStatement = connection.prepareStatement(s"DELETE FROM $AIRLINE_REPUTATION_BREAKDOWN WHERE airline = ?")
+      deleteStatement.setInt(1, airlineId)
+      deleteStatement.executeUpdate()
+      deleteStatement.close()
+
+      val preparedStatement = connection.prepareStatement(s"INSERT INTO $AIRLINE_REPUTATION_BREAKDOWN(airline, reputation_type, rep_value, quantity_value) VALUES(?,?,?,?)")
       breakdowns.breakdowns.foreach { breakdown =>
         preparedStatement.setInt(1, airlineId)
         preparedStatement.setString(2, breakdown.reputationType.toString)
         preparedStatement.setDouble(3, breakdown.value)
-        preparedStatement.setDouble(4, math.min(breakdown.quantityValue, UnsignedIntMax))
+        if (breakdown.quantityValue < 0 || breakdown.quantityValue > UnsignedIntMax) {
+          println(s"Reputation breakdown quantity value ${breakdown.quantityValue} for airline $airlineId type ${breakdown.reputationType} is out of range, clamping it")
+        }
+        preparedStatement.setLong(4, math.max(0, math.min(breakdown.quantityValue, UnsignedIntMax)))
+        preparedStatement.addBatch()
       }
+      preparedStatement.executeBatch()
       preparedStatement.close()
       connection.commit()
     } finally {

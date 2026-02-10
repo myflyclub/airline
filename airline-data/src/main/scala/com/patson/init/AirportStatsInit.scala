@@ -31,7 +31,7 @@ object AirportStatsInit extends App {
     val initAirportStats: List[AirportStatistics] = totalDemandByAirport.map { case (airport, demand) =>
       AirportStatistics(airport.id, demand, 0, 0.0, 0.0, 0.0)
     }.toList
-    AirportStatisticsSource.saveAllAirportStats(initAirportStats)
+    AirportStatisticsSource.updateBaselineStats(initAirportStats)
   }
 
 }
