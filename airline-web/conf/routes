@@ -23,7 +23,7 @@ GET		 /airports/:airportId/images	  	  controllers.Application.getAirportImages(
 GET	 	 /airports/:airportId/detail	        controllers.Application.getAirportDetail(airportId : Int)
 GET	 	 /airports/:airportId/detail-static	        controllers.Application.getAirportDetailStatic(airportId : Int)
 GET	 	 /airports/:airportId/loyalist-data	        controllers.Application.getAirportLoyalistData(airportId : Int, airlineId: Option[Int])
-GET	 	 /airports/:airportId/departures/:dayOfWeek/:hour/:minute controllers.Application.getDepartures(airportId : Int, dayOfWeek : Int, hour : Int, minute : Int)
+GET	 	 /airports/:airportId/departures/:dayOfWeek/:hour/:minute controllers.DepartureApplication.getDepartures(airportId : Int, dayOfWeek : Int, hour : Int, minute : Int)
 GET		 /airports/:fromAirportId/to/:toAirportId				controllers.Application.getAirportLinkConsumptions(fromAirportId : Int, toAirportId : Int)
 GET		 /airports/:airportId/links	controllers.Application.getLinksByAirport(airportId : Int)
 GET	 	 /airports/:airportId/assets	      controllers.AirportAssetApplication.getAirportAssets(airportId : Int)
@@ -232,9 +232,6 @@ GET      /admin/user-uuids/:userId   controllers.AdminApplication.getUserUuids(u
 GET      /admin/ip-airlines/:ip    controllers.AdminApplication.getAirlinesByIp(ip : String)
 GET      /admin/uuid-airlines/:uuid    controllers.AdminApplication.getAirlinesByUuid(uuid : String)
 
-POST	 /users/:userId/wallpaper	controllers.SettingsApplication.uploadWallpaper(userId : Int)
-GET	     /users/:userId/wallpaper	controllers.SettingsApplication.getWallpaper(userId : Int)
-DELETE	 /users/:userId/wallpaper	controllers.SettingsApplication.deleteWallpaper(userId : Int)
 
 # Signup
 GET     /signup                     controllers.SignUp.form
@@ -269,7 +266,6 @@ GET     /airport/*path                  controllers.Application.index(path)
 GET     /flights/                       controllers.Application.index(path = "/")
 GET     /flights/*path                  controllers.Application.index(path)
 GET     /search/                        controllers.Application.index(path = "/")
-GET     /search/*path                   controllers.Application.index(path)
 GET     /hangar/                        controllers.Application.index(path = "/")
 GET     /hangar/*path                   controllers.Application.index(path)
 GET     /aircraft/                      controllers.Application.index(path = "/")
