@@ -2136,7 +2136,7 @@ function processSwapModels(isEstimate = true) {
                         $('#swapAirplaneModal .envelopeDistance').css('color', newModel.range < result.envelope.maxDistance ? 'red' : '');
                         $('#swapAirplaneModal .envelopeRunway').css('color', newModel.runwayRequirement > result.envelope.minRunway ? 'red' : '');
                         if (result.envelope.hasCustomsRestriction && newModel.capacity > result.envelope.customsMaxCapacity) {
-                             $('#swapAirplaneModal .envelopeCustoms img').attr('src', '/assets/images/icons/exclamation-red.png');
+                             $('#swapAirplaneModal .envelopeCustoms img').attr('src', '/assets/images/icons/exclamation-red.svg');
                         }
                     }
                 } else {
