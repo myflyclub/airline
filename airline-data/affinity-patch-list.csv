@@ -99,6 +99,7 @@ AHB,|SA|Egyptian
 AHB,|SA|Pakistani
 AHB,Petrochemicals
 AIP,|CA|Punjabi
+AIT,Polynesia
 AJF,Oil
 AKJ,Paper & furniture
 AKL,|NZ|Indian
@@ -451,6 +452,7 @@ BNE,Logistics APAC
 BNE,Renewables
 BNE,Surfing
 BNK,Spirituality
+BOB,Polynesia
 BOD,|FR|Algerian x2
 BOD,Viticulture
 BOG,|CL|Colombian
@@ -636,6 +638,7 @@ CAY,Space
 CAZ,Copper FIFO
 CBB,|AR|Bolivian
 CBB,|BR|Bolivian
+CBR,Aussie Outliers
 CBR,Bureaucracy
 CBR,Defense
 CCJ,|AE|Malayali
@@ -644,6 +647,7 @@ CCJ,|OM|Malayali
 CCJ,|SA|Malayali
 CCJ,Spices / Tropical Ag
 CCJ,Sunni|
+CCK,Aussie Outliers
 CCK,Malay|
 CCP,|CL|Venezuelan
 CCP,Heavy industry
@@ -919,6 +923,7 @@ CSX,Chinese tourism|
 CSX,Electronics
 CSX,Heavy industry
 CSX,Machinery
+CSX,Red tourism
 CTA,|AU|Italian
 CTA,|BR|Italian
 CTA,|US|Italian
@@ -1230,6 +1235,7 @@ EDI,Whiskey
 EG1,Polar research
 EG9,Polar research
 EGA,Anglophone|
+EGA,Polar research
 EGO,Iron ore
 EGR,Anglophone|
 EGR,Polar research
@@ -1260,6 +1266,7 @@ END,Equinor
 ENO,Grain Belt
 ENQ,Equinor
 ENX,Equinor
+ENY,Red tourism
 ESB,|DK|Turkish
 ESB,|NL|Turkish
 ESB,|TR|Afghan
@@ -1432,6 +1439,7 @@ GDN,Wind energy
 GDV,Big Sky
 GDX,Gazprom
 GDX,Gold
+GEA,Melanesia
 GEG,Forestry
 GEG,Grain Belt
 GEO,Oil
@@ -1712,6 +1720,7 @@ HND,Telco
 HNL,|US|Filipino
 HNL,|US|Nikkei
 HNL,|US|Samoan
+HNL,Micronesia
 HNL,PIF|
 HNL,Polynesia
 HNL,Surfing
@@ -1759,6 +1768,9 @@ HSA,Uranium
 HSC,Zinc Eurasia
 HSG,Spirituality
 HSN,Seafood
+HSR,Auto parts
+HSR,Heavy industry
+HSR,Peanuts
 HSV,Academia
 HSV,Defense
 HSV,Space
@@ -1958,6 +1970,7 @@ IXS,Tea
 IXU,|SG|Marathi
 IXU,Gemstones
 IXU,Sugar
+IXY,Red tourism
 IXZ,Indian Ocean fishing
 IZO,Agriculture
 IZO,Seafood
@@ -2007,6 +2020,7 @@ JGD,Gold
 JGD,Soybeans
 JGN,Space
 JGN,Steel
+JGS,Red tourism
 JGS,Rice
 JHB,|MY|Malayali
 JHB,Electronics
@@ -2127,6 +2141,7 @@ KHN,Ceramics
 KHN,Copper
 KHN,Cotton
 KHN,Footwear
+KHN,Red tourism
 KHN,Uranium
 KHS,|OM|Baloch
 KHS,Oil
@@ -2187,6 +2202,7 @@ KOJ,Spirituality
 KOS,|KH|Indonesian
 KOS,Dark economy
 KOS,Indian Ocean fishing
+KOW,Red tourism
 KPO,Steel
 KRK,|IE|Polish
 KRK,|US|Polish
@@ -2209,6 +2225,7 @@ KRT,Oil refining
 KRW,LNG
 KRW,Offshore oil
 KRY,PetroChina
+KSA,Micronesia
 KSC,Steel
 KSH,Cotton
 KSU,Equinor
@@ -2266,9 +2283,6 @@ KZO,Oil refining
 KZO,Space
 KZO,Uranium
 LAD,Diamonds
-LAD,Logistics MEA
-LAD,Oil
-LAD,Sinopec
 LAE,Coffee
 LAE,ExxonMobil
 LAE,Gold FIFO
@@ -2301,7 +2315,7 @@ LBC,Loves Arctic|
 LBC,Nordic|
 LBD,Agriculture
 LBL,Ranching
-LBS,Agriculture
+LBS,Melanesia
 LBV,Offshore oil
 LCA,EU|
 LCA,Greek|
@@ -2314,6 +2328,7 @@ LCA,Russian|
 LCH,Petrochemicals
 LCJ,Appliances
 LCK,|US|Somali
+LCX,Red tourism
 LCX,Zinc Eurasia
 LCY,|UK|Jewish
 LCY,Academia
@@ -2327,6 +2342,7 @@ LCY,Professional services
 LCY,Spirits
 LDB,Poultry
 LDE,Spirituality
+LDH,Aussie Outliers
 LEA,Copper FIFO
 LEA,Gemstones
 LED,|AE|Russian
@@ -2528,6 +2544,7 @@ LYS,Pharma
 LYS,Software
 LZH,Autos
 LZO,Baijiu
+LZO,Red tourism
 MAA,|AE|Tamil
 MAA,|ID|Tamil
 MAA,|MY|Tamil
@@ -2699,6 +2716,7 @@ MIM,Seafood
 MIR,Mediterranean marine
 MIR,Offshore oil
 MIR,Spices / Tropical Ag
+MJI,Oil
 MJM,Diamonds
 MJY,Aluminum
 MJZ,Diamonds
@@ -2750,6 +2768,7 @@ MOG,PetroChina
 MOR,Coal seam gas
 MOT,Oil fracking
 MOV,Coal
+MOZ,Polynesia
 MPH,|CA|Filipino
 MPH,|IE|Filipino
 MPH,|IT|Filipino
@@ -2874,6 +2893,8 @@ NAG,Manganese
 NAG,Soybeans
 NAN,Melanesia
 NAN,Surfing
+NAN,Water
+NAO,Red tourism
 NAP,|BR|Italian
 NAP,|US|Italian
 NAP,Agribusiness
@@ -2884,6 +2905,9 @@ NAT,Petrobras
 NBC,Logistics APAC
 NBC,Petrochemicals
 NBE,|FR|Tunisian x2
+NBJ,Logistics MEA
+NBJ,Oil
+NBJ,Sinopec
 NBO,|KE|Gujarati
 NBO,Back office
 NBO,Belt & Road|
@@ -2942,6 +2966,7 @@ NLA,Belt & Road|
 NLA,Copper
 NLA,Copperbelt
 NLD,Hispanic|
+NLK,Aussie Outliers
 NLK,Polynesia
 NLT,Zinc Eurasia
 NLU,Beer
@@ -3196,6 +3221,7 @@ PEN,Rubber
 PEN,Semiconductors
 PER,|AU|Chinese
 PER,|AU|Indian
+PER,Aussie Outliers
 PER,Bauxite
 PER,Copper FIFO
 PER,Gold
@@ -3425,8 +3451,8 @@ QRO,Poultry
 QRW,Oil
 QSZ,Sunni|
 RAB,Melanesia
+RAB,Melanesia
 RAI,Lusophone|
-RAJ,Peanuts
 RAK,|FR|Moroccan
 RAK,|NL|Moroccan
 RAK,Francophonie|
@@ -3458,6 +3484,7 @@ RES,Agribusiness
 REU,|ES|Romanian
 REU,Petrochemicals
 REX,Pemex
+RFD,Logistics NAC
 RGA,Ranching
 RGL,Sheep
 RGN,Apparel
@@ -3520,6 +3547,7 @@ ROV,Logistics CIS
 ROW,UFOs
 RPR,Coal
 RPR,Steel
+RQY,Rice
 RSA,Ranching
 RST,Dairy
 RST,Healthcare admin
@@ -3752,6 +3780,7 @@ SJU,Rum
 SJW,Aluminum
 SJW,Coal CN
 SJW,New energy
+SJW,Red tourism
 SKD,Cotton
 SKG,Fine cheese
 SKG,German|
@@ -3804,6 +3833,7 @@ SOF,Apparel
 SOF,Back office
 SOF,Loves Kavala x2|
 SOF,Software
+SON,Melanesia
 SON,Melanesia
 SON,Seafood
 SOQ,Nickel
@@ -3865,6 +3895,7 @@ SUB,Nickel
 SUB,Oil
 SUB,Tobacco
 SUJ,Appliances
+SUV,Melanesia
 SUV,Seafood
 SVC,Copper FIFO
 SVG,Equinor
@@ -3909,6 +3940,8 @@ SYD,|AU|Samoan
 SYD,|AU|Vietnamese
 SYD,Advertising & media
 SYD,Asset management
+SYD,Aussie Outliers
+SYD,Aussie Outliers
 SYD,Copper FIFO
 SYD,Golden Triangle x2
 SYD,Life sciences
@@ -3942,6 +3975,7 @@ TAE,Electronics
 TAE,Machinery
 TAE,Steel
 TAE,Textiles
+TAH,Melanesia
 TAK,Copper
 TAM,Copper
 TAM,Pemex
@@ -4166,6 +4200,7 @@ TXK,Wind energy
 TXN,Spirituality
 TYN,Baijiu
 TYN,Coal CN
+TYN,Red tourism
 TYN,Space
 TYN,Titanium
 TYN,Toys
@@ -4352,6 +4387,7 @@ WNS,Cotton
 WNZ,Aluminum
 WNZ,Footwear
 WNZ,Toys
+WOL,Coal
 WRE,Geothermal
 WRO,Copper
 WRO,CPG & Retail
@@ -4384,6 +4420,7 @@ WXN,Aluminum
 WYS,Big Sky
 XAP,Paper & furniture
 XAP,Poultry
+XCH,Aussie Outliers
 XFN,Auto parts
 XIC,Rare earths
 XIC,Space
@@ -4670,22 +4707,6 @@ ZUH,Sinopec
 ZUH,Tropical fishing
 ZUH,Wind energy
 ZYI,Baijiu
+ZYI,Red tourism
 ZYL,Fabrics
 ZYL,Tea
-,
-,
-,
-,
-,
-,
-,
-,
-,
-PER,Aussie Outliers
-XCH,Aussie Outliers
-CCK,Aussie Outliers
-SYD,Aussie Outliers
-CBR,Aussie Outliers
-NLK,Aussie Outliers
-LDH,Aussie Outliers
-SYD,Aussie Outliers
