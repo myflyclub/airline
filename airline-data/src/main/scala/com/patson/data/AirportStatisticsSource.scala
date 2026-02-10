@@ -79,6 +79,29 @@ object AirportStatisticsSource {
     }
   }
 
+  def updateBaselineStats(stats: List[AirportStatistics]): Unit = {
+    val connection = Meta.getConnection()
+    try {
+      connection.setAutoCommit(false)
+      val preparedStatement = connection.prepareStatement(
+        "INSERT INTO " + AIRPORT_STATISTICS_TABLE + " (airport, baseline_demand, congestion, from_pax, reputation, travel_rate) VALUES(?,?,?,0,0.0,0.0) " +
+        "ON DUPLICATE KEY UPDATE baseline_demand = VALUES(baseline_demand), congestion = VALUES(congestion)")
+
+      stats.foreach { stat =>
+        preparedStatement.setInt(1, stat.airportId)
+        preparedStatement.setInt(2, stat.baselineDemand)
+        preparedStatement.setDouble(3, stat.congestion)
+        preparedStatement.addBatch()
+      }
+
+      preparedStatement.executeBatch()
+      preparedStatement.close()
+      connection.commit()
+    } finally {
+      connection.close()
+    }
+  }
+
   def updateAllAirportStats(stats: List[AirportStatisticsUpdate]): Unit = {
     val connection = Meta.getConnection()
     try {
