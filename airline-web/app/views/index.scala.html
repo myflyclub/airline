@@ -921,7 +921,7 @@
 	<!-- 				end extended panel -->
 				   </div>
 
-                    <div id="searchCanvas" class="canvas flex-col sidePanel mapOverlayPanel" style="display: none;">
+                    <div id="searchCanvas" class="flex-col sidePanel mapOverlayPanel" style="display: none;">
                         <div class="section mainSection">
                             <div style="width: 100%; min-height: 80px;" class="titlesContainer">
                                 <div class="titleNavigation">
@@ -2706,39 +2706,41 @@
 	<!-- 					end statements -->
 
 						<div class="section" style="width: 100%;">
-							<h4>Airline Settings</h4>
-							<div class="item-grid py-4">
-								<div class="button" style="width: 120px;" onclick="promptConfirm('Reset all tutorials?', setSkipTutorial, false)">Reset Tutorials</div>
-								<div class="table-row">
-								<div class="cell label">Airline Code:</div>
-								<div class="cell value">
-									<span id="airlineCodeDisplaySpan">
-										<span id="airlineCode"></span>
-										<img src='@routes.Assets.versioned("/images/icons/gear.png")' class='img-button' style="vertical-align: middle;" onclick="editAirlineCode()"/>
-									</span>
-									<span id="airlineCodeInputSpan" style="display: none;">
-										<input id="airlineCodeInput" type="text" onkeyup="validateAirlineCode($(this).val())"/>
-										<img src='@routes.Assets.versioned("/images/icons/tick.png")' class='img-button' style="vertical-align: middle;" onclick="setAirlineCode($('#airlineCodeInput').val())"/>
-										<span class="warning" style="display:none;">Code should be exactly 2 letters</span>
-									</span>
-								</div>
-							</div>
-								<div class="table-row airlineColor">
-								<div class="cell label">Color:</div>
-								<div class="cell value">
-									<input type="color" class="picker">
-								</div>
-							</div>
-								<div class="table-row">
-								<div class="cell label">Logo:</div>
-								<div class="cell value">
-									<span style="display: flex; align-items: center">
-										<img class="airlineLogo" src='#'>
-										<img src='@routes.Assets.versioned("/images/icons/gear.png")' class='img-button' style="vertical-align: middle;" onclick="editAirlineLogo()"/>
-										<img src='@routes.Assets.versioned("/images/icons/picture--plus.png")' class='img-button' style="vertical-align: middle;" onclick="showUploadLogo()"/>
-									</span>
-								</div>
-							</div>
+                            <h4>Airline Settings</h4>
+                            <div class="item-grid py-4">
+                                <div>
+                                    <button class="button" style="width: 120px;" onclick="promptConfirm('Reset all tutorials?', setSkipTutorial, false)">Reset Tutorials</button>
+                                </div>
+                                <div class="table-row">
+                                    <div class="cell label">Airline Code:</div>
+                                    <div class="cell value">
+                                        <span id="airlineCodeDisplaySpan">
+                                            <span id="airlineCode"></span>
+                                            <img src='@routes.Assets.versioned("/images/icons/gear.png")' class='img-button' style="vertical-align: middle;" onclick="editAirlineCode()" />
+                                        </span>
+                                        <span id="airlineCodeInputSpan" style="display: none;">
+                                            <input id="airlineCodeInput" type="text" onkeyup="validateAirlineCode($(this).val())" />
+                                            <img src='@routes.Assets.versioned("/images/icons/tick.png")' class='img-button' style="vertical-align: middle;" onclick="setAirlineCode($('#airlineCodeInput').val())" />
+                                            <span class="warning" style="display:none;">Code should be exactly 2 letters</span>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="table-row airlineColor">
+                                    <div class="cell label">Airline Color:</div>
+                                    <div class="cell value">
+                                        <input type="color" class="picker" data-tooltip='Change airline color'>
+                                    </div>
+                                </div>
+                                <div class="table-row">
+                                    <div class="cell label">Logo:</div>
+                                    <div class="cell value">
+                                        <img class="airlineLogo" src='#'>
+                                        <div class="flex-row pt-1 pb-4">
+                                            <img src='@routes.Assets.versioned("/images/icons/gear.png")' class='img-button' style="vertical-align: middle;" onclick="editAirlineLogo()" />
+                                            <img src='@routes.Assets.versioned("/images/icons/picture--plus.png")' data-tooltip='Upload custom logo' class='img-button' style="vertical-align: middle;" onclick="showUploadLogo()" />
+                                        </div>
+                                    </div>
+                                </div>
 							</div>
 						</div>
 
@@ -4175,18 +4177,18 @@
 			<span class="close" onclick="closeModal($('#uploadLogoModal'))">&times;</span>
 			<h4>Upload Own Logo</h4>
 			<ul>
-				<li class="label" style="padding: 5px;">- Logo should be in jpg format</li>
-				<li class="label" style="padding: 5px;">- Logo should be 128px wide and 64px tall</li>
+				<li class="label" style="padding: 5px;">- Logo should be in PNG format</li>
+				<li class="label" style="padding: 5px;">- Logo must be exactly 128px wide and 64px tall</li>
 			</ul>
 			<div class="uploadPanel" style="display:none" >
-				<input type="file" class="logoInput" accept="image/jpg" style="display:none;">
+				<input type="file" class="logoInput" accept="image/png" style="display:none;">
 				<div class="file-drop-zone clickable" onclick="$(this).siblings('.logoInput').click()">
 					<div class="preview-container" style="display:none; margin-bottom: 10px;">
 						<img class="logo-preview" style="max-width: 100%; height: auto; border: 1px solid var(--border-color);">
 					</div>
 					<div class="upload-prompt">
 						<img src="/assets/images/icons/image--plus.png" style="vertical-align: middle; margin-right: 5px;">
-						<span>Click or drag logo here (JPG, 128x64 recommended)</span>
+						<span>Click or drag logo here (PNG, 128x64)</span>
 					</div>
 				</div>
 				<div class="warning" style="display:none; margin-top: 10px;"></div>
@@ -4206,8 +4208,8 @@
           <span class="close" onclick="closeModal($('#uploadLogoModalAlliance'))">&times;</span>
           <h4>Upload Logo</h4>
           <ul>
-              <li class="label" style="padding: 5px;">- Logo should be in png format</li>
-              <li class="label" style="padding: 5px;">- Logo should be 48px wide and 24px tall</li>
+              <li class="label" style="padding: 5px;">- Logo should be in PNG format</li>
+              <li class="label" style="padding: 5px;">- Logo must be exactly 128px wide and 64px tall</li>
           </ul>
           <div class="uploadPanel" style="display:none" >
               <input type="file" class="logoInput" accept="image/png" style="display:none;">
@@ -4217,7 +4219,7 @@
                   </div>
                   <div class="upload-prompt">
                       <img src="/assets/images/icons/image--plus.png" style="vertical-align: middle; margin-right: 5px;">
-                      <span>Click or drag logo here (PNG, 48x24 recommended)</span>
+                      <span>Click or drag logo here (PNG, 128x64)</span>
                   </div>
               </div>
               <div class="warning" style="display:none; margin-top: 10px;"></div>
@@ -4237,18 +4239,18 @@
 		  <span class="close" onclick="closeModal($('#uploadLiveryModal'))">&times;</span>
 		  <h4>Upload Airline Livery</h4>
 		  <ul>
-			  <li class="label" style="padding: 5px;">- Livery should be in png format, transparent background recommended</li>
-			  <li class="label" style="padding: 5px;">- Image should not be larger than 1MB</li>
+			  <li class="label" style="padding: 5px;">- Livery should be in JPG or WebP format, max 600x300</li>
+			  <li class="label" style="padding: 5px;">- Image should not be larger than 2MB</li>
 		  </ul>
 		  <div class="uploadPanel" style="display:none" >
-			  <input type="file" class="logoInput" accept="image/png" style="display:none;">
+			  <input type="file" class="logoInput" accept="image/jpeg, image/webp" style="display:none;">
 			  <div class="file-drop-zone clickable" onclick="$(this).siblings('.logoInput').click()">
 				  <div class="preview-container" style="display:none; margin-bottom: 10px;">
 					  <img class="logo-preview" style="max-width: 100%; height: auto; border: 1px solid var(--border-color);">
 				  </div>
 				  <div class="upload-prompt">
 					  <img src="/assets/images/icons/image--plus.png" style="vertical-align: middle; margin-right: 5px;">
-					  <span>Click or drag livery here (PNG recommended)</span>
+					  <span>Click or drag livery here (JPG or WebP)</span>
 				  </div>
 			  </div>
 			  <div class="warning" style="display:none; margin-top: 10px;"></div>
@@ -5189,7 +5191,7 @@
                           <div class="value">
                               <span class="envelopeRunway"></span>
                               <span class="envelopeCustoms" title="International flight at domestic airport restriction" style="display: none;">
-                                  <img src="/assets/images/icons/exclamation-red.png" style="vertical-align: middle; height: 14px;">
+                                  <img src="/assets/images/icons/exclamation-red.svg" class="svg">
                               </span>
                           </div>
                       </div>
@@ -5918,30 +5920,6 @@
 				  </div>
 				  <div class="cell" style="vertical-align:middle; text-align:center;">
 					  <img style="margin: 4px" class="clickable" src='@routes.Assets.versioned("/images/icons/24px/arrow-circle-double.png")' onclick="changeWallpaper()">
-				  </div>
-			  </div>
-			  <div class="table-row customWallpaper">
-				  <div class="cell">
-					  <h5>Custom Wallpaper</h5>
-				  </div>
-				  <div class="cell" style="vertical-align:middle; text-align:center;">
-					  <div class="uploadPanel">
-						  <input type="file" class="logoInput" accept="image/jpg, image/jpeg" style="display:none;">
-						  <div class="file-drop-zone clickable" onclick="$(this).siblings('.logoInput').click()">
-							  <div class="preview-container" style="display:none; margin-bottom: 10px;">
-								  <img class="logo-preview" style="max-width: 100%; height: auto; border: 1px solid var(--border-color);">
-							  </div>
-							  <div class="upload-prompt">
-								  <img src="/assets/images/icons/image--plus.png" style="vertical-align: middle; margin-right: 5px;">
-								  <span>Click or drag jpg image here</span>
-							  </div>
-						  </div>
-						  <div class="warning" style="display:none; margin-top: 10px;"></div>
-						  <div class="actions" style="margin-top: 15px; text-align: center; display:none;">
-							  <button type="button" class="button uploadButton">Upload</button>
-							  <button type="button" class="button btn-secondary" onclick="resetLogoUpload($(this).closest('.uploadPanel'))">Cancel</button>
-						  </div>
-					  </div>
 				  </div>
 			  </div>
 		  </div>

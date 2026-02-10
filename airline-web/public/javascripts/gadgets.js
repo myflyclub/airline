@@ -654,6 +654,21 @@ function hideActiveDiv(activeDiv) {
 	}
 }
 
+/**
+ * Show a map overlay panel inside #worldMapCanvas, hiding any other visible overlay panels.
+ */
+function showMapOverlay(overlay) {
+    $('#worldMapCanvas > .mapOverlayPanel').not(overlay).hide();
+    overlay.fadeIn(200);
+}
+
+/**
+ * Hide all map overlay panels inside #worldMapCanvas.
+ */
+function hideMapOverlays() {
+    $('#worldMapCanvas > .mapOverlayPanel').fadeOut(200);
+}
+
 function toggleOnOff(element) {
 	if (element.is(":visible")){
 		element.fadeOut(200)

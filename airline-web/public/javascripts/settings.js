@@ -1,7 +1,6 @@
 //determines if the user has a set theme
 function toggleSettings() {
     if (!$("#settingsModal").is(":visible")){
-        updateCustomWallpaperPanel()
         $("#settingsModal").fadeIn(500)
     } else {
         closeModal($('#settingsModal'))
@@ -37,46 +36,37 @@ function changeWallpaper() {
         wallpaperIndex = parseInt(localStorage.getItem('wallpaperIndex'))
     }
 
-    if (activeUser && activeUser.hasWallpaper) {
-        removeCustomWallpaper()
-    }
     wallpaperIndex = (wallpaperIndex + 1) % wallpaperTemplates.length
     localStorage.setItem('wallpaperIndex', wallpaperIndex)
     refreshWallpaper()
 }
 
 function refreshWallpaper() {
-    var template
-    if (activeUser && activeUser.hasWallpaper) {
-        template = {
-            "background" : "url(users/" + activeUser.id + "/wallpaper)"
-        }
-    } else {
-        const body = document.querySelector("body");
-        var wallpaperIndex = 0
-        if (localStorage.getItem('wallpaperIndex')) {
-            wallpaperIndex = parseInt(localStorage.getItem('wallpaperIndex'))
-            if (wallpaperIndex >= wallpaperTemplates.length) {
-                wallpaperIndex = 0
-            }
-        }
-        if (wallpaperIndex < wallpaperTemplates.length) {
-            template = wallpaperTemplates[wallpaperIndex]
-        } else { //somehow an index that does not exist, might happen when wallpaper list switches
-            template = wallpaperTemplates[0]
-        }
-        if (wallpaperIndex === 0) {
-            body.removeAttribute('style');
-            body.style.backgroundColor = template.background;
-        } else if (wallpaperIndex < 4) {
-            body.style.background = template.background;
-            body.style.imageRendering = "pixelated";
-        } else {
-            body.style.background = template.background;
-            body.style.imageRendering = "auto";
+    const body = document.querySelector("body");
+    var wallpaperIndex = 0
+    if (localStorage.getItem('wallpaperIndex')) {
+        wallpaperIndex = parseInt(localStorage.getItem('wallpaperIndex'))
+        if (wallpaperIndex >= wallpaperTemplates.length) {
+            wallpaperIndex = 0
         }
     }
 
+    var template
+    if (wallpaperIndex < wallpaperTemplates.length) {
+        template = wallpaperTemplates[wallpaperIndex]
+    } else {
+        template = wallpaperTemplates[0]
+    }
+    if (wallpaperIndex === 0) {
+        body.removeAttribute('style');
+        body.style.backgroundColor = template.background;
+    } else if (wallpaperIndex < 4) {
+        body.style.background = template.background;
+        body.style.imageRendering = "pixelated";
+    } else {
+        body.style.background = template.background;
+        body.style.imageRendering = "auto";
+    }
 
     $("body").css("background", template.background)
     $("body").css("background-repeat", "no-repeat")
@@ -84,42 +74,4 @@ function refreshWallpaper() {
     $("body").css("background-size", "cover")
     $("body > div").css("image-rendering", "auto") // this prevents the non-pixel images from looking weird
 
-}
-
-function removeCustomWallpaper() {
-    activeUser.hasWallpaper = false
-    $.ajax({
-        type: 'DELETE',
-        url: "/users/" + activeUser.id + "/wallpaper",
-        contentType: 'application/json; charset=utf-8',
-        dataType: 'json',
-        success: function() {
-
-        },
-        error: function(jqXHR, textStatus, errorThrown) {
-                console.log(JSON.stringify(jqXHR));
-                console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
-        }
-    });
-}
-
-function updateCustomWallpaperPanel() {
-    if (!activeUser) {
-        $('#settingsModal .customWallpaper').hide()
-    } else {
-        $('#settingsModal .customWallpaper').show()
-        $('#settingsModal .customWallpaper .warning').hide()
-
-        if (activeUser.level >= 0) {
-            $('#settingsModal .customWallpaper .uploadPanel').show()
-            initLogoUpload($("#settingsModal .customWallpaper .uploadPanel"), "users/" + activeUser.id + "/wallpaper", "wallpaperFile", function(data) {
-                activeUser.hasWallpaper = true
-                refreshWallpaper()
-            });
-        } else {
-              $('#settingsModal .customWallpaper .warning').text("Feature is only avaiable to Patreons")
-              $('#settingsModal .customWallpaper .warning').show()
-              $('#settingsModal .customWallpaper .uploadPanel').hide()
-        }
-    }
 }

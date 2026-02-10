@@ -477,7 +477,7 @@ function showRivalMap() {
         }
         map.controls[google.maps.ControlPosition.TOP_CENTER].push(createMapButton(map, 'Exit Rival Flight Map', 'hideRivalMap()', 'hideRivalMapButton')[0]);
     }, 1000); //delay otherwise it doesn't push to center
-    switchMap()
+    setActiveDiv($('#worldMapCanvas'))
     $("#worldMapCanvas").data("initCallback", function() { //if go back to world map, re-init the map
     	map.controls[google.maps.ControlPosition.TOP_CENTER].clear()
     	AirlineMap.clearAllPaths()

@@ -42,14 +42,14 @@ html {
     --modal-content-background-image: var(--section-background-image);
     --chat-current-background: #ffffff;
     --chat-shadow: inset 0 0 2px white, 0 0 3px rgba(0, 0, 0, 0.5);
-    --select-background-color: #aaaaaa;
+    --select-background-color: var(--background-3);
     --select-linear-gradient: linear-gradient(to bottom, #ffffff 0%,#e5e5e5 100%);
     --input-border-color: #6093e7;
     --input-color: #CCC;
     --input-background-color: var(--background-3);
     --placeholder-color: #909090;
-    --loading-spinner-background: rgba( 255, 255, 255, .8 );
-    --fallback-background: #CCC;
+    --loading-spinner-background: var(--background-1);
+    --fallback-background: var(--background-3);
     --highlight-text-color: #dddddd;
     --shadow-1: 0px 0px 2px 0px rgba(0, 0, 0, 0.3);
     --shadow-2: 0px 0px 2px 0px rgba(0, 0, 0, 0.5);
@@ -62,7 +62,7 @@ html {
 html[data-theme='dark'] {
     --text-color: lightgray;
     --text-color-heading: #ccc;
-    --background-1: #090916;
+    --background-1: #0e0e23;
     --background-2: #707070;
     --background-3: #505050;
     --input-background: #aaa3;
@@ -197,6 +197,11 @@ p {
     font-size: 12px;
 }
 
+p.info {
+    font-style: italic;
+    color: var(--text-color);
+    opacity: 0.8;
+}
 .font-mono {
     font-family: "ibm-plex-mono", monospace;
 }
@@ -281,6 +286,7 @@ li.row, div.table-row {
     position: fixed;
     top: calc(50vh - 320px); /*roughly 50% - half of nav height */
     transition: transform 0.3s ease-in-out;
+    z-index: 100;
 }
 #navPrimaryToggle {
     display: none;
@@ -577,6 +583,10 @@ li.row, div.table-row {
     top: -1px;
     right: -1px;
     border-radius: 0 0 0 8px;
+}
+#topBar .logo {
+    width: 44px !important;
+    margin-bottom: -8px;
 }
 #topBar .topBarDetails {
     display: flex;
@@ -909,6 +919,13 @@ div.button.selected {
 
 a.selected, span.selected, .clickable:hover:not(.cell), .clickable.selected:not(.cell) {
     background: var(--button-active-background);
+}
+
+.isAirplane {
+    border: 1px solid transparent;
+}
+.isAirplane.selected {
+    border-color: var(--button-hover-border);
 }
 
 a:hover, .clickable:hover, .clickable-no-highlight:hover {
@@ -1344,6 +1361,11 @@ div.section, #topBar > div {
     font-size: 13px;
     text-align: center;
 }
+/* Search Canvas */
+#searchCanvas .section {
+    height: calc(100vh - 90px);
+    
+}
 
 /* ========================================
    Forms & Inputs
@@ -1489,6 +1511,8 @@ dd.error {
 img.logo {
     box-shadow: 0 0 2px 1px rgba(255, 255, 255, 0.2);
     margin-right: 4px;
+    margin-top: -2px;
+    margin-bottom: -2px;
 }
 
 .logo-alliance {
@@ -2373,7 +2397,7 @@ i, .italic {
         border-radius: 8px !important;
         position: absolute;
         right: 0;
-        top: 12px;
+        top: 4px;
     }
     .mapOverlayPanel > * {
         pointer-events: auto;

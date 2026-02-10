@@ -223,27 +223,13 @@ document.addEventListener('visibilitychange', function () {
 
 
 function showWorldMap() {
-    $('#searchCanvas').hide();
+    hideMapOverlays();
 	setActiveDiv($('#worldMapCanvas'));
-	highlightTab($('.worldMapCanvasTab'))
 	$('#sidePanel').appendTo($('#worldMapCanvas'))
 	if (selectedLink) {
 		selectLinkFromMap(selectedLink, !activeAirportPopupInfoWindow) //do not refocus if there's a popup, stay where it is
 	}
 	checkTutorial('worldMap')
-}
-
-//switch to map view w/o considering leaving current tab
-function switchMap() {
-    var mapCanvas = $('#worldMapCanvas')
-    var existingActiveDiv = mapCanvas.siblings(":visible").filter(function (index) {
-		return $(this).css("clear") != "both"
-	})
-    if (existingActiveDiv.length > 0) {
-        existingActiveDiv.fadeOut(200, function() {
-            mapCanvas.fadeIn(200)
-        })
-    }
 }
 
 function showAnnoucement() {

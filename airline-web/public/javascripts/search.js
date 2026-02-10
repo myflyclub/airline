@@ -15,14 +15,17 @@ resetHistorySearchState(); // Initial state reset
 function showSearchCanvas(historyAirline) {
     var titlesContainer = $("#searchCanvas div.titlesContainer")
     positionTitles(titlesContainer)
-    setActiveDiv($("#searchCanvas"))
+
+    // Ensure worldMapCanvas is the active top-level canvas
+    setActiveDiv($('#worldMapCanvas'))
+    // Show search overlay, hide sidePanel
+    showMapOverlay($('#searchCanvas'))
 	$("#searchCanvas").css("display", "flex")
-	highlightTab($('.searchCanvasTab'))
+
 	$("#routeSearchResult").empty()
 	if (isMobileDevice()) {
 	   $('#searchCanvas .banner').hide()
 	} else {
-        $('#map').fadeIn(200);
 	   showBanner()
     }
 	$("#historySearchResult .table-row").empty()

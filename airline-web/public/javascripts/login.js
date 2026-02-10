@@ -91,7 +91,7 @@ async function loadUser() {
                 // Session expired or invalid
                 console.log('Session restore failed: ' + response.status)
             }
-            logout();
+            window.location.replace('/logout/')
             throw new Error('Session restore failed: ' + response.status)
         }
 
