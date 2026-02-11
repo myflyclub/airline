@@ -806,6 +806,13 @@ li.row, div.table-row {
     text-shadow: 0px 0px 5px rgba(255,255,255,0.5);
 }
 
+.table-row .logo {
+    width: 30px;
+    height: 15px;
+    float: left;
+    margin-right: 4px;
+}
+
 /* ========================================
    Item Grid
    ======================================== */
@@ -1037,6 +1044,11 @@ div.section, #topBar > div {
 }
 .section.tight > p {
     padding: 2px;
+}
+.section-title {
+    width: 100%;
+    font-size: 1em;
+    font-weight: 600;
 }
 .section textarea {
     border-radius: 8px;
@@ -1362,9 +1374,10 @@ div.section, #topBar > div {
     text-align: center;
 }
 /* Search Canvas */
-#searchCanvas .section {
+#searchCanvas > .section {
     height: calc(100vh - 90px);
-    
+    display: flex;
+    flex-direction: column;
 }
 
 /* ========================================
@@ -2189,6 +2202,7 @@ i, .italic {
 .w-full { width: 100% !important; }
 .w-half { width: 50% !important; }
 .max-w-32 {max-width: 8rem;}
+.gap-0 { gap: 0 !important; }
 .gap-2 { gap: 0.5rem; }
 .gap-4 { gap: 1rem !important; }
 .gap-8 { gap: 2rem !important; }
@@ -2242,9 +2256,11 @@ i, .italic {
 }
 
 /* ========================================
-   Utility Classes - Flexbox
+   Utility Classes - Flexbox / display
    ======================================== */
-
+.block {
+    display: block;
+}
 .flex-align-center {
     display: flex;
     align-items: center;
@@ -2290,12 +2306,6 @@ i, .italic {
 .center {
     margin: 12px auto;
     width: max-content;
-}
-
-.section-title {
-    width: 100%;
-    font-size: 1em;
-    font-weight: 600;
 }
 
 /* ========================================
@@ -2462,6 +2472,12 @@ i, .italic {
         top: 144px;
         right: 0px;
     }
+    #countryCanvas .mainPanel {
+        width: 60%;
+    }
+    #countryCanvas .sidePanel {
+        width: 40%;
+    }
 }
 
 /* ========================================
@@ -2563,9 +2579,6 @@ i, .italic {
 @media screen and (max-width: 640px) {
     #topBar {
         height: var(--mobile-header-height);
-    }
-    #tabGroup {
-        display: block;
     }
     #topBar > :last-child {
         top: 0px;

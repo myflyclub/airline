@@ -4,7 +4,6 @@ var loadedAlerts = []
 
 function showEventCanvas() {
 	setActiveDiv($("#eventCanvas"))
-	highlightTab($('.eventCanvasTab'))
 	loadAllOlympics()
 }
 

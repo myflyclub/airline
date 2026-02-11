@@ -741,7 +741,12 @@ function updateFacilityList(statistics) {
     $.each(statistics.lounges, function (index, loungeStats) {
         var lounge = loungeStats.lounge
         var row = $("<div class='table-row clickable' onClick='navigateTo(/rivals/" + lounge.airlineId + "'></div>")
-        row.append("<div class='cell'>" + getAllianceOrAirlineLogoImg(lounge.allianceId, lounge.airlineId) + htmlEncode(lounge.airlineName) + "</div>")
+        var allianceSpan = "-"
+        if (lounge.allianceId) {
+            allianceSpan = "<div class='flex-row gap-0'>" + getAllianceLogoImg(lounge.allianceId) + htmlEncode(loadedAlliancesById[lounge.allianceId].name) + "</div>"
+        }
+        row.append("<div class='cell'>" + allianceSpan + "</div>")
+        row.append("<div class='cell'>" + htmlEncode(lounge.airlineName) + "</div>")
         row.append("<div class='cell'>" + lounge.name + "</div>")
         row.append("<div class='cell' style='text-align: right;'>" + lounge.level + "</div>")
         row.append("<div class='cell' style='text-align: right;'>" + lounge.status + "</div>")
@@ -774,6 +779,7 @@ function updateFacilityList(statistics) {
     if (!hasLounges) {
         var emptyRow = $("<div class='table-row'></div>")
         emptyRow.append("<div class='cell'>-</div>")
+        emptyRow.append("<div class='cell' style='text-align: right;'>-</div>")
         emptyRow.append("<div class='cell' style='text-align: right;'>-</div>")
         emptyRow.append("<div class='cell' style='text-align: right;'>-</div>")
         emptyRow.append("<div class='cell' style='text-align: right;'>-</div>")

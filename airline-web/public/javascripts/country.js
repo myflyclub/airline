@@ -39,7 +39,6 @@ async function loadAllCountries(airlineId) {
 }
 
 async function showCountryCanvas(selectedCountryCode) {
-	highlightTab($('.countryCanvasTab'))
 	$("#countryList").empty()
 
     await loadAllCountries()

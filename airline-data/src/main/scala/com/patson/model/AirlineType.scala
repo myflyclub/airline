@@ -27,7 +27,10 @@ case object BeginnerAirline extends AirlineType {
   override val airportRepRatio = 2
   override val stockRepPerLevel = 75
   val description = List[String](
-    "",
+    "Cannot grow to more than 250 reputation",
+    s"Base crew costs are ${DiscountAirline.crewRatio * 100}% the cost of other airlines.",
+    s"30% lower service costs.",
+    "Win double reputation from airports!"
   )
 }
 
@@ -59,7 +62,7 @@ case object LuxuryAirline extends AirlineType {
   val id = 4
   val label = "Luxury"
   val extraLoyalty = 12
-  val staffFreqRatio = 0.5
+  val staffFreqRatio = 0.4
   override val elitesRepPerLevel = 70
   override val stockRepPerLevel = 50
   val description = List[String](

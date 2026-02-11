@@ -149,7 +149,7 @@ function refreshPanels(airlineId) {
 	    		refreshLinkDetails(selectedLink)
 	    	}
 	    	if ($("#linksCanvas").is(":visible")) {
-	    		loadLinksTable()
+	    		loadLinksTable(null, true)
 	    	}
 	    },
 	    error: function(jqXHR, textStatus, errorThrown) {

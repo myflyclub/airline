@@ -1,3 +1,4 @@
+var logoModalConfirm = function() {}
 var loadedIncomes = {}
 var loadedCashFlows = {}
 var loadedAirlineOps = {}
@@ -29,7 +30,6 @@ $( document ).ready(function() {
 
 function showOfficeCanvas() {
 	setActiveDiv($("#officeCanvas"))
-	highlightTab($('.officeCanvasTab'))
 
 	updateAirlineDetails()
 	writeMilestones(activeAirline.reputationBreakdowns.breakdowns)
@@ -1028,6 +1028,7 @@ function loadLogoTemplates() {
 }
 
 function editAirlineLogo() {
+	logoModalConfirm = setAirlineLogo
 	var modal = $('#logoModal')
 	$('#logoTemplateIndex').val(0)
 	generateLogoPreview()

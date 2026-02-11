@@ -5,7 +5,6 @@ var loadedSuggestion
 function showOilCanvas() {
     if (!oilPrices) loadOilPrices();
 	setActiveDiv($("#oilCanvas"))
-	highlightTab($('.oilCanvasTab'))
 	loadOilDetails() 
     loadExistingOilContracts()
     plotOilPriceChart(oilPrices, "oilPriceChart");

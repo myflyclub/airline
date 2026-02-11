@@ -4,6 +4,7 @@ var promptInterval
 var activePrompt
 var activeTutorial
 var tutorialsCompleted
+var noticesShown
 
 function initPrompts() {
     promptQueue = []
@@ -13,11 +14,12 @@ function initPrompts() {
     }
     activePrompt = undefined
 
-    $('.tab-icon').bind('click.tutorial', function() {
+    $('.nav-link').bind('click.tutorial', function() {
         var pageId = $(this).data('link')
         checkTutorial(pageId)
     })
     tutorialsCompleted = new Set()
+    noticesShown = new Set()
     tutorialQueue = []
     $.ajax({
             type: 'GET',
@@ -70,7 +72,11 @@ function queueNotice(noticeJson) {
     }
 
     if (htmlId) {
-        queuePrompt(htmlId, noticeJson)
+        var noticeKey = category + ":" + noticeJson.id
+        if (!noticesShown.has(noticeKey)) {
+            noticesShown.add(noticeKey)
+            queuePrompt(htmlId, noticeJson)
+        }
     }
 }
 

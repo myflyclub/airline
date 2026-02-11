@@ -6,7 +6,8 @@ import com.patson.model.AllianceRole._
 import com.patson.model.AllianceStatus._
 import com.patson.model.{AllianceHistory, AllianceMember, _}
 import com.patson.model.alliance.AllianceStats
-import com.patson.util.{AirlineCache, AirportChampionInfo, AllianceCache, AllianceRankingUtil, ChampionUtil, CountryChampionInfo, UserCache}
+import com.patson.util.{AirlineCache, AirportChampionInfo, AllianceCache, AllianceRankingUtil, ChampionUtil, CountryChampionInfo, LogoGenerator, UserCache}
+import java.awt.Color
 import controllers.AuthenticationObject.AuthenticatedAirline
 
 import javax.inject.Inject
@@ -667,6 +668,29 @@ class AllianceApplication @Inject()(cc: ControllerComponents) extends AbstractCo
             }.getOrElse {
               BadRequest(Json.obj("error" -> JsString("Invalid request format")))
             }
+          }
+        }
+    }
+  }
+
+  def setAllianceLogo(airlineId: Int, allianceId: Int, templateIndex: Int, color1: String, color2: String) = AuthenticatedAirline(airlineId) { request =>
+    AllianceCache.getAlliance(allianceId, true) match {
+      case None =>
+        NotFound(s"Alliance with id $allianceId is not found")
+      case Some(alliance) =>
+        if (alliance.status != ESTABLISHED) {
+          BadRequest("Cannot save logo for a non-established alliance")
+        } else {
+          val isAdmin = alliance.members.exists(member =>
+            member.airline.id == request.user.id && AllianceRole.isAdmin(member.role)
+          )
+
+          if (!isAdmin) {
+            Forbidden("Only alliance leaders can save alliance logos")
+          } else {
+            val logo = LogoGenerator.generateLogo(templateIndex, Color.decode(color1).getRGB, Color.decode(color2).getRGB)
+            LogoUtil.saveAllianceLogo(allianceId, logo)
+            Ok(Json.obj())
           }
         }
     }

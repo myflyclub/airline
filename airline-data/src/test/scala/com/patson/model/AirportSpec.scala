@@ -103,6 +103,7 @@ class AirportSpec(_system: ActorSystem) extends TestKit(_system) with ImplicitSe
     val baseSizes = List(4, 8, 12, 16)
     val airline = Airline("TestAirline", id = 999)
     val airlineMHQ = Airline("TestMegaHQ", id = 1000, airlineType = MegaHqAirline)
+    val airlineRegional = Airline("TestMegaHQ", id = 1001, airlineType = RegionalAirline)
     val airports = iatas.flatMap(iata => AirportSource.loadAirportByIata(iata, true))
     println(s"Airport, BaseSize, Upkeep, UpgradeCost")
     for (airport <- airports; baseSize <- baseSizes) {
@@ -110,6 +111,8 @@ class AirportSpec(_system: ActorSystem) extends TestKit(_system) with ImplicitSe
       println(s"${airport.iata}, ${airport.rating.overallDifficulty}, $baseSize, ${base.getUpkeep}, ${base.getValue}")
       val baseMHQ = AirlineBase(airlineMHQ, airport, airport.countryCode, baseSize, foundedCycle = 0, headquarter = true)
       println(s"${airport.iata}, ${airport.rating.overallDifficulty}, $baseSize, ${baseMHQ.getUpkeep}, ${baseMHQ.getValue}")
+      val baseAirlineRegional = AirlineBase(airlineRegional, airport, airport.countryCode, baseSize, foundedCycle = 0, headquarter = true)
+      println(s"${airport.iata}, ${airport.rating.overallDifficulty}, $baseSize, ${baseAirlineRegional.getUpkeep}, ${baseAirlineRegional.getValue}")
     }
   }
 
@@ -120,7 +123,7 @@ class AirportSpec(_system: ActorSystem) extends TestKit(_system) with ImplicitSe
     allAirports.foreach { airport =>
       airportStats.get(airport.id) match {
         case Some(stat) =>
-          val travelRate = Airport.travelRate(stat.head.fromPax.toDouble / stat.head.baselineDemand, airport.size)
+          val travelRate = Airport.travelRate(stat.head.fromPax, stat.head.baselineDemand, airport.size)
           println(s"${airport.iata}, ${airport.size}, ${travelRate}, ${stat.head.reputation}, ${stat.head.fromPax}, ${stat.head.baselineDemand}")
         case None =>
           println(s"${airport.iata}, ${airport.size}, 0, 0, 0, 0")
