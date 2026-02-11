@@ -99,19 +99,15 @@ class SignUp @Inject()(cc: ControllerComponents)(ws: WSClient) extends AbstractC
   }
 
  /**
- * Handle form submission.
+ * Handle form submission (legacy form POST).
  */
   def submit = Action { implicit request =>
     signupForm.bindFromRequest().fold(
-      // Form has errors, redisplay it
       errors => BadRequest(html.signup(errors)), { userInput =>
-        
-        // if (isValidRecaptcha(userInput.recaptchaToken)) {
-          // We got a valid User value, display the summary
           val user = User(userInput.username, userInput.email, Calendar.getInstance, Calendar.getInstance, UserStatus.ACTIVE, level = 0, None, List.empty)
           UserSource.saveUser(user)
           Authentication.createUserSecret(userInput.username, userInput.password)
-          
+
           val newAirline = Airline(userInput.airlineName)
           newAirline.setMinimumRenewalBalance(300000)
           newAirline.setAirlineCode(newAirline.getDefaultAirlineCode())
@@ -123,6 +119,73 @@ class SignUp @Inject()(cc: ControllerComponents)(ws: WSClient) extends AbstractC
           Redirect("/").withCookies(Cookie("sessionActive", "true", httpOnly = false, maxAge = Some(2592000))).withSession("userToken" -> SessionUtil.addUserId(user.id))
       }
     )
+  }
+
+  /**
+   * Handle JSON signup submission.
+   */
+  def submitJson = Action { implicit request =>
+    request.body.asJson match {
+      case None => BadRequest(Json.obj("error" -> "Expected JSON body"))
+      case Some(json) =>
+        val username = (json \ "username").asOpt[String].getOrElse("").trim
+        val email = (json \ "email").asOpt[String].getOrElse("").trim
+        val password = (json \ "password").asOpt[String].getOrElse("")
+        val passwordConfirm = (json \ "passwordConfirm").asOpt[String].getOrElse("")
+        val airlineName = (json \ "airlineName").asOpt[String].getOrElse("").trim
+
+        // Validate
+        val errors = scala.collection.mutable.ListBuffer[String]()
+
+        if (username.length < 4 || username.length > 20) {
+          errors += "Username must be 4-20 characters"
+        } else if (!username.forall(char => char.isLetterOrDigit && char <= 'z')) {
+          errors += "Username can only contain alphanumeric characters"
+        } else if (UserSource.loadUsersByCriteria(List.empty).exists(_.userName.equalsIgnoreCase(username))) {
+          errors += "This username is not available"
+        }
+
+        if (email.isEmpty || !email.contains("@")) {
+          errors += "Please enter a valid email address"
+        }
+
+        if (password.length < 6) {
+          errors += "Password must be at least 6 characters"
+        } else if (password != passwordConfirm) {
+          errors += "Passwords don't match"
+        }
+
+        if (airlineName.length < MIN_AIRLINE_NAME_LENGTH || airlineName.length > MAX_AIRLINE_NAME_LENGTH) {
+          errors += s"Airline name must be $MIN_AIRLINE_NAME_LENGTH-$MAX_AIRLINE_NAME_LENGTH characters"
+        } else if (!airlineName.forall(char => (char.isLetter && char <= 'z') || char == ' ') || airlineName.trim.isEmpty) {
+          errors += "Airline name can only contain letters and spaces"
+        } else if (AirlineSource.loadAirlinesByCriteria(List(("name", airlineName))).nonEmpty) {
+          errors += "This airline name is not available"
+        }
+
+        if (errors.nonEmpty) {
+          BadRequest(Json.obj("errors" -> errors.toList))
+        } else {
+          val user = User(username, email, Calendar.getInstance, Calendar.getInstance, UserStatus.ACTIVE, level = 0, None, List.empty)
+          UserSource.saveUser(user)
+          Authentication.createUserSecret(username, password)
+
+          val newAirline = Airline(airlineName)
+          newAirline.setMinimumRenewalBalance(300000)
+          newAirline.setAirlineCode(newAirline.getDefaultAirlineCode())
+          AirlineSource.saveAirlines(List(newAirline))
+          UserSource.setUserAirline(user, newAirline)
+
+          AirlineSource.saveAirplaneRenewal(newAirline.id, 40)
+
+          Ok(Json.obj(
+            "id" -> user.id,
+            "userName" -> username,
+            "airlineIds" -> Json.arr(newAirline.id)
+          )).withCookies(Cookie("sessionActive", "true", httpOnly = false, maxAge = Some(2592000)))
+            .withSession("userToken" -> SessionUtil.addUserId(user.id))
+        }
+    }
   }
   
   def isValidRecaptcha(recaptchaToken: String) : Boolean = {

@@ -22,7 +22,7 @@ class ProfileApplication @Inject()(cc: ControllerComponents) extends AbstractCon
       var result = Json.obj(
         "name" -> profile.name,
         "type" -> profile.airlineType.id,
-        "difficulty" -> profile.difficulty,
+        "typeLabel" -> profile.airlineType.label,
         "description" -> profile.description,
         "rule" -> profile.rule,
         "cash" -> profile.cash,
@@ -82,6 +82,23 @@ class ProfileApplication @Inject()(cc: ControllerComponents) extends AbstractCon
 
     val random = new Random(airport.id)
 
+    val regionalAirplanes = generateAirplanes((capital * 2.9).toInt, 60 to 112, 4, airport, 82, airline, random)
+    if (regionalAirplanes.nonEmpty) {
+      val beginnerProfile = Profile(
+        name = "Beginner's start",
+        airlineType = BeginnerAirline,
+        difficulty = "Easy",
+        description = "Recommended for new players. This is for learning the game!",
+        rule = BeginnerAirline.description,
+        airplanes = regionalAirplanes,
+        reputation = 0,
+        cash = capital * 3,
+        airport = airport,
+        loan = Bank.getLoan(airline.id, (capital / 2).toInt, BASE_INTEREST_RATE, CycleSource.loadCycle(), LOAN_YEARS)
+      )
+      profiles.append(beginnerProfile)
+    }
+
     val loanProfile = Profile(
       name = "Entrepreneurial spirit",
       airlineType = LegacyAirline,
@@ -138,7 +155,7 @@ class ProfileApplication @Inject()(cc: ControllerComponents) extends AbstractCon
       )
       profiles.append(cheapAirplaneProfile)
     }
-    val regionalAirplanes = generateAirplanes((capital * 2.75).toInt, 60 to 112, 4, airport, 85, airline, random)
+
     if (!regionalAirplanes.isEmpty) {
       val regionalProfile = Profile(
         name = "Regional Partner Airline",

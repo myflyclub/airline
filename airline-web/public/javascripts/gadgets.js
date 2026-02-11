@@ -278,8 +278,8 @@ function getAllianceOrAirlineLogoImg(allianceId, airlineId) {
     return img;
 }
 
-function getAirlineLabelSpan(airlineId, airlineName) {
-    var $airlineLabelSpan = $('<span>' + airlineName + '</span>')
+function getAirlineLabelSpan(airlineId, airlineName, elementType = 'span') {
+    var $airlineLabelSpan = $('<' + elementType + '>' + airlineName + '</' + elementType + '>')
 	if (airlineLabelColors[airlineId]) {
 	    $airlineLabelSpan.css('color', '#' + airlineLabelColors[airlineId])
 	}
@@ -582,13 +582,18 @@ function sortByProperty(property, ascending) {
         sortOrder = -1;
     }
 
+    var keys = property.split('.')
+
     return function (a,b) {
-    	var aVal = a[property]
-    	var bVal = b[property]
+    	var aVal = keys.reduce(function(obj, key) { return obj == null ? undefined : obj[key] }, a)
+    	var bVal = keys.reduce(function(obj, key) { return obj == null ? undefined : obj[key] }, b)
     	if (Array.isArray(aVal) && Array.isArray(bVal)) {
     		aVal = aVal.length
     		bVal = bVal.length
     	}
+    	if (aVal == null && bVal == null) return 0;
+    	if (aVal == null) return 1;
+    	if (bVal == null) return -1;
     	var result = (aVal < bVal) ? -1 : (aVal > bVal) ? 1 : 0;
         return result * sortOrder;
     }
@@ -675,19 +680,6 @@ function toggleOnOff(element) {
 	} else {
 		element.fadeIn(200)
 	}
-}
-
-/**
- * Performs UI change to highlighting a tab (and unhighlighting others)
- * @param tab
- * @returns
- */
-function highlightTab(tab) {
-//	tab.siblings().children("span").removeClass("selected")
-//	//highlight the selected model
-//	tab.children("span").addClass("selected")
-    tab.siblings().find('.tab-icon').removeClass('selected')
-    tab.find('.tab-icon').addClass('selected')
 }
 
 function highlightSwitch(selectedSwitch) {

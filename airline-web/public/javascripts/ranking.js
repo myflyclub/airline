@@ -1,7 +1,5 @@
 function showRankingCanvas() {
     setActiveDiv($("#rankingCanvas"))
-    highlightTab($('.rankingCanvasTab'))
-
     loadRanking()
 }
 

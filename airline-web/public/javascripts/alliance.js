@@ -11,7 +11,6 @@ function showAllianceCanvas(selectedAllianceId) {
     checkPendingActions()
 
     setActiveDiv($("#allianceCanvas"))
-	highlightTab($('.allianceCanvasTab'))
 	if (!selectedAllianceId) {
         if (activeAirline) {
             selectedAllianceId = activeAirline.allianceId
@@ -34,7 +33,6 @@ function loadCurrentAirlineAlliance(callback) {
 		url: getUrl,
 	    contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
-	    async: false,
 	    success: function(allianceDetails) {
 	    	callback(allianceDetails)
 	    },
@@ -101,7 +99,6 @@ function loadAllAlliances(selectedAllianceId) {
 		url: `/alliances`,
 	    contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
-	    async: false,
 	    success: function(alliances) {
 	    	loadedAlliances = alliances
 	    	$.each(alliances, function(index, alliance) {
@@ -703,5 +700,34 @@ function updateLogoUploadAlliance() {
 	initLogoUpload($panel, uploadUrl, "logoFile", function(data) {
 		closeModal($('#uploadLogoModalAlliance'));
 		updateAllianceLogo();
+	});
+}
+
+function editAllianceLogo() {
+	logoModalConfirm = setAllianceLogoFromTemplate
+	$('#logoTemplateIndex').val(0)
+	generateLogoPreview()
+	$('#logoModal').fadeIn(200)
+}
+
+function setAllianceLogoFromTemplate() {
+	var logoTemplate = $('#logoTemplateIndex').val()
+	var color1 = $('#logoModal .picker.color1').val()
+	var color2 = $('#logoModal .picker.color2').val()
+
+	var url = "/airlines/" + activeAirline.id + "/set-alliance-logo-template/" + activeAirline.allianceId
+		+ "?templateIndex=" + logoTemplate + "&color1=" + encodeURIComponent(color1)
+		+ "&color2=" + encodeURIComponent(color2)
+	$.ajax({
+		type: 'GET',
+		url: url,
+		contentType: 'application/json; charset=utf-8',
+		dataType: 'json',
+		success: function() {
+			updateAllianceLogo()
+		},
+		error: function(jqXHR, textStatus, errorThrown) {
+			console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
+		}
 	});
 }

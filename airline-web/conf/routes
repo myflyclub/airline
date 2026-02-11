@@ -140,6 +140,7 @@ GET		 /alliances/:allianceId/championed-airports	controllers.AllianceApplication
 GET		 /alliances/:allianceId/championed-countries	controllers.AllianceApplication.getAllianceCountryChampions(allianceId : Int)
 GET      /alliances/:allianceId/logo controllers.AllianceApplication.getAllianceLogo(allianceId: Int)
 POST	 /airlines/:airlineId/set-alliance-logo/:allianceId	controllers.AllianceApplication.saveAllianceLogo(airlineId : Int, allianceId : Int)
+GET	 /airlines/:airlineId/set-alliance-logo-template/:allianceId	controllers.AllianceApplication.setAllianceLogo(airlineId : Int, allianceId : Int, templateIndex: Int, color1: String, color2: String)
 POST	 /airlines/:airlineId/form-alliance  controllers.AllianceApplication.formAlliance(airlineId : Int)
 GET		 /airlines/:airlineId/evaluate-alliance/:allianceId  controllers.AllianceApplication.evaluateAlliance(airlineId : Int, allianceId : Int)
 GET		 /airlines/:airlineId/apply-for-alliance/:allianceId  controllers.AllianceApplication.applyForAlliance(airlineId : Int, allianceId : Int)
@@ -237,6 +238,7 @@ GET      /admin/uuid-airlines/:uuid    controllers.AdminApplication.getAirlinesB
 GET     /signup                     controllers.SignUp.form
 #GET     /editUser/fakeuser             controllers.SignUp.editForm
 POST    /signup                     controllers.SignUp.submit
+POST    /signup/json                controllers.SignUp.submitJson
 GET     /signup/airline-name-check  controllers.SignUp.airlineNameCheck(airlineName : String)
 
 # PasswordReset

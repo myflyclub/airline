@@ -61,9 +61,9 @@ class ChangeHistoryApplication @Inject()(cc: ControllerComponents) extends Abstr
   }
 
 
-  def searchLinkHistory = Action { implicit request =>
+  def searchLinkHistory = Action(parse.json) { implicit request =>
     currentCycle = CycleSource.loadCycle()
-    val json = request.body.asInstanceOf[AnyContentAsJson].json
+    val json = request.body
     val capacityDelta = json.\("capacityDelta").asOpt[Int]
     val capacity = json.\("capacity").asOpt[Int]
     val fromAirportId = json.\("fromAirportId").asOpt[Int]

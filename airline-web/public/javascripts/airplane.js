@@ -21,6 +21,7 @@ function getAirplaneModelByAttribute(key, attribute = 'id') {
 
 async function loadAirplaneModels(airlineId) {
   if (!airlineId) {
+    if (!activeAirline) return;
     airlineId = activeAirline.id
   }
   try {
@@ -133,7 +134,6 @@ let selectedAircraftTab; //todo: refactor calculator to be independent and remov
 
 async function showAirplaneCanvas(selectedAircraftTab = 'hangar', airplaneModel = null) {
 	setActiveDiv($("#airplaneCanvas"))
-	highlightTab($('.airplaneCanvasTab'))
 
     await loadAirplaneModels()
     loadAirplaneModelOwnerInfo()
@@ -198,10 +198,10 @@ function updateAirplaneModelTable(sortProperty, sortOrder) {
      //used for pricing calculation
     const {rangeRequirement, airportFromSizeRequirement, airportToSizeRequirement} = airplaneModelCalculator()
 	
-    const hideForbidden = $('#hideForbiddenPlanes').is(':checked');
+    const showForbidden = $('#toggleHideForbiddenPlanes').is(':checked');
 
 	$.each(loadedModelsOwnerInfo, function(index, modelOwnerInfo) {
-        if (hideForbidden && modelOwnerInfo.rejection) {
+        if (!showForbidden && modelOwnerInfo.rejection && modelOwnerInfo.rejection.length > 0) {
             return;
         }
 
@@ -896,7 +896,6 @@ function loadAirplaneModelStats(modelInfo) {
 		type: 'GET',
 		url: "/airlines/" + activeAirline.id + "/airplanes/model/" + model.id + "/stats",
 	    contentType: 'application/json; charset=utf-8',
-	    async: false,
 	    dataType: 'json',
 	    success: function(stats) {
 	    	updateTopOperatorsTable(stats)
@@ -1804,7 +1803,6 @@ function confirmAirplaneConfigurationOption() {
                 url: "/airlines/" + airlineId + "/airplanes/" + airplane.id + "/configuration/" + selectedConfigurationId,
                 contentType: 'application/json; charset=utf-8',
                 dataType: 'json',
-                async: false,
                 success: function(result) {
                     loadOwnedAirplaneDetails(result.id, null, $("#ownedAirplaneDetailModal").data("close-callback"))
                     $("#ownedAirplaneDetailModal").data("hasChange", true)
@@ -1915,7 +1913,6 @@ function confirmSetFavorite() {
             url: "/airlines/" + activeAirline.id + "/favorite-model/" + model.id,
             contentType: 'application/json; charset=utf-8',
             dataType: 'json',
-            async: false,
             success: function(result) {
                 closeModal($('#setFavoriteModal'))
                 showAirplaneCanvas()

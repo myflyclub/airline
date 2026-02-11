@@ -141,7 +141,9 @@ export function centerOnHQ(airline, zoom = 6) {
 
     state.map.flyTo({
         center: center,
-        zoom: targetZoom
+        zoom: targetZoom,
+        bearing: 0,
+        pitch: 0
     });
 }
 

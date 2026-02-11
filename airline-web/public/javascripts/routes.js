@@ -24,7 +24,7 @@ function initializeRoutes() {
     page('*', (ctx, next) => {
         const isLoggedIn = checkSessionGuard();
 
-        if (!isLoggedIn && ctx.path !== '/login/') {
+        if (!isLoggedIn && ctx.path !== '/login/' || ctx.path === '/signup') {
             page.redirect('/login/');
         } else {
             next();
@@ -60,16 +60,16 @@ function initializeRoutes() {
     });
 
     page('/map/', () => {
-        document.title = `${activeAirline.name} route map`
+        document.title = activeAirline ? `${activeAirline.name} route map` : 'Route map'
         showWorldMap();
         $('#sidePanel').fadeOut(200);
+        if (activeAirline) AirlineMap.centerOnHQ(activeAirline);
     });
 
     page('/map/:iata?', (ctx) => {
         const iata = ctx.params.iata ?? null;
-        document.title = `${iata} | ${activeAirline.name} route map`
+        document.title = activeAirline ? `${iata} | ${activeAirline.name} route map` : `${iata} route map`
         showWorldMap();
-        airports.getAirportByAttribute
         const airport = getAirportByIata(iata.toUpperCase());
         AirlineMap.flyTo(airport.longitude, airport.latitude);
         AirlineMap.showAirportPopup(airport, {lat: airport.latitude, lng: airport.longitude});
@@ -80,9 +80,14 @@ function initializeRoutes() {
     });
 
     page('/flights/:link?', (ctx) => {
-        const link = ctx.params.link ?? null;
-        document.title = link ? `${link} Flights` : 'Flights';
-        showLinksCanvas(link, false);
+        const linkId = ctx.params.link ?? null;
+        if (linkId && loadedLinksById[linkId]) {
+            var l = loadedLinksById[linkId];
+            document.title = l.fromAirportCode + '-' + l.toAirportCode + ' flights';
+        } else {
+            document.title = linkId ? `Flight ${linkId}` : (activeAirline ? `${activeAirline.name} flights` : 'Flights');
+        }
+        showLinksCanvas(linkId, false);
     });
 
     page('/hangar/', () => {

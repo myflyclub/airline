@@ -7,19 +7,24 @@ function updateProfiles(profiles) {
 }
 
 function createProfileDiv(profile, profileId) {
-	var $profileDiv = $('<div" class="option available" onclick="selectProfile(' + profileId + ', this)"><h4>' + profile.name +'</h4><p><i>' + profile.difficulty + ' Difficulty</i></p></div>')
-    if (profile.rule.length > 0 && profile.rule[0].length > 0) {
-        const ruleList = document.createElement("ul");
-        ruleList.classList.add("list-disc", "pl-4", "pb-4");
-        profile.rule.forEach((ruleText) => {
-            const listItem = document.createElement("li");
-            listItem.textContent = ruleText;
-            ruleList.appendChild(listItem);
-        });
-        $profileDiv.append(ruleList);
+	var $profileDiv = $('<div class="option available" onclick="selectProfile(' + profileId + ', this)"></div>')
+    $profileDiv.append('<h4>' + profile.name + '</h4>')
+    if (profile.typeLabel) {
+        var $typeSpan = $('<span>' + profile.typeLabel + '</span>')
+        $typeSpan.css('text-decoration', 'underline dashed')
+        $typeSpan.css('cursor', 'help')
+        $typeSpan.mouseover(function() {
+            showAirlineTypeTooltip($(this), profile.typeLabel, profile.rule)
+        }).mouseout(function() {
+            $('#airlineTypeTooltip').hide()
+        }).click(function() {
+            showAirlineTypeTooltip($(this), profile.typeLabel, profile.rule)
+        })
+        var $typeP = $('<p class="pb-2"></p>')
+        $typeP.append($typeSpan)
+        $profileDiv.append($typeP)
     }
     $profileDiv.append('<p class="pb-2">' + profile.description + '</p>')
-    var $list = $('<ul></ul>').appendTo($profileDiv)
     var $list = $('<ul></ul>').appendTo($profileDiv)
     $list.append('<li class="dot">$' + commaSeparateNumber(profile.cash) + '&nbsp;cash</li>')
     if (profile.airplanes.length > 0) {
@@ -76,6 +81,28 @@ function showAirplaneQuickSummary($trigger, airplane) {
     $('#airplaneSummaryTooltip').show()
 
     $('#airplaneSummaryTooltip').off('click.close').on('click.close', function() {
+        $(this).hide()
+    })
+}
+
+function showAirlineTypeTooltip($trigger, typeLabel, rules) {
+    var yPos = $trigger.offset().top - $(window).scrollTop() + $trigger.height()
+    var xPos = $trigger.offset().left - $(window).scrollLeft() + $trigger.width() - $('#airlineTypeTooltip').width() / 2
+
+    $('#airlineTypeTooltip .typeLabel').text(typeLabel)
+    var $ruleList = $('#airlineTypeTooltip .ruleList')
+    $ruleList.empty()
+    if (rules && rules.length > 0 && rules[0].length > 0) {
+        rules.forEach(function(ruleText) {
+            $ruleList.append($('<li></li>').text(ruleText))
+        })
+    }
+
+    $('#airlineTypeTooltip').css('top', yPos + 'px')
+    $('#airlineTypeTooltip').css('left', xPos + 'px')
+    $('#airlineTypeTooltip').show()
+
+    $('#airlineTypeTooltip').off('click.close').on('click.close', function() {
         $(this).hide()
     })
 }

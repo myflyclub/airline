@@ -7,10 +7,8 @@ $( document ).ready(function() {
 
 function showLogCanvas() {
 	setActiveDiv($("#logCanvas"))
-	highlightTab($('.logCanvasTab'))
 	loadAllLogs()
 	loadAllAlerts()
-
 }
 
 function loadAllLogs() {

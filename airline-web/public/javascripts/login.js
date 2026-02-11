@@ -1,12 +1,24 @@
 function showLoginPage() {
     $('#loginPageOverlay').show();
-    $('#loginPageUserName').focus();
+    showLoginForm();
     $("#logoutDiv").hide();
 }
 
 function hideLoginPage() {
     $('#loginPageOverlay').hide();
     $("#logoutDiv").show();
+}
+
+function showLoginForm() {
+    $('#signupForm').hide();
+    $('#loginForm').show();
+    $('#loginPageUserName').focus();
+}
+
+function showSignupForm() {
+    $('#loginForm').hide();
+    $('#signupForm').show();
+    $('#signupPageUserName').focus();
 }
 
 function passwordLoginPage(e) {
@@ -56,6 +68,7 @@ async function loginFromPage() {
 
             showFloatMessage('Successfully logged in');
             await loadPostLoginScripts();
+            await ensureFullBoot();
 
             await doPostLoginSetup(user);
 
@@ -141,7 +154,7 @@ async function doPostLoginSetup(user) {
 
     // Airline-specific setup
     if (user.airlineIds && user.airlineIds.length > 0) {
-        selectAirline(user.airlineIds[0]);
+        await selectAirline(user.airlineIds[0]);
         initPrompts();
         updateAirlineLabelColors();
         try {

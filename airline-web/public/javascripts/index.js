@@ -10,15 +10,18 @@ let gameConstants = null;
 let postLoginScriptsLoaded = false;
 const SCRIPT_BASE_PATH = `${location.origin}/assets/javascripts/`;
 
-const CORE_LIBS = [
-    'https://cdnjs.cloudflare.com/ajax/libs/page.js/1.11.6/page.js',
-    'https://unpkg.com/maplibre-gl@5.17.0/dist/maplibre-gl.js'
-];
+const PAGE_JS = 'https://cdnjs.cloudflare.com/ajax/libs/page.js/1.11.6/page.js';
+const MAPLIBRE_JS = 'https://unpkg.com/maplibre-gl@5.17.0/dist/maplibre-gl.js';
+const MAPLIBRE_CSS = 'https://unpkg.com/maplibre-gl@5.17.0/dist/maplibre-gl.css';
 
-// Scripts needed before login (UI basics, routing, login functionality)
-const PRE_LOGIN_SCRIPTS = [
-    'login.js', 'airline.js', 'gadgets.js', 'main.js', 'prompt.js',
-    'routes.js', 'color.js', 'settings.js', 'local-storage.js', 'websocket.js'
+// Only what login/signup pages need
+const LOGIN_SCRIPTS = [
+    'login.js', 'signup.js', 'routes.js', 'main.js', 'gadgets.js', 'local-storage.js'
+].map(s => SCRIPT_BASE_PATH + s);
+
+// Needed once logged in (before routes fire)
+const SESSION_SCRIPTS = [
+    'airline.js', 'websocket.js', 'prompt.js', 'color.js', 'settings.js'
 ].map(s => SCRIPT_BASE_PATH + s);
 
 // Scripts loaded after successful login (game features)
@@ -242,32 +245,53 @@ async function loadPostLoginScripts() {
 // Make loadPostLoginScripts available globally for login.js
 window.loadPostLoginScripts = loadPostLoginScripts;
 
+// Background load promises — started in initializeApp, awaited by ensureFullBoot
+let _bgSessionScripts, _bgAirports, _bgConstants, _bgMaplibre;
+let _mapInitialized = false;
+
+async function ensureFullBoot() {
+    await Promise.all([_bgSessionScripts, _bgAirports, _bgConstants, _bgMaplibre]);
+    if (!_mapInitialized) {
+        await waitForMapLibre();
+        await loadStylesheet(MAPLIBRE_CSS);
+        await initMapModule();
+        _mapInitialized = true;
+        console.log('✓ Map initialized (deferred)');
+    }
+}
+window.ensureFullBoot = ensureFullBoot;
+
 async function initializeApp() {
     try {
-        // Load core libraries, pre-login scripts, and airport data in parallel
-        const requiredAssetsPromise = Promise.all([
-            loadAirportsData(),
-            loadGameConstants(),
-            loadScriptsParallel(CORE_LIBS),
-            loadScriptsParallel(PRE_LOGIN_SCRIPTS)
+        // Phase 1: Start ALL loads in parallel
+        const loginReady = Promise.all([
+            loadScriptsParallel(LOGIN_SCRIPTS),
+            loadScript(PAGE_JS),
         ]);
 
-        await requiredAssetsPromise;
-        console.log('✓ Core assets loaded (Airports, Libs, Pre-login Scripts)');
+        // Heavy assets — start now, await later
+        _bgSessionScripts = loadScriptsParallel(SESSION_SCRIPTS);
+        _bgAirports = loadAirportsData();
+        _bgConstants = loadGameConstants();
+        _bgMaplibre = loadScript(MAPLIBRE_JS);
 
-        await waitForMapLibre();
-        await loadStylesheet('https://unpkg.com/maplibre-gl@5.17.0/dist/maplibre-gl.css');
-        console.log('✓ MapLibre GL ready');
+        // Phase 2: Await only what login page needs
+        await loginReady;
+        console.log('✓ Login scripts ready');
 
-        // Initialize map module
-        await initMapModule();
-        console.log('✓ Map initialized');
-
-        // Early session guard - redirects to /login/ if on protected route without session
         const hasSession = checkSessionGuard();
 
         if (hasSession) {
-            // User is logged in - load post-login scripts first, then restore session
+            // Await heavy assets (already in flight, likely mostly done)
+            await Promise.all([_bgSessionScripts, _bgAirports, _bgConstants, _bgMaplibre]);
+            console.log('✓ Core assets loaded');
+
+            await waitForMapLibre();
+            await loadStylesheet(MAPLIBRE_CSS);
+            await initMapModule();
+            _mapInitialized = true;
+            console.log('✓ Map initialized');
+
             try {
                 await loadPostLoginScripts();
             } catch (err) {
@@ -278,20 +302,17 @@ async function initializeApp() {
                 await loadUser();
                 console.log('✓ User session restored');
             } catch (err) {
-                // Only redirect on auth errors (session invalid/expired)
                 if (err.message && err.message.includes('Session restore failed')) {
                     localStorage.removeItem('sessionActive');
                     document.cookie = "sessionActive=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
                     return;
                 }
-                // Other errors - log but continue (user is still logged in)
                 console.error('Error during session restore:', err);
             }
 
-            // Initialize routes after post-login scripts are loaded
             initializeRoutes();
         } else {
-            // Not logged in - initialize routes (will show login page or redirect as needed)
+            // Show login page immediately — heavy assets continue loading in background
             initializeRoutes();
         }
         console.log('✓ Application initialized');

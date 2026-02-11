@@ -95,7 +95,7 @@ function refreshAirlineDelegateStatus($delegateStatusDiv, delegateInfo) {
                 iconIndex--;
             } while (iconIndex > 0 && !delegateIcons[iconIndex].expirable);
             const boostRemainingDiv1 = createBoostDiv(boost);
-            delegateIcons[iconIndex].appendChild(boostRemainingDiv1);
+            delegateIcons[iconIndex].append(boostRemainingDiv1);
         }
     })
 
