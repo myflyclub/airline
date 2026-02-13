@@ -76,7 +76,7 @@ object ChampionUtil {
         val championInfoForThisAirport = topAirlineWithSortedIndex.map {
           case(loyalist, index) =>
             val ranking = index + 1
-            val reputationBoost = allAirportReps.getOrElse(airport.id, 0.0) * loyalistToPopRatio * reputationBoostTop10(ranking)
+            val reputationBoost = Math.min(499.99, allAirportReps.getOrElse(airport.id, 0.0) * loyalistToPopRatio * reputationBoostTop10(ranking))
             Some(AirportChampionInfo(loyalist, ranking, reputationBoost))
         }
         result ++= championInfoForThisAirport.flatten

@@ -189,7 +189,7 @@ function loadRivalLinks(airlineId) {
 	var airlineLinksTable = $("#rivalsCanvas #rivalLinksTable")
 	airlineLinksTable.children("div.table-row").remove()
 	
-	var getUrl = "airlines/" + airlineId + "/links"
+	var getUrl = "/airlines/" + airlineId + "/links"
 	loadedRivalLinks = undefined
 	$.ajax({
 		type: 'GET',
