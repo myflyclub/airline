@@ -105,7 +105,7 @@ function loadOilContractConsideration(volume, duration) {
 function addOilContract(volume, duration) {
 	var url = "/airlines/" + activeAirline.id + "/sign-oil-contract?volume=" + volume + "&duration=" + duration
 	$.ajax({
-		type: 'GET',
+		type: 'POST',
 		url: url,
 		contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
@@ -194,7 +194,7 @@ function exitOilInventoryPolicy() {
 function setOilInventoryPolicy(optionId) {
 	var url = "/airlines/" + activeAirline.id + "/set-oil-inventory-option?optionId=" + optionId
 	$.ajax({
-		type: 'GET',
+		type: 'POST',
 		url: url,
 		contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',

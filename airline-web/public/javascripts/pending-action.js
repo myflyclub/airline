@@ -18,7 +18,7 @@ function handlePendingActions(pendingActions) {
 function checkPendingActions() {
     if (activeAirline) {
         $.ajax({
-            type: 'GET',
+            type: 'POST',
             url: "/broadcaster-direct/trigger-prompts-check/" + activeAirline.id,
             contentType: 'application/json; charset=utf-8',
             dataType: 'json',

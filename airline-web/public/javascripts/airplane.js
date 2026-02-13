@@ -1344,7 +1344,7 @@ function onAirplaneSwapDrop(event, currentAirplaneId, refreshFunction) {
   var fromAirplaneId = currentAirplaneId
   var toAirplaneId = event.dataTransfer.getData("airplane-id")
   $.ajax({
-          type: 'GET',
+          type: 'PUT',
           url: "/airlines/" + activeAirline.id + "/swap-airplanes/" + fromAirplaneId + "/" + toAirplaneId,
           contentType: 'application/json; charset=utf-8',
           dataType: 'json',

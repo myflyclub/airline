@@ -565,7 +565,7 @@ function formAlliance(allianceName) {
 function removeAllianceMember(removeAirlineId) {
 	var url = "/airlines/" + activeAirline.id + "/remove-alliance-member/" + removeAirlineId
 	$.ajax({
-		type: 'GET',
+		type: 'DELETE',
 		url: url,
 		contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
@@ -587,7 +587,7 @@ function removeAllianceMember(removeAirlineId) {
 function acceptAllianceMember(acceptAirlineId) {
 	var url = "/airlines/" + activeAirline.id + "/accept-alliance-member/" + acceptAirlineId
 	$.ajax({
-		type: 'GET',
+		type: 'POST',
 		url: url,
 		contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
@@ -604,7 +604,7 @@ function acceptAllianceMember(acceptAirlineId) {
 function promoteAllianceMember(promoteAirlineId) {
 	var url = "/airlines/" + activeAirline.id + "/promote-alliance-member/" + promoteAirlineId
 	$.ajax({
-		type: 'GET',
+		type: 'POST',
 		url: url,
 		contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
@@ -621,7 +621,7 @@ function promoteAllianceMember(promoteAirlineId) {
 function demoteAllianceMember(promoteAirlineId) {
 	var url = "/airlines/" + activeAirline.id + "/demote-alliance-member/" + promoteAirlineId
 	$.ajax({
-		type: 'GET',
+		type: 'POST',
 		url: url,
 		contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
@@ -637,7 +637,7 @@ function demoteAllianceMember(promoteAirlineId) {
 
 function applyForAlliance() {
 	$.ajax({
-		type: 'GET',
+		type: 'POST',
 		url: "/airlines/" + activeAirline.id + "/apply-for-alliance/" + selectedAlliance.id,
 	    contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
@@ -719,7 +719,7 @@ function setAllianceLogoFromTemplate() {
 		+ "?templateIndex=" + logoTemplate + "&color1=" + encodeURIComponent(color1)
 		+ "&color2=" + encodeURIComponent(color2)
 	$.ajax({
-		type: 'GET',
+		type: 'POST',
 		url: url,
 		contentType: 'application/json; charset=utf-8',
 		dataType: 'json',

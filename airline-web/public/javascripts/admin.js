@@ -54,7 +54,7 @@ function adminMultiAction(action, targetUserIds, callback) {
 function invalidateImage(imageType) {
 	var url = "/admin/invalidate-image/" + activeAirportId +  "/" + imageType
 	$.ajax({
-		type: 'GET',
+		type: 'POST',
 		url: url,
 	    contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
@@ -269,7 +269,7 @@ function invalidateCustomization() {
     var airlineId = $("#rivalDetails .adminActions").data("airlineId")
     var url = "/admin/invalidate-customization/" + airlineId
     $.ajax({
-        type: 'GET',
+        type: 'POST',
         url: url,
         contentType: 'application/json; charset=utf-8',
         dataType: 'json',

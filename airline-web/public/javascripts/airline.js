@@ -150,7 +150,7 @@ function downgradeBase() {
 	var url = "/airlines/" + activeAirline.id + "/downgradeBase/" + activeAirportId
 
 	$.ajax({
-		type: 'GET',
+		type: 'POST',
 		url: url,
 	    contentType: 'application/json; charset=utf-8',
 	    success: function() {
