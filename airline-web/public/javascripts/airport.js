@@ -205,6 +205,11 @@ if (activeAirline) {
             const countryTitle = loadedCountriesByCode[airport.countryCode].CountryTitle
             updateAirlineTitle(countryTitle, $("#airportCanvas img.airlineTitleIcon"), $("#airportCanvas .airlineTitle"))
 
+            var $relationshipDetailsIcon = $("#airportCanvas .openCountryRelationship")
+            $relationshipDetailsIcon.data("relationship", loadedCountriesByCode[airport.countryCode].countryRelationship)
+            $relationshipDetailsIcon.data("title", countryTitle.title)
+            $relationshipDetailsIcon.data("countryCode", airport.countryCode)
+
             if (!baseDetails.baseScale) { //new base
                 document.getElementById('airportBaseDetailsHeading').innerHTML = `Build base`
                 $('#airportDetailsBaseUpkeep').text('0')

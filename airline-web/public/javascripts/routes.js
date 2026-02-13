@@ -63,6 +63,12 @@ function initializeRoutes() {
         document.title = activeAirline ? `${activeAirline.name} route map` : 'Route map'
         showWorldMap();
         $('#sidePanel').fadeOut(200);
+    });
+
+    page('/map/reset', () => {
+        document.title = activeAirline ? `${activeAirline.name} route map` : 'Route map'
+        showWorldMap();
+        $('#sidePanel').fadeOut(200);
         if (activeAirline) AirlineMap.centerOnHQ(activeAirline);
     });
 

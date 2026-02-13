@@ -7,7 +7,7 @@ function loadRanking() {
     $('#rankingCanvas .table').hide() //hide all tables until they are loaded
     $.ajax({
         type: 'GET',
-        url: activeAirline ? "/rankings/" + activeAirline.id : "rankings",
+        url: activeAirline ? "/rankings/" + activeAirline.id : "/rankings",
         contentType: 'application/json; charset=utf-8',
         dataType: 'json',
         success: function (allRankings) {

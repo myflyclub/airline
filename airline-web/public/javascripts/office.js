@@ -862,7 +862,7 @@ function doStockOp(operation = 'buyback') {
   buttons.forEach(button => {
       button.disabled = true;
   });
-	var url = `airlines/${activeAirline.id}/stock-op/${operation}`
+	var url = `/airlines/${activeAirline.id}/stock-op/${operation}`
 	var data = {"sharesOutstanding": parseInt(activeAirline.stock.sharesOutstanding)}
 
 	$.ajax({
