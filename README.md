@@ -95,6 +95,29 @@ docker compose -f docker-compose.v2.yaml up -d
 | Frontend | 5173 | http://localhost:5173 |
 | Admin Panel | 9001 | http://localhost:9001 |
 
+## Coolify Deployment
+
+This repo includes a production-ready compose file for Coolify: `docker-compose.coolify.yaml`.
+
+### 1) Create a Docker Compose resource in Coolify
+- Point it to this repository
+- Set the compose file path to `docker-compose.coolify.yaml`
+
+### 2) Configure required environment variables
+- `SECRET_KEY` (**required**)
+- `DATABASE_URL` (optional, defaults to a persistent SQLite file)
+- `CORS_ORIGINS` (optional, JSON array string, e.g. `["https://flightforge.yourdomain.com"]`)
+- `BACKEND_URL` (optional, defaults to `http://backend:8000`)
+
+### 3) Configure domains in Coolify
+- Map your main app domain to the `frontend` service on port `80`
+- (Optional) map an internal/admin domain to `admin` on port `9001`
+
+### Notes
+- Frontend is built and served by Nginx in production mode
+- Nginx proxies `/api/*` and `/ws/*` to the backend service
+- SQLite DB is persisted in the `backend-data` volume shared by backend/admin
+
 ## Project Structure
 
 ```
