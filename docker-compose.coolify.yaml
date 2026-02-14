@@ -1,0 +1,43 @@
+version: "3.8"
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-sqlite:////app/persistent/flightforge.db}
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in Coolify}
+      CORS_ORIGINS: ${CORS_ORIGINS:-["https://your-domain.com"]}
+    volumes:
+      - backend-data:/app/persistent
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    environment:
+      BACKEND_URL: ${BACKEND_URL:-http://backend:8000}
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+    restart: unless-stopped
+
+  admin:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-sqlite:////app/persistent/flightforge.db}
+    volumes:
+      - backend-data:/app/persistent
+    depends_on:
+      - backend
+    ports:
+      - "9001:9001"
+    restart: unless-stopped
+
+volumes:
+  backend-data:
