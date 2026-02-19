@@ -441,34 +441,28 @@ object AirlineSource {
         
         
         val resultSet = preparedStatement.executeQuery()
-        
-        val bases = new ListBuffer[AirlineBase]()
-        
+
+        case class BaseRow(airlineId: Int, airportId: Int, scale: Int, foundedCycle: Int, headquarter: Boolean, countryCode: String)
+        val rows = new ListBuffer[BaseRow]()
         val airportIds = scala.collection.mutable.Set[Int]()
         while (resultSet.next()) {
-          airportIds.add(resultSet.getInt("airport"))
-        }
-        
-        val airports = AirportCache.getAirports(airportIds.toList)
-        
-        resultSet.beforeFirst()
-        while (resultSet.next()) {
-          val airlineId = resultSet.getInt("airline")
-          val airline = airlines.getOrElseUpdate(airlineId, AirlineCache.getAirline(airlineId, false).getOrElse(Airline.fromId(airlineId)))
-          //val airport = Airport.fromId(resultSet.getInt("airport"))
           val airportId = resultSet.getInt("airport")
-          val airport = airports(airportId)
-          val scale = resultSet.getInt("scale")
-          val foundedCycle = resultSet.getInt("founded_cycle")
-          val headquarter = resultSet.getBoolean("headquarter")
-          val countryCode = resultSet.getString("country")
-          
-          bases += AirlineBase(airline, airport, countryCode, scale, foundedCycle, headquarter)
+          airportIds.add(airportId)
+          rows += BaseRow(resultSet.getInt("airline"), airportId, resultSet.getInt("scale"), resultSet.getInt("founded_cycle"), resultSet.getBoolean("headquarter"), resultSet.getString("country"))
         }
-        
+
         resultSet.close()
         preparedStatement.close()
-        
+
+        val airports = AirportCache.getAirports(airportIds.toList)
+
+        val bases = new ListBuffer[AirlineBase]()
+        rows.foreach { row =>
+          val airline = airlines.getOrElseUpdate(row.airlineId, AirlineCache.getAirline(row.airlineId, false).getOrElse(Airline.fromId(row.airlineId)))
+          val airport = airports(row.airportId)
+          bases += AirlineBase(airline, airport, row.countryCode, row.scale, row.foundedCycle, row.headquarter)
+        }
+
         bases.toList
       } finally {
         connection.close()

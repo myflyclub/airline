@@ -87,62 +87,47 @@ object LogSource {
 
       val resultSet = preparedStatement.executeQuery()
 
-      val logs = ListBuffer[Log]()
-
-
-      val airlines = Map[Int, Airline]()
-
-      val ids = ListBuffer[Int]()
+      case class LogRow(id: Int, airlineId: Int, message: String, category: Int, severity: Int, cycle: Int)
+      val logRows = ListBuffer[LogRow]()
       while (resultSet.next()) {
-        ids.append(resultSet.getInt("id"))
+        logRows += LogRow(resultSet.getInt("id"), resultSet.getInt("airline"), resultSet.getString("message"), resultSet.getInt("category"), resultSet.getInt("severity"), resultSet.getInt("cycle"))
       }
-      if (ids.isEmpty) {
+      resultSet.close()
+      preparedStatement.close()
+
+      if (logRows.isEmpty) {
         return List.empty
       }
 
-      resultSet.beforeFirst()
-
+      val ids = logRows.map(_.id)
       val propertiesById = HashMap[Int, HashMap[String, String]]()
-      if (!ids.isEmpty) {
-        val propertyStatement = connection.prepareStatement(s"SELECT * FROM $LOG_PROPERTY_TABLE WHERE log IN (${ids.mkString(",")})")
-        try {
-          val propertyResultSet = propertyStatement.executeQuery()
-          while (propertyResultSet.next()) {
-            val logId = propertyResultSet.getInt("log")
-            val property = propertyResultSet.getString("property")
-            val value = propertyResultSet.getString("value")
-            val properties = propertiesById.getOrElseUpdate(logId, HashMap())
-            properties.put(property, value)
-          }
-
-        } finally {
-          propertyStatement.close()
+      val propertyStatement = connection.prepareStatement(s"SELECT * FROM $LOG_PROPERTY_TABLE WHERE log IN (${ids.mkString(",")})")
+      try {
+        val propertyResultSet = propertyStatement.executeQuery()
+        while (propertyResultSet.next()) {
+          val logId = propertyResultSet.getInt("log")
+          val property = propertyResultSet.getString("property")
+          val value = propertyResultSet.getString("value")
+          val properties = propertiesById.getOrElseUpdate(logId, HashMap())
+          properties.put(property, value)
         }
-
+      } finally {
+        propertyStatement.close()
       }
 
-
-      while (resultSet.next()) {
-        val airlineId = resultSet.getInt("airline")
-        val airline = airlines.getOrElseUpdate(airlineId, AirlineCache.getAirline(airlineId, fullLoad).getOrElse(Airline.fromId(airlineId)))
-        val message = resultSet.getString("message")
-        val category = LogCategory(resultSet.getInt("category"))
-        val severity = LogSeverity(resultSet.getInt("severity"))
-        val cycle = resultSet.getInt("cycle")
-        val id = resultSet.getInt("id")
+      val airlines = Map[Int, Airline]()
+      val logs = ListBuffer[Log]()
+      logRows.foreach { row =>
+        val airline = airlines.getOrElseUpdate(row.airlineId, AirlineCache.getAirline(row.airlineId, fullLoad).getOrElse(Airline.fromId(row.airlineId)))
         logs += Log(
-          airline, message, category, severity, cycle,
-          propertiesById.get(id) match {
+          airline, row.message, LogCategory(row.category), LogSeverity(row.severity), row.cycle,
+          propertiesById.get(row.id) match {
             case Some(properties) => properties.toMap
             case None => scala.collection.immutable.Map.empty
           }
         )
       }
 
-
-      resultSet.close()
-      preparedStatement.close()
-        
       logs.toList
     } finally {
       preparedStatement.close()

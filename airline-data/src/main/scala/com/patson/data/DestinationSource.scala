@@ -53,32 +53,29 @@ object DestinationSource {
 
       val resultSet = preparedStatement.executeQuery()
 
-      val airportIds = scala.collection.mutable.Set[Int]()
+      case class DestinationRow(id: Int, airportId: Int, name: String, destinationType: Int, strength: Int, description: String, latitude: Double, longitude: Double, countryCode: String)
+      val destRows = new ListBuffer[DestinationRow]()
       while (resultSet.next()) {
-        airportIds.add(resultSet.getInt("airport"))
+        destRows += DestinationRow(resultSet.getInt("id"), resultSet.getInt("airport"), resultSet.getString("name"), resultSet.getInt("destination_type"), resultSet.getInt("strength"), resultSet.getString("description"), resultSet.getDouble("latitude"), resultSet.getDouble("longitude"), resultSet.getString("country_code"))
       }
-      val airports = AirportCache.getAirports(airportIds.toList)
-
-      val destinationList = new ListBuffer[Destination]()
-
-      resultSet.beforeFirst()
-      while (resultSet.next()) {
-        val destination = Destination(
-          resultSet.getInt("id"),
-          airports(resultSet.getInt("airport")),
-          resultSet.getString("name"),
-          DestinationType(resultSet.getInt("destination_type")),
-          resultSet.getInt("strength"),
-          resultSet.getString("description"),
-          resultSet.getDouble("latitude"),
-          resultSet.getDouble("longitude"),
-          resultSet.getString("country_code")
-        )
-        destinationList += destination
-      }
-      
       resultSet.close()
       preparedStatement.close()
+
+      val airports = AirportCache.getAirports(destRows.map(_.airportId).distinct.toList)
+      val destinationList = new ListBuffer[Destination]()
+      destRows.foreach { row =>
+        destinationList += Destination(
+          row.id,
+          airports(row.airportId),
+          row.name,
+          DestinationType(row.destinationType),
+          row.strength,
+          row.description,
+          row.latitude,
+          row.longitude,
+          row.countryCode
+        )
+      }
       destinationList.toList
     } finally {
       connection.close()
