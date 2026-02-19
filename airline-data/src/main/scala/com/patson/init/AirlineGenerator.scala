@@ -32,8 +32,8 @@ object AirlineGenerator extends App {
   private lazy val countryRelationships = CountrySource.getCountryMutualRelationships()
   private lazy val bufferOfAirplanes = mutable.Map[Model, (Airplane, Int)]()
 
-  case class LinkConfig(description: String, poolSize: Int, linkCount: Int, rawQuality: Int)
-  case class LinkGeneration(fromAirport: Airport, toAirports: List[Airport], models: List[Model], airline: Airline, config: LinkConfig)
+  case class LinkConfig(description: String, poolSize: Int, linkCount: Int, rawQuality: Int, minFrequency: Int = 1)
+  case class LinkGeneration(fromAirport: Airport, toAirports: List[Airport], models: List[Model], airline: Airline, config: LinkConfig, createdLinks: mutable.Set[(Int, Int)])
 
   def mainFlow() = {
     deleteAirlines()
@@ -69,12 +69,12 @@ object AirlineGenerator extends App {
       val bases = airports.filterNot(_.isDomesticAirport()).filter(_.countryCode == countryCode).takeRight(11).reverse
       val toAirports = airports.filter(_.countryCode == countryCode)
       generateAirline(
-        s"Rats ${countryCode}",
-        s"R${countryCode}",
+        s"Koratta ${countryCode}",
+        s"K${countryCode}",
         bases.head,
         bases.tail,
         toAirports,
-        List("Boeing 737-800", "Boeing 737-700", "Boeing 737-600", "Boeing 777-300ER"),
+        List("Embraer E195-E2", "Embraer E175-E2", "Embraer EMB 120", "Embraer E175 LR"),
         8000,
         60
       )
@@ -86,12 +86,12 @@ object AirlineGenerator extends App {
       val bases = airports.filterNot(_.isDomesticAirport()).filter(_.countryCode == countryCode).takeRight(8).reverse
       val toAirports = airports.filter(_.countryCode == countryCode)
       generateAirline(
-        s"Rats ${countryCode}",
-        s"R${countryCode}",
+        s"Volkstransportflugzeuge ${countryCode}",
+        s"VN${countryCode}",
         bases.head,
         bases.tail,
         toAirports,
-        List("Embraer E195-E2", "Embraer E175-E2", "Comac C929-600"),
+        List("Sud Aviation Caravelle 12", "Comac C929-600"),
         8000,
         60
       )
@@ -103,8 +103,8 @@ object AirlineGenerator extends App {
       val bases = airports.filterNot(_.isDomesticAirport()).filter(_.countryCode == countryCode).takeRight(6).reverse
       val toAirports = airports.filter(_.countryCode == countryCode)
       generateAirline(
-        s"Rats ${countryCode}",
-        s"R${countryCode}",
+        s"Nantas ${countryCode}",
+        s"N${countryCode}",
         bases.head,
         bases.tail,
         toAirports,
@@ -120,8 +120,7 @@ object AirlineGenerator extends App {
       val bases = airports.filterNot(_.isDomesticAirport()).filter(_.zone.contains(affinity)).takeRight(11).reverse
       val toAirports = airports.filterNot(_.isDomesticAirport()).filter(_.zone.contains(affinity))
       generateAirline(
-        s"${affinity} Rats",
-        s"${affinity}",
+        s"Flying Cod ${affinity}",
         bases.head,
         bases.tail,
         toAirports,
@@ -138,7 +137,7 @@ object AirlineGenerator extends App {
     val HQ = airports.find(_.iata == "TLS").getOrElse(bases.head)
     println(HQ)
     generateAirline(
-      s"Aerospace Rats",
+      s"Majestic Aerospace",
       s"Aerospace",
       HQ,
       bases,
@@ -150,15 +149,15 @@ object AirlineGenerator extends App {
   }
 
   def generateSSTAirline(): Unit = {
-    val bases = airports.filter(airport => airport.iata == "ORD" || airport.iata == "SFO" || airport.iata == "BOS" || airport.iata == "FAI" || airport.iata == "ANC" || airport.iata == "BET")
-    val HQ = airports.find(_.iata == "JFK").getOrElse(bases.head)
+    val bases = airports.filter(airport => airport.iata == "ARN" || airport.iata == "NCE" || airport.iata == "MAD" || airport.iata == "LHR" || airport.iata == "YUL" || airport.iata == "DXB")
+    val HQ = airports.find(_.iata == "CDG").getOrElse(bases.head)
     generateAirline(
-      s"Y",
-      s"y",
+      s"Definitely Creamy Eclair",
+      s"dce",
       HQ,
       bases,
       airports,
-      List("Boeing 2707", "Beechcraft B200 Super King Air", "Boeing 737-800"),
+      List("Boeing 2707", "Concorde", "Boeing 737 MAX 7", "Boeing 737 MAX 10"),
       6000,
       85
     )
@@ -167,8 +166,8 @@ object AirlineGenerator extends App {
   def generatePacificAirline(): Unit = {
     val bases = airports.filter(airport => airport.zone.contains("PIF") && airport.isGateway() && airport.countryCode != "AU" && airport.countryCode != "NZ" && airport.countryCode != "US").takeRight(7).reverse
     generateAirline(
-      s"Echo Pacific",
-      s"echopacific",
+      s"Universal Pacific",
+      s"up",
       bases.head,
       bases.tail,
       airports,
@@ -183,8 +182,8 @@ object AirlineGenerator extends App {
     val destinations = List("IST", "FRA", "BER", "IKA", "SVO", "LHR", "SIN")
     val toAirports = airports.filter(port => port.zone.contains("Sunni") || destinations.contains(port.iata)).distinct
     generateAirline(
-      s"ONE Arabia",
-      s"onearabia",
+      s"Gondor Arabia",
+      s"arabia",
       bases.head,
       bases.tail,
       toAirports,
@@ -199,8 +198,8 @@ object AirlineGenerator extends App {
     val HQ = airports.find(_.iata == "GRU").getOrElse(bases.head)
     val toAirports = airports.filter(port => port.zone.contains("Hispanic") || port.zone.contains("Lusophone")).distinct
     generateAirline(
-      s"Echo LATAM",
-      s"echolatam",
+      s"Penguin LATAM",
+      s"latam",
       HQ,
       bases,
       toAirports,
@@ -215,8 +214,8 @@ object AirlineGenerator extends App {
     val HQ = airports.find(_.iata == "MIA").getOrElse(bases.head)
     val toAirports = airports.filter(port => port.zone.contains("CC")).distinct
     generateAirline(
-      s"Echo Caribbean",
-      s"echocaribbean",
+      s"Purdue Caribbean",
+      s"caribbean",
       HQ,
       bases,
       toAirports,
@@ -254,10 +253,11 @@ object AirlineGenerator extends App {
     AirlineSource.saveAirplaneRenewal(airline.id, 60)
 
     // Generate bases & links
+    val createdLinks = mutable.Set[(Int, Int)]()
     makeBase(airline, hqAirport, true)
-    generateLinksForAirline(airline, hqAirport, toAirports, modelFamily, linkMaxDistance + 1000)
+    generateLinksForAirline(airline, hqAirport, toAirports, modelFamily, linkMaxDistance + 1000, createdLinks)
     bases.zipWithIndex.foreach { case (baseAirport, index) => makeBase(airline, baseAirport) }
-    bases.foreach( airport => generateLinksForAirline(airline, airport, toAirports, modelFamily, linkMaxDistance))
+    bases.foreach( airport => generateLinksForAirline(airline, airport, toAirports, modelFamily, linkMaxDistance, createdLinks))
     airline
   }
 
@@ -290,7 +290,7 @@ object AirlineGenerator extends App {
     airline
   }
 
-  private def generateLinksForAirline(airline: Airline, baseAirport: Airport, toAirports: List[Airport], modelNames: List[String], maxDistance: Int): Unit = {
+  private def generateLinksForAirline(airline: Airline, baseAirport: Airport, toAirports: List[Airport], modelNames: List[String], maxDistance: Int, createdLinks: mutable.Set[(Int, Int)]): Unit = {
     val models = allModels.filter(model => modelNames.contains(model.name))
     val nearbyFocusAirports = findAirports(toAirports, baseAirport, maxDistance / 4)
     val farAirports = findAirports(airports, baseAirport, maxDistance, maxDistance / 4).filterNot(airport => nearbyFocusAirports.contains(airport))
@@ -302,7 +302,8 @@ object AirlineGenerator extends App {
         toAirports = nearbyFocusAirports,
         models = models,
         airline = airline,
-        config = LinkConfig("near", nearbyFocusAirports.size, Math.min(24, nearbyFocusAirports.size), 40)
+        config = LinkConfig("near", nearbyFocusAirports.size, Math.min(24, nearbyFocusAirports.size), 40, minFrequency = 3),
+        createdLinks = createdLinks
       )
     )
 
@@ -312,17 +313,16 @@ object AirlineGenerator extends App {
         toAirports = farAirports,
         models = models,
         airline = airline,
-        config = LinkConfig("far", farAirports.size, 8, 60)
+        config = LinkConfig("far", farAirports.size, 8, 60),
+        createdLinks = createdLinks
       )
     )
   }
 
   private def findAirports(airports: List[Airport], baseAirport: Airport, maxDistance: Int, minDistance: Int = 300): List[Airport] = {
-    val relationships = CountrySource.getCountryMutualRelationships()
-
     airports.filter(airport => {
       val distance = Computation.calculateDistance(baseAirport, airport)
-      val relationship = relationships.getOrElse(
+      val relationship = countryRelationships.getOrElse(
         (baseAirport.countryCode, airport.countryCode),
         0
       )
@@ -335,37 +335,56 @@ object AirlineGenerator extends App {
   }
 
   private def generateLinks(config: LinkGeneration): List[Link] = {
-    val airports = config.toAirports.takeRight(config.config.poolSize + 1)
-    val pickedToAirports = drawFromPool(airports, config.config.poolSize)
+    // Filter out already-served destinations from this airline
+    val alreadyServedIds = config.createdLinks.collect {
+      case (from, to) if from == config.fromAirport.id => to
+      case (from, to) if to == config.fromAirport.id => from
+    }
+    val candidates = config.toAirports
+      .filterNot(ap => alreadyServedIds.contains(ap.id))
+      .filterNot(ap => config.createdLinks.contains((config.fromAirport.id, ap.id)) || config.createdLinks.contains((ap.id, config.fromAirport.id)))
+
+    val pickedToAirports = selectByDemand(config.fromAirport, candidates, config.config.poolSize)
 
     val airplaneModelsLarge = config.models.sortBy(_.capacity).reverse
     val airplaneModelsSmall = config.models.sortBy(_.capacity)
     val newLinks = ListBuffer[Link]()
 
     var i = 0
-    while (newLinks.length < config.config.linkCount && i < config.config.poolSize) {
+    while (newLinks.length < config.config.linkCount && i < pickedToAirports.size) {
       val toAirport = pickedToAirports(i)
       i += 1
 
-      val distance = Computation.calculateDistance(config.fromAirport, toAirport)
-      val relationship = countryRelationships.getOrElse((config.fromAirport.countryCode, toAirport.countryCode), 0)
+      // Skip if this city-pair already exists for this airline
+      if (config.createdLinks.contains((config.fromAirport.id, toAirport.id)) ||
+          config.createdLinks.contains((toAirport.id, config.fromAirport.id))) {
+        // skip duplicate
+      } else {
+        val distance = Computation.calculateDistance(config.fromAirport, toAirport)
+        val relationship = countryRelationships.getOrElse((config.fromAirport.countryCode, toAirport.countryCode), 0)
 
-      val affinity = Computation.calculateAffinityValue(config.fromAirport.zone, toAirport.zone, relationship)
+        val affinity = Computation.calculateAffinityValue(config.fromAirport.zone, toAirport.zone, relationship)
 
-      val demand = DemandGenerator.computeBaseDemandBetweenAirports(config.fromAirport, toAirport, affinity, distance)
-      val targetSeats = (demand.travelerDemand.total + demand.businessDemand.total) * 2
+        val demand = DemandGenerator.computeBaseDemandBetweenAirports(config.fromAirport, toAirport, affinity, distance)
+        val targetSeats = ((demand.travelerDemand.total + demand.businessDemand.total + demand.touristDemand.total) * 1.5).toInt
 
-      if (targetSeats > 0) {
-        createLink(
-          fromAirport = config.fromAirport,
-          toAirport = toAirport,
-          airline = config.airline,
-          distance = distance,
-          targetSeats = targetSeats,
-          modelsSmall = airplaneModelsSmall,
-          modelsLarge = airplaneModelsLarge,
-          rawQuality = config.config.rawQuality
-        ).foreach(newLinks += _)
+        if (targetSeats > 0) {
+          createLink(
+            fromAirport = config.fromAirport,
+            toAirport = toAirport,
+            airline = config.airline,
+            distance = distance,
+            targetSeats = targetSeats,
+            modelsSmall = airplaneModelsSmall,
+            modelsLarge = airplaneModelsLarge,
+            rawQuality = config.config.rawQuality,
+            minFrequency = config.config.minFrequency
+          ).foreach { link =>
+            newLinks += link
+            config.createdLinks += ((config.fromAirport.id, toAirport.id))
+            config.createdLinks += ((toAirport.id, config.fromAirport.id))
+          }
+        }
       }
     }
 
@@ -380,7 +399,18 @@ object AirlineGenerator extends App {
     newLinks.toList
   }
 
-  private def createLink(fromAirport: Airport, toAirport: Airport, airline: Airline, distance: Int, targetSeats: Int, modelsSmall: List[Model], modelsLarge: List[Model], rawQuality: Int): Option[Link] = {
+  private def selectByDemand(fromAirport: Airport, candidates: List[Airport], drawSize: Int): Seq[Airport] = {
+    candidates.map { candidate =>
+      val distance = Computation.calculateDistance(fromAirport, candidate)
+      val relationship = countryRelationships.getOrElse((fromAirport.countryCode, candidate.countryCode), 0)
+      val affinity = Computation.calculateAffinityValue(fromAirport.zone, candidate.zone, relationship)
+      val demand = DemandGenerator.computeBaseDemandBetweenAirports(fromAirport, candidate, affinity, distance)
+      val totalDemand = demand.travelerDemand.total + demand.businessDemand.total + demand.touristDemand.total
+      (candidate, totalDemand)
+    }.sortBy(-_._2).take(drawSize).map(_._1)
+  }
+
+  private def createLink(fromAirport: Airport, toAirport: Airport, airline: Airline, distance: Int, targetSeats: Int, modelsSmall: List[Model], modelsLarge: List[Model], rawQuality: Int, minFrequency: Int = 1): Option[Link] = {
     val pickedModel = modelsSmall.find(model =>
         model.capacity * Computation.calculateMaxFrequency(
           model,
@@ -390,7 +420,7 @@ object AirlineGenerator extends App {
 
     pickedModel.flatMap { model =>
       val frequency = math.min(
-        (targetSeats.toDouble / model.capacity).toInt,
+        math.max((targetSeats.toDouble / model.capacity).toInt, minFrequency),
         35
       )
 
@@ -456,7 +486,7 @@ object AirlineGenerator extends App {
         val frequencyForThis = math.min(remainingFrequency, Math.floor(matchingPlane._2 / flightMinutesRequired)).toInt
         val flightMinutesForThis = frequencyForThis * flightMinutesRequired
         val remainingFlightMinutes = matchingPlane._2 - flightMinutesForThis
-        if (remainingFlightMinutes > 120) {
+        if (remainingFlightMinutes > 60) {
           bufferOfAirplanes(model) = (usedAirplane, remainingFlightMinutes)
         } else {
           bufferOfAirplanes.remove(model)
@@ -467,7 +497,7 @@ object AirlineGenerator extends App {
         val newAirplane = createAirplane(model, airline, homeAirport)
         val frequencyForThis = math.min(remainingFrequency, maxFrequencyPerAirplane)
         val flightMinutesForThis = frequencyForThis * flightMinutesRequired
-        if (Airplane.MAX_FLIGHT_MINUTES - flightMinutesForThis > 120) {
+        if (Airplane.MAX_FLIGHT_MINUTES - flightMinutesForThis > 60) {
           bufferOfAirplanes(model) = (newAirplane, Airplane.MAX_FLIGHT_MINUTES - flightMinutesForThis)
         }
         assignedAirplanes.put(newAirplane, LinkAssignment(frequencyForThis, flightMinutesForThis))
@@ -503,14 +533,6 @@ object AirlineGenerator extends App {
     assignedAirplanes.map { case (airplane, assignment) =>
       LinkClassValues(airplane.configuration.economyVal, airplane.configuration.businessVal, airplane.configuration.firstVal) * assignment.frequency
     }.reduce(_ + _)
-  }
-
-  private def drawFromPool(poolTopFirst: Seq[Airport], drawSize: Int): Seq[Airport] = {
-    if (drawSize >= poolTopFirst.length) {
-      poolTopFirst
-    } else {
-      Random.shuffle(poolTopFirst).take(drawSize)
-    }
   }
 
   private def resizeBases(): Unit = {
