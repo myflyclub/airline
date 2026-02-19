@@ -68,6 +68,7 @@ class MyWebSocketActor(out: ActorRef, airlineId : Int, remoteAddress : String) e
   val outActor = ActorCenter.remoteSystem.actorOf(Props(classOf[LocalActor], out, airlineId), nextSubscriberId(airlineId))
 
   override def preStart() = {
+    val _ = MyWebSocketActor.backgroundPingTriggerStarted // ensure 30s ping scheduler is running
     val airline = AirlineCache.getAirline(airlineId).get
     println(s"Starting websocket on airline $airline with remoteAddress $remoteAddress path ${self}. With output actor ${outActor.path}")
   }
