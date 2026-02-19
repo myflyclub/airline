@@ -121,6 +121,7 @@ object AirlineGenerator extends App {
       val toAirports = airports.filterNot(_.isDomesticAirport()).filter(_.zone.contains(affinity))
       generateAirline(
         s"Flying Cod ${affinity}",
+        s"FC${affinity}",
         bases.head,
         bases.tail,
         toAirports,
@@ -242,7 +243,7 @@ object AirlineGenerator extends App {
     })
   }
 
-  def generateAirline(name: String, username: String, hqAirport: Airport, bases: List[Airport], toAirports: List[Airport], modelFamily: List[String], linkMaxDistance: Int, targetServiceQuality: Int, initialBalance: Long = 1000000000, currentServiceQuality: Int = 70, reputation: Int = 80): Airline = {
+  def generateAirline(name: String, username: String, hqAirport: Airport, bases: List[Airport], toAirports: List[Airport], modelFamily: List[String], linkMaxDistance: Int, targetServiceQuality: Int = 60, initialBalance: Long = 1000000000, currentServiceQuality: Int = 70, reputation: Int = 80): Airline = {
     val user = createUser(username)
     val airline = createAirline(name, hqAirport, targetServiceQuality, currentServiceQuality, reputation, initialBalance)
     println(s"generating $name at ${hqAirport.iata} with ${modelFamily.toString()}")
