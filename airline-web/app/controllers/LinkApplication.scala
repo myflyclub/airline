@@ -521,6 +521,7 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
         LinkSource.loadFlightLinksByToAirportAndAirlineId(toAirportId, airlineId)
       }
     Ok(Json.toJson(links)(LinksGeoJsonWrites)).withHeaders(
+      ETAG -> s""""$currentCycle"""",
       ACCESS_CONTROL_ALLOW_ORIGIN -> "*"
     )
   }

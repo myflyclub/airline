@@ -75,42 +75,51 @@ object LinkSource {
       
       val links = new ListBuffer[Transport]()
       
+      case class LinkRow(id: Int, fromAirportId: Int, toAirportId: Int, airlineId: Int, transportType: Int,
+        priceEconomy: Int, priceBusiness: Int, priceFirst: Int, distance: Int,
+        capacityEconomy: Int, capacityBusiness: Int, capacityFirst: Int,
+        quality: Int, duration: Int, frequency: Int, flightNumber: Int, airplaneModel: Int)
+      val rows = new ListBuffer[LinkRow]()
       val linkIds : Set[Int] = new HashSet[Int]
       val airportIds : Set[Int] = new HashSet[Int]
-      
+
       while (resultSet.next()) {
+        val id = resultSet.getInt("id")
+        linkIds += id
         airportIds += resultSet.getInt("from_airport")
         airportIds += resultSet.getInt("to_airport")
-        linkIds += resultSet.getInt("id")
+        rows += LinkRow(id, resultSet.getInt("from_airport"), resultSet.getInt("to_airport"), resultSet.getInt("airline"),
+          resultSet.getInt("transport_type"),
+          resultSet.getInt("price_economy"), resultSet.getInt("price_business"), resultSet.getInt("price_first"),
+          resultSet.getInt("distance"),
+          resultSet.getInt("capacity_economy"), resultSet.getInt("capacity_business"), resultSet.getInt("capacity_first"),
+          resultSet.getInt("quality"), resultSet.getInt("duration"), resultSet.getInt("frequency"),
+          resultSet.getInt("flight_number"), resultSet.getInt("airplane_model"))
       }
-      
+
+      resultSet.close()
+      preparedStatement.close()
+
       val assignedAirplaneCache : Map[Int, Map[Airplane, LinkAssignment]] = loadDetails.get(DetailType.AIRPLANE) match {
         case Some(fullLoad) => loadAssignedAirplanesByLinks(connection, linkIds.toList)
         case None => Map.empty
       }
 
       val airportCache : Map[Int, Airport] = loadDetails.get(DetailType.AIRPORT) match {
-        case Some(fullLoad) => {
-          AirportCache.getAirports(airportIds.toList, fullLoad)
-        }
+        case Some(fullLoad) => AirportCache.getAirports(airportIds.toList, fullLoad)
         case None => airportIds.map(id => (id, Airport.fromId(id))).toMap
       }
-      
-      resultSet.beforeFirst()
-      while (resultSet.next()) {
-        val fromAirportId = resultSet.getInt("from_airport")
-        val toAirportId = resultSet.getInt("to_airport")
-        val airlineId = resultSet.getInt("airline")
-        
-        val fromAirport = airportCache.get(fromAirportId) //Do not use AirportCache as fullLoad will be slow
-        val toAirport = airportCache.get(toAirportId) //Do not use AirportCache as fullLoad will be slow
+
+      rows.foreach { row =>
+        val fromAirport = airportCache.get(row.fromAirportId) //Do not use AirportCache as fullLoad will be slow
+        val toAirport = airportCache.get(row.toAirportId) //Do not use AirportCache as fullLoad will be slow
         val airline = loadDetails.get(DetailType.AIRLINE) match {
-          case Some(fullLoad) => AirlineCache.getAirline(airlineId, fullLoad).orElse(Some(Airline.fromId(airlineId)))
-          case None => Some(Airline.fromId(airlineId))
+          case Some(fullLoad) => AirlineCache.getAirline(row.airlineId, fullLoad).orElse(Some(Airline.fromId(row.airlineId)))
+          case None => Some(Airline.fromId(row.airlineId))
         }
-        
+
         if (fromAirport.isDefined && toAirport.isDefined && airline.isDefined) {
-          val transportType = TransportType(resultSet.getInt("transport_type"))
+          val transportType = TransportType(row.transportType)
           val link = {
             import TransportType._
             transportType match {
@@ -119,46 +128,41 @@ object LinkSource {
                   fromAirport.get,
                   toAirport.get,
                   airline.get,
-                  LinkClassValues.getInstance(resultSet.getInt("price_economy"), resultSet.getInt("price_business"), resultSet.getInt("price_first")),
-                  resultSet.getInt("distance"),
-                  LinkClassValues.getInstance(resultSet.getInt("capacity_economy"), resultSet.getInt("capacity_business"), resultSet.getInt("capacity_first")),
-                  resultSet.getInt("quality"),
-                  resultSet.getInt("duration"),
-                  resultSet.getInt("frequency"),
-                  resultSet.getInt("flight_number"))
+                  LinkClassValues.getInstance(row.priceEconomy, row.priceBusiness, row.priceFirst),
+                  row.distance,
+                  LinkClassValues.getInstance(row.capacityEconomy, row.capacityBusiness, row.capacityFirst),
+                  row.quality,
+                  row.duration,
+                  row.frequency,
+                  row.flightNumber)
               case GENERIC_TRANSIT =>
-                //from : Airport, to : Airport, airline: Airline, distance : Int, var capacity: LinkClassValues, duration : Int, var frequency : Int, var id : Int = 0
                 GenericTransit(
                   fromAirport.get,
                   toAirport.get,
-                  resultSet.getInt("distance"),
-                  LinkClassValues.getInstance(resultSet.getInt("capacity_economy"), resultSet.getInt("capacity_business"), resultSet.getInt("capacity_first")),
-                  resultSet.getInt("duration")
+                  row.distance,
+                  LinkClassValues.getInstance(row.capacityEconomy, row.capacityBusiness, row.capacityFirst),
+                  row.duration
                 )
             }
-
           }
-          link.id = resultSet.getInt("id")
+          link.id = row.id
 
           if (link.isInstanceOf[Link]) {
             assignedAirplaneCache.get(link.id).foreach { airplaneAssignments =>
               link.asInstanceOf[Link].setAssignedAirplanes(airplaneAssignments)
             }
-            if (assignedAirplaneCache.isEmpty) { //then try to load the assigned model by the record
-              AirplaneModelCache.getModel(resultSet.getInt("airplane_model")).foreach {
+            if (assignedAirplaneCache.isEmpty) {
+              AirplaneModelCache.getModel(row.airplaneModel).foreach {
                 model => link.asInstanceOf[Link].setAssignedModel(model)
               }
             }
           }
-          
-          links += link          
+
+          links += link
         } else {
-          println("Failed loading link [" + resultSet.getInt("id") + "] as some details cannot be loaded " + fromAirport + toAirport + airline)
+          println("Failed loading link [" + row.id + "] as some details cannot be loaded " + fromAirport + toAirport + airline)
         }
       }
-      
-      resultSet.close()
-      preparedStatement.close()
       links.toList
     } finally {
       connection.close()
@@ -249,21 +253,22 @@ object LinkSource {
       
       val assignmentResultSet = linkAssignmentStatement.executeQuery
       
-      val airplaneIds = new HashSet[Int]
+      case class AssignmentRow(link: Int, airplane: Int, frequency: Int, flightMinutes: Int)
+      val rows = new ListBuffer[AssignmentRow]()
       while (assignmentResultSet.next()) {
-          airplaneIds += assignmentResultSet.getInt("airplane")
+          rows += AssignmentRow(assignmentResultSet.getInt("link"), assignmentResultSet.getInt("airplane"), assignmentResultSet.getInt("frequency"), assignmentResultSet.getInt("flight_minutes"))
       }
-      
-      val airplaneCache = AirplaneSource.loadAirplanesByIds(airplaneIds.toList).map { airplane => (airplane.id, airplane) }.toMap
-      assignmentResultSet.beforeFirst()
-      
+      assignmentResultSet.close()
+      linkAssignmentStatement.close()
+
+      val airplaneCache = AirplaneSource.loadAirplanesByIds(rows.map(_.airplane).distinct.toList).map { airplane => (airplane.id, airplane) }.toMap
+
       val assignments = new HashMap[Int, HashMap[Airplane, LinkAssignment]]()
-      while (assignmentResultSet.next()) {
-        val link = assignmentResultSet.getInt("link")
-        airplaneCache.get(assignmentResultSet.getInt("airplane")).foreach { airplane =>
-          val airplanesForThisLink = assignments.getOrElseUpdate(link, new HashMap[Airplane, LinkAssignment]);
-          airplanesForThisLink.put(airplane, LinkAssignment(assignmentResultSet.getInt("frequency"), assignmentResultSet.getInt("flight_minutes")))
-        };
+      rows.foreach { row =>
+        airplaneCache.get(row.airplane).foreach { airplane =>
+          val airplanesForThisLink = assignments.getOrElseUpdate(row.link, new HashMap[Airplane, LinkAssignment]);
+          airplanesForThisLink.put(airplane, LinkAssignment(row.frequency, row.flightMinutes))
+        }
       }
 
       linkIds.foreach { linkId => //fill the link id with no airplane assigned with empty map
@@ -271,9 +276,6 @@ object LinkSource {
           assignments.put(linkId, HashMap.empty)
         }
       }
-      
-      assignmentResultSet.close()
-      linkAssignmentStatement.close()
       
       val assignedPlanesByLinkId = assignments.toList.map {
         case (linkId, mutableMap) => (linkId, mutableMap.toMap)
@@ -903,7 +905,6 @@ object LinkSource {
       
       val linkConsumptions = new ListBuffer[LinkConsumptionDetails]()
       
-      resultSet.beforeFirst()
       while (resultSet.next()) {
         val linkId = resultSet.getInt("link")
         //need to update current link with history link data

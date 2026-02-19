@@ -144,7 +144,7 @@ function getAwardOptionsTable() {
 function pickSantaClassAward(optionId) {
 	var url = "/santa-claus/pick-award/" + activeAirline.id + "/" + optionId
 	$.ajax({
-        		type: 'GET',
+        		type: 'POST',
         		url: url,
         	    contentType: 'application/json; charset=utf-8',
         	    dataType: 'json',
@@ -163,7 +163,7 @@ function guessSantaClaus() {
 	var url = "/santa-claus/guess/" + activeAirportId + "/" + activeAirline.id + "/" +  $("#santaClausModal .difficulty:checked").val()
 
 	$.ajax({
-		type: 'GET',
+		type: 'POST',
 		url: url,
 	    contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',

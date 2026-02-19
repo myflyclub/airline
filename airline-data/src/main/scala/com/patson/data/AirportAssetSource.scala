@@ -61,36 +61,36 @@ object AirportAssetSource {
       val resultSet = preparedStatement.executeQuery()
       val assets = ListBuffer[AirportAsset]()
 
-      val ids = ListBuffer[Int]()
+      case class AssetRow(id: Int, assetType: String, airportId: Int, airlineId: Int, name: String, level: Int, completionCycle: Int, revenue: Long, expense: Long, roi: Double, upgradeApplied: Boolean)
+      val assetRows = ListBuffer[AssetRow]()
       while (resultSet.next()) {
-        val id = resultSet.getInt("id") //same id as blueprint
-        ids.append(id)
+        assetRows += AssetRow(
+          resultSet.getInt("id"),
+          resultSet.getString("asset_type"),
+          resultSet.getInt("airport"),
+          resultSet.getInt("airline"),
+          resultSet.getString("name"),
+          resultSet.getInt("level"),
+          resultSet.getInt("completion_cycle"),
+          resultSet.getLong("revenue"),
+          resultSet.getLong("expense"),
+          resultSet.getDouble("roi"),
+          resultSet.getBoolean("upgrade_applied")
+        )
       }
-
-      val idToBoost = loadAirportBoostsByAssetIds(ids.toList)
-      val idToProperties = loadAirportPropertiesByAssetIds(ids.toList)
-
-      val currentCycle = CycleSource.loadCycle()
-      resultSet.beforeFirst()
-      while (resultSet.next()) {
-        val assetType = AirportAssetType.withName(resultSet.getString("asset_type"))
-        val id = resultSet.getInt("id") //same id as blueprint
-        val airport = AirportCache.getAirport(resultSet.getInt("airport"), false).get
-
-        val airline = AirlineCache.getAirline(resultSet.getInt("airline"))
-        val name = resultSet.getString("name")
-        val level = resultSet.getInt("level")
-        val completionCycle = resultSet.getInt("completion_cycle")
-        val revenue = resultSet.getLong("revenue")
-        val expense = resultSet.getLong("expense")
-        val roi = resultSet.getDouble("roi")
-        val upgradeApplied = resultSet.getBoolean("upgrade_applied")
-
-        assets += AirportAsset.getAirportAsset(id, airport, assetType, airline, name, level, Some(completionCycle), idToBoost.getOrElse(id, List.empty), revenue, expense, roi, upgradeApplied, idToProperties.getOrElse(id, Map.empty), currentCycle)
-      }
-
       resultSet.close()
       preparedStatement.close()
+
+      val ids = assetRows.map(_.id).toList
+      val idToBoost = loadAirportBoostsByAssetIds(ids)
+      val idToProperties = loadAirportPropertiesByAssetIds(ids)
+      val currentCycle = CycleSource.loadCycle()
+
+      assetRows.foreach { row =>
+        val airport = AirportCache.getAirport(row.airportId, false).get
+        val airline = AirlineCache.getAirline(row.airlineId)
+        assets += AirportAsset.getAirportAsset(row.id, airport, AirportAssetType.withName(row.assetType), airline, row.name, row.level, Some(row.completionCycle), idToBoost.getOrElse(row.id, List.empty), row.revenue, row.expense, row.roi, row.upgradeApplied, idToProperties.getOrElse(row.id, Map.empty), currentCycle)
+      }
 
       assets.toList
     } finally {

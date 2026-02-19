@@ -958,7 +958,7 @@ function loadUsedAirplanes(modelInfo) {
 	    success: function(usedAirplanes) { 
 	    	loadedUsedAirplanes = usedAirplanes
 	    	var selectedSortHeader = $('#usedAirplaneSortHeader .cell.selected')
-	    	updateUsedAirplaneTable(selectedSortHeader.data("sort-property"), selectedSortHeader.data("sort-order"))
+	    	updateUsedAirplaneTable(selectedSortHeader.data("sort-property") || 'dealerValue', selectedSortHeader.data("sort-order") || 'ascending')
 	    },
 	    error: function(jqXHR, textStatus, errorThrown) {
 	            console.log(JSON.stringify(jqXHR));
@@ -1344,7 +1344,7 @@ function onAirplaneSwapDrop(event, currentAirplaneId, refreshFunction) {
   var fromAirplaneId = currentAirplaneId
   var toAirplaneId = event.dataTransfer.getData("airplane-id")
   $.ajax({
-          type: 'GET',
+          type: 'PUT',
           url: "/airlines/" + activeAirline.id + "/swap-airplanes/" + fromAirplaneId + "/" + toAirplaneId,
           contentType: 'application/json; charset=utf-8',
           dataType: 'json',
@@ -1756,9 +1756,15 @@ function populateHangarByModel($container) {
 }
 
 function toggleAirplaneConfiguration() {
-  $("#ownedAirplaneDetail .configuration-view").hide()
-  $("#ownedAirplaneDetail .configuration-edit").show()
-  refreshAirplaneConfigurationOption($("#ownedAirplaneDetail"))
+  const isOpen = $("#ownedAirplaneDetail .configuration-edit").is(":visible")
+  if (isOpen) {
+    $("#ownedAirplaneDetail .configuration-edit").hide()
+    $("#ownedAirplaneDetail .configuration-edit-button").show()
+  } else {
+    $("#ownedAirplaneDetail .configuration-edit-button").hide()
+    $("#ownedAirplaneDetail .configuration-edit").show()
+    refreshAirplaneConfigurationOption($("#ownedAirplaneDetail"))
+  }
 }
 
 
@@ -1777,7 +1783,7 @@ function switchAirplaneConfigurationOption(containerDiv, indexDiff) {
 function cancelAirplaneConfigurationOption() {
     $("#ownedAirplaneDetail .configuration-options").data("selectedIndex", 0)
     $("#ownedAirplaneDetail .configuration-edit").hide()
-    $("#ownedAirplaneDetail .configuration-view").show()
+    $("#ownedAirplaneDetail .configuration-edit-button").show()
 }
 function refreshAirplaneConfigurationOption(containerDiv) {
     var currentIndex = containerDiv.find(".configuration-options").data("selectedIndex")
@@ -1813,7 +1819,7 @@ function confirmAirplaneConfigurationOption() {
                 }
             });
     } else { //flip back to view mode
-        $("#ownedAirplaneDetail .configuration-view").show()
+        $("#ownedAirplaneDetail .configuration-edit-button").show()
         $("#ownedAirplaneDetail .configuration-edit").hide()
     }
 }

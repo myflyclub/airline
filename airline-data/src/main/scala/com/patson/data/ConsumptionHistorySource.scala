@@ -167,24 +167,22 @@ object ConsumptionHistorySource {
       }
       val linkResultSet = linkPreparedStatement.executeQuery()
 
-      val linkConsiderationsByRouteId = scala.collection.mutable.Map[Int, ListBuffer[LinkConsideration]]()
-      val allLinkIds = scala.collection.mutable.HashSet[Int]()
-
+      case class LinkRow(linkId: Int, routeId: Int, cost: Int, linkClass: String, inverted: Boolean)
+      val linkRows = new ListBuffer[LinkRow]()
       while (linkResultSet.next()) {
-        val linkId = linkResultSet.getInt("link")
-        allLinkIds += linkId
+        linkRows += LinkRow(linkResultSet.getInt("link"), linkResultSet.getInt("route_id"), linkResultSet.getInt("cost"), linkResultSet.getString("link_class"), linkResultSet.getBoolean("inverted"))
       }
+      linkResultSet.close()
+      linkPreparedStatement.close()
 
-      val linkConsumptionById: Map[Int, LinkConsumptionDetails] = LinkSource.loadLinkConsumptionsByLinksId(allLinkIds.toList).map(entry => (entry.link.id, entry)).toMap
+      val linkConsumptionById: Map[Int, LinkConsumptionDetails] = LinkSource.loadLinkConsumptionsByLinksId(linkRows.map(_.linkId).distinct.toList).map(entry => (entry.link.id, entry)).toMap
 
       // Reconstruct routes with link considerations
-      linkResultSet.beforeFirst()
-      while (linkResultSet.next()) {
-        val linkId = linkResultSet.getInt("link")
-        val routeId = linkResultSet.getInt("route_id")
-        linkConsumptionById.get(linkId).foreach { linkConsumption =>
-          val linkConsideration = LinkConsideration.getExplicit(linkConsumption.link, linkResultSet.getInt("cost"), LinkClass.fromCode(linkResultSet.getString("link_class")), linkResultSet.getBoolean("inverted"))
-          val existingConsiderationsForThisRoute = linkConsiderationsByRouteId.getOrElseUpdate(routeId, ListBuffer[LinkConsideration]())
+      val linkConsiderationsByRouteId = scala.collection.mutable.Map[Int, ListBuffer[LinkConsideration]]()
+      linkRows.foreach { row =>
+        linkConsumptionById.get(row.linkId).foreach { linkConsumption =>
+          val linkConsideration = LinkConsideration.getExplicit(linkConsumption.link, row.cost, LinkClass.fromCode(row.linkClass), row.inverted)
+          val existingConsiderationsForThisRoute = linkConsiderationsByRouteId.getOrElseUpdate(row.routeId, ListBuffer[LinkConsideration]())
           existingConsiderationsForThisRoute += linkConsideration
         }
       }

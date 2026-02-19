@@ -271,7 +271,7 @@ function updateProgress(stats){
         }
     }
 
-    var $starBar = $(getGradeStarsImgs(activeAirline.gradeLevel - 2, 20))
+    var $starBar = $(getGradeStarsImgs(activeAirline.gradeLevel - 3, 20))
     $('.reputationText').text(activeAirline.gradeDescription)
     $('.reputationLevel').text("Level " + activeAirline.gradeLevel)
     $('.reputationTrend').text((activeAirline.reputationBreakdowns.total).toFixed(0))
@@ -1061,7 +1061,7 @@ function setAirlineLogo() {
 
 	var url = "/airlines/" + activeAirline.id + "/set-logo?templateIndex=" + logoTemplate + "&color1=" + encodeURIComponent(color1) + "&color2=" + encodeURIComponent(color2)
     $.ajax({
-		type: 'GET',
+		type: 'POST',
 		url: url,
 	    contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
@@ -1078,7 +1078,7 @@ function setAirlineLogo() {
 function setAirlineColor(color) {
 	var url = "/airlines/" + activeAirline.id + "/set-color?color=" + encodeURIComponent(color)
     $.ajax({
-		type: 'GET',
+		type: 'POST',
 		url: url,
 	    contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
@@ -1432,7 +1432,7 @@ function updateResetAirlineInfo() {
 
 function resetAirline(keepAssets) {
 	$.ajax({
-		type: 'GET',
+		type: 'POST',
 		url: "/airlines/" + activeAirline.id + "/reset?keepAssets=" + keepAssets,
 	    contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',

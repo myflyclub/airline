@@ -143,10 +143,22 @@ function initializeRoutes() {
         showOilCanvas();
     });
 
-    page('/rivals/:rivalId?', (ctx) => {
-        const rivalId = ctx.params.rivalId ?? null;
-        document.title = rivalId ? `${rivalId} Rivals` : 'Rivals';
-        showRivalsCanvas(rivalId);
+    page('/rivals/', () => {
+        document.title = 'Rivals';
+        Rivals.show();
+    });
+
+    page('/rivals/:airlineId', (ctx) => {
+        const airlineId = parseInt(ctx.params.airlineId);
+        document.title = 'Rivals';
+        Rivals.show(airlineId);
+    });
+
+    page('/map/rival/:airlineId', (ctx) => {
+        const airlineId = parseInt(ctx.params.airlineId);
+        document.title = 'Rival Map';
+        // Load rivals first to populate data, then show map
+        Rivals.show(airlineId);
     });
 
     page('/alliance/', () => {

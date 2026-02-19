@@ -45,7 +45,7 @@ object AirportGeoPatcher extends App {
       case e : Throwable => e.printStackTrace()
     }
 
-    val (computedAirports, cityAirportRelationships) = GeoDataGenerator.generateAirportData(csvAirports, runways, cities)
+    val (computedAirports, cityAirportRelationshipsByIata) = GeoDataGenerator.generateAirportData(csvAirports, runways, cities)
 
     val newAirports = computedAirports.filter(_.id == 0)
     val updatingAirports = computedAirports.filter(_.id > 0)
@@ -55,10 +55,15 @@ object AirportGeoPatcher extends App {
     GeoDataGenerator.setAirportRunwayDetails(csvAirports, runways)
     println(s"Updating ${updatingAirports.length} Airports")
     AirportSource.updateAirports(updatingAirports)
-    
+
     println(s"Creating ${newAirports.length} Airports")
     AirportSource.saveAirports(newAirports)
 
+    val airportByIata = computedAirports.groupBy(_.iata)
+    val cityAirportRelationships = cityAirportRelationshipsByIata.flatMap {
+      case (iata, relationships) =>
+        airportByIata.get(iata).map(a => (a.head.id, relationships))
+    }.toMap
     AirportSource.saveCityAirportRelationships(cityAirportRelationships)
 
     val deletingAirportIds = existingAirports.map(_.id).diff(computedAirports.map(_.id))

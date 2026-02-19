@@ -221,10 +221,17 @@ object GeoDataGenerator extends App {
     println(rawAirportResult.size + " airports")
     println(runwayResult.size + " solid runways")
     println(citites.size + " cities")
-    val (airports, cityAirportRelationships) = generateAirportData(rawAirportResult, runwayResult, citites)
+    val (airports, cityAirportRelationshipsByIata) = generateAirportData(rawAirportResult, runwayResult, citites)
 
     AirportSource.deleteAllAirports()
     AirportSource.saveAirports(airports)
+
+    // Resolve IATA keys to DB-assigned airport IDs (assigned during saveAirports)
+    val airportByIata = airports.groupBy(_.iata)
+    val cityAirportRelationships = cityAirportRelationshipsByIata.flatMap {
+      case (iata, relationships) =>
+        airportByIata.get(iata).map(a => (a.head.id, relationships))
+    }.toMap
     AirportSource.saveCityAirportRelationships(cityAirportRelationships)
     
     saveAirportRunways(rawAirportResult, runwayResult, airports)
@@ -239,7 +246,7 @@ object GeoDataGenerator extends App {
 
 
 
-  def generateAirportData(rawAirportResult : List[CsvAirport], runwayResult : Map[Int, List[Runway]], cities : List[City]) : (List[Airport], Map[Int, List[(City, Double)]]) = {
+  def generateAirportData(rawAirportResult : List[CsvAirport], runwayResult : Map[Int, List[Runway]], cities : List[City]) : (List[Airport], Map[String, List[(City, Double)]]) = {
     val removalAirportIatas = AdditionalLoader.loadRemovalAirportIatas()
 
     println(s">> ${removalAirportIatas.size} removal iatas")
@@ -323,10 +330,8 @@ object GeoDataGenerator extends App {
     }
 
     println("Added all cities!")
-    val airportByIata = airportResult.groupBy(_.iata)
-    val cityAirportRelationships = airportCityRelationships.flatMap {
-      case (iata, relationships) =>
-        airportByIata.get(iata).map(airports => (airports.head.id, relationships.toList))
+    val cityAirportRelationshipsByIata = airportCityRelationships.map {
+      case (iata, relationships) => (iata, relationships.toList)
     }.toMap
 
     println()
@@ -443,7 +448,7 @@ object GeoDataGenerator extends App {
 
     AirportStatsInit.initAirportStats()
 
-    (airports, cityAirportRelationships)
+    (airports, cityAirportRelationshipsByIata)
   }
 
 

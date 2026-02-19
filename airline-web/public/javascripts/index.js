@@ -26,7 +26,7 @@ const SESSION_SCRIPTS = [
 
 // Scripts loaded after successful login (game features)
 const POST_LOGIN_SCRIPTS = [
-    'plot-chartjs.js', 'airport.js', 'airplane.js', 'model-configuration.js',
+    'plot-chartjs.js', 'airport.js', 'airplane.js', 'model-config/index.js',
     'delegate.js', 'country.js', 'office.js', 'ranking.js', 'christmas.js',
     'bank.js', 'admin.js', 'oil.js', 'rivals.js', 'alliance.js', 'event.js',
     'search.js', 'profile.js', 'pending-action.js', 'table-utils.js',

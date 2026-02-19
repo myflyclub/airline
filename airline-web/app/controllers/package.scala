@@ -717,14 +717,15 @@ package object controllers {
           "toAirportId" -> link.to.id,
           "fromAirportCode" -> link.from.iata,
           "toAirportCode" -> link.to.iata,
-          "fromAirportCity" -> link.from.city,
-          "toAirportCity" -> link.to.city,
+//          "fromAirportCity" -> link.from.city,
+//          "toAirportCity" -> link.to.city,
           "airlineId" -> link.airline.id,
           "airlineName" -> link.airline.name,
           "distance" -> link.distance,
           "frequency" -> link.frequency,
           "rawQuality" -> link.rawQuality,
-          "computedQuality" -> link.computedQuality()
+          "computedQuality" -> link.computedQuality(),
+          "capacity" -> link.capacity
         )
 
         Json.obj(

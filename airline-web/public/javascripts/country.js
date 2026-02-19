@@ -180,7 +180,7 @@ function loadCountryDetails(countryCode) {
                 $.each(country.nationalAirlines, function(index, nationalAirline) {
                     var championRow = $("<div class='table-row clickable' data-link='rival'><div class='cell'><img src='/assets/images/icons/star.png' style='vertical-align:middle;'>" + getAirlineLogoImg(nationalAirline.airlineId) + "<span style='font-weight: bold;'>" + getAirlineLabelSpan(nationalAirline.airlineId, nationalAirline.airlineName) + "</span> (" + nationalAirline.passengerCount + " passengers, " + nationalAirline.loyaltyBonus + " loyalty bonus)</div></div>")
                     championRow.click(function() {
-                        showRivalsCanvas(nationalAirline.airlineId)
+                        Rivals.show(nationalAirline.airlineId)
                     })
                     $("#countryCanvas .nationalAirlines").append(championRow)
                 })
@@ -193,7 +193,7 @@ function loadCountryDetails(countryCode) {
                 $.each(country.partneredAirlines, function(index, partneredAirline) {
                     var championRow = $("<div class='table-row clickable' data-link='rival'><div class='cell'><img src='/assets/images/icons/hand-shake.png' style='vertical-align:middle;'>" + getAirlineLogoImg(partneredAirline.airlineId) + "<span style='font-weight: bold;'>" + getAirlineLabelSpan(partneredAirline.airlineId, partneredAirline.airlineName) + "</span> (" + partneredAirline.passengerCount + " passengers, " + partneredAirline.loyaltyBonus + " loyalty bonus)</div></div>")
                     championRow.click(function() {
-                        showRivalsCanvas(partneredAirline.airlineId)
+                        Rivals.show(partneredAirline.airlineId)
                     })
                     $("#countryCanvas .partneredAirlines").append(championRow)
                 })
@@ -206,7 +206,7 @@ function loadCountryDetails(countryCode) {
 	    		$.each(country.champions, function(index, champion) {
 	    		    var championRow = $("<div class='table-row clickable' data-link='rival'><div class='cell'>" + getRankingImg(champion.ranking) + getAirlineLogoImg(champion.airlineId) + "<span style='font-weight: bold;'>" + getAirlineLabelSpan(champion.airlineId, champion.airlineName) + "</span> (" + champion.passengerCount + " passengers)</div></div>")
 	    		    championRow.click(function() {
-                        showRivalsCanvas(champion.airlineId)
+                        Rivals.show(champion.airlineId)
                     })
     				$("#countryCanvas .countryDetailsChampion").append(championRow)
     			})

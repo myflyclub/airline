@@ -4,7 +4,7 @@ function adminAction(action, targetUserId, callback) {
 
 function adminActionWithData(action, targetUserId, data, callback) {
 	var url = "/admin-action/" + action + "/" + targetUserId
-	var selectedAirlineId =  $("#rivalDetails .adminActions").data("airlineId")
+	var selectedAirlineId =  $("#rivalDetailsModal .adminActions").data("airlineId")
 
 	$.ajax({
 		type: 'PUT',
@@ -13,7 +13,7 @@ function adminActionWithData(action, targetUserId, data, callback) {
 	    contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
 	    success: function(result) {
-            showRivalsCanvas(selectedAirlineId)
+            Rivals.show(selectedAirlineId)
             if (callback) {
                 callback()
             }
@@ -27,7 +27,7 @@ function adminActionWithData(action, targetUserId, data, callback) {
 
 function adminMultiAction(action, targetUserIds, callback) {
 	var url = "/admin-multi-action/" + action
-	var selectedAirlineId =  $("#rivalDetails .adminActions").data("airlineId")
+	var selectedAirlineId =  $("#rivalDetailsModal .adminActions").data("airlineId")
 
     var data = {
         "userIds" : targetUserIds
@@ -39,7 +39,7 @@ function adminMultiAction(action, targetUserIds, callback) {
 	    contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
 	    success: function(result) {
-	        showRivalsCanvas(selectedAirlineId)
+	        Rivals.show(selectedAirlineId)
 	        if (callback) {
                 callback()
             }
@@ -54,7 +54,7 @@ function adminMultiAction(action, targetUserIds, callback) {
 function invalidateImage(imageType) {
 	var url = "/admin/invalidate-image/" + activeAirportId +  "/" + imageType
 	$.ajax({
-		type: 'GET',
+		type: 'POST',
 		url: url,
 	    contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
@@ -90,23 +90,23 @@ function initAdminActions() {
 
 
 function showAdminActions(airline) {
-    $("#rivalDetails .adminActions").data("userId", airline.userId)
-    $("#rivalDetails .adminActions").data("airlineId", airline.id)
-    $("#rivalDetails .adminActions .username").text(airline.username)
-    $("#rivalDetails .adminActions .userId").text(airline.userId)
+    $("#rivalDetailsModal .adminActions").data("userId", airline.userId)
+    $("#rivalDetailsModal .adminActions").data("airlineId", airline.id)
+    $("#rivalDetailsModal .adminActions .username").text(airline.username)
+    $("#rivalDetailsModal .adminActions .userId").text(airline.userId)
 
     if (airline.userModifiers) {
-        $("#rivalDetails .adminActions .userModifiers").text(airline.userModifiers.join(";"))
+        $("#rivalDetailsModal .adminActions .userModifiers").text(airline.userModifiers.join(";"))
     } else {
-        $("#rivalDetails .adminActions .userModifiers").text('-')
+        $("#rivalDetailsModal .adminActions .userModifiers").text('-')
     }
     if (airline.airlineModifiers) {
-        $("#rivalDetails .adminActions .airlineModifiers").text(airline.airlineModifiers.join(";"))
+        $("#rivalDetailsModal .adminActions .airlineModifiers").text(airline.airlineModifiers.join(";"))
     } else {
-        $("#rivalDetails .adminActions .airlineModifiers").text('-')
+        $("#rivalDetailsModal .adminActions .airlineModifiers").text('-')
     }
-    $("#rivalDetails .adminActions .ips").empty()
-    $("#rivalDetails .adminActions .uuids").empty()
+    $("#rivalDetailsModal .adminActions .ips").empty()
+    $("#rivalDetailsModal .adminActions .uuids").empty()
     $.ajax({
         type: 'GET',
         url: "/admin/user-ips/" + airline.userId,
@@ -116,9 +116,9 @@ function showAdminActions(airline) {
             $.each(ips, function(index, ipEntry) {
                 var ip = ipEntry[0]
                 var occurrence = ipEntry[1]
-                $("#rivalDetails .adminActions .ips").append("<div style='padding-right : 10px; float: left' class='clickable' onclick='showAirlinesByIp(\"" + ip + "\")'>" + ip + "(" + occurrence + ")</div>")
+                $("#rivalDetailsModal .adminActions .ips").append("<div style='padding-right : 10px; float: left' class='clickable' onclick='showAirlinesByIp(\"" + ip + "\")'>" + ip + "(" + occurrence + ")</div>")
             })
-            $("#rivalDetails .adminActions .ips").append("<div style='clear : both;'></div>")
+            $("#rivalDetailsModal .adminActions .ips").append("<div style='clear : both;'></div>")
 
         },
         error: function(jqXHR, textStatus, errorThrown) {
@@ -135,9 +135,9 @@ function showAdminActions(airline) {
             $.each(result, function(index, entry) {
                 var uuid = entry[0]
                 var occurrence = entry[1]
-                $("#rivalDetails .adminActions .uuids").append("<div style='padding-right : 10px; float: left' class='clickable' onclick='showAirlinesByUuid(\"" + uuid + "\")'>" + uuid.substring(0, 8) + "(" + occurrence + ")</div>")
+                $("#rivalDetailsModal .adminActions .uuids").append("<div style='padding-right : 10px; float: left' class='clickable' onclick='showAirlinesByUuid(\"" + uuid + "\")'>" + uuid.substring(0, 8) + "(" + occurrence + ")</div>")
             })
-            $("#rivalDetails .adminActions .uuids").append("<div style='clear : both;'></div>")
+            $("#rivalDetailsModal .adminActions .uuids").append("<div style='clear : both;'></div>")
 
         },
         error: function(jqXHR, textStatus, errorThrown) {
@@ -165,7 +165,7 @@ function showAirlinesByIp(ip) {
                    modifiersSpan = "<span>-</span>"
                }
                $row.append("<div class='cell'><input type='checkbox' checked='checked' data-user-id='" + entry.userId + "' data-airline-id='" + entry.airlineId + "'></div>")
-               $row.append("<div class='cell clickable' onclick='loadRivalDetails(null," + entry.airlineId + "); closeModal($(\"#airlinesByUuidModal\"))'>" + getAirlineLogoImg(entry.airlineId) +  entry.airlineName + "</div>")
+               $row.append("<div class='cell clickable' onclick='Rivals.showDetails(null," + entry.airlineId + "); closeModal($(\"#airlinesByUuidModal\"))'>" + getAirlineLogoImg(entry.airlineId) +  entry.airlineName + "</div>")
                $row.append("<div class='cell'>" + (entry.hqAirport ? getAirportText(entry.hqAirport.city, entry.hqAirport.iata) : "-") + "</div>")
                $row.append("<div class='cell'>" + entry.username + getUserLevelImg(entry.userLevel) + "</div>")
                $row.append("<div class='cell'>" + entry.userStatus + "</div>")
@@ -201,7 +201,7 @@ function showAirlinesByUuid(uuid) {
                    modifiersSpan = "<span>-</span>"
                }
                 $row.append("<div class='cell'><input type='checkbox' checked='checked' data-user-id='" + entry.userId + "' data-airline-id='" + entry.airlineId + "'></div>")
-                $row.append("<div class='cell clickable' onclick='loadRivalDetails(null," + entry.airlineId + "); closeModal($(\"#airlinesByUuidModal\"))'>" + getAirlineLogoImg(entry.airlineId) +  entry.airlineName + "</div>")
+                $row.append("<div class='cell clickable' onclick='Rivals.showDetails(null," + entry.airlineId + "); closeModal($(\"#airlinesByUuidModal\"))'>" + getAirlineLogoImg(entry.airlineId) +  entry.airlineName + "</div>")
                 $row.append("<div class='cell'>" + (entry.hqAirport ? getAirportText(entry.hqAirport.city, entry.hqAirport.iata) : "-") + "</div>")
                 $row.append("<div class='cell'>" + entry.username + getUserLevelImg(entry.userLevel) + "</div>")
                 $row.append("<div class='cell'>" + entry.userStatus + "</div>")
@@ -221,36 +221,36 @@ function showAirlinesByUuid(uuid) {
 }
 
 function banWarning() {
-    adminAction("warn", $("#rivalDetails .adminActions").data("userId"))
+    adminAction("warn", $("#rivalDetailsModal .adminActions").data("userId"))
 }
 
 function ban() {
-    adminAction("ban", $("#rivalDetails .adminActions").data("userId"))
+    adminAction("ban", $("#rivalDetailsModal .adminActions").data("userId"))
 }
 function banAndReset() {
-    adminAction("ban-reset", $("#rivalDetails .adminActions").data("userId"))
+    adminAction("ban-reset", $("#rivalDetailsModal .adminActions").data("userId"))
 }
 function nerf() {
-    adminAction("nerf", $("#rivalDetails .adminActions").data("userId"))
+    adminAction("nerf", $("#rivalDetailsModal .adminActions").data("userId"))
 }
 function restore() {
-    adminAction("restore", $("#rivalDetails .adminActions").data("userId"))
+    adminAction("restore", $("#rivalDetailsModal .adminActions").data("userId"))
 }
 function banChat() {
-    adminAction("ban-chat", $("#rivalDetails .adminActions").data("userId"))
+    adminAction("ban-chat", $("#rivalDetailsModal .adminActions").data("userId"))
 }
 function setBannerWinner() {
-    adminActionWithData("set-banner-winner", $("#rivalDetails .adminActions").data("userId"),
+    adminActionWithData("set-banner-winner", $("#rivalDetailsModal .adminActions").data("userId"),
     {
-        "strength" : parseInt($("#rivalDetails .bannerLoyaltyBonus").val()),
-        "airlineId" : parseInt($("#rivalDetails .adminActions").data("airlineId")) //airline specific
+        "strength" : parseInt($("#rivalDetailsModal .bannerLoyaltyBonus").val()),
+        "airlineId" : parseInt($("#rivalDetailsModal .adminActions").data("airlineId")) //airline specific
     })
 }
 
 function setUserLevel() {
-    adminActionWithData("set-user-level", $("#rivalDetails .adminActions").data("userId"),
+    adminActionWithData("set-user-level", $("#rivalDetailsModal .adminActions").data("userId"),
     {
-        "level" : parseInt($("#rivalDetails .setUserLevel").val()),
+        "level" : parseInt($("#rivalDetailsModal .setUserLevel").val()),
     })
 }
 
@@ -266,15 +266,15 @@ function adminSetUsers(action, $modal) {
 }
 
 function invalidateCustomization() {
-    var airlineId = $("#rivalDetails .adminActions").data("airlineId")
+    var airlineId = $("#rivalDetailsModal .adminActions").data("airlineId")
     var url = "/admin/invalidate-customization/" + airlineId
     $.ajax({
-        type: 'GET',
+        type: 'POST',
         url: url,
         contentType: 'application/json; charset=utf-8',
         dataType: 'json',
         success: function(result) {
-            showRivalsCanvas(selectedAirlineId)
+            Rivals.show(selectedAirlineId)
         },
         error: function(jqXHR, textStatus, errorThrown) {
                 console.log(JSON.stringify(jqXHR));
@@ -284,19 +284,19 @@ function invalidateCustomization() {
 }
 
 function switchUser() {
-    adminAction("switch", $("#rivalDetails .adminActions").data("userId"), function() { loadUser(false)})
+    adminAction("switch", $("#rivalDetailsModal .adminActions").data("userId"), function() { loadUser(false)})
 }
 
 function promptAirlineMessage() {
-    var selectedAirlineId =  $("#rivalDetails .adminActions").data("airlineId")
-    var airline = loadedRivalsById[selectedAirlineId]
+    var selectedAirlineId =  $("#rivalDetailsModal .adminActions").data("airlineId")
+    var airline = Rivals.loadedById[selectedAirlineId]
     $('#sendAirlineMessageModal .airlineName').text(airline.name)
     $('#sendAirlineMessageModal .sendMessage').val('')
     $('#sendAirlineMessageModal').fadeIn(500)
 }
 
 function sendAirlineMessage() {
-    var selectedAirlineId = $("#rivalDetails .adminActions").data("airlineId")
+    var selectedAirlineId = $("#rivalDetailsModal .adminActions").data("airlineId")
     var url = "/admin/send-airline-message/" + selectedAirlineId
 
     var data = { "message" : $('#sendAirlineMessageModal .sendMessage').val() }
