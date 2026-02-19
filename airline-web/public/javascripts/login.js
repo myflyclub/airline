@@ -128,7 +128,8 @@ async function doPostLoginSetup(user) {
     if ($("#floatMessage").val()) {
         showFloatMessage($("#floatMessage").val())
     }
-    window.addEventListener('orientationchange', refreshMobileLayout)
+    window.addEventListener('orientationchange', mobileCheck);
+    window.addEventListener('resize', mobileCheck);
     $(window).scroll(function () {
         $('#floatBackButton').animate({ top: ($(window).scrollTop() + 100) + "px" }, { queue: false, duration: 350 });
     });

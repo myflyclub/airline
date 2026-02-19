@@ -85,7 +85,7 @@ export function toggleHeatmap() {
 export function showHeatmap() {
     const $panel = $('#heatmapControlPanel');
     $panel.data('cycleDelta', 0).css('display', 'flex');
-    const airlineId = window.rivalMapAirlineId || window.activeAirline?.id;
+    const airlineId = Rivals.mapAirlineId || window.activeAirline?.id;
     if (airlineId) updateHeatmap(airlineId);
 }
 
@@ -118,7 +118,7 @@ export function updateHeatmapArrows(minDelta, airlineId) {
 export function initHeatmapControls() {
     $(() => {
         $('#heatmapControlPanel input[name=heatmapType]').change(() => {
-            const aid = window.rivalMapAirlineId || window.activeAirline?.id;
+            const aid = Rivals.mapAirlineId || window.activeAirline?.id;
             if (aid) updateHeatmap(aid);
         });
     });

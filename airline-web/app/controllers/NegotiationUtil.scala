@@ -88,11 +88,11 @@ object NegotiationUtil {
     val fromAirportStats = AirportStatisticsCache.getAirportStatistics(airport.id).getOrElse(AirportStatistics(0, 0, 0, 0, 0, 0))
     val fromCongestion = fromAirportStats.congestion
     if (fromCongestion < 0.6) {
-      requirements.append(NegotiationRequirement(SLOT_CONTROLLED, 0, "Level 1 Coordination, no slot control"))
+      requirements.append(NegotiationRequirement(SLOT_CONTROLLED, 0, "Low congestion: Level 1 Coordination, no slot control"))
     } else if (fromCongestion <= 1.0) {
-      requirements.append(NegotiationRequirement(SLOT_CONTROLLED, 0.5, "Level 2 Coordination, partial slot control"))
+      requirements.append(NegotiationRequirement(SLOT_CONTROLLED, 0.5, "Moderate congestion: Level 2 Coordination, partial slot control"))
     } else {
-      requirements.append(NegotiationRequirement(SLOT_CONTROLLED, 1.5, "Level 3 Coordination, full slot control"))
+      requirements.append(NegotiationRequirement(SLOT_CONTROLLED, 1.5, "High congestion: Level 3 Coordination, full slot control"))
     }
 
     requirements.toList
@@ -185,11 +185,11 @@ object NegotiationUtil {
     val toAirportStats = AirportStatisticsCache.getAirportStatistics(newLink.to.id).getOrElse(AirportStatistics(0, 0, 0, 0, 0, 0))
     val toCongestion = toAirportStats.congestion
     if (toCongestion < Airport.CONGESTION_MODERATE.toDouble / 100) {
-      requirements.append(NegotiationRequirement(SLOT_CONTROLLED, 0, "No congestion! Level 1 Coordination, no slot control."))
+      requirements.append(NegotiationRequirement(SLOT_CONTROLLED, 0, "Low congestion: Level 1 Coordination, no slot control."))
     } else if (toCongestion <= Airport.CONGESTION_HIGH.toDouble / 100) {
-      requirements.append(NegotiationRequirement(SLOT_CONTROLLED, 0.5, "Moderate congestion! Level 2 Coordination, partial slot control."))
+      requirements.append(NegotiationRequirement(SLOT_CONTROLLED, 0.5, "Moderate congestion: Level 2 Coordination, partial slot control."))
     } else {
-      requirements.append(NegotiationRequirement(SLOT_CONTROLLED, 1.5, "High congestion! Level 3 Coordination, full slot control."))
+      requirements.append(NegotiationRequirement(SLOT_CONTROLLED, 1.5, "High congestion: Level 3 Coordination, full slot control."))
     }
 
     if (airline.getReputation() < STARTUP_MAX_REPUTATION) {

@@ -65,7 +65,7 @@ function refreshTopBar(airline) {
 	//desktop
     const airlineNext = airline.gradeCeiling > 10e12 ? "∞" : commaSeparateNumber(airline.gradeCeiling)
 	const reputationText = "Reputation: " + airline.reputation.toFixed(0) + " (" + airline.gradeDescription + ") Next Grade: " + airlineNext
-	var $starBar = $(getGradeStarsImgs(airline.gradeLevel - 2))
+	var $starBar = $(getGradeStarsImgs(airline.gradeLevel - 3))
 	$(".reputationStars").append($starBar)
 	addTooltip($("#topReputationStars"), reputationText, {'top' : 0, 'width' : '350px', 'white-space' : 'nowrap'})
 
@@ -282,7 +282,7 @@ function refreshLinkDetails(linkId) {
 	    	    success: function(linkConsumptions) {
 	    	    	$("#linkCompetitons .data-row").remove()
 	    	    	$.each(linkConsumptions, function(index, linkConsumption) {
-    	    			var row = $("<div class='table-row data-row clickable' onclick='navigateTo(/rivals/" + linkConsumption.id + "'><div style='display: table-cell;'>" + linkConsumption.airlineName
+    	    			var row = $("<div class='table-row data-row clickable' onclick='navigateTo(\"/rivals/" + linkConsumption.id + "\")'><div style='display: table-cell;'>" + linkConsumption.airlineName
                                   		    	    				+ "</div><div style='display: table-cell;'>" + toLinkClassValueString(linkConsumption.price, "$")
                                   		    	    				+ "</div><div style='display: table-cell; text-align: right;'>" + toLinkClassValueString(linkConsumption.capacity)
                                   		    	    				+ "</div><div style='display: table-cell; text-align: right;'>" + linkConsumption.quality
@@ -1472,7 +1472,7 @@ function createLink() {
                     if (isSuccessful) {
                         negotiationAnimation(savedLink, refreshSavedLink, savedLink)
                     } else {
-                        negotiationAnimation(savedLink, updateTopBarDelegates, activeAirline.id)
+                        negotiationAnimation(savedLink, updateAirlineInfo, activeAirline.id)
                     }
                 } else {
                     refreshSavedLink(savedLink)
@@ -2857,7 +2857,7 @@ function refreshSavedLink(savedLink) {
 	setActiveDiv($('#linkDetails'))
     hideActiveDiv($('#extendedPanel #airplaneModelDetails'))
 	refreshPanels(activeAirline.id) //refresh panels would update link details
-
+	updateTopBarDelegates(activeAirline.id)
 
 	if ($('#linksCanvas').is(':visible')) { //reload the links table then
 		loadLinksTable(null, true)

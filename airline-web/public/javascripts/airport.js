@@ -89,6 +89,10 @@ async function showAirportDetails(airportId) {
     $('#main-tabs').children('.left-tab').children('span').removeClass('selected')
     checkTutorial('airport')
 
+    if (Object.keys(loadedCountriesByCode).length === 0) {
+        await loadAllCountries()
+    }
+
     const airportDetailed = await loadAirportDetails(airportId);
     populateAirportDetails(airportDetailed)
     updateAirportDetails(airportDetailed)
@@ -202,12 +206,15 @@ if (activeAirline) {
             const baseType = targetBase.headquarter ? "Headquarters" : "Base"
             // const upkeepByLevel = baseDetails.targetBase.upkeepByLevel
 
-            const countryTitle = loadedCountriesByCode[airport.countryCode].CountryTitle
-            updateAirlineTitle(countryTitle, $("#airportCanvas img.airlineTitleIcon"), $("#airportCanvas .airlineTitle"))
+            const countryData = loadedCountriesByCode[airport.countryCode]
+            const countryTitle = countryData.CountryTitle
+            if (countryTitle) {
+                updateAirlineTitle(countryTitle, $("#airportCanvas img.airlineTitleIcon"), $("#airportCanvas .airlineTitle"))
+            }
 
             var $relationshipDetailsIcon = $("#airportCanvas .openCountryRelationship")
-            $relationshipDetailsIcon.data("relationship", loadedCountriesByCode[airport.countryCode].countryRelationship)
-            $relationshipDetailsIcon.data("title", countryTitle.title)
+            $relationshipDetailsIcon.data("relationship", countryData.countryRelationship)
+            $relationshipDetailsIcon.data("title", countryTitle ? countryTitle.title : "")
             $relationshipDetailsIcon.data("countryCode", airport.countryCode)
 
             if (!baseDetails.baseScale) { //new base
@@ -727,7 +734,7 @@ function updateFacilityList(statistics) {
         row.append("<div class='cell' style='text-align: right;'>" + getCountryFlagImg(base.airlineCountryCode) + "</div>")
         row.append("<div class='cell' style='text-align: right;'>" + base.scale + "</div>")
         row.click(function () {
-            showRivalsCanvas(base.airlineId)
+            Rivals.show(base.airlineId)
         })
         row.append("<div class='cell' style='text-align: right;'>" + linkCount + "</div>")
         row.append("<div class='cell' style='text-align: right;'>" + commaSeparateNumber(passengers) + "</div>")
@@ -759,7 +766,7 @@ function updateFacilityList(statistics) {
         row.append("<div class='cell' style='text-align: right;'>" + commaSeparateNumber(loungeStats.allianceVisitors) + "</div>")
         row.click(
             function () {
-                showRivalsCanvas(lounge.airlineId)
+                Rivals.show(lounge.airlineId)
             })
 
         $('#airportDetailsLoungeList').append(row)
@@ -857,7 +864,7 @@ function updateAirportLoyalistDetails(airport) {
                 var deltaText = (deltaEntry.passengers >= 0) ? ("+" + deltaEntry.passengers) : deltaEntry.passengers
                 var $row = $('<div class="table-row clickable" onClick="navigateTo(/rivals/' + deltaEntry.airlineId + '"><div class="cell">' + getAirlineSpan(airlineId, airlineName) + '</div><div class="cell" style="text-align:right">' + deltaText + '</div></div>')
                 $row.click(function () {
-                    showRivalsCanvas(deltaEntry.airlineId)
+                    Rivals.show(deltaEntry.airlineId)
                 })
                 $table.append($row)
             })

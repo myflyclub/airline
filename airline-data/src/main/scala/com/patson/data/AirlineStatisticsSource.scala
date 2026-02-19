@@ -112,6 +112,48 @@ object AirlineStatisticsSource {
     }
   }
 
+  def loadAirlineStatsForAirlineIds(airlineIds: List[Int]): List[AirlineStat] = {
+    if (airlineIds.isEmpty) {
+      return List.empty
+    }
+    val connection = Meta.getConnection()
+    val placeholders = airlineIds.map(_ => "?").mkString(",")
+    val queryString = s"SELECT * FROM $AIRLINE_STATISTICS_TABLE WHERE airline IN ($placeholders)"
+    try {
+      val preparedStatement = connection.prepareStatement(queryString)
+      for (i <- airlineIds.indices) {
+        preparedStatement.setInt(i + 1, airlineIds(i))
+      }
+      val resultSet = preparedStatement.executeQuery()
+      val airlineStats = ListBuffer[AirlineStat]()
+      while (resultSet.next()) {
+        airlineStats += AirlineStat(
+          resultSet.getInt("airline"),
+          resultSet.getInt("cycle"),
+          Period(resultSet.getInt("period")),
+          resultSet.getInt("tourists"),
+          resultSet.getInt("elites"),
+          resultSet.getInt("business"),
+          resultSet.getInt("total"),
+          resultSet.getInt("codeshares"),
+          resultSet.getDouble("rask"),
+          resultSet.getDouble("cask"),
+          resultSet.getDouble("satisfaction"),
+          resultSet.getDouble("load_factor"),
+          resultSet.getDouble("on_time"),
+          resultSet.getInt("cash_on_hand"),
+          resultSet.getDouble("eps"),
+          resultSet.getInt("link_count"),
+          resultSet.getInt("rep_total"),
+          resultSet.getInt("rep_leaderboards")
+        )
+      }
+      airlineStats.toList
+    } finally {
+      connection.close()
+    }
+  }
+
   def loadAirlineStat(airlineId: Int, cycle: Int): Option[AirlineStat] = {
     val airlineStats = loadAirlineStatsByCriteria(List(("airline", airlineId), ("cycle", cycle)))
     airlineStats.headOption

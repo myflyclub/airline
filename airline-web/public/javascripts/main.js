@@ -33,10 +33,9 @@ function registerEscape() {
     });
 }
 
-
 function mobileCheck() {
 	if (isMobileDevice()) {
-		refreshMobileLayout()
+        $("#navPrimaryToggle").show();
 		currentAnimationStatus = false //turn off animation by default
         registernavPrimaryToggle()
         registerMobileGestures()
@@ -62,7 +61,7 @@ function setNavPrimaryState(expand) {
 }
 
 function registernavPrimaryToggle() {
-    $('#navPrimaryToggle').off('click').on('click', function() {
+    $('#navPrimaryToggle').off('click').on('click', function () {
         const isExpanded = $(this).attr('aria-expanded') === 'true';
         setNavPrimaryState(!isExpanded);
     });
@@ -93,17 +92,7 @@ function registerMobileGestures() {
 }
 
 function isMobileDevice() {
-    return window.screen.availWidth < 1024
-}
-
-function refreshMobileLayout() {
-	if (window.screen.availWidth < window.screen.availHeight) { //only toggle layout change if it's landscape
-		$("#reputationLevel").hide()
-    } else {
-        $("#reputationLevel").show()
-	}
-    updateLinksInfo()
-    AirlineMap.updateAirportMarkers(activeAirline)
+    return window.innerWidth< 1024
 }
 
 function showFloatMessage(message, timeout) {
@@ -168,7 +157,7 @@ var currentTickTimer
 var tickTimerCreator
 
 function updateTime(cycle, fraction, cycleDurationEstimation) {
-	$(".currentTime").attr("title", "Day " + Math.floor(cycle / 48) + " & " + cycle % 48 + " cycles")
+	$(".currentTime").attr("data-tooltip", "Year " + Math.floor(cycle / 48) + " & " + cycle % 48 + " weeks | One year is 48 weeks or ~ 24 hours in realtime; one week lasts ~ 30min.")
 	gameTimeStart = (cycle + fraction) * totalmillisecPerWeek
 
     var initialDurationTillNextTick

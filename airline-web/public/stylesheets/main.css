@@ -302,7 +302,7 @@ li.row, div.table-row {
         position: fixed;
         bottom: 4px;
         left: 4px;
-        z-index: 3;
+        z-index: 99;
         width: 48px;
         height: 48px;
         margin: 0;
@@ -447,6 +447,7 @@ li.row, div.table-row {
 }
 
 #detailsPanel, #extendedPanel {
+    margin-top: 2rem;
     background-color: var(--background-1);
 }
 
@@ -908,6 +909,10 @@ button, .button, .ajax-file-upload {
     border-color: transparent;
     background-color: transparent;
 }
+.button.tight {
+    line-height: 1.2rem;
+    padding: 2px 6px;
+}
 .button img {
     vertical-align: middle;
 }
@@ -1113,7 +1118,7 @@ div.section, #topBar > div {
     position: relative;
     z-index: 11;
     margin: 15% auto 0;
-    max-width: 96% !important;
+    max-width: 96%;
     width: 100%;
     display: block;
     overflow: hidden;
@@ -2601,4 +2606,135 @@ i, .italic {
    Airplane Config (Svelte Components)
    ======================================== */
 
-.chart-container.svelte-16dxm5m{height:100%;display:flex;flex-direction:column}.empty-chart.svelte-16dxm5m{display:flex;justify-content:center;align-items:center;height:180px;border-radius:4px;color:#333}.svg-btn.svelte-udovpc.svelte-udovpc{margin:0 2px;background:none;color:inherit;border:none;padding:0;font:inherit;cursor:pointer;width:24px;height:20px;transition:opacity .2s}.svg-btn.svelte-udovpc.svelte-udovpc:hover:enabled{opacity:.4}.svg-btn.svelte-udovpc svg.svelte-udovpc{width:auto;height:100%}label.svelte-udovpc.svelte-udovpc{width:72px;text-transform:capitalize}input.svelte-udovpc.svelte-udovpc{width:44px}.inputs.svelte-udovpc.svelte-udovpc{display:flex;flex-direction:column;padding:8px 0 4px;gap:2px}.inputs.svelte-udovpc div.svelte-udovpc{display:flex;align-items:baseline}.inputs.svelte-udovpc input.svelte-udovpc{margin:4px 0 0}.planeDiagram.svelte-udovpc.svelte-udovpc{display:flex;flex-direction:column;justify-content:flex-start;border:1px solid #ccc;overflow:hidden;padding:0 8px 0 16px;border-radius:80px 40px 40px 80px}.seat-group.svelte-udovpc.svelte-udovpc{display:flex;flex-wrap:wrap;flex-direction:column;justify-content:end;align-content:start;width:auto;height:100%}.seat-group.top.svelte-udovpc.svelte-udovpc{padding:0;justify-content:end}.seat-group.center.svelte-udovpc.svelte-udovpc{padding:0;justify-content:center}.seat-group.bottom.svelte-udovpc.svelte-udovpc{padding:0;justify-content:start}.group-business.svelte-udovpc.svelte-udovpc{margin:0 6px;display:flex;flex-direction:column;flex-wrap:wrap;height:100%;align-content:start}.top.svelte-udovpc .group-business.svelte-udovpc{justify-content:end}.center.svelte-udovpc .group-business.svelte-udovpc{justify-content:center}.bottom.svelte-udovpc .group-business.svelte-udovpc{justify-content:start}.seat.svelte-udovpc.svelte-udovpc{flex:0 0 auto;box-sizing:border-box;min-width:4px;min-height:6px;border:.5px solid #222;margin:.5px 0 .5px 4px}.economy.svelte-udovpc.svelte-udovpc{background-color:#deb887;width:4px;height:6px}.business.svelte-udovpc.svelte-udovpc{background-color:silver;width:4px;height:9px;margin:1px 0 1px 5px}.first.svelte-udovpc.svelte-udovpc{background-color:gold;width:9px;height:11px;margin:1px 0 1px 3px}.aisle.svelte-udovpc.svelte-udovpc{flex:0 0 auto;height:7px;width:100%;background-color:#daa520;opacity:.15}
+/* ========================================
+   Stock Market Dropdowns
+   ======================================== */
+.smDropdown {
+    position: relative;
+    display: inline-block;
+}
+.smDropdownToggle {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+}
+.smDropdownMenu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 100;
+    min-width: 140px;
+    background: var(--background-1);
+    border: 1px solid var(--background-2);
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    padding: 4px 0;
+}
+.smDropdown.open .smDropdownMenu {
+    display: block;
+}
+.smDropdownItem {
+    padding: 5px 12px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.smDropdownItem:hover {
+    background: var(--background-2);
+}
+.smDropdownItem.active {
+    font-weight: bold;
+}
+.smDropdownCheckItem {
+    padding: 4px 12px;
+    cursor: pointer;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.smDropdownCheckItem:hover {
+    background: var(--background-2);
+}
+
+.chart-container.svelte-16dxm5m{height:100%;display:flex;flex-direction:column}.empty-chart.svelte-16dxm5m{display:flex;justify-content:center;align-items:center;height:180px;border-radius:4px;color:#333}
+
+/* -------------------------------------------------------------------------
+   AircraftConfig module styles (replaces Svelte-scoped .svelte-udovpc rules)
+   All rules scoped under .aircraft-config-view to avoid collisions.
+   ------------------------------------------------------------------------- */
+.aircraft-config-view .svg-btn {
+    margin: 0 2px;
+    background: none;
+    color: inherit;
+    border: none;
+    padding: 0;
+    font: inherit;
+    cursor: pointer;
+    width: 24px;
+    height: 20px;
+    transition: opacity .2s;
+}
+.aircraft-config-view .svg-btn:hover:enabled { opacity: .4; }
+.aircraft-config-view .svg-btn svg { width: auto; height: 100%; }
+.aircraft-config-view .inputs label { width: 72px; text-transform: capitalize; }
+.aircraft-config-view .inputs input { width: 44px; }
+.aircraft-config-view .inputs {
+    display: flex;
+    flex-direction: column;
+    padding: 8px 0 4px;
+    gap: 2px;
+}
+.aircraft-config-view .inputs div { display: flex; align-items: baseline; }
+.aircraft-config-view .inputs input { margin: 4px 0 0; }
+.aircraft-config-view .planeDiagram {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    border: 1px solid #ccc;
+    overflow: hidden;
+    padding: 0 8px 0 16px;
+    border-radius: 80px 40px 40px 80px;
+}
+.aircraft-config-view .seat-group {
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: column;
+    justify-content: end;
+    align-content: start;
+    width: auto;
+    height: 100%;
+}
+.aircraft-config-view .seat-group.top    { padding: 0; justify-content: end; }
+.aircraft-config-view .seat-group.center { padding: 0; justify-content: center; }
+.aircraft-config-view .seat-group.bottom { padding: 0; justify-content: start; }
+.aircraft-config-view .group-business {
+    margin: 0 6px;
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    height: 100%;
+    align-content: start;
+}
+.aircraft-config-view .top    .group-business { justify-content: end; }
+.aircraft-config-view .center .group-business { justify-content: center; }
+.aircraft-config-view .bottom .group-business { justify-content: start; }
+.aircraft-config-view .seat {
+    flex: 0 0 auto;
+    box-sizing: border-box;
+    min-width: 4px;
+    min-height: 6px;
+    border: .5px solid #222;
+    margin: .5px 0 .5px 4px;
+}
+.aircraft-config-view .economy  { background-color: #deb887; width: 4px;  height: 6px; }
+.aircraft-config-view .business { background-color: silver;   width: 4px;  height: 9px;  margin: 1px 0 1px 5px; }
+.aircraft-config-view .first    { background-color: gold;     width: 9px;  height: 11px; margin: 1px 0 1px 3px; }
+.aircraft-config-view .aisle {
+    flex: 0 0 auto;
+    height: 7px;
+    width: 100%;
+    background-color: #daa520;
+    opacity: .15;
+}

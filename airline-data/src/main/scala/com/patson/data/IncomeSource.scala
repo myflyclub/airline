@@ -360,6 +360,36 @@ object IncomeSource {
     preparedStatement
   }
   
+  /**
+   * Used for rivals
+   */
+  def loadStockPriceHistory(airlineIds: List[Int]): List[(Int, Int, Int, Double, Long)] = {
+    if (airlineIds.isEmpty) return List.empty
+    val connection = Meta.getConnection()
+    val placeholders = airlineIds.map(_ => "?").mkString(",")
+    val queryString = s"SELECT airline, cycle, period, stock_price, total_value FROM $INCOME_TABLE WHERE airline IN ($placeholders) ORDER BY cycle"
+    try {
+      val preparedStatement = connection.prepareStatement(queryString)
+      for (i <- airlineIds.indices) {
+        preparedStatement.setInt(i + 1, airlineIds(i))
+      }
+      val resultSet = preparedStatement.executeQuery()
+      val results = ListBuffer[(Int, Int, Int, Double, Long)]()
+      while (resultSet.next()) {
+        results += ((
+          resultSet.getInt("airline"),
+          resultSet.getInt("cycle"),
+          resultSet.getInt("period"),
+          resultSet.getDouble("stock_price"),
+          resultSet.getLong("total_value")
+        ))
+      }
+      results.toList
+    } finally {
+      connection.close()
+    }
+  }
+
   object DetailType extends Enumeration {
     type Type = Value
     val AIRPORT, AIRLINE, AIRPLANE = Value

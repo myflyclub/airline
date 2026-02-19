@@ -234,7 +234,7 @@
 			</div>
 			<!-- end live-chat -->
 
-        <button id="navPrimaryToggle" title="Toggle mobile nav collapse" aria-controls="navPrimary" aria-expanded="false" style="display: none;">
+        <button id="navPrimaryToggle" title="Toggle mobile nav collapse" aria-controls="navPrimary" aria-expanded="false">
             <span class="icon-open" aria-hidden="true" style="display: inline-block;">
                 <span style="display:block; width: 20px; height: 2px; background-color: var(--text-color); border-radius:2px; margin-bottom:3px;"></span>
                 <span style="display:block; width: 20px; height: 2px; background-color: var(--text-color); border-radius:2px; margin-bottom:3px;"></span>
@@ -920,7 +920,7 @@
 									</div>
 									<button type="button" class="button add ml-0" onclick="promptBuyNewAirplane($('#airplaneModelDetails .selectedModel').val(), true, $('#planLinkFromAirportId').val())">Purchase</button>
 									<button type="button" class="button" onclick="showAirplaneBaseFromPlanLink($('#airplaneModelDetails .selectedModel').val())">Base</button>
-									<button type="button" class="button ml-0" onclick="showAirplaneModelConfigurationsFromPlanLink($('#airplaneModelDetails .selectedModel').val())">Config</button>
+									<button type="button" class="button ml-0" onclick="AircraftConfig.showFromPlanLink($('#airplaneModelDetails .selectedModel').val())">Config</button>
 									<input type="hidden" class="selectedModel"/>
 								</div>
 							</div>
@@ -2091,7 +2091,7 @@
 								<div class="flex-container-width-half gap-2 pt-2">
 									<div class="button add" onclick="promptBuyNewAirplane($('#airplaneCanvas .selectedModel').val(), false)">Purchase</div>
 									<div class="button" onclick="showAirplaneBase($('#airplaneCanvas .selectedModel').val())">Base</div>
-									<div class="button" onclick="showAirplaneModelConfigurations($('#airplaneCanvas .selectedModel').val())">Config</div>
+									<div class="button" onclick="AircraftConfig.show($('#airplaneCanvas .selectedModel').val())">Config</div>
 									<div class="button" onclick="showAllAirplaneInventory($('#airplaneCanvas .selectedModel').val())">Inventory</div>
 								</div>
 							</div>
@@ -3427,44 +3427,52 @@
 					</div>
 				</div>
 	<!--   			end ranking canvas -->
-				<div id="rivalsCanvas" class="canvas" style="height: 100%; display: none;">
-					<div class="mainPanel">
-						<div class="section tight">
-							<div style="height: 20px; display: flex;">
-                                <span id="rivalIdSortButton" data-sort-property="id" data-sort-order="descending" class="adminActions" title="Sort by created date"
-                                      onclick="toggleRivalsTableSortOrder($(this))" style="vertical-align: text-bottom">
-									<img src='@routes.Assets.versioned("/images/icons/clock-frame.png")' class="img-button">
-								</span>
-								<input type="checkbox" id="hideInactive" onchange="toggleHideInactive(this.checked)" checked/><span class="label">Hide Inactive Airlines</span>
-								<input type="checkbox" id="hideNonPlayerAirlines" onchange="toggleHideNonPlayerAirlines(this.checked)"/><span class="label">Hide Non-Player Airlines</span>
+				<div id="rivalsCanvas" class="canvas" style="display: none; width: 100%; flex-direction: column; height: 100%;">
+					<!-- Market chart + ticker -->
+					<div style="width: 100%; height: min-content; flex-shrink: 0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 4px 0;">
+						<div class="smDropdown" id="rivalsPeriodDropdown">
+							<button class="button smDropdownToggle" onclick="Rivals.toggleDropdown(this)"><span class="smDropdownLabel">Week</span> &#9662;</button>
+							<div class="smDropdownMenu">
+								<div class="smDropdownItem active" data-value="WEEKLY" onclick="Rivals.selectPeriod('WEEKLY', this)">Week</div>
+								<div class="smDropdownItem" data-value="QUARTER" onclick="Rivals.selectPeriod('QUARTER', this)">Quarter</div>
+								<div class="smDropdownItem" data-value="YEAR" onclick="Rivals.selectPeriod('YEAR', this)">Year</div>
 							</div>
-							<div class="table-container-x">
-								<div id="rivalsTableSortHeader" class="table data" style="width: 100%; height: 20px; min-width: 500px;">
-									<div class="table-header">
-										<div class="cell clickable" style="width: 5%" data-sort-property="loginStatus" data-sort-order="ascending" onclick="toggleRivalsTableSortOrder($(this))">&nbsp;</div>
-										<div class="cell clickable" style="width: 35%" data-sort-property="name" data-sort-order="ascending" onclick="toggleRivalsTableSortOrder($(this))">Name</div>
-										<div class="cell clickable" style="width: 30%" data-sort-property="headquartersCity" data-sort-order="ascending" onclick="toggleRivalsTableSortOrder($(this))">Headquarters</div>
-										<div class="cell clickable selected" style="width: 15%" align="right" data-sort-property="reputation" data-sort-order="descending" onclick="toggleRivalsTableSortOrder($(this))">Reputation</div>
-										<div class="cell clickable" style="width: 15%" align="right" data-sort-property="baseCount" data-sort-order="descending" onclick="toggleRivalsTableSortOrder($(this))">Bases</div>
-									</div>
-								</div>
-								<div class="table-container-y" style="min-width: 500px;">
-									<div id="rivalsTable" class="table data">
-										<div class="table-header">
-											<div class="cell" style="width: 5%; border-bottom: none;"></div>
-											<div class="cell" style="width: 35%; border-bottom: none;"></div>
-											<div class="cell" style="width: 30%; border-bottom: none;"></div>
-											<div class="cell" style="width: 15%; border-bottom: none;"></div>
-											<div class="cell" style="width: 15%; border-bottom: none;"></div>
-										</div>
-									</div>
-								</div>
+						</div>
+						<div class="smDropdown" id="rivalsMetricDropdown">
+							<button class="button smDropdownToggle" onclick="Rivals.toggleDropdown(this)"><span class="smDropdownLabel">Stock Price</span> &#9662;</button>
+							<div class="smDropdownMenu">
+								<div class="smDropdownItem active" data-value="price" onclick="Rivals.selectMetric('price', this)">Stock Price</div>
+								<div class="smDropdownItem" data-value="totalValue" onclick="Rivals.selectMetric('totalValue', this)">Total Value</div>
+								<div class="smDropdownItem" data-value="reputation" onclick="Rivals.selectMetric('reputation', this)">Reputation</div>
+							</div>
+						</div>
+						<div class="smDropdown" id="rivalsTypeDropdown">
+							<button class="button smDropdownToggle" onclick="Rivals.toggleDropdown(this)"><span class="smDropdownLabel">Airline Type</span> &#9662;</button>
+							<div class="smDropdownMenu" id="rivalsTypeFilter"></div>
+						</div>
+					</div>
+					<div id="rivalsChartContainer" style="width: 100%; flex: 1; min-height: 200px; position: relative;"></div>
+					<div style="width: 100%; flex-shrink: 0; max-height: 35%; overflow-y: auto;">
+						<div class="table data tight" id="rivalsTicker">
+							<div class="table-header">
+								<div class="cell" style="width: 3%;"><img src="/assets/images/icons/magnifier.png" data-tooltip="View a rival"></div>
+								<div class="cell" style="width: 3%;"><input type="checkbox" checked onclick="Rivals.toggleAll(this.checked)" data-tooltip="Select / deselect all" style="display: block; margin: auto;"></div>
+								<div class="cell clickable" style="width: 18%;" data-sort-property="name" data-sort-order="ascending" onclick="Rivals.toggleTickerSortOrder($(this))">Airline</div>
+								<div class="cell clickable" style="width: 11%;" data-sort-property="airlineType" data-sort-order="ascending" onclick="Rivals.toggleTickerSortOrder($(this))">Type</div>
+								<div class="cell clickable" style="width: 13%;" data-sort-property="alliance" data-sort-order="ascending" onclick="Rivals.toggleTickerSortOrder($(this))">Alliance</div>
+								<div class="cell clickable selected" style="width: 11%;" align="right" data-sort-property="currentPrice" data-sort-order="descending" onclick="Rivals.toggleTickerSortOrder($(this))">Price</div>
+								<div class="cell clickable" style="width: 11%;" align="right" data-sort-property="changePct" data-sort-order="descending" onclick="Rivals.toggleTickerSortOrder($(this))">Change</div>
+								<div class="cell clickable" style="width: 14%;" align="right" data-sort-property="totalValue" data-sort-order="descending" onclick="Rivals.toggleTickerSortOrder($(this))">Total Value</div>
+								<div class="cell clickable" style="width: 11%;" align="right" data-sort-property="reputation" data-sort-order="descending" onclick="Rivals.toggleTickerSortOrder($(this))">Reputation</div>
 							</div>
 						</div>
 					</div>
-
-					<div id="rivalDetails" class="sidePanel vertical-group" style="display: none;">
-						<div class="section" style="display: flex; flex-wrap: wrap; gap: 8px;">
+				</div>
+	<!--   			end rivals canvas -->
+				<div id="rivalDetailsModal" class="modal">
+					<div class="modal-content" style="width: 900px; max-height: 85vh; overflow-y: auto;">
+						<span class="close" onclick="closeModal($('#rivalDetailsModal'))">&times;</span>
+						<div style="display: flex; flex-wrap: wrap; gap: 8px;">
 							<div style="min-width: 200px; flex: 1;">
 								<div class="airlineGrade"></div>
 								<h3 class="m-0"><span class="airlineName"></span></h3>
@@ -3493,8 +3501,8 @@
 									</div>
 								</div>
 								<div>
-									<button class="button" onclick="showRivalMap()">Flight Map</button>
-									<button class="button" onclick="showRivalHistory()">Recent Activities</button>
+									<button class="button" onclick="Rivals.showMap()">Flight Map</button>
+									<button class="button" onclick="Rivals.showHistory()">Recent Activities</button>
 								</div>
 
 								<div class="adminActions py-2" style="display: none;">
@@ -3555,7 +3563,7 @@
 								</div>
 							</div>
 						</div>
-						<div class="section flex-container-width-half">
+						<div class="flex-container-width-half">
 							<div style="min-width: 200px;">
 								<h4>Airline Headquarters</h4>
 								<div style="position: relative; height: 150px; width: 100%" class="headquartersMap"></div>
@@ -3567,7 +3575,7 @@
 								</div>
 							</div>
 						</div>
-						<div class="section tight" style="display: flex; flex-wrap: wrap; gap: 8px;">
+						<div class="tight" style="display: flex; flex-wrap: wrap; gap: 8px;">
 							<div style="min-width: 200px; flex: 1;">
 								<h4>National Airline of</h4>
 								<div class="table data nationalAirlineCountryList" style="width: 100%;">
@@ -3612,14 +3620,14 @@
 								</div>
 							</div>
 						</div>
-						<div class="section tight">
+						<div class="tight">
 							<h4>Routes</h4>
 							<div class="table data" style="width: 100%; height: 20px;">
 								<div class="table-header">
-									<div class="cell clickable" style="width: 25%" data-sort-property="fromAirportCity" data-sort-order="ascending" onclick="toggleRivalLinksTableSortOrder($(this))">From</div>
-									<div class="cell clickable" style="width: 25%" data-sort-property="toAirportCity" data-sort-order="ascending" onclick="toggleRivalLinksTableSortOrder($(this))">To</div>
-									<div class="cell clickable" style="width: 25%" text-align="right" data-sort-property="distance" data-sort-order="descending" onclick="toggleRivalLinksTableSortOrder($(this))">Distance</div>
-									<div class="cell clickable" style="width: 25%" text-align="right" data-sort-property="totalCapacity" data-sort-order="descending" onclick="toggleRivalLinksTableSortOrder($(this))">Capacity</div>
+									<div class="cell clickable" style="width: 25%" data-sort-property="fromAirportCity" data-sort-order="ascending" onclick="Rivals.toggleLinksSortOrder($(this))">From</div>
+									<div class="cell clickable" style="width: 25%" data-sort-property="toAirportCity" data-sort-order="ascending" onclick="Rivals.toggleLinksSortOrder($(this))">To</div>
+									<div class="cell clickable" style="width: 25%" text-align="right" data-sort-property="distance" data-sort-order="descending" onclick="Rivals.toggleLinksSortOrder($(this))">Distance</div>
+									<div class="cell clickable" style="width: 25%" text-align="right" data-sort-property="totalCapacity" data-sort-order="descending" onclick="Rivals.toggleLinksSortOrder($(this))">Capacity</div>
 								</div>
 							</div>
 							<div style="max-height: 600px; overflow: auto;">
@@ -5156,9 +5164,9 @@
 				<div class="table-row seatConfiguration overflow-y-auto">
 					<div class="cell"><h5>Seat configuration:</h5></div>
 					<div class="cell no-highlight" style="overflow: visible; display: flex; align-items: center; margin-top: 4px;">
-                        <a style="font-size:20px;" class='button' onclick="switchAirplaneConfigurationOption($('#buyAirplaneModal'), -1)">⇤</a>
-						<div class="configuration-options" style="height: 24px; width: 80%;"></div>
-                        <a style="font-size:20px;" class='button' onclick="switchAirplaneConfigurationOption($('#buyAirplaneModal'), 1)">⇥</a>
+                        <a style="font-size:20px;" class='button tight' onclick="switchAirplaneConfigurationOption($('#buyAirplaneModal'), -1)">⇤</a>
+						<div class="configuration-options" style="height: 30px; width: auto; min-width: 100px;"></div>
+                        <a style="font-size:20px;" class='button tight' onclick="switchAirplaneConfigurationOption($('#buyAirplaneModal'), 1)">⇥</a>
 					</div>
 				</div>
 			</div>
@@ -5326,7 +5334,7 @@
 				<p id="configuration-warning"><i>Add more configurations to switch them here</i></p>
 				<div class="configuration-edit flex-row" style="display:none">
 					<img src='@routes.Assets.versioned("/images/icons/arrow-180.png")' class='button' style="vertical-align: middle;" onclick="switchAirplaneConfigurationOption($('#ownedAirplaneDetail'), -1)"/>
-					<div class="configuration-options" style="display : inline-block; width: 80%"></div>
+					<div class="configuration-options" style="height: 24px; width: auto; min-width: 80px;"></div>
 					<img src='@routes.Assets.versioned("/images/icons/arrow.png")' class='button' style="vertical-align: middle;" onclick="switchAirplaneConfigurationOption($('#ownedAirplaneDetail'), 1)"/>
 					<img src='@routes.Assets.versioned("/images/icons/tick.png")' class='button' style="vertical-align: middle;" onclick="confirmAirplaneConfigurationOption()"/>
 					<img src='@routes.Assets.versioned("/images/icons/cross.png")' class='button' style="vertical-align: middle;" onclick="cancelAirplaneConfigurationOption()"/>
@@ -5461,7 +5469,7 @@
 
 
 
-			  <button type="button" class="button" onclick="closeModal($('#allianceMemberModal')); showRivalsCanvas($('#allianceMemberModal').data('airlineId'))">Details</button>
+			  <button type="button" class="button" onclick="closeModal($('#allianceMemberModal')); Rivals.show($('#allianceMemberModal').data('airlineId'))">Details</button>
 			  <button type="button" class="button" onclick="closeModal($('#allianceMemberModal'))")>Cancel</button>
 		  </div>
 	  </div>
@@ -6050,7 +6058,7 @@
 
   <script src='@routes.Assets.versioned("javascripts/index.js")'></script>
 
-  <script src='@routes.Assets.versioned("javascripts/aircraft-config.umd.js")' defer></script>
+
   <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/index-CKPGaino.css")'>
 
 

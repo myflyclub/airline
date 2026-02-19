@@ -178,6 +178,7 @@ GET     /airlines/:airlineId/preferred-suppliers       controllers.AirplaneAppli
 
 GET		 /oil-prices	controllers.OilApplication.getOilPrices()
 GET		 /loan-interest-rates	controllers.BankApplication.getLoanInterestRates()
+GET		 /stock-market	controllers.StockMarketApplication.getStockMarketData()
 
 GET		 /countries					  controllers.CountryApplication.getAllCountries()
 GET		 /countries/:countryCode  		  controllers.CountryApplication.getCountry(countryCode : String)

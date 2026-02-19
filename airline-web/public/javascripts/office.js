@@ -271,7 +271,7 @@ function updateProgress(stats){
         }
     }
 
-    var $starBar = $(getGradeStarsImgs(activeAirline.gradeLevel - 2, 20))
+    var $starBar = $(getGradeStarsImgs(activeAirline.gradeLevel - 3, 20))
     $('.reputationText').text(activeAirline.gradeDescription)
     $('.reputationLevel').text("Level " + activeAirline.gradeLevel)
     $('.reputationTrend').text((activeAirline.reputationBreakdowns.total).toFixed(0))

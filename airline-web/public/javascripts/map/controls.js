@@ -111,7 +111,7 @@ class TextButtonControl extends CustomControl {
 
     _buildUI() {
         this._container.id = this.id || '';
-        this._container.className = 'maplibregl-ctrl googleMapButton button';
+        this._container.className = 'maplibregl-ctrl button';
         this._container.style.cssText = 'cursor: pointer; display: flex; align-items: center; padding: 8px 12px;';
 
         if (this.iconUrl) {
@@ -199,9 +199,8 @@ export function addHeatmapControl(position = 'bottom-right') {
  * Add exit button control (for special views like alliance map).
  * @param {string} text - Button text
  * @param {Function} onClick - Click handler
- * @param {string} position - Control position
  */
-export function addExitButton(text, onClick, position = 'top-center') {
+export function addExitButton(text, onClick) {
     if (!state.map) return;
 
     // Remove existing exit button first
@@ -216,22 +215,24 @@ export function addExitButton(text, onClick, position = 'top-center') {
 
     addedControls.set('exit', control);
 
-    // MapLibre doesn't have top-center, so we add to top-left and style it
-    addControl(control, 'top-left');
-
-    // Center the control
-    setTimeout(() => {
-        const container = document.getElementById('exitMapViewButton');
-        if (container) {
-            container.style.cssText = 'position: absolute; left: 50%; transform: translateX(-50%); cursor: pointer;';
-        }
-    }, 100);
+    // Inject directly into the map container for bottom-center positioning
+    const mapContainer = state.map.getContainer();
+    const el = control.onAdd(state.map);
+    el.style.position = 'absolute';
+    el.style.left = '50%';
+    el.style.transform = 'translateX(-50%)';
+    el.style.bottom = '10px';
+    el.style.zIndex = '2';
+    mapContainer.appendChild(el);
 }
 
 export function removeExitButton() {
     const control = addedControls.get('exit');
     if (control) {
-        removeControl(control);
+        if (control._container && control._container.parentNode) {
+            control._container.parentNode.removeChild(control._container);
+        }
+        control._map = undefined;
         addedControls.delete('exit');
     }
 }

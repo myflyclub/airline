@@ -12,6 +12,7 @@ let tempPathData = null;
 let highlightedLinkId = null;
 let highlightAnimation = null;
 let hoveredRouteId = null;
+let routeSelectable = true;
 
 /**
  * Generic route layer factory - creates source, layers, and refresh function.
@@ -188,9 +189,10 @@ function flightPathsToGeoJSON(flightPaths) {
 /**
  * Enhance backend GeoJSON with great circle geometry and derived properties.
  * @param {Object} geojson - GeoJSON FeatureCollection from backend
+ * @param {string|null} colorOverride - Optional fixed color for all routes
  * @returns {Object} Enhanced GeoJSON with great circle arcs
  */
-function enhanceLinksGeoJSON(geojson) {
+function enhanceLinksGeoJSON(geojson, colorOverride = null) {
     const enhancedFeatures = geojson.features.map(feature => {
         const props = feature.properties;
         const coords = feature.geometry.coordinates;
@@ -208,7 +210,7 @@ function enhanceLinksGeoJSON(geojson) {
             geometry: geometry,
             properties: {
                 ...props,
-                color: getLinkColor(props.profit, props.revenue),
+                color: colorOverride || getLinkColor(props.profit, props.revenue),
                 opacity: getPathOpacity('normal'),
                 highlighted: feature.id === highlightedLinkId
             }
@@ -224,19 +226,34 @@ function enhanceLinksGeoJSON(geojson) {
 /**
  * Set all routes from backend GeoJSON.
  * @param {Object} geojson - GeoJSON FeatureCollection from backend
+ * @param {string|null} colorOverride - Optional fixed color for all routes
  */
-export function setRoutesFromGeoJSON(geojson) {
+export function setRoutesFromGeoJSON(geojson, colorOverride = null) {
     if (!state.map) return;
     ensureRoutesLayers();
 
-    // Store links in flightPaths for compatibility
+    // Store links in flightPaths, including source coordinates so
+    // flightPathsToGeoJSON can recreate geometry if refreshRoutesGeoJSON is called later
     geojson.features.forEach(feature => {
         const props = feature.properties;
-        state.flightPaths[props.id] = { link: props, color: getLinkColor(props.profit, props.revenue), opacity: getPathOpacity('normal') };
+        const coords = feature.geometry.coordinates;
+        const color = colorOverride || getLinkColor(props.profit, props.revenue);
+        state.flightPaths[props.id] = {
+            link: {
+                ...props,
+                fromLongitude: coords[0][0],
+                fromLatitude: coords[0][1],
+                toLongitude: coords[1][0],
+                toLatitude: coords[1][1]
+            },
+            color,
+            colorOverride,
+            opacity: getPathOpacity('normal')
+        };
     });
 
     // Enhance and set the GeoJSON
-    flightRoutes.refresh(enhanceLinksGeoJSON(geojson).features);
+    flightRoutes.refresh(enhanceLinksGeoJSON(geojson, colorOverride).features);
 }
 
 /**
@@ -287,6 +304,7 @@ function setupRouteInteractions() {
     });
 
     on('click', flightRoutes.clickLayerId, (e) => {
+        if (!routeSelectable) return;
         if (e.features.length > 0) {
             const linkId = e.features[0].properties.id;
             if (typeof selectLinkFromMap === 'function') selectLinkFromMap(linkId, false);
@@ -460,7 +478,7 @@ export function unhighlightPath(linkId) {
 
     if (pathEntry) {
         const link = pathEntry.link;
-        pathEntry.color = getLinkColor(link?.profit, link?.revenue);
+        pathEntry.color = pathEntry.colorOverride || getLinkColor(link?.profit, link?.revenue);
         pathEntry.opacity = getPathOpacity('normal');
         refreshRoutesGeoJSON();
     }
@@ -813,4 +831,12 @@ export function clearHistoryPaths() {
  */
 export function getFlightPaths() {
     return state.flightPaths;
+}
+
+/**
+ * Enable or disable click-to-select on flight routes.
+ * @param {boolean} selectable
+ */
+export function setRouteSelectable(selectable) {
+    routeSelectable = selectable;
 }
