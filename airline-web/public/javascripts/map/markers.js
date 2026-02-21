@@ -197,7 +197,10 @@ export function addMarkers(airportsGeoJSON, options = {}) {
 
         setupMarkerInteractions();
 
-        // Ensure base layer is on top for interaction priority
+        // Ensure marker layers are on top of all route layers
+        if (state.map.getLayer(AIRPORTS_LAYER)) {
+            state.map.moveLayer(AIRPORTS_LAYER);
+        }
         if (state.map.getLayer(AIRPORTS_LAYER_BASES)) {
             state.map.moveLayer(AIRPORTS_LAYER_BASES);
         }

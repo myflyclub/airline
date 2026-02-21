@@ -754,7 +754,7 @@ li.row, div.table-row {
     background-color: var(--table-even-row-background-color);
 }
 
-.table.data div.table-row.selected:nth-child(even), .table.data div.table-row.selected:nth-child(odd), .table.data div.table-row.clickable:hover:nth-child(even), .table.data div.table-row.clickable:hover:nth-child(odd) {
+.data .table-row.selected:nth-child(even), .data .table-row.selected:nth-child(odd), .data .table-row.clickable:hover:nth-child(even), .data .table-row.clickable:hover:nth-child(odd) {
     background: var(--table-selected-row-background);
     box-shadow: var(--table-selected-row-shadow);
 }

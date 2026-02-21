@@ -149,6 +149,7 @@ async function doPostLoginSetup(user) {
 
     AirlineMap.addMapControls();
     AirlineMap.addMarkers();
+    AirlineMap.centerOnHQ(activeAirline)
 
     mobileCheck();
     refreshWallpaper();

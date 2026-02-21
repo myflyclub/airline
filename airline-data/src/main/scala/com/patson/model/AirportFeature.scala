@@ -274,9 +274,9 @@ sealed case class IsolatedTownFeature(strength : Int) extends AirportFeature {
       if (toAirport.isGateway() && fromAirport.zone.contains("CC") && distance <= boostRange * 0.7) {
         (rng * affinityMod * distanceMod).toInt //Increase Caribbean demand
       } else if (toAirport.isGateway() && fromAirport.countryCode == toAirport.countryCode && List("GB", "NL", "DK", "GR", "JP", "ID", "PH", "MH", "PG", "RU").contains(fromAirport.countryCode)) {
-        (rng * 0.7).toInt //add demand from territories or islands back to Metropol
+        rng //add demand from territories or islands back to Metropol
       } else if ((toAirport.hasFeature(AirportFeatureType.BUSH_HUB) || fromAirport.hasFeature(AirportFeatureType.BUSH_HUB)) && distance <= boostRange * 0.6 && affinity >= 4) {
-        (rng * distanceMod * affinityMod * 1.2).toInt //Create bush hub demand
+        (rng * distanceMod * affinityMod * 1.3).toInt //Create bush hub demand
       } else if (affinity >= 3 && rawDemand >= 1 && toAirport.size >= 4 && distance <= boostRange * 0.4) {
         (rng * affinityMod * distanceMod).toInt
       } else {

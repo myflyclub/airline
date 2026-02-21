@@ -66,7 +66,10 @@ function onMessage(evt) { //right now the message is just the cycle #, so refres
 	} else if (json.messageType == "cycleCompleted") {
 		if (selectedAirlineId) {
 			var jitter = Math.floor(Math.random() * 8000)
-			setTimeout(function() { updateAirlineInfo(selectedAirlineId) }, jitter)
+			setTimeout(function() { 
+                updateAirlineInfo(selectedAirlineId);
+                loadAirportsDynamic();
+            }, jitter)
 		}
 	} else if (json.messageType == "broadcastMessage") {
         queuePrompt("broadcastMessagePopup", json.message)

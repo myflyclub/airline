@@ -57,29 +57,39 @@ object MainSimulation extends App {
     UserSimulation.simulate(cycle)
     println("Event simulation")
     EventSimulation.simulate(cycle)
+    println("Event simulation done")
 
+    println("Link simulation starting")
     val (flightLinkResult, loungeResult, linkRidershipDetails, paxStatsByAirlineId) = LinkSimulation.linkSimulation(cycle)
+    println("Link simulation done")
 
     println("Airport simulation")
     val airportChampionInfo = AirportSimulation.airportSimulation(cycle, linkRidershipDetails)
+    println("Airport simulation done")
 
     println("Alliance simulation")
     AllianceSimulation.simulate(flightLinkResult, loungeResult, paxStatsByAirlineId, airportChampionInfo, cycle)
+    println("Alliance simulation done")
 
     println("Airport assets simulation")
     AirportAssetSimulation.simulate(cycle, linkRidershipDetails)
+    println("Airport assets simulation done")
 
     println("Airplane simulation")
     val airplanes = AirplaneSimulation.airplaneSimulation(cycle)
+    println("Airplane simulation done")
 
     println("Airline simulation")
     AirlineSimulation.airlineSimulation(cycle, flightLinkResult, loungeResult, airplanes, paxStatsByAirlineId)
+    println("Airline simulation done")
 
     println("Country simulation")
     CountrySimulation.simulate(cycle)
+    println("Country simulation done")
 
     println("Airplane model simulation")
     AirplaneModelSimulation.simulate(cycle)
+    println("Airplane model simulation done")
 
     //purge log
     println("Purging logs")
@@ -134,16 +144,22 @@ object MainSimulation extends App {
     def receive = {
       case Start =>
         status = SimulationStatus.IN_PROGRESS
-        val endTime = startCycle(currentWeek)
+        try {
+          val endTime = startCycle(currentWeek)
 
-        currentWeek += 1
-        CycleSource.setCycle(currentWeek)
-        status = SimulationStatus.WAITING_CYCLE_START
-        postCycle(currentWeek) //post cycle do some quick updates, no long simulation
+          currentWeek += 1
+          CycleSource.setCycle(currentWeek)
+          status = SimulationStatus.WAITING_CYCLE_START
+          postCycle(currentWeek) //post cycle do some quick updates, no long simulation
 
-        //notify the websockets via EventStream
-        println("Publish Cycle Complete message")
-        SimulationEventStream.publish(CycleCompleted(currentWeek - 1, endTime), None)
+          //notify the websockets via EventStream
+          println("Publish Cycle Complete message")
+          SimulationEventStream.publish(CycleCompleted(currentWeek - 1, endTime), None)
+        } catch {
+          case e : Exception =>
+            println(s"!!!!!!! Cycle $currentWeek failed with exception: ${e.getClass.getSimpleName}: ${e.getMessage}. Will retry next tick.")
+            status = SimulationStatus.WAITING_CYCLE_START
+        }
     }
   }
 

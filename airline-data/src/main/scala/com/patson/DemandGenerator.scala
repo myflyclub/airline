@@ -245,8 +245,8 @@ object DemandGenerator {
         //if there's no stats available, assume setup or testcase and generate unaltered demands
         val demandForClass = allAirportStats.get(fromAirport.id) match {
           case Some(stats) if stats.baselineDemand > 0 =>
-            val travelRate = Airport.travelRate(stats.fromPax, stats.baselineDemand, fromAirport.size)
-            demandRandomizerByType(passengerType, (demand(linkClass) * travelRate).toInt, cycle, cyclePhaseLength)
+            val travelRateAdjusted = Airport.travelRateAdjusted(stats.fromPax, stats.baselineDemand, fromAirport.size)
+            demandRandomizerByType(passengerType, (demand(linkClass) * travelRateAdjusted).toInt, cycle, cyclePhaseLength)
           case _ =>
             demand(linkClass)
         }

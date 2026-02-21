@@ -2,66 +2,54 @@
 
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>MyFly.Club | A Fork of Airline Club</title>
-   	<meta name="google-signin-client_id" content="526466847284-mmk6qg2bc4su9ihgqippccaha28edn81.apps.googleusercontent.com">
-    <meta name="description" content="MyFly.Club, a free airline management game. Build your own airline, manage it's profits, create routes to over 4000 airports from a choice of 150+ aircraft.">
-    <meta name="keywords" content="Airline Simulation Game,Airline Strategy Game,Airline Management Game,Free Online Game,Open Source">
+
+<head>
+	<title>MyFly.Club | A Fork of Airline Club</title>
+	<meta name="google-signin-client_id"
+		content="526466847284-mmk6qg2bc4su9ihgqippccaha28edn81.apps.googleusercontent.com">
+	<meta name="description"
+		content="MyFly.Club, a free airline management game. Build your own airline, manage it's profits, create routes to over 4000 airports from a choice of 150+ aircraft.">
 	<meta name="author" content="Paces Creative">
 	<meta name="google-site-verification" content="EyjPyE3kaprSp7umZW58OuLwb-viMRBYx1lUh50ozAk" />
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <style type="text/css">html, body { height: 100%; margin: 0; padding: 0; }</style>
-      <link rel="dns-prefetch" href="//ajax.googleapis.com">
-      <link rel="dns-prefetch" href="//api.protomaps.com">
-      <script>
-        window.googleMapKey = "@configuration.get[String]("google.mapKey")";
-        window.protomapsKey = "@configuration.get[String]("protomaps.apiKey")";
-      </script>
-
-    <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/main.css")'>
-    <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/departures.css")'>
-    <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/tooltip.css")'>
-    <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/chat.css")'>
-    <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/search.css")'>
-    <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/campaign.css")'>
-    <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/switch.css")'>
-    <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/select.css")'>
-    <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/prompt.css")'>
-    <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("javascripts/jemoji/jemoji.css")'>
-    <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("javascripts/emojify/emojify.min.css")'>
-    <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("javascripts/splitting/splitting.css")'>
-    <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("javascripts/splitting/splitting-cells.css")'>
-    <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/mobile.css")'> <!-- this has to be last so it overrides the CSS if mobile-->
-
-      <script src="https://code.jquery.com/jquery-3.7.1.min.js"
-			integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
-			crossorigin="anonymous"></script>
-  	<script
-		  src="https://code.jquery.com/jquery-migrate-3.4.1.min.js"
-		  integrity="sha256-UnTxHm+zKuDPLfufgEMnKGXDl6fEIjtM+n1Q6lL73ok="
-		  crossorigin="anonymous"></script>
-
-    <script src='@routes.Assets.versioned("javascripts/libs/reconnecting-websocket.min.js")'></script>
+	<link rel="dns-prefetch" href="//ajax.googleapis.com">
+	<link rel="dns-prefetch" href="//api.protomaps.com">
+	<script>
+		window.protomapsKey = "@configuration.get[String]("protomaps.apiKey")";
+	</script>
+	<link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/main.css")'>
+	<link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/departures.css")'>
+	<link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/tooltip.css")'>
+	<link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/chat.css")'>
+	<link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/search.css")'>
+	<link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/campaign.css")'>
+	<link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/switch.css")'>
+	<link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/select.css")'>
+	<link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/prompt.css")'>
+	<link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("javascripts/jemoji/jemoji.css")'>
+	<link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("javascripts/emojify/emojify.min.css")'>
+	<link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("javascripts/splitting/splitting.css")'>
+	<link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("javascripts/splitting/splitting-cells.css")'>
+	<link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/mobile.css")'>
+	<script src="https://code.jquery.com/jquery-3.7.1.min.js"
+		integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+	<script src="https://code.jquery.com/jquery-migrate-3.4.1.min.js"
+		integrity="sha256-UnTxHm+zKuDPLfufgEMnKGXDl6fEIjtM+n1Q6lL73ok=" crossorigin="anonymous"></script>
+	<script src='@routes.Assets.versioned("javascripts/libs/reconnecting-websocket.min.js")'></script>
 	<script src='@routes.Assets.versioned("javascripts/jemoji/jemoji.js")' defer></script>
 	<script src='@routes.Assets.versioned("javascripts/emojify/emojify.js")' defer></script>
-    <script src='@routes.Assets.versioned("javascripts/splitting/splitting.min.js")'></script>
-
+	<script src='@routes.Assets.versioned("javascripts/splitting/splitting.min.js")'></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@@4.4.1/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
-
 	<script type="text/javascript" src='@routes.Assets.versioned("progress-bar/progress-bar.js")' defer></script>
-	  <link rel="stylesheet" href='@routes.Assets.versioned("progress-bar/progress-bar.css")' type="text/css" />
-
-
-
-	  <link rel="stylesheet" href="/assets/firework/firework.css">
-	  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-	  <meta name="mobile-web-app-capable" content="yes">
-	  <meta name="apple-mobile-web-app-capable" content="yes">
-	  <meta name="theme-color" content="#000000">
-	  <meta name="msapplication-TileColor" content="#000000">
-	  <meta name="msapplication-TileImage" content="https://s3-us-west-2.amazonaws.com/s.cdpn.io/329180/firework-burst-icon-v2.png">
+	<link rel="stylesheet" href='@routes.Assets.versioned("progress-bar/progress-bar.css")' type="text/css" />
+  <link rel="stylesheet" href="/assets/firework/firework.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#000000">
+  <meta name="msapplication-TileColor" content="#000000">
+  <meta name="msapplication-TileImage" content="https://s3-us-west-2.amazonaws.com/s.cdpn.io/329180/firework-burst-icon-v2.png">
   </head>
   <div>
 	<div id="linkHistoryControlPanel" class="mapControlPanel" style="display: none; width: 500px; max-width: 95vw;">
@@ -189,11 +177,11 @@
 		</ul>
 	</div>
 
-	<div style="position: relative;" id="mainContainer" > <!-- Main container for the contents + the landing masks-->
+	<div style="position: relative;" id="mainContainer"> <!-- Main container for the contents + the landing masks-->
 		<div id="landing">
 
 		</div>
-		<div id="main" style="width: 100%; position: relative;  overflow-x: hidden; overflow-y: scroll;" >
+		<div id="main" style="width: 100%; position: relative;  overflow-x: hidden; overflow-y: scroll;">
 			<!-- Chat Window -->
 			<div id="live-chat" class="user-specific-tab">
 				<div ng-app="ChatApp">
@@ -328,16 +316,17 @@
 			<div id="canvasContainer">
 				<div id="worldMapCanvas">
 					<div id="map" class="mainPanel"
-						 data-headquarter-marker='@routes.Assets.versioned("images/markers/headquarter.svg")'
-						 data-base-marker='@routes.Assets.versioned("images/markers/base.svg")'
-						 data-base-alliance-marker='@routes.Assets.versioned("images/markers/baseAlliance.svg")'
-						 data-base-alliancehq-marker='@routes.Assets.versioned("images/markers/baseAllianceHQ.svg")'
-						 data-large-airport-marker='@routes.Assets.versioned("images/markers/airport-darker.svg")'
-						 data-medium-airport-marker='@routes.Assets.versioned("images/markers/airport.svg")'
-						 data-small-airport-marker='@routes.Assets.versioned("images/markers/airport-lighter.svg")'
-						 data-gateway-airport-marker='@routes.Assets.versioned("images/markers/airport-gateway.svg")'
-						 data-domestic-airport-marker='@routes.Assets.versioned("images/markers/airport-domestic.svg")'
-						 data-disabled-airport-marker='@routes.Assets.versioned("images/markers/airport-transparent.svg")'></div>
+						data-headquarter-marker='@routes.Assets.versioned("images/markers/headquarter.svg")'
+						data-base-marker='@routes.Assets.versioned("images/markers/base.svg")'
+						data-base-alliance-marker='@routes.Assets.versioned("images/markers/baseAlliance.svg")'
+						data-base-alliancehq-marker='@routes.Assets.versioned("images/markers/baseAllianceHQ.svg")'
+						data-large-airport-marker='@routes.Assets.versioned("images/markers/airport-darker.svg")'
+						data-medium-airport-marker='@routes.Assets.versioned("images/markers/airport.svg")'
+						data-small-airport-marker='@routes.Assets.versioned("images/markers/airport-lighter.svg")'
+						data-gateway-airport-marker='@routes.Assets.versioned("images/markers/airport-gateway.svg")'
+						data-domestic-airport-marker='@routes.Assets.versioned("images/markers/airport-domestic.svg")'
+						data-disabled-airport-marker='@routes.Assets.versioned("images/markers/airport-transparent.svg")'>
+					</div>
 					<div id="sidePanel" class="sidePanel mapOverlayPanel" style="display:none;">
 						<div class="section">
 							<div id="linkDetails" class="flex-container-width-half">
@@ -746,7 +735,6 @@
 												</div>
 											</p>
 										</div>
-										<!--  <div class="value"><input type="text" id="planLinkFrequency"/></div> -->
 										<div class="value">
 											<div class="frequencyDetail table colored" style="width: 100%">
 												<div class="table-header"/>
@@ -1177,92 +1165,156 @@
 	<!-- 	    	   end bottom panel -->
 				</div>
 	<!--   			end world map canvas -->
-				<div id="linksCanvas"  class="canvas" style="display: none; height: 100%;">
-					<div class="mainPanel">
-						<div class="section tight">
-							<div class="no-highlight flex-row">
-								<a class="px-2 button secondary py-1 flex-align-center tooltip-attr tooltip-attr-bottom" data-tooltip="Sort by last updated" onclick="toggleLinksTableSortOrder($('#hiddenLinkSortBy'))"><img src='@routes.Assets.versioned("/images/icons/clock-frame.png")'></a>
-								<a class="px-2 button secondary py-1 flex-align-center tooltip-attr tooltip-attr-bottom" data-tooltip="Show / Hide Filter Row" onclick="toggleLinksTableFilterRow()"><img src='@routes.Assets.versioned("/images/icons/funnel.png")'></a>
-                                <a class="px-2 button secondary flex-align-center tooltip-attr tooltip-attr-bottom opacity-80" data-tooltip="Show Averages" onclick="toggleLinksTableAverage()" style="font-family:monospace; font-size: 18px;">x̄</a>
-                                <a class="px-2 button secondary py-1 flex-align-center tooltip-attr tooltip-attr-bottom opacity-80" data-tooltip="Show Medians" onclick="toggleLinksTableMedian()" style="font-size: 16px;">M</a>
-                            </div>
-								<div class="table-container-x">
-									<div class="table data" style="min-width: 980px; height: 20px;">
-										<div class="table-header" id="linksTableSortHeader">
-											<div class="cell clickable selected" style="width: 16%" data-sort-property="fromAirportCode" data-sort-order="descending" onclick="toggleLinksTableSortOrder($(this))">From Airport</div>
-											<div class="cell clickable" style="width: 0%" data-sort-property="lastUpdate" data-sort-order="ascending" id="hiddenLinkSortBy"></div> <!--hidden column for last update (cannot be first otherwise the left round corner would not work -->
-											<div class="cell clickable" style="width: 16%" data-sort-property="toAirportCode" data-sort-order="descending" onclick="toggleLinksTableSortOrder($(this))">To Airport</div>
-											<div class="cell clickable" style="width: 14%" data-sort-property="model" data-sort-order="ascending" onclick="toggleLinksTableSortOrder($(this))">Model</div>
-											<div class="cell clickable" style="width: 8%" align="right" data-sort-property="distance" data-sort-order="ascending" onclick="toggleLinksTableSortOrder($(this))">Distance</div>
-											<div class="cell clickable" style="width: 8%" align="right" data-sort-property="totalCapacity" data-sort-order="ascending" onclick="toggleLinksTableSortOrder($(this))">Capacity (Freq.)</div>
-											<div class="cell clickable" style="width: 4%" align="right" data-sort-property="totalPassengers" data-sort-order="ascending" onclick="toggleLinksTableSortOrder($(this))">Pax</div>
-											<div class="cell clickable" style="width: 4%" align="right" data-sort-property="totalLoadFactor" data-sort-order="ascending" onclick="toggleLinksTableSortOrder($(this))" title="Load Factor">LF</div>
-											<div class="cell clickable" style="width: 3%" align="right" data-sort-property="computedQuality" data-sort-order="ascending" onclick="toggleLinksTableSortOrder($(this))" title="Quality">Q</div>
-											<div class="cell clickable" style="width: 5%" align="right" data-sort-property="satisfaction" data-sort-order="ascending" onclick="toggleLinksTableSortOrder($(this))" title="Satisfaction Factor">SF</div>
-											<div class="cell clickable" style="width: 8%" align="right" data-sort-property="revenue" data-sort-order="ascending" onclick="toggleLinksTableSortOrder($(this))">Revenue</div>
-											<div class="cell clickable" style="width: 8%" align="right" data-sort-property="profit" data-sort-order="ascending" onclick="toggleLinksTableSortOrder($(this))">Profit</div>
-											<div class="cell clickable" style="width: 7%" align="right" data-sort-property="profitMargin" data-sort-order="ascending" onclick="toggleLinksTableSortOrder($(this))">Margin</div>
-											<div class="cell clickable" style="width: 5%" align="right" data-sort-property="currentStaffRequired" data-sort-order="ascending" onclick="toggleLinksTableSortOrder($(this))" title="Current Staff Required">Staff</div>
-											<div class="cell clickable" style="width: 8%" align="right" data-sort-property="profitPerStaff" data-sort-order="ascending" onclick="toggleLinksTableSortOrder($(this))">Profit per staff</div>
-										</div>
-										<div class="table-header" id="linksTableFilterHeader" style="display: none;">
-											<div class="cell" style="width: 16%" data-filter-property="fromAirportCode">&nbsp;</div>
-											<div class="cell" style="width: 0%"></div>
-											<div class="cell" style="width: 16%" data-filter-property="toAirportCode">&nbsp;</div>
-											<div class="cell" style="width: 14%" data-filter-property="modelId">&nbsp;</div>
-											<div class="cell" style="width: 8%" data-filter-property="distance">&nbsp;</div>
-											<div class="cell" style="width: 8%">&nbsp;</div>
-											<div class="cell" style="width: 4%">&nbsp;</div>
-											<div class="cell" style="width: 4%">&nbsp;</div>
-											<div class="cell" style="width: 3%">&nbsp;</div>
-											<div class="cell" style="width: 5%">&nbsp;</div>
-											<div class="cell" style="width: 8%">&nbsp;</div>
-											<div class="cell" style="width: 8%">&nbsp;</div>
-											<div class="cell" style="width: 7%">&nbsp;</div>
-											<div class="cell" style="width: 5%">&nbsp;</div>
-											<div class="cell" style="width: 8%">&nbsp;</div>
-										</div>
-									</div>
-									<div class="table-container-y" style="min-width: 980px;">
-									<div class="table data" id="linksTable">
-										<div class="table-header">
-											<div class="cell" style="width: 16%; border-bottom: none;"></div>
-											<div class="cell" style="width: 16%; border-bottom: none;"></div>
-											<div class="cell" style="width: 14%; border-bottom: none;"></div>
-											<div class="cell" style="width: 8%; border-bottom: none;"></div>
-											<div class="cell" style="width: 8%; border-bottom: none;"></div>
-											<div class="cell" style="width: 4%; border-bottom: none;"></div>
-											<div class="cell" style="width: 4%; border-bottom: none;"></div>
-											<div class="cell" style="width: 3%; border-bottom: none;"></div>
-											<div class="cell" style="width: 5%; border-bottom: none;"></div>
-											<div class="cell" style="width: 8%; border-bottom: none;"></div>
-											<div class="cell" style="width: 8%; border-bottom: none;"></div>
-											<div class="cell" style="width: 7%; border-bottom: none;"></div>
-											<div class="cell" style="width: 5%; border-bottom: none;"></div>
-											<div class="cell" style="width: 8%; border-bottom: none;"></div>
-										</div>
-									</div>
-									<div style="height: 100px; width: 100%; min-width: 600px; display:none;" class="noLinkTips">
-										<div style="height: 100%; width: 100%; display:flex; justify-content: center; align-items: center;">
-											<div class="tooltip clickable">
-												<span style="vertical-align:middle">No flights yet</span>
-												<img class="info svg" src='@routes.Assets.versioned("/images/icons/information.svg")' style="vertical-align:middle">
-												<span class="tooltiptext below">
-													<h4>First build your Headquarters</h4>
-													<img data-src='@routes.Assets.versioned("/images/tutorial/build-hq.gif")' loading="lazy" alt="">
-													<h4 style="margin-top: 8px;">Then select the Destination Airport from the world map</h4>
-													<img data-src='@routes.Assets.versioned("/images/tutorial/plan-link-1.gif")' loading="lazy" alt="">
-												</span>
-											</div>
-										</div>
-									</div>
+	<div id="linksCanvas" class="canvas" style="display: none; height: 100%;">
+		<div class="mainPanel">
+			<div class="section tight">
+				<div class="no-highlight flex-row">
+                    <a class="px-2 button secondary py-1 flex-align-center tooltip-attr tooltip-attr-bottom" data-tooltip="Sort by last updated" onclick="toggleLinksTableSortOrder($('#hiddenLinkSortBy'))"><img src='@routes.Assets.versioned("/images/icons/clock-frame.png")'></a>
+                    <a class="px-2 button secondary py-1 flex-align-center tooltip-attr tooltip-attr-bottom" data-tooltip="Show / Hide Filter Row" onclick="toggleLinksTableFilterRow()"><img src='@routes.Assets.versioned("/images/icons/funnel.png")'></a>
+                    <a class="px-2 button secondary flex-align-center tooltip-attr tooltip-attr-bottom opacity-80" data-tooltip="Show Averages" onclick="toggleLinksTableAverage()" style="font-family:monospace; font-size: 18px;">x̄</a>
+                    <a class="px-2 button secondary py-1 flex-align-center tooltip-attr tooltip-attr-bottom opacity-80" data-tooltip="Show Medians" onclick="toggleLinksTableMedian()" style="font-size: 16px;">M</a>
+				</div>
+				<div class="table-container-x">
+					<div class="table data" style="min-width: 980px; height: 20px;">
+						<div class="table-header" id="linksTableSortHeader">
+							<div class="cell" style="width: 3%"><input type="checkbox" id="toggleAllLinks"
+									onclick="toggleAllLinks(this)"></div>
+                            <div class="cell clickable" style="width: 0%" data-sort-property="lastUpdate"
+								data-sort-order="ascending" id="hiddenLinkSortBy"></div>
+							<div class="cell clickable selected" style="width: 16%" data-sort-property="fromAirportCode"
+								data-sort-order="descending" onclick="toggleLinksTableSortOrder($(this))">From Airport
+							</div>
+							<div class="cell clickable" style="width: 16%" data-sort-property="toAirportCode"
+								data-sort-order="descending" onclick="toggleLinksTableSortOrder($(this))">To Airport
+							</div>
+							<div class="cell clickable" style="width: 14%" data-sort-property="model"
+								data-sort-order="ascending" onclick="toggleLinksTableSortOrder($(this))">Model</div>
+							<div class="cell clickable" style="width: 8%" align="right" data-sort-property="distance"
+								data-sort-order="ascending" onclick="toggleLinksTableSortOrder($(this))">Distance</div>
+							<div class="cell clickable" style="width: 8%" align="right"
+								data-sort-property="totalCapacity" data-sort-order="ascending"
+								onclick="toggleLinksTableSortOrder($(this))">Capacity (Freq.)</div>
+							<div class="cell clickable" style="width: 4%" align="right"
+								data-sort-property="totalPassengers" data-sort-order="ascending"
+								onclick="toggleLinksTableSortOrder($(this))">Pax</div>
+							<div class="cell clickable" style="width: 4%" align="right"
+								data-sort-property="totalLoadFactor" data-sort-order="ascending"
+								onclick="toggleLinksTableSortOrder($(this))" title="Load Factor">LF</div>
+							<div class="cell clickable" style="width: 3%" align="right"
+								data-sort-property="computedQuality" data-sort-order="ascending"
+								onclick="toggleLinksTableSortOrder($(this))" title="Quality">Q</div>
+							<div class="cell clickable" style="width: 5%" align="right"
+								data-sort-property="satisfaction" data-sort-order="ascending"
+								onclick="toggleLinksTableSortOrder($(this))" title="Satisfaction Factor">SF</div>
+							<div class="cell clickable" style="width: 8%" align="right" data-sort-property="revenue"
+								data-sort-order="ascending" onclick="toggleLinksTableSortOrder($(this))">Revenue</div>
+							<div class="cell clickable" style="width: 8%" align="right" data-sort-property="profit"
+								data-sort-order="ascending" onclick="toggleLinksTableSortOrder($(this))">Profit</div>
+							<div class="cell clickable" style="width: 7%" align="right"
+								data-sort-property="profitMargin" data-sort-order="ascending"
+								onclick="toggleLinksTableSortOrder($(this))">Margin</div>
+							<div class="cell clickable" style="width: 5%" align="right"
+								data-sort-property="currentStaffRequired" data-sort-order="ascending"
+								onclick="toggleLinksTableSortOrder($(this))" title="Current Staff Required">Staff</div>
+							<div class="cell clickable" style="width: 8%" align="right"
+								data-sort-property="profitPerStaff" data-sort-order="ascending"
+								onclick="toggleLinksTableSortOrder($(this))">Profit per staff</div>
+						</div>
+						<div class="table-header" id="linksTableFilterHeader" style="display: none;">
+							<div class="cell" style="width: 3%">&nbsp;</div>
+							<div class="cell" style="width: 16%" data-filter-property="fromAirportCode">&nbsp;</div>
+							<div class="cell" style="width: 0%"></div>
+							<div class="cell" style="width: 16%" data-filter-property="toAirportCode">&nbsp;</div>
+							<div class="cell" style="width: 14%" data-filter-property="modelId">&nbsp;</div>
+							<div class="cell" style="width: 8%" data-filter-property="distance">&nbsp;</div>
+							<div class="cell" style="width: 8%">&nbsp;</div>
+							<div class="cell" style="width: 4%">&nbsp;</div>
+							<div class="cell" style="width: 4%">&nbsp;</div>
+							<div class="cell" style="width: 3%">&nbsp;</div>
+							<div class="cell" style="width: 5%">&nbsp;</div>
+							<div class="cell" style="width: 8%">&nbsp;</div>
+							<div class="cell" style="width: 8%">&nbsp;</div>
+							<div class="cell" style="width: 7%">&nbsp;</div>
+							<div class="cell" style="width: 5%">&nbsp;</div>
+							<div class="cell" style="width: 8%">&nbsp;</div>
+						</div>
+					</div>
+					<div class="table-container-y" style="min-width: 980px;">
+						<div class="table data" id="linksTable">
+							<div class="table-header">
+                                <div class="cell" style="width: 3%; border-bottom: none;"></div>
+								<div class="cell" style="width: 16%; border-bottom: none;"></div>
+								<div class="cell" style="width: 16%; border-bottom: none;"></div>
+								<div class="cell" style="width: 14%; border-bottom: none;"></div>
+								<div class="cell" style="width: 8%; border-bottom: none;"></div>
+								<div class="cell" style="width: 8%; border-bottom: none;"></div>
+								<div class="cell" style="width: 4%; border-bottom: none;"></div>
+								<div class="cell" style="width: 4%; border-bottom: none;"></div>
+								<div class="cell" style="width: 3%; border-bottom: none;"></div>
+								<div class="cell" style="width: 5%; border-bottom: none;"></div>
+								<div class="cell" style="width: 8%; border-bottom: none;"></div>
+								<div class="cell" style="width: 8%; border-bottom: none;"></div>
+								<div class="cell" style="width: 7%; border-bottom: none;"></div>
+								<div class="cell" style="width: 5%; border-bottom: none;"></div>
+								<div class="cell" style="width: 8%; border-bottom: none;"></div>
+							</div>
+						</div>
+						<div style="height: 100px; width: 100%; min-width: 600px; display:none;" class="noLinkTips">
+							<div
+								style="height: 100%; width: 100%; display:flex; justify-content: center; align-items: center;">
+								<div class="tooltip clickable">
+									<span style="vertical-align:middle">No flights yet</span>
+									<img class="info svg"
+										src='@routes.Assets.versioned("/images/icons/information.svg")'
+										style="vertical-align:middle">
+									<span class="tooltiptext below">
+										<h4>First build your Headquarters</h4>
+                                        <img data-src='@routes.Assets.versioned("/images/tutorial/build-hq.gif")' loading="lazy" alt="">
+                                        <h4 style="margin-top: 8px;">Then select the Destination Airport from the world map</h4>
+                                        <img data-src='@routes.Assets.versioned("/images/tutorial/plan-link-1.gif")' loading="lazy" alt="">
+									</span>
 								</div>
 							</div>
 						</div>
 					</div>
-					<!--  Link details here -->
 				</div>
-	<!--  end links canvas -->
+			</div>
+		</div>
+	</div>
+    <div id="linksActionBar" style="display: none; position: fixed; bottom: 0; left: 0; right: 0; background: #333; color: white; padding: 10px; z-index: 2000; align-items: center; justify-content: space-between; box-shadow: 0 -2px 10px rgba(0,0,0,0.3);">
+          <div style="display: flex; gap: 15px; align-items: center;">
+              <span id="selectedLinksCount" style="font-weight: bold; margin-left: 20px;">0 selected</span>
+              <div style="width: 1px; height: 20px; background: #555;"></div>
+              <span style="font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #aaa;">Color</span>
+              <div class="color-picker-container" style="display: flex; gap: 8px;">
+                  <div class="color-dot"
+                       style="background-color: transparent; border: 1px solid #aaa; width: 20px; height: 20px; border-radius: 50%; cursor: pointer;"
+                       onclick="bulkUpdateColor(null)" title="None"></div>
+                  <div class="color-dot"
+                       style="background-color: #ffcccc; width: 20px; height: 20px; border-radius: 50%; cursor: pointer;"
+                       onclick="bulkUpdateColor('#ffcccc88')" title="Red"></div>
+                  <div class="color-dot"
+                       style="background-color: #ccffcc; width: 20px; height: 20px; border-radius: 50%; cursor: pointer;"
+                       onclick="bulkUpdateColor('#ccffcc88')" title="Green"></div>
+                  <div class="color-dot"
+                       style="background-color: #ffffcc; width: 20px; height: 20px; border-radius: 50%; cursor: pointer;"
+                       onclick="bulkUpdateColor('#ffffcc88')" title="Yellow"></div>
+                  <div class="color-dot"
+                       style="background-color: #ccccff; width: 20px; height: 20px; border-radius: 50%; cursor: pointer;"
+                       onclick="bulkUpdateColor('#ccccff88')" title="Blue"></div>
+              </div>
+              <div style="width: 1px; height: 20px; background: #555;"></div>
+              <span style="font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #aaa;">Quality</span>
+              <div id="bulkUpdateQualityBar" data-empty-icon='@routes.Assets.versioned("/images/icons/star-empty.svg")'
+                   data-fill-icon='@routes.Assets.versioned("/images/icons/star-full.svg")'></div>
+              <input type="hidden" id="bulkUpdateQualityLevel" value="1" />
+              <button class="button" onclick="submitBulkUpdateQuality()" style="padding: 4px 12px;">Update Quality</button>
+              <div style="width: 1px; height: 20px; background: #555; margin: 0 20px;;"></div>
+              <button class="button warning" onclick="promptBulkDelete()" style="padding: 4px 12px;">Delete Selected</button>
+          </div>
+      </div>
+</div>
+<!--  end links canvas -->
 
 	  <div id="airportCanvas" class="canvas" style="display: none;">
 		  <!-- left panel -->
@@ -2774,36 +2826,13 @@
 								<div style="width: 100%;" class="table data bases">
 									<div class="table-header">
 										<div class="cell" style="width: 14%; border-bottom: none;"></div>
-										<div class="cell" style="width: 33%; border-bottom: none;"></div>
+										<div class="cell" style="width: 35%; border-bottom: none;"></div>
 										<div class="cell" style="width: 31%; border-bottom: none;"></div>
-										<div class="cell" style="width: 22%; border-bottom: none;"></div>
+										<div class="cell" style="width: 20%; border-bottom: none;"></div>
 									</div>
 								</div>
 							</div>
                         </div>
-<!--						<div class="section">-->
-<!--							<h4>Airport Assets</h4>-->
-<!--							<div class="table data" style="width: 100%;">-->
-<!--								<div class="table-header">-->
-<!--									<div class="cell" style="width: 15%">Airport</div>-->
-<!--									<div class="cell" style="width: 40%">Asset</div>-->
-<!--									<div class="cell" style="width: 10%">Level</div>-->
-<!--									<div class="cell" style="width: 20%">Profit</div>-->
-<!--									<div class="cell" style="width: 15%">Margin</div>-->
-<!--								</div>-->
-<!--							</div>-->
-<!--							<div style="max-height: 250px; overflow: auto;">-->
-<!--								<div class="table data assetList" style="width: 100%; max-height: 200px; overflow-y: auto;">-->
-<!--									<div class="table-header">-->
-<!--										<div class="cell" style="width: 15%; border-bottom: none;"></div>-->
-<!--										<div class="cell" style="width: 40%; border-bottom: none;"></div>-->
-<!--										<div class="cell" style="width: 10%; border-bottom: none;"></div>-->
-<!--										<div class="cell" style="width: 20%; border-bottom: none;"></div>-->
-<!--										<div class="cell" style="width: 15%; border-bottom: none;"></div>-->
-<!--									</div>-->
-<!--								</div>-->
-<!--							</div>-->
-<!--						</div>-->
 
 						<div class="section">
 							<h4>Airplane Livery
@@ -4173,7 +4202,6 @@
 	  </div>
 
 	<!-- Logo Modal -->
-
 	<div id="logoModal" class="modal">
 	  <div class="modal-content"  style="width : 480px;">
 	    <span class="close" onclick="closeModal($('#logoModal'))">&times;</span>
@@ -4645,21 +4673,6 @@
 
 			</div>
 
-<!--				<div style="flex-grow: 1; display:flex; flex-direction: column; align-items: center;">-->
-
-<!--					<div class="table data passengerTypeTable" style="width: 250px;">-->
-<!--					</div>-->
-<!--				</div>-->
-<!--                <div style="flex-grow: 1; display:flex; flex-direction: column; align-items: center;">-->
-
-<!--                    <div class="table data preferredClassTable" style="width: 250px;">-->
-<!--                    </div>-->
-<!--                </div>-->
-<!--                <div style="flex-grow: 1; display:flex; flex-direction: column; align-items: center;">-->
-
-<!--                    <div class="table data preferenceTypeTable" style="width: 250px;">-->
-<!--                    </div>-->
-<!--                </div>-->
 			<div class="flex-container-width-half py-4">
 				<div class="mt-0">
 					<h5>Home country</h5>
@@ -5179,12 +5192,12 @@
       <div class="modal-content" style="max-width: 900px; width: 95vw;">
           <span class="close" onclick="closeModal($('#swapAirplaneModal'))">&times;</span>
           <h4 style="margin-bottom: 10px;">Swap airplane model from <span class="modelName"></span></h4>
-          
+
           <div style="display: flex; gap: 20px; flex-wrap: wrap;">
               <div style="flex: 1.5; min-width: 300px;">
                   <select class="select-css" id="swapAirplaneModalSelect" onchange="processSwapModels(true)" style="width: 100%; margin-bottom: 15px;">
                   </select>
-                  
+
                   <div class="table data" style="width: 100%;">
                       <div class="table-row">
                           <div class="label">Airplane Ids:</div>
@@ -5235,7 +5248,7 @@
                   <p id="swapError" class="error" style="display: none; margin-top: 10px;"></p>
                   <p class="text-right info pr-3 pt-2" id="promptSwapModelsWarning"></p>
               </div>
-              
+
               <div style="flex: 1; min-width: 250px; border-left: 1px solid #ddd; padding-left: 20px;" class="stats-comparison">
                   <div class="old-model-stats">
                       <h5>Current: <span class="oldModelName"></span></h5>
@@ -5264,7 +5277,7 @@
                           </div>
                       </div>
                   </div>
-                  
+
                   <div class="new-model-stats" style="margin-top: 20px; display: none;">
                       <h5>New: <span class="newModelName"></span></h5>
                       <div class="modelIllustration" style="width:100%; position: relative;">
@@ -6031,8 +6044,6 @@
 	  </div>
   </div>
 
-
-
 <!--  end profiles-->
 
     <div id="tutorialHtml"></div>
@@ -6052,20 +6063,16 @@
 	<!-- Modal for loading -->
 	<div class="loadingSpinner"><div class="loader-svg"></div></div>
 
-  <link rel="preconnect" href="https://use.typekit.net" crossorigin />
-  <link rel="preconnect" href="https://p.typekit.net" crossorigin />
-  <link rel="stylesheet" href="https://use.typekit.net/plw0ulw.css">
+<link rel="preconnect" href="https://use.typekit.net" crossorigin />
+<link rel="preconnect" href="https://p.typekit.net" crossorigin />
+<link rel="stylesheet" href="https://use.typekit.net/plw0ulw.css">
+<script src='@routes.Assets.versioned("javascripts/index.js")'></script>
+<link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/index-CKPGaino.css")'>
+<script defer src='/assets/firework/fscreen.js'></script>
+<script defer src='/assets/firework/stage.js'></script>
+<script defer src='/assets/firework/my-math.js'></script>
+<script defer src="/assets/firework/firework.js"></script>
 
-  <script src='@routes.Assets.versioned("javascripts/index.js")'></script>
+</body>
 
-
-  <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/index-CKPGaino.css")'>
-
-
-  <script defer src='/assets/firework/fscreen.js'></script>
-  <script defer src='/assets/firework/stage.js'></script>
-  <script defer src='/assets/firework/my-math.js'></script>
-  <script defer src="/assets/firework/firework.js"></script>
-
-  </body>
 </html>

@@ -22,6 +22,8 @@ function createRouteLayer(sourceId, layerId, options = {}) {
 
     function ensure() {
         if (!state.map || hasSource(sourceId)) return;
+        // Insert route layers below airport markers if they exist
+        const beforeId = hasLayer('airports-layer') ? 'airports-layer' : undefined;
         addSource(sourceId, { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
         addLayer({
             id: layerId, type: 'line', source: sourceId,
@@ -31,13 +33,13 @@ function createRouteLayer(sourceId, layerId, options = {}) {
                 'line-width': options.hoverWidth ? ['case', ['boolean', ['feature-state', 'hover'], false], 2, 1.5] : 1.5,
                 'line-opacity': ['case', ['boolean', ['feature-state', 'hover'], false], 0.9, ['get', 'opacity']]
             }
-        });
+        }, beforeId);
         if (clickLayerId) {
             addLayer({
                 id: clickLayerId, type: 'line', source: sourceId,
                 layout: { 'line-cap': 'round', 'line-join': 'round' },
                 paint: { 'line-color': '#000', 'line-width': options.clickWidth || 15, 'line-opacity': 0.001 }
-            });
+            }, beforeId);
         }
     }
 

@@ -114,14 +114,15 @@ object EventSimulation {
       Olympics.getSelectedAirport(olympics.id).map(_.zone.split("-")(0))
     }
 
-    val previousCanidateAirports: List[Airport] = previousOlympics.takeRight(3).map(_.asInstanceOf[Olympics]).flatMap { olympics =>
+    val allPreviousCandidateAirports: List[Airport] = previousOlympics.takeRight(3).map(_.asInstanceOf[Olympics]).flatMap { olympics =>
       Olympics.getCandidates(olympics.id).filter { airport =>
         !cooldownCountries.contains(airport.countryCode) &&
           !cooldownZones.contains(airport.zone.split("-")(0))
       }
-    }.takeRight(PREVIOUS_CANIDATE_AIRPORTS)
+    }.distinct
+    val previousCandidateAirports = Random.shuffle(allPreviousCandidateAirports).take(PREVIOUS_CANIDATE_AIRPORTS)
 
-    val randomizedAirports: List[Airport] = previousCanidateAirports ++ Random.shuffle(allAirports.filter { airport =>
+    val randomizedAirports: List[Airport] = previousCandidateAirports ++ Random.shuffle(allAirports.filter { airport =>
       airport.size >= CANDIDATE_MIN_SIZE &&
       !cooldownCountries.contains(airport.countryCode) &&
       !cooldownZones.contains(airport.zone.split("-")(0)) ||
