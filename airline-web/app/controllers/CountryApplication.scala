@@ -100,18 +100,21 @@ class CountryApplication @Inject()(cc: ControllerComponents) extends AbstractCon
     }
   }
 
+  private val countryJsonCache = new scala.collection.concurrent.TrieMap[String, (Int, JsValue)]()
+
   def getCountry(countryCode: String) = Action { request =>
     request.headers.get(IF_NONE_MATCH) match {
       case Some(etag) if etag == s""""$currentCycle"""" =>
         NotModified
       case _ =>
-        getCountryJson(countryCode) match {
-          case Some(jsonObject) =>
-            Ok(jsonObject)
-              .withHeaders(
-                CACHE_CONTROL -> "no-cache",
-                ETAG -> s""""$currentCycle""""
-              )
+        val cycle = currentCycle
+        val json: Option[JsValue] = countryJsonCache.get(countryCode).filter(_._1 == cycle).map(_._2).orElse {
+          val fresh = getCountryJson(countryCode)
+          fresh.foreach { j => countryJsonCache(countryCode) = (cycle, j) }
+          fresh
+        }
+        json match {
+          case Some(j) => Ok(j).withHeaders(CACHE_CONTROL -> "no-cache", ETAG -> s""""$cycle"""")
           case None => NotFound
         }
     }

@@ -57,71 +57,77 @@ class OlympicsApplication @Inject()(cc: ControllerComponents) extends AbstractCo
       )
   }
 
+  private val olympicsDetailsCache = new scala.collection.concurrent.TrieMap[Int, (Int, JsValue)]()
+
   def getOlympicsDetails(eventId : Int) = Action {
+    val cycle = currentCycle
+    val json = olympicsDetailsCache.get(eventId).filter(_._1 == cycle).map(_._2).getOrElse {
+      var result = Json.obj()
 
-    var result = Json.obj()
+      var candidatesJson = Json.arr()
 
-    var candidatesJson = Json.arr()
-
-    EventSource.loadOlympicsAffectedAirports(eventId).foreach {
-      case(principalAirport, affectedAirports) =>
-        val airportJson = Json.toJson(principalAirport).asInstanceOf[JsObject] + ("affectedAirports" -> Json.toJson(affectedAirports))
-        candidatesJson = candidatesJson.append(airportJson)
-    }
-
-    result = result + ("candidates" -> candidatesJson)
-
-    val votingRounds = EventSource.loadOlympicsVoteRounds(eventId)
-    if (!votingRounds.isEmpty) {
-      val eliminatedCandidatesByRound = ListBuffer[Airport]()
-
-      for (i <- 1 until votingRounds.length) {
-        val previousCandidates = votingRounds(i - 1).votes.keys
-        val currentCandidates = votingRounds(i).votes.keys
-        eliminatedCandidatesByRound.append(previousCandidates.toSet.removedAll(currentCandidates).iterator.next())
+      EventSource.loadOlympicsAffectedAirports(eventId).foreach {
+        case(principalAirport, affectedAirports) =>
+          val airportJson = Json.toJson(principalAirport).asInstanceOf[JsObject] + ("affectedAirports" -> Json.toJson(affectedAirports))
+          candidatesJson = candidatesJson.append(airportJson)
       }
 
-      var votingRoundsJson = Json.arr()
+      result = result + ("candidates" -> candidatesJson)
 
+      val votingRounds = EventSource.loadOlympicsVoteRounds(eventId)
+      if (!votingRounds.isEmpty) {
+        val eliminatedCandidatesByRound = ListBuffer[Airport]()
 
-      votingRounds.foreach { round =>
-        var votesJson = Json.obj()
-        round.votes.foreach {
-          case (airport, vote) => votesJson = votesJson + (airport.id.toString -> JsNumber(vote))
+        for (i <- 1 until votingRounds.length) {
+          val previousCandidates = votingRounds(i - 1).votes.keys
+          val currentCandidates = votingRounds(i).votes.keys
+          eliminatedCandidatesByRound.append(previousCandidates.toSet.removedAll(currentCandidates).iterator.next())
         }
 
-        var votingRoundJson = Json.obj("votes" -> votesJson)
+        var votingRoundsJson = Json.arr()
 
-        val eliminatedIndex = round.round - 1
-        if (eliminatedIndex < eliminatedCandidatesByRound.size) {
-          val eliminatedAirport = eliminatedCandidatesByRound(eliminatedIndex)
-          votingRoundJson = votingRoundJson +  ("eliminatedAirport" -> Json.toJson(eliminatedAirport))
+
+        votingRounds.foreach { round =>
+          var votesJson = Json.obj()
+          round.votes.foreach {
+            case (airport, vote) => votesJson = votesJson + (airport.id.toString -> JsNumber(vote))
+          }
+
+          var votingRoundJson = Json.obj("votes" -> votesJson)
+
+          val eliminatedIndex = round.round - 1
+          if (eliminatedIndex < eliminatedCandidatesByRound.size) {
+            val eliminatedAirport = eliminatedCandidatesByRound(eliminatedIndex)
+            votingRoundJson = votingRoundJson +  ("eliminatedAirport" -> Json.toJson(eliminatedAirport))
+          }
+
+          votingRoundsJson = votingRoundsJson.append(votingRoundJson)
         }
 
-        votingRoundsJson = votingRoundsJson.append(votingRoundJson)
+        result = result + ("votingRounds" -> votingRoundsJson)
+        Olympics.getSelectedAirport(eventId).foreach { selectedAirport =>
+          result = result + ("selectedAirport", Json.toJson(selectedAirport))
+        }
+      }
+      EventSource.loadEventById(eventId) match {
+        case Some(olympics: Olympics) =>
+          if (!olympics.isActive(cycle)) { //only load total pax after the olympics is over
+            val stats = EventSource.loadOlympicsCountryStats(eventId)
+            val totalPassengers : Int = stats.view.values.map {
+              case statsOfAnCountry => statsOfAnCountry.map(_.transported).sum
+            }.sum
+            result = result + ("totalPassengers" -> JsNumber(totalPassengers))
+          }
+        case _ =>
       }
 
-      result = result + ("votingRounds" -> votingRoundsJson)
-      Olympics.getSelectedAirport(eventId).foreach { selectedAirport =>
-        result = result + ("selectedAirport", Json.toJson(selectedAirport))
-      }
-    }
-    EventSource.loadEventById(eventId) match {
-      case Some(olympics: Olympics) =>
-        val currentCycle = CycleSource.loadCycle()
-        if (!olympics.isActive(currentCycle)) { //only load total pax after the olympics is over
-          val stats = EventSource.loadOlympicsCountryStats(eventId)
-          val totalPassengers : Int = stats.view.values.map {
-            case statsOfAnCountry => statsOfAnCountry.map(_.transported).sum
-          }.sum
-          result = result + ("totalPassengers" -> JsNumber(totalPassengers))
-        }
-      case _ =>
+      olympicsDetailsCache(eventId) = (cycle, result)
+      result
     }
 
-    Ok(result)
+    Ok(json)
       .withHeaders(
-        ETAG -> s""""$currentCycle""""
+        ETAG -> s""""$cycle""""
       )
   }
 

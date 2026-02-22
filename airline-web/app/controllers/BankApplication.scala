@@ -101,10 +101,15 @@ class BankApplication @Inject()(cc: ControllerComponents) extends AbstractContro
     }
   }
 
+  @volatile private var loanRatesCycle: Int = -1
+  @volatile private var loanRatesJson: JsValue = Json.arr()
+
   def getLoanInterestRates() = Action {
-    val currentCycle = CycleSource.loadCycle()
-    val rates = BankSource.loadLoanInterestRatesFromCycle(currentCycle - 100).sortBy(_.cycle)
-    Ok(Json.toJson(rates))
+    if (loanRatesCycle != currentCycle) {
+      loanRatesJson = Json.toJson(BankSource.loadLoanInterestRatesFromCycle(currentCycle - 100).sortBy(_.cycle))
+      loanRatesCycle = currentCycle
+    }
+    Ok(loanRatesJson)
       .withHeaders(
         ETAG -> s""""$currentCycle""""
       )
