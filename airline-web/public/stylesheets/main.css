@@ -884,7 +884,10 @@ button, .button, .ajax-file-upload {
     transition: all 0.2s ease;
 }
 /* button hover */
-.button:hover:not([class*="disabled"]), .maplibregl-ctrl button:not(:disabled):hover, :focus {
+:focus {
+    text-decoration: underline;
+}
+.button:hover:not([class*="disabled"]), .maplibregl-ctrl button:not(:disabled):hover {
     background-color: var(--button-hover-background);
     color: var(--button-hover-color);
     border-color: var(--button-hover-border);
@@ -925,7 +928,7 @@ button, .button, .ajax-file-upload {
     opacity: 1;
 }
 
-div.button.selected {
+.button.selected {
     background: linear-gradient(#72ad5f, #90be81);
 }
 
@@ -2737,4 +2740,13 @@ i, .italic {
     width: 100%;
     background-color: #daa520;
     opacity: .15;
+}
+.config-btn-max {
+    rotate: -90deg;
+    font-size: 1rem;
+    font-family: system-ui;
+    font-weight: 900;
+    height: 20px;
+    width: 24px;
+    padding: 4px 0 4px 4px;
 }

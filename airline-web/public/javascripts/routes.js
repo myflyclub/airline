@@ -20,6 +20,24 @@ function checkSessionGuard() {
     return sessionActive;
 }
 
+async function requireMap() {
+    if (window.loadMap) {
+        await window.loadMap();
+    }
+}
+
+function backgroundLoadMap() {
+    if (window.loadMap) {
+        setTimeout(() => {
+            if (window.requestIdleCallback) {
+                requestIdleCallback(() => window.loadMap());
+            } else {
+                setTimeout(() => window.loadMap(), 1000);
+            }
+        }, 1000);
+    }
+}
+
 function initializeRoutes() {
     page('*', (ctx, next) => {
         const isLoggedIn = checkSessionGuard();
@@ -41,38 +59,43 @@ function initializeRoutes() {
         logout();
     });
 
-    page('/', () => {
+    page('/', async () => {
         document.title = `MFC Airline Game`;
         // If logged in, show map; otherwise redirect to login
         const isLoggedIn = checkSessionGuard();
         if (isLoggedIn) {
+            await requireMap();
             showWorldMap();
         } else {
             page.redirect('/login/');
         }
     });
 
-    page('/airport/:iata?', (ctx) => {
+    page('/airport/:iata?', async (ctx) => {
+        await requireMap();
         const iata = ctx.params.iata ?? null;
         document.title = iata ? `${iata.toUpperCase()} Airport` : 'Airport';
         id = getAirportByAttribute(iata.toUpperCase(), 'iata').id || null;
         showAirportDetails(id);
     });
 
-    page('/map/', () => {
+    page('/map/', async () => {
+        await requireMap();
         document.title = activeAirline ? `${activeAirline.name} route map` : 'Route map'
         showWorldMap();
         $('#sidePanel').fadeOut(200);
     });
 
-    page('/map/reset', () => {
+    page('/map/reset', async () => {
+        await requireMap();
         document.title = activeAirline ? `${activeAirline.name} route map` : 'Route map'
         showWorldMap();
         $('#sidePanel').fadeOut(200);
         if (activeAirline) AirlineMap.centerOnHQ(activeAirline);
     });
 
-    page('/map/:iata?', (ctx) => {
+    page('/map/:iata?', async (ctx) => {
+        await requireMap();
         const iata = ctx.params.iata ?? null;
         document.title = activeAirline ? `${iata} | ${activeAirline.name} route map` : `${iata} route map`
         showWorldMap();
@@ -81,11 +104,13 @@ function initializeRoutes() {
         AirlineMap.showAirportPopup(airport, {lat: airport.latitude, lng: airport.longitude});
     });
 
-    page('/search/', (ctx) => {
+    page('/search/', async (ctx) => {
+        await requireMap();
         showSearchCanvas();
     });
 
     page('/flights/:link?', (ctx) => {
+        backgroundLoadMap();
         const linkId = ctx.params.link ?? null;
         if (linkId && loadedLinksById[linkId]) {
             var l = loadedLinksById[linkId];
@@ -97,10 +122,12 @@ function initializeRoutes() {
     });
 
     page('/hangar/', () => {
+        backgroundLoadMap();
         document.title = 'Hangar';
         showAirplaneCanvas("hangar");
     });
     page('/hangar/:model', (ctx) => {
+        backgroundLoadMap();
         document.title = 'Hangar';
         if (ctx.params.model) {
             showAirplaneCanvas("market", pathToString(ctx.params.model));
@@ -111,10 +138,12 @@ function initializeRoutes() {
     });
 
     page('/aircraft/', () => {
+        backgroundLoadMap();
         document.title = 'Aircraft Market';
         showAirplaneCanvas("market");
     });
     page('/aircraft/:model', (ctx) => {
+        backgroundLoadMap();
         document.title = 'Aircraft Market';
         if (ctx.params.model) {
             showAirplaneCanvas("market", pathToString(ctx.params.model));
@@ -124,37 +153,44 @@ function initializeRoutes() {
     });
 
     page('/office/', () => {
+        backgroundLoadMap();
         document.title = 'Office';
         showOfficeCanvas();
     });
 
     page('/champions/', () => {
+        backgroundLoadMap();
         document.title = 'Champions';
         showRankingCanvas();
     });
 
     page('/bank/', () => {
+        backgroundLoadMap();
         document.title = 'Bank';
         showBankCanvas();
     });
 
     page('/oil/', () => {
+        backgroundLoadMap();
         document.title = 'Oil';
         showOilCanvas();
     });
 
     page('/rivals/', () => {
+        backgroundLoadMap();
         document.title = 'Rivals';
         Rivals.show();
     });
 
     page('/rivals/:airlineId', (ctx) => {
+        backgroundLoadMap();
         const airlineId = parseInt(ctx.params.airlineId);
         document.title = 'Rivals';
         Rivals.show(airlineId);
     });
 
-    page('/map/rival/:airlineId', (ctx) => {
+    page('/map/rival/:airlineId', async (ctx) => {
+        await requireMap();
         const airlineId = parseInt(ctx.params.airlineId);
         document.title = 'Rival Map';
         // Load rivals first to populate data, then show map
@@ -162,21 +198,25 @@ function initializeRoutes() {
     });
 
     page('/alliance/', () => {
+        backgroundLoadMap();
         document.title = 'Alliance';
         showAllianceCanvas();
     });
 
     page('/country/:countryCode?', (ctx) => {
+        backgroundLoadMap();
         const code = ctx.params.countryCode ? ctx.params.countryCode.toUpperCase() : null;
         showCountryCanvas(code);
     });
 
     page('/log/', () => {
+        backgroundLoadMap();
         document.title = 'Log';
         showLogCanvas();
     });
 
     page('/olympics/', () => {
+        backgroundLoadMap();
         document.title = 'Olympics';
         showEventCanvas();
     });

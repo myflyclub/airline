@@ -83,7 +83,15 @@ const AircraftConfig = (() => {
         const { economy, business, first, maxCapacity, maxSeats } = config;
         const totalSeats    = economy + business + first;
         const totalCapacity = economy + business * 2.5 + first * 6;
-        const isValid = totalCapacity <= maxCapacity && totalSeats <= maxSeats;
+        const minSeats = gameConstants.aircraft.minSeatsPerClass;
+        const minViolations = ['economy', 'business', 'first'].filter(cls => {
+            const count = config[cls];
+            return count > 0 && count < minSeats;
+        });
+        const minSeatsError = minViolations.length > 0
+            ? `${minViolations.map(c => c.charAt(0).toUpperCase() + c.slice(1)).join(', ')} must have at least ${minSeats} seats`
+            : '';
+        const isValid = totalCapacity <= maxCapacity && totalSeats <= maxSeats && minViolations.length === 0;
         const seatsColor    = totalSeats    > maxSeats    ? 'crimson' : 'inherit';
         const capacityColor = totalCapacity > maxCapacity ? 'crimson' : 'inherit';
         const borderColor = !isValid
@@ -91,7 +99,7 @@ const AircraftConfig = (() => {
             : (totalCapacity === maxCapacity || totalSeats === maxSeats)
                 ? 'forestgreen'
                 : 'inherit';
-        return { isValid, totalCapacity, totalSeats, capacityColor, seatsColor, borderColor };
+        return { isValid, totalCapacity, totalSeats, capacityColor, seatsColor, borderColor, minSeatsError };
     }
 
     // -------------------------------------------------------------------------
@@ -157,12 +165,13 @@ const AircraftConfig = (() => {
         </div>`;
 
         const inputsHtml = `<div class="inputs">
-            <div><label>First:</label><input type="number" class="ac-input" data-class="first" min="0" value="${config.first}"></div>
-            <div><label>Business:</label><input type="number" class="ac-input" data-class="business" min="0" value="${config.business}"></div>
-            <div><label>Economy:</label><input type="number" class="ac-input" data-class="economy" min="0" value="${config.economy}"></div>
+            <div><label>First:</label><input type="number" class="ac-input" data-class="first" min="0" value="${config.first}"><a class="config-btn-max img-button" data-class="first" aria-label="Increase first seats to max">➞</a></div>
+            <div><label>Business:</label><input type="number" class="ac-input" data-class="business" min="0" value="${config.business}"><a class="config-btn-max img-button" data-class="business" aria-label="Increase business seats to max">➞</a></div>
+            <div><label>Economy:</label><input type="number" class="ac-input" data-class="economy" min="0" value="${config.economy}"><a class="config-btn-max img-button" data-class="economy" aria-label="Increase economy seats to max">➞</a></div>
         </div>`;
 
-        const statsHtml = `<p class="ac-stats" style="margin:2px 0;text-align:center;">using <span class="ac-capacity-stat" style="color:${validation.capacityColor}">${validation.totalCapacity} of ${config.maxCapacity} capacity</span> | <span class="ac-seat-stat" style="color:${validation.seatsColor}">${validation.totalSeats} of ${config.maxSeats} seats</span></p>`;
+        const statsHtml = `<p class="ac-stats" style="margin:2px 0;text-align:center;">using <span class="ac-capacity-stat" style="color:${validation.capacityColor}">${validation.totalCapacity} of ${config.maxCapacity} capacity</span></p>`
+            + `<p class="ac-min-seats-error" style="margin:2px 0;text-align:center;color:crimson;${validation.minSeatsError ? '' : 'display:none;'}">${validation.minSeatsError}</p>`;
 
         const diagramHtml = _renderDiagramHtml(config, validation, dim, view);
 
@@ -173,7 +182,7 @@ const AircraftConfig = (() => {
     }
 
     function _updatePanel($panel, config) {
-        const { isValid, totalCapacity, totalSeats, capacityColor, seatsColor, borderColor } = _getValidation(config);
+        const { isValid, totalCapacity, totalSeats, capacityColor, seatsColor, borderColor, minSeatsError } = _getValidation(config);
 
         $panel.find('.ac-capacity-stat')
             .css('color', capacityColor)
@@ -181,6 +190,12 @@ const AircraftConfig = (() => {
         $panel.find('.ac-seat-stat')
             .css('color', seatsColor)
             .text(totalSeats + ' of ' + config.maxSeats + ' seats');
+
+        if (minSeatsError) {
+            $panel.find('.ac-min-seats-error').text(minSeatsError).show();
+        } else {
+            $panel.find('.ac-min-seats-error').hide();
+        }
 
         if (isValid) {
             const dim  = _calcDimensions(config.maxCapacity);
@@ -246,6 +261,23 @@ const AircraftConfig = (() => {
                 setDefault,
                 getCurrentConfig()
             );
+        });
+
+        // Fill remaining capacity into one class
+        $panel.find('.config-btn-max').on('click', function() {
+            const cls = $(this).data('class');
+            const cur = getCurrentConfig();
+            const usedCapacity = cur.economy * 1 + cur.business * 2.5 + cur.first * 6;
+            const remainingCapacity = cur.maxCapacity - usedCapacity;
+            const remainingSeats = cur.maxSeats - (cur.economy + cur.business + cur.first);
+            const lcEntry = gameConstants.linkClassValues.find(v => v.name === cls);
+            const seatSize = lcEntry ? lcEntry.spaceMultiplier : 1;
+            const additional = Math.min(Math.floor(remainingCapacity / seatSize), remainingSeats);
+            if (additional > 0) {
+                state[cls] += additional;
+                $panel.find(`.ac-input[data-class="${cls}"]`).val(state[cls]);
+                _updatePanel($panel, getCurrentConfig());
+            }
         });
 
         // Delete
