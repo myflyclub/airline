@@ -1,0 +1,145 @@
+				<div id="allianceCanvas" class="canvas flex-container-width-half" style="display: none;">
+					<div>
+                        <div id="currentAirlineMemberDetails" style="width: 100%;">
+                            <p>Your Alliance</p>
+                            <h4><span class="allianceName"></span><span class="allianceRanking"></span></h4>
+                        </div>
+
+                        <div style="min-height: 300px" class="section">
+								<div id = "allianceTableSortHeader" class="table data" style="width: 100%; height: 20px;">
+									<div class="table-header">
+										<div class="cell clickable" style="width: 30%" data-sort-property="name" data-sort-order="ascending" onclick="toggleAllianceTableSortOrder($(this))">Alliance Name</div>
+										<div class="cell clickable" style="width: 30%" data-sort-property="leaderAirlineName" data-sort-order="ascending" onclick="toggleAllianceTableSortOrder($(this))">Leader Airline</div>
+										<div class="cell clickable" style="width: 20%" align="right" data-sort-property="memberCount" data-sort-order="descending" onclick="toggleAllianceTableSortOrder($(this))">Airline Member</div>
+										<div class="cell clickable selected" style="width: 20%" align="right" data-sort-property="championPointsValue" data-sort-order="descending" onclick="toggleAllianceTableSortOrder($(this))">Total Reputation</div>
+									</div>
+								</div>
+								<div style="width: 100%; flex: 1; overflow-y: auto;" id="allianceTableContainer">
+									<div id="allianceTable" class="table data" style="width: 100%;">
+										<div class="table-header">
+											<div class="cell" style="width: 30%; border-bottom: none;"></div>
+											<div class="cell" style="width: 30%; border-bottom: none;"></div>
+											<div class="cell" style="width: 20%; border-bottom: none;"></div>
+											<div class="cell" style="width: 20%; border-bottom: none;"></div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					<div id="allianceDetails" class="vertical-group">
+							<div class="section">
+                                <div class="flex-container-width-half">
+                                    <div>
+                                        <h4 class="allianceName">Alliance Details</h4>
+                                        <div class="table" style="width: 100%;">
+                                            <div class="table-row">
+                                                <div class="cell label">Ranking:</div>
+                                                <div class="cell value allianceRanking"></div>
+                                            </div>
+                                            <div class="table-row">
+                                                <div class="cell label">Status:</div>
+                                                <div class="cell value allianceStatus"></div>
+                                            </div>
+                                            <div class="table-row tagColor">
+                                                <div class="cell label">Tag Color:</div>
+                                                <div class="cell value">
+                                                    <input type="color" class="picker tagColor">
+                                                    <img src='@routes.Assets.versioned("/images/icons/arrow-circle-135.png")' class="clickable" onclick="checkResetAllianceLabelColor(selectedAlliance.id)">
+                                                </div>
+                                            </div>
+                                            <div class="table-row tagColor">
+                                                <div class="cell label">Logo:</div>
+                                                <div class="cell value">
+                                                    <span style="display: flex; align-items: center">
+                                                        <img class="allianceLogo" src="">
+                                                        <img src="/assets/images/icons/picture--plus.png" class="img-button" style="vertical-align: middle;" onclick="showUploadLogoAlliance()">
+                                                        <img src='@routes.Assets.versioned("images/icons/gear.png")' class="img-button" style="vertical-align: middle;" onclick="editAllianceLogo()">
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="button" onclick="showAllianceMap()">Flight Map</div>
+                                        <div style="display: flex; align-items: center" id="allianceLogoInput">
+                                            <img class="allianceLogo" src="">
+                                        </div>
+                                    </div>
+                                    <div class="table table-width-50" style="width: 100%;" id="allianceStatsTable">
+                                    </div>
+                                </div>
+                                <div style="width: 100%;">
+									<h4 style="margin-top: 10px">Members</h4>
+									<div id="allianceMemberList" class="table data" style="width: 100%;">
+									</div>
+									<div class="button" id="applyForAllianceButton" onclick="applyForAlliance()">Apply</div>
+									<span id="applyForAllianceRejectionSpan" style="display: none;">
+										<img src='@routes.Assets.versioned("/images/icons/prohibition.png")'>
+										<span class="warning">Cannot join alliance</span>&nbsp;
+										<span id="applyForAllianceRejection" class="warning"></span>
+									</span>
+								</div>
+							</div>
+							<div class="section" style="width: 95%;">
+								<h4>Alliance Bonus</h4>
+								<div style="width: 100%;">
+									<div id="allianceBonusList" class="table data" style="width: 100%;">
+										<div class='table-row' id ="allianceNoneBonus" style="display:none;"><div class='cell'>Flight Code sharing - passengers are more willing to take connection flights from the same alliance</div></div>
+										<div class='table-row' id ="allianceCodeShareBonus" style="display:none;"><div class='cell'>Flight Code sharing - passengers are more willing to take connection flights from the same alliance</div></div>
+									</div>
+								</div>
+							</div>
+							<div class="section" style="width: 95%;">
+								<h4>Alliance Championed Airports</h4>
+								<div style="width: 100%;">
+									<div class="table data" style="width: 100%;">
+										<div class="table-header">
+											<div class="cell" style="width: 10%">Ranking</div>
+											<div class="cell" style="width: 30%">Airport</div>
+											<div class="cell" style="width: 30%">Airline</div>
+											<div class="cell" style="width: 20% align='right'">Loyalists</div>
+											<div class="cell" style="width: 10% align='right'">Reputation Bonus</div>
+										</div>
+									</div>
+									<div style="max-height: 200px; overflow: auto;">
+										<div class="table data" id="allianceChampionAirportList" style="width: 100%;">
+										  <div class="table-header">
+											<div class="cell" style="width: 10%; border-bottom: none;"></div>
+											<div class="cell" style="width: 30%; border-bottom: none;"></div>
+											<div class="cell" style="width: 30%; border-bottom: none;"></div>
+											<div class="cell" style="width: 20% align='right'; border-bottom: none;"></div>
+											<div class="cell" style="width: 10% align='right'; border-bottom: none;"></div>
+										  </div>
+										</div>
+									</div>
+									<h5 style="float: right;"><div>Total&nbsp;<span class="totalReputation"></span>&nbsp;reputation points (<span class="reputationTruncatedEntries"></span> entries truncated)</div></h5>
+								</div>
+							</div>
+							<div class="section" style="width: 95%;">
+								<h4>Alliance Championed Countries</h4>
+								<div style="width: 100%;">
+									<div class="table data" style="width: 100%;">
+										<div class="table-header">
+											<div class="cell" style="width: 10%">Ranking</div>
+											<div class="cell" style="width: 40%">Country</div>
+											<div class="cell" style="width: 50%">Airline</div>
+										</div>
+									</div>
+									<div style="max-height: 200px; overflow: auto;">
+										<div class="table data" id="allianceChampionCountryList" style="width: 100%;">
+											<div class="table-header">
+												<div class="cell" style="width: 10%; border-bottom: none;"></div>
+												<div class="cell" style="width: 40%; border-bottom: none;"></div>
+												<div class="cell" style="width: 50%; border-bottom: none;"></div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="section" style="width: 95%;">
+								<h4>Alliance History</h4>
+								<div style="width: 100%; overflow: auto; max-height: 400px;">
+									<div class="table data" id="allianceHistory" style="width: 100%;">
+									</div>
+								</div>
+							</div>
+						</div>
+				</div>

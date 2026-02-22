@@ -1,0 +1,96 @@
+				<div id="countryCanvas" class="canvas" style="height: 100%; display: none;">
+					<div class="mainPanel section tight">
+						<div style="width: 100%; height: 100%; overflow: auto;">
+							<div id="countryTableHeader" class="table data" style="width: 100%; height: 20px; min-width: 400px;">
+								<div class="table-header">
+									<div class="cell clickable" style="width: 22%" data-sort-property="name" data-sort-order="descending" onclick="toggleCountryTableSortOrder($(this))">Name</div>
+									<div class="cell clickable selected" style="width: 16%" align="right" data-sort-property="airportPopulation" data-sort-order="descending" onclick="toggleCountryTableSortOrder($(this))">Airport Pop Coverage</div>
+									<div class="cell clickable" style="width: 14%" align="right" data-sort-property="income" data-sort-order="ascending" onclick="toggleCountryTableSortOrder($(this))">GDP per Pop</div>
+									<div class="cell clickable" style="width: 12%" align="right" data-sort-property="openness" data-sort-order="ascending" onclick="toggleCountryTableSortOrder($(this))">Openness</div>
+									<div class="cell clickable" style="width: 12%" align="right" data-sort-property="gini" data-sort-order="ascending" onclick="toggleCountryTableSortOrder($(this))">Gini</div>
+									<div class="cell clickable" style="width: 12%" align="right" data-sort-property="countryRelationship.total" data-sort-order="ascending" onclick="toggleCountryTableSortOrder($(this))">Airline Relationship</div>
+									<div class="cell clickable" style="width: 12%" align="right" data-sort-property="delegatesCount" data-sort-order="ascending" onclick="toggleCountryTableSortOrder($(this))">Delegates Assigned</div>
+								</div>
+							</div>
+							<div style="height:  calc(100% - 40px); width: 100%; overflow-y: auto; min-width: 400px;">
+								<div id="countryTable" class="table data" style="height: 100%; width: 100%;">
+									<div class="table-header">
+										<div class="cell" style="width: 22%; border-bottom: none;"></div>
+										<div class="cell" style="width: 16%; border-bottom: none;"></div>
+										<div class="cell" style="width: 14%; border-bottom: none;"></div>
+										<div class="cell" style="width: 12%; border-bottom: none;"></div>
+										<div class="cell" style="width: 12%; border-bottom: none;"></div>
+										<div class="cell" style="width: 12%; border-bottom: none;"></div>
+										<div class="cell" style="width: 12%; border-bottom: none;"></div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="sidePanel section">
+						<div id="countryDetails" class="table" style="width: 100%;">
+							<div class="table-row">
+								<div class="label">Country:</div>
+								<div class="value" id="countryDetailsName"></div>
+							</div>
+							<div class="table-row">
+								<div class="label">Airport PPP Income:</div>
+								<div class="value" id="countryDetailsIncomeLevel"></div>
+							</div>
+							<div class="table-row">
+								<div class="label">Market Openness:</div>
+								<div class="value" id="countryDetailsOpenness" style="display: flex; align-items: center;"></div>
+							</div>
+							<div class="table-row">
+								<div class="label">Relationship with your airline:</div>
+								<div class="value relationship" style="display: flex; align-items: center;"><span class="total"></span><img src='@routes.Assets.versioned("/images/icons/gear.png")' title='Manage Relationship' class="clickable detailsIcon" onclick="showRelationshipDetailsModal($(this).data('relationship'), $(this).data('title'), $(this).data('countryCode'), showCountryView)"></div>
+							</div>
+							<div class="table-row">
+								<div class="label">Your airline title with this country:</div>
+								<div class="value"><img class="airlineTitleIcon" style='display : none; vertical-align: middle;'>&nbsp;<span class="airlineTitle"></span></div>
+							</div>
+							<div class="table-row">
+								<div class="label">Large Airports:</div>
+								<div class="value" id="countryDetailsLargeAirportCount"></div>
+							</div>
+							<div class="table-row">
+								<div class="label">Medium Airports:</div>
+								<div class="value" id="countryDetailsMediumAirportCount"></div>
+							</div>
+							<div class="table-row">
+								<div class="label">Small Airports:</div>
+								<div class="value" id="countryDetailsSmallAirportCount"></div>
+							</div>
+							<div class="table-row">
+								<div class="label">Airline Headquarters:</div>
+								<div class="value" id="countryDetailsAirlineHeadquarters"></div>
+							</div>
+							<div class="table-row">
+								<div class="label">Airline Bases:</div>
+								<div class="value" id="countryDetailsAirlineBases"></div>
+							</div>
+							<div class="table-row">
+								<div class="label">National Airline:</div>
+								<div class="value" style="padding-bottom : 10px;">
+									<div class="table data nationalAirlines" style="width : 100%">
+									</div>
+								</div>
+							</div>
+							<div class="table-row">
+								<div class="label">Partnered Airline:</div>
+								<div class="value" style="padding-bottom : 10px;">
+									<div class="table data partneredAirlines" style="width : 100%">
+									</div>
+								</div>
+							</div>
+							<div class="table-row">
+								<div class="label">Top Airline:</div>
+								<div class="value" style="padding-bottom : 10px;">
+									<div class="table data countryDetailsChampion" style="width : 100%">
+									</div>
+								</div>
+							</div>
+						</div>
+						<div id="countryDetailsSharesChart" style="height: 170px;"></div>
+					</div>
+				</div>

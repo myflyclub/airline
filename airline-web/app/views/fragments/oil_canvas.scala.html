@@ -1,0 +1,128 @@
+				<div id="oilCanvas" class="canvas" style="height: 100%; display: none;">
+					<div class="vertical-group oilCanvasLeftGroup">
+						<div class="section tight">
+							<h4 class="py-4">Oil Price History</h4>
+							<div id="oilPriceChart"></div>
+						</div>
+					</div>
+					<div class="vertical-group oilCanvasRightGroup">
+					<!--  new loan -->
+						<div class="section">
+							<h4 class="py-2">Fuel Consumption History
+								<span class="tooltip">
+									<img class="info svg" src='@routes.Assets.versioned("/images/icons/information.svg")'>
+									<p class="tooltiptext below" style="width: 400px;">
+										Fuel consumption details of previous week
+									</p>
+								</span>
+							</h4>
+							<div class="table data" id="oilConsumptionHistoryTable">
+									<div class="table-header">
+										<div class="cell" style="width: 20%" align="right">Price per Barrel</div>
+										<div class="cell" style="width: 30%" align="right">Volume</div>
+										<div class="cell" style="width: 50%" align="right">Transaction Type</div>
+									</div>
+							</div>
+							<h4 class="pt-4">Inventory Policy
+								<span class="tooltip">
+									<img class="info svg" src='@routes.Assets.versioned("/images/icons/information.svg")'>
+									<p class="tooltiptext below" style="width: 400px;">
+										Airline keeps an inventory of fuel to buffer oil price fluctuations<br/>
+										<br/>
+										Oil from inventory still fluctuates with the market price but to a smaller degree depending on the policy type<br/>
+										<br/>
+										In order to completely fix fuel price, Oil Contract should be signed
+									</p>
+								</span>
+							</h4>
+							<div class="table" style="width: 100%; margin-bottom: 15px">
+								<div class="table-row">
+									<div class="label">Current Policy:</div>
+									<div class="value">
+										<div id="currentInventoryPolicyDiv">
+											<span id="currentInventoryPolicy"></span>
+											<img id="editOilInventoryPolicyButton" src='@routes.Assets.versioned("/images/icons/gear.png")' class='button' style="vertical-align: middle;" onclick="editOilInventoryPolicy()"/>
+										</div>
+										<div id="editInventoryPolicyDiv" style="display:none;">
+											<div class="table data" id="editInventoryPolicyTable">
+												<div class="table-header">
+														<div class="cell" style="width: 70%" >Policy</div>
+														<div class="cell" style="width: 20%" align="right">Inventory Price</div>
+														<div class="cell" style="width: 10%" align="right"></div>
+												</div>
+											</div>
+											<div><img class="info svg" src='@routes.Assets.versioned("/images/icons/information.svg")'><span class="warning"></span></div>
+										</div>
+									</div>
+								</div>
+								<div class="table-row">
+									<div class="label">Current Inventory Price:</div>
+									<div class="value" id="currentInventoryPrice"></div>
+								</div>
+							</div>
+							<h4 class="pt-4">New Oil Contract
+								<span class="tooltip">
+									<img class="info svg" src='@routes.Assets.versioned("/images/icons/information.svg")'>
+									<p class="tooltiptext"  style="width: 400px;">
+										Sign long term Oil Contract with fixed price.<br/>
+										<br/>
+										The price offered depends on current market price and the contract duration
+									</p>
+								</span>
+							</h4>
+							<div class="table" style="width: 100%; margin-bottom: 15px">
+								<div class="table-row">
+									<div class="label">Contract Per Barrel Price:</div>
+									<div class="value" id="oilContractPrice"></div>
+								</div>
+								<div class="table-row">
+									<div class="label">Contract Volume:</div>
+									<div class="value">
+										<input type="text" id="oilContractVolume" oninput="loadOilContractConsideration($('#oilContractVolume').val(), $('#oilContractDuration').val())"/> barrels
+										<img class="img-button" src='@routes.Assets.versioned("/images/icons/arrow-circle-135.png")' title="reset value" onclick="setSuggestedOilContractVolume()">
+										<img class="img-button" src='@routes.Assets.versioned("/images/icons/control-skip-090.png")' title="max value" onclick="setMaxOilContractVolume()">
+									</div>
+
+								</div>
+								<div class="table-row">
+									<div class="label">Contract Duration:</div>
+									<div class="value">
+										<input type="text" id="oilContractDuration" oninput="loadOilContractConsideration($('#oilContractVolume').val(), $('#oilContractDuration').val())"/> weeks
+										<img class="img-button" src='@routes.Assets.versioned("/images/icons/arrow-circle-135.png")' title="reset value" onclick="setSuggestedOilContractDuration()">
+										<img class="img-button" src='@routes.Assets.versioned("/images/icons/control-skip-090.png")' title="max value" onclick="setMaxOilContractDuration()">
+									</div>
+								</div>
+								<div class="table-row">
+									<div class="label">Contract Initial Cost:</div>
+									<div class="value" id="oilContractInitialCost"></div>
+								</div>
+								<div class="table-row">
+									<div class="label">Contract Termination Cost (current):</div>
+									<div class="value" id="oilContractTerminationCost"></div>
+								</div>
+							</div>
+							<div class="button" id="signOilContractButton" style="display:none;" onclick="addOilContract($('#oilContractVolume').val(), $('#oilContractDuration').val())">Sign</div>
+							<div id="signOilContractRejectionDiv" style="display:none;">
+								<img src='@routes.Assets.versioned("/images/icons/prohibition.png")'>
+								<span id="signOilContractRejection" class="warning"></span>
+							</div>
+						</div>
+
+						<div class="section">
+							<h4 class="pt-4">Active Oil Contracts</h4>
+							<div class="table data" id="existingContractsTable">
+								<div class="table-header">
+									<div class="cell" style="width: 15%" align="right">Contract Price</div>
+									<div class="cell" style="width: 20%" align="right">Volume</div>
+									<div class="cell" style="width: 18%" align="right">Initial Cost</div>
+									<div class="cell" style="width: 20%" align="right">Termination Penalty</div>
+									<div class="cell" style="width: 15%" align="right">Remaining Weeks</div>
+									<div class="cell" style="width: 2%">&nbsp;</div>
+								</div>
+							</div>
+						</div>
+
+					</div>
+
+		<!--          end contract list -->
+				</div>
