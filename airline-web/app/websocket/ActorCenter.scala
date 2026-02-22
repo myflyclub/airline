@@ -114,6 +114,7 @@ sealed class LocalMainActor(remoteActor : ActorSelection) extends Actor {
         case CycleCompleted(cycle, cycleEndTime) =>
           println(s"${self.path} invalidating cache")
           MyWebSocketActor.lastSimulatedCycle = cycle
+          controllers.cachedCurrentCycle = cycle
           AirlineCache.invalidateAll()
           AirportCache.invalidateAll()
           AirportStatisticsCache.invalidateAll()

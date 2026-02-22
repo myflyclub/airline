@@ -6,6 +6,8 @@ var loadedLinksById = {}
 var linksTableSummaryState = false
 var currentAnimationStatus = false
 var currentAirlineAllianceMembers = []
+var selectedLinkIds = new Set()
+var linkColors = JSON.parse(localStorage.getItem('linkColors')) || {}
 const CLASSES = ['economy', 'business', 'first'];
 
 $( document ).ready(function() {
@@ -20,6 +22,11 @@ $( document ).ready(function() {
     })
 })
 
+/**
+ * 
+ * @param {integer} airlineId 
+ * @returns 
+ */
 function updateAirlineInfo(airlineId) {
 	return $.ajax({
 		type: 'GET',
@@ -38,10 +45,11 @@ function updateAirlineInfo(airlineId) {
 	    	activeAirline = airline
             const airlineType = airline.type.replace(" ", "") || 'standard'
             document.body.classList.add(`airlineType-${airlineType}`);
-	    	updateLinksInfo()
-	    	AirlineMap.updateAirportMarkers(airline)
 	    	updateAirlineLogo()
-	    	AirlineMap.centerOnHQ(airline)
+            if (window.AirlineMap) {
+                updateLinksInfo();
+                AirlineMap.updateAirportMarkers(airline);
+            }
 	    },
 	    error: function(jqXHR, textStatus, errorThrown) {
 	            console.log(JSON.stringify(jqXHR));
@@ -166,7 +174,9 @@ function downgradeBase() {
 
 //remove and re-add all the links
 function updateLinksInfo() {
-    AirlineMap.clearAllPaths()
+    if (window.AirlineMap) {
+        AirlineMap.clearAllPaths()
+    }
 
     if (activeAirline) {
         var url = "/airlines/" + activeAirline.id + "/links-details"
@@ -179,18 +189,24 @@ function updateLinksInfo() {
             success: function (data) {
                 // Check if response is GeoJSON format
                 if (data.type === 'FeatureCollection' && data.features) {
-                    AirlineMap.setRoutesFromGeoJSON(data);
+                    if (window.AirlineMap) {
+                        AirlineMap.setRoutesFromGeoJSON(data);
+                    }
                     // Extract link properties for updateLoadedLinks
                     const links = data.features.map(f => f.properties);
                     updateLoadedLinks(links);
                 } else {
                     // Legacy array format
-                    $.each(data, function (key, link) {
-                        AirlineMap.drawFlightPath(link)
-                    });
+                    if (window.AirlineMap) {
+                        $.each(data, function (key, link) {
+                            AirlineMap.drawFlightPath(link)
+                        });
+                    }
                     updateLoadedLinks(data);
                 }
-                AirlineMap.updateAirportMarkers(activeAirline)
+                if (window.AirlineMap) {
+                    AirlineMap.updateAirportMarkers(activeAirline)
+                }
             },
             error: function (jqXHR, textStatus, errorThrown) {
                 console.log(JSON.stringify(jqXHR));
@@ -270,6 +286,7 @@ function refreshLinkDetails(linkId) {
 	    	    $("#linkCurrentDetails .future").hide()
 	    	}
 	    	$("#linkCurrentDetails").show()
+            $("#editLinkButton").attr("onclick", `planLink(${link.fromAirportId}, ${link.toAirportId})`);
 	    	$("#linkToAirportId").val(link.toAirportId)
 	    	$("#linkFromAirportId").val(link.fromAirportId)
 
@@ -555,43 +572,40 @@ function planLink(fromAirport, toAirport, isRefresh) {
 
 	$("#planLinkFromAirportId").val(fromAirport)
 	$("#planLinkToAirportId").val(toAirport)
+    setActiveDiv($('#planLinkDetails'))
+    $('#planLinkDetails .warning').hide()
 
-	if (fromAirport && toAirport) {
-		setActiveDiv($('#planLinkDetails'))
-		$('#planLinkDetails .warning').hide()
-
-		var loadPlanLink = function() {
-            var url = "/airlines/" + airlineId + "/plan-link"
-            $.ajax({
-                type: 'POST',
-                url: url,
-                data: { 'airlineId' : parseInt(airlineId), 'fromAirportId': parseInt(fromAirport), 'toAirportId' : parseInt(toAirport)} ,
-                dataType: 'json',
-                success: function(linkInfo) {
-                    updatePlanLinkInfo(linkInfo, isRefresh)
-                    if (!isRefresh) {
-                        showMapOverlay($('#sidePanel'));
-                    }
-                },
-                error: function(jqXHR, textStatus, errorThrown) {
-                        console.log(JSON.stringify(jqXHR));
-                        console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
-                },
-                beforeSend: function() {
-                    $('body .loadingSpinner').show()
-                },
-                complete: function(){
-                    $('body .loadingSpinner').hide()
+    var loadPlanLink = function() {
+        var url = "/airlines/" + airlineId + "/plan-link"
+        $.ajax({
+            type: 'POST',
+            url: url,
+            data: { 'airlineId' : parseInt(airlineId), 'fromAirportId': parseInt(fromAirport), 'toAirportId' : parseInt(toAirport)} ,
+            dataType: 'json',
+            success: function(linkInfo) {
+                updatePlanLinkInfo(linkInfo, isRefresh)
+                if (!isRefresh) {
+                    showMapOverlay($('#sidePanel'));
                 }
-            });
-        }
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                    console.log(JSON.stringify(jqXHR));
+                    console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
+            },
+            beforeSend: function() {
+                $('body .loadingSpinner').show()
+            },
+            complete: function(){
+                $('body .loadingSpinner').hide()
+            }
+        });
+    }
 
-        if (!isRefresh) {
-            $('#sidePanel').fadeOut(200, loadPlanLink)
-        } else {
-            loadPlanLink()
-        }
-	}
+    if (!isRefresh) {
+        $('#sidePanel').fadeOut(200, loadPlanLink)
+    } else {
+        loadPlanLink()
+    }
 
 
 }
@@ -1754,6 +1768,21 @@ function updateLinksTable(sortProperty, sortOrder) {
         const quality = link.computedQuality > 0 ? link.computedQuality : "-"
 
         const row = $("<div class='table-row clickable' data-link-id='" + link.id + "' onclick='selectLinkFromTable($(this), " + link.id + ")'></div>")
+
+        if (linkColors[link.id]) {
+            row.css('background-color', linkColors[link.id])
+        }
+
+        var checkbox = $("<input type='checkbox' class='link-checkbox'>")
+        if (selectedLinkIds.has(link.id)) {
+            checkbox.prop('checked', true)
+        }
+        checkbox.click(function (e) {
+            e.stopPropagation()
+            toggleLinkSelection(link.id, $(this))
+        })
+        var checkboxCell = $("<div class='cell'></div>").append(checkbox)
+        row.append(checkboxCell)
         row.append("<div class='cell'>" + getCountryFlagImg(link.fromCountryCode) + getAirportText(link.fromAirportCity, link.fromAirportCode) + "</div>")
         row.append("<div class='cell'>" + getCountryFlagImg(link.toCountryCode) + getAirportText(link.toAirportCity, link.toAirportCode) + "</div>")
         row.append("<div class='cell'>" + link.model + "</div>")
@@ -3097,5 +3126,149 @@ function loadAndWatchAirlineNotes(airlineId) {
                     console.error('Error saving note:', error);
                 });
         }, debounceDelay);
+    });
+}
+
+function toggleAllLinks(source) {
+    var checkboxes = $("#linksTable .link-checkbox")
+    var isChecked = $(source).prop('checked')
+    checkboxes.prop('checked', isChecked)
+
+    if (isChecked) {
+        // Add all visible links to set
+        checkboxes.each(function () {
+            var linkId = $(this).closest('.table-row').data('link-id')
+            selectedLinkIds.add(linkId)
+        })
+    } else {
+        // Remove all visible links from set (or clear all?)
+        // If "Select All" is unchecked, usually means clear selection or clear visible.
+        // For safety, let's clear visible ones from the set.
+        checkboxes.each(function () {
+            var linkId = $(this).closest('.table-row').data('link-id')
+            selectedLinkIds.delete(linkId)
+        })
+    }
+    updateLinksActionBar()
+}
+
+function toggleLinkSelection(linkId, checkbox) {
+    if (checkbox.prop('checked')) {
+        selectedLinkIds.add(linkId)
+    } else {
+        selectedLinkIds.delete(linkId)
+        $("#toggleAllLinks").prop('checked', false)
+    }
+    updateLinksActionBar()
+}
+
+function updateLinksActionBar() {
+    var count = selectedLinkIds.size
+    $("#selectedLinksCount").text(count + " selected")
+    if (count > 0) {
+        $("#linksActionBar").fadeIn(200)
+    } else {
+        $("#linksActionBar").fadeOut(200)
+        $("#toggleAllLinks").prop('checked', false)
+    }
+    var $qualityBar = $("#bulkUpdateQualityBar")
+    generateImageBar($qualityBar.data("emptyIcon"), $qualityBar.data("fillIcon"), 5, $qualityBar, $("#bulkUpdateQualityLevel"))
+}
+
+function submitBulkUpdateQuality() {
+    var qualityLevel = parseInt($("#bulkUpdateQualityLevel").val())
+    var qualityRaw = qualityLevel * 20
+    var selectedCount = selectedLinkIds.size
+    if (selectedCount === 0) return
+
+    promptConfirm("Update quality of " + selectedCount + " selected links to " + qualityLevel + " stars?", function () {
+        executeBulkUpdateQuality(qualityRaw)
+    })
+}
+
+function bulkUpdateColor(color) {
+    selectedLinkIds.forEach(function (linkId) {
+        if (color) {
+            linkColors[linkId] = color
+        } else {
+            delete linkColors[linkId]
+        }
+    })
+    localStorage.setItem('linkColors', JSON.stringify(linkColors))
+
+    // Refresh table rows to show new color
+    loadLinksTable()
+}
+
+function executeBulkUpdateQuality(qualityInt) {
+    if (selectedLinkIds.size === 0) return;
+
+    $.ajax({
+        type: 'POST',
+        url: "/airlines/" + activeAirline.id + "/links/bulk-update-quality",
+        data: JSON.stringify({ "linkIds": Array.from(selectedLinkIds), "quality": qualityInt }),
+        contentType: 'application/json; charset=utf-8',
+        dataType: 'json',
+        success: function (result) {
+            loadLinksTable(null, true);
+            updateLinksActionBar()
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+            console.log(JSON.stringify(jqXHR));
+            alert("Failed to update quality: " + errorThrown);
+        }
+    });
+}
+
+function promptBulkDelete() {
+    if (selectedLinkIds.size === 0) return;
+
+    var count = selectedLinkIds.size;
+    $.ajax({
+        type: 'DELETE',
+        url: "/airlines/" + activeAirline.id + "/links/bulk-delete-details",
+        data: JSON.stringify({ "linkIds": Array.from(selectedLinkIds) }),
+        contentType: 'application/json; charset=utf-8',
+        dataType: 'json',
+        success: function (result) {
+            var delegateRefund = result.delegateRefund;
+            var capacityToRemove = result.capacityToRemove;
+
+            var message = "Are you sure you want to delete " + count + " selected links?<br><br>";
+            message += "&bull; <b>Capacity to remove:</b> " + commaSeparateNumber(capacityToRemove) + " seats<br>";
+            message += "&bull; <b>Delegates to refund:</b> " + delegateRefund;
+
+            promptConfirm(message, function () {
+                executeBulkDelete();
+            });
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+            console.log(JSON.stringify(jqXHR));
+            alert("Failed to get bulk delete details: " + errorThrown);
+        }
+    });
+}
+
+function executeBulkDelete() {
+    $.ajax({
+        type: 'POST',
+        url: "/airlines/" + activeAirline.id + "/links/bulk-delete",
+        data: JSON.stringify({ "linkIds": Array.from(selectedLinkIds) }),
+        contentType: 'application/json; charset=utf-8',
+        dataType: 'json',
+        success: function (result) {
+            selectedLinkIds.clear();
+            updateLinksActionBar();
+            loadLinksTable(null, true);
+
+            updateAirlineInfo(activeAirline.id);
+            if ($('#linksCanvas').is(':visible') && typeof updateLinksInfo === 'function') {
+                updateLinksInfo();
+            }
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+            console.log(JSON.stringify(jqXHR));
+            alert("Failed to delete links: " + errorThrown);
+        }
     });
 }

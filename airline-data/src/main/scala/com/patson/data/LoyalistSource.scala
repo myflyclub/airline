@@ -10,24 +10,24 @@ import scala.collection.mutable.{ListBuffer}
 object LoyalistSource {
   val updateLoyalists = (loyalistEntries : List[Loyalist]) => {
     val connection = Meta.getConnection()
-    val statement = connection.prepareStatement("REPLACE INTO " + LOYALIST_TABLE + "(airport, airline, amount) VALUES(?,?,?)")
-
-    connection.setAutoCommit(false)
-
     try {
-      loyalistEntries.foreach {
-        case Loyalist(airport : Airport, airline : Airline, amount : Int) => {
-          statement.setInt(1, airport.id)
-          statement.setInt(2, airline.id)
-          statement.setInt(3, amount)
-          statement.addBatch()
+      connection.setAutoCommit(false)
+      val statement = connection.prepareStatement("REPLACE INTO " + LOYALIST_TABLE + "(airport, airline, amount) VALUES(?,?,?)")
+      try {
+        loyalistEntries.foreach {
+          case Loyalist(airport : Airport, airline : Airline, amount : Int) => {
+            statement.setInt(1, airport.id)
+            statement.setInt(2, airline.id)
+            statement.setInt(3, amount)
+            statement.addBatch()
+          }
         }
+        statement.executeBatch()
+        connection.commit()
+      } finally {
+        statement.close()
       }
-      statement.executeBatch()
-
-      connection.commit()
     } finally {
-      statement.close()
       connection.close()
     }
   }
@@ -96,23 +96,23 @@ object LoyalistSource {
 
   val deleteLoyalists = (loyalistEntries : List[Loyalist]) => {
     val connection = Meta.getConnection()
-    val statement = connection.prepareStatement("DELETE FROM " + LOYALIST_TABLE + " WHERE airport = ? AND airline = ?")
-
-    connection.setAutoCommit(false)
-
     try {
-      loyalistEntries.foreach {
-        case Loyalist(airport : Airport, airline : Airline, amount : Int) => {
-          statement.setInt(1, airport.id)
-          statement.setInt(2, airline.id)
-          statement.addBatch()
+      connection.setAutoCommit(false)
+      val statement = connection.prepareStatement("DELETE FROM " + LOYALIST_TABLE + " WHERE airport = ? AND airline = ?")
+      try {
+        loyalistEntries.foreach {
+          case Loyalist(airport : Airport, airline : Airline, amount : Int) => {
+            statement.setInt(1, airport.id)
+            statement.setInt(2, airline.id)
+            statement.addBatch()
+          }
         }
+        statement.executeBatch()
+        connection.commit()
+      } finally {
+        statement.close()
       }
-      statement.executeBatch()
-
-      connection.commit()
     } finally {
-      statement.close()
       connection.close()
     }
   }
@@ -137,26 +137,37 @@ object LoyalistSource {
   }
 
   val updateLoyalistHistory = (entries : List[LoyalistHistory]) => {
+    val BATCH_SIZE = 10000
     val connection = Meta.getConnection()
-    val statement = connection.prepareStatement("REPLACE INTO " + LOYALIST_HISTORY_TABLE + "(airport, airline, amount, cycle) VALUES(?,?,?,?)")
-
-    connection.setAutoCommit(false)
-
     try {
-      entries.foreach {
-        case LoyalistHistory(Loyalist(airport : Airport, airline : Airline, amount : Int), cycle) => {
-          statement.setInt(1, airport.id)
-          statement.setInt(2, airline.id)
-          statement.setInt(3, amount)
-          statement.setInt(4, cycle)
-          statement.addBatch()
+      connection.setAutoCommit(false)
+      val statement = connection.prepareStatement("REPLACE INTO " + LOYALIST_HISTORY_TABLE + "(airport, airline, amount, cycle) VALUES(?,?,?,?)")
+      try {
+        var count = 0
+        for (entry <- entries) {
+          entry match {
+            case LoyalistHistory(Loyalist(airport: Airport, airline: Airline, amount: Int), cycle) =>
+              statement.setInt(1, airport.id)
+              statement.setInt(2, airline.id)
+              statement.setInt(3, amount)
+              statement.setInt(4, cycle)
+              statement.addBatch()
+              count += 1
+              if (count % BATCH_SIZE == 0) {
+                statement.executeBatch()
+                connection.commit()
+              }
+          }
         }
+        // Execute remaining batch
+        if (count % BATCH_SIZE != 0) {
+          statement.executeBatch()
+          connection.commit()
+        }
+      } finally {
+        statement.close()
       }
-      statement.executeBatch()
-
-      connection.commit()
     } finally {
-      statement.close()
       connection.close()
     }
   }

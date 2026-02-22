@@ -21,7 +21,8 @@ package object controllers {
   implicit val actorSystem: ActorSystem = ActorSystem("patson-web-app-system")
   implicit val order: Double.IeeeOrdering.type = Ordering.Double.IeeeOrdering
   val currentApiVersion = "v4.1.5" // Update this when schema changes
-  val currentCycle: Int = CycleSource.loadCycle()
+  @volatile var cachedCurrentCycle: Int = CycleSource.loadCycle()
+  def currentCycle: Int = cachedCurrentCycle
 
   implicit object AirlineFormat extends Format[Airline] {
     def reads(json: JsValue): JsResult[Airline] = {

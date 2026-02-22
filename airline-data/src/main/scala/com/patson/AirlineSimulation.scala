@@ -739,13 +739,13 @@ object AirlineSimulation {
 //    println(s"StockPrice metrics: $newPrice, adjust=$sizeAdjust, EPS=$metricEPS, PASK=$metricPASK, SF=$metricSF, Links=$metricLinks, OnTime=$metricOnTime, Airport=$metricAirport, Codeshares=$metricCodeshares, Leaderboard=$metricLeaderboard, Cash=$metricCash, Interest=$metricInterest")
 
 
-    if (newPrice > stockPrice) {
+    val result = if (newPrice > stockPrice) {
       stockPrice * 0.15 + Math.pow(Math.max(0.01, newPrice), StockModel.STOCK_EXPONENT) / 10 * 0.85
     } else {
       //price falls slower, making buybacks more impactful
       stockPrice * 0.6 + Math.pow(Math.max(0.01, newPrice), StockModel.STOCK_EXPONENT) / 10 * 0.4
     }
-
+    BigDecimal(result).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble
   }
 
   val getNewQuality : (Double, Double) => Double = (currentQuality, targetQuality) =>  {

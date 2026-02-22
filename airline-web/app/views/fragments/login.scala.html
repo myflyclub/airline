@@ -1,0 +1,25 @@
+		<!-- login page overlay (shown when not logged in) -->
+		<div id="loginPageOverlay" style="display: none;">
+			<div class="login-page-content">
+				<h1 class="login-title">MyFly.Club</h1>
+				<p class="login-subtitle">It's airline capitalism – online!</p>
+				<div class="login-form" id="loginForm">
+					<input type="text" id="loginPageUserName" placeholder="Username" tabindex="1" />
+					<a href="/forgot-id" target="_blank" class="forgot-link" title="Forgot Username?">?</a>
+					<input type="password" id="loginPagePassword" placeholder="Password" tabindex="2" onkeydown="passwordLoginPage(event)" />
+					<a href="/forgot-password" target="_blank" class="forgot-link" title="Forgot Password?">?</a>
+					<button class="button login-page-btn" onclick="loginFromPage()" tabindex="3">Login</button>
+					<button class="button" onclick="showSignupForm()" tabindex="4">Sign Up</button>
+                    <a href="https://myfly.club/" class="button" tabindex="5">Learn more</a>
+				</div>
+				<div class="login-form" id="signupForm" style="display: none;">
+					<input type="text" id="signupPageUserName" placeholder="Username" tabindex="1" />
+					<input type="email" id="signupPageEmail" placeholder="Email address" tabindex="2" />
+					<input type="password" id="signupPagePassword" placeholder="Password" tabindex="3" />
+					<input type="password" id="signupPagePasswordConfirm" placeholder="Repeat password" tabindex="4" />
+					<input type="text" id="signupPageAirlineName" placeholder="Airline name" tabindex="5" onkeydown="passwordSignupPage(event)" />
+					<button class="button signup-page-btn" onclick="signupFromPage()" tabindex="6">Create Account</button>
+					<button class="button" onclick="showLoginForm()" tabindex="7">Back to Login</button>
+				</div>
+			</div>
+		</div>

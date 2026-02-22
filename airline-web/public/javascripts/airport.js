@@ -450,6 +450,33 @@ function updateAirportChampionDetails(airport) {
 
 
 function checkForAirportUpdate(airport) {
+    // Prefer fresh boost data embedded in the airport detail response (populationBoost /
+    // incomeLevelBoost from AirportExtendedWrites) — avoids relying on the potentially
+    // stale airportsLatestData bulk cache (e.g. after a specialization change).
+    if (airport.populationBoost || airport.incomeLevelBoost) {
+        const boostFactors = {}
+        if (airport.populationBoost) {
+            const popBoost = airport.populationBoost.reduce((sum, item) => sum + (Number(item.value) || 0), 0)
+            const oldMiddleIncome = airport.population * airport.popMiddleIncome / 100
+            airport.popMiddleIncome = ((oldMiddleIncome + popBoost) / (airport.population + popBoost) * 100).toFixed(1)
+            airport.population += popBoost
+            boostFactors.population = airport.populationBoost
+        }
+        if (airport.incomeLevelBoost) {
+            boostFactors.income = airport.incomeLevelBoost
+        }
+        airport.boosts = boostFactors
+
+        // Still pull travelRate / reputation / congestion from the bulk cache if available
+        const stats = airportsLatestData?.champions?.[airport.id]
+        if (stats) {
+            airport.travelRate = stats.travelRate
+            airport.reputation = stats.reputation
+            airport.congestion = stats.hasOwnProperty('congestion') ? stats.congestion : 0
+        }
+        return airport
+    }
+
     if (!airportsLatestData || !airportsLatestData.boosts) {
         return airport;
     }

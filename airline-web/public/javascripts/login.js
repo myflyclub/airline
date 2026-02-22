@@ -147,9 +147,6 @@ async function doPostLoginSetup(user) {
     //User
     updateAirlineColors()
 
-    AirlineMap.addMapControls();
-    AirlineMap.addMarkers();
-
     mobileCheck();
     refreshWallpaper();
 
@@ -159,7 +156,7 @@ async function doPostLoginSetup(user) {
         initPrompts();
         updateAirlineLabelColors();
         try {
-            if (typeof loadAirplaneModels === 'function') await loadAirplaneModels(user.airlineIds[0]);
+            if (typeof loadAirplaneModels === 'function') loadAirplaneModels(user.airlineIds[0]);
             if (typeof loadOilPrices === 'function') loadOilPrices();
         } catch (e) {
             console.warn('Airline setup error:', e);

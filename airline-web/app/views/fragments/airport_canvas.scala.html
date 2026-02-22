@@ -1,0 +1,391 @@
+	  <div id="airportCanvas" class="canvas" style="display: none;">
+		  <!-- left panel -->
+		  <div class="vertical-group max-w-screen-nav" style="max-width: 1280px;">
+			  <div style="display: flex; flex-flow: row; flex-wrap: wrap; gap: 8px;">
+				  <div class="vertical-group" style="flex-basis: 66%; flex-grow: 1; box-sizing:border-box;">
+					  <div class="section" style="display: flex; flex-wrap: wrap;">
+                          <div id="airportDetailsCityImage" class="desktopOnly" style="">
+                              <p class="caption"></p>
+                          </div>
+						  <h2 style="width:100%; font-size: 16px;"><span class="airportName">Airport Details</span> | <i class="airportCityName"></i>, <i class="airportCountryName"></i></h2>
+						  <p class="flex-row pt-1 inline-icons"><span class="airportCountryFlag"></span> <b class="airportIataIaco"></b> <span id="airportDetailsOpenness"></span></p>
+						  <div class="pb-6">
+							  <p>
+									<span class="airportAffinityZone"></span>
+									<span class="tooltip pl-1">
+										<img class="info svg" src='@routes.Assets.versioned("/images/icons/information.svg")'>
+										<span class="tooltiptext below" style="width: 400px;">
+											Each affinity shared with another airport increases demand between the two airports especially over long distances. <b>Cultural-political</b> affinities only apply on international routes; <b>trade</b> affinities always apply.
+										</span>
+									</span>
+							  </p>
+						  </div>
+						  <div class="item-grid">
+							  <div class="item">
+								  <div class="i-label">Charms</div>
+								  <div class="flex-row airportFeatures"></div>
+							  </div>
+							  <div class="item">
+								  <div class="i-label">Travel Rate<div class="tooltip">
+									  <img loading="lazy" class="info svg" src='@routes.Assets.versioned("/images/icons/information.svg")'>
+									  <span class="tooltiptext" style="width: 400px;">
+										<p>The travel rate directly modifies the demand generated from this airport. As more passengers are transported from this airport, the travel rate will increase.</p>
+									  </span>
+								  </div></div>
+								  <div class="flex-row">
+									  <div><b id="airportTravelRate"></b></div>
+									  <img class="svg" loading="lazy" src='@routes.Assets.versioned("/images/icons/rate.svg")' />
+								  </div>
+							  </div>
+							  <div class="item">
+								  <div class="i-label">Population</div>
+								  <div class="i-value">
+                                      <img loading="lazy" title="Population coverage" width="20" src='@routes.Assets.versioned("/images/icons/population.svg")'>
+                                      <div id="airportDetailsPopulation"></div>
+                                  </div>
+							  </div>
+							  <div class="item">
+								  <div class="i-label">Nearby Airport Connections</div>
+								  <div class="i-value tooltip-attr tooltip-attr-bottom" data-tooltip="Passengers from nearby airports may also use this airport." onclick="showGenericTransitModal()">
+									  <div id="airportDetailsNearbyAirportCount"></div>
+									  <img loading="lazy" src="/assets/images/icons/car.png" title="Local airport connections" class="clickable" width="24px">
+								  </div>
+							  </div>
+							  <div class="item">
+								  <div class="i-label">Airport scale <div class="tooltip">
+									  <img class="info svg" loading="lazy" src='@routes.Assets.versioned("/images/icons/information.svg")'>
+									  <span class="tooltiptext" style="width: 400px;">
+										<p>Larger airports with more gates, runways, and other facilities are a higher "<b>airport scale</b>." Higher scale airports have higher aircraft landing fees and base upkeep costs.</p>
+									  </span>
+								  </div></div>
+								  <div class="i-value tooltip-attr tooltip-attr-bottom" data-tooltip="Airport Scale">
+									  <img loading="lazy" width="20px" height="20px" src='@routes.Assets.versioned("/images/icons/airplane-takeoff.svg")'>
+									  <span class="airportSize"></span>
+								  </div>
+							  </div>
+							  <div class="item">
+								  <div class="i-label">Middle income
+									  <div class="tooltip">
+										  <img class="info svg" src='@routes.Assets.versioned("/images/icons/information.svg")'>
+										  <div class="tooltiptext" style="width: 400px;">
+											  <p>In-game, the very poor do not take flights. Highly populous airports with large middle classes will have the most outgoing passengers.</p>
+											  <p>Additionally, airports with higher incomes will have more outgoing demand for premium seats.</p>
+										  </div>
+									  </div>
+								  </div>
+								  <div class="i-value">
+                                      <img loading="lazy" title="Middle income" width="20" src='@routes.Assets.versioned("/images/icons/house.svg")'>
+									  <div id="airportDetailsPopMiddleIncome"></div>
+								  </div>
+							  </div>
+							  <div class="item">
+								  <div class="i-label"><span class="airportCityName">Airport</span> elites
+									  <div class="tooltip">
+										  <img class="info svg" src='@routes.Assets.versioned("/images/icons/information.svg")'>
+										  <span class="tooltiptext" style="width: 400px;">
+											  <p>In-game, population, income, and inequality is applied to determine how much of
+												each airport is low, middle, and extremely-high income. You can see the <b>gini coefficient</b> (inequality) in the country list.</p>
+										  </span>
+								  	</div>
+								  </div>
+								  <div class="i-value">
+                                      <div id="airportDetailsPopElite"></div>
+                                      <img class="info svg" src='@routes.Assets.versioned("/images/icons/airport-features/ELITE_CHARM.png")'>
+                                  </div>
+							  </div>
+							  <div class="item">
+								  <div class="i-label" data-tooltip="Higher income generates more demand and more premium passengers.">GDP per capita</div>
+								  <div class="i-value"><img title="Average income per capita" width="20" src='@routes.Assets.versioned("/images/icons/money.svg")' style="margin-right: 5px;"><span id="airportDetailsIncomeLevel"></span></div>
+							  </div>
+						  </div>
+					  </div>
+					  <div id="airportBaseDetails" class="section m-0" style="box-sizing:border-box;">
+						  <h4 id="airportBaseDetailsHeading" class="pb-2">Your Airline Headquarters</h4>
+						  <div class="item-grid" id="airportBaseIsBase">
+							  <div class="item">
+								  <div class="i-label">Upkeep Costs</div>
+								  <div class="i-value">
+									  <span id="airportDetailsBaseUpkeep"></span>
+									  <span class="tooltip" onmouseover="showBaseUpkeepModal()">
+										  <img class="info svg" src='@routes.Assets.versioned("/images/icons/information.svg")'>
+										  <span class="tooltiptext below" style="width: 400px;"></span>
+									  </span>
+								  </div>
+							  </div>
+							  <div class="item">
+								  <div class="i-label">Regulatory status</div>
+								  <div class="i-value" style="display: flex; align-items: center;">
+									  <img class="airlineTitleIcon" style='display : none; vertical-align: middle;'>
+									  <p class="airlineTitle titleCue"></p>
+								  </div>
+							  </div>
+								<div class="item">
+									<div class="i-label">Delegates Required</div>
+									<div class="i-value inline-icons">
+										<span id="airportDetailsBaseDelegatesRequired"></span>
+										<img src='@routes.Assets.versioned("/images/icons/gear.png")' title='Manage Relationship'
+										   class="clickable detailsIcon openCountryRelationship"
+										   onclick="showRelationshipDetailsModal($(this).data('relationship'), $(this).data('title'), $(this).data('countryCode'), function(){ showAirportDetails(activeAirportId) })"
+										   >
+									</div>
+								</div>
+								<div class="item">
+									<div class="i-label">Facilities</div>
+									<div class="i-value" id="airportDetailsFacilities"></div>
+								</div>
+								<div class="item">
+									<div class="i-label">Airport Loyalty
+										<img src='@routes.Assets.versioned("/images/icons/gear.png")' class="clickable campaignGear"
+											width="16"
+											height="16"
+											onclick="showCampaignModal()"
+											title="View/Edit Campaigns"
+											style="vertical-align:text-bottom"/>
+									    <img src='@routes.Assets.versioned("/images/icons/information.svg")'
+											class="svg info clickable airportLoyaltyBonusTrigger" style="vertical-align:text-bottom"
+											onmouseover="showAppealBreakdown($(this), $('#appealBonusDetailsTooltip').data('loyaltyBreakdown'))"
+											onmouseout="hideAppealBreakdown()"/>
+									</div>
+									<div class="i-value airportLoyalty">
+								    	<span id="airportDetailsLoyalty"></span><span class="airportLoyaltyBonus"></span>
+								  	</div>
+								</div>
+								<div class="item">
+									<div class="i-label">Staff required / capacity</div>
+									<div class="i-value" style="display: flex; align-items: center;">
+										<span id="airportDetailsStaff"></span>
+										<span class="tooltip" onmouseover="showBaseDetailsModal()">
+											<img class="info svg" src='@routes.Assets.versioned("/images/icons/information.svg")'>
+											<span class="tooltiptext below alignLeft" style="width: 400px;"></span>
+										</span>
+									</div>
+								</div>
+							</div>
+						  <button type="button" class="button ml-0" id="buildHeadquarterButton" style="display: none;"
+								  onclick='selectHeadquarters(activeAirportId)'>Build Headquarters</button>
+						  <button type="button" class="button ml-0" id="buildBaseButton" style="display: none;"
+								  onclick='promptConfirm("Build a base at this airport?", data => buildBase(false))'>Build
+							  Base</button>
+						  <button type="button" class="button ml-0" id="upgradeBaseButton" data-scale=""
+								  style="display: none;"
+								  onclick='promptConfirm("Upgrade this base to scale " + (parseInt(targetBase.scale)) + "?", data => {console.log(data); buildBase(targetBase.headquarter, parseInt(targetBase.scale))})'>Upgrade</button>
+						  <button type="button" class="button" id="downgradeBaseButton" style="display: none;"
+								  onclick='promptConfirm("Downgrade this base?", downgradeBase)'>Downgrade</button>
+						  <button type="button" class="button" id="deleteBaseButton" style="display: none;"
+								  onclick='promptConfirm("Remove this base? All routes from this airport will also be removed. All airplanes assigned to this base will be re-assigned to HQs. All assets of this Airport will be sold.", deleteBase)'>Remove</button>
+						  <button type="button" class="button" onclick="showSpecializationModal()">Base
+							  Specializations</button>
+					  </div>
+				  </div>
+
+				<div class="vertical-group" style="flex-basis: 33%; flex-grow: 1; box-sizing:border-box;">
+					<div class="section tight">
+						<textarea id="airportNotes" style="width: 99%; min-height: 80px;" placeholder="Add notes here..."></textarea>
+					</div>
+					<div class="section loyalistDetails">
+						<h5>
+							Loyalist Trend
+							<span class="tooltip">
+									<img class="info svg" src='@routes.Assets.versioned("/images/icons/information.svg")'>
+									<span class="tooltiptext below alignLeft" style="width: 400px;">
+										<p>Loyalty is very important. With more loyalty a passenger is more likely to choose your airline and to pay higher ticket prices.</p>
+										<p>Gain loyalists by providing satisfying service! Different passenger types care for different attributes, for example flight quality or price. For more info, please refer to the survey</p>
+										<img src='@routes.Assets.versioned("/images/tutorial/survey-button.png")'
+											style="box-shadow: 0 0 2px 1px rgba(255, 255, 255, 0.2);">
+										<p>Having the most loyalists at an airport also makes you the "champion" of the airport, giving you additional reputation.</p>
+									</span>
+							</span>
+							<img src='@routes.Assets.versioned("/images/icons/chart-up.png")' class="clickable"
+								title="View History" onclick="showLoyalistHistoryModal()" style="vertical-align: text-bottom">
+						</h5>
+						<div>
+							<div id="loyalistPie" style="height: 160px; width:100%;">
+							</div>
+							<div class="table data loyalistDelta" style="width: 100%">
+								<div class="table-header">
+									<div class="cell" style="width: 70%">Airline</div>
+									<div class="cell" style="width: 30%; text-align: right;">Trend</div>
+								</div>
+							</div>
+						</div>
+						<p class="pt-2"></p>
+					</div>
+				</div>
+			</div>
+
+			  <div class="section-grid">
+				  <div class="section tight flex-col">
+					  <h3 class="pt-2 inline-icons"><img src='@routes.Assets.versioned("/images/icons/crown.png")'> Rankings <span class="rep-value text-xs opacity-80 pr-1 font-normal">max rep: <i id="maxRep"></i></span></h3>
+					  <div id="airportDetailsChampionList" style="width: 100%; margin-bottom: 15px;" class="table data">
+						  <div class="table-header">
+							  <div class="cell" style="width: 5%">&nbsp;</div>
+							  <div class="cell" style="width: 40%">Airline</div>
+							  <div class="cell" style="width: 20%; text-align: right;">Loyalists</div>
+							  <div class="cell" style="width: 20%; text-align: right;">Loyalty</div>
+							  <div class="cell" style="width: 25%; text-align: right;">Reputation Boost</div>
+						  </div>
+					  </div>
+                      <div class="adminActions" style="display: none;">
+                          <h4>Admin Action</h4>
+                          <div><a onclick="invalidateImage('airport');">Invalidate Airport Image</a></div>
+                          <div><a onclick="invalidateImage('city');">Invalidate City Image</a></div>
+                      </div>
+                      <div id="airportDetailsAirportImage"><p class="caption"></p></div>
+				  </div>
+				  <div class="section">
+					  <h4 class="inline-icons pt-4"><img height="16px"
+								   src='@routes.Assets.versioned("/images/icons/building-hedge.png")'> Airline Headquarters</h4>
+					  <div id="airportDetailsHeadquarterList" style="width: 100%; margin-bottom: 15px;"
+						   class="table data">
+						  <div class="table-header">
+							  <div class="cell" style="width: 30%">Airline</div>
+							  <div class="cell" style="width: 10%; text-align: right;">Home Country</div>
+							  <div class="cell" style="width: 10%; text-align: right;">Base Scale</div>
+							  <div class="cell" style="width: 13%; text-align: right;">Flight Routes</div>
+							  <div class="cell" style="width: 13%; text-align: right;">Weekly Passengers</div>
+							  <div class="cell" style="width: 13%; text-align: right;">Average Frequency</div>
+							  <div class="cell" style="width: 13%; text-align: right;">Average Distance</div>
+						  </div>
+					  </div>
+					  <h4 class="inline-icons pt-4"><img src='@routes.Assets.versioned("/images/icons/building-low.png")'>Airline Bases</h4>
+					  <div id="airportDetailsBaseList" style="width: 100%; margin-bottom: 15px;" class="table data">
+						  <div class="table-header">
+							  <div class="cell" style="width: 30%">Airline</div>
+							  <div class="cell" style="width: 10%; text-align: right;">Home Country</div>
+							  <div class="cell" style="width: 10%; text-align: right;">Base Scale</div>
+							  <div class="cell" style="width: 13%; text-align: right;">Flight Routes</div>
+							  <div class="cell" style="width: 13%; text-align: right;">Weekly Passengers</div>
+							  <div class="cell" style="width: 13%; text-align: right;">Average Frequency</div>
+							  <div class="cell" style="width: 13%; text-align: right;">Average Distance</div>
+						  </div>
+					  </div>
+					  <h4 class="inline-icons pt-4"><img src='@routes.Assets.versioned("/images/icons/sofa.png")'> Airline Lounges<span class="tooltip">
+                          <img class="info svg" loading="lazy" src="/assets/images/icons/information.svg">
+                          <span class="tooltiptext alignLeft" style="width: 320px;" id="tooltip_lounge"></span>
+                      </span></h4>
+					  <div id="airportDetailsLoungeList" style="width: 100%;" class="table data">
+						  <div class="table-header">
+							  <div class="cell" style="width: 20%">Alliance</div>
+							  <div class="cell" style="width: 15%">Airline</div>
+							  <div class="cell" style="width: 20%">Lounge Name</div>
+							  <div class="cell" style="width: 9%; text-align: right;">Level</div>
+							  <div class="cell" style="width: 9%; text-align: right;">Status</div>
+							  <div class="cell" style="width: 12%; text-align: right;">Visitors</div>
+							  <div class="cell" style="width: 15%; text-align: right;">Alliance Visitors</div>
+						  </div>
+					  </div>
+				  </div>
+			  </div>
+
+			  <div class="section mb-0 max-w-screen-nav" style="width: 100%;" id="airportDetails">
+				  <h4 style="width:100%;" class="pb-4"><span class="airportName">Airport</span> Statistics</h4>
+				  <div class="section-grid">
+					  <div class="pb-4">
+						  <div class="i-label">Congestion:<span class="tooltip">
+                              <img class="info svg" loading="lazy" src="/assets/images/icons/information.svg">
+                              <span class="tooltiptext alignLeft" style="width: 400px;" id="tooltip_congestion"></span>
+                            </span></div>
+						  <div class="i-value pb-4"><b id="airportCongestion"></b></div>
+                          <button class="button" style="margin:8px 0;" id="toggleDeparturesButton" onclick="showDeparturesCanvas()">Departures</button>
+						  <div class="i-label">Runways:</div>
+						  <div class="table-row runwayTable table data" style="width: 95%;"></div>
+					  </div>
+					  <div class="item-grid">
+							<div class="item">
+								<div class="i-label">Served By Airlines</div>
+								<div class="i-value" id="airportDetailsAirlineCount"></div>
+							</div>
+							<div class="item">
+								<div class="i-label">Flight Routes</div>
+								<div class="i-value" id="airportDetailsLinkCount"></div>
+							</div>
+							<div class="item">
+								<div class="i-label">Daily Flight Movements</div>
+								<div class="i-value" id="airportDetailsFlightFrequency"></div>
+							</div>
+						    <div class="item">
+							  <div class="i-label">Daily Ticketed Passengers</div>
+							  <div class="i-value" id="airportDetailsTotalTickets"></div>
+						    </div>
+							<div class="item">
+								<div class="i-label">Connected Airports</div>
+								<div class="i-value" id="airportDetailsConnectedAirportCount"></div>
+							</div>
+							<div class="item">
+								<div class="i-label">Connected Countries</div>
+								<div class="i-value" id="airportDetailsConnectedCountryCount"></div>
+							</div>
+							<div class="item">
+								<div class="i-label">Average Load Factor</div>
+								<div class="i-value" id="airportDetailsLF"></div>
+							</div>
+							<div class="item">
+								<div class="i-label">Percent of Seats International</div>
+								<div class="i-value" id="airportDetailsInternational"></div>
+							</div>
+					  </div>
+				  </div>
+				  <div id="airportStatistics" class="pt-6 flex-row overflow-x-auto overflow-y-clip">
+					  <div class="vertical-group" style="width: 180px; height: 200px; margin: auto;">
+						  <h5 class="heading-center mb-auto" style="">Total Passenger Share</h5>
+						  <div id="airlineTotalPie" style="height: 180px;"></div>
+					  </div>
+					  <div class="vertical-group" style="width: 180px; height: 200px; margin: auto;">
+						  <h5 class="heading-center mb-auto" style="">Premium Share</h5>
+						  <div id="airlinePremiumPie" style="height: 180px;"></div>
+					  </div>
+					  <div class="vertical-group" style="width: 180px; height: 200px; margin: auto;">
+						  <h5 class="heading-center mb-auto" style=""><span class="airportIata"></span> Departures Share<span class="tooltip">
+                                <img class="info svg" src="/assets/images/icons/information.svg">
+                                <span class="tooltiptext below" style="width: 260px;">
+                                    <p>Share of total passengers originating from this airport (does not include other local airports).</p>
+                                </span>
+							</span></h5>
+						  <div id="airlineOriginPie" style="height: 180px;"></div>
+					  </div>
+					  <div class="vertical-group" style="width: 180px; height: 200px; margin: auto;">
+						  <h5 class="heading-center mb-auto" style="">Airport Flow</h5>
+						  <div id="transitTypePie" style="height: 180px;"></div>
+					  </div>
+                      <div class="vertical-group" style="width: 180px; height: 200px; margin: auto;">
+                          <h5 class="heading-center mb-auto" style="">Aircraft by Seats</h5>
+                          <div id="airportModelPie" style="height: 180px;"></div>
+                      </div>
+				  </div>
+			  </div>
+
+			  <div class="section tight">
+				  <h4>Destinations</h4>
+				  <p>Destinations determine charm strength.</p>
+				  <div class="table data" style="width: 100%" id="airportDetailsDestinationList">
+					  <div class="table-header">
+						  <div class="cell" style="width: 30%">Name</div>
+						  <div class="cell" style="width: 20%; text-align: right;">Type</div>
+						  <div class="cell" style="width: 20%; text-align: right;">Strength</div>
+						  <div class="cell" style="width: 30%; text-align: right;">Description</div>
+					  </div>
+				  </div>
+			  </div>
+
+			  <div class="section tight">
+				  <h4>Cities served</h4>
+				  <p><span class="airportName">This airport</span> serves <span id="airportDetailsCityListCount">the following</span> cities and towns. Number of airport customers is determined by how close it is to the airport and the airport's scale.</p>
+				  <div class="table data" style="width: 100%" id="airportDetailsCityList">
+					  <div class="table-header">
+						  <div class="cell" style="width: 35%">Name</div>
+						  <div class="cell" style="width: 25%; text-align: right;">Airport Customers</div>
+						  <div class="cell" style="width: 20%; text-align: right;">Population</div>
+						  <div class="cell" style="width: 20%; text-align: right;">Income</div>
+					  </div>
+				  </div>
+			  </div>
+
+		  </div>
+		  <!-- right panel -->
+		  <div class="section" style="min-width: 200px; width: 100%; overflow: clip;">
+			  <h4>Assets</h4>
+			  <div class="sectionContainer assetsDetails"
+				   style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));gap: 8px;">
+			  </div>
+		  </div>
+	  </div>

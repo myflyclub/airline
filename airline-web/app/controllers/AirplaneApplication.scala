@@ -178,6 +178,8 @@ class AirplaneApplication @Inject()(cc: ControllerComponents) extends AbstractCo
     val discountsByModelId: Map[Int, List[ModelDiscount]] = ModelDiscount.getAllCombinedDiscountsByAirlineId(airlineId)
     val favoriteOption = ModelSource.loadFavoriteModelId(airlineId)
     val countsByModel: Map[Int, Int] = AirplaneSource.loadAirplaneModelCounts()
+    // Batch all rejection checks: computes country relationships and owned models once for all models
+    val rejections: Map[Model, Option[String]] = getRejections(allAirplaneModels, request.user)
 
     val modelsJson = allAirplaneModels.map { model =>
       val modelId = model.id
@@ -193,7 +195,7 @@ class AirplaneApplication @Inject()(cc: ControllerComponents) extends AbstractCo
         }
       )
       val total = countsByModel.getOrElse(modelId, 0).toInt
-      val rejection = getRejection(model, 1, request.user)
+      val rejection = rejections.get(model).flatten
 
       var baseJson = Json.obj(
         "id" -> modelId,
@@ -925,7 +927,7 @@ class AirplaneApplication @Inject()(cc: ControllerComponents) extends AbstractCo
                           // Update the link with new assignments and model
                           link.setAssignedModel(newModelWithDiscounts)
                           link.setAssignedAirplanes(newAssignments.toMap)
-                          LinkSource.saveLink(link)
+                          LinkSource.updateLink(link)
                         }
                       }
 

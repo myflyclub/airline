@@ -3,11 +3,14 @@ var loadedContracts = {}
 var loadedSuggestion
 
 function showOilCanvas() {
-    if (!oilPrices) loadOilPrices();
+    if (!oilPrices) {
+        loadOilPrices();
+    } else {
+        plotOilPriceChart(oilPrices, "oilPriceChart");
+    }
 	setActiveDiv($("#oilCanvas"))
-	loadOilDetails() 
+	loadOilDetails()
     loadExistingOilContracts()
-    plotOilPriceChart(oilPrices, "oilPriceChart");
 }
 
 function loadOilPrices() {
@@ -19,6 +22,7 @@ function loadOilPrices() {
 	    dataType: 'json',
 	    success: function(oilPricesData) {
             oilPrices = oilPricesData;
+            plotOilPriceChart(oilPrices, "oilPriceChart");
 	    },
         error: function(jqXHR, textStatus, errorThrown) {
 	            console.log(JSON.stringify(jqXHR));

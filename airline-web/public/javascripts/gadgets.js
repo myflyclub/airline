@@ -622,7 +622,7 @@ function getAirportSpan(airport) {
 
 function setActiveDiv(activeDiv, callback) {
 	var existingActiveDiv = activeDiv.siblings(":visible").filter(function (index) {
-		return $(this).css("clear") != "both"
+		return $(this).css("clear") != "both" && $(this).css("position") != "fixed"
 	})
 	if (!callback && activeDiv.data("initCallback")) {
         callback = activeDiv.data("initCallback")
@@ -641,7 +641,7 @@ function setActiveDiv(activeDiv, callback) {
 		    }
 			return false;
 		} else {
-			activeDiv.siblings().hide();
+			activeDiv.siblings().filter(function() { return $(this).css("position") != "fixed"; }).hide();
 			activeDiv.addClass('active')
     	    activeDiv.fadeIn(200, callback);
 		}

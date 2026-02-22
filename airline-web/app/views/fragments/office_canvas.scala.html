@@ -1,0 +1,768 @@
+				<div id="officeCanvas" class="canvas" style="display: none; min-width: 400px;">
+					<div style="box-sizing: border-box;display: flex;gap: 8px;flex-wrap: wrap;" class="officeCanvasLeftGroup">
+
+						<div class="section min-w-52 max-w-260px">
+							<h2 class="text-center text-underline">
+								<span class="airlineName">Airline Name</span>
+								<span class="clickable editButton"><img src='@routes.Assets.versioned("/images/icons/gear.png")'style="vertical-align: middle;" onclick="editAirlineName()"/></span>
+							</h2>
+							<span class="airlineNameInputSpan" style="display: none;">
+								<input id="airlineNameInput" class="airlineNameInput" type="text" />
+								<button onclick="confirmAirlineRename($('#officeCanvas .airlineNameInput').val())" class="confirm">
+									<img src='@routes.Assets.versioned("/images/icons/tick.png")'/>
+								</button>
+								<button onclick="cancelAirlineRename()">
+									<img src='@routes.Assets.versioned("/images/icons/cross.png")' class='cancel'/>
+								</button>
+								<div class="warning" style="display:none;"></div>
+							</span>
+
+							<div class="reputationStars pb-4 text-center"></div>
+							<div class="threshold-section">
+								<p class="text-center leading-tight"><i class="reputationLevel">Level 1</i></p>
+								<p class="text-center leading-tight pb-2 reputationText">Baby Airline</p>
+								<div class="threshold-bar short-fat reputation">
+									<p class="text-center font-mono reputationValueCurrent">0</p>
+									<div id="reputationBar" class="threshold-bar-bg"></div>
+								</div>
+								<p class="small max-w-32 mx-auto flex-container-width-half"><span class="font-mono reputationValuePrev text-left">0</span><span class="font-mono reputationValueNext">10</span></p>
+								<p class="text-right small max-w-32 mx-auto pb-4">trending to: <span class="font-mono reputationTrend">10</span></p>
+								<div class="">
+									<p class="text-center">Reputation Breakdown
+										<span class="tooltip">
+											<img src='@routes.Assets.versioned("/images/icons/information.svg")'>
+											<span class="tooltiptext alignLeft below" style="width: 280px;">
+												Your airline's reputation slowly moves toward the "trending to" reputation. Each reputation level gives your airline 3 additional delegates.
+											</span>
+										</span>
+									</p>
+									<ul class="reputationDetails small"></ul>
+								</div>
+							</div>
+							<h4 class="pt-4 pb-4"><span class="airlineType"></span> Airline<span class="tooltip">
+											<img class="info svg" src='@routes.Assets.versioned("/images/icons/information.svg")'>
+											<div class="tooltiptext alignLeft below airlineTypeDescription" style="width: 280px;"></div>
+										</span></h4>
+							<h4>Employee settings</h4>
+							<p>Current Employee Quality: <span id="currentServiceQuality"></span></p>
+							<p>Target Employee Quality:
+								<span id="serviceFundingDisplaySpan">
+									<span id="targetServiceQuality"></span>
+									<img src='@routes.Assets.versioned("/images/icons/gear.png")' class='img-button' style="vertical-align: sub;" onclick="editTargetServiceQuality()"/>
+								</span>
+								<span id="serviceFundingInputSpan">
+									<input id="targetServiceQualityInput" type="number" size="3" maxlength="3" onkeyup="checkTargetServiceQualityInput($(this).val())"/>
+									<span class="warning" style="display: none;">Value must be an integer 0 - 100</span>
+									<img src='@routes.Assets.versioned("/images/icons/tick.png")' class='button' style="vertical-align: middle;" onclick="setTargetServiceQuality($('#targetServiceQualityInput').val())"/>
+								</span>
+								<span class="tooltip">
+									<img class="info svg" src='@routes.Assets.versioned("/images/icons/information.svg")'>
+									<span class="tooltiptext alignLeft below" style="width: 220px;">Employee quality (EQ) impacts flight quality across your entire airline.</span>
+								</span>
+							</p>
+							<p class="pb-4">Projected Employee Costs: $<span id="fundingProjection"></span></p>
+
+							<h4>Aircraft Renewal<span class="tooltip">
+									<img src='@routes.Assets.versioned("/images/icons/information.svg")'>
+									<span class="tooltiptext alignLeft below" style="width: 280px;">
+										You may set:<br>
+										- Auto renewal, your airline will auto purchase new planes when they fall below the set condition. Having newer planes increases your quality.
+										- Minimum balance, your airline will not auto purchase if your cash on hand is below your set minimum balance.
+									</span>
+								</span>
+							</h4>
+							<p>Auto Renewal:
+								<span id="airplaneRenewalDisplaySpan">
+									<span id="airplaneRenewal"></span>
+									<img src='@routes.Assets.versioned("/images/icons/gear.png")' class='img-button' style="vertical-align: sub;" onclick="editAirplaneRenewal()"/>
+								</span>
+								<span id="airplaneRenewalInputSpan" style="display:none;">
+									Condition Below&nbsp;<input id="airplaneRenwalInput" type="number" maxlength="2" size="2"/>% Age
+									<img src='@routes.Assets.versioned("/images/icons/tick.png")' class='button' style="vertical-align: middle;" onclick="setAirplaneRenewal($('#airplaneRenwalInput').val())"/>
+									<img src='@routes.Assets.versioned("/images/icons/cross.png")' class='button' style="vertical-align: middle;" onclick="setAirplaneRenewal()"/>
+								</span>
+							</p>
+							<p class="pb-4">Minimum Balance: Above <span id="minimumRenewalBalanceDisplaySpan">
+								<span id="minimumRenewalBalance"></span>
+									<img src='@routes.Assets.versioned("/images/icons/gear.png")' class='img-button' style="vertical-align: sub;" onclick="editMinimumRenewalBalance()"/>
+								</span>
+								<span id="minimumRenewalBalanceInputSpan" style="display:none;">
+									Minimum balance&nbsp;<input id="minimumRenewalBalanceInput" type="number" maxlength="12" size="2" onkeyup="checkEditMinimumRenewalBalanceInput($(this).val())"/>
+									<span class="warning" style="display: none;">Value must be a positive integer less than 999,999,999,999</span>
+									<img src='@routes.Assets.versioned("/images/icons/tick.png")' class='img-button' style="vertical-align: middle;" onclick="setMinimumRenewalBalance($('#minimumRenewalBalanceInput').val())"/>
+								</span>
+							</p>
+                            <div class="airlineTypeHide">
+                                <h4>Company Stock</h4>
+                                <p>Stock price: <span class="airlineStockPrice"></span></p>
+                                <p>Market cap: <span class="airlineMarketCap"></span></p>
+                                <p>Shares outstanding: <span class="airlineSharesOutstanding"></span></p>
+                                <button type="button" class="button stockOpBtn" onclick="doStockOp('buyback')">Buyback 1m shares for <span class="stockBuyBackCost"></span></button>
+                                <button type="button" class="button stockOpBtn" onclick="doStockOp('sell')">Sell 1m shares for <span class="stockSellRevenue"></span></button>
+                                <p class="stockBuybackInfo"></p>
+                            </div>
+						</div>
+
+						<div class="section min-w-80" style="flex:1; max-width: 100%;">
+							<h4>Reputation tracks<div class="tooltip">
+									<img src='@routes.Assets.versioned("/images/icons/information.svg")'>
+									<div class="tooltiptext alignLeft below p-4" style="width: 320px;">
+										<p>Achieving a level on a reputation track earns an additional 25 reputation.</p>
+										<p>The tourist & elite track each time a passenger of that type takes your airline during their journey.</p>
+									</div>
+								</div>
+							</h4>
+
+							<div class="threshold-section" id="touristsTravelersProgress">
+								<div class="flex-row items-end flex-wrap">
+									<div class="min-w-52 pr-2">
+										<h4 class="leading-tight m-0">Tourists & Travelers Ticketed: <span class="touristsTravelersValueCurrent">0</span></h4>
+										<p class="leading-tight">Next level at <span class="touristsTravelersValueNext"></span> tourists & travelers ticketed</p>
+									</div>
+									<p class="leading-tight pr-2 min-w-40"><span class="touristsTravelersLevel pr-1">Level 0</span>: <i class="touristsTravelersText">Worthless</i></p>
+								</div>
+								<div class="threshold-bar-container">
+									<div class="threshold-bar">
+										<div id="touristsTravelersBar" class="threshold-bar-bg"></div>
+									</div>
+								</div>
+							</div>
+
+							<div class="threshold-section" id="elitesProgress">
+								<div class="flex-row items-end flex-wrap">
+									<div class="min-w-52 pr-2">
+										<h4 class="leading-tight m-0">Elites Ticketed: <span class="elitesValueCurrent">0</span></h4>
+										<p class="leading-tight">Next level at <span class="elitesValueNext"></span> elites ticketed</p>
+									</div>
+									<p class="leading-tight pr-2 min-w-40"><span class="elitesLevel pr-1">Level 0</span>: <i class="elitesText"></i></p>
+								</div>
+								<div class="threshold-bar-container">
+									<div class="threshold-bar">
+										<div id="elitesBar" class="threshold-bar-bg"></div>
+									</div>
+								</div>
+							</div>
+
+							<div class="threshold-section" id="stockProgress">
+								<div class="flex-row items-end">
+									<h4 class="leading-tight m-0 pr-2"><span class="stockValueCurrent">0</span> Stock Price</h4>
+									<p class="leading-tight pr-2"><i class="stockLevel pr-1">Level 0: </i>: <span class="stockText">Worthless</span></p>
+									<p class="leading-tight">Next level at <span class="stockValueNext"></span></p>
+								</div>
+								<div class="threshold-bar-container">
+									<div class="threshold-bar">
+										<div id="stockBar" class="threshold-bar-bg"></div>
+									</div>
+								</div>
+							</div>
+
+							<div class="pt-8">
+								<h4>Milestones <i class="opacity-70 very-small">@@ last week</i></h4>
+								<div id="milestones" class="container-cols-180px py-2"></div>
+							</div>
+						</div>
+
+						<div style="width: 100%; min-height: 1000px;" class="section tight">
+                            <div class="controllers flex-container-width-half">
+                                <div class="table" style="flex-basis: 440px;">
+                                    <div class="table-header sheetOptions">
+                                        <div class="cell clickable selected" data-type="income" onclick="selectSheet($(this), $('#incomeSheet'));">Income</div>
+										<div class="cell clickable" data-type="cashFlow" onclick="selectSheet($(this), $('#cashFlowSheet'));">Cash Flow</div>
+										<div class="cell clickable" data-type="airlineStat" onclick="selectSheet($(this), $('#airlineStatsSheet'));">Passenger Stats</div>
+										<div class="cell clickable" data-type="airlineOp" onclick="selectSheet($(this), $('#opsSheet'));">Operating Metrics</div>
+										<div class="cell clickable" data-type="airlineReputation" onclick="selectSheet($(this), $('#airlineReputationSheet'));">Reputation</div>
+                                    </div>
+                                </div>
+                                <div style="display: flex; align-items: center;" class="controllers-period">
+                                    <img style="margin-left: auto;" src='@routes.Assets.versioned("/images/icons/arrow-180.png")' class="button" onclick="officeHistoryStep(-1)"/>
+                                    <select class="select-css period" onchange="changeOfficePeriod($(this).val())">
+                                        <option value="WEEKLY" selected="selected">Week</option>
+                                        <option value="QUARTER">Quarter</option>
+                                        <option value="YEAR">Year</option>
+                                    </select>
+                                    &nbsp;<span id="officeCycleText"></span>
+                                    <img src='@routes.Assets.versioned("/images/icons/arrow.png")' class="button" onclick="officeHistoryStep(1)"/>
+                                </div>
+                            </div>
+
+							<div style="width: 100%; overflow:hidden;" id="incomeSheet" class="sheet">
+								<div id="totalProfitChart" style="width: 100%; max-width: 100%; overflow-x:scroll; height: 300px; margin: 2rem auto;"></div>
+								<div style="display: flex; flex-wrap: wrap;" class="">
+
+									<div class="table data rounded-none" style="min-width: 200px">
+										<h4>Total Income <i class="officeCycleText small-10px"></i></h4>
+										<div class="table-row">
+											<div class="cell">Total Revenue:</div>
+											<div id="totalRevenue" class="cell" style="text-align: right;"></div>
+										</div>
+										<div class="table-row">
+											<div class="cell">Total Expense:</div>
+											<div id="totalExpense" class="cell" style="text-align: right;"></div>
+										</div>
+										<div class="table-row">
+											<div class="cell">Total Profit:</div>
+											<div id="totalProfit" class="cell" style="text-align: right;"></div>
+										</div>
+									</div>
+
+									<div class="table data rounded-none" style="min-width: 200px">
+										<h4>Flights Income</h4>
+										<div class="table-row">
+											<div class="cell">Ticket Revenue:</div>
+											<div id="linksTicketRevenue" class="cell" style="text-align: right;"></div>
+										</div>
+										<div class="table-row">
+											<div class="cell">Airport Rentals & Fees:</div>
+											<div id="linksAirportFee" class="cell" style="text-align: right;"></div>
+										</div>
+										<div class="table-row">
+											<div class="cell">Fuel:</div>
+											<div id="linksFuelCost" class="cell" style="text-align: right;"></div>
+										</div>
+										<div class="table-row">
+											<div class="cell"><span class="fuelTaxRate"></span>Fuel Tax:</div>
+											<div id="linksFuelTax" class="cell" style="text-align: right;"></div>
+										</div>
+										<div class="table-row">
+											<div class="cell">Crew & Labor:</div>
+											<div id="linksCrewCost" class="cell" style="text-align: right;"></div>
+										</div>
+										<div class="table-row">
+											<div class="cell">Flight Supplies:</div>
+											<div id="linksInflightCost" class="cell" style="text-align: right;"></div>
+										</div>
+										<div class="table-row">
+											<div class="cell">Aircraft Maintenance:</div>
+											<div id="linksMaintenanceCost" class="cell" style="text-align: right;"></div>
+										</div>
+										<div class="table-row">
+											<div class="cell">Aircraft Depreciation, In-flight:</div>
+											<div id="linksDepreciation" class="cell" style="text-align: right;"></div>
+										</div>
+										<div class="table-row">
+											<div class="cell">Delay Compensation:</div>
+											<div id="linksDelayCompensation" class="cell" style="text-align: right;"></div>
+										</div>
+										<div class="table-row">
+											<div class="cell">Lounge Use:</div>
+											<div id="linksLoungeCost" class="cell" style="text-align: right;"></div>
+										</div>
+										<div class="table-row">
+											<div class="divider cell"></div>
+											<div class="divider cell"></div>
+										</div>
+										<div class="table-row">
+											<div class="cell">Flight Revenue:</div>
+											<div id="linksRevenue" class="cell" style="text-align: right;"></div>
+										</div>
+										<div class="table-row">
+											<div class="cell">Flight Expense:</div>
+											<div id="linksExpense" class="cell" style="text-align: right;"></div>
+										</div>
+										<div class="table-row">
+											<div class="cell">Flight Profit:</div>
+											<div id="linksProfit" class="cell" style="text-align: right;"></div>
+										</div>
+									</div>
+
+									<div class="table data rounded-none" style="min-width: 200px;">
+										<h4>Transaction Income</h4>
+										<p class="small italic">Losses and gains from selling aircraft</p>
+										<div class="table-row">
+											<div class="cell">Capital Gains:</div>
+											<div id="transactionsCapitalGain" class="cell" style="text-align: right;"></div>
+										</div>
+	<!-- 				 	  				<div class="table-row"> -->
+	<!-- 				 	  					<div class="cell">Setup New Flight Route:</div> -->
+	<!-- 				 	  					<div id="transactionsCreateLink" class="cell" style="text-align: right;"></div> -->
+	<!-- 				 	  				</div> -->
+										<div class="table-row">
+											<div class="cell">Transactions Revenue:</div>
+											<div id="transactionsRevenue" class="cell" style="text-align: right;"></div>
+										</div>
+										<div class="table-row">
+											<div class="cell">Transactions Expense:</div>
+											<div id="transactionsExpense" class="cell" style="text-align: right;"></div>
+										</div>
+										<div class="table-row">
+											<div class="cell">Transactions Profit:</div>
+											<div id="transactionsProfit" class="cell" style="text-align: right;"></div>
+										</div>
+									</div>
+
+									<div class="table data rounded-none" style="min-width: 200px">
+										<h4>Other Income</h4>
+										<div class="table-row">
+											<div class="cell">Loan / Negative Cash Interest:</div>
+											<div id="othersLoanInterest" class="cell" style="text-align: right;"></div>
+										</div>
+										<div class="table-row">
+											<div class="cell">Dividends:</div>
+											<div id="othersDividends" class="cell" style="text-align: right;"></div>
+										</div>
+										<div class="table-row">
+											<div class="cell">Airport Bases:</div>
+											<div id="othersBaseUpkeep" class="cell" style="text-align: right;"></div>
+										</div>
+										<div class="table-row">
+											<div class="cell">Bases Overtime:</div>
+											<div id="othersOvertimeCompensation" class="cell" style="text-align: right;"></div>
+										</div>
+										<div class="table-row">
+											<div class="cell">Lounge Upkeep:</div>
+											<div id="othersLoungeUpkeep" class="cell" style="text-align: right;"></div>
+										</div>
+										<div class="table-row">
+											<div class="cell">Lounge Labor & Supplies:</div>
+											<div id="othersLoungeCost" class="cell" style="text-align: right;"></div>
+										</div>
+										<div class="table-row">
+											<div class="cell">Lounge Income:</div>
+											<div id="othersLoungeIncome" class="cell" style="text-align: right;"></div>
+										</div>
+										<div class="table-row">
+											<div class="cell">Asset Expense:</div>
+											<div id="othersAssetExpense" class="cell" style="text-align: right;"></div>
+										</div>
+										<div class="table-row">
+											<div class="cell">Asset Revenue:</div>
+											<div id="othersAssetRevenue" class="cell" style="text-align: right;"></div>
+										</div>
+										<div class="table-row">
+											<div class="cell">Campaign/Advertisement:</div>
+											<div id="othersAdvertisement" class="cell" style="text-align: right;"></div>
+										</div>
+										<div class="table-row">
+											<div class="cell">Fuel Profit:</div>
+											<div id="othersFuelProfit" class="cell" style="text-align: right;"></div>
+										</div>
+										<div class="table-row">
+											<div class="cell">Aircraft Depreciation, Grounded:</div>
+											<div id="othersDepreciation" class="cell" style="text-align: right;"></div>
+										</div>
+										<div class="table-row">
+											<div class="divider cell"></div>
+											<div class="divider cell"></div>
+										</div>
+										<div class="table-row">
+											<div class="cell">Others Revenue:</div>
+											<div id="othersRevenue" class="cell" style="text-align: right;"></div>
+										</div>
+										<div class="table-row">
+											<div class="cell">Others Expense:</div>
+											<div id="othersExpense" class="cell" style="text-align: right;"></div>
+										</div>
+										<div class="table-row">
+											<div class="cell">Others Profit:</div>
+											<div id="othersProfit" class="cell" style="text-align: right;"></div>
+										</div>
+									</div>
+
+								</div>
+							</div>
+<!-- end income statement -->
+							<div style="display: none;" id="cashFlowSheet" class="sheet">
+								<div id="totalCashFlowChart" style="height: 280px; margin: 0 auto;"></div>
+								<div style="display: flex; flex-wrap: wrap;">
+									<div class="table data rounded-none" style="min-width: 200px">
+										<h4 class="table-row">Total Cash Flow <i class="officeCycleText small-10px"></i></h4>
+										<div class="table-row">
+											<div class="cell">Total Cash Flow:</div>
+											<div class="totalCashFlow cell" style="text-align: right;"></div>
+										</div>
+									</div>
+									<div class="table data rounded-none" style="min-width: 200px">
+										<h4>Cash Flow Details</h4>
+										<div class="table-row">
+											<div class="cell">Operation Cash Flow:</div>
+											<div class="operation cell" style="text-align: right;"></div>
+										</div>
+										<div class="table-row">
+											<div class="cell">Loan Interest:</div>
+											<div class="loanInterest cell" style="text-align: right;"></div>
+										</div>
+										<div class="table-row">
+											<div class="cell">Loan Principal Repayment:</div>
+											<div class="loanPrincipal cell" style="text-align: right;"></div>
+										</div>
+										<div class="table-row">
+											<div class="cell">Base Construction:</div>
+											<div class="baseConstruction cell" style="text-align: right;"></div>
+										</div>
+										<div class="table-row">
+											<div class="cell">Airplane Purchase:</div>
+											<div class="buyAirplane cell" style="text-align: right;"></div>
+										</div>
+										<div class="table-row">
+											<div class="cell">Airplane Sold:</div>
+											<div class="sellAirplane cell" style="text-align: right;"></div>
+										</div>
+										<div class="table-row">
+											<div class="cell">Route Setup:</div>
+											<div class="createLink cell" style="text-align: right;"></div>
+										</div>
+										<div class="table-row">
+											<div class="cell">Facility Construction:</div>
+											<div class="facilityConstruction cell" style="text-align: right;"></div>
+										</div>
+										<div class="table-row">
+											<div class="cell">Oil Contract Cost/Penalty:</div>
+											<div class="oilContract cell" style="text-align: right;"></div>
+										</div>
+										<div class="table-row">
+											<div class="cell">Airport Asset Transactions:</div>
+											<div class="assetTransactions cell" style="text-align: right;"></div>
+										</div>
+									</div>
+								</div>
+								<h4 class="pt-2 px-5">Total Company Assets</h4>
+								<div id="totalValueChart" style="height: 280px; margin: 0 auto;"></div>
+							</div>
+<!-- end cashflow sheet -->
+							<div style="width : 100%; display: none;" id="airlineStatsSheet" class="sheet">
+								<div id="airlineStatsChart" class="py-2" style="width: 100%; height: 700px;"></div>
+								<div style="display: flex; flex-wrap: wrap;">
+									<div class="table data rounded-none" style="min-width: 200px; max-width: 300px;">
+										<h4>Passenger Stats <i class="officeCycleText small-10px"></i></h4>
+										<div class="table-row">
+											<div class="cell">Total unique:</div>
+											<div class="total cell" style="text-align: right;"></div>
+										</div>
+										<div class="table-row">
+											<div class="cell">Business:</div>
+											<div class="business cell" style="text-align: right;"></div>
+										</div>
+										<div class="table-row">
+											<div class="cell">Tourist:</div>
+											<div class="tourist cell" style="text-align: right;"></div>
+										</div>
+										<div class="table-row">
+											<div class="cell">Elite:</div>
+											<div class="elite cell" style="text-align: right;"></div>
+										</div>
+										<div class="table-row">
+											<div class="cell">Traveler & other:</div>
+											<div class="traveler cell" style="text-align: right;"></div>
+										</div>
+										<div class="table-row">
+											<div class="cell">Codeshares:</div>
+											<div class="codeshares cell" style="text-align: right;"></div>
+										</div>
+									</div>
+								</div>
+							</div>
+
+							<div style="width: 100%; display: none;" id="opsSheet" class="sheet">
+								<div id="opsChart" style="width: 100%; height: 400px;"></div>
+								<div class="item-grid pt-4" id="opsSheetContent">
+                                    <div class="grid-header">
+                                        <h4>Operating Metrics <i class="officeCycleText small-10px"></i></h4>
+                                        <p>These are the key metrics investors look at when buying / selling your stock.</p>
+                                    </div>
+									<div class="item">
+										<div class="i-label">Earnings per share<div class="tooltip">
+                                            <img src="/assets/images/icons/information.svg">
+                                            <div id="tooltip_stock_eps" class="tooltiptext below" style="width: 280px;"></div>
+                                        </div></div>
+										<div class="i-value eps"></div>
+									</div>
+                                    <div class="item">
+                                        <div class="i-label">Profit Available<br>Seat km<div class="tooltip">
+                                            <img src="/assets/images/icons/information.svg">
+                                            <div id="tooltip_stock_pask" class="tooltiptext below" style="width: 280px;"></div>
+                                        </div></div>
+                                        <div class="i-value">¢<span class="PASK"></span></div>
+                                    </div>
+                                    <div class="item">
+                                        <div class="i-label">Routes</div>
+                                        <div class="i-value"><span class="link_count"></span></div>
+                                    </div>
+									<div class="item">
+										<div class="i-label">Satisfaction<div class="tooltip">
+                                            <img src="/assets/images/icons/information.svg">
+                                            <div id="tooltip_satisfaction" class="tooltiptext below" style="width: 280px;"></div>
+                                        </div></div>
+										<div class="i-value"><span class="satisfaction"></span>%</div>
+									</div>
+                                    <div class="item">
+                                        <div class="i-label">Codeshares</div>
+                                        <div class="i-value codeshares"></div>
+                                    </div>
+									<div class="item">
+										<div class="i-label">On-Time Performance<div class="tooltip">
+											<img src="/assets/images/icons/information.svg">
+											<div class="tooltiptext below" style="width: 280px;">
+												<p>On-time performance is modified by the condition each aircraft, maintenance hangars, and airport congestion.</p>
+											</div>
+										</div></div>
+										<div class="i-value"><span class="on_time"></span>%</div>
+									</div>
+                                    <div class="item">
+                                        <div class="i-label">Cash on Hand<div class="tooltip">
+                                            <img src="/assets/images/icons/information.svg">
+                                            <div class="tooltiptext below" style="width: 280px;">
+                                                <p>Investors do not like companies sitting on cash and would prefer to see it returned to shareholders (through stock buybacks).</p>
+                                            </div>
+                                        </div></div>
+                                        <div class="i-value"><span class="months_cash_on_hand"></span> months</div>
+                                    </div>
+                                    <div class="item">
+                                        <div class="i-label">Leading Airline<div class="tooltip">
+                                            <img src="/assets/images/icons/information.svg">
+                                            <div class="tooltiptext below" style="width: 280px;">
+                                                <p>Getting on leaderboards generates investor enthusiasm.</p>
+                                            </div>
+                                        </div></div>
+                                        <div class="i-value rep_leaderboards"></div>
+                                    </div>
+									<div class="divider"></div>
+                                    <h4 class="grid-header">Ticketing</h4>
+                                    <div class="item">
+                                        <div class="i-label">Tickets sold</div>
+                                        <div class="i-value total"></div>
+                                    </div>
+                                    <div class="item">
+                                        <div class="i-label">Load Factor</div>
+                                        <div class="i-value"><span class="load_factor"></span>%</div>
+                                    </div>
+									<div class="item">
+										<div class="i-label">Destinations</div>
+										<div class="i-value destinations"></div>
+									</div>
+									<div class="item">
+										<div class="i-label">Countries Served</div>
+										<div class="i-value countriesServed"></div>
+									</div>
+									<div class="divider"></div>
+                                    <h4 class="grid-header">Fleet</h4>
+									<div class="item">
+										<div class="i-label">Size</div>
+										<div class="i-value fleetSize"></div>
+									</div>
+                                    <div class="item">
+                                        <div class="i-label">Average age</div>
+                                        <div class="i-value"><span class="fleetAge"></span></div>
+                                    </div>
+									<div class="item">
+										<div class="i-label">Condition</div>
+										<div class="i-value"><span class="fleetCondition"></span>%</div>
+									</div>
+									<div class="item">
+										<div class="i-label">Utilization</div>
+										<div class="i-value"><span class="fleetUtilization"></span>%</div>
+									</div>
+								</div>
+							</div>
+
+							<div style="width: 100%; display: none;" id="airlineReputationSheet" class="sheet">
+								<div id="airlineReputationChart" style="width: 100%; height: 400px; margin: 0 auto;"></div>
+								<div class="table data rounded-none" style="min-width: 200px; max-width: 300px;">
+									<h4>Airline Reputation</h4>
+									<div class="table-row">
+										<div class="cell">Total:</div>
+										<div class="rep_total cell" style="text-align: right;"></div>
+									</div>
+									<div class="table-row">
+										<div class="cell">Leaderboard:</div>
+										<div class="rep_leaderboards cell" style="text-align: right;"></div>
+									</div>
+								</div>
+							</div>
+
+						</div>
+	<!-- 					end statements -->
+
+						<div class="section" style="width: 100%;">
+                            <h4>Airline Settings</h4>
+                            <div class="item-grid py-4">
+                                <div>
+                                    <button class="button" style="width: 120px;" onclick="promptConfirm('Reset all tutorials?', setSkipTutorial, false)">Reset Tutorials</button>
+                                </div>
+                                <div class="table-row">
+                                    <div class="cell label">Airline Code:</div>
+                                    <div class="cell value">
+                                        <span id="airlineCodeDisplaySpan">
+                                            <span id="airlineCode"></span>
+                                            <img src='@routes.Assets.versioned("/images/icons/gear.png")' class='img-button' style="vertical-align: middle;" onclick="editAirlineCode()" />
+                                        </span>
+                                        <span id="airlineCodeInputSpan" style="display: none;">
+                                            <input id="airlineCodeInput" type="text" onkeyup="validateAirlineCode($(this).val())" />
+                                            <img src='@routes.Assets.versioned("/images/icons/tick.png")' class='img-button' style="vertical-align: middle;" onclick="setAirlineCode($('#airlineCodeInput').val())" />
+                                            <span class="warning" style="display:none;">Code should be exactly 2 letters</span>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="table-row airlineColor">
+                                    <div class="cell label">Airline Color:</div>
+                                    <div class="cell value">
+                                        <input type="color" class="picker" data-tooltip='Change airline color'>
+                                    </div>
+                                </div>
+                                <div class="table-row">
+                                    <div class="cell label">Logo:</div>
+                                    <div class="cell value">
+                                        <img class="airlineLogo" src='#'>
+                                        <div class="flex-row pt-1 pb-4">
+                                            <img src='@routes.Assets.versioned("/images/icons/gear.png")' class='img-button' style="vertical-align: middle;" onclick="editAirlineLogo()" />
+                                            <img src='@routes.Assets.versioned("/images/icons/picture--plus.png")' data-tooltip='Upload custom logo' class='img-button' style="vertical-align: middle;" onclick="showUploadLogo()" />
+                                        </div>
+                                    </div>
+                                </div>
+							</div>
+						</div>
+
+					</div>
+<!-- end left section  -->
+					<div class="vertical-group officeCanvasRightGroup">
+						<div class="section py-0">
+							<textarea id="airlineNotes" style="width:99%;" placeholder="Add notes here..."></textarea>
+						</div>
+						<div class="section">
+                            <h4>Headquarters</h4>
+							<div style="position: relative; height: 125px; width: 150px; margin: auto;box-sizing: border-box;" class="headquartersMap"></div>
+							<h4>Airline Bases</h4>
+							<div style="width: 100%;" class="table">
+								<div class="table-header">
+									<div class="cell" style="width: 14%">Scale</div>
+									<div class="cell" style="width: 35%">Airport</div>
+									<div class="cell" style="width: 31%">Staff <br><small>Required | Available</small></div>
+									<div class="cell" style="width: 20%">Overtime</div>
+								</div>
+							</div>
+							<div style="width: 100%;  overflow-y:auto; flex: 1;">
+								<div style="width: 100%;" class="table data bases">
+									<div class="table-header">
+										<div class="cell" style="width: 14%; border-bottom: none;"></div>
+										<div class="cell" style="width: 35%; border-bottom: none;"></div>
+										<div class="cell" style="width: 31%; border-bottom: none;"></div>
+										<div class="cell" style="width: 20%; border-bottom: none;"></div>
+									</div>
+								</div>
+							</div>
+                        </div>
+
+						<div class="section">
+							<h4>Airplane Livery
+								<img src='@routes.Assets.versioned("/images/icons/picture--plus.png")' class='img-button' style="vertical-align: middle;" onclick="showUploadLivery()">
+								<img src='@routes.Assets.versioned("/images/icons/picture--minus.png")' class='img-button' style="vertical-align: middle;" onclick="deleteLivery()">
+							</h4>
+							<div style="position: relative; width: 100%">
+								<img class="livery" style="max-height: 300px; max-width: 100%; display: block; margin: auto;">
+							</div>
+							<h4 style="margin-top: 5px;">Company Slogan
+								<img src='@routes.Assets.versioned("/images/icons/tick.png")' class='button' style="vertical-align: middle;" onclick="saveSlogan()">
+							</h4>
+							<textarea rows="3" cols="40" maxlength="200" class="slogan" style="width:99%; height: 50px;" placeholder="Your airline slogan..."></textarea>
+						</div>
+
+                        <div class="section" >
+							<div style="display: flex; align-items: base-line;">
+								<span><h4>Campaigns</h4></span>
+								<span><img src='@routes.Assets.versioned("/images/icons/gear.png")' class='img-button' onclick="showCampaignModal()" title="View/Edit Campaigns"/></span>
+							</div>
+							<div class="campaignSummary table data" style="width: 100%; height: 20px;">
+								<div class="table-header">
+									<div class="cell" style="width: 60%">Area</div>
+									<div class="cell" style="width: 40%">Coverage Pop.</div>
+								</div>
+							</div>
+						</div>
+						<div class="section" >
+							<h4>Championed Countries</h4>
+							<div class="table data" style="width: 100%;">
+								<div class="table-header">
+									<div class="cell" style="width: 5%; min-width: 20px;">&nbsp;</div>
+									<div class="cell" style="width: 95%">Country</div>
+								</div>
+							</div>
+							<div style="max-height: 500px; overflow: auto;">
+								<div class="table data" id="championedCountriesList" style="width: 100%;">
+									<div class="table-header">
+										<div class="cell" style="width: 5%; min-width: 20px; border-bottom: none;"></div>
+										<div class="cell" style="width: 95%; border-bottom: none;"></div>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<div class="section" >
+							<h4>Championed Airports</h4>
+							<div class="table data" style="width: 100%;">
+								<div class="table-header">
+									<div class="cell" style="width: 5%">&nbsp;</div>
+									<div class="cell" style="width: 55%">Airport</div>
+									<div class="cell" style="width: 20%">Loyalists</div>
+									<div class="cell" style="width: 20%">Reputation Bonus</div>
+								</div>
+							</div>
+							<div style="max-height: 250px; overflow: auto;">
+								<div class="table data" id="championedAirportsList" style="width: 100%;">
+									<div class="table-header">
+										<div class="cell" style="width: 5%; border-bottom: none;"></div>
+										<div class="cell" style="width: 60%; border-bottom: none;"></div>
+										<div class="cell" style="width: 20%; border-bottom: none;"></div>
+										<div class="cell" style="width: 15%; border-bottom: none;"></div>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<div style="width: 600px;" id="popover-reset" popover>
+							<div class="table data" style="width: 100%;">
+								<div class="table-row">
+									<div class="label">Sold Airplanes</div>
+									<div class="value airplanes"></div>
+								</div>
+								<div class="table-row">
+									<div class="label">Sold Bases</div>
+									<div class="value bases"></div>
+								</div>
+								<div class="table-row">
+									<div class="label">Sold Assets</div>
+									<div class="value assets"></div>
+								</div>
+								<div class="table-row">
+									<div class="label">Loans Repayment</div>
+									<div class="value loans"></div>
+								</div>
+								<div class="table-row">
+									<div class="label">Oil Contracts Termination</div>
+									<div class="value oilContracts"></div>
+								</div>
+								<div class="table-row">
+									<div class="label">Cash</div>
+									<div class="value cash"></div>
+								</div>
+								<div class="table-row">
+									<div class="label">New Balance after reset</div>
+									<div class="value overall"></div>
+								</div>
+							</div>
+						</div>
+
+						<div class="section" >
+                            <h4>Rebuild airline<img src='@routes.Assets.versioned("/images/icons/construction.png")'/></h4>
+                            <ul>
+                                <li class="label dot">Balance reset to&nbsp;$<span id="resetBalance"></span>
+                                    <a popovertarget="popover-reset" onmouseover="document.getElementById('popover-reset').showPopover();">
+                                        <img class="info svg" src='@routes.Assets.versioned("/images/icons/information.svg")'>
+                                    </a>
+                                </li>
+                                <li class="label dot">All of the airplanes will be removed</li>
+                                <li class="label dot">Headquarters, bases and facilities will be removed</li>
+								<li class="label dot">All Airport Assets will be sold</li>
+                                <li class="label dot">All routes will be cancelled</li>
+								<li class="label dot">All loans and oil contracts cancelled</li>
+								<li class="label dot">Dropped from current Alliance</li>
+                                <li class="label dot">Reputation and Loyalty will be kept</li>
+                            </ul>
+                            <div class='button resetAirline rebuild' onclick='promptConfirm("Rebuild Airline?", resetAirline, true)'>Rebuild Airline</div>
+                            <h4 class="pt-4">Declare bankruptcy<img src='@routes.Assets.versioned("/images/icons/heart-break.png")'/></h4>
+                            <ul>
+                                <li class="label dot">Reset to initial game start</li>
+                            </ul>
+                            <div class='button resetAirline bankrupt' onclick='promptConfirm("Declare bankruptcy?", resetAirline, false)'>Declare Bankruptcy</div>
+						</div>
+					</div>
+	<!-- 		    	end right section -->
+				</div>

@@ -190,7 +190,7 @@ function bootstrapAngularJS() {
 
 /**
  * Load scripts that are only needed after login.
- * This includes game features, Angular, and chat functionality.
+ * This includes game features.
  */
 async function loadPostLoginScripts() {
     if (postLoginScriptsLoaded) {
@@ -208,6 +208,15 @@ async function loadPostLoginScripts() {
             .then(() => console.log('✓ Deferred scripts loaded'))
             .catch(err => console.warn('Deferred script loading failed', err));
 
+        postLoginScriptsLoaded = true;
+    } catch (error) {
+        console.error('Failed to load post-login scripts:', error);
+        throw error;
+    }
+}
+
+async function loadChatApp() {
+    try {
         // Temporarily remove ng-app to prevent auto-bootstrap
         const ngAppElements = document.querySelectorAll('[ng-app]');
         const ngAppBackup = [];
@@ -234,11 +243,8 @@ async function loadPostLoginScripts() {
             updateChatTabs();
         }
         console.log('✓ AngularJS bootstrapped');
-
-        postLoginScriptsLoaded = true;
     } catch (error) {
-        console.error('Failed to load post-login scripts:', error);
-        throw error;
+        console.warn('Failed to load Chat App:', error);
     }
 }
 
@@ -249,15 +255,31 @@ window.loadPostLoginScripts = loadPostLoginScripts;
 let _bgSessionScripts, _bgAirports, _bgConstants, _bgMaplibre;
 let _mapInitialized = false;
 
+window.loadMap = async function() {
+    if (_mapInitialized) return;
+    
+    // Ensure prerequisites are loaded
+    await Promise.all([_bgAirports, _bgMaplibre]); 
+    await waitForMapLibre();
+    await loadStylesheet(MAPLIBRE_CSS);
+    
+    await initMapModule();
+    _mapInitialized = true;
+    console.log('✓ Map initialized (on demand)');
+
+    // Perform map setup that was deferred from login
+    AirlineMap.addMapControls();
+    AirlineMap.addMarkers();
+    if (typeof activeAirline !== 'undefined' && activeAirline) {
+        AirlineMap.centerOnHQ(activeAirline);
+        updateLinksInfo(); // Draw the routes now that the map is ready
+    }
+};
+
 async function ensureFullBoot() {
     await Promise.all([_bgSessionScripts, _bgAirports, _bgConstants, _bgMaplibre]);
-    if (!_mapInitialized) {
-        await waitForMapLibre();
-        await loadStylesheet(MAPLIBRE_CSS);
-        await initMapModule();
-        _mapInitialized = true;
-        console.log('✓ Map initialized (deferred)');
-    }
+    await window.loadMap();
+    await loadChatApp();
 }
 window.ensureFullBoot = ensureFullBoot;
 
@@ -282,15 +304,11 @@ async function initializeApp() {
         const hasSession = checkSessionGuard();
 
         if (hasSession) {
-            // Await heavy assets (already in flight, likely mostly done)
-            await Promise.all([_bgSessionScripts, _bgAirports, _bgConstants, _bgMaplibre]);
-            console.log('✓ Core assets loaded');
+            // Await essential session scripts
+            await Promise.all([_bgSessionScripts, _bgConstants]);
+            console.log('✓ Session ready');
 
-            await waitForMapLibre();
-            await loadStylesheet(MAPLIBRE_CSS);
-            await initMapModule();
-            _mapInitialized = true;
-            console.log('✓ Map initialized');
+            // NOTE: Map is NOT initialized here. It is loaded on-demand by routes.js
 
             try {
                 await loadPostLoginScripts();
@@ -311,6 +329,14 @@ async function initializeApp() {
             }
 
             initializeRoutes();
+
+            // Defer Chat App load
+            if (window.requestIdleCallback) {
+                requestIdleCallback(() => loadChatApp());
+            } else {
+                setTimeout(() => loadChatApp(), 2000);
+            }
+
         } else {
             // Show login page immediately — heavy assets continue loading in background
             initializeRoutes();

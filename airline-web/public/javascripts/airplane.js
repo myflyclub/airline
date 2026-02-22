@@ -184,6 +184,7 @@ function updateAirplaneModelTable(sortProperty, sortOrder) {
 	airplaneModelTable.children("div.table-row").remove()
 
     var availableOptions = {
+		"name": {},
 		"family": {},
 		"airplaneType": {},
 		"capacity": {},
@@ -212,6 +213,7 @@ function updateAirplaneModelTable(sortProperty, sortOrder) {
         modelOwnerInfo.trips = calcFreq(modelOwnerInfo, rangeRequirement)
 
         // Collect filter options
+        availableOptions.name[modelOwnerInfo.name] = modelOwnerInfo.name;
         availableOptions.family[modelOwnerInfo.family] = modelOwnerInfo.family;
         availableOptions.airplaneType[modelOwnerInfo.airplaneType] = modelOwnerInfo.airplaneType;
         availableOptions.capacity[modelOwnerInfo.capacity] = Number(modelOwnerInfo.capacity);
