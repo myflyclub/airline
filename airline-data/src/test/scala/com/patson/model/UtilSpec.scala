@@ -2,9 +2,8 @@ package com.patson.model
 
 import scala.collection.mutable.{ListBuffer, Map}
 import org.scalatest.BeforeAndAfterAll
-import org.scalatest.Finders
-import org.scalatest.Matchers
-import org.scalatest.WordSpecLike
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpecLike
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.testkit.ImplicitSender
 import org.apache.pekko.testkit.TestKit
@@ -13,7 +12,7 @@ import com.patson.Util
 import scala.util.Random
  
 class UtilSpec(_system: ActorSystem) extends TestKit(_system) with ImplicitSender
-  with WordSpecLike with Matchers with BeforeAndAfterAll {
+  with AnyWordSpecLike with Matchers with BeforeAndAfterAll {
  
   def this() = this(ActorSystem("MySpec"))
  

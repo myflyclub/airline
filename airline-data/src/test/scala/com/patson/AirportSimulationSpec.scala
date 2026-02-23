@@ -2,11 +2,12 @@ package com.patson
 
 import com.patson.model._
 import com.patson.model.airplane._
-import org.scalatest.{Matchers, WordSpecLike}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpecLike
 
 import scala.collection.mutable.ListBuffer
  
-class AirportSimulationSpec extends WordSpecLike with Matchers {
+class AirportSimulationSpec extends AnyWordSpecLike with Matchers {
   val sampleLink = Link.fromId(1)
   val sampleConsumption = LinkConsumptionDetails(link = sampleLink, fuelCost = 0, fuelTax = 0, crewCost = 0, airportFees = 0, inflightCost = 0, delayCompensation = 0, maintenanceCost = 0, loungeCost = 0, depreciation = 0, revenue = 0, profit = 0, satisfaction = 0, cycle = 0)
   

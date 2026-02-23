@@ -1,8 +1,9 @@
 package com.patson.model
 
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
-class StockModelSpec extends FunSuite with Matchers {
+class StockModelSpec extends AnyFunSuite with Matchers {
   test("getMetricValue should not return NaN for airlineValue = 0") {
     val result = StockModel.getMetricValue("eps", 0)
     result.isNaN shouldBe false

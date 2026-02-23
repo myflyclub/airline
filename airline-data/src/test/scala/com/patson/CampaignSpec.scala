@@ -2,9 +2,10 @@ package com.patson
 
 import com.patson.model.{Airline, Airport, BusyDelegate, DelegateTask}
 import com.patson.model.campaign._
-import org.scalatest.{Matchers, WordSpecLike}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpecLike
 
-class CampaignSpec extends WordSpecLike with Matchers {
+class CampaignSpec extends AnyWordSpecLike with Matchers {
   val airport1 = Airport("", "", "Test Airport 1", 0, 0 , "", "", "", size = 1, baseIncome = 10, basePopulation = 1000000, 0, id = 1)
   val airport2 = Airport("", "", "Test Airport 2", 0, 0 , "", "", "", size = 1, baseIncome = 10, basePopulation = 2000000, 0, id = 2)
   val airport3 = Airport("", "", "Test Airport 3", 0, 0 , "", "", "", size = 1, baseIncome = 10, basePopulation = 3000000, 0, id = 3)

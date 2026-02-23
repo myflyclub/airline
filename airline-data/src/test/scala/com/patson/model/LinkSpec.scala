@@ -4,12 +4,14 @@ import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.testkit.{ImplicitSender, TestKit}
 import com.patson.Util
 import com.patson.model.airplane.{Airplane, AirplaneConfiguration, LinkAssignment, Model}
-import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Matchers, WordSpecLike}
+import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpecLike
 
 import scala.collection.immutable.Map
 
 class LinkSpec(_system: ActorSystem) extends TestKit(_system) with ImplicitSender
-  with WordSpecLike with Matchers with BeforeAndAfterAll with BeforeAndAfterEach {
+  with AnyWordSpecLike with Matchers with BeforeAndAfterAll with BeforeAndAfterEach {
  
   def this() = this(ActorSystem("MySpec"))
 
@@ -41,6 +43,56 @@ class LinkSpec(_system: ActorSystem) extends TestKit(_system) with ImplicitSende
       assert(airline1Link.frequencyByClass(ECONOMY) == 30)
       assert(airline1Link.frequencyByClass(BUSINESS) == 20)
       assert(airline1Link.frequencyByClass(FIRST) == 10)
+    }
+  }
+
+  "airport base upkeep cost for link".must {
+    "calculate upkeep cost proportional to link staff for different airline types".in {
+      val testAirport = Airport("TEST", "TEST", "Test Airport", 0, 0, "US", "Test City", "", 6, baseIncome = 50000, basePopulation = 5000000, 0, 0, id = 1)
+
+      val legacyAirline = Airline("Legacy Test", id = 101)
+      legacyAirline.airlineType = LegacyAirline
+
+      val megaHqAirline = Airline("Mega HQ Test", id = 102)
+      megaHqAirline.airlineType = MegaHqAirline
+
+      val regionalAirline = Airline("Regional Test", id = 103)
+      regionalAirline.airlineType = RegionalAirline
+
+      val linkDistance = 1000
+      val linkCapacity = LinkClassValues.getInstance(3000, 0, 0)
+      val linkFrequency = 30
+      val baseScale = 6
+      val flightCategory = FlightCategory.INTERNATIONAL
+
+      val legacyBase = AirlineBase(legacyAirline, testAirport, "US", baseScale, 0, headquarter = true)
+      val megaHqBase = AirlineBase(megaHqAirline, testAirport, "US", baseScale, 0, headquarter = true)
+      val regionalBase = AirlineBase(regionalAirline, testAirport, "US", baseScale, 0, headquarter = true)
+
+      val staffSchemeBreakdownLegacy = Link.getStaffRequired(linkDistance, flightCategory, LegacyAirline)
+      val legacyLinkStaffRequired = Math.max(3, (staffSchemeBreakdownLegacy.basicStaff + staffSchemeBreakdownLegacy.perFrequency * linkFrequency + staffSchemeBreakdownLegacy.per500Pax * linkCapacity.total / 500))
+      val staffSchemeBreakdownMegaHQ = Link.getStaffRequired(linkDistance, flightCategory, MegaHqAirline)
+      val megaHQLinkStaffRequired = Math.max(3, (staffSchemeBreakdownMegaHQ.basicStaff + staffSchemeBreakdownMegaHQ.perFrequency * linkFrequency + staffSchemeBreakdownMegaHQ.per500Pax * linkCapacity.total / 500))
+      val staffSchemeBreakdownRegional = Link.getStaffRequired(linkDistance, flightCategory, RegionalAirline)
+      val regionalLinkStaffRequired = Math.max(3, (staffSchemeBreakdownRegional.basicStaff + staffSchemeBreakdownRegional.perFrequency * linkFrequency + staffSchemeBreakdownRegional.per500Pax * linkCapacity.total / 500))
+
+      val baseStaffCapacity = AirlineBase.getOfficeStaffCapacity(baseScale, isHeadquarters = true)
+
+      val legacyUpkeep = legacyBase.calculateUpkeep(baseScale, LegacyAirline)
+      val megaHqUpkeep = megaHqBase.calculateUpkeep(baseScale, MegaHqAirline)
+      val regionalUpkeep = regionalBase.calculateUpkeep(baseScale, RegionalAirline)
+
+      val legacyUpkeepForLink = (legacyUpkeep * legacyLinkStaffRequired / baseStaffCapacity).toLong
+      val megaHqUpkeepForLink = (megaHqUpkeep * megaHQLinkStaffRequired / baseStaffCapacity).toLong
+      val regionalUpkeepForLink = (regionalUpkeep * regionalLinkStaffRequired / baseStaffCapacity).toLong
+
+      println(s"Legacy Base Upkeep: $legacyUpkeep, Link Upkeep: $legacyUpkeepForLink, staff: $legacyLinkStaffRequired")
+      println(s"Mega HQ Base Upkeep: $megaHqUpkeep, Link Upkeep: $megaHqUpkeepForLink, staff: $megaHQLinkStaffRequired")
+      println(s"Regional Base Upkeep: $regionalUpkeep, Link Upkeep: $regionalUpkeepForLink, staff: $regionalLinkStaffRequired")
+
+      assert(legacyUpkeepForLink > 0)
+      assert(megaHqUpkeepForLink > 0)
+      assert(regionalUpkeepForLink > 0)
     }
   }
 }
