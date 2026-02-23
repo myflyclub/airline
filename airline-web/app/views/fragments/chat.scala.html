@@ -1,39 +1,32 @@
-			<!-- Chat Window -->
-			<div id="live-chat" class="user-specific-tab">
-				<div ng-app="ChatApp">
-					<div ng-controller="ChatController as chat">
-						<header class="clearfix">
-							<span>
-							 <i></i>
-							<h4>
-								<ul class="ctabs">
-									<li class="tab-link current" data-tab="chatBox-1" data-room-id="0">General</li>
-									<li class="tab-link" data-tab="chatBox-2" id="allianceChatTab"></li>
-								</ul>
-							</h4>
-							<div class="chatOption"><img class="clickable" loading="lazy" src='@routes.Assets.versioned("/images/icons/arrow-stop-270.png")' title="Scroll to bottom" onclick="adjustScroll()"></div>
-							</span>
-							<span class="notify-bubble">0</span>
-						</header>
-						<div class="chat" id="chat-box" style="display: none;">
-							<div class="chat-history tab-content current" id="chatBox-1">
-								<ul style="padding: 5px;">
-								</ul>
-							</div> <!-- end chat-history -->
-							<div class="chat-history tab-content" id="chatBox-2">
-								<ul style="padding: 5px;">
-								</ul>
-							</div> <!-- end chat-history -->
-						   <form autocomplete="off">
-							   <input autocomplete="false" name="hidden" type="text" style="display:none;">
-							   <div style="display: inline-block; position: relative; width: 95%;">
-								<input type="text" maxlength="250" placeholder="Enter message..." ng-keyup="$event.keyCode == 13 && chat.sendMessage($event)" id="chattext"/>
-<!--								   <img src='@routes.Assets.versioned("/images/emoji/smiley.png")' id="emojiButton" title='Emoji Menu' style="position : absolute; right: -10px; height:25px; width:25px;" class="button"/>-->
-							   </div>
+		<!-- Chat Window -->
+		<div id="live-chat" class="user-specific-tab">
+			<header class="clearfix">
+				<span>
+				 <i></i>
+				<h4>
+					<ul class="ctabs">
+						<li class="tab-link current" data-tab="chatBox-1" data-room-id="0">General</li>
+						<li class="tab-link" data-tab="chatBox-2" id="allianceChatTab" style="display:none;"></li>
+					</ul>
+				</h4>
+				<div class="chatOption"><img class="clickable" loading="lazy" src='@routes.Assets.versioned("/images/icons/arrow-stop-270.png")' title="Scroll to bottom" onclick="adjustScroll()"></div>
+				</span>
+				<span class="notify-bubble">0</span>
+			</header>
+			<div class="chat" id="chat-box" style="display: none;">
+				<div class="chat-history tab-content current" id="chatBox-1">
+					<ul style="padding: 5px;">
+					</ul>
+				</div> <!-- end chat-history -->
+				<div class="chat-history tab-content" id="chatBox-2">
+					<ul style="padding: 5px;">
+					</ul>
+				</div> <!-- end chat-history -->
+			   <div style="display: flex; align-items: center; padding: 4px;">
+				<input type="text" maxlength="250" placeholder="Enter message..." id="chattext" autocomplete="off" style="flex: 1;"/>
+				<button id="chatSend" style="margin-left: 4px;">Send</button>
+			   </div>
+			</div> <!-- end chat -->
+		</div>
+		<!-- end live-chat -->
 
-							</form>
-						</div> <!-- end chat -->
-					</div>
-				</div>
-			</div>
-			<!-- end live-chat -->

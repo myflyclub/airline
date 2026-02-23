@@ -32,12 +32,6 @@ const POST_LOGIN_SCRIPTS = [
     'search.js', 'profile.js', 'pending-action.js', 'table-utils.js',
 ].map(s => SCRIPT_BASE_PATH + s);
 
-// AngularJS and scripts that depend on it
-const ANGULAR_LIB = 'https://ajax.googleapis.com/ajax/libs/angularjs/1.4.4/angular.min.js';
-const ANGULAR_DEPENDENT_SCRIPTS = [
-    'chat.js'
-].map(s => SCRIPT_BASE_PATH + s);
-
 const DEFERRED_SCRIPTS = [
     'link-history.js', 'confetti.js', 'departures.js', 'campaign.js',
     'log.js', 'mobile.js', 'chat-popup.js', 'tiles.js', 'facility.js',
@@ -162,33 +156,6 @@ async function initMapModule() {
 }
 
 /**
- * Manually bootstrap AngularJS after all modules are defined.
- */
-function bootstrapAngularJS() {
-    return new Promise((resolve, reject) => {
-        // Use setTimeout(0) to push this to the end of the execution queue,
-        // ensuring the DOM has updated with restored 'ng-app' attributes.
-        setTimeout(() => {
-            if (window.angular) {
-                try {
-                    const ngAppElements = document.querySelectorAll('[ng-app]');
-                    ngAppElements.forEach(element => {
-                        const appName = element.getAttribute('ng-app');
-                        window.angular.bootstrap(element, [appName]);
-                    });
-                    resolve();
-                } catch (error) {
-                    console.warn('Failed to bootstrap AngularJS:', error);
-                    reject(error);
-                }
-            } else {
-                reject(new Error('AngularJS not found on window object for bootstrap'));
-            }
-        }, 0);
-    });
-}
-
-/**
  * Load scripts that are only needed after login.
  * This includes game features.
  */
@@ -215,34 +182,20 @@ async function loadPostLoginScripts() {
     }
 }
 
+let _chatInitialized = false;
 async function loadChatApp() {
+    if (_chatInitialized) {
+        if (typeof updateChatTabs === 'function') updateChatTabs();
+        return;
+    }
     try {
-        // Temporarily remove ng-app to prevent auto-bootstrap
-        const ngAppElements = document.querySelectorAll('[ng-app]');
-        const ngAppBackup = [];
-        ngAppElements.forEach(element => {
-            ngAppBackup.push({ element, appName: element.getAttribute('ng-app') });
-            element.removeAttribute('ng-app');
-        });
-
-        // Load Angular, then its dependent scripts, then bootstrap
-        await loadScript(ANGULAR_LIB);
-        console.log('✓ AngularJS loaded');
-
-        await loadScriptsParallel(ANGULAR_DEPENDENT_SCRIPTS);
-        console.log('✓ Angular-dependent scripts loaded');
-
-        // Restore ng-app attributes
-        ngAppBackup.forEach(({ element, appName }) => {
-            element.setAttribute('ng-app', appName);
-        });
-
-        // Manually bootstrap
-        await bootstrapAngularJS();
+        await loadScript(SCRIPT_BASE_PATH + 'chat.js');
+        _chatInitialized = true;
+        initChat();
         if (typeof updateChatTabs === 'function') {
             updateChatTabs();
         }
-        console.log('✓ AngularJS bootstrapped');
+        console.log('✓ Chat loaded');
     } catch (error) {
         console.warn('Failed to load Chat App:', error);
     }
