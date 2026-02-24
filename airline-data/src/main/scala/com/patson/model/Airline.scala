@@ -1,6 +1,8 @@
 package com.patson.model
 
 import com.patson.data._
+import com.patson.data.airplane.ModelSource
+import com.patson.util.AirlineCache
 
 import java.util.concurrent.ThreadLocalRandom
 import java.util.{Calendar, Date}
@@ -243,7 +245,7 @@ case class AirlineIncome(airlineId : Int, profit : Long = 0, revenue: Long = 0, 
    * Current income is expected to be QUARTER/YEAR. Adds parameter (WEEKLY income) to this current income object and return a new Airline income with period same as this object but cycle as the parameter
    */
   def update(income2 : AirlineIncome) : AirlineIncome = {
-    AirlineIncome(airlineId, 
+    AirlineIncome(airlineId,
         profit = profit + income2.profit,
         revenue = revenue + income2.revenue,
         expense = expense + income2.expense,
@@ -258,7 +260,7 @@ case class AirlineIncome(airlineId : Int, profit : Long = 0, revenue: Long = 0, 
 }
 case class LinksIncome(airlineId : Int, profit : Long = 0, revenue : Long = 0, expense : Long = 0, ticketRevenue: Long = 0, airportFee : Long = 0, fuelCost : Long = 0, fuelTax : Long = 0, crewCost : Long = 0, inflightCost : Long = 0, delayCompensation : Long = 0, maintenanceCost: Long = 0, loungeCost : Long = 0, depreciation : Long = 0, period : Period.Value = Period.WEEKLY, var cycle : Int = 0) {
   def update(income2 : LinksIncome) : LinksIncome = {
-    LinksIncome(airlineId, 
+    LinksIncome(airlineId,
         profit = profit + income2.profit,
         revenue = revenue + income2.revenue,
         expense = expense + income2.expense,
@@ -278,7 +280,7 @@ case class LinksIncome(airlineId : Int, profit : Long = 0, revenue : Long = 0, e
 }
 case class TransactionsIncome(airlineId : Int, profit : Long = 0, revenue: Long = 0, expense: Long = 0, capitalGain : Long = 0, createLink : Long = 0,  prize : Long = 0, buyBack : Long = 0, period : Period.Value = Period.WEEKLY, var cycle : Int = 0) {
   def update(income2 : TransactionsIncome) : TransactionsIncome = {
-    TransactionsIncome(airlineId, 
+    TransactionsIncome(airlineId,
         profit = profit + income2.profit,
         revenue = revenue + income2.revenue,
         expense = expense + income2.expense,
@@ -288,11 +290,11 @@ case class TransactionsIncome(airlineId : Int, profit : Long = 0, revenue: Long 
         buyBack = buyBack + income2.buyBack,
         period = period,
         cycle = income2.cycle)
-  }  
+  }
 }
 case class OthersIncome(airlineId : Int, profit : Long = 0, revenue: Long = 0, expense: Long = 0, loanInterest : Long = 0, baseUpkeep : Long = 0, overtimeCompensation : Long = 0, advertisement : Long = 0, loungeUpkeep : Long = 0, loungeCost : Long = 0, loungeIncome : Long = 0, assetExpense : Long = 0, assetRevenue : Long = 0, fuelProfit : Long = 0, depreciation : Long = 0, period : Period.Value = Period.WEEKLY, var cycle : Int = 0) {
   def update(income2 : OthersIncome) : OthersIncome = {
-    OthersIncome(airlineId, 
+    OthersIncome(airlineId,
         profit = profit + income2.profit,
         revenue = revenue + income2.revenue,
         expense = expense + income2.expense,
@@ -309,7 +311,7 @@ case class OthersIncome(airlineId : Int, profit : Long = 0, revenue: Long = 0, e
         depreciation = depreciation + income2.depreciation,
         period = period,
         cycle = income2.cycle)
-  }    
+  }
 }
 
 
@@ -319,7 +321,7 @@ case class AirlineCashFlow(airlineId : Int, cashFlow : Long = 0, operation : Lon
    * Current income is expected to be QUARTER/YEAR. Adds parameter (WEEKLY income) to this current income object and return a new Airline income with period same as this object but cycle as the parameter
    */
   def update(cashFlow2 : AirlineCashFlow) : AirlineCashFlow = {
-    AirlineCashFlow(airlineId, 
+    AirlineCashFlow(airlineId,
         cashFlow = cashFlow + cashFlow2.cashFlow,
         operation = operation + cashFlow2.operation,
         loanInterest = loanInterest + cashFlow2.loanInterest,
@@ -353,6 +355,7 @@ object Airline {
         LinkSource.deleteLinksByAirlineId(airlineId)
         //remove all airplanes
         AirplaneSource.deleteAirplanesByCriteria(List(("owner", airlineId)));
+        ModelSource.deleteFavoriteModelId(airlineId);
         //remove all assets
         AirportAssetSource.loadAirportAssetsByAirline(airlineId).foreach { asset =>
           AirportAssetSource.deleteAirportAsset(asset.id)
@@ -392,12 +395,9 @@ object Airline {
         airline.removeCountryCode()
         airline.setTargetServiceQuality(EQ_INTITIAL)
         airline.setCurrentServiceQuality(0)
+        airline.setReputation(0)
 
-        if (resetExtendedInfo) {
-          airline.setReputation(0)
-          airline.setInitialized(false)
-          LoyalistSource.deleteLoyalistsByAirline(airlineId)
-        }
+        LoyalistSource.deleteLoyalistsByAirline(airlineId)
 
         //reset all busy delegates
         DelegateSource.deleteBusyDelegateByCriteria(List(("airline", "=", airlineId)))
@@ -408,7 +408,12 @@ object Airline {
         //reset all notice
         NoticeSource.deleteNoticesByAirline(airline.id)
 
+        if (resetExtendedInfo) {
+          airline.setInitialized(false)
+        }
+
         AirlineSource.saveAirlineInfo(airline)
+        AirlineCache.invalidateAirline(airlineId)
         println(s"!! Reset airline - $airline")
         Some(airline)
       case None =>

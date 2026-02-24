@@ -743,23 +743,20 @@
 						<div class="section" >
                             <h4>Rebuild airline<img src='@routes.Assets.versioned("/images/icons/construction.png")'/></h4>
                             <ul>
-                                <li class="label dot">Balance reset to&nbsp;$<span id="resetBalance"></span>
+                                <li class="label dot">Reset to initial game start with rebuild value of&nbsp;$<span id="resetBalance"></span>
                                     <a popovertarget="popover-reset" onmouseover="document.getElementById('popover-reset').showPopover();">
                                         <img class="info svg" src='@routes.Assets.versioned("/images/icons/information.svg")'>
                                     </a>
                                 </li>
-                                <li class="label dot">All of the airplanes will be removed</li>
-                                <li class="label dot">Headquarters, bases and facilities will be removed</li>
-								<li class="label dot">All Airport Assets will be sold</li>
-                                <li class="label dot">All routes will be cancelled</li>
-								<li class="label dot">All loans and oil contracts cancelled</li>
-								<li class="label dot">Dropped from current Alliance</li>
-                                <li class="label dot">Reputation and Loyalty will be kept</li>
+								<li class="label dot">Select an airport on the map to build your headquarters</li>
+								<li class="label dot">Then choose your airline type</li>
                             </ul>
                             <div class='button resetAirline rebuild' onclick='promptConfirm("Rebuild Airline?", resetAirline, true)'>Rebuild Airline</div>
                             <h4 class="pt-4">Declare bankruptcy<img src='@routes.Assets.versioned("/images/icons/heart-break.png")'/></h4>
                             <ul>
                                 <li class="label dot">Reset to initial game start</li>
+								<li class="label dot">Select an airport on the map to build your headquarters</li>
+								<li class="label dot">Then choose your airline type</li>
                             </ul>
                             <div class='button resetAirline bankrupt' onclick='promptConfirm("Declare bankruptcy?", resetAirline, false)'>Declare Bankruptcy</div>
 						</div>
