@@ -220,7 +220,7 @@ class ProfileApplication @Inject()(cc: ControllerComponents) extends AbstractCon
         airport = airport,
         airplanes = List.empty,
         loan = None,
-        reputation = 100,
+        reputation = 0,
         quality = quality,
       )
     }
