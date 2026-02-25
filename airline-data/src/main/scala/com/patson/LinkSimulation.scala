@@ -109,6 +109,29 @@ object LinkSimulation {
     ConsumptionHistorySource.updateConsumptions(consumptionResult)
     Util.outputTimeDiff(startTime, "Saved all consumptions. Took ")
 
+    //save top 10 missed demand per origin airport
+    startTime = System.currentTimeMillis()
+    println("Saving missed demand snapshot")
+    val topMissed = missedPassengerResult
+      .groupBy { case ((pg, _), _) => pg.fromAirport.id }
+      .flatMap { case (fromId, entries) =>
+        // Aggregate by composite key first — multiple PassengerGroup objects can share
+        // the same (from, to, passengerType, preferenceType, linkClass) but differ in
+        // internal preference details, producing duplicate DB keys.
+        val aggregated = mutable.HashMap[(Int, Int, Int, Int, String), Int]()
+        entries.foreach { case ((pg, toAirport), count) =>
+          val key = (fromId, toAirport.id, pg.passengerType.id,
+            pg.preference.getPreferenceType.id, pg.preference.preferredLinkClass.code)
+          aggregated(key) = aggregated.getOrElse(key, 0) + count
+        }
+        aggregated.toList.sortBy(-_._2).take(10).map {
+          case ((fId, tId, paxType, prefType, linkClass), count) =>
+            MissedDemandEntry(fId, tId, paxType, prefType, linkClass, count)
+        }
+      }
+    MissedDemandSource.deleteAndSave(topMissed)
+    Util.outputTimeDiff(startTime, "Saved missed demand. Took ")
+
     println("Calculating profits by links")
     startTime = System.currentTimeMillis()
     val linkConsumptionDetails = ListBuffer[LinkConsumptionDetails]()

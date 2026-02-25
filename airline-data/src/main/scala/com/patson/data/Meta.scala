@@ -543,6 +543,10 @@ object Meta {
     statement.execute()
     statement.close()
 
+    statement = connection.prepareStatement("CREATE INDEX idx_home_pass_count ON " + PASSENGER_ROUTE_HISTORY_TABLE + "(home_airport, passenger_count DESC)")
+    statement.execute()
+    statement.close()
+
     statement = connection.prepareStatement("DROP TABLE IF EXISTS " + PASSENGER_LINK_HISTORY_TABLE)
     statement.execute()
     statement.close()
@@ -2204,6 +2208,32 @@ object Meta {
     )
     statement.execute()
     statement.close()
+  }
+
+  def createMissedDemandTableIfNotExists(): Unit = {
+    val connection = getConnection(false)
+    try {
+      val stmt = connection.prepareStatement(
+        "CREATE TABLE IF NOT EXISTS " + PASSENGER_MISSED_DEMAND_TABLE + " (" +
+          "from_airport INT NOT NULL, " +
+          "to_airport INT NOT NULL, " +
+          "passenger_type TINYINT NOT NULL, " +
+          "preference_type TINYINT NOT NULL, " +
+          "preferred_link_class CHAR(1) NOT NULL, " +
+          "passenger_count INT NOT NULL, " +
+          "PRIMARY KEY (from_airport, to_airport, passenger_type, preference_type, preferred_link_class)" +
+          ")"
+      )
+      stmt.execute()
+      stmt.close()
+      val idxStmt = connection.prepareStatement(
+        "CREATE INDEX IF NOT EXISTS idx_missed_from ON " + PASSENGER_MISSED_DEMAND_TABLE + "(from_airport)"
+      )
+      idxStmt.execute()
+      idxStmt.close()
+    } finally {
+      connection.close()
+    }
   }
 
   def isTableExist(connection : Connection, tableName : String): Boolean = {

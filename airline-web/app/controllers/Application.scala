@@ -688,6 +688,81 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
     }
   }
 
+  private val demandCache = new scala.collection.concurrent.TrieMap[Int, (Int, JsValue)]()
+
+  def getAirportDemand(airportId: Int) = Action { request =>
+    request.headers.get(IF_NONE_MATCH) match {
+      case Some(etag) if etag == s""""$currentCycle"""" =>
+        NotModified
+      case _ =>
+        val cycle = currentCycle
+        val json = demandCache.get(airportId).filter(_._1 == cycle).map(_._2).getOrElse {
+          val result = computeAirportDemandJson(airportId, cycle)
+          demandCache(airportId) = (cycle, result)
+          result
+        }
+        Ok(json).withHeaders(CACHE_CONTROL -> "no-cache", ETAG -> s""""$cycle"""")
+    }
+  }
+
+  private def computeAirportDemandJson(airportId: Int, cycle: Int): JsValue = {
+    AirportCache.getAirport(airportId) match {
+      case None => Json.arr()
+      case Some(fromAirport) =>
+        val ticketed = ConsumptionHistorySource.loadTopConsumptionsByFromAirport(airportId, 30)
+        val missed   = MissedDemandSource.loadByFromAirport(airportId)
+
+        // Convert ticketed entries to json candidates
+        // airline IDs come from the passenger_link_history JOIN in the query itself
+        val ticketedCandidates: List[JsObject] = ticketed.flatMap { e =>
+          AirportCache.getAirport(e.toAirportId).map { toAirport =>
+            val distance = Computation.calculateDistance(fromAirport, toAirport)
+            val flightCategory = Computation.getFlightCategory(fromAirport, toAirport)
+            val linkClass = LinkClass.fromCode(e.preferredLinkClass)
+            val paxType = PassengerType.apply(e.passengerType)
+            val standardPrice = Pricing.computeStandardPrice(distance, flightCategory, linkClass, paxType, fromAirport.income)
+            Json.obj(
+              "toAirportId"       -> toAirport.id,
+              "toAirportName"     -> toAirport.city,
+              "toAirportIata"     -> toAirport.iata,
+              "passengerCount"    -> e.passengerCount,
+              "passengerType"     -> PassengerType.label(paxType),
+              "preferredLinkClass"-> linkClass.label,
+              "standardPrice"     -> standardPrice,
+              "isMissed"          -> false,
+              "airlineIds"        -> Json.toJson(e.airlineIds)
+            )
+          }
+        }
+
+        // Convert missed entries to json candidates
+        val missedCandidates: List[JsObject] = missed.flatMap { e =>
+          AirportCache.getAirport(e.toAirportId).map { toAirport =>
+            val distance = Computation.calculateDistance(fromAirport, toAirport)
+            val flightCategory = Computation.getFlightCategory(fromAirport, toAirport)
+            val linkClass = LinkClass.fromCode(e.preferredLinkClass)
+            val paxType = PassengerType.apply(e.passengerType)
+            val standardPrice = Pricing.computeStandardPrice(distance, flightCategory, linkClass, paxType, fromAirport.income)
+            Json.obj(
+              "toAirportId"       -> toAirport.id,
+              "toAirportName"     -> toAirport.city,
+              "toAirportIata"     -> toAirport.iata,
+              "passengerCount"    -> e.passengerCount,
+              "passengerType"     -> PassengerType.label(paxType),
+              "preferredLinkClass"-> linkClass.prettyLabel,
+              "standardPrice"     -> standardPrice,
+              "isMissed"          -> true,
+              "airlineIds"        -> Json.arr()
+            )
+          }
+        }
+
+        val pool = ticketedCandidates ++ missedCandidates
+        val rng = new scala.util.Random(cycle.toLong * airportId)
+        Json.toJson(rng.shuffle(pool).take(21))
+    }
+  }
+
   def options(path: String): Action[AnyContent] = Action {
     Ok("").withHeaders(
       "Access-Control-Allow-Methods" -> "GET, POST, PUT, DELETE, OPTIONS",

@@ -104,6 +104,7 @@ object Constants {
   val PASSENGER_LINK_HISTORY_TABLE_TEMP = "passenger_link_history_temp"
   val PASSENGER_ROUTE_HISTORY_TABLE = "passenger_route_history"
   val PASSENGER_ROUTE_HISTORY_TABLE_TEMP = "passenger_route_history_temp"
+  val PASSENGER_MISSED_DEMAND_TABLE = "passenger_missed_demand"
   val LOAN_TABLE = "loan"
   val LOUNGE_TABLE = "lounge"
   val LOUNGE_CONSUMPTION_TABLE = "lounge_consumption"

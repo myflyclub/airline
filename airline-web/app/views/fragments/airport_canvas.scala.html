@@ -1,6 +1,5 @@
-	  <div id="airportCanvas" class="canvas" style="display: none;">
-		  <!-- left panel -->
-		  <div class="vertical-group max-w-screen-nav" style="max-width: 1280px;">
+	  <div id="airportCanvas" class="canvas sidebar-grid" style="display: none;">
+		  <div class="vertical-group">
 			  <div style="display: flex; flex-flow: row; flex-wrap: wrap; gap: 8px;">
 				  <div class="vertical-group" style="flex-basis: 66%; flex-grow: 1; box-sizing:border-box;">
 					  <div class="section" style="display: flex; flex-wrap: wrap;">
@@ -180,7 +179,7 @@
 
 				<div class="vertical-group" style="flex-basis: 33%; flex-grow: 1; box-sizing:border-box;">
 					<div class="section tight">
-						<textarea id="airportNotes" style="width: 99%; min-height: 80px;" placeholder="Add notes here..."></textarea>
+						<textarea id="airportNotes" style="width: 99%; min-height: 80px;" placeholder="Add your private notes here..."></textarea>
 					</div>
 					<div class="section loyalistDetails">
 						<h5>
@@ -381,11 +380,9 @@
 			  </div>
 
 		  </div>
-		  <!-- right panel -->
-		  <div class="section" style="min-width: 200px; width: 100%; overflow: clip;">
-			  <h4>Assets</h4>
-			  <div class="sectionContainer assetsDetails"
-				   style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));gap: 8px;">
+		  <div class="section">
+			  <div id="airportDemandCards" class="vertical-group text-sm">
+				  <div class="table-row"><div class="cell">Loading...</div></div>
 			  </div>
 		  </div>
 	  </div>
