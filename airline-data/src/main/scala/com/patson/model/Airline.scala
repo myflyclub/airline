@@ -10,7 +10,7 @@ import scala.collection.mutable.ListBuffer
 import scala.collection.immutable.ListMap
 
 case class Airline(name: String, var airlineType: AirlineType = LegacyAirline, var id : Int = 0) extends IdObject {
-  val airlineInfo = AirlineInfo(0, 0, 0, 0, 0, 0, 0)
+  val airlineInfo = AirlineInfo(0, 0, 0, 0, 0, 0, 0, 0)
   var allianceId : Option[Int] = None
   var bases : List[AirlineBase] = List.empty
   var stats = AirlineStat(0, 0, Period.WEEKLY, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
@@ -29,6 +29,10 @@ case class Airline(name: String, var airlineType: AirlineType = LegacyAirline, v
 
   def setMinimumRenewalBalance(minimumRenewalBalance: Long) {
     airlineInfo.minimumRenewalBalance = minimumRenewalBalance
+  }
+
+  def setPrestigePoints(prestigePoints: Int) {
+    airlineInfo.prestigePoints = prestigePoints
   }
 
   def setReputation(reputation : Double) {
@@ -80,6 +84,10 @@ case class Airline(name: String, var airlineType: AirlineType = LegacyAirline, v
 
   def getMinimumRenewalBalance() = {
     airlineInfo.minimumRenewalBalance
+  }
+
+  def getPrestigePoints() = {
+    airlineInfo.prestigePoints
   }
 
   def setSkipTutorial(value : Boolean) = {
@@ -208,7 +216,7 @@ case class DelegateInfo(availableCount : Int, boosts : List[DelegateBoostAirline
 
 }
 
-case class AirlineInfo(var balance : Long, var currentServiceQuality : Double, var stockPrice : Double, var sharesOutstanding : Int, var targetServiceQuality : Int, var reputation : Double, var minimumRenewalBalance: Long, var countryCode : Option[String] = None, var airlineCode : String = "", var skipTutorial : Boolean = false, var initialized : Boolean = false)
+case class AirlineInfo(var balance : Long, var currentServiceQuality : Double, var stockPrice : Double, var sharesOutstanding : Int, var targetServiceQuality : Int, var reputation : Double, var minimumRenewalBalance: Long, var prestigePoints: Int,var countryCode : Option[String] = None, var airlineCode : String = "", var skipTutorial : Boolean = false, var initialized : Boolean = false)
 
 object TransactionType extends Enumeration {
   type TransactionType = Value
@@ -351,6 +359,17 @@ object Airline {
   def resetAirline(airlineId : Int, newBalance : Long, resetExtendedInfo : Boolean = false) : Option[Airline] = {
     AirlineSource.loadAirlineById(airlineId, true) match {
       case Some(airline) =>
+        // Update prestige info first before reputation is reset
+        if (resetExtendedInfo) {
+          airline.setInitialized(false)
+          PrestigeSource.unlinkPrestige(airlineId)
+          airline.setPrestigePoints(0)
+        } else {
+          Prestige.processPrestige(airline)
+        }
+
+        // TODO: Reduce/Remove Airline HQ prestige charm
+
         //remove all links
         LinkSource.deleteLinksByAirlineId(airlineId)
         //remove all airplanes
@@ -407,10 +426,6 @@ object Airline {
 
         //reset all notice
         NoticeSource.deleteNoticesByAirline(airline.id)
-
-        if (resetExtendedInfo) {
-          airline.setInitialized(false)
-        }
 
         AirlineSource.saveAirlineInfo(airline)
         AirlineCache.invalidateAirline(airlineId)

@@ -2247,9 +2247,9 @@ object Meta {
       "id INTEGER PRIMARY KEY AUTO_INCREMENT," +
       "airline INTEGER, " +
       "airport INTEGER, " +
+      "airline_name VARCHAR(256), " +
       "prestige_points INTEGER UNSIGNED, " +
       "cycle INTEGER, " +
-      "bankrupt TINYINT, " +
       "FOREIGN KEY(airport) REFERENCES " + AIRPORT_TABLE + "(id) ON DELETE CASCADE ON UPDATE CASCADE" +
       ")"
     )
