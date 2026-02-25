@@ -31,7 +31,7 @@ object PrestigePatcher extends App {
     val connection = dataSource.getConnection
     Meta.createPrestige(connection)
 
-    val preparedStatement = connection.prepareStatement("ALTER TABLE " + Constants.AIRLINE_INFO_TABLE + " ADD COLUMN prestige_points INTEGER UNSIGNED DEFAULT 0")
+    val preparedStatement = connection.prepareStatement("ALTER TABLE " + AIRLINE_INFO_TABLE + " ADD COLUMN prestige_points INTEGER UNSIGNED DEFAULT 0")
     preparedStatement.execute()
     preparedStatement.close()
 
