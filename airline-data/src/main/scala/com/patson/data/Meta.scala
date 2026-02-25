@@ -13,7 +13,7 @@ object Meta {
   //    val properties = new Properties()
   //    properties.put("user", DATABASE_USER);
   //    properties.put("password", "admin");
-  //DriverManager.getConnection(DATABASE_CONNECTION, properties);    
+  //DriverManager.getConnection(DATABASE_CONNECTION, properties);
   //mysql end
 
   //dataSource.setProperties(properties)
@@ -51,7 +51,7 @@ object Meta {
     statement = connection.prepareStatement("SET FOREIGN_KEY_CHECKS = 0")
     statement.execute()
     statement.close()
-    
+
     statement = connection.prepareStatement("DROP TABLE IF EXISTS " + CYCLE_TABLE)
     statement.execute()
     statement.close()
@@ -63,15 +63,15 @@ object Meta {
     statement = connection.prepareStatement("DROP TABLE IF EXISTS " + CITY_TABLE)
     statement.execute()
     statement.close()
-    
+
     statement = connection.prepareStatement("DROP TABLE IF EXISTS " + COUNTRY_TABLE)
     statement.execute()
     statement.close()
-    
+
     statement = connection.prepareStatement("DROP TABLE IF EXISTS " + COUNTRY_AIRLINE_RELATIONSHIP_TABLE)
     statement.execute()
     statement.close()
-    
+
     statement = connection.prepareStatement("DROP TABLE IF EXISTS " + COUNTRY_MUTUAL_RELATIONSHIP_TABLE)
     statement.execute()
     statement.close()
@@ -143,24 +143,24 @@ object Meta {
     statement = connection.prepareStatement("CREATE TABLE " + CITY_TABLE + "(id INTEGER PRIMARY KEY AUTO_INCREMENT, name VARCHAR(256) CHARACTER SET 'utf8', latitude DOUBLE, longitude DOUBLE, country_code VARCHAR(256) CHARACTER SET 'utf8', population INTEGER, income INTEGER)")
     statement.execute()
     statement.close()
-    
+
     statement = connection.prepareStatement("CREATE TABLE " + COUNTRY_TABLE + "(code CHAR(2) PRIMARY KEY, name VARCHAR(256) CHARACTER SET 'utf8', airport_population INTEGER, income INTEGER, openness INTEGER, gini DOUBLE)")
     statement.execute()
     statement.close()
-    
+
     statement = connection.prepareStatement("CREATE TABLE " + AIRPORT_TABLE + "( id INTEGER PRIMARY KEY AUTO_INCREMENT, iata VARCHAR(256), icao VARCHAR(256), name VARCHAR(256) CHARACTER SET 'utf8', latitude DOUBLE, longitude DOUBLE, country_code VARCHAR(256), city VARCHAR(256) CHARACTER SET 'utf8', zone VARCHAR(256), airport_size INTEGER, income BIGINT, population BIGINT, pop_middle_income BIGINT, pop_elite BIGINT, runway_length SMALLINT)")
     statement.execute()
     statement.close()
-    
+
     statement = connection.prepareStatement("CREATE INDEX " + AIRPORT_INDEX_1 + " ON " + AIRPORT_TABLE + "(country_code)")
     statement.execute()
     statement.close()
-    
+
 
     statement = connection.prepareStatement("CREATE TABLE " + AIRLINE_TABLE + "( id INTEGER PRIMARY KEY AUTO_INCREMENT, name VARCHAR(256), airline_type TINYINT(1))")
     statement.execute()
     statement.close()
-    
+
     statement = connection.prepareStatement("CREATE TABLE " + COUNTRY_AIRLINE_RELATIONSHIP_TABLE + "(country CHAR(2), airline INTEGER, relationship INTEGER," +
                                             "PRIMARY KEY (country, airline)," +
 	                                          "FOREIGN KEY(airline) REFERENCES " + AIRLINE_TABLE + "(id) ON DELETE CASCADE ON UPDATE CASCADE," +
@@ -175,7 +175,7 @@ object Meta {
     statement = connection.prepareStatement("CREATE INDEX " + COUNTRY_AIRLINE_RELATIONSHIP_INDEX_2 + " ON " + COUNTRY_TABLE + "(code)")
     statement.execute()
     statement.close()
-    
+
     statement = connection.prepareStatement("CREATE TABLE " + COUNTRY_MUTUAL_RELATIONSHIP_TABLE + "(country_1 CHAR(2), country_2 CHAR(2), relationship INTEGER," +
                                             "PRIMARY KEY (country_1, country_2)," +
                                             "FOREIGN KEY(country_1) REFERENCES " + COUNTRY_TABLE + "(code) ON DELETE CASCADE ON UPDATE CASCADE," +
@@ -196,6 +196,7 @@ object Meta {
       "color CHAR(7)," +
       "skip_tutorial TINYINT," +
       "initialized TINYINT," +
+      "prestige_points INTEGER UNSIGNED DEFAULT 0," +
       "minimum_renewal_balance INTEGER DEFAULT 0," +
       "FOREIGN KEY(airline) REFERENCES " + AIRLINE_TABLE + "(id) ON DELETE CASCADE ON UPDATE CASCADE" +
       ")")
@@ -230,7 +231,7 @@ object Meta {
 
     createLinkStats(connection)
     createPassengerHistoryTables(connection)
-    createAirlineTransaction(connection)  
+    createAirlineTransaction(connection)
     createIncome(connection)
     createAirlineCashFlowItem(connection)
     createCashFlow(connection)
@@ -284,6 +285,7 @@ object Meta {
     createAirportStatistics(connection)
     createWorldStatistics(connection)
     createRankingLeaderboard(connection)
+    createPrestige(connection)
 
     statement = connection.prepareStatement("CREATE TABLE " + AIRPORT_CITY_SHARE_TABLE + "(" +
       "airport INTEGER," +
@@ -2247,6 +2249,26 @@ object Meta {
     } finally {
       connection.close()
     }
+  }
+
+  def createPrestige(connection: Connection): Unit = {
+    var statement = connection.prepareStatement("DROP TABLE IF EXISTS " + PRESTIGE_TABLE)
+    statement.execute()
+    statement.close()
+
+    statement = connection.prepareStatement("CREATE TABLE " + PRESTIGE_TABLE + "(" +
+      "id INTEGER PRIMARY KEY AUTO_INCREMENT," +
+      "airline INTEGER, " +
+      "airport INTEGER, " +
+      "prestige_points INTEGER UNSIGNED, " +
+      "cycle INTEGER, " +
+      "bankrupt TINYINT, " +
+      "FOREIGN KEY(airport) REFERENCES " + AIRPORT_TABLE + "(id) ON DELETE CASCADE ON UPDATE CASCADE" +
+      ")"
+    )
+
+    statement.execute()
+    statement.close()
   }
 
   def isTableExist(connection : Connection, tableName : String): Boolean = {
