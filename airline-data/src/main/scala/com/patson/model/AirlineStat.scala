@@ -20,28 +20,39 @@ case class AirlineStat(
                         repTotal: Int,
                         repLeaderboards: Int
                       ) {
-  def update(other: AirlineStat): AirlineStat = {
-    AirlineStat(
-      airlineId,
-      other.cycle, // use the latest cycle
-      period,
-      tourists + other.tourists,
-      elites + other.elites,
-      business + other.business,
-      total + other.total,
-      codeshares + other.codeshares,
-      (RASK + other.RASK) / 2,
-      (CASK + other.CASK) / 2,
-      (satisfaction + other.satisfaction) / 2,
-      (loadFactor + other.loadFactor) / 2,
-      (onTime + other.onTime) / 2,
-      (cashOnHand + other.cashOnHand) / 2,
-      (eps + other.eps) / 2,
-      ((linkCount + other.linkCount).toDouble / 2).toInt,
-      ((repTotal + other.repTotal).toDouble / 2).toInt,
-      ((repLeaderboards + other.repLeaderboards).toDouble / 2).toInt
-    )
-  }
+  def update(other: AirlineStat): AirlineStat = AirlineStat(
+    airlineId,
+    other.cycle, // use the latest cycle
+    period,
+    tourists + other.tourists,
+    elites + other.elites,
+    business + other.business,
+    total + other.total,
+    codeshares + other.codeshares,
+    RASK + other.RASK,
+    CASK + other.CASK,
+    satisfaction + other.satisfaction,
+    loadFactor + other.loadFactor,
+    onTime + other.onTime,
+    cashOnHand + other.cashOnHand,
+    eps + other.eps,
+    linkCount + other.linkCount,
+    repTotal + other.repTotal,
+    repLeaderboards + other.repLeaderboards
+  )
+
+  def toAverage(count: Int): AirlineStat = if (count <= 1) this else copy(
+    RASK = RASK / count,
+    CASK = CASK / count,
+    satisfaction = satisfaction / count,
+    loadFactor = loadFactor / count,
+    onTime = onTime / count,
+    cashOnHand = (cashOnHand.toDouble / count).toInt,
+    eps = eps / count,
+    linkCount = (linkCount.toDouble / count).toInt,
+    repTotal = (repTotal.toDouble / count).toInt,
+    repLeaderboards = (repLeaderboards.toDouble / count).toInt
+  )
 }
 
 //intermediate data objects

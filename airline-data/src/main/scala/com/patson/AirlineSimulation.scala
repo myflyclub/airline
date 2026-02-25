@@ -581,8 +581,8 @@ object AirlineSimulation {
               profit = acc.profit + week.profit,
               revenue = acc.revenue + week.revenue,
               expense = acc.expense + week.expense,
-              stockPrice = acc.stockPrice,
-              totalValue = acc.totalValue,
+              stockPrice = acc.stockPrice + week.stockPrice,
+              totalValue = acc.totalValue + week.totalValue,
               links = acc.links.copy(
                 profit = acc.links.profit + week.links.profit,
                 revenue = acc.links.revenue + week.links.revenue,
@@ -667,19 +667,19 @@ object AirlineSimulation {
     val endCycle = cycle
     
     // Batch load all weekly stats for all airlines in this period
-    val weeklyStatsByAirline = AirlineStatisticsSource.loadAirlineStatsByCriteria(List(("period", 0))).filter { stat =>
-      stat.cycle >= startCycle && stat.cycle <= endCycle
-    }.groupBy(_.airlineId)
-    
+    val weeklyStatsByAirline = AirlineStatisticsSource
+      .loadAirlineStatsByCycleRange(startCycle, endCycle, Period.WEEKLY)
+      .groupBy(_.airlineId)
+
     val periodStats = scala.collection.mutable.ListBuffer[AirlineStat]()
-    
+
     allAirlines.foreach { airline =>
       weeklyStatsByAirline.get(airline.id).foreach { weeks =>
         if (weeks.nonEmpty) {
           val summed = weeks.reduce { (acc, week) =>
             acc.update(week)
           }
-          periodStats += summed.copy(period = period, cycle = cycle)
+          periodStats += summed.toAverage(weeks.length).copy(period = period, cycle = cycle)
         }
       }
     }

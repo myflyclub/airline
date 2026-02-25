@@ -52,10 +52,6 @@ object Meta {
     statement.execute()
     statement.close()
     
-    statement = connection.prepareStatement("DROP TABLE IF EXISTS " + PASSENGER_HISTORY_TABLE)
-    statement.execute()
-    statement.close()
-    
     statement = connection.prepareStatement("DROP TABLE IF EXISTS " + CYCLE_TABLE)
     statement.execute()
     statement.close()
@@ -105,18 +101,6 @@ object Meta {
     statement.close()
 
     statement = connection.prepareStatement("DROP TABLE IF EXISTS " + LINK_CONSUMPTION_TABLE)
-    statement.execute()
-    statement.close()
-
-    statement = connection.prepareStatement("DROP TABLE IF EXISTS " + WATCHED_LINK_TABLE)
-    statement.execute()
-    statement.close()
-
-    statement = connection.prepareStatement("DROP TABLE IF EXISTS " + VIP_ROUTE_TABLE)
-    statement.execute()
-    statement.close()
-
-    statement = connection.prepareStatement("DROP TABLE IF EXISTS " + VIP_ROUTE_ENTRY_TABLE)
     statement.execute()
     statement.close()
 
@@ -1935,7 +1919,7 @@ object Meta {
       "link_count INTEGER, " +
       "rep_total DOUBLE, " +
       "rep_leaderboards DOUBLE, " +
-      "PRIMARY KEY (airline, cycle)," +
+      "PRIMARY KEY (airline, period, cycle)," +
       "FOREIGN KEY(airline) REFERENCES " + AIRLINE_TABLE + "(id) ON DELETE CASCADE ON UPDATE CASCADE" +
       ")")
     statement.execute()
@@ -2103,6 +2087,7 @@ object Meta {
     statement = connection.prepareStatement("CREATE TABLE " + ALLIANCE_STATS_TABLE + "(" +
       "alliance INTEGER, " +
       "cycle INTEGER, " +
+      "period INTEGER, " +
       "traveler_pax INT UNSIGNED, " +
       "business_pax INT UNSIGNED, " +
       "elite_pax INT UNSIGNED, " +
@@ -2111,7 +2096,7 @@ object Meta {
       "total_airline_market_cap DOUBLE, " +
       "total_lounge_visit INT UNSIGNED, " +
       "total_profit BIGINT, " +
-      "PRIMARY KEY (alliance, cycle)," +
+      "PRIMARY KEY (alliance, period, cycle)," +
       "FOREIGN KEY(alliance) REFERENCES " + ALLIANCE_TABLE + "(id) ON DELETE CASCADE ON UPDATE CASCADE" +
       ")")
     statement.execute()

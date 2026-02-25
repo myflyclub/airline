@@ -603,16 +603,6 @@ object LinkSimulation {
     (linkStatistics, airportStatistics, countryMarketShares)
   }
 
-//  def calculatePaxRatio(ticketSoldGlobally: Int, allPaxUsingAirport: Int, paxFromThisAirport: Int, airportSize: Int, airportStatsOpt: Option[AirportStatistics]): Double = {
-//    if (ticketSoldGlobally <= 0) return 0.0
-//
-//    airportStatsOpt match {
-//      case Some(airportStats) if airportStats.baselineDemand > 0 =>
-//        (allPaxUsingAirport.toDouble / ticketSoldGlobally) * Airport.travelRate(paxFromThisAirport.toDouble / (0.8 * airportStats.baselineDemand), airportSize)
-//      case _ => 0.0 // Handle missing airport stats or zero baseline demand
-//    }
-//  }
-
   private def createLinkStatisticsKey(link: Transport, isFlipped: Boolean, index: Int, totalLinks: Int): LinkStatisticsKey = {
     val isDeparture = index == 0
     val isDestination = index == totalLinks - 1

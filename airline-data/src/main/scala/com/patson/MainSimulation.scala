@@ -99,9 +99,6 @@ object MainSimulation extends App {
     println("Purging link history")
     ChangeHistorySource.deleteLinkChangeByCriteria(List(("cycle", "<", cycle - 400)))
 
-    println("Purging Alliance Stats – remove if running AllianceSimulation")
-    AllianceSource.deleteAllianceStatsBeforeCutoff(cycle - 108)
-
     //purge airline modifier
     println("Purging airline modifier")
     AirlineSource.deleteAirlineModifierByExpiry(cycle)

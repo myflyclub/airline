@@ -1,6 +1,6 @@
 package com.patson.model.alliance
 
-import com.patson.model.{Alliance, PassengerType}
+import com.patson.model.{Alliance, PassengerType, Period}
 
 case class AllianceStats(alliance : Alliance,
                          travelerPax : Long,
@@ -11,7 +11,8 @@ case class AllianceStats(alliance : Alliance,
                          airlineMarketCap : Long,
                          loungeVisit : Long,
                          profit : Long,
-                         cycle : Int) {
+                         cycle : Int,
+                         period : Period.Value = Period.WEEKLY) {
 
   lazy val totalPax: Long = travelerPax + businessPax + elitePax + touristPax
 

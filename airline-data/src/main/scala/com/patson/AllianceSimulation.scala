@@ -8,6 +8,8 @@ import com.patson.util.{AirlineCache, AirportChampionInfo, CountryChampionInfo}
 import scala.collection.{immutable, mutable}
 
 object AllianceSimulation {
+  val BOOKKEEPING_ENTRIES_COUNT = 25
+
   def simulate(flightLinkResult: List[LinkConsumptionDetails], loungeResult: List[LoungeConsumptionDetails], paxStatsByAirlineId: immutable.Map[Int, AirlinePaxStat], airportChampionInfo: List[AirportChampionInfo], cycle: Int): Unit = {
     println("Tallying alliance stats...")
     val allActiveAlliances = AllianceSource.loadAllAlliancesEstablished(true)
@@ -43,6 +45,54 @@ object AllianceSimulation {
     }
 
     AllianceSource.saveAllianceStats(allianceStatsList)
+
+    // Accumulate at period boundaries
+    if ((cycle + 1) % Period.numberWeeks(Period.QUARTER) == 0)
+      computeAndSaveAccumulation(cycle, allActiveAlliances, Period.QUARTER)
+    if ((cycle + 1) % Period.numberWeeks(Period.YEAR) == 0)
+      computeAndSaveAccumulation(cycle, allActiveAlliances, Period.YEAR)
+
+    // Period-aware purging
+    AllianceSource.deleteAllianceStatsBefore(cycle - BOOKKEEPING_ENTRIES_COUNT, Period.WEEKLY)
+    AllianceSource.deleteAllianceStatsBefore(cycle - BOOKKEEPING_ENTRIES_COUNT * Period.numberWeeks(Period.QUARTER), Period.QUARTER)
+    AllianceSource.deleteAllianceStatsBefore(cycle - BOOKKEEPING_ENTRIES_COUNT * Period.numberWeeks(Period.YEAR), Period.YEAR)
+  }
+
+  def computeAndSaveAccumulation(cycle: Int, alliances: List[Alliance], period: Period.Value): Unit = {
+    val periodWeeks = Period.numberWeeks(period)
+    val startCycle = cycle - (cycle % periodWeeks) + 1
+    val endCycle = cycle
+
+    val weeklyStatsByAlliance = AllianceSource.loadAllianceStatsByCycleRange(startCycle, endCycle, Period.WEEKLY)
+      .groupBy(_.alliance.id)
+
+    val periodStats = alliances.flatMap { alliance =>
+      weeklyStatsByAlliance.get(alliance.id).filter(_.nonEmpty).map { weeks =>
+        val count = weeks.length
+        val summed = weeks.reduce { (acc, week) =>
+          AllianceStats(
+            alliance = acc.alliance,
+            travelerPax = acc.travelerPax + week.travelerPax,
+            businessPax = acc.businessPax + week.businessPax,
+            elitePax = acc.elitePax + week.elitePax,
+            touristPax = acc.touristPax + week.touristPax,
+            airportRep = acc.airportRep + week.airportRep,
+            airlineMarketCap = acc.airlineMarketCap + week.airlineMarketCap,
+            loungeVisit = acc.loungeVisit + week.loungeVisit,
+            profit = acc.profit + week.profit,
+            cycle = cycle,
+            period = period
+          )
+        }
+        // Average the per-member metrics; sum the flow metrics
+        summed.copy(
+          airportRep = summed.airportRep / count,
+          airlineMarketCap = summed.airlineMarketCap / count
+        )
+      }
+    }
+
+    AllianceSource.saveAllianceStats(periodStats)
   }
 
 }
