@@ -5,6 +5,7 @@ import com.patson.data.Constants._
 import com.patson.model._
 import com.patson.model.alliance.AllianceStats
 import com.patson.util.{AirlineCache, AllianceCache}
+import com.patson.model.Period
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
@@ -443,7 +444,7 @@ object AllianceSource {
   }
 
   def saveAllianceStats(stats: List[AllianceStats]) = {
-    val coreQueryString = s"REPLACE INTO $ALLIANCE_STATS_TABLE (alliance, cycle, traveler_pax, business_pax, elite_pax, tourist_pax, total_airport_rep, total_airline_market_cap, total_lounge_visit, total_profit) VALUES(?,?,?,?,?,?,?,?,?,?)";
+    val coreQueryString = s"REPLACE INTO $ALLIANCE_STATS_TABLE (alliance, cycle, period, traveler_pax, business_pax, elite_pax, tourist_pax, total_airport_rep, total_airline_market_cap, total_lounge_visit, total_profit) VALUES(?,?,?,?,?,?,?,?,?,?,?)";
 
     val connection = Meta.getConnection()
     try {
@@ -454,14 +455,15 @@ object AllianceSource {
       stats.foreach { entry =>
         coreStatement.setInt(1, entry.alliance.id)
         coreStatement.setInt(2, entry.cycle)
-        coreStatement.setLong(3, entry.travelerPax)
-        coreStatement.setLong(4, entry.businessPax)
-        coreStatement.setLong(5, entry.elitePax)
-        coreStatement.setLong(6, entry.touristPax)
-        coreStatement.setDouble(7, entry.airportRep)
-        coreStatement.setLong(8, entry.airlineMarketCap)
-        coreStatement.setLong(9, entry.loungeVisit)
-        coreStatement.setLong(10, entry.profit)
+        coreStatement.setInt(3, entry.period.id)
+        coreStatement.setLong(4, entry.travelerPax)
+        coreStatement.setLong(5, entry.businessPax)
+        coreStatement.setLong(6, entry.elitePax)
+        coreStatement.setLong(7, entry.touristPax)
+        coreStatement.setInt(8, entry.airportRep)
+        coreStatement.setLong(9, entry.airlineMarketCap)
+        coreStatement.setLong(10, entry.loungeVisit)
+        coreStatement.setLong(11, entry.profit)
         coreStatement.executeUpdate()
       }
       coreStatement.close()
@@ -483,11 +485,32 @@ object AllianceSource {
     } finally {
       connection.close()
     }
+  }
 
+  def deleteAllianceStatsBefore(cycleAndBefore: Int, period: Period.Value): Unit = {
+    val queryString = s"DELETE FROM $ALLIANCE_STATS_TABLE WHERE cycle <= ? AND period = ?"
+    val connection = Meta.getConnection()
+    try {
+      val preparedStatement = connection.prepareStatement(queryString)
+      preparedStatement.setInt(1, cycleAndBefore)
+      preparedStatement.setInt(2, period.id)
+      preparedStatement.executeUpdate()
+      preparedStatement.close()
+    } finally {
+      connection.close()
+    }
   }
 
   def loadAllianceStatsByCycle(cycle : Int) : List[AllianceStats] = {
-    loadAllianceStatsByCriteria(List(("cycle", "=", cycle)))
+    loadAllianceStatsByCriteria(List(("cycle", "=", cycle), ("period", "=", Period.WEEKLY.id)))
+  }
+
+  def loadAllianceStatsByCycleRange(startCycle: Int, endCycle: Int, period: Period.Value): List[AllianceStats] = {
+    loadAllianceStatsByCriteria(List(
+      ("cycle", ">=", startCycle),
+      ("cycle", "<=", endCycle),
+      ("period", "=", period.id)
+    ))
   }
 
   def loadAllianceStatsByCriteria(criteria : List[(String, String, Any)]) : List[AllianceStats]= {
@@ -522,11 +545,12 @@ object AllianceSource {
               businessPax = coreResultSet.getLong("business_pax"),
               elitePax = coreResultSet.getLong("elite_pax"),
               touristPax = coreResultSet.getLong("tourist_pax"),
-              airportRep = coreResultSet.getLong("total_airport_rep"),
+              airportRep = coreResultSet.getInt("total_airport_rep"),
               airlineMarketCap = coreResultSet.getLong("total_airline_market_cap"),
               loungeVisit = coreResultSet.getLong("total_lounge_visit"),
               profit = coreResultSet.getLong("total_profit"),
-              cycle = coreResultSet.getInt("cycle")
+              cycle = coreResultSet.getInt("cycle"),
+              period = Period(coreResultSet.getInt("period"))
             )
           )
         }

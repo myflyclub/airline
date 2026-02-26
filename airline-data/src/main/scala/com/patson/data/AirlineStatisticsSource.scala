@@ -167,6 +167,45 @@ object AirlineStatisticsSource {
     loadAirlineStatsByCriteria(List(("cycle", cycle)))
   }
 
+  def loadAirlineStatsByCycleRange(startCycle: Int, endCycle: Int, period: Period.Value): List[AirlineStat] = {
+    val connection = Meta.getConnection()
+    val airlineStats = ListBuffer[AirlineStat]()
+    try {
+      val queryString = s"SELECT * FROM $AIRLINE_STATISTICS_TABLE WHERE cycle >= ? AND cycle <= ? AND period = ?"
+      val preparedStatement = connection.prepareStatement(queryString)
+      preparedStatement.setInt(1, startCycle)
+      preparedStatement.setInt(2, endCycle)
+      preparedStatement.setInt(3, period.id)
+      val resultSet = preparedStatement.executeQuery()
+      while (resultSet.next()) {
+        airlineStats += AirlineStat(
+          resultSet.getInt("airline"),
+          resultSet.getInt("cycle"),
+          Period(resultSet.getInt("period")),
+          resultSet.getInt("tourists"),
+          resultSet.getInt("elites"),
+          resultSet.getInt("business"),
+          resultSet.getInt("total"),
+          resultSet.getInt("codeshares"),
+          resultSet.getDouble("rask"),
+          resultSet.getDouble("cask"),
+          resultSet.getDouble("satisfaction"),
+          resultSet.getDouble("load_factor"),
+          resultSet.getDouble("on_time"),
+          resultSet.getInt("cash_on_hand"),
+          resultSet.getDouble("eps"),
+          resultSet.getInt("link_count"),
+          resultSet.getInt("rep_total"),
+          resultSet.getInt("rep_leaderboards")
+        )
+      }
+      preparedStatement.close()
+      airlineStats.toList
+    } finally {
+      connection.close()
+    }
+  }
+
   def loadAirlineStatsByCriteria(criteria: List[(String, Any)]) = {
     val connection = Meta.getConnection()
     val airlineStats = ListBuffer[AirlineStat]()

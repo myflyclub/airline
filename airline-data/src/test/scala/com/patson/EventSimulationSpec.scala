@@ -2,11 +2,12 @@ package com.patson
 
 import com.patson.model.event.{OlympicsAirlineVote, OlympicsAirlineVoteWithWeight, OlympicsVoteRound}
 import com.patson.model.{PassengerType, _}
-import org.scalatest.{Matchers, WordSpecLike}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpecLike
 
 import scala.collection.mutable.ListBuffer
 
-class EventSimulationSpec extends WordSpecLike with Matchers {
+class EventSimulationSpec extends AnyWordSpecLike with Matchers {
   val DEFAULT_RELATIONSHIP = 0
   val countries = List(Country.fromCode("A"), Country.fromCode("B"), Country.fromCode("C"), Country.fromCode("D"), Country.fromCode("E"), Country.fromCode("F"))
 

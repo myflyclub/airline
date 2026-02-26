@@ -108,6 +108,57 @@ object ConsumptionHistorySource {
     }
   }
 
+  case class TicketedDemandEntry(toAirportId: Int, passengerType: Int, preferenceType: Int, preferredLinkClass: String, passengerCount: Int, airlineIds: List[Int])
+
+  /**
+   * Top individual route journeys from a given origin airport by passenger count.
+   * Groups by route_id to collect all airline IDs across every leg of each journey.
+   */
+  def loadTopConsumptionsByFromAirport(fromAirportId: Int, limit: Int): List[TicketedDemandEntry] = {
+    val connection = Meta.getConnection()
+    try {
+      val stmt = connection.prepareStatement(
+        s"""WITH TopRoutes AS (
+            SELECT route_id, destination_airport, passenger_type, preference_type, 
+                preferred_link_class, passenger_count
+            FROM $PASSENGER_ROUTE_HISTORY_TABLE
+            WHERE home_airport = ?
+            ORDER BY passenger_count DESC
+            LIMIT ?
+        )
+        SELECT tr.destination_airport, tr.passenger_type, tr.preference_type, tr.preferred_link_class, tr.passenger_count,
+            GROUP_CONCAT(DISTINCT l.airline ORDER BY l.airline) AS airline_ids
+        FROM TopRoutes tr
+        LEFT JOIN $PASSENGER_LINK_HISTORY_TABLE plh ON tr.route_id = plh.route_id
+        LEFT JOIN $LINK_TABLE l ON plh.link = l.id
+        GROUP BY tr.route_id, tr.destination_airport, tr.passenger_type, tr.preference_type, tr.preferred_link_class, tr.passenger_count
+        ORDER BY tr.passenger_count DESC""".stripMargin
+      )
+      stmt.setInt(1, fromAirportId)
+      stmt.setInt(2, limit)
+      val rs = stmt.executeQuery()
+      val result = scala.collection.mutable.ListBuffer[TicketedDemandEntry]()
+      while (rs.next()) {
+        val airlineIds = Option(rs.getString("airline_ids"))
+          .map(_.split(",").toList.flatMap(s => scala.util.Try(s.trim.toInt).toOption))
+          .getOrElse(List.empty)
+        result += TicketedDemandEntry(
+          toAirportId = rs.getInt("destination_airport"),
+          passengerType = rs.getInt("passenger_type"),
+          preferenceType = rs.getInt("preference_type"),
+          preferredLinkClass = rs.getString("preferred_link_class"),
+          passengerCount = rs.getInt("passenger_count"),
+          airlineIds = airlineIds
+        )
+      }
+      rs.close()
+      stmt.close()
+      result.toList
+    } finally {
+      connection.close()
+    }
+  }
+
   def deleteAllConsumptions() = {
     val connection = Meta.getConnection()
 
@@ -189,7 +240,9 @@ object ConsumptionHistorySource {
 
       val routeIdsCostsMap = routeIdsWithCosts.toMap
       val result: Map[Route, (PassengerType.Value, Int)] = linkConsiderationsByRouteId.view.map {
-        case (routeId: Int, considerations: ListBuffer[LinkConsideration]) => (Route(considerations.toList, routeIdsCostsMap(routeId), List.empty, routeId), routeConsumptions(routeId))
+        case (routeId: Int, considerations: ListBuffer[LinkConsideration]) =>
+          val sortedConsiderations = sortLinks(considerations.toList, fromAirportId)
+          (Route(sortedConsiderations, routeIdsCostsMap(routeId), List.empty, routeId), routeConsumptions(routeId))
       }.toMap
 
       println(s"Loaded ${result.size} routes for airport pair ${fromAirportId} and ${toAirportId})")
@@ -199,6 +252,28 @@ object ConsumptionHistorySource {
       connection.close()
     }
   }
+
+  def sortLinks(links: List[LinkConsideration], fromAirportId: Int): List[LinkConsideration] = {
+    var currentAirportId = fromAirportId
+    val sortedLinks = ListBuffer[LinkConsideration]()
+    val remainingLinks = scala.collection.mutable.ListBuffer(links: _*)
+
+    while (remainingLinks.nonEmpty) {
+      remainingLinks.find(_.from.id == currentAirportId) match {
+        case Some(nextLink) =>
+          sortedLinks += nextLink
+          remainingLinks -= nextLink
+          currentAirportId = nextLink.to.id
+        case None =>
+          // Cannot find next link.
+          // Maybe the start airport was wrong?
+          // Or the route is disjoint.
+          return links // Fallback to unsorted
+      }
+    }
+    sortedLinks.toList
+  }
+
   /**
    *
    *

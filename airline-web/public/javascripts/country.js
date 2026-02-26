@@ -170,7 +170,7 @@ function loadCountryDetails(countryCode) {
 
             $("#countryDetails img.airlineTitleIcon").hide()
             $("#countryDetails span.airlineTitle").empty()
-            updateAirlineTitle(title.title, $("#countryDetails img.airlineTitleIcon"), $("#countryDetails span.airlineTitle"))
+            updateAirlineTitle(title, $("#countryDetails img.airlineTitleIcon"), $("#countryDetails span.airlineTitle"))
 
     		$("#countryDetailsAirlineHeadquarters").text(country.headquartersCount)
     		$("#countryDetailsAirlineBases").text(country.basesCount)

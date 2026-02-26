@@ -190,7 +190,7 @@ export function showAirportLinkPopup(pathData, lngLat) {
         popupEl.querySelector('#airportLinkPopupFrom').innerHTML = `${fromFlag}${fromAirport}`;
         popupEl.querySelector('#airportLinkPopupTo').innerHTML = `${toFlag}${toAirport}`;
         
-        const capacityStr = typeof toLinkClassValueString === 'function' ? toLinkClassValueString(details.capacity) : details.capacity.total;
+        const capacityStr = toLinkClassValueString(details.capacity);
         popupEl.querySelector('#airportLinkPopupCapacity').textContent = `${capacityStr}(${details.frequency})`;
 
         const operatorsEl = popupEl.querySelector('#airportLinkOperators');
@@ -198,8 +198,8 @@ export function showAirportLinkPopup(pathData, lngLat) {
             operatorsEl.innerHTML = '';
             details.operators.forEach(operator => {
                 const div = document.createElement('div');
-                const logo = typeof getAirlineLogoSpan === 'function' ? getAirlineLogoSpan(operator.airlineId, operator.airlineName) : operator.airlineName;
-                const capStr = typeof toLinkClassValueString === 'function' ? toLinkClassValueString(operator.capacity) : operator.capacity;
+                const logo = getAirlineLogoSpan(operator.airlineId, operator.airlineName);
+                const capStr = toLinkClassValueString(operator.capacity);
                 div.innerHTML = `${logo}<span>${operator.frequency}&nbsp;flight(s) weekly&nbsp;${capStr}</span>`;
                 operatorsEl.appendChild(div);
             });

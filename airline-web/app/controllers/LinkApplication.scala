@@ -484,6 +484,23 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
     }
   }
 
+  def updateLinkPrice(airlineId: Int, linkId: Int) = AuthenticatedAirline(airlineId) { request =>
+    val body = request.body.asInstanceOf[AnyContentAsJson].json
+    val economyPrice = (body \ "economy").as[Int]
+    val businessPrice = (body \ "business").as[Int]
+    val firstPrice = (body \ "first").as[Int]
+
+    LinkSource.loadFlightLinkById(linkId) match {
+      case Some(link) if link.airline.id == airlineId =>
+        val newPrice = LinkClassValues.getInstance(economyPrice, businessPrice, firstPrice, link.price.discountVal)
+        val updatedLink = link.copy(price = newPrice)
+        LinkSource.updateLink(updatedLink)
+        Ok(Json.obj("economy" -> economyPrice, "business" -> businessPrice, "first" -> firstPrice))
+      case Some(_) => Forbidden
+      case None => NotFound
+    }
+  }
+
   def getOvertimeCompensation(airlineId : Int) = AuthenticatedAirline(airlineId) { request =>
     val incomingLink = request.body.asInstanceOf[AnyContentAsJson].json.as[Link]
 //    val incomingRelationship = request.body.asInstanceOf[AnyContentAsJson].json.\("relationship").as[Int]
@@ -693,7 +710,7 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
 
         val allModels = allAirplaneModels
 
-        val ownedAirplanesByModel = AirplaneOwnershipCache.getOwnershipInfo(airlineId).airplanes.groupBy(_.model)
+        val ownedAirplanesByModel = AirplaneSource.loadAirplanesByOwner(airlineId).groupBy(_.model)
         val candidateModels = (allModels ++ ownedAirplanesByModel.keys).distinct
 
         val availableModels = candidateModels.filter(model => LinkApplication.validateModelForLink(model, airline, fromAirport, toAirport).isEmpty)

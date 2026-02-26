@@ -2,9 +2,10 @@ package com.patson
 
 import com.patson.AirportAssetSimulation.{AssetSimulationResult, PassengerStats}
 import com.patson.model._
-import org.scalatest.{Matchers, WordSpecLike}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpecLike
 
-class AirportAssetSimulationSpec extends WordSpecLike with Matchers {
+class AirportAssetSimulationSpec extends AnyWordSpecLike with Matchers {
   val highIncomeAirport = Airport.fromId(1).copy(baseIncome = 50000, basePopulation = 1000000) //NA city with 1m pop, no charm
   val airline = Airline.fromId(1)
   "simulateHotelPerformance".must {

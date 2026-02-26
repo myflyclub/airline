@@ -27,6 +27,7 @@ GET	 	 /airports/:airportId/departures/:dayOfWeek/:hour/:minute controllers.Depa
 GET		 /airports/:fromAirportId/to/:toAirportId				controllers.Application.getAirportLinkConsumptions(fromAirportId : Int, toAirportId : Int)
 GET		 /airports/:airportId/links	controllers.Application.getLinksByAirport(airportId : Int)
 GET	 	 /airports/:airportId/assets	      controllers.AirportAssetApplication.getAirportAssets(airportId : Int)
+GET	 	 /airports/:airportId/demand	      controllers.Application.getAirportDemand(airportId : Int)
 GET	 	 /airports/:airportId/champions	      controllers.Application.getAirportChampions(airportId : Int, airlineId: Option[Int])
 GET      /airports/:airportId/generic-transits     controllers.GenericTransitApplication.getGenericTransits(airportId: Int)
 
@@ -51,6 +52,7 @@ POST     /airlines/:airlineId/links/bulk-delete-details 	controllers.LinkApplica
 PUT 	 /airlines/:airlineId/links/bulk-update-quality	controllers.LinkApplication.bulkUpdateQuality(airlineId : Int)
 DELETE   /airlines/:airlineId/links/:linkId 		 	controllers.LinkApplication.deleteLink(airlineId : Int, linkId : Int)
 GET		 /airlines/:airlineId/links/:linkId 			controllers.LinkApplication.getLink(airlineId : Int, linkId : Int)
+PATCH    /airlines/:airlineId/links/:linkId/price	controllers.LinkApplication.updateLinkPrice(airlineId : Int, linkId : Int)
 GET		 /airlines/:airlineId/bases		  controllers.AirlineApplication.getBases(airlineId : Int)
 GET		 /airlines/:airlineId/bases/:airportId  		controllers.AirlineApplication.getBase(airlineId : Int, airportId : Int)
 DELETE	 /airlines/:airlineId/bases/:airportId  		controllers.AirlineApplication.deleteBase(airlineId : Int, airportId : Int)
@@ -137,6 +139,7 @@ DELETE	 /airlines/:airlineId/airport-asset/:assetId	      controllers.AirportAss
 GET      /airlines/:airlineId/former-names  controllers.AirlineApplication.getAirlineFormerNames(airlineId : Int)
 
 GET		 /alliances  controllers.AllianceApplication.getAlliances()
+GET      /alliances-data  controllers.AllianceApplication.getAlliancesData()
 GET		 /alliances/:allianceId/details  controllers.AllianceApplication.getAllAllianceDetails(allianceId : Int)
 GET		 /alliances/:allianceId/member-login-status  controllers.AllianceApplication.getMemberLoginStatus(allianceId : Int)
 GET		 /alliances/:allianceId/championed-airports	controllers.AllianceApplication.getAllianceAirportChampions(allianceId : Int)
@@ -181,7 +184,7 @@ GET     /airlines/:airlineId/preferred-suppliers       controllers.AirplaneAppli
 
 GET		 /oil-prices	controllers.OilApplication.getOilPrices()
 GET		 /loan-interest-rates	controllers.BankApplication.getLoanInterestRates()
-GET		 /stock-market	controllers.StockMarketApplication.getStockMarketData()
+GET		 /rivals-data	controllers.RivalsApplication.getRivalsData()
 
 GET		 /countries					  controllers.CountryApplication.getAllCountries()
 GET		 /countries/:countryCode  		  controllers.CountryApplication.getCountry(countryCode : String)
@@ -252,8 +255,6 @@ GET   /forgot-password				controllers.AccountApplication.forgotPassword()
 POST   /forgot-password				controllers.AccountApplication.forgotPasswordSubmit
 GET   /forgot-id				controllers.AccountApplication.forgotId()
 POST   /forgot-id				controllers.AccountApplication.forgotIdSubmit
-
-GET     /about      controllers.AboutApplication.about()
 
 OPTIONS    /*path     controllers.Application.options(path)
 

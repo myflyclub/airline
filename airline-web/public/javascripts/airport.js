@@ -405,7 +405,7 @@ function updateAirportChampionDetails(airport) {
             })
 
             if (result.currentAirline) {
-                var row = $("<div class='table-row clickable' onclick='navigateTo(/rivals/" + linkConsumption.id + "'></div>")
+                var row = $(`<div class='table-row clickable' onclick='navigateTo("/rivals/${result.currentAirline.id}")'></div>`)
                 row.append("<div class='cell'>" + result.currentAirline.ranking + "</div>")
                 row.append("<div class='cell'>" + getAirlineSpan(result.currentAirline.airlineId, result.currentAirline.airlineName) + "</div>")
                 row.append("<div class='cell' style='text-align: right'>" + commaSeparateNumber(result.currentAirline.amount) + "</div>")
@@ -599,6 +599,7 @@ function populateAirportDetails(airport) {
     updateAirportLoyalistDetails(airport)
     updateAirportCities(airport)
     updateAirportDestinations(airport)
+    loadAirportDemand(airport.id)
 
     if (christmasFlag) {
         initSantaClaus()
@@ -735,7 +736,7 @@ function updateFacilityList(statistics) {
     var hasBases = false
     var hasLounges = false
     $.each(statistics.bases, function (index, base) {
-        var row = $("<div class='table-row clickable' onClick='navigateTo(/rivals/" + base.airlineId + "'></div>")
+        var row = $(`<div class='table-row clickable' onClick='navigateTo("/rivals/${base.airlineId}")'></div>`)
         let airlineTooltip = "";
         let linkCount = 0;
         let avgFreq = 0;
@@ -779,10 +780,10 @@ function updateFacilityList(statistics) {
 
     $.each(statistics.lounges, function (index, loungeStats) {
         var lounge = loungeStats.lounge
-        var row = $("<div class='table-row clickable' onClick='navigateTo(/rivals/" + lounge.airlineId + "'></div>")
+        var row = $(`<div class='table-row clickable' onClick='navigateTo("/rivals/${lounge.airlineId}")'></div>`)
         var allianceSpan = "-"
         if (lounge.allianceId) {
-            allianceSpan = "<div class='flex-row gap-0'>" + getAllianceLogoImg(lounge.allianceId) + htmlEncode(loadedAlliancesById[lounge.allianceId].name) + "</div>"
+            allianceSpan = "<div class='flex-row gap-0'>" + getAllianceLogoImg(lounge.allianceId) + htmlEncode(Alliance.loadedAlliancesById[lounge.allianceId].name) + "</div>"
         }
         row.append("<div class='cell'>" + allianceSpan + "</div>")
         row.append("<div class='cell'>" + htmlEncode(lounge.airlineName) + "</div>")
@@ -889,7 +890,7 @@ function updateAirportLoyalistDetails(airport) {
                 var airlineName = deltaEntry.airlineName
                 var airlineId = deltaEntry.airlineId
                 var deltaText = (deltaEntry.passengers >= 0) ? ("+" + deltaEntry.passengers) : deltaEntry.passengers
-                var $row = $('<div class="table-row clickable" onClick="navigateTo(/rivals/' + deltaEntry.airlineId + '"><div class="cell">' + getAirlineSpan(airlineId, airlineName) + '</div><div class="cell" style="text-align:right">' + deltaText + '</div></div>')
+                var $row = $(`<div class="table-row clickable" onClick="navigateTo('/rivals/${deltaEntry.airlineId}')"><div class="cell">${getAirlineSpan(airlineId, airlineName)}</div><div class="cell" style="text-align:right">${deltaText}</div></div>`)
                 $row.click(function () {
                     Rivals.show(deltaEntry.airlineId)
                 })
@@ -1242,4 +1243,93 @@ function showBaseDetailsModal() {
     }
 
     $('#baseDetailsModal').fadeIn(500)
+}
+
+var _demandEtag = null
+
+async function loadAirportDemand(airportId) {
+    const container = document.getElementById('airportDemandCards')
+    if (!container) return
+    container.innerHTML = '<div class="table-row"><div class="cell">Loading...</div></div>'
+
+    try {
+        const headers = {}
+        if (_demandEtag) headers['If-None-Match'] = _demandEtag
+
+        const response = await fetch('/airports/' + airportId + '/demand', { headers })
+        if (response.status === 304) return  // cached, container unchanged from last render
+
+        if (!response.ok) {
+            container.innerHTML = '<div class="table-row"><div class="cell">-</div></div>'
+            return
+        }
+        _demandEtag = response.headers.get('ETag')
+        const demands = await response.json()
+        renderDemandCards(demands)
+    } catch (e) {
+        console.error('loadAirportDemand failed', e)
+        container.innerHTML = '<div class="table-row"><div class="cell">-</div></div>'
+    }
+}
+
+const PAX_TYPE_COLORS = {
+    'Business': '#4a90d9',
+    'Elite': '#c9a227',
+    'Tourist': '#3a9e5f',
+    'Traveler': '#888888',
+    'Traveler Small Town': '#888888',
+    'Olympic': '#d94a4a'
+}
+
+function renderDemandCards(demands) {
+    const container = document.getElementById('airportDemandCards')
+    if (!container) return
+    container.innerHTML = ''
+
+    if (!demands || demands.length === 0) {
+        container.innerHTML = '<p class="h4">No demand data yet.</p>'
+        return
+    } else {
+        const header = document.createElement('h3')
+        header.textContent = `${activeAirport.city} Passengers`
+        container.appendChild(header)
+        const helper = document.createElement('p')
+        helper.textContent = `A random sample from last week`
+        helper.classList = 'pb-4'
+        container.appendChild(helper)
+    }
+
+    demands.forEach(function(d) {
+        const card = document.createElement('div')
+        card.className = 'card'
+
+        const typeColor = PAX_TYPE_COLORS[d.passengerType] || '#888888'
+        const typeBadge = '<span class="ml-auto" style="background:' + typeColor + ';color:#fff;border-radius:2px;padding:1px 4px;font-size:0.8em;margin-right:4px;">' + d.passengerType + '</span>'
+        const classBadge = '<span style="border:1px solid rgba(255,255,255,0.3);border-radius:3px;padding:1px 4px;font-size:0.8em;">' + d.preferredLinkClass + '</span>'
+
+        const header = document.createElement('div')
+        header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;'
+        header.innerHTML = `<strong class="iata">${d.toAirportIata}</strong>${d.toAirportName}${typeBadge}${classBadge}`
+
+        const statsRow = document.createElement('div')
+        statsRow.style.cssText = 'display:flex;justify-content:space-between;align-items:center;'
+        statsRow.innerHTML = '<span>&#9654; ' + commaSeparateNumber(d.passengerCount) + ' pax</span><span>Budget: $' + commaSeparateNumber(d.standardPrice) + '</span>'
+
+        const footerRow = document.createElement('div')
+        footerRow.classList = 'mt-2'
+
+        if (d.isMissed) {
+            footerRow.innerHTML = '<span style="color:#f90;font-size:0.8em;">&#9888; Unserved</span>'
+        } else if (d.airlineIds && d.airlineIds.length > 0) {
+            const logos = d.airlineIds.slice(0, 5).map(function(id) {
+                return getAirlineLogoImg(id)
+            }).join('')
+            footerRow.innerHTML = logos
+        }
+
+        card.appendChild(header)
+        card.appendChild(statsRow)
+        card.appendChild(footerRow)
+        container.appendChild(card)
+    })
 }

@@ -12,7 +12,7 @@ function showLinkHistoryView() {
 	loadCurrentAirlineAlliance(function(allianceDetails) {
 		currentAirlineAllianceMembers = []
 		if (allianceDetails.allianceId) {
-			var alliance = loadedAlliancesById[allianceDetails.allianceId]
+			var alliance = Alliance.loadedAlliancesById[allianceDetails.allianceId]
 			if (alliance) {
 				$.each(alliance.members, function(index, member) {
 					currentAirlineAllianceMembers.push(member.airlineId)

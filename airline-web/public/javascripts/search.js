@@ -216,7 +216,7 @@ function searchRoute(fromAirportId, toAirportId) {
             $("#searchCanvas .banner").hide();
 
             if (searchResult.length === 0) {
-                resultContainer.append("<div class='ticketTitle'>Sorry, no flights available.</div>");
+                resultContainer.append("<div class='ticketTitle p-4'>Sorry, no flights available.</div>");
                 return;
             }
 
@@ -244,7 +244,7 @@ function searchRoute(fromAirportId, toAirportId) {
                 if (entry.remarks) {
                     entry.remarks.forEach(remark => {
                         if (remark === 'BEST_SELLER' || remark === 'BEST_DEAL') {
-                            remarksLabel += `<div style='display:inline-block;' class='remark bg-darkGreen'>${remark.replace('_', ' ')}</div>`;
+                            remarksLabel += `<div class='remark bg-darkGreen inline-block'>${remark.replace('_', ' ')}</div>`;
                         }
                     });
                 }
@@ -265,29 +265,29 @@ function searchRoute(fromAirportId, toAirportId) {
                     const remarksText = remarks.length > 0 ? `(${remarks.join(", ")})` : '';
 
                     return `
-                        <div style='margin-bottom: 10px;'>
-                            <div style='margin : 10px 0; display: flex;'>
-                                <div style='width: 50%; display: flex; align-items: center;'>
-                                    ${getAirlineLogoImg(link.airlineId)}<span class='summary'>${link.airlineName}</span>
+                        <div class='mb-2'>
+                            <div class='flex-row py-2'>
+                                <div class='w-half flex-align-center'>
+                                    ${getAirlineLogoImg(link.airlineId)}<span class='summary ml-1'>${link.airlineName}</span>
                                 </div>
-                                <div style='width: 50%;'>${linkDurationText} ${remarksText.length > 0 ? '<span class="remark">' + remarksText + '</span>' : ''}</div>
+                                <div class='w-half'>${linkDurationText} ${remarksText.length > 0 ? '<span class="remark">' + remarksText + '</span>' : ''}</div>
                             </div>
-                            <div style='display: none;' class='linkDetails pb-2'>
-                                <div style='width: 50%;'>
-                                    <div style='display: inline-block; width: 75px;' class='summary'>${link.flightCode}</div>
+                            <div style='display: none;' class='linkDetails pb-2 flex-row'>
+                                <div class='w-half'>
+                                    <div class='summary inline-block' style='width: 75px;'>${link.flightCode}</div>
                                     <span class='summary'>${getAirlineTimeSlotText(link.departure, startDay)} - ${getAirlineTimeSlotText(link.arrival, startDay)}</span>
-                                    <div>$${link.price}</div>
+                                    <div class='font-bold'>$${link.price}</div>
                                     ${getLinkFeatureIconsDiv(link.features).prop('outerHTML')}
                                     ${getLinkReviewDiv(link.computedQuality, link.linkClass).prop('outerHTML')}
                                 </div>
-                                <div style='width: 50%;'>
-                                    <div style='display: flex; align-items: center;'>
+                                <div class='w-half'>
+                                    <div class='flex-align-center'>
                                         ${getAirportText(link.fromAirportCity, link.fromAirportIata)}
-                                        <img src='/assets/images/icons/arrow.png' style='margin: 0 5px;'>
+                                        <img src='/assets/images/icons/arrow.png' class='mx-2'>
                                         ${getAirportText(link.toAirportCity, link.toAirportIata)}
                                     </div>
-                                    <div><i>${link.airplaneModelName ? link.airplaneModelName : "-"}</i></div>
-                                    ${link.operatorAirlineId ? `<div>Operated by ${getAirlineLogoImg(link.operatorAirlineId)}${link.operatorAirlineName}</div>` : ''}
+                                    <div><i class='opacity-80'>${link.airplaneModelName ? link.airplaneModelName : "-"}</i></div>
+                                    ${link.operatorAirlineId ? `<div class='text-xs'>Operated by ${getAirlineLogoImg(link.operatorAirlineId)}${link.operatorAirlineName}</div>` : ''}
                                     ${preGenericTransit ? `<div>Depart from ${preGenericTransit.toAirportText}</div>` : ''}
                                     ${postGenericTransit ? `<div>Arrive at ${postGenericTransit.fromAirportText}</div>` : ''}
                                 </div>
@@ -297,20 +297,19 @@ function searchRoute(fromAirportId, toAirportId) {
                 }).join('');
 
                 const itineraryHtml = `
-                    <div class='section itinerary' onclick='toggleSearchLinkDetails($(this))'>
-                        <div style='float:left; width : 85%'>
-                            <div class='summary' style='display: flex; align-items: center;'>
-                                <div style='width: 50%; float:left;'>${getAirlineTimeSlotText(startLink.departure, startDay)} - ${getAirlineTimeSlotText(endLink.arrival, startDay)}</div>
-                                <div style='width: 50%; float:left;'>${getDurationText(endLink.arrival - startLink.departure)}</div>
+                    <div class='section itinerary flex-row items-center mb-4' onclick='toggleSearchLinkDetails($(this))'>
+                        <div class='flex-grow pr-4'>
+                            <div class='summary flex-row items-center pb-2 mb-2' style='border-bottom: 1px solid rgba(0,0,0,0.05);'>
+                                <div class='w-half'>${getAirlineTimeSlotText(startLink.departure, startDay)} - ${getAirlineTimeSlotText(endLink.arrival, startDay)}</div>
+                                <div class='w-half'>${getDurationText(endLink.arrival - startLink.departure)}</div>
                             </div>
                             ${linksHtml}
                         </div>
-                        <div style='float: right; width: 15%;'>
-                            <div class='price' style='color: ${priceColor};'>$ ${totalCost}</div>
+                        <div class='flex-col items-end' style='width: 100px; flex-shrink: 0;'>
+                            <div class='price text-xl font-bold' style='color: ${priceColor};'>$ ${totalCost}</div>
                             ${remarksLabel}
-                            <div style='margin-top: 5px;'>${stopDescription}</div>
+                            <div class='mt-1 opacity-80'>${stopDescription}</div>
                         </div>
-                        <div style='clear:both;'></div>
                     </div>
                 `;
                 resultContainer.append(itineraryHtml);
@@ -832,14 +831,14 @@ const searchConfigs = {
         idField: 'countryCode'
     },
     airline: {
-        dataSource: () => loadedRivals || [],
+        dataSource: () => Rivals.airlines || [],
         searchFields: [
             { field: 'airlineCode', exactScore: 200, partialScore: 80 },
             { field: 'name', exactScore: 100, partialScore: 50 },
             { field: 'username', exactScore: 50, partialScore: 25 },
         ],
         resultMapper: (item) => ({
-            airlineId: item.airlineId,
+            airlineId: item.id || item.airlineId,
             airlineName: item.name,
             airlineCode: item.airlineCode,
             countryCode: item.countryCode
@@ -848,7 +847,7 @@ const searchConfigs = {
         idField: 'airlineId'
     },
     alliance: {
-        dataSource: () => loadedAlliances || [],
+        dataSource: () => Object.values(Alliance.loadedAlliancesById),
         searchFields: [
             { field: 'name', exactScore: 100, partialScore: 50 }
         ],
@@ -1166,48 +1165,10 @@ function positionTitles(titlesContainer) {
     var titleSelections = titlesContainer.children('div.titleSelection')
     titleSelections.addClass('clickable')
 
-    var selectedDiv = titlesContainer.children('div.titleSelection.selected')
-
-    var selectedIndex = titleSelections.index(selectedDiv)
-
-    var divWidths = []
-
-    $.each(titleSelections, function(index, titleSelection) {
-        divWidths[index] = $(titleSelection).width()
-    })
-
-    var margin = 20
-
-    $.each(titleSelections, function(index, titleSelection) {
-        var offset = 0
-        if (selectedIndex < index) { //shift right
-            offset = divWidths[selectedIndex] / 2 + margin
-
-            for (i = selectedIndex + 1; i < index ; i ++) {
-                offset += divWidths[i]
-                offset += margin
-            }
-
-            offset += divWidths[index] / 2
-
-        } else if (selectedIndex > index) { //shift left
-            offset -= divWidths[selectedIndex] / 2 + margin
-            for (i = selectedIndex -1; i > index ; i --) {
-                offset -= divWidths[i]
-                offset -= margin
-            }
-            offset -= divWidths[index] / 2
-        }
-
-        //$(titleSelection).css({ "position": "absolute", "left" : "50%", "transform" : "translate(-50%, 0%) translate(" + (index - selectedIndex) * 150 + "px, 0)" })
-        $(titleSelection).css({ "position": "absolute", "left" : "50%", "bottom": "0", "transform" : "translate(-50%, 0%) translate(" + offset + "px, 0)" })
-    })
-
     titleSelections.off("click.select");
     titleSelections.on("click.select", function(){
       $(this).siblings().removeClass('selected')
       $(this).addClass('selected')
-      positionTitles(titlesContainer)
       updateNavigationArrows(titlesContainer, true)
     });
 }

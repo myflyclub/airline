@@ -770,7 +770,7 @@ object RankingSimulation {
 
   private[this] def getAllianceAirportRepRanking(currentCycle: Int): List[Ranking] = {
     val allianceStats = AllianceSource.loadAllianceStatsByCycle(currentCycle)
-    val sortedByAirportRep = allianceStats.sortBy(_.airportRep)(Ordering[Double].reverse)
+    val sortedByAirportRep = allianceStats.sortBy(_.airportRep)(Ordering[Int].reverse)
     
     sortedByAirportRep.zipWithIndex.map {
       case (stats, index) => Ranking(
@@ -778,7 +778,7 @@ object RankingSimulation {
         key = AllianceKey(stats.alliance.id),
         entry = stats.alliance,
         ranking = index + 1,
-        rankedValue = BigDecimal(stats.airportRep).setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble,
+        rankedValue = BigDecimal(stats.airportRep),
         reputationPrize = reputationBonus(18, index)
       )
     }.sortBy(_.ranking).take(20)

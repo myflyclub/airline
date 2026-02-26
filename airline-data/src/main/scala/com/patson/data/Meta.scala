@@ -52,10 +52,6 @@ object Meta {
     statement.execute()
     statement.close()
     
-    statement = connection.prepareStatement("DROP TABLE IF EXISTS " + PASSENGER_HISTORY_TABLE)
-    statement.execute()
-    statement.close()
-    
     statement = connection.prepareStatement("DROP TABLE IF EXISTS " + CYCLE_TABLE)
     statement.execute()
     statement.close()
@@ -105,18 +101,6 @@ object Meta {
     statement.close()
 
     statement = connection.prepareStatement("DROP TABLE IF EXISTS " + LINK_CONSUMPTION_TABLE)
-    statement.execute()
-    statement.close()
-
-    statement = connection.prepareStatement("DROP TABLE IF EXISTS " + WATCHED_LINK_TABLE)
-    statement.execute()
-    statement.close()
-
-    statement = connection.prepareStatement("DROP TABLE IF EXISTS " + VIP_ROUTE_TABLE)
-    statement.execute()
-    statement.close()
-
-    statement = connection.prepareStatement("DROP TABLE IF EXISTS " + VIP_ROUTE_ENTRY_TABLE)
     statement.execute()
     statement.close()
 
@@ -556,6 +540,10 @@ object Meta {
     statement.close()
 
     statement = connection.prepareStatement("CREATE INDEX idx_route_airports ON " + PASSENGER_ROUTE_HISTORY_TABLE + "(home_airport, destination_airport)")
+    statement.execute()
+    statement.close()
+
+    statement = connection.prepareStatement("CREATE INDEX idx_home_pass_count ON " + PASSENGER_ROUTE_HISTORY_TABLE + "(home_airport, passenger_count DESC)")
     statement.execute()
     statement.close()
 
@@ -1935,7 +1923,7 @@ object Meta {
       "link_count INTEGER, " +
       "rep_total DOUBLE, " +
       "rep_leaderboards DOUBLE, " +
-      "PRIMARY KEY (airline, cycle)," +
+      "PRIMARY KEY (airline, period, cycle)," +
       "FOREIGN KEY(airline) REFERENCES " + AIRLINE_TABLE + "(id) ON DELETE CASCADE ON UPDATE CASCADE" +
       ")")
     statement.execute()
@@ -2103,15 +2091,16 @@ object Meta {
     statement = connection.prepareStatement("CREATE TABLE " + ALLIANCE_STATS_TABLE + "(" +
       "alliance INTEGER, " +
       "cycle INTEGER, " +
+      "period INTEGER, " +
       "traveler_pax INT UNSIGNED, " +
       "business_pax INT UNSIGNED, " +
       "elite_pax INT UNSIGNED, " +
       "tourist_pax INT UNSIGNED, " +
-      "total_airport_rep DOUBLE, " +
+      "total_airport_rep INT, " +
       "total_airline_market_cap DOUBLE, " +
       "total_lounge_visit INT UNSIGNED, " +
       "total_profit BIGINT, " +
-      "PRIMARY KEY (alliance, cycle)," +
+      "PRIMARY KEY (alliance, period, cycle)," +
       "FOREIGN KEY(alliance) REFERENCES " + ALLIANCE_TABLE + "(id) ON DELETE CASCADE ON UPDATE CASCADE" +
       ")")
     statement.execute()
@@ -2219,6 +2208,32 @@ object Meta {
     )
     statement.execute()
     statement.close()
+  }
+
+  def createMissedDemandTableIfNotExists(): Unit = {
+    val connection = getConnection(false)
+    try {
+      val stmt = connection.prepareStatement(
+        "CREATE TABLE IF NOT EXISTS " + PASSENGER_MISSED_DEMAND_TABLE + " (" +
+          "from_airport INT NOT NULL, " +
+          "to_airport INT NOT NULL, " +
+          "passenger_type TINYINT NOT NULL, " +
+          "preference_type TINYINT NOT NULL, " +
+          "preferred_link_class CHAR(1) NOT NULL, " +
+          "passenger_count INT NOT NULL, " +
+          "PRIMARY KEY (from_airport, to_airport, passenger_type, preference_type, preferred_link_class)" +
+          ")"
+      )
+      stmt.execute()
+      stmt.close()
+      val idxStmt = connection.prepareStatement(
+        "CREATE INDEX IF NOT EXISTS idx_missed_from ON " + PASSENGER_MISSED_DEMAND_TABLE + "(from_airport)"
+      )
+      idxStmt.execute()
+      idxStmt.close()
+    } finally {
+      connection.close()
+    }
   }
 
   def isTableExist(connection : Connection, tableName : String): Boolean = {

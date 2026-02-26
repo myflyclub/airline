@@ -1,216 +1,215 @@
-				<div id="rivalsCanvas" class="canvas" style="display: none; width: 100%; flex-direction: column; height: 100%;">
-					<!-- Market chart + ticker -->
-					<div style="width: 100%; height: min-content; flex-shrink: 0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 4px 0;">
-						<div class="smDropdown" id="rivalsPeriodDropdown">
-							<button class="button smDropdownToggle" onclick="Rivals.toggleDropdown(this)"><span class="smDropdownLabel">Week</span> &#9662;</button>
-							<div class="smDropdownMenu">
-								<div class="smDropdownItem active" data-value="WEEKLY" onclick="Rivals.selectPeriod('WEEKLY', this)">Week</div>
-								<div class="smDropdownItem" data-value="QUARTER" onclick="Rivals.selectPeriod('QUARTER', this)">Quarter</div>
-								<div class="smDropdownItem" data-value="YEAR" onclick="Rivals.selectPeriod('YEAR', this)">Year</div>
-							</div>
-						</div>
-						<div class="smDropdown" id="rivalsMetricDropdown">
-							<button class="button smDropdownToggle" onclick="Rivals.toggleDropdown(this)"><span class="smDropdownLabel">Stock Price</span> &#9662;</button>
-							<div class="smDropdownMenu">
-								<div class="smDropdownItem active" data-value="price" onclick="Rivals.selectMetric('price', this)">Stock Price</div>
-								<div class="smDropdownItem" data-value="totalValue" onclick="Rivals.selectMetric('totalValue', this)">Total Value</div>
-								<div class="smDropdownItem" data-value="reputation" onclick="Rivals.selectMetric('reputation', this)">Reputation</div>
-							</div>
-						</div>
-						<div class="smDropdown" id="rivalsTypeDropdown">
-							<button class="button smDropdownToggle" onclick="Rivals.toggleDropdown(this)"><span class="smDropdownLabel">Airline Type</span> &#9662;</button>
-							<div class="smDropdownMenu" id="rivalsTypeFilter"></div>
+			<div id="rivalsCanvas" class="canvas" style="display: none; width: 100%; flex-direction: column; height: 100%;">
+				<!-- Market chart + ticker -->
+				<div style="width: 100%; height: min-content; flex-shrink: 0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 4px 0;">
+					<div class="smDropdown" id="rivalsPeriodDropdown">
+						<button class="button smDropdownToggle" onclick="Rivals.toggleDropdown(this)"><span class="smDropdownLabel">Week</span> &#9662;</button>
+						<div class="smDropdownMenu">
+							<div class="smDropdownItem active" data-value="WEEKLY" onclick="Rivals.selectPeriod('WEEKLY', this)">Week</div>
+							<div class="smDropdownItem" data-value="QUARTER" onclick="Rivals.selectPeriod('QUARTER', this)">Quarter</div>
+							<div class="smDropdownItem" data-value="YEAR" onclick="Rivals.selectPeriod('YEAR', this)">Year</div>
 						</div>
 					</div>
-					<div id="rivalsChartContainer" style="width: 100%; flex: 1; min-height: 200px; position: relative;"></div>
-					<div style="width: 100%; flex-shrink: 0; max-height: 35%; overflow-y: auto;">
-						<div class="table data tight" id="rivalsTicker">
-							<div class="table-header">
-								<div class="cell" style="width: 3%;"><img src="/assets/images/icons/magnifier.png" data-tooltip="View a rival"></div>
-								<div class="cell" style="width: 3%;"><input type="checkbox" checked onclick="Rivals.toggleAll(this.checked)" data-tooltip="Select / deselect all" style="display: block; margin: auto;"></div>
-								<div class="cell clickable" style="width: 18%;" data-sort-property="name" data-sort-order="ascending" onclick="Rivals.toggleTickerSortOrder($(this))">Airline</div>
-								<div class="cell clickable" style="width: 11%;" data-sort-property="airlineType" data-sort-order="ascending" onclick="Rivals.toggleTickerSortOrder($(this))">Type</div>
-								<div class="cell clickable" style="width: 13%;" data-sort-property="alliance" data-sort-order="ascending" onclick="Rivals.toggleTickerSortOrder($(this))">Alliance</div>
-								<div class="cell clickable selected" style="width: 11%;" align="right" data-sort-property="currentPrice" data-sort-order="descending" onclick="Rivals.toggleTickerSortOrder($(this))">Price</div>
-								<div class="cell clickable" style="width: 11%;" align="right" data-sort-property="changePct" data-sort-order="descending" onclick="Rivals.toggleTickerSortOrder($(this))">Change</div>
-								<div class="cell clickable" style="width: 14%;" align="right" data-sort-property="totalValue" data-sort-order="descending" onclick="Rivals.toggleTickerSortOrder($(this))">Total Value</div>
-								<div class="cell clickable" style="width: 11%;" align="right" data-sort-property="reputation" data-sort-order="descending" onclick="Rivals.toggleTickerSortOrder($(this))">Reputation</div>
-							</div>
+					<div class="smDropdown" id="rivalsMetricDropdown">
+						<button class="button smDropdownToggle" onclick="Rivals.toggleDropdown(this)"><span class="smDropdownLabel">Stock Price</span> &#9662;</button>
+						<div class="smDropdownMenu">
+							<div class="smDropdownItem active" data-value="price" onclick="Rivals.selectMetric('price', this)">Stock Price</div>
+							<div class="smDropdownItem" data-value="totalValue" onclick="Rivals.selectMetric('totalValue', this)">Total Value</div>
+							<div class="smDropdownItem" data-value="reputation" onclick="Rivals.selectMetric('reputation', this)">Reputation</div>
+						</div>
+					</div>
+					<div class="smDropdown" id="rivalsTypeDropdown">
+						<button class="button smDropdownToggle" onclick="Rivals.toggleDropdown(this)"><span class="smDropdownLabel">Airline Type</span> &#9662;</button>
+						<div class="smDropdownMenu" id="rivalsTypeFilter"></div>
+					</div>
+				</div>
+				<div id="rivalsChartContainer" style="width: 100%; flex: 1; min-height: 200px; position: relative;"></div>
+				<div style="width: 100%; flex-shrink: 0; max-height: 50%; overflow-y: auto;">
+					<div class="table data tight" id="rivalsTicker">
+						<div class="table-header">
+							<div class="cell" style="width: 3%;"><img src="/assets/images/icons/magnifier.png" data-tooltip="View a rival"></div>
+							<div class="cell" style="width: 3%;"><input type="checkbox" checked onclick="Rivals.toggleAll(this.checked)" data-tooltip="Select / deselect all" style="display: block; margin: auto;"></div>
+							<div class="cell clickable" style="width: 21%;" data-sort-property="name" data-sort-order="ascending" onclick="Rivals.toggleTickerSortOrder($(this))">Airline</div>
+							<div class="cell clickable" style="width: 12%;" data-sort-property="airlineType" data-sort-order="ascending" onclick="Rivals.toggleTickerSortOrder($(this))">Type</div>
+							<div class="cell clickable" style="width: 14%;" data-sort-property="alliance" data-sort-order="ascending" onclick="Rivals.toggleTickerSortOrder($(this))">Alliance</div>
+							<div class="cell clickable selected" style="width: 13%;" align="right" data-sort-property="currentPrice" data-sort-order="descending" onclick="Rivals.toggleTickerSortOrder($(this))">Price</div>
+							<div class="cell clickable" style="width: 16%;" align="right" data-sort-property="totalValue" data-sort-order="descending" onclick="Rivals.toggleTickerSortOrder($(this))">Total Value</div>
+							<div class="cell clickable" style="width: 13%;" align="right" data-sort-property="reputation" data-sort-order="descending" onclick="Rivals.toggleTickerSortOrder($(this))">Reputation</div>
 						</div>
 					</div>
 				</div>
-	<!--   			end rivals canvas -->
-				<div id="rivalDetailsModal" class="modal">
-					<div class="modal-content" style="width: 900px; max-height: 85vh; overflow-y: auto;">
-						<span class="close" onclick="closeModal($('#rivalDetailsModal'))">&times;</span>
-						<div style="display: flex; flex-wrap: wrap; gap: 8px;">
-							<div style="min-width: 200px; flex: 1;">
-								<div class="airlineGrade"></div>
-								<h3 class="m-0"><span class="airlineName"></span></h3>
-								<p class="pb-4"><i class="airlineType"></i></p>
-								<p><span class="airlineSlogan"></span></p>
+			</div>
+<!--   			end rivals canvas -->
+			<div id="rivalDetailsModal" class="modal">
+				<div class="modal-content" style="width: 900px; max-height: 85vh; overflow-y: auto;">
+					<span class="close" onclick="closeModal($('#rivalDetailsModal'))">&times;</span>
+					<div style="display: flex; flex-wrap: wrap; gap: 8px;">
+						<div style="min-width: 200px; flex: 1;">
+							<div class="airlineGrade"></div>
+							<h3 class="m-0"><span class="airlineName"></span></h3>
+							<p class="pb-4"><i class="airlineType"></i></p>
+							<p><span class="airlineSlogan"></span></p>
 
-								<div class="table" style="width: 100%;">
-									<div class="table-row">
-										<div class="label">Alliance:</div>
-										<div class="value alliance"></div>
-									</div>
-									<div class="table-row">
-										<div class="label">Airline Code:</div>
-										<div class="value airlineCode"></div>
-									</div>
-									<div class="table-row">
-										<div class="label">Airline Color:</div>
-										<div class="value"><span class="airlineColorDot"></span></div>
-									</div>
-									<div class="table-row formerNameRow">
-										<div class="label">Former Names:</div>
-										<div class="value">
-											<div class="table data formerNames" style="width: 100%; max-height: 50px; overflow: auto;">
-											</div>
+							<div class="table" style="width: 100%;">
+								<div class="table-row">
+									<div class="label">Alliance:</div>
+									<div class="value alliance"></div>
+								</div>
+								<div class="table-row">
+									<div class="label">Airline Code:</div>
+									<div class="value airlineCode"></div>
+								</div>
+								<div class="table-row">
+									<div class="label">Airline Color:</div>
+									<div class="value"><span class="airlineColorDot"></span></div>
+								</div>
+								<div class="table-row formerNameRow">
+									<div class="label">Former Names:</div>
+									<div class="value">
+										<div class="table data formerNames" style="width: 100%; max-height: 50px; overflow: auto;">
 										</div>
 									</div>
 								</div>
-								<div>
-									<button class="button" onclick="Rivals.showMap()">Flight Map</button>
-									<button class="button" onclick="Rivals.showHistory()">Recent Activities</button>
-								</div>
+							</div>
+							<div>
+								<button class="button" onclick="Rivals.showMap()">Flight Map</button>
+								<button class="button" onclick="Rivals.showHistory()">Recent Activities</button>
+							</div>
 
-								<div class="adminActions py-2" style="display: none;">
-									<h4>Admin Action</h4>
-									<div>Username: <span class="username"></span></div>
-									<div>User ID: <span class="userId"></span></div>
-									<div>User Mod: <span class="userModifiers"></span></div>
-									<div>Airline Mod: <span class="airlineModifiers"></span></div>
-									<div><span>IP:</span>&nbsp;<div class="ips" style="display: inline-block; width: 90%"></div></div>
-									<div><span>UUID:</span>&nbsp;<div class="uuids" style="display: inline-block; width: 90%"></div></div>
-									<div class="clickable" onclick="banChat()" style="margin-top: 8px;">Ban Chat</div>
-									<div class="clickable" onclick="invalidateCustomization()">Remove Livery/Slogan</div>
-									<div class="clickable" onclick="banWarning()">Warn about ban</div>
-									<div class="clickable" onclick="ban()">Ban</div>
-									<div class="clickable" onclick="nerf()">Nerf</div>
-									<div class="clickable" onclick="promptConfirm('Confirm to ban and reset this user? This cannot be undo!', banAndReset)">Ban and reset</div>
-									<div class="clickable" onclick="restore()">Restore</div>
-									<div class="clickable" onclick="promptAirlineMessage()">Send Direct Message</div>
+							<div class="adminActions py-2" style="display: none;">
+								<h4>Admin Action</h4>
+								<div>Username: <span class="username"></span></div>
+								<div>User ID: <span class="userId"></span></div>
+								<div>User Mod: <span class="userModifiers"></span></div>
+								<div>Airline Mod: <span class="airlineModifiers"></span></div>
+								<div><span>IP:</span>&nbsp;<div class="ips" style="display: inline-block; width: 90%"></div></div>
+								<div><span>UUID:</span>&nbsp;<div class="uuids" style="display: inline-block; width: 90%"></div></div>
+								<div class="clickable" onclick="banChat()" style="margin-top: 8px;">Ban Chat</div>
+								<div class="clickable" onclick="invalidateCustomization()">Remove Livery/Slogan</div>
+								<div class="clickable" onclick="banWarning()">Warn about ban</div>
+								<div class="clickable" onclick="ban()">Ban</div>
+								<div class="clickable" onclick="nerf()">Nerf</div>
+								<div class="clickable" onclick="promptConfirm('Confirm to ban and reset this user? This cannot be undo!', banAndReset)">Ban and reset</div>
+								<div class="clickable" onclick="restore()">Restore</div>
+								<div class="clickable" onclick="promptAirlineMessage()">Send Direct Message</div>
+							</div>
+							<div class="superAdminActions py-2" style="display: none;">
+								<h4>Super Admin Action</h4>
+								<div class="clickable" onclick="switchUser()">Switch to this user</div>
+								<div>
+									<span>User Level:</span>
+									<select class="setUserLevel">
+										<option value="0">0</option>
+										<option value="1">1</option>
+										<option value="2">2</option>
+										<option value="3">3</option>
+									</select>
+									<div class="button" onclick="setUserLevel()">Set user level</div>
 								</div>
-								<div class="superAdminActions py-2" style="display: none;">
-									<h4>Super Admin Action</h4>
-									<div class="clickable" onclick="switchUser()">Switch to this user</div>
-									<div>
-										<span>User Level:</span>
-										<select class="setUserLevel">
-											<option value="0">0</option>
-											<option value="1">1</option>
-											<option value="2">2</option>
-											<option value="3">3</option>
-										</select>
-										<div class="button" onclick="setUserLevel()">Set user level</div>
-									</div>
-									<div>
-										<span>Loyalty Bonus:</span>
-										<select class="bannerLoyaltyBonus">
-											<option value="1">1</option>
-											<option value="2">2</option>
-											<option value="3">3</option>
-											<option value="4">4</option>
-											<option value="5">5</option>
-										</select>
-										<div class="button" onclick="setBannerWinner()">Set banner winner</div>
-									</div>
-									<div class="clickable" onclick="promptBroadcastMessage()">Send Broadcast Message</div>
+								<div>
+									<span>Loyalty Bonus:</span>
+									<select class="bannerLoyaltyBonus">
+										<option value="1">1</option>
+										<option value="2">2</option>
+										<option value="3">3</option>
+										<option value="4">4</option>
+										<option value="5">5</option>
+									</select>
+									<div class="button" onclick="setBannerWinner()">Set banner winner</div>
+								</div>
+								<div class="clickable" onclick="promptBroadcastMessage()">Send Broadcast Message</div>
+							</div>
+						</div>
+						<div style="min-width: 200px; flex: 1;">
+							<h4>Fleet</h4>
+							<div class="table data" style="width: 100%;">
+								<div class="table-header">
+									<div class="cell" style="width: 70%">Model</div>
+									<div class="cell" style="width: 30%">Quantity</div>
 								</div>
 							</div>
-							<div style="min-width: 200px; flex: 1;">
-								<h4>Fleet</h4>
-								<div class="table data" style="width: 100%;">
-									<div class="table-header">
-										<div class="cell" style="width: 70%">Model</div>
-										<div class="cell" style="width: 30%">Quantity</div>
-									</div>
+							<div class="table data fleetList" style="width: 100%; max-height: 50px; overflow: auto;">
+								<div class="cell" style="width: 70%; border-bottom: none;"></div>
+								<div class="cell" style="width: 30%; border-bottom: none;"></div>
+							</div>
+						</div>
+					</div>
+					<div class="flex-container-width-half">
+						<div style="min-width: 200px;">
+							<h4>Airline Headquarters</h4>
+							<div style="position: relative; height: 150px; width: 100%" class="headquartersMap"></div>
+						</div>
+
+						<div style="min-width: 200px;">
+							<h4>Airline Bases</h4>
+							<div id="rivalBases" style="width: 100%;" class="table data">
+							</div>
+						</div>
+					</div>
+					<div class="tight" style="display: flex; flex-wrap: wrap; gap: 8px;">
+						<div style="min-width: 200px; flex: 1;">
+							<h4>National Airline of</h4>
+							<div class="table data nationalAirlineCountryList" style="width: 100%;">
+								<div class="table-header">
+									<div class="cell" style="width: 70%">&nbsp;</div>
+									<div class="cell" style="width: 30%">Loyalty Bonus</div>
 								</div>
-								<div class="table data fleetList" style="width: 100%; max-height: 50px; overflow: auto;">
+							</div>
+
+							<h4>Partnered Airline of</h4>
+							<div class="table data" style="width: 100%;">
+								<div class="table-header">
+									<div class="cell" style="width: 70%">&nbsp;</div>
+									<div class="cell" style="width: 30%">Loyalty Bonus</div>
+								</div>
+							</div>
+							<div class="table data partneredAirlineCountryList" style="width: 100%; max-height: 250px; overflow: auto;">
+								<div class="table-header">
 									<div class="cell" style="width: 70%; border-bottom: none;"></div>
 									<div class="cell" style="width: 30%; border-bottom: none;"></div>
 								</div>
 							</div>
 						</div>
-						<div class="flex-container-width-half">
-							<div style="min-width: 200px;">
-								<h4>Airline Headquarters</h4>
-								<div style="position: relative; height: 150px; width: 100%" class="headquartersMap"></div>
-							</div>
 
-							<div style="min-width: 200px;">
-								<h4>Airline Bases</h4>
-								<div id="rivalBases" style="width: 100%;" class="table data">
-								</div>
-							</div>
-						</div>
-						<div class="tight" style="display: flex; flex-wrap: wrap; gap: 8px;">
-							<div style="min-width: 200px; flex: 1;">
-								<h4>National Airline of</h4>
-								<div class="table data nationalAirlineCountryList" style="width: 100%;">
-									<div class="table-header">
-										<div class="cell" style="width: 70%">&nbsp;</div>
-										<div class="cell" style="width: 30%">Loyalty Bonus</div>
-									</div>
-								</div>
-
-								<h4>Partnered Airline of</h4>
-								<div class="table data" style="width: 100%;">
-									<div class="table-header">
-										<div class="cell" style="width: 70%">&nbsp;</div>
-										<div class="cell" style="width: 30%">Loyalty Bonus</div>
-									</div>
-								</div>
-								<div class="table data partneredAirlineCountryList" style="width: 100%; max-height: 250px; overflow: auto;">
-									<div class="table-header">
-										<div class="cell" style="width: 70%; border-bottom: none;"></div>
-										<div class="cell" style="width: 30%; border-bottom: none;"></div>
-									</div>
-								</div>
-							</div>
-
-							<div style="min-width: 200px; flex: 1;">
-								<h4>Champion Airline of</h4>
-								<div class="table data" style="width: 100%;">
-									<div class="table-header">
-										<div class="cell" style="width: 8%">&nbsp;</div>
-										<div class="cell" style="width: 67`%">Airport</div>
-										<div class="cell" style="width: 25% align='right'">Reputation Bonus</div>
-									</div>
-								</div>
-								<div style="max-height: 250px; overflow: auto;">
-									<div class="table data" id="rivalChampionedAirportsList" style="width: 100%;">
-										<div class="table-header">
-											<div class="cell" style="width: 8%; border-bottom: none;"></div>
-											<div class="cell" style="width: 67%; border-bottom: none;"></div>
-											<div class="cell" style="width: 25%; border-bottom: none;"></div>
-										</div>
-									</div>
-								</div>
-							</div>
-						</div>
-						<div class="tight">
-							<h4>Routes</h4>
-							<div class="table data" style="width: 100%; height: 20px;">
+						<div style="min-width: 200px; flex: 1;">
+							<h4>Champion Airline of</h4>
+							<div class="table data" style="width: 100%;">
 								<div class="table-header">
-									<div class="cell clickable" style="width: 25%" data-sort-property="fromAirportCity" data-sort-order="ascending" onclick="Rivals.toggleLinksSortOrder($(this))">From</div>
-									<div class="cell clickable" style="width: 25%" data-sort-property="toAirportCity" data-sort-order="ascending" onclick="Rivals.toggleLinksSortOrder($(this))">To</div>
-									<div class="cell clickable" style="width: 25%" text-align="right" data-sort-property="distance" data-sort-order="descending" onclick="Rivals.toggleLinksSortOrder($(this))">Distance</div>
-									<div class="cell clickable" style="width: 25%" text-align="right" data-sort-property="totalCapacity" data-sort-order="descending" onclick="Rivals.toggleLinksSortOrder($(this))">Capacity</div>
+									<div class="cell" style="width: 8%">&nbsp;</div>
+									<div class="cell" style="width: 67%">Airport</div>
+									<div class="cell" style="width: 25%" align="right">Reputation Bonus</div>
 								</div>
 							</div>
-							<div style="max-height: 600px; overflow: auto;">
-								<div id="rivalLinksTable" class="table data" style="width: 100%;">
+							<div style="max-height: 250px; overflow: auto;">
+								<div class="table data" id="rivalChampionedAirportsList" style="width: 100%;">
 									<div class="table-header">
-										<div class="cell" style="width: 25%; border-bottom: none;"></div>
-										<div class="cell" style="width: 25%; border-bottom: none;"></div>
-										<div class="cell" style="width: 25%; border-bottom: none;"></div>
+										<div class="cell" style="width: 8%; border-bottom: none;"></div>
+										<div class="cell" style="width: 67%; border-bottom: none;"></div>
 										<div class="cell" style="width: 25%; border-bottom: none;"></div>
 									</div>
 								</div>
 							</div>
 						</div>
 					</div>
+					<div class="tight">
+						<h4>Routes</h4>
+						<div class="table data" style="width: 100%; height: 20px;">
+							<div class="table-header">
+								<div class="cell clickable" style="width: 25%" data-sort-property="fromAirportCity" data-sort-order="ascending" onclick="Rivals.toggleLinksSortOrder($(this))">From</div>
+								<div class="cell clickable" style="width: 25%" data-sort-property="toAirportCity" data-sort-order="ascending" onclick="Rivals.toggleLinksSortOrder($(this))">To</div>
+								<div class="cell clickable" style="width: 25%" align="right" data-sort-property="distance" data-sort-order="descending" onclick="Rivals.toggleLinksSortOrder($(this))">Distance</div>
+								<div class="cell clickable" style="width: 25%" align="right" data-sort-property="frequency" data-sort-order="descending" onclick="Rivals.toggleLinksSortOrder($(this))">Frequency</div>
+							</div>
+						</div>
+						<div style="max-height: 600px; overflow: auto;">
+							<div id="rivalLinksTable" class="table data" style="width: 100%;">
+								<div class="table-header">
+									<div class="cell" style="width: 25%; border-bottom: none;"></div>
+									<div class="cell" style="width: 25%; border-bottom: none;"></div>
+									<div class="cell" style="width: 25%; border-bottom: none;"></div>
+									<div class="cell" style="width: 25%; border-bottom: none;"></div>
+								</div>
+							</div>
+						</div>
+					</div>
 				</div>
+			</div>

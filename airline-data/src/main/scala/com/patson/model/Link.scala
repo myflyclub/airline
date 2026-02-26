@@ -302,18 +302,23 @@ case class CostStoreProvider() extends CostProvider {
 
 sealed abstract class LinkClass(val code : String, val spaceMultiplier : Double, val resourceMultiplier : Double, val priceSensitivity : Double, val level : Int) {
   def label : String //level for sorting/comparison purpose
+  def prettyLabel : String
 }
 case object FIRST extends LinkClass("F", spaceMultiplier = 6, resourceMultiplier = 3.6, priceSensitivity = 0.75, level = 3) {
   override def label = "first"
+  override def prettyLabel = "First"
 }
 case object BUSINESS extends LinkClass("J", spaceMultiplier = 2.5, resourceMultiplier = 1.5, priceSensitivity = 0.85, level = 2) {
   override def label = "business"
+  override def prettyLabel = "Business"
 }
 case object ECONOMY extends LinkClass("Y", spaceMultiplier = 1, resourceMultiplier = 1.1, priceSensitivity = 0.95, level = 1) {
   override def label = "economy"
+  override def prettyLabel = "Economy"
 }
 case object DISCOUNT_ECONOMY extends LinkClass("D", spaceMultiplier = 1, resourceMultiplier = 1.0, priceSensitivity = 1.05, level = 0) {
   override def label = "discountEconomy"
+  override def prettyLabel = "Discount"
 }
 object LinkClass {
   val values = List(FIRST, BUSINESS, ECONOMY, DISCOUNT_ECONOMY)

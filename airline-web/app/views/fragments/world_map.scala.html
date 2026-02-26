@@ -12,6 +12,7 @@
 						data-disabled-airport-marker='@routes.Assets.versioned("images/markers/airport-transparent.svg")'>
 					</div>
 					<div id="sidePanel" class="sidePanel mapOverlayPanel" style="display:none;">
+
 						<div class="section">
 							<div id="linkDetails" class="flex-container-width-half">
 								<div id="linkCurrentDetails">
@@ -19,8 +20,8 @@
 									<div class="pb-5" style="display:flex;">
 										<div class="link-decoration">
 											<div class="link-decoration-circle"></div>
-											<div style="border-right: 3.2px dotted #5f6368;flex: 1;margin-bottom: 4px;margin-top: 4px;width: 0px;"></div>
-											<div style="border: 2px solid #5f6368; border-radius:12px; height: 12px; width: 12px;"></div>
+											<div class="link-decoration-line"></div>
+											<div class="link-decoration-circle"></div>
 										</div>
 										<div>
 											<p class="text-base pb-2 leading-tight"><a class="clickable" id="linkFromAirport"></a></p>
@@ -29,14 +30,22 @@
 											<p class="text-base leading-tight"><a class="clickable" id="linkToAirport"></a></p>
 										</div>
 									</div>
-									<h5 class="leading-snug text-base">Price</h5>
+									<h5 class="leading-snug opacity-80">Price</h5>
 									<div class="class-values">
 										<p class="class-value-child-helper economy">economy</p>
 										<p class="class-value-child-helper business">business</p>
 										<p class="class-value-child-helper first">first class</p>
 									</div>
-									<div class="text-base pb-3 font-mono" id="linkCurrentPrice"></div>
-									<h5 class="leading-snug text-base">Capacity</h5>
+									<div id="linkCurrentPrice" class="pb-3" style="display:flex; align-items:center; gap:6px;">
+									<div class="class-values text-base font-mono">
+										<span class="price-wrapper class-value-child"><input type="number" id="quickPriceEconomy" class="quick-price-input price-input" data-class="economy" min="1"/></span>
+										<span class="price-wrapper class-value-child"><input type="number" id="quickPriceBusiness" class="quick-price-input price-input" data-class="business" min="1"/></span>
+										<span class="price-wrapper class-value-child"><input type="number" id="quickPriceFirst" class="quick-price-input price-input" data-class="first" min="1"/></span>
+									</div>
+									<img id="quickPriceSave" src='@routes.Assets.versioned("images/icons/tick.png")' class="clickable" style="display:none; width:18px;" title="Save prices" onclick="saveCurrentLinkPrice()"/>
+								</div>
+								<div id="quickPriceMessage" style="font-size:80%; min-height:1em; margin-top:-8px; padding-bottom:4px;"></div>
+									<h5 class="leading-snug opacity-80">Capacity</h5>
 									<div class="class-values">
 										<p class="class-value-child-helper economy">economy</p>
 										<p class="class-value-child-helper business">business</p>
@@ -51,7 +60,7 @@
 									<input type="hidden" id="actionLinkId">
 									<input type="hidden" id="linkFromAirportId">
 									<input type="hidden" id="linkToAirportId">
-									<button type="button" class="button ml-0" id="editLinkButton" onclick="editLink($('#actionLinkId').val())">Edit</button>
+									<button type="button" class="button ml-0" id="editLinkButton" onclick="">Edit</button>
 									<button type="button" class="button" onclick="deselectLink()">Cancel</button>
 
 									<div class="divider"></div>
@@ -64,10 +73,10 @@
                                             <span class="switch-selection"></span>
                                         </div>
                                     </fieldset>
-                                    <h4 class="section-title pt-2 pb-2" id="linkHistoryDate">
+                                    <h4 class="font-uppercase pt-2 pb-2" id="linkHistoryDate">
                                         Last week:
                                     </h4>
-									<div class="table" id="linkHistoryDetails" style="width: 100%">
+									<div class="table data" id="linkHistoryDetails" style="width: 100%">
 										<div class="table-row">
 											<div class="label" style="width:45%">
 													Quality:
@@ -198,7 +207,7 @@
 									<div id=linkCompetitionsPie></div>
 								</div>
 								<div id="linkCharts">
-									<textarea id="linkNotes" style="width: 90%; margin:1rem auto; border-radius: 0;" placeholder="Add notes here..."></textarea>
+									<textarea id="linkNotes" style="width: 90%; margin:1rem auto; border-radius: 0;" placeholder="Add your private notes here..."></textarea>
 									<fieldset>
 										<div class="switch" style="float: right;">
 											<input type="radio" class="switch-input" name="view" value="month" id="switchMonth" onchange="refreshLinkCharts()" checked>
@@ -219,8 +228,8 @@
 								<div class="pb-4" style="display:flex;">
 									<div class="link-decoration">
 										<div class="link-decoration-circle"></div>
-										<div style="border-right: 3.2px dotted #5f6368;flex: 1;margin-bottom: 4px;margin-top: 4px;width: 0px;"></div>
-										<div style="border: 2px solid #5f6368; border-radius:12px; height: 12px; width: 12px;"></div>
+										<div class="link-decoration-line"></div>
+										<div class="link-decoration-circle"></div>
 									</div>
 									<div>
 										<p class="text-lg pb-1"><a class="clickable" id="planLinkFromAirportName"></a><img id="planLinkFromAirportEditIcon" src='@routes.Assets.versioned("/images/icons/gear.png")' class='clickable' onclick="$('#planLinkFromAirportSelect').show()"  title="Change From Airport"></p>
@@ -300,7 +309,7 @@
 											<img src='@routes.Assets.versioned("/images/icons/minus-button.png")' class='img-button pr-1 pb-1' onclick='decreasePrice(`economy`)'  title="Decrease economy price by 5%">
 										</div>
 									</div>
-									<div class="m-0"><input type="text" id="planLinkEconomyPrice" data-class="economy" class="planLinkPrice py-1 font-mono"/></div>
+									<div class="m-0"><span class="price-wrapper pr-8 w-42 text-base font-mono"><input type="text" id="planLinkEconomyPrice" data-class="economy" class="price-input"/></span></div>
 									<div><p class="py-1" id="planLFEconomy">100%</p></div>
 									<div><p class="py-1" id="planMarkupEconomy">100%</p></div>
 								</div>
@@ -312,7 +321,7 @@
 											<img src='@routes.Assets.versioned("/images/icons/minus-button.png")' class='img-button pr-1 pb-1' onclick='decreasePrice(`business`)'  title="Decrease business price by 5%">
 										</div>
 									</div>
-									<div class="m-0"><input type="text" id="planLinkBusinessPrice" data-class="business" class="planLinkPrice py-1 font-mono"/></div>
+									<div class="m-0"><span class="price-wrapper pr-8 w-42 text-base font-mono"><input type="text" id="planLinkBusinessPrice" data-class="business" class="price-input"/></span></div>
 									<div><p class="py-1" id="planLFBusiness">100%</p></div>
 									<div><p class="py-1" id="planMarkupBusiness">100%</p></div>
 								</div>
@@ -325,7 +334,7 @@
 										</div>
 									</div>
 									<div>
-										<input type="text" id="planLinkFirstPrice" data-class="first" class="planLinkPrice py-1 font-mono"/>
+                                        <div class="m-0"><span class="price-wrapper pr-8 w-42 text-base font-mono"><input type="text" id="planLinkFirstPrice" data-class="first" class="price-input"/></span></div>
 										<div>
 											<img src='@routes.Assets.versioned("/images/icons/plus-button.png")' class='img-button pr-1 py-1' onclick='increasePrice()'  title="Increase all price by 5% of Default">
 											<img src='@routes.Assets.versioned("/images/icons/minus-button.png")' class='img-button pr-1 py-1' onclick='decreasePrice()'  title="Decrease all price by 5% of Default">
@@ -347,7 +356,7 @@
 										<input type="hidden" id="planLinkServiceLevel" value="1"/>
 									</div>
 									<div id="planLinkExpectedFromQuality">
-										<p class="strong pt-2">From <span class="planFromIata"></span></p>
+										<p class="strong pt-2">Expected from <span class="planFromIata"></span></p>
 										<p><span class="inline-block w-68">first:</span><span class="firstQuality w-68 inline-block"></span></p>
 										<p><span class="inline-block w-68">business:</span><span class="businessQuality w-68 inline-block"></span><p>
 										<p><span class="inline-block w-68">economy:</span><span class="economyQuality w-68 inline-block"></span></p>
@@ -420,20 +429,20 @@
 											</p>
 										</div>
 										<div class="value">
-											<div class="frequencyDetail table colored" style="width: 100%">
-												<div class="table-header"/>
+											<div class="frequencyDetail table" style="width: 100%">
+												<div class="table-header">
 													<div class="cell" style="width: 15%; min-width: 60px;">Airplane</div>
 													<div class="cell" style="width: 25%">Config</div>
 													<div class="cell" style="width: 60%">Flight Frequency</div>
 												</div>
 											</div>
 											<div class="frequencyDetailTotal table" style="width: 100%">
-												<div class="table-header"/>
+												<div class="table-header">
 													<div class="cell" style="width: 20%; min-width: 100px;"></div>
 													<div class="cell" style="width: 20%"></div>
 													<div class="cell" style="width: 60%"></div>
 												</div>
-												<div class="table-row"/>
+												<div class="table-row">
 													<div class="cell"></div>
 													<div class="cell"></div>
 													<div class="cell">Total <span class="total"></span> flight(s) per week</div>
@@ -600,136 +609,165 @@
 	<!-- 				end extended panel -->
 				   </div>
 
-                    <div id="searchCanvas" class="flex-col sidePanel mapOverlayPanel" style="display: none;">
+                    <div id="searchCanvas" class="vertical-group sidePanel mapOverlayPanel" style="display: none;">
                         <div class="section mainSection">
-                            <div style="width: 100%; min-height: 80px;" class="titlesContainer">
-                                <div class="titleNavigation">
-                                    <div style="float:left;" class="left" onclick="titleNavigate($(this), -1)"><img class='button' src='@routes.Assets.versioned("/images/icons/24px/arrow-180.png")' style="opacity: 0.8"></div>
-
-                                    <div style="float:right;" class="right" onclick="titleNavigate($(this), 1)"><img class='button' src='@routes.Assets.versioned("/images/icons/24px/arrow.png")' style="opacity: 0.8"></div>
-                                </div>
+                            <div class="titlesContainer">
                                 <div class="titleSelection selected" data-search-type="route" onclick="refreshSearchDiv('route')">Tickets</div>
                                 <div class="titleSelection" data-search-type="history" onclick="refreshSearchDiv('history')">History</div>
                                 <div class="titleSelection" data-search-type="research" onclick="refreshSearchDiv('research')">Research</div>
                             </div>
-
+                    
                             <!-- shared for route and research-->
-                            <div class="searchFieldContainer" style="margin-top: 10px">
-                                <div class="flex-container-width-half gap-8 px-8"> <!--from and to box-->
-                                    <div style="position: relative;">
+                            <div class="searchFieldContainer mt-4">
+                                <div class="flex-row gap-4 px-8"> <!--from and to box-->
+                                    <div class="relative">
                                         <div class="searchInput" data-search-type="airport">
-                                            <input type="text" style="width: 99%" tabindex="101" class="fromAirport" placeholder="From" data-search-group="fromDestination" oninput="searchChange($(this))" onfocus="$(this).select();" onfocusout="searchFocusOut($(this))" onkeyup="searchKeyUp(event, $('div.searchFieldContainer input.fromAirport'))" onkeydown="searchKeyDown(event, $('div.searchFieldContainer input.fromAirport'))">
+                                            <input type="text" tabindex="101" class="fromAirport" placeholder="From"
+                                                data-search-group="fromDestination" oninput="searchChange($(this))"
+                                                onfocus="$(this).select();" onfocusout="searchFocusOut($(this))"
+                                                onkeyup="searchKeyUp(event, $('div.searchFieldContainer input.fromAirport'))"
+                                                onkeydown="searchKeyDown(event, $('div.searchFieldContainer input.fromAirport'))">
                                             <span class="spinner" style="display: none;"><img src='/assets/images/icons/spinner-plane.svg' style="height: 60px"></span>
                                         </div>
                                         <div class="searchResult"></div>
                                     </div>
-                                    <div style="position: relative;">
+                                    <div class="relative">
                                         <div class="searchInput" data-search-type="airport">
-                                            <input type="text" style="width: 99%" tabindex="102" class="toAirport" placeholder="To" data-search-group="toDestination" oninput="searchChange($(this))" onfocus="$(this).select();" onfocusout="searchFocusOut($(this))" onkeyup="searchKeyUp(event, $('div.searchFieldContainer input.toAirport'))" onkeydown="searchKeyDown(event, $('div.searchFieldContainer input.toAirport'))">
+                                            <input type="text" tabindex="102" class="toAirport" placeholder="To"
+                                                data-search-group="toDestination" oninput="searchChange($(this))"
+                                                onfocus="$(this).select();" onfocusout="searchFocusOut($(this))"
+                                                onkeyup="searchKeyUp(event, $('div.searchFieldContainer input.toAirport'))"
+                                                onkeydown="searchKeyDown(event, $('div.searchFieldContainer input.toAirport'))">
                                             <span class="spinner" style="display: none;"><img src='/assets/images/icons/spinner-plane.svg' style="height: 60px"></span>
                                         </div>
                                         <div class="searchResult"></div>
                                     </div>
                                 </div>
-
-                                <button type="button" class="button search" tabindex="103" onkeypress="searchButtonKeyPress(event, $(this))" onclick="searchAction(document.querySelector('div.searchFieldContainer input.fromAirport').dataset.selectedid, document.querySelector('div.searchFieldContainer input.toAirport').dataset.selectedid)">Search</button>
-                            </div>
-
-                            <div class="routeSearch searchContainer" style="display: flex; flex-flow: column; flex-grow : 1;">
-                                <div id="routeSearchResult" style="overflow-y: auto; flex-grow: 1; padding: 10px; height: 0px;"></div> <!-- need height otherwise the scroll would not work -->
-                                <div class="banner" style="width: 90%; margin: auto;">
-                                    <img src="" style="width: 100%;">
+                    
+                                <div class="flex-row gap-4 mt-4 px-8">
+                                    <button type="button" class="button search" tabindex="103" onkeypress="searchButtonKeyPress(event, $(this))"
+                                        onclick="searchAction(document.querySelector('div.searchFieldContainer input.fromAirport').dataset.selectedid, document.querySelector('div.searchFieldContainer input.toAirport').dataset.selectedid)">Search</button>
+                                    <img width="20px" class="clickable mr-auto" onclick="resetSearchInput($(this))" src='@routes.Assets.versioned("/images/icons/reset.svg")' title="reset">
                                 </div>
                             </div>
-                            <div class="historySearch searchContainer" style="flex-grow: 1; display: flex; flex-flow: column;">
-                                <div style="margin-top: 10px">
-                                    <div class="locationCriteria" style="float: left; width : 50%; position: relative; box-sizing: border-box;">
-                                        <div class="searchCriterion"> <!-- Airport -->
-                                            <div style="float: left; width : 50%; position: relative;">
+                    
+                            <div class="routeSearch searchContainer vertical-group flex-grow">
+                                <div id="routeSearchResult" class="overflow-y-auto flex-grow p-2"></div>
+                                <!-- need height otherwise the scroll would not work -->
+                                <div class="banner p-4">
+                                    <img src="" class="w-full">
+                                </div>
+                            </div>
+                            <div class="historySearch searchContainer vertical-group flex-grow">
+                                <div class="flex-container-width-half gap-8">
+                                    <div class="locationCriteria vertical-group gap-2">
+                                        <div class="searchCriterion flex-row gap-2"> <!-- Airport -->
+                                            <div class="relative">
                                                 <div class="searchInput" data-search-type="airport">
-                                                    <input type="text" style="width: 80%" tabindex="101" class="fromAirport" data-search-group="fromDestination" placeholder="From Airport (Any)" autocomplete="no" oninput="searchChange($(this))" onfocus="$(this).select();" onfocusout="searchFocusOut($(this))" onkeyup="searchKeyUp(event, $('div.historySearch input.fromAirport'))" onkeydown="searchKeyDown(event, $('div.historySearch input.fromAirport'))">
+                                                    <input type="text" tabindex="101" class="fromAirport"
+                                                        data-search-group="fromDestination" placeholder="From Airport (Any)"
+                                                        autocomplete="no" oninput="searchChange($(this))" onfocus="$(this).select();"
+                                                        onfocusout="searchFocusOut($(this))"
+                                                        onkeyup="searchKeyUp(event, $('div.historySearch input.fromAirport'))"
+                                                        onkeydown="searchKeyDown(event, $('div.historySearch input.fromAirport'))">
                                                     <span class="spinner" style="display: none;"><img src='/assets/images/icons/spinner-plane.svg' style="height: 60px"></span>
                                                 </div>
                                                 <div class="searchResult"></div>
                                             </div>
-                                            <div style="float: left; width : 50%; position: relative;">
+                                            <div class="relative">
                                                 <div class="searchInput" data-search-type="airport">
-                                                    <input type="text" style="width: 80%" tabindex="102" class="toAirport" data-search-group="toDestination" placeholder="To Airport (Any)" autocomplete="no" oninput="searchChange($(this))" onfocus="$(this).select();" onfocusout="searchFocusOut($(this))" onkeyup="searchKeyUp(event, $('div.historySearch input.toAirport'))" onkeydown="searchKeyDown(event, $('div.historySearch input.toAirport'))">
+                                                    <input type="text" tabindex="102" class="toAirport" data-search-group="toDestination"
+                                                        placeholder="To Airport (Any)" autocomplete="no" oninput="searchChange($(this))"
+                                                        onfocus="$(this).select();" onfocusout="searchFocusOut($(this))"
+                                                        onkeyup="searchKeyUp(event, $('div.historySearch input.toAirport'))"
+                                                        onkeydown="searchKeyDown(event, $('div.historySearch input.toAirport'))">
                                                     <span class="spinner" style="display: none;"><img src='/assets/images/icons/spinner-plane.svg' style="height: 60px"></span>
                                                 </div>
                                                 <div class="searchResult"></div>
                                             </div>
-                                            <div style="clear: both;"></div>
                                         </div>
-                                        <div class="searchCriterion"> <!-- Country -->
-                                            <div style="float: left; width : 50%; position: relative;">
+                                        <div class="searchCriterion flex-row gap-2"> <!-- Country -->
+                                            <div class="relative">
                                                 <div class="searchInput" data-search-type="country">
-                                                    <input type="text" style="width: 80%" tabindex="103" class="fromCountry" data-search-group="fromDestination" placeholder="From Country (Any)" autocomplete="no" oninput="searchChange($(this))" onfocus="$(this).select();" onfocusout="searchFocusOut($(this))" onkeyup="searchKeyUp(event, $('div.historySearch input.fromCountry'))" onkeydown="searchKeyDown(event, $('div.historySearch input.fromCountry'))">
+                                                    <input type="text" tabindex="103" class="fromCountry"
+                                                        data-search-group="fromDestination" placeholder="From Country (Any)"
+                                                        autocomplete="no" oninput="searchChange($(this))" onfocus="$(this).select();"
+                                                        onfocusout="searchFocusOut($(this))"
+                                                        onkeyup="searchKeyUp(event, $('div.historySearch input.fromCountry'))"
+                                                        onkeydown="searchKeyDown(event, $('div.historySearch input.fromCountry'))">
                                                     <span class="spinner" style="display: none;"><img src='/assets/images/icons/spinner-plane.svg' style="height: 60px"></span>
                                                 </div>
                                                 <div class="searchResult"></div>
                                             </div>
-                                            <div style="float: left; width : 50%; position: relative;">
+                                            <div class="relative">
                                                 <div class="searchInput" data-search-type="country">
-                                                    <input type="text" style="width: 80%" tabindex="104" class="toCountry" data-search-group="toDestination" placeholder="To Country (Any)" autocomplete="no" oninput="searchChange($(this))" onfocus="$(this).select();" onfocusout="searchFocusOut($(this))" onkeyup="searchKeyUp(event, $('div.historySearch input.toCountry'))" onkeydown="searchKeyDown(event, $('div.historySearch input.toCountry'))">
+                                                    <input type="text" tabindex="104" class="toCountry" data-search-group="toDestination"
+                                                        placeholder="To Country (Any)" autocomplete="no" oninput="searchChange($(this))"
+                                                        onfocus="$(this).select();" onfocusout="searchFocusOut($(this))"
+                                                        onkeyup="searchKeyUp(event, $('div.historySearch input.toCountry'))"
+                                                        onkeydown="searchKeyDown(event, $('div.historySearch input.toCountry'))">
                                                     <span class="spinner" style="display: none;"><img src='/assets/images/icons/spinner-plane.svg' style="height: 60px"></span>
                                                 </div>
                                                 <div class="searchResult"></div>
                                             </div>
-                                            <div style="clear: both;"></div>
                                         </div>
                                     </div>
-                                    <div class="otherCriteria" style="float: right; width : 50%; position: relative; box-sizing: border-box;">
-                                        <div style="float: left; width : 50%; position: relative;">
-                                            <div class = "searchCriterion">
+                                    <div class="otherCriteria vertical-group gap-2">
+                                        <div class="flex-row gap-2">
+                                            <div class="searchCriterion relative">
                                                 <div class="searchInput" data-search-type="airline">
-                                                    <input type="text" style="width: 80%" tabindex="107" class="airline" data-search-group="entity" placeholder="Airline (Any)" autocomplete="no" oninput="searchChange($(this))" onfocus="$(this).select();" onfocusout="searchFocusOut($(this))" onkeyup="searchKeyUp(event, $('div.historySearch input.airline'))" onkeydown="searchKeyDown(event, $('div.historySearch input.airline'))">
+                                                    <input type="text" tabindex="107" class="airline" data-search-group="entity"
+                                                        placeholder="Airline (Any)" autocomplete="no" oninput="searchChange($(this))"
+                                                        onfocus="$(this).select();" onfocusout="searchFocusOut($(this))"
+                                                        onkeyup="searchKeyUp(event, $('div.historySearch input.airline'))"
+                                                        onkeydown="searchKeyDown(event, $('div.historySearch input.airline'))">
                                                     <span class="spinner" style="display: none;"><img src='/assets/images/icons/spinner-plane.svg' style="height: 60px"></span>
                                                 </div>
                                                 <div class="searchResult"></div>
                                             </div>
-                                            <div class = "searchCriterion">
+                                            <div class="searchCriterion relative">
                                                 <div class="searchInput" data-search-type="alliance">
-                                                    <input type="text" style="width: 80%" tabindex="108" class="alliance" data-search-group="entity" placeholder="Alliance (Any)" autocomplete="no"  oninput="searchChange($(this))" onfocus="$(this).select();" onfocusout="searchFocusOut($(this))" onkeyup="searchKeyUp(event, $('div.historySearch input.alliance'))" onkeydown="searchKeyDown(event, $('div.historySearch input.alliance'))">
+                                                    <input type="text" tabindex="108" class="alliance" data-search-group="entity"
+                                                        placeholder="Alliance (Any)" autocomplete="no" oninput="searchChange($(this))"
+                                                        onfocus="$(this).select();" onfocusout="searchFocusOut($(this))"
+                                                        onkeyup="searchKeyUp(event, $('div.historySearch input.alliance'))"
+                                                        onkeydown="searchKeyDown(event, $('div.historySearch input.alliance'))">
                                                     <span class="spinner" style="display: none;"><img src='/assets/images/icons/spinner-plane.svg' style="height: 60px"></span>
                                                 </div>
                                                 <div class="searchResult"></div>
                                             </div>
                                         </div>
-                                        <div style="float: left; width : 50%; position: relative;">
-                                            <div class="table">
-                                                <div class="table-row searchCriterion">
-                                                    <div class="label" style="width : 70%">Capacity >=</div>
-                                                    <div class="data"><input type="text"  tabindex="109" class="capacity" size="6" placeholder="Any" onfocusout="numberInputFocusOut($(this))"></div>
-                                                </div>
-                                                <div class="table-row searchCriterion">
-                                                    <div class="label" style="width : 70%">Capacity Change >=</div>
-                                                    <div class="data"><input type="text"  tabindex="109" class="capacityDelta" size="6" placeholder="Any" onfocusout="numberInputFocusOut($(this))"></div>
-                                                </div>
-                                            </div>
-                                            <img class="clickable" onclick="resetSearchInput($(this))" src='@routes.Assets.versioned("/images/icons/24px/arrow-circle-135.png")' title="reset">
+                                        <div class="flex-row gap-2 items-center">
+                                            <div class="label pr-16">Capacity >=</div>
+                                            <div class="data"><input type="text" tabindex="109" class="capacity w-full" placeholder="Any" onfocusout="numberInputFocusOut($(this))"></div>
                                         </div>
-
+                                        <div class="flex-row gap-2 items-center">
+                                            <div class="label pr-4">Capacity Change >=</div>
+                                            <div class="data"><input type="text" tabindex="109" class="capacityDelta w-full" placeholder="Any" onfocusout="numberInputFocusOut($(this))"></div>
+                                        </div>
                                     </div>
-                                    <div style='clear: both;'></div>
-                                    <button type="button" class="button search" tabindex="111" onkeypress="searchButtonKeyPress(event, $(this))" onclick="searchLinkHistory()">Search</button>
                                 </div>
-                                <div id="historySearchResult" class="section" style="height: 100px; overflow-y: auto; flex-grow: 1;">
-                                    <div class="table data" style="height: 20px; width: 100%; min-width: 700px;">
+                                <div class="flex-row">
+                                    <button type="button" class="button search mt-4" tabindex="111" onkeypress="searchButtonKeyPress(event, $(this))" onclick="searchLinkHistory()">Search</button>
+                                    <img width="20px" class="clickable mr-auto" onclick="resetSearchInput($(this))" src='@routes.Assets.versioned("/images/icons/reset.svg")' title="reset">
+                                </div>
+                                <div id="historySearchResult" class="section flex-grow overflow-y-auto p-0 mt-2">
+                                    <div class="table data w-full" style="min-width: 700px;">
                                         <div class="table-header sortHeader">
                                             <div class="cell clickable" style="width: 7%" data-sort-property="cycleDelta" data-sort-order="decending">Cycle</div>
                                             <div class="cell clickable" style="width: 12%" data-sort-property="airlineName" data-sort-order="ascending">Airline</div>
                                             <div class="cell clickable" style="width: 15%" data-sort-property="fromAirportIata" data-sort-order="descending">From Airport</div>
                                             <div class="cell clickable" style="width: 15%" data-sort-property="toAirportIata" data-sort-order="descending">To Airport</div>
                                             <div class="cell clickable" style="width: 10%" data-sort-property="model" data-sort-order="ascending">Model</div>
-                                            <div class="cell clickable" style="width: 7%" align="right" data-sort-property="capacityTotal" data-sort-order="ascending">Capacity (Freq.)</div>
-                                            <div class="cell clickable" style="width: 7%" align="right" data-sort-property="capacityDeltaTotal" data-sort-order="descending">Cap Chg.</div>
+                                            <div class="cell clickable" style="width: 7%; text-align: right;" data-sort-property="capacityTotal" data-sort-order="ascending">Capacity (Freq.)</div>
+                                            <div class="cell clickable" style="width: 7%; text-align: right;" data-sort-property="capacityDeltaTotal" data-sort-order="descending">Cap Chg.</div>
                                             <div class="cell" style="width: 14%">Price</div>
                                             <div class="cell" style="width: 14%">Price Chg.</div>
                                         </div>
                                     </div>
-                                    <div style="height: calc(100% - 20px - 20px);  width: 100%; min-width: 700px; overflow-y: auto;">
-                                        <div class="table data linkHistorySearchTable" style="width: 100%; table-layout: fixed; min-width: 700px;">
+                                    <div class="flex-grow w-full overflow-y-auto" style="min-width: 700px;">
+                                        <div class="table data linkHistorySearchTable w-full"
+                                            style="table-layout: fixed; min-width: 700px;">
                                             <div class="table-header">
                                                 <div class="cell" style="width: 7%; border-bottom: none;"></div>
                                                 <div class="cell" style="width: 12%; border-bottom: none;"></div>
@@ -745,92 +783,115 @@
                                     </div>
                                 </div>
                             </div>
-
-                            <div class="research searchContainer" style="display: flex; flex-flow: column; flex-grow : 1;">
-                                <div id="researchSearchResult" style="overflow-y: auto; flex-grow: 1; padding: 10px; height: 0px;"><!-- need height otherwise the scroll would not work -->
-                                    <div class="flex-container-width-half gap-8 py-4 mx-auto" style="width: 600px; max-width:100%;">
-                                        <div style="max-width: 200px; display: flex; flex-direction: column; align-items: center;" class="fromAirport">
+                    
+                            <div class="research searchContainer vertical-group flex-grow">
+                                <div id="researchSearchResult" class="overflow-y-auto flex-grow p-4">
+                                    <div class="flex-row gap-8 py-4 mx-auto" style="width: 600px; max-width:100%;">
+                                        <div class="fromAirport vertical-group items-center">
                                             <img class="fromAirport roundImage" style="height: 150px; width:150px; max-height: 30vw; max-width: 30vw;">
-                                            <a style="display:inline-block; align-self: center; margin-top:5px; font-weight: bold;" class="fromAirportText clickable"></a>
-                                            <div class="table" style="width: 100%">
+                                            <a class="fromAirportText clickable mt-2 font-bold block"></a>
+                                            <div class="table w-full">
                                                 <div class="table-row">
                                                     <div class="label">Population</div>
-                                                    <div class="value population" style="text-align:right;  padding-right: 10px;"></div>
+                                                    <div class="value population text-right pr-2"></div>
                                                 </div>
                                                 <div class="table-row">
                                                     <div class="label">Income <small>Per Capita, PPP</small></div>
-                                                    <div class="value income" style="text-align:right; padding-right: 10px;"></div>
+                                                    <div class="value income text-right pr-2"></div>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div style="max-width: 200px; display: flex; flex-direction: column; align-items: center;" class="toAirport">
+                                        <div class="toAirport vertical-group items-center">
                                             <img class="toAirport roundImage" style="height: 150px; width:150px; max-height: 30vw; max-width: 30vw;">
-                                            <a style="display:inline-block; align-self: center; margin-top:5px; font-weight: bold;" class="toAirportText clickable"></a>
-                                            <div class="table" style="width: 100%">
+                                            <a class="toAirportText clickable mt-2 font-bold block"></a>
+                                            <div class="table w-full">
                                                 <div class="table-row">
                                                     <div class="label">Population</div>
-                                                    <div class="value from population" style="text-align:right; padding-right: 10px;"></div>
+                                                    <div class="value from population text-right pr-2"></div>
                                                 </div>
                                                 <div class="table-row">
                                                     <div class="label">Income <small>Per Capita, PPP</small></div>
-                                                    <div class="value from income" style="text-align:right; padding-right: 10px;"></div>
+                                                    <div class="value from income text-right pr-2"></div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="table" style="margin:auto; width: 380px; max-width:100%; margin-top: 20px;">
+                                    <div class="table mx-auto w-full mt-5 max-w-72">
                                         <div class="table-row">
-                                            <p class="label" style="width:40%">Relationship</p>
-                                            <div class="value" style="text-align:right; width:60%"><span class="relationship"></span></div>
+                                            <p class="label">Relationship</p>
+                                            <div class="value text-right"><span class="relationship"></span></div>
                                         </div>
                                         <div class="table-row">
-                                            <p class="label" style="width:50%">Affinities</p>
-                                            <div class="value" style="text-align:right; width:50%"><span class="affinities"></span></div>
+                                            <p class="label">Affinities</p>
+                                            <div class="value text-right"><span class="affinities"></span></div>
                                         </div>
                                         <div class="table-row">
-                                            <p class="label" style="width:50%">Distance</p>
-                                            <div class="value" style="text-align:right; width:50%"><span class="distance"></span>&nbsp;km</div>
+                                            <p class="label">Distance</p>
+                                            <div class="value text-right"><span class="distance"></span>&nbsp;km</div>
                                         </div>
                                         <div class="table-row">
-                                            <p class="label" style="width:50%">Flight Type</p>
-                                            <div class="value" style="text-align:right; width:50%"><span class="flightType"></span></div>
+                                            <p class="label">Flight Type</p>
+                                            <div class="value text-right"><span class="flightType"></span></div>
                                         </div>
                                         <div class="table-row">
-                                            <p class="label" style="width:50%">Direct Demand</p>
-                                            <div class="value" style="width:50%">
-                                                <div style="text-align: right" class="demand">
+                                            <p class="label">Direct Demand</p>
+                                            <div class="value text-right">
+                                                <div class="demand">
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-
-                                    <h4>Existing Flights</h4>
-                                    <div class="table data links" style="width: 100%">
+                    
+                                    <h4 class="mt-8">Existing Flights</h4>
+                                    <div class="table data links w-full">
                                         <div class='table-header'>
-                                            <div class="cell" style="width: 31%;"><p>Airline</p></div>
-                                            <div class="cell" style="width: 21%;"><p>Percent of Price</p></div>
-                                            <div class="cell" style="width: 21%;"><p>Capacity</p></div>
-                                            <div class="cell" style="width: 9%;"><p>Freq.</p></div>
-                                            <div class="cell" style="width: 9%;"><p>Quality</p></div>
-                                            <div class="cell" style="width: 9%;"><p>L.F.</p></div>
+                                            <div class="cell" style="width: 31%;">
+                                                <p>Airline</p>
+                                            </div>
+                                            <div class="cell" style="width: 21%;">
+                                                <p>Percent of Price</p>
+                                            </div>
+                                            <div class="cell" style="width: 21%;">
+                                                <p>Capacity</p>
+                                            </div>
+                                            <div class="cell" style="width: 9%;">
+                                                <p>Freq.</p>
+                                            </div>
+                                            <div class="cell" style="width: 9%;">
+                                                <p>Quality</p>
+                                            </div>
+                                            <div class="cell" style="width: 9%;">
+                                                <p>L.F.</p>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="linksPie"></div>
-
-                                    <h4 class="pt-4 fromDemandHeading" style="width: 100%">Demands from</h4>
-                                    <p>Each week different passenger "profiles" may fly. Below is a random draw of what may be drawn. The total demand and passenger type is stable, +/- 10%.</p>
-                                    <div class="table data fromDemand" style="width: 100%">
+                    
+                                    <h4 class="mt-8 fromDemandHeading w-full">Demands from</h4>
+                                    <p class="py-2 opacity-80 italic">Each week different passenger "profiles" may fly. Below is a random
+                                        draw of what may be drawn. The total demand and passenger type is stable, +/- 10%.</p>
+                                    <div class="table data fromDemand w-full">
                                         <div class='table-header'>
-                                            <div class="cell" style="width: 20%;"><p>Class</p></div>
-                                            <div class="cell" style="width: 20%;"><p>Type</p></div>
-                                            <div class="cell" style="width: 20%;"><p>Profile</p></div>
-                                            <div class="cell" style="width: 15%;"><p>Target Price</p></div>
-                                            <div class="cell" style="width: 15%;"><p>Estimated Demand</p></div>
+                                            <div class="cell" style="width: 20%;">
+                                                <p>Class</p>
+                                            </div>
+                                            <div class="cell" style="width: 20%;">
+                                                <p>Type</p>
+                                            </div>
+                                            <div class="cell" style="width: 20%;">
+                                                <p>Profile</p>
+                                            </div>
+                                            <div class="cell" style="width: 15%;">
+                                                <p>Target Price</p>
+                                            </div>
+                                            <div class="cell" style="width: 15%;">
+                                                <p>Estimated Demand</p>
+                                            </div>
                                         </div>
                                     </div>
-
-                                    <h4 class="pt-4 toDemandHeading" style="width: 100%">Demands to</h4>
-                                    <div class="table data toDemand" style="width: 100%">
+                    
+                                    <h4 class="mt-8 toDemandHeading w-full">Demands to</h4>
+                                    <div class="table data toDemand w-full">
                                         <div class='table-header'>
                                             <div class="cell" style="width: 20%;"><p>Class</p></div>
                                             <div class="cell" style="width: 20%;"><p>Type</p></div>
@@ -842,9 +903,8 @@
                                 </div>
                             </div>
                         </div>
-                        <div style="clear: both;"></div>
                     </div>
                     <!-- end search canvas -->
-
-	<!-- 	    	   end bottom panel -->
-				</div>
+                    
+                    <!-- 	    	   end bottom panel -->
+                    </div>

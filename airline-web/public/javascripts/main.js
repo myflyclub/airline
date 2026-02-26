@@ -221,13 +221,25 @@ function showWorldMap() {
 	checkTutorial('worldMap')
 }
 
+var ANNOUNCEMENT_VERSION = "2026-02-25"
+
 function showAnnoucement() {
+	if (localStorage.getItem('announcementAgreed') === ANNOUNCEMENT_VERSION) {
+		return
+	}
 	var modal = $('#announcementModal')
-	// Get the <span> element that closes the modal
+	$('#announcementAgreeCheck').prop('checked', false)
 	$('#announcementContainer').empty()
 	$('#announcementContainer').load('/assets/html/announcement.html')
 
 	modal.fadeIn(1000)
+}
+
+function onAnnouncementAgreeChange(checkbox) {
+	if (checkbox.checked) {
+		localStorage.setItem('announcementAgreed', ANNOUNCEMENT_VERSION)
+		closeModal($('#announcementModal'))
+	}
 }
 
 async function populateTooltips() {

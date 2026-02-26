@@ -44,7 +44,6 @@ object Constants {
   val LINK_STATISTICS_INDEX_2 = "link_statistics_index_2"
   val LINK_STATISTICS_INDEX_3 = "link_statistics_index_3"
   val LINK_STATISTICS_INDEX_4 = "link_statistics_index_4"
-  val WATCHED_LINK_TABLE = "watched_link"
   val AIRLINE_TABLE = "airline"
   val AIRLINE_INFO_TABLE = "airline_info"
   val AIRLINE_BASE_TABLE = "airline_base"
@@ -101,13 +100,11 @@ object Constants {
   val BANNED_IP_TABLE = "banned_ip"
   val USER_UUID_TABLE = "user_uuid"
   val USER_AIRLINE_TABLE = "user_airline"
-  val VIP_ROUTE_TABLE = "vip_route"
-  val VIP_ROUTE_ENTRY_TABLE = "vip_route_entry"
-  val PASSENGER_HISTORY_TABLE = "passenger_history"
   val PASSENGER_LINK_HISTORY_TABLE = "passenger_link_history"
   val PASSENGER_LINK_HISTORY_TABLE_TEMP = "passenger_link_history_temp"
   val PASSENGER_ROUTE_HISTORY_TABLE = "passenger_route_history"
   val PASSENGER_ROUTE_HISTORY_TABLE_TEMP = "passenger_route_history_temp"
+  val PASSENGER_MISSED_DEMAND_TABLE = "passenger_missed_demand"
   val LOAN_TABLE = "loan"
   val LOUNGE_TABLE = "lounge"
   val LOUNGE_CONSUMPTION_TABLE = "lounge_consumption"
@@ -186,9 +183,7 @@ object Constants {
   println("!!!!!!!!!!!!!!!DB HOST IS " + DB_HOST)
   val SCHEMA_NAME = if (configFactory.hasPath("mysqldb.schema")) configFactory.getString("mysqldb.schema") else sys.env.get("DB_NAME").getOrElse("airline")
 
-  //val DATABASE_CONNECTION = "jdbc:mysql://" + DB_HOST + "/airline?rewriteBatchedStatements=true&useSSL=false&autoReconnect=true&useUnicode=true&characterEncoding=utf-8"
   val DATABASE_CONNECTION = "jdbc:mysql://" + DB_HOST + "/" + SCHEMA_NAME +"?rewriteBatchedStatements=true&sslMode=DISABLED&useUnicode=true&characterEncoding=utf-8&allowPublicKeyRetrieval=true&socketTimeout=300000&connectTimeout=10000" + dbParams
-  // val DATABASE_CONNECTION = "jdbc:mysql://localhost:3306/airline_v2_1?socket=/tmp/mysql_3306.sock?rewriteBatchedStatements=true&useSSL=false&autoReconnect=true&useUnicode=true&characterEncoding=utf-8"
   val DB_DRIVER = "com.mysql.cj.jdbc.Driver"
   val DATABASE_USER = if (configFactory.hasPath("mysqldb.user")) configFactory.getString("mysqldb.user") else sys.env.get("DB_USER").getOrElse("mfc01")
   val DATABASE_PASSWORD = if (configFactory.hasPath("mysqldb.password")) configFactory.getString("mysqldb.password") else sys.env.get("DB_PASSWORD").getOrElse("ghEtmwBdnXYBQH4")
