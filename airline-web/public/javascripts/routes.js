@@ -26,16 +26,28 @@ async function requireMap() {
     }
 }
 
+function scheduleIdleLoad(fn, initialDelay = 1000) {
+    setTimeout(() => {
+        if (window.requestIdleCallback) {
+            requestIdleCallback(fn);
+        } else {
+            setTimeout(fn, 1000);
+        }
+    }, initialDelay);
+}
+
 function backgroundLoadMap() {
     if (window.loadMap) {
-        setTimeout(() => {
-            if (window.requestIdleCallback) {
-                requestIdleCallback(() => window.loadMap());
-            } else {
-                setTimeout(() => window.loadMap(), 1000);
-            }
-        }, 1000);
+        scheduleIdleLoad(() => window.loadMap());
     }
+}
+
+function backgroundLoad() {
+    backgroundLoadMap();
+    scheduleIdleLoad(() => {
+        Rivals.prefetch();
+        Alliance.prefetch();
+    }, 2000);
 }
 
 function initializeRoutes() {
@@ -110,7 +122,7 @@ function initializeRoutes() {
     });
 
     page('/flights/:link?', (ctx) => {
-        backgroundLoadMap();
+        backgroundLoad();
         const linkId = ctx.params.link ?? null;
         if (linkId && loadedLinksById[linkId]) {
             var l = loadedLinksById[linkId];
@@ -122,12 +134,12 @@ function initializeRoutes() {
     });
 
     page('/hangar/', () => {
-        backgroundLoadMap();
+        backgroundLoad();
         document.title = 'Hangar';
         showAirplaneCanvas("hangar");
     });
     page('/hangar/:model', (ctx) => {
-        backgroundLoadMap();
+        backgroundLoad();
         document.title = 'Hangar';
         if (ctx.params.model) {
             showAirplaneCanvas("market", pathToString(ctx.params.model));
@@ -138,12 +150,12 @@ function initializeRoutes() {
     });
 
     page('/aircraft/', () => {
-        backgroundLoadMap();
+        backgroundLoad();
         document.title = 'Aircraft Market';
         showAirplaneCanvas("market");
     });
     page('/aircraft/:model', (ctx) => {
-        backgroundLoadMap();
+        backgroundLoad();
         document.title = 'Aircraft Market';
         if (ctx.params.model) {
             showAirplaneCanvas("market", pathToString(ctx.params.model));
@@ -153,25 +165,25 @@ function initializeRoutes() {
     });
 
     page('/office/', () => {
-        backgroundLoadMap();
+        backgroundLoad();
         document.title = 'Office';
         showOfficeCanvas();
     });
 
     page('/champions/', () => {
-        backgroundLoadMap();
+        backgroundLoad();
         document.title = 'Champions';
         showRankingCanvas();
     });
 
     page('/bank/', () => {
-        backgroundLoadMap();
+        backgroundLoad();
         document.title = 'Bank';
         showBankCanvas();
     });
 
     page('/oil/', () => {
-        backgroundLoadMap();
+        backgroundLoad();
         document.title = 'Oil';
         showOilCanvas();
     });
@@ -204,19 +216,19 @@ function initializeRoutes() {
     });
 
     page('/country/:countryCode?', (ctx) => {
-        backgroundLoadMap();
+        backgroundLoad();
         const code = ctx.params.countryCode ? ctx.params.countryCode.toUpperCase() : null;
         showCountryCanvas(code);
     });
 
     page('/log/', () => {
-        backgroundLoadMap();
+        backgroundLoad();
         document.title = 'Log';
         showLogCanvas();
     });
 
     page('/olympics/', () => {
-        backgroundLoadMap();
+        backgroundLoad();
         document.title = 'Olympics';
         showEventCanvas();
     });
