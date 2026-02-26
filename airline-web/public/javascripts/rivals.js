@@ -10,13 +10,10 @@ const Rivals = (() => {
     let selectedTypes = {};
 
     // -------------------------------------------------------------------------
-    // State - Rivals List
+    // State - Rivals List / Details
     // -------------------------------------------------------------------------
-    let loadedList = [];
     let loadedById = {};
     let loadedLinks = [];
-    let hideInactive = true;
-    let hideNonPlayer = false;
 
     // Exposed externally via window property (heatmap.js compatibility)
     let mapAirlineId;
@@ -29,152 +26,25 @@ const Rivals = (() => {
     function show(selectedAirline) {
         setActiveDiv($('#rivalsCanvas'), () => loadData());
         $('#rivalDetailsModal').hide();
-        loadAllRivals(selectedAirline);
-    }
 
-
-    // =========================================================================
-    // SECTION: Rivals List
-    // =========================================================================
-
-    function loadAllRivals(selectedAirline = null) {
-        loadedList = [];
-        loadedById = {};
-        $.ajax({
-            type: 'GET',
-            url: `/airlines?loginStatus=true&hideInactive=${hideInactive}`,
-            contentType: 'application/json; charset=utf-8',
-            dataType: 'json',
-            success: function(airlines) {
-                loadedList = airlines;
-                $.each(airlines, function(index, airline) {
-                    loadedById[airline.id] = airline;
-                });
-
-                const selectedSortHeader = $('#rivalsTableSortHeader .table-header .cell.selected');
-                const sortProperty = selectedSortHeader.data('sort-property') || 'reputation';
-                const sortOrder = selectedSortHeader.data('sort-order') || 'descending';
-                renderList(sortProperty, sortOrder, selectedAirline);
-            },
-            error: function(jqXHR, textStatus, errorThrown) {
-                console.log(JSON.stringify(jqXHR));
-                console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
-            },
-            beforeSend: function() {
-                $('body .loadingSpinner').show();
-            },
-            complete: function() {
-                $('body .loadingSpinner').hide();
-            }
-        });
-    }
-
-    function renderList(sortProperty, sortOrder, selectedAirline) {
-        if (!selectedAirline) {
-            selectedAirline = $("#rivalsCanvas #rivalsTable div.table-row.selected").data('airline-id');
-        }
-        const rivalsTable = $("#rivalsCanvas #rivalsTable");
-
-        rivalsTable.children("div.table-row").remove();
-
-        // Filter if necessary
-        let displayRivals;
-        if (hideInactive && hideNonPlayer) {
-            displayRivals = loadedList.filter(function(rival) {
-                return rival.loginStatus < 3 && rival.type != "Non-Player" || rival.id == selectedAirline;
+        const ticker = $('#rivalsTicker');
+        if (!ticker.data('delegation-set')) {
+            ticker.on('click', '.table-row', function() {
+                showDetailsModal($(this).data('airline-id'));
             });
-        } else if (hideInactive) {
-            displayRivals = loadedList.filter(function(rival) {
-                return rival.loginStatus < 3 || rival.id == selectedAirline;
+            ticker.on('click', '.js-toggle-airline', function(e) {
+                e.stopPropagation();
+                toggleAirline($(this).closest('.table-row').data('airline-id'));
             });
-        } else if (hideNonPlayer) {
-            displayRivals = loadedList.filter(function(rival) {
-                return rival.type != "Non-Player";
+            ticker.on('click', '.js-show-details', function(e) {
+                e.stopPropagation();
+                showDetailsModal($(this).closest('.table-row').data('airline-id'));
             });
-        } else {
-            displayRivals = loadedList;
+            ticker.data('delegation-set', true);
         }
 
-        // Sort the list
-        displayRivals.sort(sortByProperty(sortProperty, sortOrder == "ascending"));
-
-        let selectedRow;
-        $.each(displayRivals, function(index, airline) {
-            const row = $("<div class='table-row clickable' data-airline-id='" + airline.id + "' onclick=\"Rivals.showDetails($(this), '" + airline.id + "')\"></div>");
-
-            row.append("<div class='cell'><img src='" + getStatusLogo(airline.loginStatus) + "' title='" + getStatusTitle(airline.loginStatus) + "' style='vertical-align:middle;'/>");
-            const $nameDiv = $("<div class='cell' style='vertical-align:unset;'>" + getAirlineSpan(airline.id, airline.name) + getUserLevelImg(airline.userLevel) + getAdminImg(airline.adminStatus) + getUserModifiersSpan(airline.userModifiers) + getAirlineModifiersSpan(airline.airlineModifiers)
-                + (airline.type == "Non-Player" ? "<img src='/assets/images/icons/robot.png' title='AI' style='vertical-align:middle;'/>" : "") + "</div>").appendTo(row);
-            addAirlineTooltip($nameDiv, airline.id, airline.slogan, airline.name);
-            if (airline.headquartersAirportName) {
-                row.append("<div class='cell'>" + getCountryFlagImg(airline.countryCode) + getAirportText(airline.headquartersCity, airline.headquartersAirportIata) + "</div>");
-            } else {
-                row.append("<div class='cell'>-</div>");
-            }
-            row.append("<div class='cell' align='right'>" + airline.reputation + "</div>");
-            row.append("<div class='cell' align='right'>" + airline.baseCount + "</div>");
-
-            if (selectedAirline == airline.id) {
-                row.addClass("selected");
-                selectedRow = row;
-            }
-
-            rivalsTable.append(row);
-        });
-
-        if (selectedRow) {
-            selectedRow[0].scrollIntoView();
-            showDetails(selectedRow, selectedAirline);
-        }
-    }
-
-    function toggleHideInactive(flagValue) {
-        hideInactive = flagValue;
-        const selectedSortHeader = $('#rivalsTableSortHeader .table-header .cell.selected');
-        renderList(selectedSortHeader.data('sort-property') || 'reputation', selectedSortHeader.data('sort-order') || 'descending', null);
-    }
-
-    function toggleHideNonPlayer(flagValue) {
-        hideNonPlayer = flagValue;
-        const selectedSortHeader = $('#rivalsTableSortHeader .table-header .cell.selected');
-        renderList(selectedSortHeader.data('sort-property') || 'reputation', selectedSortHeader.data('sort-order') || 'descending', null);
-    }
-
-    function toggleListSortOrder(sortHeader) {
-        if (sortHeader.data("sort-order") == "ascending") {
-            sortHeader.data("sort-order", "descending");
-        } else {
-            sortHeader.data("sort-order", "ascending");
-        }
-
-        $('#rivalsTableSortHeader .cell').removeClass("selected");
-        $('#rivalIdSortButton').removeClass("selected");
-        sortHeader.addClass("selected");
-
-        renderList(sortHeader.data("sort-property"), sortHeader.data("sort-order"));
-    }
-
-    function getStatusLogo(status) {
-        if (status == 0) {
-            return "/assets/images/icons/12px/status-green.png";
-        } else if (status == 1) {
-            return "/assets/images/icons/12px/status-yellow.png";
-        } else if (status == 2) {
-            return "/assets/images/icons/12px/status-orange.png";
-        } else {
-            return "/assets/images/icons/12px/status-grey.png";
-        }
-    }
-
-    function getStatusTitle(status) {
-        if (status == 0) {
-            return "Online";
-        } else if (status == 1) {
-            return "Active within last 7 days";
-        } else if (status == 2) {
-            return "Active within last 30 days";
-        } else {
-            return "Inactive";
+        if (selectedAirline) {
+            showDetailsModal(selectedAirline);
         }
     }
 
@@ -217,7 +87,6 @@ const Rivals = (() => {
                 contentType: 'application/json; charset=utf-8',
                 dataType: 'json',
                 success: function(airlines) {
-                    loadedList = airlines;
                     $.each(airlines, function(index, airline) {
                         loadedById[airline.id] = airline;
                     });
@@ -423,14 +292,18 @@ const Rivals = (() => {
 
         loadedLinks.sort(sortByProperty(sortProperty || 'distance', sortOrder == "ascending"));
 
-        $.each(loadedLinks, function(index, link) {
-            const row = $("<div class='table-row'></div>");
-            row.append("<div class='cell'>" + getCountryFlagImg(link.fromCountryCode) + getAirportText(link.fromAirportCity, link.fromAirportCode) + "</div>");
-            row.append("<div class='cell'>" + getCountryFlagImg(link.toCountryCode) + getAirportText(link.toAirportCity, link.toAirportCode) + "</div>");
-            row.append("<div class='cell' align='right'>" + link.distance + "km</div>");
-            row.append("<div class='cell' align='right'>" + link.frequency + "</div>");
-            rivalLinksTable.append(row);
+        const rowsHtml = [];
+        loadedLinks.forEach(function(link) {
+            rowsHtml.push(
+                `<div class='table-row'>` +
+                `<div class='cell'>${getCountryFlagImg(link.fromCountryCode)}${getAirportText(link.fromAirportCity, link.fromAirportCode)}</div>` +
+                `<div class='cell'>${getCountryFlagImg(link.toCountryCode)}${getAirportText(link.toAirportCity, link.toAirportCode)}</div>` +
+                `<div class='cell' align='right'>${link.distance}km</div>` +
+                `<div class='cell' align='right'>${link.frequency}</div>` +
+                `</div>`
+            );
         });
+        rivalLinksTable.append(rowsHtml.join(''));
     }
 
     function toggleLinksSortOrder(sortHeader) {
@@ -534,19 +407,82 @@ const Rivals = (() => {
     // SECTION: Market Data Loading
     // =========================================================================
 
-    function loadData() {
+    function prefetch() {
+        if (rivalsData) return;
         $.ajax({
-            url: '/stock-market',
+            url: '/rivals-data',
             type: 'GET',
             dataType: 'json',
             success: function(data) {
                 rivalsData = data;
                 buildTypeFilter();
+                resetVisibilityToTop20();
+            },
+            error: function(jqXHR, textStatus) {
+                console.error('Rivals prefetch failed:', textStatus);
+            }
+        });
+    }
+
+    function loadData() {
+        if (rivalsData) {
+            buildTypeFilter();
+            resetVisibilityToTop20();
+            renderChart();
+            renderTicker();
+            return;
+        }
+        $.ajax({
+            url: '/rivals-data',
+            type: 'GET',
+            dataType: 'json',
+            success: function(data) {
+                rivalsData = data;
+                buildTypeFilter();
+                resetVisibilityToTop20();
                 renderChart();
                 renderTicker();
             },
             error: function(jqXHR, textStatus) {
                 console.error('Failed to load rivals market data:', textStatus);
+            }
+        });
+    }
+
+    function resetVisibilityToTop20() {
+        if (!rivalsData) return;
+        const airlines = rivalsData.airlines;
+        const history = rivalsData.history;
+
+        // Helper to get current value for sorting
+        const getMetricValue = (airline) => {
+             if (metric === 'price') return airline.currentPrice;
+             const airlineHistory = history[airline.id] || [];
+             const filtered = airlineHistory.filter(h => h.period === period);
+             if (filtered.length === 0) return -1;
+             // Sort to ensure we get the latest
+             filtered.sort((a, b) => a.cycle - b.cycle);
+             return filtered[filtered.length - 1][metric];
+        };
+
+        // 1. Sort by current metric descending
+        // Clone array to avoid mutating original order if that matters elsewhere
+        const sortedAirlines = [...airlines].sort((a, b) => getMetricValue(b) - getMetricValue(a));
+        
+        // 2. Select Top 20 IDs
+        const top20Ids = new Set(sortedAirlines.slice(0, 20).map(a => a.id));
+        
+        // 3. Ensure Active Airline is included (if it exists)
+        if (typeof activeAirline !== 'undefined' && activeAirline) {
+            top20Ids.add(activeAirline.id);
+        }
+
+        // 4. Update hiddenAirlines
+        // If it's NOT in the top 20 set, we hide it.
+        hiddenAirlines = {};
+        airlines.forEach(function(airline) {
+            if (!top20Ids.has(airline.id)) {
+                hiddenAirlines[airline.id] = true;
             }
         });
     }
@@ -590,6 +526,7 @@ const Rivals = (() => {
         $(item).addClass('active');
         $dropdown.find('.smDropdownLabel').text($(item).text());
         $dropdown.removeClass('open');
+        resetVisibilityToTop20();
         renderChart();
     }
 
@@ -793,16 +730,9 @@ const Rivals = (() => {
         rivalsData.airlines.forEach(function(airline) {
             if (!isAirlineTypeVisible(airline)) return;
 
-            const weeklyHistory = (history[airline.id] || []).filter(function(h) { return h.period === period; });
-            weeklyHistory.sort(function(a, b) { return a.cycle - b.cycle; });
-            let changePct = 0;
-            if (weeklyHistory.length >= 2) {
-                const prev = weeklyHistory[weeklyHistory.length - 2].price;
-                const curr = weeklyHistory[weeklyHistory.length - 1].price;
-                changePct = prev > 0 ? ((curr - prev) / prev) * 100 : 0;
-            }
-
-            const latestEntry = weeklyHistory.length > 0 ? weeklyHistory[weeklyHistory.length - 1] : null;
+            const airlineHistory = (history[airline.id] || []).filter(function(h) { return h.period === period; });
+            airlineHistory.sort(function(a, b) { return a.cycle - b.cycle; });
+            const latestEntry = airlineHistory.length > 0 ? airlineHistory[airlineHistory.length - 1] : null;
 
             displayRows.push({
                 id: airline.id,
@@ -810,7 +740,6 @@ const Rivals = (() => {
                 airlineType: airline.airlineType,
                 alliance: airline.alliance || '',
                 currentPrice: airline.currentPrice,
-                changePct: changePct,
                 totalValue: latestEntry ? latestEntry.totalValue : 0,
                 reputation: latestEntry ? latestEntry.reputation : 0
             });
@@ -826,28 +755,26 @@ const Rivals = (() => {
         const $table = $('#rivalsTicker');
         $table.find('.table-row').remove();
 
+        const rowsHtml = [];
         displayRows.forEach(function(entry) {
             const color = colorFromString(entry.name);
             const isHidden = hiddenAirlines[entry.id];
-            const changeColor = entry.changePct >= 0 ? '#4CAF50' : '#F44336';
-            const changeSign = entry.changePct >= 0 ? '+' : '';
             const opacity = isHidden ? '0.4' : '1';
 
-            const row = '<div class="table-row clickable" style="opacity: ' + opacity + ';">' +
-                '<div class="cell" style="width: 3%;" onclick="event.stopPropagation(); Rivals.showDetailsModal(' + entry.id + ')">' +
-                    '<img src="/assets/images/icons/magnifier.png" style="width:14px;height:14px;cursor:pointer;opacity:0.7;" data-tooltip="View details">' +
-                '</div>' +
-                '<div class="cell" style="width: 3%;" onclick="Rivals.toggleAirline(' + entry.id + ')"><span style="display:block;width:12px;height:12px;margin:auto;border-radius:2px;background:' + color + ';"></span></div>' +
-                '<div class="cell" style="width: 18%;" onclick="Rivals.showDetailsModal(' + entry.id + ')">' + entry.name + '</div>' +
-                '<div class="cell" style="width: 11%;" onclick="Rivals.showDetailsModal(' + entry.id + ')">' + entry.airlineType + '</div>' +
-                '<div class="cell" style="width: 13%;" onclick="Rivals.showDetailsModal(' + entry.id + ')">' + (entry.alliance || '-') + '</div>' +
-                '<div class="cell" style="width: 11%;" align="right" onclick="Rivals.showDetailsModal(' + entry.id + ')" data-tooltip="Change since last entry">$' + entry.currentPrice.toFixed(2) + '</div>' +
-                '<div class="cell" style="width: 11%;" align="right" onclick="Rivals.showDetailsModal(' + entry.id + ')"><span style="color:' + changeColor + ';">' + changeSign + entry.changePct.toFixed(1) + '%</span></div>' +
-                '<div class="cell" style="width: 14%;" align="right" onclick="Rivals.showDetailsModal(' + entry.id + ')">$' + commaSeparateNumber(entry.totalValue) + '</div>' +
-                '<div class="cell" style="width: 11%;" align="right" onclick="Rivals.toggleAirline(' + entry.id + ')">' + entry.reputation + '</div>' +
-                '</div>';
-            $table.append(row);
+            rowsHtml.push(
+                `<div class="table-row clickable" data-airline-id="${entry.id}" style="opacity:${opacity};">` +
+                `<div class="cell js-show-details" style="width:3%;"><img src="/assets/images/icons/magnifier.png" style="width:14px;height:14px;cursor:pointer;opacity:0.7;" data-tooltip="View details"></div>` +
+                `<div class="cell js-toggle-airline" style="width:3%;"><input type="checkbox" ${isHidden ? '' : 'checked'} style="cursor:pointer;"></div>` +
+                `<div class="cell" style="width:21%;"><span style="display:inline-block;width:10px;height:10px;margin-right:4px;border-radius:2px;background:${color};vertical-align:middle;"></span>${entry.name}</div>` +
+                `<div class="cell" style="width:12%;">${entry.airlineType}</div>` +
+                `<div class="cell" style="width:14%;">${entry.alliance || '-'}</div>` +
+                `<div class="cell" style="width:13%;" align="right">$${entry.currentPrice.toFixed(2)}</div>` +
+                `<div class="cell" style="width:16%;" align="right">$${commaSeparateNumber(entry.totalValue)}</div>` +
+                `<div class="cell js-toggle-airline" style="width:13%;" align="right">${entry.reputation}</div>` +
+                `</div>`
+            );
         });
+        $table.append(rowsHtml.join(''));
     }
 
     function toggleAirline(airlineId) {
@@ -877,14 +804,11 @@ const Rivals = (() => {
         show,
 
         // Market data
+        get airlines() { return rivalsData ? rivalsData.airlines : []; },
+        prefetch,
         loadData,
         renderChart,
         renderTicker,
-
-        // Rivals list
-        toggleHideInactive,
-        toggleHideNonPlayer,
-        toggleListSortOrder,
 
         // Rival details
         showDetails,
