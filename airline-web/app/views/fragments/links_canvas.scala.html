@@ -114,35 +114,25 @@
 			</div>
 		</div>
 	</div>
-    <div id="linksActionBar" style="display: none; position: fixed; bottom: 0; left: 0; right: 0; background: #333; color: white; padding: 10px; z-index: 2000; align-items: center; justify-content: space-between; box-shadow: 0 -2px 10px rgba(0,0,0,0.3);">
-          <div style="display: flex; gap: 15px; align-items: center;">
-              <span id="selectedLinksCount" style="font-weight: bold; margin-left: 20px;">0 selected</span>
-              <div style="width: 1px; height: 20px; background: #555;"></div>
-              <span style="font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #aaa;">Color</span>
-              <div class="color-picker-container" style="display: flex; gap: 8px;">
-                  <div class="color-dot"
-                       style="background-color: transparent; border: 1px solid #aaa; width: 20px; height: 20px; border-radius: 50%; cursor: pointer;"
-                       onclick="bulkUpdateColor(null)" title="None"></div>
-                  <div class="color-dot"
-                       style="background-color: #ffcccc; width: 20px; height: 20px; border-radius: 50%; cursor: pointer;"
-                       onclick="bulkUpdateColor('#ffcccc88')" title="Red"></div>
-                  <div class="color-dot"
-                       style="background-color: #ccffcc; width: 20px; height: 20px; border-radius: 50%; cursor: pointer;"
-                       onclick="bulkUpdateColor('#ccffcc88')" title="Green"></div>
-                  <div class="color-dot"
-                       style="background-color: #ffffcc; width: 20px; height: 20px; border-radius: 50%; cursor: pointer;"
-                       onclick="bulkUpdateColor('#ffffcc88')" title="Yellow"></div>
-                  <div class="color-dot"
-                       style="background-color: #ccccff; width: 20px; height: 20px; border-radius: 50%; cursor: pointer;"
-                       onclick="bulkUpdateColor('#ccccff88')" title="Blue"></div>
+    <div id="linksActionBar">
+          <div class="flex-align-center gap-4">
+              <span id="selectedLinksCount" class="font-bold ml-5">0 selected</span>
+              <div class="divider-v"></div>
+              <span class="font-uppercase">Color</span>
+              <div class="color-picker-container flex-align-center gap-2">
+                  <div class="color-dot" style="background-color: transparent; border-color: #aaa;" onclick="bulkUpdateColor(null)" title="None"></div>
+                  <div class="color-dot" style="background-color: #ffcccc;" onclick="bulkUpdateColor('#ffcccc88')" title="Red"></div>
+                  <div class="color-dot" style="background-color: #ccffcc;" onclick="bulkUpdateColor('#ccffcc88')" title="Green"></div>
+                  <div class="color-dot" style="background-color: #ffffcc;" onclick="bulkUpdateColor('#ffffcc88')" title="Yellow"></div>
+                  <div class="color-dot" style="background-color: #ccccff;" onclick="bulkUpdateColor('#ccccff88')" title="Blue"></div>
               </div>
-              <div style="width: 1px; height: 20px; background: #555;"></div>
-              <span style="font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #aaa;">Quality</span>
+              <div class="divider-v"></div>
+              <span class="font-uppercase">Quality</span>
               <div id="bulkUpdateQualityBar" data-empty-icon='@routes.Assets.versioned("/images/icons/star-empty.svg")'
                    data-fill-icon='@routes.Assets.versioned("/images/icons/star-full.svg")'></div>
               <input type="hidden" id="bulkUpdateQualityLevel" value="1" />
-              <button class="button" onclick="submitBulkUpdateQuality()" style="padding: 4px 12px;">Update Quality</button>
-              <div style="width: 1px; height: 20px; background: #555; margin: 0 20px;;"></div>
-              <button class="button warning" onclick="promptBulkDelete()" style="padding: 4px 12px;">Delete Selected</button>
+              <button class="button px-4 py-1" onclick="submitBulkUpdateQuality()">Update Quality</button>
+              <div class="divider-v mx-5"></div>
+              <button class="button warning px-4 py-1" onclick="promptBulkDelete()">Delete Selected</button>
           </div>
       </div>

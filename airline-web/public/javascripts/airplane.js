@@ -138,10 +138,34 @@ async function showAirplaneCanvas(selectedAircraftTab = 'hangar', airplaneModel 
     await loadAirplaneModels()
     loadAirplaneModelOwnerInfo()
 
+    const airplaneModelTable = $('#airplaneModelTable');
+    if (!airplaneModelTable.data('delegation-set')) {
+        airplaneModelTable.on('click', '.table-row', function() {
+            selectAirplaneModel(loadedModelsById[$(this).data('model-id')]);
+        });
+        airplaneModelTable.data('delegation-set', true);
+    }
+
+    const aircraftAvailableOptions = {
+        "name": {}, "family": {}, "airplaneType": {}, "capacity": {},
+        "quality": {}, "range": {}, "runwayRequirement": {}, "speed": {},
+    };
+    $.each(loadedModelsOwnerInfo, function(index, m) {
+        aircraftAvailableOptions.name[m.name] = m.name;
+        aircraftAvailableOptions.family[m.family] = m.family;
+        aircraftAvailableOptions.airplaneType[m.airplaneType] = m.airplaneType;
+        aircraftAvailableOptions.capacity[m.capacity] = Number(m.capacity);
+        aircraftAvailableOptions.quality[m.quality] = Number(m.quality);
+        aircraftAvailableOptions.speed[m.speed] = Number(m.speed);
+        aircraftAvailableOptions.range[m.range] = Number(m.range);
+        aircraftAvailableOptions.runwayRequirement[m.runwayRequirement] = m.runwayRequirement;
+    });
+    updateColumnFilterOptions(aircraftAvailableOptions, 'aircraft');
+
     if (selectedAircraftTab === 'market') {
         document.querySelector('.details.market').style.display = 'block';
         document.querySelector('.details.hangar').style.display = 'none';
-        
+
         const $hideForbidden = $('#toggleHideForbiddenPlanes');
         if (!$hideForbidden.data('listener-attached')) {
             $hideForbidden.on('change', function() {
@@ -183,44 +207,22 @@ function updateAirplaneModelTable(sortProperty, sortOrder) {
 	var airplaneModelTable = $("#airplaneModelTable")
 	airplaneModelTable.children("div.table-row").remove()
 
-    var availableOptions = {
-		"name": {},
-		"family": {},
-		"airplaneType": {},
-		"capacity": {},
-		"quality": {},
-		"range": {},
-		"runwayRequirement": {},
-        "speed": {},
-	};
-
     const state = tableFilterState.getTableState('aircraft');
 
      //used for pricing calculation
     const {rangeRequirement, airportFromSizeRequirement, airportToSizeRequirement} = airplaneModelCalculator()
-	
+
     const showForbidden = $('#toggleHideForbiddenPlanes').is(':checked');
+    const rowsHtml = [];
+    let selectedModel = null;
 
 	$.each(loadedModelsOwnerInfo, function(index, modelOwnerInfo) {
         if (!showForbidden && modelOwnerInfo.rejection && modelOwnerInfo.rejection.length > 0) {
             return;
         }
 
-		var row = $("<div class='table-row clickable' data-model-id='" + modelOwnerInfo.id + "' onclick='selectAirplaneModel(loadedModelsById[" + modelOwnerInfo.id + "])'></div>")
-		var stars = $("<div class='cell' align='right'>").append(getGradeStarsImgs(modelOwnerInfo.quality)).append("</div>")
-		var capacity = modelOwnerInfo.capacity
         modelOwnerInfo.costPerPax = calcCostPerPax(modelOwnerInfo, rangeRequirement, airportFromSizeRequirement, airportToSizeRequirement)
         modelOwnerInfo.trips = calcFreq(modelOwnerInfo, rangeRequirement)
-
-        // Collect filter options
-        availableOptions.name[modelOwnerInfo.name] = modelOwnerInfo.name;
-        availableOptions.family[modelOwnerInfo.family] = modelOwnerInfo.family;
-        availableOptions.airplaneType[modelOwnerInfo.airplaneType] = modelOwnerInfo.airplaneType;
-        availableOptions.capacity[modelOwnerInfo.capacity] = Number(modelOwnerInfo.capacity);
-        availableOptions.quality[modelOwnerInfo.quality] = Number(modelOwnerInfo.quality);
-        availableOptions.speed[modelOwnerInfo.speed] = Number(modelOwnerInfo.speed);
-        availableOptions.range[modelOwnerInfo.range] = Number(modelOwnerInfo.range);
-        availableOptions.runwayRequirement[modelOwnerInfo.runwayRequirement] = modelOwnerInfo.runwayRequirement;
 
         let isFiltered = false;
 		Object.entries(state.selectedColumnFilter).forEach(([property, filterValues]) => {
@@ -232,38 +234,44 @@ function updateAirplaneModelTable(sortProperty, sortOrder) {
 			}
 		});
 		if (isFiltered) {
-			return; // skip rendering this row
+			return;
 		}
 
-		if (modelOwnerInfo.isFavorite) {
-		    row.append("<div class='cell'>" + modelOwnerInfo.name + "<img src='/assets/images/icons/heart.png' height='10px'></div>")
-        } else {
-            row.append("<div class='cell'>" + modelOwnerInfo.name + "</div>")
-		}
-		row.append("<div class='cell'>" + modelOwnerInfo.family + "</div>")
-		row.append("<div class='cell'>" + modelOwnerInfo.airplaneType + "</div>")
-		row.append("<div class='cell' align='right'>$" + commaSeparateNumber(modelOwnerInfo.price) + "</div>")
-		row.append("<div class='cell' align='right'>" + capacity + "</div>")
-		row.append(stars)
-		row.append("<div class='cell' align='right'>" + modelOwnerInfo.range + " km</div>")
-		row.append("<div class='cell' align='right'>" + modelOwnerInfo.trips + "</div>")
-		row.append("<div class='cell' align='right'>" + modelOwnerInfo.ascentBurn + "</div>")
-		row.append("<div class='cell' align='right'>" + modelOwnerInfo.cruiseBurn + "</div>")
-		row.append("<div class='cell' align='right'>" + modelOwnerInfo.lifespan / 52 + " yrs</div>")
-		row.append("<div class='cell' align='right'>" + modelOwnerInfo.speed + " km/h</div>")
-		row.append("<div class='cell' align='right'>" + modelOwnerInfo.runwayRequirement + " m</div>")
-		row.append("<div class='cell' align='right'>" + modelOwnerInfo.assignedAirplanes.length + "/" + modelOwnerInfo.availableAirplanes.length + "/" + modelOwnerInfo.constructingAirplanes.length + "</div>")
-		row.append("<div class='cell' align='right'>" + modelOwnerInfo.total + "</div>")
-		row.append("<div class='cell' align='right'>$" + (modelOwnerInfo.costPerPax).toFixed() + "</div>")
-		
-		if (selectedModelId == modelOwnerInfo.id) {
-			row.addClass("selected")
-			selectAirplaneModel(modelOwnerInfo)
-		}
-		airplaneModelTable.append(row)
+        const selectedClass = selectedModelId == modelOwnerInfo.id ? ' selected' : '';
+        if (selectedModelId == modelOwnerInfo.id) {
+            selectedModel = modelOwnerInfo;
+        }
+
+        const nameCell = modelOwnerInfo.isFavorite
+            ? `<div class='cell'>${modelOwnerInfo.name}<img src='/assets/images/icons/heart.png' height='10px'></div>`
+            : `<div class='cell'>${modelOwnerInfo.name}</div>`;
+
+        rowsHtml.push(
+            `<div class='table-row clickable${selectedClass}' data-model-id='${modelOwnerInfo.id}'>` +
+            nameCell +
+            `<div class='cell'>${modelOwnerInfo.family}</div>` +
+            `<div class='cell'>${modelOwnerInfo.airplaneType}</div>` +
+            `<div class='cell' align='right'>$${commaSeparateNumber(modelOwnerInfo.price)}</div>` +
+            `<div class='cell' align='right'>${modelOwnerInfo.capacity}</div>` +
+            `<div class='cell' align='right'>${getGradeStarsImgs(modelOwnerInfo.quality)}</div>` +
+            `<div class='cell' align='right'>${modelOwnerInfo.range} km</div>` +
+            `<div class='cell' align='right'>${modelOwnerInfo.trips}</div>` +
+            `<div class='cell' align='right'>${modelOwnerInfo.ascentBurn}</div>` +
+            `<div class='cell' align='right'>${modelOwnerInfo.cruiseBurn}</div>` +
+            `<div class='cell' align='right'>${modelOwnerInfo.lifespan / 52} yrs</div>` +
+            `<div class='cell' align='right'>${modelOwnerInfo.speed} km/h</div>` +
+            `<div class='cell' align='right'>${modelOwnerInfo.runwayRequirement} m</div>` +
+            `<div class='cell' align='right'>${modelOwnerInfo.assignedAirplanes.length}/${modelOwnerInfo.availableAirplanes.length}/${modelOwnerInfo.constructingAirplanes.length}</div>` +
+            `<div class='cell' align='right'>${modelOwnerInfo.total}</div>` +
+            `<div class='cell' align='right'>$${(modelOwnerInfo.costPerPax).toFixed()}</div>` +
+            `</div>`
+        );
 	});
 
-	updateColumnFilterOptions(availableOptions, 'aircraft');
+    airplaneModelTable.append(rowsHtml.join(''));
+    if (selectedModel) {
+        selectAirplaneModel(selectedModel);
+    }
 }
 
 function updateAirplaneModelCalculator() {
