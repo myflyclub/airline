@@ -8,6 +8,8 @@ import com.patson.model.{AllianceHistory, AllianceMember, _}
 import com.patson.model.alliance.AllianceStats
 import com.patson.util.{AirlineCache, AirportChampionInfo, AllianceCache, AllianceRankingUtil, ChampionUtil, CountryChampionInfo, LogoGenerator, UserCache}
 import java.awt.Color
+import com.google.common.cache.{CacheBuilder, CacheLoader, LoadingCache}
+import java.util.concurrent.TimeUnit
 import controllers.AuthenticationObject.AuthenticatedAirline
 
 import javax.inject.Inject
@@ -82,6 +84,85 @@ class AllianceApplication @Inject()(cc: ControllerComponents) extends AbstractCo
     }
   }
 
+
+  private def currentCycle: Int = CycleSource.loadCycle() - 1
+
+  private val alliancesDataCache: LoadingCache[Int, JsValue] =
+    CacheBuilder.newBuilder()
+      .maximumSize(2)
+      .expireAfterWrite(10, TimeUnit.MINUTES)
+      .build(new CacheLoader[Int, JsValue] {
+        override def load(cycle: Int): JsValue = buildAlliancesData(cycle)
+      })
+
+  def getAlliancesData() = Action { request =>
+    request.headers.get(IF_NONE_MATCH) match {
+      case Some(etag) if etag == s""""$currentCycle"""" =>
+        NotModified
+      case _ =>
+        val cycle = currentCycle
+        Ok(alliancesDataCache.get(cycle)).withHeaders(
+          CACHE_CONTROL -> "no-cache",
+          ETAG -> s""""$cycle""""
+        )
+    }
+  }
+
+  private def buildAlliancesData(cycle: Int): JsValue = {
+    val alliances = AllianceSource.loadAllAlliances(true)
+    val alliancesWithRanking: Map[Int, (Int, BigDecimal)] = AllianceRankingUtil.getRankings()
+    val currentStats: Map[Int, AllianceStats] = AllianceSource.loadAllianceStatsByCycle(cycle)
+      .groupBy(_.alliance.id).view.mapValues(_.head).toMap
+
+    val weeklyHistory  = AllianceSource.loadAllianceStatsByCycleRange(cycle - 52, cycle, Period.WEEKLY)
+    val quarterHistory = AllianceSource.loadAllianceStatsByCycleRange(cycle - 52 * 4, cycle, Period.QUARTER)
+    val yearHistory    = AllianceSource.loadAllianceStatsByCycleRange(cycle - 52 * 10, cycle, Period.YEAR)
+    val allHistory     = weeklyHistory ++ quarterHistory ++ yearHistory
+
+    val alliancesJson = JsArray(alliances.map { alliance =>
+      var allianceJson: JsObject = Json.obj(
+        "id"          -> alliance.id,
+        "name"        -> alliance.name,
+        "status"      -> (if (alliance.status == ESTABLISHED) "Established" else "Forming"),
+        "memberCount" -> alliance.members.count(_.role != AllianceRole.APPLICANT)
+      )
+      alliancesWithRanking.get(alliance.id).foreach { case (ranking, championPoints) =>
+        allianceJson = allianceJson +
+          ("ranking"        -> JsNumber(ranking)) +
+          ("championPoints" -> JsNumber(championPoints.toInt))
+      }
+      alliance.members.find(_.role == LEADER).foreach { leader =>
+        allianceJson = allianceJson + ("leaderName" -> JsString(leader.airline.name))
+      }
+      currentStats.get(alliance.id).foreach { stats =>
+        allianceJson = allianceJson + ("currentStats" -> Json.obj(
+          "totalAirportRep"  -> BigDecimal(stats.airportRep).setScale(1, RoundingMode.HALF_UP),
+          "combinedMarketCap" -> stats.airlineMarketCap,
+          "elitePax"         -> stats.elitePax,
+          "touristPax"       -> stats.touristPax,
+          "totalPax"         -> stats.totalPax
+        ))
+      }
+      allianceJson
+    })
+
+    val historyByAlliance: Map[Int, List[AllianceStats]] = allHistory.groupBy(_.alliance.id)
+    val historyJson = JsObject(historyByAlliance.map { case (allianceId, statsList) =>
+      allianceId.toString -> JsArray(statsList.sortBy(_.cycle).map { stats =>
+        Json.obj(
+          "cycle"             -> stats.cycle,
+          "period"            -> stats.period.toString,
+          "totalAirportRep"   -> stats.airportRep.toInt,
+          "combinedMarketCap" -> stats.airlineMarketCap,
+          "elitePax"          -> stats.elitePax,
+          "touristPax"        -> stats.touristPax,
+          "totalPax"          -> stats.totalPax
+        )
+      })
+    }.toSeq)
+
+    Json.obj("alliances" -> alliancesJson, "history" -> historyJson)
+  }
 
   case class FormAlliance(allianceName: String)
 
@@ -320,9 +401,8 @@ class AllianceApplication @Inject()(cc: ControllerComponents) extends AbstractCo
         val topEntries = allianceChampions.sortBy(_.reputationBoost).reverse.take(MAX_CHAMPION_ENTRIES)
         val (topMemberChampions, topApplicantChampions) = topEntries.partition(entry => approvedMemberAirlineIds.contains(entry.loyalist.airline.id))
 
-        val airportReputation = allianceChampions.filter(entry => approvedMemberAirlineIds.contains(entry.loyalist.airline.id)).map(_.reputationBoost).sum
         val totalReputation = AirlineCache.getAirlines(approvedMemberAirlineIds).map(_._2.getReputation()).sum
-        Ok(Json.obj("members" -> Json.toJson(topMemberChampions), "applicants" -> Json.toJson(topApplicantChampions), "airportReputation" -> BigDecimal(airportReputation).setScale(2, RoundingMode.HALF_UP), "totalReputation" -> BigDecimal(totalReputation).setScale(2, RoundingMode.HALF_UP), "truncatedEntries" -> Math.max(0, allianceChampions.length - MAX_CHAMPION_ENTRIES)))
+        Ok(Json.obj("members" -> Json.toJson(topMemberChampions), "applicants" -> Json.toJson(topApplicantChampions), "totalReputation" -> BigDecimal(totalReputation).setScale(2, RoundingMode.HALF_UP), "truncatedEntries" -> Math.max(0, allianceChampions.length - MAX_CHAMPION_ENTRIES)))
       }
     }
   }

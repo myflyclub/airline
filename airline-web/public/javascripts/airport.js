@@ -783,7 +783,7 @@ function updateFacilityList(statistics) {
         var row = $(`<div class='table-row clickable' onClick='navigateTo("/rivals/${lounge.airlineId}")'></div>`)
         var allianceSpan = "-"
         if (lounge.allianceId) {
-            allianceSpan = "<div class='flex-row gap-0'>" + getAllianceLogoImg(lounge.allianceId) + htmlEncode(loadedAlliancesById[lounge.allianceId].name) + "</div>"
+            allianceSpan = "<div class='flex-row gap-0'>" + getAllianceLogoImg(lounge.allianceId) + htmlEncode(Alliance.loadedAlliancesById[lounge.allianceId].name) + "</div>"
         }
         row.append("<div class='cell'>" + allianceSpan + "</div>")
         row.append("<div class='cell'>" + htmlEncode(lounge.airlineName) + "</div>")
@@ -1304,12 +1304,12 @@ function renderDemandCards(demands) {
         card.className = 'card'
 
         const typeColor = PAX_TYPE_COLORS[d.passengerType] || '#888888'
-        const typeBadge = '<span style="background:' + typeColor + ';color:#fff;border-radius:3px;padding:1px 4px;font-size:0.8em;margin-right:4px;">' + d.passengerType + '</span>'
+        const typeBadge = '<span class="ml-auto" style="background:' + typeColor + ';color:#fff;border-radius:2px;padding:1px 4px;font-size:0.8em;margin-right:4px;">' + d.passengerType + '</span>'
         const classBadge = '<span style="border:1px solid rgba(255,255,255,0.3);border-radius:3px;padding:1px 4px;font-size:0.8em;">' + d.preferredLinkClass + '</span>'
 
         const header = document.createElement('div')
         header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;'
-        header.innerHTML = `<strong class="iata">${d.toAirportIata}</strong>${d.toAirportName}<span class="ml-auto">${typeBadge}${classBadge}</span>`
+        header.innerHTML = `<strong class="iata">${d.toAirportIata}</strong>${d.toAirportName}${typeBadge}${classBadge}`
 
         const statsRow = document.createElement('div')
         statsRow.style.cssText = 'display:flex;justify-content:space-between;align-items:center;'
