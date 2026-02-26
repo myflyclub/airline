@@ -9,7 +9,7 @@
 	<link rel="dns-prefetch" href="//ajax.googleapis.com">
 	<link rel="dns-prefetch" href="//api.protomaps.com">
 	<script>
-		window.protomapsKey = "@configuration.get[String]("protomaps.apiKey")";
+		window.protomapsKey = '@configuration.get[String]("protomaps.apiKey")';
 	</script>
 	<link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/main.css")'>
 	<link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/departures.css")'>
@@ -20,13 +20,10 @@
 	<link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/switch.css")'>
 	<link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/select.css")'>
 	<link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/prompt.css")'>
-	<link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("javascripts/splitting/splitting.css")'>
-	<link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("javascripts/splitting/splitting-cells.css")'>
 	<link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/mobile.css")'>
-	<script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
-	<script src="https://code.jquery.com/jquery-migrate-3.4.1.min.js" integrity="sha256-UnTxHm+zKuDPLfufgEMnKGXDl6fEIjtM+n1Q6lL73ok=" crossorigin="anonymous"></script>
+	<script src="https://code.jquery.com/jquery-4.0.0.min.js" crossorigin="anonymous"></script>
+	<script src="https://code.jquery.com/jquery-migrate-4.0.2.min.js" crossorigin="anonymous"></script>
 	<script src='@routes.Assets.versioned("javascripts/libs/reconnecting-websocket.min.js")'></script>
-	<script src='@routes.Assets.versioned("javascripts/splitting/splitting.min.js")'></script>
 	<script src="https://cdn.jsdelivr.net/npm/chart.js@@4.4.1/dist/chart.umd.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 	<script type="text/javascript" src='@routes.Assets.versioned("progress-bar/progress-bar.js")' defer></script>
