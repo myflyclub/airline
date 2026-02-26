@@ -4,13 +4,117 @@ var loadedCashFlows = {}
 var loadedAirlineOps = {}
 var loadedAirlineStats = {}
 var loadedAirlineReputation = {}
-var officeSheetPage = 0;
-var officeAirlineStatsPage = 0
 var officePeriod;
-
 var companyValue = 0;
 
-const minPositiveLog = 0.2 //manually defined lower bound for log 
+const minPositiveLog = 0.2 //manually defined lower bound for log
+
+// --- Unified sheet system ---
+const SHEET_CONFIG = {
+	income: {
+		pageGroup: 'financial',
+		getData: () => loadedIncomes[officePeriod] ?? [],
+		updateSheet: data => updateIncomeSheet(data),
+		updateChart: () => updateIncomeChart(),
+		sheetId: 'incomeSheet',
+		chartIds: ['totalProfitChart'],
+	},
+	cashFlow: {
+		pageGroup: 'financial',
+		getData: () => loadedCashFlows[officePeriod] ?? [],
+		updateSheet: data => updateCashFlowSheet(data),
+		updateChart: () => updateCashFlowChart(),
+		sheetId: 'cashFlowSheet',
+		chartIds: ['totalCashFlowChart', 'totalValueChart'],
+	},
+	airlineStat: {
+		pageGroup: 'stats',
+		getData: () => loadedAirlineStats[officePeriod] ?? [],
+		updateSheet: data => updateAirlineStatSheet(data),
+		updateChart: () => updateAirlineStatChart(),
+		sheetId: 'airlineStatsSheet',
+		chartIds: ['airlineStatsChart'],
+	},
+	airlineOp: {
+		pageGroup: 'stats',
+		getData: () => loadedAirlineStats[officePeriod] ?? [],
+		updateSheet: data => updateAirlineOpSheet(data),
+		updateChart: () => updateOpsChart(),
+		sheetId: 'opsSheet',
+		chartIds: ['opsChart'],
+	},
+	airlineReputation: {
+		pageGroup: 'stats',
+		getData: () => loadedAirlineStats[officePeriod] ?? [],
+		updateSheet: data => updateAirlineReputationSheet(data),
+		updateChart: () => updateAirlineReputationChart(),
+		sheetId: 'airlineReputationSheet',
+		chartIds: ['airlineReputationChart'],
+	},
+}
+
+const allSheetChartIds = new Set(Object.values(SHEET_CONFIG).flatMap(c => c.chartIds))
+const sheetPages = { financial: 0, stats: 0 }
+
+function getActiveSheetType() {
+	return document.querySelector('#officeCanvas .sheetOptions .cell.selected')?.dataset.type
+}
+function getSheetPage(type) {
+	return sheetPages[SHEET_CONFIG[type].pageGroup]
+}
+function setSheetPage(type, page) {
+	sheetPages[SHEET_CONFIG[type].pageGroup] = page
+}
+
+function getPeriodLabel() {
+	return { WEEKLY: 'Week', QUARTER: 'Quarter', YEAR: 'Year' }[officePeriod] ?? officePeriod
+}
+
+function renderSheetNav(type) {
+	if (!type) return
+	const config = SHEET_CONFIG[type]
+	const data = config.getData()
+	const page = getSheetPage(type)
+	const entry = data[page]
+	const sheet = document.getElementById(config.sheetId)
+	if (!sheet) return
+
+	let nav = sheet.querySelector('.sheet-nav')
+	if (!nav) {
+		nav = document.createElement('div')
+		nav.className = 'sheet-nav'
+
+		const prev = document.createElement('a')
+		prev.className = 'button-text prev'
+		prev.textContent = `\u2190 Prev ${getPeriodLabel()}`
+		prev.addEventListener('click', () => officeHistoryStep(-1))
+
+		const cycleEl = document.createElement('span')
+		cycleEl.className = 'officeCycleText text-xs'
+
+		const next = document.createElement('a')
+		next.className = 'button-text next'
+		next.textContent = `Next ${getPeriodLabel()} \u2192`
+		next.addEventListener('click', () => officeHistoryStep(1))
+
+		nav.append(prev, cycleEl, next)
+
+		const chart = sheet.querySelector('[id$="Chart"]')
+		if (chart) {
+			chart.after(nav)
+		} else {
+			sheet.prepend(nav)
+		}
+	}
+
+	// Update state
+	const label = getPeriodLabel()
+	nav.querySelector('.button-text.prev').textContent = `\u2190 Prev ${label}`
+	nav.querySelector('.button-text.next').textContent = `Next ${label} \u2192`
+	nav.querySelector('.button-text.prev').classList.toggle('disabled', page <= 0)
+	nav.querySelector('.button-text.next').classList.toggle('disabled', page >= data.length - 1)
+	nav.querySelector('.officeCycleText').textContent = entry ? getGameDate(entry.cycle, entry.period, true) : ''
+}
 
 $( document ).ready(function() {
 	loadLogoTemplates()
@@ -26,6 +130,15 @@ $( document ).ready(function() {
     $airlineColorPicker.change(function() {
         setAirlineColor($(this).val())
     });
+
+    document.querySelectorAll('#officeCanvas .sheetOptions .cell[data-type]').forEach(tab => {
+        tab.addEventListener('click', () => selectSheet(tab))
+    })
+
+    document.querySelector('#officeCanvas select.period')?.addEventListener('change', function() {
+        changeOfficePeriod(this.value)
+    })
+
 })
 
 function showOfficeCanvas() {
@@ -332,7 +445,7 @@ function writeMilestones(breakdowns) {
             const metCondtion = currentValue >= cond.reward ? "tick" : "cross";
             $col.append(
                 `<div style="width: 160px;justify-content: space-between;" class="flex-row py-1">
-					<div class="font-mono text-sm flex-center">
+					<div class="font-mono text-sm flex-align-center">
 						${commaSeparateNumber(cond.threshold)}
 						<img height="16" class="pl-1" src="/assets/images/icons/${metCondtion}.png">
 					</div>
@@ -431,10 +544,10 @@ function loadSheets() {
 	loadedAirlineStats = Object.fromEntries(periodKeys.map(key => [key, []]));
 	loadedAirlineReputation = Object.fromEntries(periodKeys.map(key => [key, []]));
 
-	officeSheetPage = 0
-	officeAirlineStatsPage = 0
+	sheetPages.financial = 0
+	sheetPages.stats = 0
 	officePeriod = 'WEEKLY'
-	$('#officeCanvas select.period').val(officePeriod)
+	document.querySelector('#officeCanvas select.period').value = officePeriod
 
 
 	$.ajax({
@@ -451,8 +564,8 @@ function loadSheets() {
 
 			var totalPages = loadedIncomes[officePeriod].length
 	    	if (totalPages > 0) {
-	    		officeSheetPage = totalPages - 1
-	    		updateIncomeSheet(loadedIncomes[officePeriod][officeSheetPage])
+	    		sheetPages.financial = totalPages - 1
+	    		updateIncomeSheet(loadedIncomes[officePeriod][sheetPages.financial])
 	    	}
 
 				updateIncomeChart(loadedIncomes[officePeriod])
@@ -465,8 +578,7 @@ function loadSheets() {
 
 			totalPages = loadedCashFlows[officePeriod].length
 	    	if (totalPages > 0) {
-	    		officeSheetPage = totalPages - 1
-	    		updateCashFlowSheet(loadedCashFlows[officePeriod][officeSheetPage])
+	    		updateCashFlowSheet(loadedCashFlows[officePeriod][sheetPages.financial])
 	    	}
 
 			updateCashFlowChart(loadedCashFlows[officePeriod], loadedIncomes[officePeriod])
@@ -475,21 +587,20 @@ function loadSheets() {
                 loadedAirlineStats[stat.period].push(stat)
             })
 
-			// group airline stats by period
-			// temp data for charts & initial sheet load
 			const airlineStat = data.airlineStats[data.airlineStats.length - 1] ?? null
 
-			// ensure we have page indices for airline stats per period
-			officeAirlineStatsPage = loadedAirlineStats[officePeriod].length > 0 ? loadedAirlineStats[officePeriod].length - 1 : 0
+			sheetPages.stats = loadedAirlineStats[officePeriod].length > 0 ? loadedAirlineStats[officePeriod].length - 1 : 0
 
 			updateAirlineStatChart(loadedAirlineStats[officePeriod]);
 			updateOpsChart(loadedAirlineStats[officePeriod]);
 			updateAirlineReputationChart(loadedAirlineStats[officePeriod]);
 
-			updateAirlineOpSheet(loadedAirlineStats[officePeriod][officeAirlineStatsPage] || airlineStat)
-			updateAirlineStatSheet(loadedAirlineStats[officePeriod][officeAirlineStatsPage] || airlineStat)
-			updateAirlineReputationSheet(loadedAirlineStats[officePeriod][officeAirlineStatsPage] || airlineStat)
-			updateProgress(loadedAirlineStats[officePeriod][officeAirlineStatsPage] || airlineStat)
+			const statData = loadedAirlineStats[officePeriod][sheetPages.stats] ?? airlineStat
+			updateAirlineOpSheet(statData)
+			updateAirlineStatSheet(statData)
+			updateAirlineReputationSheet(statData)
+			updateProgress(statData)
+			renderSheetNav(getActiveSheetType())
 	    },
 	    error: function(jqXHR, textStatus, errorThrown) {
             console.log(JSON.stringify(jqXHR));
@@ -551,82 +662,33 @@ function ensureChart(containerId, createCb) {
 }
 
 function officeHistoryStep(step) {
-	var type = $('#officeCanvas .sheetOptions').find('.cell.selected').data('type')
-
-	if (type === 'income' || type === 'cashFlow') {
-		// income/cashflow share the officeSheetPage
-		var totalPages = (type === 'income' ? loadedIncomes[officePeriod] : loadedCashFlows[officePeriod]).length
-		if (officeSheetPage + step < 0) {
-			officeSheetPage = 0
-		} else if (officeSheetPage + step >= totalPages) {
-			officeSheetPage = Math.max(totalPages - 1, 0)
-		} else {
-			officeSheetPage = officeSheetPage + step
-		}
-
-		if (type === 'income') {
-			updateIncomeSheet(loadedIncomes[officePeriod][officeSheetPage])
-		} else {
-			updateCashFlowSheet(loadedCashFlows[officePeriod][officeSheetPage])
-		}
-		return
-	}
-
-	// airline stats related sheets use their own page index
-	if (type === 'airlineStat' || type === 'airlineOp' || type === 'airlineReputation') {
-		var totalPages = (loadedAirlineStats[officePeriod] || []).length
-		if (officeAirlineStatsPage + step < 0) {
-			officeAirlineStatsPage = 0
-		} else if (officeAirlineStatsPage + step >= totalPages) {
-			officeAirlineStatsPage = Math.max(totalPages - 1, 0)
-		} else {
-			officeAirlineStatsPage = officeAirlineStatsPage + step
-		}
-
-		if (type === 'airlineStat') {
-			updateAirlineStatSheet(loadedAirlineStats[officePeriod][officeAirlineStatsPage])
-		} else if (type === 'airlineOp') {
-			updateAirlineOpSheet(loadedAirlineStats[officePeriod][officeAirlineStatsPage])
-		} else if (type === 'airlineReputation') {
-			updateAirlineReputationSheet(loadedAirlineStats[officePeriod][officeAirlineStatsPage])
-		}
-	}
+	const type = getActiveSheetType()
+	if (!type) return
+	const config = SHEET_CONFIG[type]
+	const data = config.getData()
+	const newPage = Math.max(0, Math.min(data.length - 1, getSheetPage(type) + step))
+	setSheetPage(type, newPage)
+	config.updateSheet(data[newPage])
+	renderSheetNav(type)
 }
 
-function changeOfficePeriod(period, type) {
-    var type = $('#officeCanvas .sheetOptions').find('.cell.selected').data('type')
-    officePeriod = period
-	if (type === 'income') {
-		var totalPages = loadedIncomes[officePeriod].length
-		officeSheetPage = totalPages - 1
-		updateIncomeSheet(loadedIncomes[officePeriod][officeSheetPage])
-		updateIncomeChart(loadedIncomes[officePeriod])
-	} else if (type === 'cashFlow') {
-		var totalPages = loadedCashFlows[officePeriod].length
-		officeSheetPage = totalPages - 1
-		updateCashFlowSheet(loadedCashFlows[officePeriod][officeSheetPage])
-		updateCashFlowChart(loadedCashFlows[officePeriod], loadedIncomes[officePeriod])
-    } else if (type === 'airlineStat') {
-        var totalPages = (loadedAirlineStats[officePeriod] || []).length
-    	officeAirlineStatsPage = totalPages > 0 ? totalPages - 1 : 0
-    	updateAirlineStatSheet(loadedAirlineStats[officePeriod][officeAirlineStatsPage])
-    	// updateAirlineStatChart()
-    } else if (type === 'airlineOp') {
-        var totalPages = (loadedAirlineStats[officePeriod] || []).length
-    	officeAirlineStatsPage = totalPages > 0 ? totalPages - 1 : 0
-    	updateAirlineOpSheet(loadedAirlineStats[officePeriod][officeAirlineStatsPage])
-    	// updateAirlineOpChart()
-    } else if (type === 'airlineReputation') {
-        var totalPages = (loadedAirlineStats[officePeriod] || []).length
-    	officeAirlineStatsPage = totalPages > 0 ? totalPages - 1 : 0
-    	updateAirlineReputationSheet(loadedAirlineStats[officePeriod][officeAirlineStatsPage])
-    	// updateAirlineReputationChart()
-    }
+function changeOfficePeriod(period) {
+	officePeriod = period
+	const type = getActiveSheetType()
+	if (!type) return
+	const config = SHEET_CONFIG[type]
+	const data = config.getData()
+	setSheetPage(type, Math.max(data.length - 1, 0))
+	config.updateSheet(data[getSheetPage(type)])
+	config.updateChart()
+	// Rebuild nav so period label and disabled states refresh
+	document.getElementById(config.sheetId)?.querySelector('.sheet-nav')?.remove()
+	renderSheetNav(type)
 }
 
 function updateIncomeSheet(airlineIncome) {
 	if (airlineIncome) {
-        updateAllTextNodes(".officeCycleText", getGameDate(airlineIncome.cycle, airlineIncome.period, true));
+        // updateAllTextNodes(".officeCycleText", getGameDate(airlineIncome.cycle, airlineIncome.period, true));
 		$().text(getGameDate(airlineIncome.cycle, airlineIncome.period, hasUnits = true))
 		$("#totalProfit").text('$' + commaSeparateNumber(airlineIncome.totalProfit))
         $("#totalRevenue").text('$' + commaSeparateNumber(airlineIncome.totalRevenue))
@@ -667,17 +729,10 @@ function updateIncomeSheet(airlineIncome) {
 	}
 }
 
-function changeCashFlowPeriod(period) {
-	officePeriod = period
-	var totalPages = loadedCashFlows[officePeriod].length
-	officeSheetPage = totalPages - 1
-	updateCashFlowSheet(loadedCashFlows[officePeriod][officeSheetPage])
-	updateCashFlowChart(loadedCashFlows[officePeriod], loadedIncomes[officePeriod])
-}
 
 function updateCashFlowSheet(airlineCashFlow) {
 	if (airlineCashFlow) {
-        updateAllTextNodes(".officeCycleText", getGameDate(airlineCashFlow.cycle, airlineCashFlow.period, true));
+        // updateAllTextNodes(".officeCycleText", getGameDate(airlineCashFlow.cycle, airlineCashFlow.period, true));
 		$("#cashFlowSheet .totalCashFlow").text('$' + commaSeparateNumber(airlineCashFlow.totalCashFlow))
         $("#cashFlowSheet .operation").text('$' + commaSeparateNumber(airlineCashFlow.operation))
         $("#cashFlowSheet .loanInterest").text('$' + commaSeparateNumber(airlineCashFlow.loanInterest))
@@ -693,58 +748,41 @@ function updateCashFlowSheet(airlineCashFlow) {
 }
 
 function updateAirlineStatSheet(airlineStats) {
-    updateAllTextNodes(".officeCycleText", getGameDate(airlineStats.cycle, airlineStats.period, true));
-    if (airlineStats) {
-			Object.keys(airlineStats).forEach((key) => { 
-				const element = document.querySelector(`#airlineStatsSheet .${key}`); 
-				if (element) { 
-					element.textContent = commaSeparateNumber(airlineStats[key]); 
-            }
-        });
-    }
+    if (!airlineStats) return
+    // updateAllTextNodes(".officeCycleText", getGameDate(airlineStats.cycle, airlineStats.period, true));
+    Object.keys(airlineStats).forEach(key => {
+        const element = document.querySelector(`#airlineStatsSheet .${key}`)
+        if (element) element.textContent = commaSeparateNumber(airlineStats[key])
+    })
 }
 
 function updateAirlineOpSheet(opsData) {
-    updateAllTextNodes(".officeCycleText", getGameDate(opsData.cycle, opsData.period, true));
-    if (opsData) {
-        Object.keys(opsData).forEach((key) => {
-            const element = document.querySelector(`#opsSheet .${key}`);
-            if (element) {
-                element.textContent = opsData[key] < 1 ? commaSeparateNumber(opsData[key] * 100) : commaSeparateNumber(opsData[key]);
-
-                // Color code based on stock metrics
-                if (gameConstants && gameConstants.stockMetrics && gameConstants.stockMetrics[key.toLowerCase()]) {
-                    const metric = gameConstants.stockMetrics[key.toLowerCase()];
-                    const value = opsData[key];
-                    const range = metric.target - metric.floor;
-                    const normalizedValue = (value - metric.floor) / range;
-
-                    element.classList.remove('text-success', 'text-middling', 'text-danger', 'text-warning');
-
-                    if (normalizedValue >= 0.8) {
-                        element.classList.add('text-success');
-                    } else if (normalizedValue <= 0.2) {
-                        element.classList.add('text-danger');
-                    } else if (normalizedValue <= 0.5) {
-                        element.classList.add('text-warning');
-                    } else {
-                        element.classList.add('text-middling');
-                    }
-                }
-            }
-        });
-    }
+    if (!opsData) return
+    // updateAllTextNodes(".officeCycleText", getGameDate(opsData.cycle, opsData.period, true));
+    Object.keys(opsData).forEach(key => {
+        const element = document.querySelector(`#opsSheet .${key}`)
+        if (!element) return
+        element.textContent = opsData[key] < 1
+            ? commaSeparateNumber(opsData[key] * 100)
+            : commaSeparateNumber(opsData[key])
+        const metric = gameConstants?.stockMetrics?.[key.toLowerCase()]
+        if (metric) {
+            const normalizedValue = (opsData[key] - metric.floor) / (metric.target - metric.floor)
+            element.classList.remove('text-success', 'text-middling', 'text-danger', 'text-warning')
+            if (normalizedValue >= 0.8) element.classList.add('text-success')
+            else if (normalizedValue <= 0.2) element.classList.add('text-danger')
+            else if (normalizedValue <= 0.5) element.classList.add('text-warning')
+            else element.classList.add('text-middling')
+        }
+    })
 }
 
 function updateAirlineReputationSheet(airlineReputation) {
-    if (airlineReputation) {
-        Object.keys(airlineReputation).forEach((key) => {
-            const element = document.querySelector(`#airlineReputationSheet .${key}`);
-            if (element) {
-                element.textContent = commaSeparateNumber(airlineReputation[key]);
-            }
-        });
-    }
+    if (!airlineReputation) return
+    Object.keys(airlineReputation).forEach(key => {
+        const el = document.querySelector(`#airlineReputationSheet .${key}`)
+        if (el) el.textContent = commaSeparateNumber(airlineReputation[key])
+    })
 }
 
 function setTargetServiceQuality(targetServiceQuality) {
@@ -1340,49 +1378,31 @@ function updateChampionedAirportsDetails() {
 }
 
 
-function selectSheet(tab, sheet) {
-	// expect jQuery-wrapped tab and sheet
-	var $tab = tab && tab.jquery ? tab : $(tab)
-	var $sheet = sheet && sheet.jquery ? sheet : $(sheet)
+function selectSheet(tabEl) {
+	const type = tabEl.dataset.type
+	const config = SHEET_CONFIG[type]
+	if (!config) return
 
-	// toggle selected class
-	$tab.siblings().removeClass('selected')
-	$tab.addClass('selected')
+	tabEl.closest('.sheetOptions').querySelectorAll('.cell').forEach(el => el.classList.remove('selected'))
+	tabEl.classList.add('selected')
 
-	// hide other sheets and destroy known chart containers inside them
-	$sheet.siblings('.sheet').each(function() {
-		var $s = $(this)
-		// destroy charts by known IDs if present inside this sheet
-		var known = ['totalProfitChart','totalCashFlowChart','totalValueChart','airlineStatsChart','opsChart','airlineReputationChart']
-		known.forEach(function(id) {
-			var $c = $s.find('#' + id)
-			if ($c.length && window.ChartUtils) {
-				window.ChartUtils.destroyChart($c.get(0))
-			}
-		})
-		$s.hide()
+	const targetSheet = document.getElementById(config.sheetId)
+	targetSheet.parentElement.querySelectorAll('.sheet').forEach(sheet => {
+		if (sheet === targetSheet) {
+			sheet.style.display = ''
+		} else {
+			allSheetChartIds.forEach(id => {
+				const el = sheet.querySelector(`#${id}`)
+				if (el && window.ChartUtils) window.ChartUtils.destroyChart(el)
+			})
+			sheet.style.display = 'none'
+		}
 	})
 
-	$sheet.show()
-
-	var type = $tab.data('type')
-
-	if (type === 'income') {
-		updateIncomeSheet(loadedIncomes[officePeriod][officeSheetPage])
-		updateIncomeChart(loadedIncomes[officePeriod])
-	} else if (type === 'cashFlow') {
-		updateCashFlowSheet(loadedCashFlows[officePeriod][officeSheetPage])
-		updateCashFlowChart(loadedCashFlows[officePeriod], loadedIncomes[officePeriod])
-	} else if (type === 'airlineStat') {
-		updateAirlineStatSheet(loadedAirlineStats[officePeriod][officeAirlineStatsPage])
-		updateAirlineStatChart(loadedAirlineStats[officePeriod])
-	} else if (type === 'airlineOp') {
-		updateAirlineOpSheet(loadedAirlineStats[officePeriod][officeAirlineStatsPage])
-		updateOpsChart(loadedAirlineStats[officePeriod])
-	} else if (type === 'airlineReputation') {
-		updateAirlineReputationSheet(loadedAirlineStats[officePeriod][officeAirlineStatsPage])
-		updateAirlineReputationChart(loadedAirlineStats[officePeriod])
-	}
+	const data = config.getData()
+	config.updateSheet(data[getSheetPage(type)])
+	config.updateChart()
+	renderSheetNav(type)
 }
 
 function updateResetAirlineInfo() {
