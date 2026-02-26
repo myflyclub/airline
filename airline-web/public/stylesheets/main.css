@@ -800,7 +800,17 @@ li.row, div.table-row {
     background-color: var(--table-even-row-background-color);
 }
 
+.section.clickable:hover, .section.clickable.selected {
+    background: var(--table-header-selected-background);
+    box-shadow: var(--table-header-selected-shadow);
+}
+
+.data div.table-row:nth-child(odd){
+    background: var(--table-odd-row-background-color);
+}
+
 .data .table-row.selected:nth-child(even), .data .table-row.selected:nth-child(odd) {
+    color: var(--table-selected-color);
     background: var(--table-selected-row-background);
     box-shadow: var(--table-selected-row-shadow);
 }
@@ -809,19 +819,6 @@ li.row, div.table-row {
     color: var(--table-selected-color);
     background: var(--table-selected-row-background);
     box-shadow: var(--table-selected-row-shadow);
-}
-
-.section.clickable:hover, .section.clickable.selected {
-    background: var(--table-header-selected-background);
-    box-shadow: var(--table-header-selected-shadow);
-}
-
-.table.colored div.table-row:nth-child(even){
-    background-color: var(--table-even-row-background-color);
-}
-
-.table.data div.table-row:nth-child(odd), .table.colored  div.table-row:nth-child(odd){
-    background: var(--table-odd-row-background-color);
 }
 
 .table-container-y {
