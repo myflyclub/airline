@@ -34,19 +34,18 @@
     text-shadow: none;
     font-weight: normal;
     max-width: 45vw;
-    box-shadow: var(--table-header-shadow);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18), 0 1px 4px rgba(0, 0, 0, 0.12);
 }
 
 .customTooltip .tooltiptext {
-    background-color: rgba(0, 0, 0, 0.8);
+    background-color: var(--modal-background-color);
     color: var(--text-color);
     border-radius: 6px;
     padding: 10px 10px;
-    z-index: 1;
+    z-index: 10;
     transition: opacity 0.3s;
     text-shadow: none;
     font-weight: normal;
-
 }
 .tooltiptext h4 {
     color: var(--text-color);

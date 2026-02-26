@@ -246,11 +246,11 @@ function getCountryFlagUrl(countryCode) {
 }
 
 function getAirlineLogoImg(airlineId) {
-	return "<img class='logo' loading='lazy' width='36px' height='auto' src='" + "/airlines/" + airlineId + "/logo'/>"
+	return `<img class='logo' loading='lazy' width='36px' height='auto' alt='Airline Logo' src='/airlines/${airlineId}/logo'/>`
 }
 
 function getAllianceLogoImg(allianceId) {
-	return "<img class='logo-alliance' loading='lazy' width='36px' height='18px' src='" + "/alliances/" + allianceId + "/logo'/>"
+	return `<img class='logo-alliance' loading='lazy' width='36px' height='18px' src='/alliances/${allianceId}/logo'/>`
 }
 
 function getAllianceOrAirlineLogoImg(allianceId, airlineId) {
@@ -287,7 +287,7 @@ function getAirlineLabelSpan(airlineId, airlineName, elementType = 'span') {
 }
 
 function getAirlineSpan(airlineId, airlineName, tooltip = null) {
-    var $airlineSpan = $('<span></span>')
+    var $airlineSpan = $('<span class="flex-row gap-0"></span>')
 	$airlineSpan.append(getAirlineLogoImg(airlineId))
 	$airlineSpan.append(getAirlineLabelSpan(airlineId, airlineName))
 	if (tooltip) {
@@ -444,7 +444,7 @@ function getOpennessIcon(openness, size=null, isDomesticAirport=false, isGateway
 	var description
 	var icon
 	if (size && size <= 2 && ! isGateway ){
-        description = "No International Flights"
+        description = "International Flights Forbidden"
         icon = "prohibition.png"
     } else if (isDomesticAirport){
 	    description = "Only Small-sized International Flights"
@@ -463,7 +463,7 @@ function getOpennessSpan(openness, size=null, isDomesticAirport=false, isGateway
 	var description
 	var icon
     if (size && size <= 2 && ! isGateway ){
-        description = "No International Flights"
+        description = "International Flights Forbidden"
         icon = "prohibition.png"
     } else if (isDomesticAirport){
         description = "Only Small-sized International Flights"
@@ -913,7 +913,7 @@ function getGameDate(cycle, period = "WEEKLY", hasUnits = false) {
         return `${remainderUnit}${remainder}${seperator}${periodUnit}${periods}`;
     } else if (period == "QUARTER") {
         return `${remainderUnit}${remainder - 3}${seperator}${periodUnit}${periods} - ${remainderUnit}${remainder}${seperator}${periodUnit}${periods}`;
-    } else if (period == "PERIOD") {
+    } else if (period == "YEAR") {
         return `${remainderUnit}${remainder}${seperator}${periodUnit}${periods - 1} - ${remainderUnit}${remainder}${seperator}${periodUnit}${periods}`;
     }
 }

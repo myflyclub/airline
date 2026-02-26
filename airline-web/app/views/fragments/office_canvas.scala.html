@@ -1,6 +1,6 @@
-				<div id="officeCanvas" class="canvas" style="display: none; min-width: 400px;">
-					<div style="box-sizing: border-box;display: flex;gap: 8px;flex-wrap: wrap;" class="officeCanvasLeftGroup">
+				<div id="officeCanvas" class="canvas" style="display: none;">
 
+					<div style="box-sizing: border-box;display: flex;gap: 8px;flex-wrap: wrap; min-width: 400px; width: 70%;">
 						<div class="section min-w-52 max-w-260px">
 							<h2 class="text-center text-underline">
 								<span class="airlineName">Airline Name</span>
@@ -162,35 +162,28 @@
 							</div>
 						</div>
 
-						<div style="width: 100%; min-height: 1000px;" class="section tight">
-                            <div class="controllers flex-container-width-half">
-                                <div class="table" style="flex-basis: 440px;">
-                                    <div class="table-header sheetOptions">
-                                        <div class="cell clickable selected" data-type="income" onclick="selectSheet($(this), $('#incomeSheet'));">Income</div>
-										<div class="cell clickable" data-type="cashFlow" onclick="selectSheet($(this), $('#cashFlowSheet'));">Cash Flow</div>
-										<div class="cell clickable" data-type="airlineStat" onclick="selectSheet($(this), $('#airlineStatsSheet'));">Passenger Stats</div>
-										<div class="cell clickable" data-type="airlineOp" onclick="selectSheet($(this), $('#opsSheet'));">Operating Metrics</div>
-										<div class="cell clickable" data-type="airlineReputation" onclick="selectSheet($(this), $('#airlineReputationSheet'));">Reputation</div>
-                                    </div>
-                                </div>
-                                <div style="display: flex; align-items: center;" class="controllers-period">
-                                    <img style="margin-left: auto;" src='@routes.Assets.versioned("/images/icons/arrow-180.png")' class="button" onclick="officeHistoryStep(-1)"/>
-                                    <select class="select-css period" onchange="changeOfficePeriod($(this).val())">
-                                        <option value="WEEKLY" selected="selected">Week</option>
-                                        <option value="QUARTER">Quarter</option>
-                                        <option value="YEAR">Year</option>
-                                    </select>
-                                    &nbsp;<span id="officeCycleText"></span>
-                                    <img src='@routes.Assets.versioned("/images/icons/arrow.png")' class="button" onclick="officeHistoryStep(1)"/>
-                                </div>
+                        <div style="display:flex;flex-direction:column;width:100%;">
+                        <div class="sheet-tab-row">
+                            <div class="sheetOptions">
+                                <div class="cell clickable selected" data-type="income">Income</div>
+                                <div class="cell clickable" data-type="cashFlow">Cash Flow</div>
+                                <div class="cell clickable" data-type="airlineStat">Passenger Stats</div>
+                                <div class="cell clickable" data-type="airlineOp">Operating Metrics</div>
+                                <div class="cell clickable" data-type="airlineReputation">Reputation</div>
                             </div>
-
+                            <select class="select-css period ml-auto mb-2">
+                                <option value="WEEKLY" selected="selected">Week</option>
+                                <option value="QUARTER">Quarter</option>
+                                <option value="YEAR">Year</option>
+                            </select>
+                        </div>
+                        <div class="sheet-frame section tight">
 							<div style="width: 100%; overflow:hidden;" id="incomeSheet" class="sheet">
 								<div id="totalProfitChart" style="width: 100%; max-width: 100%; overflow-x:scroll; height: 300px; margin: 2rem auto;"></div>
 								<div style="display: flex; flex-wrap: wrap;" class="">
 
 									<div class="table data rounded-none" style="min-width: 200px">
-										<h4>Total Income <i class="officeCycleText small-10px"></i></h4>
+										<h4>Total Income</h4>
 										<div class="table-row">
 											<div class="cell">Total Revenue:</div>
 											<div id="totalRevenue" class="cell" style="text-align: right;"></div>
@@ -365,7 +358,7 @@
 								<div id="totalCashFlowChart" style="height: 280px; margin: 0 auto;"></div>
 								<div style="display: flex; flex-wrap: wrap;">
 									<div class="table data rounded-none" style="min-width: 200px">
-										<h4 class="table-row">Total Cash Flow <i class="officeCycleText small-10px"></i></h4>
+										<h4 class="table-row">Total Cash Flow</h4>
 										<div class="table-row">
 											<div class="cell">Total Cash Flow:</div>
 											<div class="totalCashFlow cell" style="text-align: right;"></div>
@@ -418,12 +411,12 @@
 								<h4 class="pt-2 px-5">Total Company Assets</h4>
 								<div id="totalValueChart" style="height: 280px; margin: 0 auto;"></div>
 							</div>
-<!-- end cashflow sheet -->
+<!-- end cashflow sheet, end sheet wrapper -->
 							<div style="width : 100%; display: none;" id="airlineStatsSheet" class="sheet">
 								<div id="airlineStatsChart" class="py-2" style="width: 100%; height: 700px;"></div>
 								<div style="display: flex; flex-wrap: wrap;">
 									<div class="table data rounded-none" style="min-width: 200px; max-width: 300px;">
-										<h4>Passenger Stats <i class="officeCycleText small-10px"></i></h4>
+										<h4>Passenger Stats</h4>
 										<div class="table-row">
 											<div class="cell">Total unique:</div>
 											<div class="total cell" style="text-align: right;"></div>
@@ -456,7 +449,7 @@
 								<div id="opsChart" style="width: 100%; height: 400px;"></div>
 								<div class="item-grid pt-4" id="opsSheetContent">
                                     <div class="grid-header">
-                                        <h4>Operating Metrics <i class="officeCycleText small-10px"></i></h4>
+                                        <h4>Operating Metrics</h4>
                                         <p>These are the key metrics investors look at when buying / selling your stock.</p>
                                     </div>
 									<div class="item">
@@ -570,7 +563,7 @@
 							</div>
 
 						</div>
-	<!-- 					end statements -->
+                        </div><!-- end sheet wrapper -->
 
 						<div class="section" style="width: 100%;">
                             <h4>Airline Settings</h4>
@@ -612,10 +605,10 @@
 						</div>
 
 					</div>
-<!-- end left section  -->
-					<div class="vertical-group officeCanvasRightGroup">
+
+					<div class="vertical-group" style="width: 30%; min-width: 300px;">
 						<div class="section py-0">
-							<textarea id="airlineNotes" style="width:99%;" placeholder="Add notes here..."></textarea>
+							<textarea id="airlineNotes" style="width:99%;" placeholder="Add your private notes here..."></textarea>
 						</div>
 						<div class="section">
                             <h4>Headquarters</h4>
