@@ -2096,7 +2096,7 @@ object Meta {
       "business_pax INT UNSIGNED, " +
       "elite_pax INT UNSIGNED, " +
       "tourist_pax INT UNSIGNED, " +
-      "total_airport_rep DOUBLE, " +
+      "total_airport_rep INT, " +
       "total_airline_market_cap DOUBLE, " +
       "total_lounge_visit INT UNSIGNED, " +
       "total_profit BIGINT, " +

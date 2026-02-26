@@ -460,7 +460,7 @@ object AllianceSource {
         coreStatement.setLong(5, entry.businessPax)
         coreStatement.setLong(6, entry.elitePax)
         coreStatement.setLong(7, entry.touristPax)
-        coreStatement.setLong(8, entry.airportRep)
+        coreStatement.setInt(8, entry.airportRep)
         coreStatement.setLong(9, entry.airlineMarketCap)
         coreStatement.setLong(10, entry.loungeVisit)
         coreStatement.setLong(11, entry.profit)
@@ -545,7 +545,7 @@ object AllianceSource {
               businessPax = coreResultSet.getLong("business_pax"),
               elitePax = coreResultSet.getLong("elite_pax"),
               touristPax = coreResultSet.getLong("tourist_pax"),
-              airportRep = coreResultSet.getLong("total_airport_rep"),
+              airportRep = coreResultSet.getInt("total_airport_rep"),
               airlineMarketCap = coreResultSet.getLong("total_airline_market_cap"),
               loungeVisit = coreResultSet.getLong("total_lounge_visit"),
               profit = coreResultSet.getLong("total_profit"),

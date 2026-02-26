@@ -7,7 +7,7 @@ case class AllianceStats(alliance : Alliance,
                          businessPax : Long,
                          elitePax : Long,
                          touristPax : Long,
-                         airportRep : Double,
+                         airportRep : Int,
                          airlineMarketCap : Long,
                          loungeVisit : Long,
                          profit : Long,
@@ -32,7 +32,7 @@ object AllianceStats {
   val empty = (alliance: Alliance, cycle: Int) => AllianceStats(
     alliance,
     0L, 0L, 0L, 0L, // passenger types
-    0L, 0L, // airport rep and stock price
+    0, 0L, // airport rep and stock price
     0L, 0L, // lounge, loyalist, profit
     cycle
   )

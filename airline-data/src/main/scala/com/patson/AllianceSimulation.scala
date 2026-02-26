@@ -13,18 +13,18 @@ object AllianceSimulation {
   def simulate(flightLinkResult: List[LinkConsumptionDetails], loungeResult: List[LoungeConsumptionDetails], paxStatsByAirlineId: immutable.Map[Int, AirlinePaxStat], airportChampionInfo: List[AirportChampionInfo], cycle: Int): Unit = {
     println("Tallying alliance stats...")
     val allActiveAlliances = AllianceSource.loadAllAlliancesEstablished(true)
-    val airportRepByAirlineId: Map[Int, Double] = airportChampionInfo.groupBy(_.loyalist.airline.id).mapValues(_.map(_.reputationBoost).sum).toMap
+    val airportRepByAirlineId: Map[Int, Int] = airportChampionInfo.groupBy(_.loyalist.airline.id).mapValues(_.map(_.reputationBoost).sum.toInt).toMap
     val loungePaxByAirlineId: Map[Int, Int] = loungeResult.map(info => info.lounge.airline.id -> info.allianceVisitors).toMap
     val flightProfitsByAirlineId: Map[Int, Int] = flightLinkResult.map(linkConsumption => linkConsumption.link.airline.id -> linkConsumption.profit).toMap
 
     val allianceStatsList: List[AllianceStats] = allActiveAlliances.map { alliance =>
       // Fold member stats into a single 8-tuple of totals
-      val memberTotals: (Long, Long, Long, Long, Double, Long, Long, Long) = alliance.members.foldLeft((0L, 0L, 0L, 0L, 0.0, 0L, 0L, 0L)) {
+      val memberTotals: (Long, Long, Long, Long, Int, Long, Long, Long) = alliance.members.foldLeft((0L, 0L, 0L, 0L, 0, 0L, 0L, 0L)) {
         case ((travTot, busTot, eliteTot, tourTot, repTot, capTot, loungeTot, profitTot), allianceMember) =>
           val airlineId = allianceMember.airline.id
           val paxStats = paxStatsByAirlineId.getOrElse(airlineId, AirlinePaxStat.empty)
           val traveler = paxStats.total - (paxStats.business + paxStats.tourists + paxStats.elites)
-          val airportRep = airportRepByAirlineId.getOrElse(airlineId, 0.0)
+          val airportRep = airportRepByAirlineId.getOrElse(airlineId, 0).toInt
           val marketCap: Long = (allianceMember.airline.getSharesOutstanding().toLong * allianceMember.airline.getStockPrice()).toLong
           val loungePax = loungePaxByAirlineId.getOrElse(airlineId, 0)
           val flightProfit = flightProfitsByAirlineId.getOrElse(airlineId, 0)
