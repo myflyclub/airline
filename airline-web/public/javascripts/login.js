@@ -134,9 +134,6 @@ async function doPostLoginSetup(user) {
         $('#floatBackButton').animate({ top: ($(window).scrollTop() + 100) + "px" }, { queue: false, duration: 350 });
     });
 
-    $('#chattext').jemoji({
-        folder: '/assets/images/emoji/'
-    });
     hideLoginPage();
     $('.topBarDetails').show()
     $('#navPrimary').show()

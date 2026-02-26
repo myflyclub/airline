@@ -28,14 +28,20 @@ export function initMap() {
         return null;
     }
 
-    const mapInstance = new maplibregl.Map({
-        container: 'map',
-        style: getMapStyle(),
-        center: [50.57,79.12],
-        zoom: 2,
-        maxZoom: MAX_ZOOM,
-        renderWorldCopies: true
-    });
+    let mapInstance;
+    try {
+        mapInstance = new maplibregl.Map({
+            container: 'map',
+            style: getMapStyle(),
+            center: [50.57,79.12],
+            zoom: 2,
+            maxZoom: MAX_ZOOM,
+            renderWorldCopies: true
+        });
+    } catch (e) {
+        console.warn('Map initialization failed (WebGL unavailable?):', e.message);
+        return null;
+    }
 
     // Store the map instance in state
     setMap(mapInstance);
