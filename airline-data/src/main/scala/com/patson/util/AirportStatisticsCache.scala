@@ -8,9 +8,9 @@ import com.patson.model._
 
 object AirportStatisticsCache {
 
-  import com.google.common.cache.{CacheBuilder, CacheLoader, LoadingCache}
+  import com.github.benmanes.caffeine.cache.{Caffeine, CacheLoader, LoadingCache}
 
-  val simpleCache: LoadingCache[Int, Option[AirportStatistics]] = CacheBuilder.newBuilder.maximumSize(1000).expireAfterAccess(10, TimeUnit.MINUTES).build(new SimpleLoader())
+  val simpleCache: LoadingCache[Int, Option[AirportStatistics]] = Caffeine.newBuilder().maximumSize(4000).build(new SimpleLoader())
 
   def getAirportStatistics(airportId : Int) : Option[AirportStatistics] = {
     simpleCache.get(airportId)

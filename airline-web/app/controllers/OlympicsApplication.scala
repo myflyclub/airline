@@ -57,11 +57,9 @@ class OlympicsApplication @Inject()(cc: ControllerComponents) extends AbstractCo
       )
   }
 
-  private val olympicsDetailsCache = new scala.collection.concurrent.TrieMap[Int, (Int, JsValue)]()
-
   def getOlympicsDetails(eventId : Int) = Action {
     val cycle = currentCycle
-    val json = olympicsDetailsCache.get(eventId).filter(_._1 == cycle).map(_._2).getOrElse {
+    val json = Option(ResponseCache.olympicsDetailsCache.getIfPresent(eventId)).filter(_._1 == cycle).map(_._2).getOrElse {
       var result = Json.obj()
 
       var candidatesJson = Json.arr()
@@ -121,7 +119,7 @@ class OlympicsApplication @Inject()(cc: ControllerComponents) extends AbstractCo
         case _ =>
       }
 
-      olympicsDetailsCache(eventId) = (cycle, result)
+      ResponseCache.olympicsDetailsCache.put(eventId, (cycle, result))
       result
     }
 

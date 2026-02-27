@@ -799,14 +799,20 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
 
 
   def getAirlineFinances(airlineId: Int) = AuthenticatedAirline(airlineId) { request =>
-    val incomes = IncomeSource.loadIncomesByAirline(airlineId).filter { statement => (statement.cycle + 1) % Period.numberWeeks(statement.period) == 0 }
-    val cashFlows = CashFlowSource.loadCashFlowsByAirline(airlineId).filter { statement => (statement.cycle + 1) % Period.numberWeeks(statement.period) == 0 }
-    val stats = AirlineStatisticsSource.loadAirlineStats(airlineId).filter { statement => (statement.cycle + 1) % Period.numberWeeks(statement.period) == 0 }
+    request.headers.get(IF_NONE_MATCH) match {
+      case Some(etag) if etag == s""""$currentCycle"""" =>
+        NotModified
+      case _ =>
+        val incomes = IncomeSource.loadIncomesByAirline(airlineId).filter { statement => (statement.cycle + 1) % Period.numberWeeks(statement.period) == 0 }
+        val cashFlows = CashFlowSource.loadCashFlowsByAirline(airlineId).filter { statement => (statement.cycle + 1) % Period.numberWeeks(statement.period) == 0 }
+        val stats = AirlineStatisticsSource.loadAirlineStats(airlineId).filter { statement => (statement.cycle + 1) % Period.numberWeeks(statement.period) == 0 }
 
-    Ok(Json.obj("incomes" -> Json.toJson(incomes), "cashFlows" -> Json.toJson(cashFlows), "airlineStats" -> Json.toJson(stats)))
-      .withHeaders(
-        ETAG -> s""""$currentCycle""""
-      )
+        Ok(Json.obj("incomes" -> Json.toJson(incomes), "cashFlows" -> Json.toJson(cashFlows), "airlineStats" -> Json.toJson(stats)))
+          .withHeaders(
+            CACHE_CONTROL -> "no-cache",
+            ETAG -> s""""$currentCycle""""
+          )
+    }
   }
 
   def getFleet(airlineId: Int) = Action { request =>

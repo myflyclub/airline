@@ -17,7 +17,23 @@ import scala.util.Random
 
 class SearchApplication @Inject()(cc: ControllerComponents) extends AbstractController(cc) {
 
-  def searchRoute(fromAirportId : Int, toAirportId : Int) = Action {
+  def searchRoute(fromAirportId : Int, toAirportId : Int) = Action { request =>
+    request.headers.get(IF_NONE_MATCH) match {
+      case Some(etag) if etag == s""""$currentCycle"""" =>
+        NotModified
+      case _ =>
+        val cycle = currentCycle
+        val cacheKey = s"$fromAirportId-$toAirportId"
+        val json = Option(ResponseCache.searchRouteCache.getIfPresent(cacheKey)).filter(_._1 == cycle).map(_._2).getOrElse {
+          val fresh = computeSearchRoute(fromAirportId, toAirportId)
+          ResponseCache.searchRouteCache.put(cacheKey, (cycle, fresh))
+          fresh
+        }
+        Ok(json).withHeaders(CACHE_CONTROL -> "no-cache", ETAG -> s""""$cycle"""")
+    }
+  }
+
+  private def computeSearchRoute(fromAirportId : Int, toAirportId : Int) : JsValue = {
     val routes: List[(SimpleRoute, PassengerType.Value, Int)] = ConsumptionHistorySource.loadConsumptionsByAirportPair(fromAirportId, toAirportId).toList.sortBy(_._2._2).map {
       case ((route, (passengerType, passengerCount))) =>
         (SimpleRoute(route.links.map(linkConsideration => (linkConsideration.link, linkConsideration.linkClass, linkConsideration.inverted)), route.totalCost.toInt), passengerType, passengerCount)
@@ -158,7 +174,7 @@ class SearchApplication @Inject()(cc: ControllerComponents) extends AbstractCont
         resultJson = resultJson.append(routeEntryJson)
     }
 
-    Ok(resultJson)
+    resultJson
   }
 
   case class SimpleRoute(links: List[(Transport, LinkClass, Boolean)], routeCost: Int) {
@@ -283,7 +299,23 @@ class SearchApplication @Inject()(cc: ControllerComponents) extends AbstractCont
     result.view.mapValues(_.toList).toMap
   }
 
-  def researchLink(fromAirportId : Int, toAirportId : Int) = Action {
+  def researchLink(fromAirportId : Int, toAirportId : Int) = Action { request =>
+    request.headers.get(IF_NONE_MATCH) match {
+      case Some(etag) if etag == s""""$currentCycle"""" =>
+        NotModified
+      case _ =>
+        val cycle = currentCycle
+        val cacheKey = s"$fromAirportId-$toAirportId"
+        val json = Option(ResponseCache.researchLinkCache.getIfPresent(cacheKey)).filter(_._1 == cycle).map(_._2).getOrElse {
+          val fresh = computeResearchLink(fromAirportId, toAirportId)
+          ResponseCache.researchLinkCache.put(cacheKey, (cycle, fresh))
+          fresh
+        }
+        Ok(json).withHeaders(CACHE_CONTROL -> "no-cache", ETAG -> s""""$cycle"""")
+    }
+  }
+
+  private def computeResearchLink(fromAirportId : Int, toAirportId : Int) : JsValue = {
     val fromAirport = AirportCache.getAirport(fromAirportId, true).get
     val toAirport = AirportCache.getAirport(toAirportId, true).get
     val distance = Computation.calculateDistance(fromAirport, toAirport)
@@ -349,7 +381,7 @@ class SearchApplication @Inject()(cc: ControllerComponents) extends AbstractCont
     val consumptions = LinkSource.loadLinkConsumptionsByLinksId(links.map(_.id)).sortBy(_.link.airline.id)
 
     result = result + ("consumptions" -> Json.toJson(consumptions)(Writes.list(SimpleLinkConsumptionWrite)))
-    Ok(result)
+    result
   }
 
   object LinkFeature extends Enumeration {

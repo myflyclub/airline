@@ -1,6 +1,6 @@
 package com.patson.util
 
-import com.google.common.cache.{CacheBuilder, CacheLoader, LoadingCache}
+import com.github.benmanes.caffeine.cache.{Caffeine, CacheLoader, LoadingCache}
 import com.patson.data.AirportSource
 import com.patson.model._
 
@@ -9,8 +9,8 @@ import scala.jdk.CollectionConverters._
 
 object AirportCache {
 
-  private val detailedCache: LoadingCache[Int, Option[Airport]] = CacheBuilder.newBuilder.maximumSize(2500).expireAfterAccess(30, TimeUnit.MINUTES).build[Int, Option[Airport]](new DetailedLoader())
-  private val simpleCache: LoadingCache[Int, Option[Airport]] = CacheBuilder.newBuilder.maximumSize(5000).expireAfterAccess(30, TimeUnit.MINUTES).build[Int, Option[Airport]](new SimpleLoader())
+  private val detailedCache: LoadingCache[Int, Option[Airport]] = Caffeine.newBuilder().maximumSize(2500).expireAfterAccess(30, TimeUnit.MINUTES).build[Int, Option[Airport]](new DetailedLoader())
+  private val simpleCache: LoadingCache[Int, Option[Airport]] = Caffeine.newBuilder().maximumSize(5000).expireAfterAccess(30, TimeUnit.MINUTES).build[Int, Option[Airport]](new SimpleLoader())
 
   def getAirport(airportId: Int, fullLoad: Boolean = false): Option[Airport] = {
     if (fullLoad) {
@@ -48,8 +48,8 @@ object AirportCache {
   def getCacheStats: String = {
     val detailedStats = detailedCache.stats()
     val simpleStats = simpleCache.stats()
-    s"Detailed cache - Size: ${detailedCache.size()}, Hit rate: ${detailedStats.hitRate()}, Evictions: ${detailedStats.evictionCount()}; " +
-      s"Simple cache - Size: ${simpleCache.size()}, Hit rate: ${simpleStats.hitRate()}, Evictions: ${simpleStats.evictionCount()}"
+    s"Detailed cache - Size: ${detailedCache.estimatedSize()}, Hit rate: ${detailedStats.hitRate()}, Evictions: ${detailedStats.evictionCount()}; " +
+      s"Simple cache - Size: ${simpleCache.estimatedSize()}, Hit rate: ${simpleStats.hitRate()}, Evictions: ${simpleStats.evictionCount()}"
   }
 
   class DetailedLoader extends CacheLoader[Int, Option[Airport]] {
@@ -57,7 +57,7 @@ object AirportCache {
       AirportSource.loadAirportById(airportId, true)
     }
 
-    override def loadAll(keys: java.lang.Iterable[_ <: Int]): java.util.Map[Int, Option[Airport]] = {
+    override def loadAll(keys: java.util.Set[_ <: Int]): java.util.Map[_ <: Int, _ <: Option[Airport]] = {
       val airports = AirportSource.loadAirportsByIds(keys.asScala.toList, fullLoad = true)
       val airportMap = airports.map(airport => (airport.id, Some(airport))).toMap
       //for keys that are not found, we should still return a None in the map
@@ -71,7 +71,7 @@ object AirportCache {
       AirportSource.loadAirportById(airportId, loadFeatures = true)
     }
 
-    override def loadAll(keys: java.lang.Iterable[_ <: Int]): java.util.Map[Int, Option[Airport]] = {
+    override def loadAll(keys: java.util.Set[_ <: Int]): java.util.Map[_ <: Int, _ <: Option[Airport]] = {
       val airports = AirportSource.loadAirportsByIds(keys.asScala.toList, loadFeatures = true)
       val airportMap = airports.map(airport => (airport.id, Some(airport))).toMap
       //for keys that are not found, we should still return a None in the map

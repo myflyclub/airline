@@ -6,6 +6,7 @@ var activeAirportPopupInfoWindow
 var targetBase
 var airportBaseScale
 var _toggleState_AllianceBaseMapView = false
+const _etagStore = {}
 /**
  * Find an airport by id (O(1) lookup)
  */
@@ -365,86 +366,85 @@ if (activeAirline) {
 }
 
 
-function updateAirportChampionDetails(airport) {
-    $('#airportDetailsChampionList').children('div.table-row').remove()
+async function updateAirportChampionDetails(airport) {
+    const url = '/airports/' + airport.id + '/champions' + (activeAirline ? '?airlineId=' + activeAirline.id : '')
+    const key = 'champions-' + airport.id
+    const headers = {}
+    if (_etagStore[key]) headers['If-None-Match'] = _etagStore[key]
 
-    var url = "/airports/" + airport.id + "/champions"
-    if (activeAirline) {
-        url += "?airlineId=" + activeAirline.id
-    }
-    $.ajax({
-        type: 'GET',
-        url: url,
-        contentType: 'application/json; charset=utf-8',
-        dataType: 'json',
-        success: function (result) {
-            document.getElementById('maxRep').textContent = result.maxRep;
-            var champions = result.champions
-            $(champions).each(function (index, championDetails) {
-                var row = $("<div class='table-row clickable' onclick='navigateTo(/rivals/" + championDetails.airlineId + "'></div>")
-                var icon = getRankingImg(championDetails.ranking)
-                row.append("<div class='cell'>" + icon + "</div>")
-                row.append("<div class='cell'>" + getAirlineSpan(championDetails.airlineId, championDetails.airlineName) + "</div>")
-                row.append("<div class='cell' style='text-align: right'>" + commaSeparateNumber(championDetails.loyalistCount) + "</div>")
-                var $loyaltyCell = $("<div class='cell' style='text-align: right'>" + championDetails.loyalty + "</div>")
-                if (!isMobileDevice()) {
-                    $loyaltyCell.hover(
-                        function () {
-                            if (airport.bonusList[championDetails.airlineId]) {
-                                showAppealBreakdown($(this), airport.bonusList[championDetails.airlineId].loyaltyBreakdown)
-                            }
-                        },
-                        function () {
-                            hideAppealBreakdown()
-                        }
-                    )
-                }
-                row.append($loyaltyCell)
-                row.append("<div class='cell' style='text-align: right'>" + championDetails.reputationBoost + "</div>")
-                $('#airportDetailsChampionList').append(row)
-            })
-
-            if (result.currentAirline) {
-                var row = $(`<div class='table-row clickable' onclick='navigateTo("/rivals/${result.currentAirline.id}")'></div>`)
-                row.append("<div class='cell'>" + result.currentAirline.ranking + "</div>")
-                row.append("<div class='cell'>" + getAirlineSpan(result.currentAirline.airlineId, result.currentAirline.airlineName) + "</div>")
-                row.append("<div class='cell' style='text-align: right'>" + commaSeparateNumber(result.currentAirline.amount) + "</div>")
-
-                var $loyaltyCell = $("<div class='cell' style='text-align: right'>" + result.currentAirline.loyalty + "</div>")
-
-                if (!isMobileDevice()) {
-                    $loyaltyCell.hover(
-                        function () {
-                            if (airport.bonusList[result.currentAirline.airlineId]) {
-                                showAppealBreakdown($(this), airport.bonusList[result.currentAirline.airlineId].loyaltyBreakdown)
-                            }
-                        },
-                        function () {
-                            hideAppealBreakdown()
-                        }
-                    )
-                }
-                row.append($loyaltyCell)
-                row.append("<div class='cell' style='text-align: right'>-</div>")
-                $('#airportDetailsChampionList').append(row)
-            }
-
-            if ($(champions).length == 0) {
-                var row = $("<div class='table-row'></div>")
-                row.append("<div class='cell'>-</div>")
-                row.append("<div class='cell'>-</div>")
-                row.append("<div class='cell' style='text-align: right'>-</div>")
-                row.append("<div class='cell' style='text-align: right'>-</div>")
-                row.append("<div class='cell' style='text-align: right'>-</div>")
-                $('#airportDetailsChampionList').append(row)
-            }
-        },
-        error: function (jqXHR, textStatus, errorThrown) {
-            console.log(JSON.stringify(jqXHR));
-            console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
+    try {
+        const res = await fetch(url, { headers })
+        if (res.status === 304) return
+        if (!res.ok) {
+            console.log('AJAX error: ' + res.status)
+            return
         }
-    });
+        const etag = res.headers.get('ETag')
+        if (etag) _etagStore[key] = etag
+        const result = await res.json()
 
+        document.getElementById('maxRep').textContent = result.maxRep
+        var champions = result.champions
+        $('#airportDetailsChampionList').children('div.table-row').remove()
+        $(champions).each(function (index, championDetails) {
+            var row = $("<div class='table-row clickable' onclick='navigateTo(/rivals/" + championDetails.airlineId + "'></div>")
+            var icon = getRankingImg(championDetails.ranking)
+            row.append("<div class='cell'>" + icon + "</div>")
+            row.append("<div class='cell'>" + getAirlineSpan(championDetails.airlineId, championDetails.airlineName) + "</div>")
+            row.append("<div class='cell' style='text-align: right'>" + commaSeparateNumber(championDetails.loyalistCount) + "</div>")
+            var $loyaltyCell = $("<div class='cell' style='text-align: right'>" + championDetails.loyalty + "</div>")
+            if (!isMobileDevice()) {
+                $loyaltyCell.hover(
+                    function () {
+                        if (airport.bonusList[championDetails.airlineId]) {
+                            showAppealBreakdown($(this), airport.bonusList[championDetails.airlineId].loyaltyBreakdown)
+                        }
+                    },
+                    function () {
+                        hideAppealBreakdown()
+                    }
+                )
+            }
+            row.append($loyaltyCell)
+            row.append("<div class='cell' style='text-align: right'>" + championDetails.reputationBoost + "</div>")
+            $('#airportDetailsChampionList').append(row)
+        })
+
+        if (result.currentAirline) {
+            var row = $(`<div class='table-row clickable' onclick='navigateTo("/rivals/${result.currentAirline.id}")'></div>`)
+            row.append("<div class='cell'>" + result.currentAirline.ranking + "</div>")
+            row.append("<div class='cell'>" + getAirlineSpan(result.currentAirline.airlineId, result.currentAirline.airlineName) + "</div>")
+            row.append("<div class='cell' style='text-align: right'>" + commaSeparateNumber(result.currentAirline.amount) + "</div>")
+            var $loyaltyCell = $("<div class='cell' style='text-align: right'>" + result.currentAirline.loyalty + "</div>")
+            if (!isMobileDevice()) {
+                $loyaltyCell.hover(
+                    function () {
+                        if (airport.bonusList[result.currentAirline.airlineId]) {
+                            showAppealBreakdown($(this), airport.bonusList[result.currentAirline.airlineId].loyaltyBreakdown)
+                        }
+                    },
+                    function () {
+                        hideAppealBreakdown()
+                    }
+                )
+            }
+            row.append($loyaltyCell)
+            row.append("<div class='cell' style='text-align: right'>-</div>")
+            $('#airportDetailsChampionList').append(row)
+        }
+
+        if ($(champions).length == 0) {
+            var row = $("<div class='table-row'></div>")
+            row.append("<div class='cell'>-</div>")
+            row.append("<div class='cell'>-</div>")
+            row.append("<div class='cell' style='text-align: right'>-</div>")
+            row.append("<div class='cell' style='text-align: right'>-</div>")
+            row.append("<div class='cell' style='text-align: right'>-</div>")
+            $('#airportDetailsChampionList').append(row)
+        }
+    } catch (e) {
+        console.error('Failed to load champion details:', e)
+    }
 }
 
 
@@ -648,23 +648,26 @@ function loadAirportStatistics(airportStatistics) {
     updateFacilityList(airportStatistics)
 }
 
-function loadGenericTransits() {
-    $.ajax({
-        type: 'GET',
-        url: "/airports/" + activeAirportId + "/generic-transits",
-        contentType: 'application/json; charset=utf-8',
-        dataType: 'json',
-        success: function (transits) {
-            $('#genericTransitModal .table.genericTransits').data('transits', transits) //set the loaded data to modal as well
-            $('#airportDetailsNearbyAirportCount').text(transits.length)
+async function loadGenericTransits() {
+    const key = 'transits-' + activeAirportId
+    const headers = {}
+    if (_etagStore[key]) headers['If-None-Match'] = _etagStore[key]
 
-        },
-        error: function (jqXHR, textStatus, errorThrown) {
-            console.log(JSON.stringify(jqXHR));
-            console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
+    try {
+        const res = await fetch('/airports/' + activeAirportId + '/generic-transits', { headers })
+        if (res.status === 304) return
+        if (!res.ok) {
+            console.log('AJAX error: ' + res.status)
+            return
         }
-    });
-
+        const etag = res.headers.get('ETag')
+        if (etag) _etagStore[key] = etag
+        const transits = await res.json()
+        $('#genericTransitModal .table.genericTransits').data('transits', transits)
+        $('#airportDetailsNearbyAirportCount').text(transits.length)
+    } catch (e) {
+        console.error('Failed to load generic transits:', e)
+    }
 }
 
 function updateAirportCities(airport) {
@@ -870,43 +873,47 @@ function updateBaseInfo(airportId) {
     }
 }
 
-function updateAirportLoyalistDetails(airport) {
-    var url = "/airports/" + airport.id + "/loyalist-data"
-    var $table = $('#airportCanvas .loyalistDelta')
-    $table.find('.table-row').remove()
-
+async function updateAirportLoyalistDetails(airport) {
+    var url = '/airports/' + airport.id + '/loyalist-data'
     if (activeAirline) {
-        url += "?airlineId=" + activeAirline.id
+        url += '?airlineId=' + activeAirline.id
     }
-    $.ajax({
-        type: 'GET',
-        url: url,
-        contentType: 'application/json; charset=utf-8',
-        dataType: 'json',
-        success: function (result) {
-            var currentData = result.current
+    const key = 'loyalists-' + airport.id
+    const headers = {}
+    if (_etagStore[key]) headers['If-None-Match'] = _etagStore[key]
 
-            $.each(result.airlineDeltas, function (index, deltaEntry) {
-                var airlineName = deltaEntry.airlineName
-                var airlineId = deltaEntry.airlineId
-                var deltaText = (deltaEntry.passengers >= 0) ? ("+" + deltaEntry.passengers) : deltaEntry.passengers
-                var $row = $(`<div class="table-row clickable" onClick="navigateTo('/rivals/${deltaEntry.airlineId}')"><div class="cell">${getAirlineSpan(airlineId, airlineName)}</div><div class="cell" style="text-align:right">${deltaText}</div></div>`)
-                $row.click(function () {
-                    Rivals.show(deltaEntry.airlineId)
-                })
-                $table.append($row)
-            })
-
-            assignAirlineColors(currentData, "airlineId")
-
-            plotPie(currentData, activeAirline ? activeAirline.name : null, "loyalistPie", "airlineName", "amount")
-            plotLoyalistHistoryChart(result.history, "loyalistHistoryChart")
-        },
-        error: function (jqXHR, textStatus, errorThrown) {
-            console.log(JSON.stringify(jqXHR));
-            console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
+    try {
+        const res = await fetch(url, { headers })
+        if (res.status === 304) return
+        if (!res.ok) {
+            console.log('AJAX error: ' + res.status)
+            return
         }
-    });
+        const etag = res.headers.get('ETag')
+        if (etag) _etagStore[key] = etag
+        const result = await res.json()
+
+        var $table = $('#airportCanvas .loyalistDelta')
+        $table.find('.table-row').remove()
+        var currentData = result.current
+
+        $.each(result.airlineDeltas, function (index, deltaEntry) {
+            var airlineName = deltaEntry.airlineName
+            var airlineId = deltaEntry.airlineId
+            var deltaText = (deltaEntry.passengers >= 0) ? ("+" + deltaEntry.passengers) : deltaEntry.passengers
+            var $row = $(`<div class="table-row clickable" onClick="navigateTo('/rivals/${deltaEntry.airlineId}')"><div class="cell">${getAirlineSpan(airlineId, airlineName)}</div><div class="cell" style="text-align:right">${deltaText}</div></div>`)
+            $row.click(function () {
+                Rivals.show(deltaEntry.airlineId)
+            })
+            $table.append($row)
+        })
+
+        assignAirlineColors(currentData, "airlineId")
+        plotPie(currentData, activeAirline ? activeAirline.name : null, "loyalistPie", "airlineName", "amount")
+        plotLoyalistHistoryChart(result.history, "loyalistHistoryChart")
+    } catch (e) {
+        console.error('Failed to load loyalist details:', e)
+    }
 }
 
 function showLoyalistHistoryModal() {

@@ -1,6 +1,6 @@
 package com.patson.model
 
-import com.google.common.cache.{CacheBuilder, CacheLoader, LoadingCache}
+import com.github.benmanes.caffeine.cache.{Caffeine, CacheLoader, LoadingCache}
 import com.patson.data.{AirportSource, CountrySource, DestinationSource, GameConstants}
 import com.patson.model.AirportAssetType.{PassengerCostModifier, TransitModifier}
 import com.patson.model.airplane.Model
@@ -45,7 +45,7 @@ case class Airport(iata: String, icao: String, name: String, latitude: Double, l
   lazy val popMiddleIncome: Int = basePopMiddleIncome + populationBoost
   lazy val popElite: Int = basePopElite + eliteBoost
 
-  lazy val boostFactorsByType: LoadingCache[AirportBoostType.Value, List[(String, Double)]] = CacheBuilder.newBuilder.build(Airport.createBoostFactorsLoader(this))
+  lazy val boostFactorsByType: LoadingCache[AirportBoostType.Value, List[(String, Double)]] = Caffeine.newBuilder().build(Airport.createBoostFactorsLoader(this))
   lazy val incomeBoost: Int = boostFactorsByType.get(AirportBoostType.INCOME).map(_._2).sum.toInt
   lazy val populationBoost: Int = boostFactorsByType.get(AirportBoostType.POPULATION).map(_._2).sum.toInt
   lazy val eliteBoost: Int = boostFactorsByType.get(AirportBoostType.ELITE).map(_._2).sum.toInt

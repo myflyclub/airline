@@ -3,9 +3,9 @@ package controllers;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.CacheLoader;
+import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.patson.data.GoogleResourceSource;
 import com.patson.model.Airport;
 import com.patson.model.google.GoogleResource;
@@ -44,14 +44,14 @@ public class GoogleImageUtil {
 	private final static int MAX_PHOTO_WIDTH = 480;
 	private final static int SEARCH_RADIUS = 50000; //50km
 
-	private static LoadingCache<CityKey, Optional<ImageResult>> cityCache = CacheBuilder.newBuilder().maximumSize(100000).expireAfterWrite(1, TimeUnit.DAYS).build(new ResourceCacheLoader<>(key -> loadCityImageUrl(key.latitude, key.longitude), ResourceType.CITY_IMAGE().id()));
-	private static LoadingCache<AirportKey, Optional<ImageResult>> airportCache = CacheBuilder.newBuilder().maximumSize(100000).expireAfterWrite(1, TimeUnit.DAYS).build(new ResourceCacheLoader<>(key -> 	loadAirportImageUrl(key.latitude, key.longitude), ResourceType.AIRPORT_IMAGE().id()));
+	private static LoadingCache<CityKey, Optional<ImageResult>> cityCache = Caffeine.newBuilder().maximumSize(100000).expireAfterWrite(1, TimeUnit.DAYS).build(new ResourceCacheLoader<>(key -> loadCityImageUrl(key.latitude, key.longitude), ResourceType.CITY_IMAGE().id()));
+	private static LoadingCache<AirportKey, Optional<ImageResult>> airportCache = Caffeine.newBuilder().maximumSize(100000).expireAfterWrite(1, TimeUnit.DAYS).build(new ResourceCacheLoader<>(key -> 	loadAirportImageUrl(key.latitude, key.longitude), ResourceType.AIRPORT_IMAGE().id()));
 
 	private interface LoadFunction<T, R> {
 		R apply(T t) throws IOException;
 	}
 
-	private static class ResourceCacheLoader<KeyType extends Key> extends CacheLoader<KeyType, Optional<ImageResult>> {
+	private static class ResourceCacheLoader<KeyType extends Key> implements CacheLoader<KeyType, Optional<ImageResult>> {
 		private static final int DEFAULT_MAX_AGE = 24 * 60 * 60; //in sec
 		private final LoadFunction<KeyType, ImageResult> loadFunction;
 		private final int resourceTypeValue;
@@ -115,10 +115,10 @@ public class GoogleImageUtil {
 
 	public static void invalidate(Key key) {
 		if (key instanceof CityKey) {
-			cityCache.invalidate(key);
+			cityCache.invalidate((CityKey) key);
 			GoogleResourceSource.deleteResource(key.getId(), ResourceType.CITY_IMAGE());
 		} else if (key instanceof AirportKey) {
-			airportCache.invalidate(key);
+			airportCache.invalidate((AirportKey) key);
 			GoogleResourceSource.deleteResource(key.getId(), ResourceType.AIRPORT_IMAGE());
 		}
 	}

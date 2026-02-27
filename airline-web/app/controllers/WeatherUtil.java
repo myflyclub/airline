@@ -2,19 +2,18 @@ package controllers;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.CacheLoader;
+import com.github.benmanes.caffeine.cache.LoadingCache;
 
 import play.libs.Json;
 
 public class WeatherUtil {
 	private static final String APP_ID = "a73aa7c1bf75d7e3cb83d45a40d50c78";
-	private static LoadingCache<Coordinates, Weather> cache = CacheBuilder.newBuilder().maximumSize(1000)
+	private static LoadingCache<Coordinates, Weather> cache = Caffeine.newBuilder().maximumSize(1000)
 			.expireAfterWrite(10, TimeUnit.MINUTES).build(new CacheLoader<Coordinates, Weather>() {
 				public Weather load(Coordinates coordinates) {
 					Weather result = loadWeather(coordinates);
@@ -116,7 +115,7 @@ public class WeatherUtil {
 	public static Weather getWeather(Coordinates coordinates) {
 		try {
 			return cache.get(coordinates);
-		} catch (ExecutionException e) {
+		} catch (RuntimeException e) {
 			e.printStackTrace();
 			return null;
 		}

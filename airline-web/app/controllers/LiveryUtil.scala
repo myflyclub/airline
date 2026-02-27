@@ -4,12 +4,9 @@ import com.patson.data.FileSource
 
 import java.io.ByteArrayOutputStream
 import java.nio.file.Path
-import java.util.concurrent.TimeUnit
 import javax.imageio.ImageIO
 
 object LiveryUtil {
-  import com.google.common.cache.{CacheBuilder, CacheLoader, LoadingCache}
-  val liveries: LoadingCache[Int, Option[Array[Byte]]] = CacheBuilder.newBuilder.maximumSize(100).expireAfterAccess(10, TimeUnit.MINUTES).build(new LiveryLoader())
   val blank: Array[Byte] = getBlankImage(1, 1)
 
   val MAX_SIZE = 2 * 1024 * 1024
@@ -18,11 +15,11 @@ object LiveryUtil {
   val ALLOWED_TYPES: Set[String] = Set(FileSource.CONTENT_TYPE_JPEG, FileSource.CONTENT_TYPE_WEBP)
 
   def getLivery(airlineId: Int): Array[Byte] = {
-    liveries.get(airlineId).getOrElse(blank)
+    FileSource.loadLogo("livery", airlineId).getOrElse(blank)
   }
 
   def getLiveryContentType(airlineId: Int): String = {
-    liveries.get(airlineId).map(FileSource.detectContentType).getOrElse(FileSource.CONTENT_TYPE_PNG)
+    FileSource.loadLogo("livery", airlineId).map(FileSource.detectContentType).getOrElse(FileSource.CONTENT_TYPE_PNG)
   }
 
   def getBlankImage(width: Int, height: Int): Array[Byte] = {
@@ -42,12 +39,10 @@ object LiveryUtil {
       maxBytes = MAX_SIZE,
       allowedContentTypes = ALLOWED_TYPES,
       maxWidth = MAX_WIDTH, maxHeight = MAX_HEIGHT)
-    liveries.put(airlineId, Some(livery))
   }
 
   def deleteLivery(airlineId: Int): Unit = {
     FileSource.deleteLogo("livery", airlineId)
-    liveries.invalidate(airlineId)
   }
 
   def validateUpload(liveryFile: Path): Option[String] = {
@@ -74,16 +69,6 @@ object LiveryUtil {
       None
     } catch {
       case e: Exception => Some(s"Error validating livery: ${e.getMessage}")
-    }
-  }
-
-  def invalidateAirlineLivery(airlineId: Int): Unit = {
-    liveries.invalidate(airlineId)
-  }
-
-  class LiveryLoader extends CacheLoader[Int, Option[Array[Byte]]] {
-    override def load(airlineId: Int): Option[Array[Byte]] = {
-      FileSource.loadLogo("livery", airlineId)
     }
   }
 }

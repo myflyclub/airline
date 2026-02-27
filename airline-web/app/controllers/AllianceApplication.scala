@@ -8,7 +8,7 @@ import com.patson.model.{AllianceHistory, AllianceMember, _}
 import com.patson.model.alliance.AllianceStats
 import com.patson.util.{AirlineCache, AirportChampionInfo, AllianceCache, AllianceRankingUtil, ChampionUtil, CountryChampionInfo, LogoGenerator, UserCache}
 import java.awt.Color
-import com.google.common.cache.{CacheBuilder, CacheLoader, LoadingCache}
+import com.github.benmanes.caffeine.cache.{Caffeine, CacheLoader, LoadingCache}
 import java.util.concurrent.TimeUnit
 import controllers.AuthenticationObject.AuthenticatedAirline
 
@@ -88,9 +88,9 @@ class AllianceApplication @Inject()(cc: ControllerComponents) extends AbstractCo
   private def currentCycle: Int = CycleSource.loadCycle() - 1
 
   private val alliancesDataCache: LoadingCache[Int, JsValue] =
-    CacheBuilder.newBuilder()
+    Caffeine.newBuilder()
       .maximumSize(2)
-      .expireAfterWrite(10, TimeUnit.MINUTES)
+      .expireAfterWrite(15, TimeUnit.MINUTES)
       .build(new CacheLoader[Int, JsValue] {
         override def load(cycle: Int): JsValue = buildAlliancesData(cycle)
       })
@@ -230,12 +230,12 @@ class AllianceApplication @Inject()(cc: ControllerComponents) extends AbstractCo
     )
   }
 
-  //add cycle cache
   def getAlliances(): Action[AnyContent] = Action {
     val alliances: List[Alliance] = AllianceSource.loadAllAlliances(true)
     val cycle = CycleSource.loadCycle() - 1
     val alliancesWithRanking: Map[Int, (Int, BigDecimal)] = AllianceRankingUtil.getRankings()
     val allianceStats: Map[Int, AllianceStats] = AllianceSource.loadAllianceStatsByCycle(cycle).groupBy(_.alliance.id).view.mapValues(_.head).toMap
+    val sloganByAllianceId: Map[Int, String] = AllianceSource.loadAllAllianceSlogans()
 
     var result = Json.arr()
 
@@ -262,10 +262,40 @@ class AllianceApplication @Inject()(cc: ControllerComponents) extends AbstractCo
             allianceJson = allianceJson + ("stats" -> Json.toJson(stats))
         }
 
+        sloganByAllianceId.get(alliance.id).foreach { slogan =>
+          allianceJson = allianceJson + ("slogan" -> JsString(slogan))
+        }
+
         result = result.append(allianceJson)
     }
 
     Ok(result)
+  }
+
+  def saveAllianceSlogan(airlineId: Int, allianceId: Int) = AuthenticatedAirline(airlineId) { request =>
+    AllianceCache.getAlliance(allianceId, false) match {
+      case None =>
+        NotFound(s"Alliance with id $allianceId is not found")
+      case Some(alliance) =>
+        val isAdmin = alliance.members.exists(member =>
+          member.airline.id == request.user.id && AllianceRole.isAdmin(member.role)
+        )
+        if (!isAdmin) {
+          Forbidden("Only alliance leaders can save the alliance slogan")
+        } else {
+          request.body.asJson.flatMap(json => (json \ "slogan").asOpt[String]) match {
+            case Some(slogan) =>
+              if (slogan.length > 90) {
+                BadRequest(Json.obj("error" -> JsString("Slogan must be 90 characters or fewer")))
+              } else {
+                AllianceSource.saveAllianceSlogan(allianceId, slogan)
+                Ok(Json.obj())
+              }
+            case None =>
+              BadRequest(Json.obj("error" -> JsString("Missing slogan field")))
+          }
+        }
+    }
   }
 
   object SimpleLinkWrites extends Writes[List[Link]] {
@@ -351,7 +381,7 @@ class AllianceApplication @Inject()(cc: ControllerComponents) extends AbstractCo
   }
 
   def getMemberLoginStatus(allianceId: Int) = Action { request =>
-    AllianceCache.getAlliance(allianceId, true) match {
+    AllianceCache.getAlliance(allianceId) match { // Does not need to be fullLoad?
       case None => NotFound("Alliance with " + allianceId + " is not found")
       case Some(alliance) => {
         val userByAirlineId = mutable.HashMap[Int, User]()
@@ -390,7 +420,7 @@ class AllianceApplication @Inject()(cc: ControllerComponents) extends AbstractCo
   val MAX_CHAMPION_ENTRIES = 100
 
   def getAllianceAirportChampions(allianceId: Int) = Action { request =>
-    AllianceCache.getAlliance(allianceId, true) match {
+    AllianceCache.getAlliance(allianceId, false) match { // Does not need to be fullLoad?
       case None => NotFound("Alliance with " + allianceId + " is not found")
       case Some(alliance) => {
         val allianceChampions: List[AirportChampionInfo] = alliance.members.map { allianceMember =>
@@ -408,7 +438,7 @@ class AllianceApplication @Inject()(cc: ControllerComponents) extends AbstractCo
   }
 
   def getAllianceCountryChampions(allianceId: Int) = Action { request =>
-    AllianceCache.getAlliance(allianceId, true) match {
+    AllianceCache.getAlliance(allianceId, false) match { // Does not need to be fullLoad?
       case None => NotFound("Alliance with " + allianceId + " is not found")
       case Some(alliance) => {
         val allianceChampions: List[CountryChampionInfo] = alliance.members.map { allianceMember =>
@@ -712,7 +742,7 @@ class AllianceApplication @Inject()(cc: ControllerComponents) extends AbstractCo
   }
 
   def saveAllianceLogo(airlineId: Int, allianceId: Int) = AuthenticatedAirline(airlineId) { request =>
-    AllianceCache.getAlliance(allianceId, true) match {
+    AllianceCache.getAlliance(allianceId, false) match {
       case None =>
         NotFound(s"Alliance with id $allianceId is not found")
       case Some(alliance) =>
@@ -754,7 +784,7 @@ class AllianceApplication @Inject()(cc: ControllerComponents) extends AbstractCo
   }
 
   def setAllianceLogo(airlineId: Int, allianceId: Int, templateIndex: Int, color1: String, color2: String) = AuthenticatedAirline(airlineId) { request =>
-    AllianceCache.getAlliance(allianceId, true) match {
+    AllianceCache.getAlliance(allianceId, false) match {
       case None =>
         NotFound(s"Alliance with id $allianceId is not found")
       case Some(alliance) =>
