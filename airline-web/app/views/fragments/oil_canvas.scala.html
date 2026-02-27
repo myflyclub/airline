@@ -79,7 +79,7 @@
 									<div class="label">Contract Volume:</div>
 									<div class="value">
 										<input type="text" id="oilContractVolume" oninput="loadOilContractConsideration($('#oilContractVolume').val(), $('#oilContractDuration').val())"/> barrels
-										<img class="img-button" src='@routes.Assets.versioned("/images/icons/arrow-circle-135.png")' title="reset value" onclick="setSuggestedOilContractVolume()">
+										<img class="img-button svg" src='@routes.Assets.versioned("images/icons/reset.svg")' title="reset value" onclick="setSuggestedOilContractVolume()">
 										<img class="img-button" src='@routes.Assets.versioned("/images/icons/control-skip-090.png")' title="max value" onclick="setMaxOilContractVolume()">
 									</div>
 
@@ -88,7 +88,7 @@
 									<div class="label">Contract Duration:</div>
 									<div class="value">
 										<input type="text" id="oilContractDuration" oninput="loadOilContractConsideration($('#oilContractVolume').val(), $('#oilContractDuration').val())"/> weeks
-										<img class="img-button" src='@routes.Assets.versioned("/images/icons/arrow-circle-135.png")' title="reset value" onclick="setSuggestedOilContractDuration()">
+										<img class="img-button svg" src='@routes.Assets.versioned("images/icons/reset.svg")' title="reset value" onclick="setSuggestedOilContractDuration()">
 										<img class="img-button" src='@routes.Assets.versioned("/images/icons/control-skip-090.png")' title="max value" onclick="setMaxOilContractDuration()">
 									</div>
 								</div>

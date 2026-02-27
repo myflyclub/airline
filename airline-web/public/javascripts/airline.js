@@ -23,9 +23,9 @@ $( document ).ready(function() {
 })
 
 /**
- * 
- * @param {integer} airlineId 
- * @returns 
+ *
+ * @param {integer} airlineId
+ * @returns
  */
 function updateAirlineInfo(airlineId) {
 	return $.ajax({
@@ -89,24 +89,20 @@ async function selectAirline(airlineId) {
 
 function selectHeadquarters(airportId) {
     if (!activeAirline.headquarterAirport) {
-        if (!activeAirline.initialized) {
-            $.ajax({
-                    type: 'GET',
-                    url: "/airlines/" + activeAirline.id + "/profiles?airportId=" + airportId ,
-                    contentType: 'application/json; charset=utf-8',
-                    dataType: 'json',
-                    success: function(profiles) {
-                        updateProfiles(profiles)
-                    },
-                    error: function(jqXHR, textStatus, errorThrown) {
-                            console.log(JSON.stringify(jqXHR));
-                            console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
-                    }
-                });
-        } else {
-
-            promptConfirm("Build your headquarters at this airport?", data => buildBase(true))
-        }
+        $.ajax({
+                type: 'GET',
+                url: "/airlines/" + activeAirline.id + "/profiles?airportId=" + airportId ,
+                contentType: 'application/json; charset=utf-8',
+                dataType: 'json',
+                success: function(profiles) {
+                    updateProfiles(profiles)
+                    showWorldMap()
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                        console.log(JSON.stringify(jqXHR));
+                        console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
+                }
+            });
     }
 }
 

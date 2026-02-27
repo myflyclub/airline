@@ -239,7 +239,7 @@ function removeSnowflakes(container) {
 var flightMarkerImageWeight = {
 	"/assets/images/markers/dot.png" : 2000,
 	"/assets/images/markers/christmas/snowflake.png" : 200,
-	"/assets/images/markers/christmas/star.png" : 50,
+	"/assets/images/markers/christmas/star-full.svg" : 50,
 	"/assets/images/markers/christmas/holly.png" : 20,
 	"/assets/images/markers/christmas/bauble.png" : 20,
 	"/assets/images/markers/christmas/candy-cane.png" : 10,

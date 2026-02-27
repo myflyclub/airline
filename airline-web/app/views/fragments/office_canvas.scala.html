@@ -9,10 +9,10 @@
 							<span class="airlineNameInputSpan" style="display: none;">
 								<input id="airlineNameInput" class="airlineNameInput" type="text" />
 								<button onclick="confirmAirlineRename($('#officeCanvas .airlineNameInput').val())" class="confirm">
-									<img src='@routes.Assets.versioned("/images/icons/tick.png")'/>
+									<img src='@routes.Assets.versioned("/images/icons/tick.svg")' class="svg img-button"/>
 								</button>
 								<button onclick="cancelAirlineRename()">
-									<img src='@routes.Assets.versioned("/images/icons/cross.png")' class='cancel'/>
+									<img src='@routes.Assets.versioned("/images/icons/cross.svg")' class='cancel svg img-button'/>
 								</button>
 								<div class="warning" style="display:none;"></div>
 							</span>
@@ -30,7 +30,7 @@
 								<div class="">
 									<p class="text-center">Reputation Breakdown
 										<span class="tooltip">
-											<img src='@routes.Assets.versioned("/images/icons/information.svg")'>
+											<img class="info svg" src='@routes.Assets.versioned("/images/icons/information.svg")'>
 											<span class="tooltiptext alignLeft below" style="width: 280px;">
 												Your airline's reputation slowly moves toward the "trending to" reputation. Each reputation level gives your airline 3 additional delegates.
 											</span>
@@ -53,7 +53,7 @@
 								<span id="serviceFundingInputSpan">
 									<input id="targetServiceQualityInput" type="number" size="3" maxlength="3" onkeyup="checkTargetServiceQualityInput($(this).val())"/>
 									<span class="warning" style="display: none;">Value must be an integer 0 - 100</span>
-									<img src='@routes.Assets.versioned("/images/icons/tick.png")' class='button' style="vertical-align: middle;" onclick="setTargetServiceQuality($('#targetServiceQualityInput').val())"/>
+									<img src='@routes.Assets.versioned("/images/icons/tick.svg")' class='img-button svg' style="vertical-align: middle;" onclick="setTargetServiceQuality($('#targetServiceQualityInput').val())"/>
 								</span>
 								<span class="tooltip">
 									<img class="info svg" src='@routes.Assets.versioned("/images/icons/information.svg")'>
@@ -63,7 +63,7 @@
 							<p class="pb-4">Projected Employee Costs: $<span id="fundingProjection"></span></p>
 
 							<h4>Aircraft Renewal<span class="tooltip">
-									<img src='@routes.Assets.versioned("/images/icons/information.svg")'>
+									<img class="info svg" src='@routes.Assets.versioned("/images/icons/information.svg")'>
 									<span class="tooltiptext alignLeft below" style="width: 280px;">
 										You may set:<br>
 										- Auto renewal, your airline will auto purchase new planes when they fall below the set condition. Having newer planes increases your quality.
@@ -78,8 +78,8 @@
 								</span>
 								<span id="airplaneRenewalInputSpan" style="display:none;">
 									Condition Below&nbsp;<input id="airplaneRenwalInput" type="number" maxlength="2" size="2"/>% Age
-									<img src='@routes.Assets.versioned("/images/icons/tick.png")' class='button' style="vertical-align: middle;" onclick="setAirplaneRenewal($('#airplaneRenwalInput').val())"/>
-									<img src='@routes.Assets.versioned("/images/icons/cross.png")' class='button' style="vertical-align: middle;" onclick="setAirplaneRenewal()"/>
+									<img src='@routes.Assets.versioned("/images/icons/tick.svg")' class='img-button svg' style="vertical-align: middle;" onclick="setAirplaneRenewal($('#airplaneRenwalInput').val())"/>
+									<img src='@routes.Assets.versioned("/images/icons/cross.svg")' class='img-button svg' style="vertical-align: middle;" onclick="setAirplaneRenewal()"/>
 								</span>
 							</p>
 							<p class="pb-4">Minimum Balance: Above <span id="minimumRenewalBalanceDisplaySpan">
@@ -89,7 +89,7 @@
 								<span id="minimumRenewalBalanceInputSpan" style="display:none;">
 									Minimum balance&nbsp;<input id="minimumRenewalBalanceInput" type="number" maxlength="12" size="2" onkeyup="checkEditMinimumRenewalBalanceInput($(this).val())"/>
 									<span class="warning" style="display: none;">Value must be a positive integer less than 999,999,999,999</span>
-									<img src='@routes.Assets.versioned("/images/icons/tick.png")' class='img-button' style="vertical-align: middle;" onclick="setMinimumRenewalBalance($('#minimumRenewalBalanceInput').val())"/>
+									<img src='@routes.Assets.versioned("/images/icons/tick.svg")' class='img-button svg' style="vertical-align: middle;" onclick="setMinimumRenewalBalance($('#minimumRenewalBalanceInput').val())"/>
 								</span>
 							</p>
                             <div class="airlineTypeHide">
@@ -580,7 +580,7 @@
                                         </span>
                                         <span id="airlineCodeInputSpan" style="display: none;">
                                             <input id="airlineCodeInput" type="text" onkeyup="validateAirlineCode($(this).val())" />
-                                            <img src='@routes.Assets.versioned("/images/icons/tick.png")' class='img-button' style="vertical-align: middle;" onclick="setAirlineCode($('#airlineCodeInput').val())" />
+                                            <img src='@routes.Assets.versioned("/images/icons/tick.svg")' class='img-button' style="vertical-align: middle;" onclick="setAirlineCode($('#airlineCodeInput').val())" />
                                             <span class="warning" style="display:none;">Code should be exactly 2 letters</span>
                                         </span>
                                     </div>
@@ -607,9 +607,7 @@
 					</div>
 
 					<div class="vertical-group" style="width: 30%; min-width: 300px;">
-						<div class="section py-0">
-							<textarea id="airlineNotes" style="width:99%;" placeholder="Add your private notes here..."></textarea>
-						</div>
+                        <textarea id="airlineNotes" class="section" placeholder="Add your private notes here..."></textarea>
 						<div class="section">
                             <h4>Headquarters</h4>
 							<div style="position: relative; height: 125px; width: 150px; margin: auto;box-sizing: border-box;" class="headquartersMap"></div>
@@ -643,7 +641,7 @@
 								<img class="livery" style="max-height: 300px; max-width: 100%; display: block; margin: auto;">
 							</div>
 							<h4 style="margin-top: 5px;">Company Slogan
-								<img src='@routes.Assets.versioned("/images/icons/tick.png")' class='button' style="vertical-align: middle;" onclick="saveSlogan()">
+								<img src='@routes.Assets.versioned("/images/icons/tick.svg")' class='img-button svg' style="vertical-align: middle;" onclick="saveSlogan()">
 							</h4>
 							<textarea rows="3" cols="40" maxlength="200" class="slogan" style="width:99%; height: 50px;" placeholder="Your airline slogan..."></textarea>
 						</div>
@@ -736,23 +734,20 @@
 						<div class="section" >
                             <h4>Rebuild airline<img src='@routes.Assets.versioned("/images/icons/construction.png")'/></h4>
                             <ul>
-                                <li class="label dot">Balance reset to&nbsp;$<span id="resetBalance"></span>
+                                <li class="label dot">Reset to initial game start with rebuild value of&nbsp;$<span id="resetBalance"></span>
                                     <a popovertarget="popover-reset" onmouseover="document.getElementById('popover-reset').showPopover();">
                                         <img class="info svg" src='@routes.Assets.versioned("/images/icons/information.svg")'>
                                     </a>
                                 </li>
-                                <li class="label dot">All of the airplanes will be removed</li>
-                                <li class="label dot">Headquarters, bases and facilities will be removed</li>
-								<li class="label dot">All Airport Assets will be sold</li>
-                                <li class="label dot">All routes will be cancelled</li>
-								<li class="label dot">All loans and oil contracts cancelled</li>
-								<li class="label dot">Dropped from current Alliance</li>
-                                <li class="label dot">Reputation and Loyalty will be kept</li>
+								<li class="label dot">Select an airport on the map to build your headquarters</li>
+								<li class="label dot">Then choose your airline type</li>
                             </ul>
                             <div class='button resetAirline rebuild' onclick='promptConfirm("Rebuild Airline?", resetAirline, true)'>Rebuild Airline</div>
                             <h4 class="pt-4">Declare bankruptcy<img src='@routes.Assets.versioned("/images/icons/heart-break.png")'/></h4>
                             <ul>
                                 <li class="label dot">Reset to initial game start</li>
+								<li class="label dot">Select an airport on the map to build your headquarters</li>
+								<li class="label dot">Then choose your airline type</li>
                             </ul>
                             <div class='button resetAirline bankrupt' onclick='promptConfirm("Declare bankruptcy?", resetAirline, false)'>Declare Bankruptcy</div>
 						</div>

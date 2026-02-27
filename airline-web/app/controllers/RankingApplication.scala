@@ -5,45 +5,32 @@ import com.patson.data.{AirlineSource, AirplaneSource, AirportSource, CountrySou
 import com.patson.data.airplane.ModelSource
 import com.patson.model.airplane._
 import com.patson.model._
-import play.api.libs.json.JsNumber
-import play.api.libs.json.JsObject
-import play.api.libs.json.JsString
-import play.api.libs.json.JsValue
-import play.api.libs.json.Json
-import play.api.libs.json.Writes
+import play.api.libs.json._
 import play.api.mvc._
-
-import scala.collection.mutable.ListBuffer
 import controllers.AuthenticationObject.AuthenticatedAirline
 
-import javax.inject.Inject
-// ADDED IMPORTS
-import com.google.common.cache.{CacheBuilder, CacheLoader, LoadingCache}
-import java.util.concurrent.TimeUnit
+import javax.inject.{Inject, Singleton}
+import com.github.benmanes.caffeine.cache.{AsyncLoadingCache, Caffeine}
+import java.util.concurrent.{CompletableFuture, TimeUnit}
+import java.util.concurrent.atomic.AtomicReference
 import scala.concurrent.{ExecutionContext, Future}
+import scala.jdk.FutureConverters._ // Required for Scala 2.13 CompletableFuture interop
 
-
-// MODIFIED CLASS CONSTRUCTOR - removed AsyncCacheApi
+@Singleton
 class RankingApplication @Inject()(cc: ControllerComponents)(implicit ec: ExecutionContext) extends AbstractController(cc) {
   val MAX_ENTRY = 20
 
-  // START: GUAVA CACHE DEFINITION
-  // Define the loader that fetches data on a cache miss
-  val rankingsLoader: CacheLoader[Int, Map[RankingType.Value, List[Ranking]]] =
-    new CacheLoader[Int, Map[RankingType.Value, List[Ranking]]] {
-      def load(cycle: Int): Map[RankingType.Value, List[Ranking]] = {
-        // This is the synchronous database call
-        RankingLeaderboardSource.loadRankingsByCycle(cycle)
+  // 1st cache: per cycle data
+  val rankingsCache: AsyncLoadingCache[Integer, Map[RankingType.Value, List[Ranking]]] =
+    Caffeine.newBuilder()
+      .maximumSize(10)
+      .expireAfterWrite(1, TimeUnit.HOURS)
+      .buildAsync { (cycle: Integer, executor: java.util.concurrent.Executor) =>
+        CompletableFuture.supplyAsync(
+          () => RankingLeaderboardSource.loadRankingsByCycle(cycle), 
+          executor
+        )
       }
-    }
-
-  // Build the cache instance
-  val rankingsCache: LoadingCache[Int, Map[RankingType.Value, List[Ranking]]] =
-    CacheBuilder.newBuilder()
-      .maximumSize(10) // Cache up to 10 cycles' data
-      .expireAfterWrite(1, TimeUnit.HOURS) // Evict entries after 1 hour
-      .build(rankingsLoader)
-  // END: GUAVA CACHE DEFINITION
 
   implicit object RankingWrites extends Writes[Ranking] {
     def writes(ranking: Ranking): JsValue = {
@@ -94,46 +81,54 @@ class RankingApplication @Inject()(cc: ControllerComponents)(implicit ec: Execut
     lounge.name + " at " + lounge.airport.city + "(" + lounge.airport.iata + ")"
   }
 
+  // 2nd cache: per cycle JSON serialization of top N entries for each ranking type
+  private val cachedTopJson = new AtomicReference[(Int, Map[RankingType.Value, JsArray])]((-1, Map.empty))
+
+  private def getTopRankingsJson(rankings: Map[RankingType.Value, List[Ranking]], cycle: Int): Map[RankingType.Value, JsArray] = {
+    cachedTopJson.updateAndGet { current =>
+      if (current._1 == cycle) {
+        current // Cache hit, return existing
+      } else {
+        // Cache miss, execute JSON serialization exactly once
+        val built = rankings.view.mapValues(rs => Json.toJson(rs.take(MAX_ENTRY)).as[JsArray]).toMap
+        (cycle, built)
+      }
+    }._2
+  }
+
   def getRankingsWithAirline(airlineId: Int) = AuthenticatedAirline(airlineId).async { request =>
-    request.headers.get(IF_NONE_MATCH) match {
-      case Some(etag) if etag == s""""$currentCycle"""" =>
-        Future.successful(NotModified)
-      case _ =>
-        val latestCycleOpt = RankingLeaderboardSource.loadLatestCycle()
+    
+    // Execute the O(1) query on the isolated database thread pool
+    val cycleFuture: Future[Int] = Future {
+      CycleSource.loadCycle() 
+    }
 
-        latestCycleOpt match {
-          case None =>
-            // No cycle found, return empty object
-            Future.successful(Ok(Json.obj()).withHeaders(ETAG -> s""""0""""))
-          case Some(cycle) =>
-            // 1. Wrap the blocking cache.get() call in a Future to keep the action non-blocking
-            val rankingsFuture: Future[Map[RankingType.Value, List[Ranking]]] = Future {
-              rankingsCache.get(cycle) // This will either return the cached value or trigger rankingsLoader.load(cycle)
+    cycleFuture.flatMap { cycle =>
+      request.headers.get(IF_NONE_MATCH) match {
+        case Some(etag) if etag == s""""$cycle"""" =>
+          Future.successful(NotModified)
+        case _ =>
+          // Cache miss/stale: fetch new data
+          val rankingsFuture: Future[Map[RankingType.Value, List[Ranking]]] = rankingsCache.get(cycle).asScala
+
+          rankingsFuture.map { rankings =>
+            val airlineKey = RankingKey.AirlineKey(airlineId)
+            val topJson = getTopRankingsJson(rankings, cycle)
+
+            val rankingJson = topJson.foldLeft(Json.obj()) {
+              case (acc, (rankingType, topArr)) =>
+                val allRankings = rankings.getOrElse(rankingType, Nil)
+                val airlineExtra = allRankings.find(_.key == airlineKey).filter(_.ranking > MAX_ENTRY)
+                val arr: JsValue = airlineExtra.fold(topArr: JsValue)(r => topArr :+ Json.toJson(r))
+                acc + (rankingType.toString -> arr)
             }
 
-            // 2. Process the result asynchronously
-            rankingsFuture.map { rankings =>
-              val airlineKey = RankingKey.AirlineKey(airlineId)
-
-              val rankingJson = rankings.foldLeft(Json.obj()) {
-                case (jsonAccumulator, (rankingType, allRankings)) =>
-
-                  val topRankings = allRankings.take(MAX_ENTRY)
-                  val airlineRankingOpt = allRankings.find(_.key == airlineKey)
-                  val airlineRankingToAppend = airlineRankingOpt.filter(_.ranking > MAX_ENTRY)
-
-                  val rankingsList = topRankings ++ airlineRankingToAppend.toList
-                  val rankingEntriesJson = Json.toJson(rankingsList)
-
-                  jsonAccumulator + (rankingType.toString -> rankingEntriesJson)
-              }
-
-              Ok(rankingJson).withHeaders(
-                CACHE_CONTROL -> "no-cache",
-                ETAG -> s""""$cycle""""
-              )
-            }
-        }
+            Ok(rankingJson).withHeaders(
+              CACHE_CONTROL -> "no-cache",
+              ETAG -> s""""$cycle""""
+            )
+          }
+      }
     }
   }
 }

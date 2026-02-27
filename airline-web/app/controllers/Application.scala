@@ -116,6 +116,7 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
     AirportStatisticsCache.invalidateAll()
     AirplaneOwnershipCache.invalidateAll()
     AirplaneModelDiscountCache.invalidateAll()
+    ResponseCache.invalidateAll()
     Ok(Json.toJson("Cache cleared"))
   }
 
@@ -141,7 +142,6 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
    */
   @volatile private var airportsJsonCycle: Int = -1
   @volatile private var airportsJson: JsValue = Json.obj()
-  private val airportDetailCache = new scala.collection.concurrent.TrieMap[Int, (Int, JsValue)]()
 
   private def buildAirportsJson(airportData: List[models.AirportWithChampionAndStats]): JsValue = {
     val championsObject = JsObject(
@@ -168,15 +168,14 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
       case Some(etag) if etag == s""""$currentCycle"""" =>
         NotModified
       case _ =>
-        val cycle = currentCycle
-        if (airportsJsonCycle != cycle) {
+        if (airportsJsonCycle != currentCycle) {
           airportsJson = buildAirportsJson(AirportUtil.cachedAirportChampions)
-          airportsJsonCycle = cycle
+          airportsJsonCycle = currentCycle
         }
         Ok(airportsJson)
           .withHeaders(
             CACHE_CONTROL -> "no-cache",
-            ETAG -> s""""$cycle""""
+            ETAG -> s""""$currentCycle""""
           )
     }
   }
@@ -259,8 +258,8 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
       case Some(etag) if etag == s""""$currentCycle"""" =>
         NotModified
       case _ =>
-        val json: Option[JsValue] = airportDetailCache.get(airportId).filter(_._1 == currentCycle).map(_._2).orElse {
-          computeAirportDetailJson(airportId).map { j => airportDetailCache(airportId) = (currentCycle, j); j }
+        val json: Option[JsValue] = Option(ResponseCache.airportDetailCache.getIfPresent(airportId)).filter(_._1 == currentCycle).map(_._2).orElse {
+          computeAirportDetailJson(airportId).map { j => ResponseCache.airportDetailCache.put(airportId, (currentCycle, j)); j }
         }
         json match {
           case Some(j) => Ok(j).withHeaders(CACHE_CONTROL -> "no-cache", ETAG -> s""""$currentCycle"""")
@@ -688,20 +687,18 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
     }
   }
 
-  private val demandCache = new scala.collection.concurrent.TrieMap[Int, (Int, JsValue)]()
 
   def getAirportDemand(airportId: Int) = Action { request =>
     request.headers.get(IF_NONE_MATCH) match {
       case Some(etag) if etag == s""""$currentCycle"""" =>
         NotModified
       case _ =>
-        val cycle = currentCycle
-        val json = demandCache.get(airportId).filter(_._1 == cycle).map(_._2).getOrElse {
-          val result = computeAirportDemandJson(airportId, cycle)
-          demandCache(airportId) = (cycle, result)
+        val json = Option(ResponseCache.demandCache.getIfPresent(airportId)).filter(_._1 == currentCycle).map(_._2).getOrElse {
+          val result = computeAirportDemandJson(airportId, currentCycle)
+          ResponseCache.demandCache.put(airportId, (currentCycle, result))
           result
         }
-        Ok(json).withHeaders(CACHE_CONTROL -> "no-cache", ETAG -> s""""$cycle"""")
+        Ok(json).withHeaders(CACHE_CONTROL -> "no-cache", ETAG -> s""""$currentCycle"""")
     }
   }
 
@@ -709,7 +706,7 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
     AirportCache.getAirport(airportId) match {
       case None => Json.arr()
       case Some(fromAirport) =>
-        val ticketed = ConsumptionHistorySource.loadTopConsumptionsByFromAirport(airportId, 30)
+        val ticketed = ConsumptionHistorySource.loadTopConsumptionsByFromAirport(airportId, 35)
         val missed   = MissedDemandSource.loadByFromAirport(airportId)
 
         // Convert ticketed entries to json candidates
@@ -727,7 +724,7 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
               "toAirportIata"     -> toAirport.iata,
               "passengerCount"    -> e.passengerCount,
               "passengerType"     -> PassengerType.label(paxType),
-              "preferredLinkClass"-> linkClass.label,
+              "preferredLinkClass"-> linkClass.prettyLabel,
               "standardPrice"     -> standardPrice,
               "isMissed"          -> false,
               "airlineIds"        -> Json.toJson(e.airlineIds)
@@ -757,8 +754,8 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
           }
         }
 
-        val pool = ticketedCandidates ++ missedCandidates
         val rng = new scala.util.Random(cycle.toLong * airportId)
+        val pool = rng.shuffle(ticketedCandidates).take(22) ++ missedCandidates
         Json.toJson(rng.shuffle(pool).take(21))
     }
   }

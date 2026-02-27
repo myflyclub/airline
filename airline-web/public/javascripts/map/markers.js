@@ -5,10 +5,10 @@ import { showAirportPopup } from './popups.js';
 const AIRPORTS_SOURCE = 'airports';
 const AIRPORTS_LAYER = 'airports-layer';
 const AIRPORTS_LAYER_BASES = 'airports-layer-bases';
+const AIRPORTS_LAYER_BASES_LOGO = 'airports-layer-bases-logo';
 const FLIGHT_ROUTES_SOURCE = 'flight-routes';
 
 let airportsData = null;
-let hoveredBaseAirportId = null;
 let hoveredRouteIds = [];
 let iconsLoaded = false;
 let pendingMarkerUpdate = null;
@@ -129,6 +129,7 @@ function enhanceAirportsGeoJSON(geojson, options = {}) {
                     icon: icon,
                     sortKey: sortKey,
                     isBase: isBase,
+                    logoIcon: isBase ? `airline-logo-${baseInfo.airlineId}` : '',
                     isChampion: !!championInfo,
                     championAirlineId: championInfo?.championAirlineId,
                     championAirlineName: championInfo?.championAirlineName,
@@ -187,8 +188,28 @@ export function addMarkers(airportsGeoJSON, options = {}) {
                 'icon-image': ['get', 'icon'],
                 'icon-size': 1.0,
                 'icon-allow-overlap': true,
-                'icon-anchor': 'bottom',
+                'icon-anchor': 'center',
                 'symbol-sort-key': 999
+            },
+            paint: {
+                'icon-opacity': ['case', ['boolean', ['feature-state', 'hover'], false], 1.0, 0.9]
+            }
+        });
+
+        addLayer({
+            id: AIRPORTS_LAYER_BASES_LOGO,
+            type: 'symbol',
+            source: AIRPORTS_SOURCE,
+            filter: ['all',
+                ['==', ['get', 'isBase'], true],
+                ['!=', ['get', 'logoIcon'], '']
+            ],
+            layout: {
+                'icon-image': ['get', 'logoIcon'],
+                'icon-size': 0.2,
+                'icon-allow-overlap': true,
+                'icon-anchor': 'center',
+                'symbol-sort-key': 1000
             },
             paint: {
                 'icon-opacity': ['case', ['boolean', ['feature-state', 'hover'], false], 1.0, 0.9]
@@ -203,6 +224,9 @@ export function addMarkers(airportsGeoJSON, options = {}) {
         }
         if (state.map.getLayer(AIRPORTS_LAYER_BASES)) {
             state.map.moveLayer(AIRPORTS_LAYER_BASES);
+        }
+        if (state.map.getLayer(AIRPORTS_LAYER_BASES_LOGO)) {
+            state.map.moveLayer(AIRPORTS_LAYER_BASES_LOGO);
         }
     }
 
@@ -308,8 +332,6 @@ function highlightRoutesFromAirport(airportId) {
 
     // Clear any previous highlights
     clearRouteHighlights();
-
-    hoveredBaseAirportId = airportId;
     hoveredRouteIds = [];
 
     // Find all routes connected to this airport
@@ -338,8 +360,6 @@ function clearRouteHighlights() {
             { hover: false }
         );
     });
-
-    hoveredBaseAirportId = null;
     hoveredRouteIds = [];
 }
 
@@ -347,6 +367,7 @@ export function removeMarkers() {
     if (!state.map) return;
     removeLayer(AIRPORTS_LAYER);
     removeLayer(AIRPORTS_LAYER_BASES);
+    removeLayer(AIRPORTS_LAYER_BASES_LOGO);
     removeSource(AIRPORTS_SOURCE);
     state.markers = {};
 }
@@ -359,6 +380,40 @@ function getCurrentBases() {
         }
     });
     return bases;
+}
+
+async function useBaseLogos(bases) {
+    if (!state.map) return;
+
+    const uniqueAirlineIds = [...new Set(Object.values(bases).map(b => b.airlineId))].filter(id => id !== undefined);
+    const loadPromises = uniqueAirlineIds.map(async (airlineId) => {
+        const imageName = `airline-logo-${airlineId}`;
+        if (state.map.hasImage(imageName)) return;
+
+        try {
+            const url = `/airlines/${airlineId}/logo`;
+            const response = await fetch(url);
+            const blob = await response.blob();
+            const imgUrl = URL.createObjectURL(blob);
+            const img = new Image();
+
+            await new Promise((resolve, reject) => {
+                img.onload = () => {
+                    if (!state.map.hasImage(imageName)) {
+                        state.map.addImage(imageName, img);
+                    }
+                    URL.revokeObjectURL(imgUrl);
+                    resolve();
+                };
+                img.onerror = reject;
+                img.src = imgUrl;
+            });
+        } catch (error) {
+            console.warn(`Failed to load logo for airline ${airlineId}:`, error);
+        }
+    });
+
+    await Promise.all(loadPromises);
 }
 
 async function useChampionLogos(champions) {
@@ -399,15 +454,15 @@ export async function refreshMarkers() {
     if (!state.map || !hasSource(AIRPORTS_SOURCE) || !airportsData) return;
 
     const champions = window.airportsLatestData?.champions || {};
+    const bases = getCurrentBases();
+
+    await useBaseLogos(bases);
 
     if (state.championMapMode) {
         await useChampionLogos(champions);
     }
 
-    const geojson = enhanceAirportsGeoJSON(airportsData, {
-        bases: getCurrentBases(),
-        champions: champions
-    });
+    const geojson = enhanceAirportsGeoJSON(airportsData, { bases, champions });
     setSourceData(AIRPORTS_SOURCE, geojson);
 }
 

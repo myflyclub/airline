@@ -68,6 +68,13 @@ const Alliance = (() => {
             if (row) navigateTo(`/country/${row.dataset.countryCode}`);
         });
 
+        document.getElementById('allianceSloganInput').addEventListener('input', function() {
+            _updateSloganCharCount(this);
+        });
+        document.getElementById('saveSloganBtn').addEventListener('click', () => {
+            if (selectedAllianceId) _saveAllianceSlogan(selectedAllianceId);
+        });
+
         sidebar.dataset.buttonsBound = 'true';
     }
 
@@ -220,6 +227,15 @@ const Alliance = (() => {
         // Logo image
         sidebar.querySelector('.allianceLogo').src = `/alliances/${allianceId}/logo${_logoBust}`;
 
+        // Slogan section
+        const sloganSection = document.getElementById('sidebarSloganSection');
+        sloganSection.style.display = isAdmin ? '' : 'none';
+        if (isAdmin) {
+            const sloganInput = document.getElementById('allianceSloganInput');
+            sloganInput.value = alliance.slogan || '';
+            _updateSloganCharCount(sloganInput);
+        }
+
         // Stats table
         const statsTable = document.getElementById('allianceStatsTable');
         statsTable.innerHTML = '';
@@ -294,7 +310,7 @@ const Alliance = (() => {
                                         `<img src="/assets/images/icons/exclamation-circle.png" class="img-button disabled" title="Cannot accept: ${entry.acceptRejection}">`);
                                 } else if (entry.acceptPrompt) {
                                     const icon = document.createElement('img');
-                                    icon.src = '/assets/images/icons/tick.png';
+                                    icon.src = '/assets/images/icons/tick.svg';
                                     icon.className = 'img-button';
                                     icon.title = 'Accept Member';
                                     icon.addEventListener('click', e => {
@@ -327,8 +343,8 @@ const Alliance = (() => {
                                 }
                                 if (!entry.removeRejection && entry.removePrompt) {
                                     const icon = document.createElement('img');
-                                    icon.src = '/assets/images/icons/cross.png';
-                                    icon.className = 'img-button';
+                                    icon.src = '/assets/images/icons/cross.svg';
+                                    icon.className = 'svg img-button';
                                     icon.title = 'Remove Member';
                                     icon.addEventListener('click', e => {
                                         e.stopPropagation();
@@ -548,6 +564,7 @@ const Alliance = (() => {
         const rows = Object.values(loadedAlliancesById).map(a => ({
             id:                a.id,
             name:              a.name,
+            slogan:            a.slogan || '',
             championPoints:    a.championPoints || 0,
             totalAirportRep:   (a.stats && a.stats.totalAirportRep)   || 0,
             combinedMarketCap: (a.stats && a.stats.combinedMarketCap) || 0,
@@ -571,16 +588,20 @@ const Alliance = (() => {
             const color    = colorFromString(entry.name);
             const rep      = typeof entry.totalAirportRep === 'number'
                 ? entry.totalAirportRep.toFixed(1) : entry.totalAirportRep;
+            const sloganHtml = entry.slogan
+                ? `<div class="p-0 mt-1 text-xxs">${entry.slogan}</div>`
+                : '';
             return `<div class="table-row clickable" data-alliance-id="${entry.id}" style="opacity:${opacity};">
                 <div class="cell js-toggle-alliance" style="width:3%; text-align:center;">
                     <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${color};vertical-align:middle;"></span>
                 </div>
                 <div class="cell js-toggle-alliance" style="width:3%;">
-                    <input type="checkbox" ${isHidden ? '' : 'checked'} style="cursor:pointer;pointer-events:none;display:block;margin:auto;">
+                    <input type="checkbox" ${isHidden ? '' : 'checked'} class="img-button" style="vertical-align:middle;">
                 </div>
                 <div class="cell" style="width:32%;">
-                    <img src="/alliances/${entry.id}/logo${_logoBust}" style="height:16px;width:auto;max-width:32px;vertical-align:middle;margin-right:4px;" onerror="this.style.display='none'">
+                    <img src="/alliances/${entry.id}/logo${_logoBust}" style="height:16px;width:auto;max-width:32px;vertical-align:middle;margin-right:4px;" onerror="this.style.display='none'"${entry.slogan ? ` data-tooltip="${entry.slogan.replace(/"/g, '&quot;')}"` : ''}>
                     ${entry.name}
+                    ${sloganHtml}
                 </div>
                 <div class="cell" style="width:9%;" align="right">${rep}</div>
                 <div class="cell" style="width:9%;" align="right">${commaSeparateNumber(entry.championPoints)}</div>
@@ -754,6 +775,42 @@ const Alliance = (() => {
     // =========================================================================
     // SECTION: Alliance Actions
     // =========================================================================
+
+    function _updateSloganCharCount(input) {
+        const MAX = 90;
+        const remaining = MAX - input.value.length;
+        const countEl = document.getElementById('sloganCharCount');
+        if (remaining < 15) {
+            countEl.textContent = `${remaining} characters remaining`;
+            countEl.style.display = '';
+        } else {
+            countEl.style.display = 'none';
+        }
+    }
+
+    function _saveAllianceSlogan(allianceId) {
+        const input = document.getElementById('allianceSloganInput');
+        const slogan = input.value;
+        if (slogan.length > 90) return;
+
+        fetch(`/airlines/${activeAirline.id}/set-alliance-slogan/${allianceId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json; charset=utf-8' },
+            body: JSON.stringify({ slogan }),
+        })
+            .then(r => r.json())
+            .then(result => {
+                if (result.error) {
+                    console.error('Failed to save slogan:', result.error);
+                    return;
+                }
+                if (loadedAlliancesById[allianceId]) {
+                    loadedAlliancesById[allianceId].slogan = slogan;
+                }
+                renderTicker();
+            })
+            .catch(err => console.error('Failed to save slogan:', err));
+    }
 
     function toggleFormAlliance() {
         document.getElementById('toggleFormAllianceButton').style.display = 'none';

@@ -42,7 +42,7 @@
 										<span class="price-wrapper class-value-child"><input type="number" id="quickPriceBusiness" class="quick-price-input price-input" data-class="business" min="1"/></span>
 										<span class="price-wrapper class-value-child"><input type="number" id="quickPriceFirst" class="quick-price-input price-input" data-class="first" min="1"/></span>
 									</div>
-									<img id="quickPriceSave" src='@routes.Assets.versioned("images/icons/tick.png")' class="clickable" style="display:none; width:18px;" title="Save prices" onclick="saveCurrentLinkPrice()"/>
+									<img id="quickPriceSave" src='@routes.Assets.versioned("images/icons/tick.svg")' class="svg img-button" style="display:none; width:18px;" title="Save prices" onclick="saveCurrentLinkPrice()"/>
 								</div>
 								<div id="quickPriceMessage" style="font-size:80%; min-height:1em; margin-top:-8px; padding-bottom:4px;"></div>
 									<h5 class="leading-snug opacity-80">Capacity</h5>
@@ -242,7 +242,7 @@
 								<div class="flex-row h-6">
 									<div style="width:162px"><p>Regulatory status at <span class="planToIata"></span>:</p></div>
 									<div style="width:calc(100% - 165px)"><p class="leading-snug">
-										<span id="planLinkToCountryTitle"><img class="airlineTitleIcon" style='display : none; vertical-align: middle;'>&nbsp;<span class="airlineTitle titleCue"></span></span>,
+										<span id="planLinkToCountryTitle"><img class="airlineTitleIcon svg" style='display: none;'>&nbsp;<span class="airlineTitle titleCue"></span></span>,
 										<span id="planLinkToCountryRelationship">
 												<span class="total"></span>
 												<img class="pb-1 clickable detailsIcon titleCue" src='@routes.Assets.versioned("/images/icons/gear.png")' title='Manage Relationship' class="clickable detailsIcon titleCue" onclick="showRelationshipDetailsModal($(this).data('relationship'), $(this).data('title'), $(this).data('countryCode'))" style="vertical-align: middle;">
@@ -305,8 +305,8 @@
 									<div>
 										<h5>Economy:</h5>
 										<div>
-											<img src='@routes.Assets.versioned("/images/icons/plus-button.png")' class='img-button pr-1 pb-1' onclick='increasePrice(`economy`)'  title="Increase economy price by 5%">
-											<img src='@routes.Assets.versioned("/images/icons/minus-button.png")' class='img-button pr-1 pb-1' onclick='decreasePrice(`economy`)'  title="Decrease economy price by 5%">
+											<img src='@routes.Assets.versioned("/images/icons/plus.svg")' class='img-button svg svg-monochrome svg-hover-green pr-1 pb-1' onclick='increasePrice(`economy`)'  title="Increase economy price by 5%">
+											<img src='@routes.Assets.versioned("/images/icons/minus.svg")' class='img-button svg svg-monochrome svg-hover-red pr-1 pb-1' onclick='decreasePrice(`economy`)'  title="Decrease economy price by 5%">
 										</div>
 									</div>
 									<div class="m-0"><span class="price-wrapper pr-8 w-42 text-base font-mono"><input type="text" id="planLinkEconomyPrice" data-class="economy" class="price-input"/></span></div>
@@ -317,8 +317,8 @@
 									<div class="m-0">
 										<h5>Business:</h5>
 										<div>
-											<img src='@routes.Assets.versioned("/images/icons/plus-button.png")' class='img-button pr-1 pb-1' onclick='increasePrice(`business`)'  title="Increase business price by 5%">
-											<img src='@routes.Assets.versioned("/images/icons/minus-button.png")' class='img-button pr-1 pb-1' onclick='decreasePrice(`business`)'  title="Decrease business price by 5%">
+											<img src='@routes.Assets.versioned("/images/icons/plus.svg")' class='img-button svg svg-monochrome svg-hover-green pr-1 pb-1' onclick='increasePrice(`business`)'  title="Increase business price by 5%">
+											<img src='@routes.Assets.versioned("/images/icons/minus.svg")' class='img-button svg svg-monochrome svg-hover-red pr-1 pb-1' onclick='decreasePrice(`business`)'  title="Decrease business price by 5%">
 										</div>
 									</div>
 									<div class="m-0"><span class="price-wrapper pr-8 w-42 text-base font-mono"><input type="text" id="planLinkBusinessPrice" data-class="business" class="price-input"/></span></div>
@@ -329,16 +329,16 @@
 									<div class="m-0">
 										<h5>First:</h5>
 										<div>
-											<img src='@routes.Assets.versioned("/images/icons/plus-button.png")' class='img-button pr-1 pb-1' onclick='increasePrice(`first`)'  title="Increase first price by 5%">
-											<img src='@routes.Assets.versioned("/images/icons/minus-button.png")' class='img-button pr-1 pb-1' onclick='decreasePrice(`first`)'  title="Decrease first price by 5%">
+											<img src='@routes.Assets.versioned("/images/icons/plus.svg")' class='img-button svg svg-monochrome svg-hover-green pr-1 pb-1' onclick='increasePrice(`first`)'  title="Increase first price by 5%">
+											<img src='@routes.Assets.versioned("/images/icons/minus.svg")' class='img-button svg svg-monochrome svg-hover-red pr-1 pb-1' onclick='decreasePrice(`first`)'  title="Decrease first price by 5%">
 										</div>
 									</div>
 									<div>
                                         <div class="m-0"><span class="price-wrapper pr-8 w-42 text-base font-mono"><input type="text" id="planLinkFirstPrice" data-class="first" class="price-input"/></span></div>
 										<div>
-											<img src='@routes.Assets.versioned("/images/icons/plus-button.png")' class='img-button pr-1 py-1' onclick='increasePrice()'  title="Increase all price by 5% of Default">
-											<img src='@routes.Assets.versioned("/images/icons/minus-button.png")' class='img-button pr-1 py-1' onclick='decreasePrice()'  title="Decrease all price by 5% of Default">
-											<img src='@routes.Assets.versioned("/images/icons/arrow-circle-135.png")' class='img-button pr-1 py-1' onclick='resetPrice()'  title="Reset to Default Ticket Prices">
+											<img src='@routes.Assets.versioned("/images/icons/plus.svg")' class='img-button svg svg-monochrome svg-hover-green pr-1 py-1' onclick='increasePrice(`first`)'  title="Increase first price by 5%">
+											<img src='@routes.Assets.versioned("/images/icons/minus.svg")' class='img-button svg svg-monochrome svg-hover-red pr-1 py-1' onclick='decreasePrice(`first`)'  title="Decrease first price by 5%">
+											<img src='@routes.Assets.versioned("images/icons/reset.svg")' class='img-button svg svg-monochrome pr-1 py-1' onclick='resetPrice()'  title="Reset to Default Ticket Prices">
 										</div>
 									</div>
 									<div class="m-0"><p class="py-1" id="planLFFirst">100%</p></div>
@@ -647,7 +647,7 @@
                                 <div class="flex-row gap-4 mt-4 px-8">
                                     <button type="button" class="button search" tabindex="103" onkeypress="searchButtonKeyPress(event, $(this))"
                                         onclick="searchAction(document.querySelector('div.searchFieldContainer input.fromAirport').dataset.selectedid, document.querySelector('div.searchFieldContainer input.toAirport').dataset.selectedid)">Search</button>
-                                    <img width="20px" class="clickable mr-auto" onclick="resetSearchInput($(this))" src='@routes.Assets.versioned("/images/icons/reset.svg")' title="reset">
+                                    <img width="20px" class="img-button svg mr-auto" onclick="resetSearchInput($(this))" src='@routes.Assets.versioned("images/icons/reset.svg")' title="reset">
                                 </div>
                             </div>
                     
@@ -749,7 +749,7 @@
                                 </div>
                                 <div class="flex-row">
                                     <button type="button" class="button search mt-4" tabindex="111" onkeypress="searchButtonKeyPress(event, $(this))" onclick="searchLinkHistory()">Search</button>
-                                    <img width="20px" class="clickable mr-auto" onclick="resetSearchInput($(this))" src='@routes.Assets.versioned("/images/icons/reset.svg")' title="reset">
+                                    <img width="20px" class="clickable mr-auto" onclick="resetSearchInput($(this))" src='@routes.Assets.versioned("images/icons/reset.svg")' title="reset">
                                 </div>
                                 <div id="historySearchResult" class="section flex-grow overflow-y-auto p-0 mt-2">
                                     <div class="table data w-full" style="min-width: 700px;">

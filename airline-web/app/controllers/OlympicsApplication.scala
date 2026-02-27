@@ -17,7 +17,6 @@ import scala.collection.mutable.ListBuffer
 class OlympicsApplication @Inject()(cc: ControllerComponents) extends AbstractController(cc) {
   implicit object OlympicsWrites extends Writes[Olympics] {
     def writes(olympics: Olympics): JsValue = {
-      val currentCycle = CycleSource.loadCycle()
       val remainingDuration =
         if (currentCycle > olympics.startCycle + olympics.duration) {
           0
@@ -57,11 +56,8 @@ class OlympicsApplication @Inject()(cc: ControllerComponents) extends AbstractCo
       )
   }
 
-  private val olympicsDetailsCache = new scala.collection.concurrent.TrieMap[Int, (Int, JsValue)]()
-
   def getOlympicsDetails(eventId : Int) = Action {
-    val cycle = currentCycle
-    val json = olympicsDetailsCache.get(eventId).filter(_._1 == cycle).map(_._2).getOrElse {
+    val json = Option(ResponseCache.olympicsDetailsCache.getIfPresent(eventId)).filter(_._1 == currentCycle).map(_._2).getOrElse {
       var result = Json.obj()
 
       var candidatesJson = Json.arr()
@@ -111,7 +107,7 @@ class OlympicsApplication @Inject()(cc: ControllerComponents) extends AbstractCo
       }
       EventSource.loadEventById(eventId) match {
         case Some(olympics: Olympics) =>
-          if (!olympics.isActive(cycle)) { //only load total pax after the olympics is over
+          if (!olympics.isActive(currentCycle)) { //only load total pax after the olympics is over
             val stats = EventSource.loadOlympicsCountryStats(eventId)
             val totalPassengers : Int = stats.view.values.map {
               case statsOfAnCountry => statsOfAnCountry.map(_.transported).sum
@@ -121,13 +117,13 @@ class OlympicsApplication @Inject()(cc: ControllerComponents) extends AbstractCo
         case _ =>
       }
 
-      olympicsDetailsCache(eventId) = (cycle, result)
+      ResponseCache.olympicsDetailsCache.put(eventId, (currentCycle, result))
       result
     }
 
     Ok(json)
       .withHeaders(
-        ETAG -> s""""$cycle""""
+        ETAG -> s""""$currentCycle""""
       )
   }
 

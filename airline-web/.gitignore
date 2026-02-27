@@ -16,3 +16,4 @@ target
 /conf/google-oauth-credentials.json
 /google-tokens/
 /data/logos/
+/project/metals.sbt

@@ -5,10 +5,10 @@ import com.patson.model.airplane.{Model, ModelDiscount}
 
 
 object AirplaneModelDiscountCache {
-  import com.google.common.cache.{CacheBuilder, CacheLoader, LoadingCache}
+  import com.github.benmanes.caffeine.cache.{Caffeine, CacheLoader, LoadingCache}
   import scala.jdk.CollectionConverters._
 
-  val simpleCache: LoadingCache[Int, List[ModelDiscount]] = CacheBuilder.newBuilder.maximumSize(1000).build(new SimpleLoader())
+  val simpleCache: LoadingCache[Int, List[ModelDiscount]] = Caffeine.newBuilder().maximumSize(1000).build(new SimpleLoader())
 
 
   def getModelDiscount(modelId : Int) = {

@@ -1,4 +1,7 @@
 // State management for History Search
+const _searchEtagStore = {}
+const _searchRouteData = {}
+const _researchData = {}
 let historySearchState = {};
 const resetHistorySearchState = () => {
     historySearchState = {
@@ -198,19 +201,27 @@ function showResearchPreloaded(fromAirportId, toAirportId) {
 }
 
 
-function searchRoute(fromAirportId, toAirportId) {
+async function searchRoute(fromAirportId, toAirportId) {
     if (!fromAirportId || !toAirportId) {
         return;
     }
-
     const url = `/search-route/${fromAirportId}/${toAirportId}`;
-
-    $.ajax({
-        type: 'GET',
-        url: url,
-        contentType: 'application/json; charset=utf-8',
-        dataType: 'json',
-        success: function(searchResult) {
+    const key = `route-${fromAirportId}-${toAirportId}`;
+    const headers = {};
+    if (_searchEtagStore[key]) headers['If-None-Match'] = _searchEtagStore[key];
+    $('body .loadingSpinner').show();
+    try {
+        const res = await fetch(url, { headers });
+        let searchResult;
+        if (res.status === 304 && _searchRouteData[key]) {
+            searchResult = _searchRouteData[key];
+        } else {
+            if (!res.ok) { console.log('AJAX error: ' + res.status); return; }
+            const etag = res.headers.get('ETag');
+            if (etag) _searchEtagStore[key] = etag;
+            searchResult = await res.json();
+            _searchRouteData[key] = searchResult;
+        }
             const resultContainer = $("#routeSearchResult");
             resultContainer.empty();
             $("#searchCanvas .banner").hide();
@@ -314,18 +325,11 @@ function searchRoute(fromAirportId, toAirportId) {
                 `;
                 resultContainer.append(itineraryHtml);
             });
-        },
-        error: function(jqXHR, textStatus, errorThrown) {
-                console.log(JSON.stringify(jqXHR));
-                console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
-        },
-        beforeSend: function() {
-            $('body .loadingSpinner').show()
-        },
-        complete: function(){
-            $('body .loadingSpinner').hide()
-        }
-    });
+    } catch (e) {
+        console.error('Failed to search route:', e);
+    } finally {
+        $('body .loadingSpinner').hide();
+    }
 }
 
 
@@ -1032,39 +1036,37 @@ function buildDemandsTable(demands, targetDiv) {
 }
 
 
-function researchFlight(fromAirportId, toAirportId) {
+async function researchFlight(fromAirportId, toAirportId) {
     if (!fromAirportId || !toAirportId) {
         return;
     }
-
     const url = `/research-link/${fromAirportId}/${toAirportId}`;
-
-    $.ajax({
-        type: 'GET',
-        url: url,
-        contentType: 'application/json; charset=utf-8',
-        dataType: 'json',
-        success: function(result) {
-            populateResearchHeader(result);
-            populateResearchLinksTable(result.links, result.consumptions, result.basePrice);
-            populateResearchDemandTables(result);
-
-            $('#researchSearchResult').show();
-
-            assignAirlineColors(result.consumptions, "airlineId") 
-            // plotPie(result.consumptions, null, "linksPie", "airlineName", "soldSeats");
-        },
-        error: function(jqXHR, textStatus, errorThrown) {
-            console.log(JSON.stringify(jqXHR));
-            console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
-        },
-        beforeSend: function() {
-            $('body .loadingSpinner').show();
-        },
-        complete: function(){
-            $('body .loadingSpinner').hide();
+    const key = `research-${fromAirportId}-${toAirportId}`;
+    const headers = {};
+    if (_searchEtagStore[key]) headers['If-None-Match'] = _searchEtagStore[key];
+    $('body .loadingSpinner').show();
+    try {
+        const res = await fetch(url, { headers });
+        let result;
+        if (res.status === 304 && _researchData[key]) {
+            result = _researchData[key];
+        } else {
+            if (!res.ok) { console.log('AJAX error: ' + res.status); return; }
+            const etag = res.headers.get('ETag');
+            if (etag) _searchEtagStore[key] = etag;
+            result = await res.json();
+            _researchData[key] = result;
         }
-    });
+        populateResearchHeader(result);
+        populateResearchLinksTable(result.links, result.consumptions, result.basePrice);
+        populateResearchDemandTables(result);
+        $('#researchSearchResult').show();
+        assignAirlineColors(result.consumptions, "airlineId");
+    } catch (e) {
+        console.error('Failed to research flight:', e);
+    } finally {
+        $('body .loadingSpinner').hide();
+    }
 }
 
 function populateResearchHeader(result) {

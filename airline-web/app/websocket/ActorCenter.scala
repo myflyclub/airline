@@ -7,7 +7,7 @@ import com.patson.model.notice.{AirlineNotice, NoticeCategory, TrackingNotice}
 import com.patson.stream.{CycleCompleted, CycleInfo, KeepAlivePing, KeepAlivePong, ReconnectPing, SimulationEvent}
 import com.patson.util.{AirlineCache, AirplaneModelDiscountCache, AirplaneOwnershipCache, AirportCache, AirportStatisticsCache}
 import com.typesafe.config.ConfigFactory
-import controllers.{AirlineTutorial, AirportUtil, GooglePhotoUtil}
+import controllers.{AirlineTutorial, AirportUtil, GooglePhotoUtil, ResponseCache}
 import models.PendingAction
 import play.api.libs.json.{JsNumber, Json}
 import websocket.chat.TriggerPing
@@ -120,6 +120,7 @@ sealed class LocalMainActor(remoteActor : ActorSelection) extends Actor {
           AirportStatisticsCache.invalidateAll()
           AirplaneOwnershipCache.invalidateAll()
           AirplaneModelDiscountCache.invalidateAll()
+          ResponseCache.invalidateAll()
           AirportUtil.refreshAirports()
           if (bannerEnabled) {
             println("Banner is enabled. Refreshing banner on cycle complete")

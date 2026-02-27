@@ -5,12 +5,12 @@ import com.patson.data.FileSource
 import javax.imageio.ImageIO
 
 object LogoUtil {
-  private val logoCache = com.google.common.cache.CacheBuilder.newBuilder()
+  private val logoCache = com.github.benmanes.caffeine.cache.Caffeine.newBuilder()
     .maximumSize(1000)
     .expireAfterWrite(10, java.util.concurrent.TimeUnit.MINUTES)
     .build[java.lang.Integer, Array[Byte]]()
 
-  private val allianceLogoCache = com.google.common.cache.CacheBuilder.newBuilder()
+  private val allianceLogoCache = com.github.benmanes.caffeine.cache.Caffeine.newBuilder()
     .maximumSize(200)
     .expireAfterWrite(10, java.util.concurrent.TimeUnit.MINUTES)
     .build[java.lang.Integer, Array[Byte]]()

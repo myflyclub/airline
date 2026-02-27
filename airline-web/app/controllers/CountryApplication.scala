@@ -101,39 +101,48 @@ class CountryApplication @Inject()(cc: ControllerComponents) extends AbstractCon
   }
 
   private val countryJsonCache = new scala.collection.concurrent.TrieMap[String, (Int, JsValue)]()
+  private val titleProgressionCache = new scala.collection.concurrent.TrieMap[String, (Int, JsValue)]()
 
   def getCountry(countryCode: String) = Action { request =>
     request.headers.get(IF_NONE_MATCH) match {
       case Some(etag) if etag == s""""$currentCycle"""" =>
         NotModified
       case _ =>
-        val cycle = currentCycle
-        val json: Option[JsValue] = countryJsonCache.get(countryCode).filter(_._1 == cycle).map(_._2).orElse {
+        val json: Option[JsValue] = countryJsonCache.get(countryCode).filter(_._1 == currentCycle).map(_._2).orElse {
           val fresh = getCountryJson(countryCode)
-          fresh.foreach { j => countryJsonCache(countryCode) = (cycle, j) }
+          fresh.foreach { j => countryJsonCache(countryCode) = (currentCycle, j) }
           fresh
         }
         json match {
-          case Some(j) => Ok(j).withHeaders(CACHE_CONTROL -> "no-cache", ETAG -> s""""$cycle"""")
+          case Some(j) => Ok(j).withHeaders(CACHE_CONTROL -> "no-cache", ETAG -> s""""$currentCycle"""")
           case None => NotFound
         }
     }
   }
 
-  def getCountryAirlineTitleProgression(countryCode: String) = Action {
-    var result = Json.arr()
-    CountryCache.getCountry(countryCode) match {
-      case Some(country) =>
-        Title.values.toList.sortBy(_.id).reverse.foreach { title =>
-          val titleJson = Json.obj("title" -> title.toString,
-            "description" -> Title.description(title),
-            "requirements" -> CountryAirlineTitle.getTitleRequirements(title, country),
-            "bonus" -> CountryAirlineTitle.getTitleBonus(title, country))
-          result = result.append(titleJson)
+  def getCountryAirlineTitleProgression(countryCode: String) = Action { request =>
+    request.headers.get(IF_NONE_MATCH) match {
+      case Some(etag) if etag == s""""$currentCycle"""" =>
+        NotModified
+      case _ =>
+        val json = titleProgressionCache.get(countryCode).filter(_._1 == currentCycle).map(_._2).orElse {
+          CountryCache.getCountry(countryCode).map { country =>
+            var result = Json.arr()
+            Title.values.toList.sortBy(_.id).reverse.foreach { title =>
+              val titleJson = Json.obj("title" -> title.toString,
+                "description" -> Title.description(title),
+                "requirements" -> CountryAirlineTitle.getTitleRequirements(title, country),
+                "bonus" -> CountryAirlineTitle.getTitleBonus(title, country))
+              result = result.append(titleJson)
+            }
+            titleProgressionCache(countryCode) = (currentCycle, result)
+            result: JsValue
+          }
         }
-
-        Ok(result)
-      case None => NotFound
+        json match {
+          case Some(j) => Ok(j).withHeaders(CACHE_CONTROL -> "no-cache", ETAG -> s""""$currentCycle"""")
+          case None => NotFound
+        }
     }
   }
 

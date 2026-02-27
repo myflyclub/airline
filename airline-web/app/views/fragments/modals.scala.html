@@ -1357,8 +1357,8 @@
 				</div>
 				<div class="homeEdit" style="display:none">
 					<select class="homeOptions select-css"></select>
-					<img src='@routes.Assets.versioned("/images/icons/tick.png")' class='button' style="vertical-align: middle;" onclick="confirmAirplaneHome()"/>
-					<img src='@routes.Assets.versioned("/images/icons/cross.png")' class='button' style="vertical-align: middle;" onclick="cancelAirplaneHome()"/>
+					<img src='@routes.Assets.versioned("/images/icons/tick.svg")' class='img-button svg' style="vertical-align: middle;" onclick="confirmAirplaneHome()"/>
+					<img src='@routes.Assets.versioned("/images/icons/cross.svg")' class='img-button svg' style="vertical-align: middle;" onclick="cancelAirplaneHome()"/>
 				</div>
 				<p><i id="airplaneDetailsAge"></i></p>
 				<p id="airplaneDetailsDelivery" style="font-weight: bold;"></p>
@@ -1375,9 +1375,9 @@
 				<div class="configuration-edit flex-row" style="display:none">
 					<img src='@routes.Assets.versioned("/images/icons/arrow-180.png")' class='button' style="vertical-align: middle;" onclick="switchAirplaneConfigurationOption($('#ownedAirplaneDetail'), -1)"/>
 					<div class="configuration-options" style="height: 24px; width: auto; min-width: 80px;"></div>
-					<img src='@routes.Assets.versioned("/images/icons/arrow.png")' class='button' style="vertical-align: middle;" onclick="switchAirplaneConfigurationOption($('#ownedAirplaneDetail'), 1)"/>
-					<img src='@routes.Assets.versioned("/images/icons/tick.png")' class='button' style="vertical-align: middle;" onclick="confirmAirplaneConfigurationOption()"/>
-					<img src='@routes.Assets.versioned("/images/icons/cross.png")' class='button' style="vertical-align: middle;" onclick="cancelAirplaneConfigurationOption()"/>
+					<img src='@routes.Assets.versioned("/images/icons/arrow.png")' class='img-button svg' style="vertical-align: middle;" onclick="switchAirplaneConfigurationOption($('#ownedAirplaneDetail'), 1)"/>
+					<img src='@routes.Assets.versioned("/images/icons/tick.svg")' class='img-button svg' style="vertical-align: middle;" onclick="confirmAirplaneConfigurationOption()"/>
+					<img src='@routes.Assets.versioned("/images/icons/cross.svg")' class='img-button svg' style="vertical-align: middle;" onclick="cancelAirplaneConfigurationOption()"/>
 				</div>
 				<div class="flex-row">
 					<input type="hidden" id="actionAirplaneId">
@@ -1559,7 +1559,7 @@
 			  <h2 style="margin-bottom: 20px">Relationship Management with&nbsp;<span class="country"></span></h2>
 			  <h4 style="margin-bottom: 10px; margin-top: 30px;">Airline Title</h4>
 			  <div class="section">
-				<div class="currentTitle" style="margin-bottom: 20px; display: flex;"><span>Current:&nbsp;</span><img class="titleIcon">&nbsp;<span class="titleDescription"></span></div>
+				<div class="currentTitle" style="margin-bottom: 20px; display: flex;"><span>Current: </span><img class="titleIcon svg">&nbsp;<span class="titleDescription"></span></div>
 				<div style="display:flex; align-items:center; flex-wrap: wrap;" class="titleProgression">
 
 				</div>

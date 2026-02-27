@@ -1,4 +1,6 @@
 var loadedCountriesByCode = {}
+const _countryEtagStore = {}
+const _titleProgressionData = {}
 
 async function loadAllCountries(airlineId) {
   if (!airlineId) {
@@ -121,7 +123,7 @@ function selectCountry(countryCode) {
 function updateAirlineTitle(title, $icon, $description) {
     var imgSrc
     if (title.title === "NATIONAL_AIRLINE") {
-        imgSrc = '/assets/images/icons/star.png'
+        imgSrc = '/assets/images/icons/star-full.svg'
     } else if (title.title === "PARTNERED_AIRLINE") {
         imgSrc = '/assets/images/icons/hand-shake.png'
     } else if (title.title === "PRIVILEGED_AIRLINE") {
@@ -129,7 +131,7 @@ function updateAirlineTitle(title, $icon, $description) {
     } else if (title.title === "ESTABLISHED_AIRLINE") {
         imgSrc = '/assets/images/icons/leaf-plant.png'
     } else if (title.title === "APPROVED_AIRLINE") {
-        imgSrc = '/assets/images/icons/tick.png'
+        imgSrc = '/assets/images/icons/tick.svg'
     }
     if (imgSrc) {
         $icon.attr('src', imgSrc)
@@ -140,16 +142,23 @@ function updateAirlineTitle(title, $icon, $description) {
     $description.text(title.description)
 }
 
-function loadCountryDetails(countryCode) {
+async function loadCountryDetails(countryCode) {
 	$("#countryDetailsSharesChart").hide()
 	var url = "/countries/" + countryCode
-	$.ajax({
-		type: 'GET',
-		url: url,
-	    contentType: 'application/json; charset=utf-8',
-	    dataType: 'json',
-	    success: function(country) {
-	    	$("#countryDetailsName").text(country.name)
+	const key = 'country-' + countryCode
+	const headers = {}
+	if (_countryEtagStore[key]) headers['If-None-Match'] = _countryEtagStore[key]
+	try {
+		const res = await fetch(url, { headers })
+		if (res.status === 304) {
+			$("#countryCanvas .sidePanel").fadeIn(200)
+			return
+		}
+		if (!res.ok) { console.log('AJAX error: ' + res.status); return }
+		const etag = res.headers.get('ETag')
+		if (etag) _countryEtagStore[key] = etag
+		const country = await res.json()
+		$("#countryDetailsName").text(country.name)
 	    	$("#countryDetailsIncomeLevel").text("$" + commaSeparateNumber(country.income))
 	    	$("#countryDetailsOpenness").html(getOpennessSpan(country.openness))
 
@@ -164,7 +173,7 @@ function loadCountryDetails(countryCode) {
             var title = loadedCountriesByCode[countryCode].CountryTitle
             var $relationshipDetailsIcon = $("#countryDetails div.relationship .detailsIcon")
             $relationshipDetailsIcon.data("relationship", relationship)
-            $relationshipDetailsIcon.data("title", title.title)
+            $relationshipDetailsIcon.data("title", title)
             $relationshipDetailsIcon.data("countryCode", countryCode)
             $relationshipDetailsIcon.show()
 
@@ -178,7 +187,7 @@ function loadCountryDetails(countryCode) {
     		$("#countryCanvas .nationalAirlines").empty()
             if (country.nationalAirlines && country.nationalAirlines.length > 0) {
                 $.each(country.nationalAirlines, function(index, nationalAirline) {
-                    var championRow = $("<div class='table-row clickable' data-link='rival'><div class='cell'><img src='/assets/images/icons/star.png' style='vertical-align:middle;'>" + getAirlineLogoImg(nationalAirline.airlineId) + "<span style='font-weight: bold;'>" + getAirlineLabelSpan(nationalAirline.airlineId, nationalAirline.airlineName) + "</span> (" + nationalAirline.passengerCount + " passengers, " + nationalAirline.loyaltyBonus + " loyalty bonus)</div></div>")
+                    var championRow = $("<div class='table-row clickable' data-link='rival'><div class='cell'><img src='/assets/images/icons/star-full.svg' class='svg'>" + getAirlineLogoImg(nationalAirline.airlineId) + "<span style='font-weight: bold;'>" + getAirlineLabelSpan(nationalAirline.airlineId, nationalAirline.airlineName) + "</span> (" + nationalAirline.passengerCount + " passengers, " + nationalAirline.loyaltyBonus + " loyalty bonus)</div></div>")
                     championRow.click(function() {
                         Rivals.show(nationalAirline.airlineId)
                     })
@@ -219,12 +228,9 @@ function loadCountryDetails(countryCode) {
 	    	plotPie(country.marketShares, activeAirline ? activeAirline.name : null , "countryDetailsSharesChart", "airlineName", "passengerCount")
 
 	    	$("#countryCanvas .sidePanel").fadeIn(200);
-	    },
-	    error: function(jqXHR, textStatus, errorThrown) {
-	            console.log(JSON.stringify(jqXHR));
-	            console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
-	    }
-	});
+	} catch (e) {
+		console.error('Failed to load country details:', e)
+	}
 }
 
 function getCountryRelationshipDescription(value) {
@@ -298,48 +304,57 @@ function refreshTitleDescription() {
 
 }
 
-function updateTitleProgressionInfo(currentAirlineTitle, countryCode) {
-    var $progression = $("#airlineCountryRelationshipModal .titleProgression")
+function renderTitleProgressionItems($progression, titleInfoList, currentAirlineTitle) {
     $progression.empty()
+    $.each(titleInfoList, function(index, titleInfo) {
+        if (index > 0) {
+            $progression.append('<img src="/assets/images/icons/arrow.png">')
+        }
+        var $titleSpan = $('<span class="title tooltip progressionItem">')
+        $titleSpan.text(titleInfo.description)
+        $titleSpan.data('title', titleInfo.title)
+        if (titleInfo.title == currentAirlineTitle.title) {
+          $titleSpan.addClass("selected")
+        }
+        var $descriptionSpan = $('<span class="tooltiptext below" style="width: 400px;">')
+        var $requirementsDiv = $('<div><h3>Requirements</h3></div>').appendTo($descriptionSpan)
+        var $requirementsList = $('<ul></ul>').appendTo($requirementsDiv)
+        $.each(titleInfo.requirements, function(index, requirement){
+            $requirementsList.append('<li style="text-align: left;">' + requirement +' </li>')
+        })
+
+        var $benefitsDiv = $('<div style="margin-top: 10px;"><h3>Benefits</h3></div>').appendTo($descriptionSpan)
+        var $benefitsList = $('<ul></ul>').appendTo($benefitsDiv)
+        $.each(titleInfo.bonus, function(index, entry){
+            $benefitsList.append('<li style="text-align: left;">' + entry +' </li>')
+        })
+
+        $titleSpan.append($descriptionSpan)
+        $progression.append($titleSpan)
+    })
+}
+
+async function updateTitleProgressionInfo(currentAirlineTitle, countryCode) {
+    var $progression = $("#airlineCountryRelationshipModal .titleProgression")
     var url = "/countries/" + countryCode + "/title-progression"
-    	$.ajax({
-    		type: 'GET',
-    		url: url,
-    	    contentType: 'application/json; charset=utf-8',
-    	    dataType: 'json',
-    	    success: function(result) {
-    	        $.each(result, function(index, titleInfo) {
-                    if (index > 0) {
-                        $progression.append('<img src="/assets/images/icons/arrow.png">')
-                    }
-                    var $titleSpan = $('<span class="title tooltip progressionItem">')
-                    $titleSpan.text(titleInfo.description)
-                    $titleSpan.data(titleInfo.title)
-                    if (titleInfo.title == currentAirlineTitle.title) {
-                      $titleSpan.addClass("selected")
-                    }
-                    var $descriptionSpan = $('<span class="tooltiptext below" style="width: 400px;">')
-                    var $requirementsDiv = $('<div><h3>Requirements</h3></div>').appendTo($descriptionSpan)
-                    var $requirementsList = $('<ul></ul>').appendTo($requirementsDiv)
-                    $.each(titleInfo.requirements, function(index, requirement){
-                        $requirementsList.append('<li style="text-align: left;">' + requirement +' </li>')
-                    })
-
-                    var $benefitsDiv = $('<div style="margin-top: 10px;"><h3>Benefits</h3></div>').appendTo($descriptionSpan)
-                    var $benefitsList = $('<ul></ul>').appendTo($benefitsDiv)
-                    $.each(titleInfo.bonus, function(index, entry){
-                        $benefitsList.append('<li style="text-align: left;">' + entry +' </li>')
-                    })
-
-                    $titleSpan.append($descriptionSpan)
-                    $progression.append($titleSpan)
-    	        })
-    	    },
-    	    error: function(jqXHR, textStatus, errorThrown) {
-    	            console.log(JSON.stringify(jqXHR));
-    	            console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
-    	    }
-    });
+    const key = 'titleProg-' + countryCode
+    const headers = {}
+    if (_countryEtagStore[key]) headers['If-None-Match'] = _countryEtagStore[key]
+    try {
+        const res = await fetch(url, { headers })
+        if (res.status === 304 && _titleProgressionData[countryCode]) {
+            renderTitleProgressionItems($progression, _titleProgressionData[countryCode], currentAirlineTitle)
+            return
+        }
+        if (!res.ok) { console.log('AJAX error: ' + res.status); return }
+        const etag = res.headers.get('ETag')
+        if (etag) _countryEtagStore[key] = etag
+        const result = await res.json()
+        _titleProgressionData[countryCode] = result
+        renderTitleProgressionItems($progression, result, currentAirlineTitle)
+    } catch (e) {
+        console.error('Failed to load title progression:', e)
+    }
 }
 
 function showRelationshipDetailsModal(relationship, title, countryCode, closeCallback) {
@@ -368,31 +383,6 @@ function showRelationshipDetailsModal(relationship, title, countryCode, closeCal
 
     $('#airlineCountryRelationshipModal').fadeIn(500)
 }
-
-
-
-//function refreshAssignedDelegates() {
-//    $('#airlineCountryRelationshipModal div.assignedDelegatesIcons').empty()
-//    var $delegateSection = $('#airlineCountryRelationshipModal .delegateSection')
-//    var originalDelegates = $delegateSection.data('originalDelegates')
-//    var assignedDelegateCount = $delegateSection.data('assignedDelegateCount')
-//
-//    if (assignedDelegateCount == 0) {
-//        $('#airlineCountryRelationshipModal div.assignedDelegatesIcons').append("<span>None</span>")
-//    }
-//
-//    $.each(originalDelegates.slice(0, assignedDelegateCount), function(index, assignedDelegate) {
-//            var delegateIcon = $('<img src="/assets/images/icons/delegate-level-' + assignedDelegate.level + '.png" title="' + assignedDelegate.levelDescription + "&nbsp;(level " + assignedDelegate.level + (assignedDelegate.nextLevelCycleCount ? " - promotion in " + assignedDelegate.nextLevelCycleCount + " week(s)" : "") + ')"/>')
-//            $('#airlineCountryRelationshipModal .assignedDelegatesIcons').append(delegateIcon)
-//    })
-//
-//    if (assignedDelegateCount > originalDelegates.length) {
-//        for (i = 0; i < assignedDelegateCount - originalDelegates.length; i ++) {
-//            var delegateIcon = $('<img src="/assets/images/icons/delegate-level-0.png" title="New"/>')
-//            $('#airlineCountryRelationshipModal .assignedDelegatesIcons').append(delegateIcon)
-//        }
-//    }
-//}
 
 function updateCountryDelegates() {
     var $delegateSection = $('#airlineCountryRelationshipModal .delegateSection')

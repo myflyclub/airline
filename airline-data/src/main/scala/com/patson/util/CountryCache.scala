@@ -8,9 +8,9 @@ import com.patson.model._
 
 object CountryCache {
 
-  import com.google.common.cache.{CacheBuilder, CacheLoader, LoadingCache}
+  import com.github.benmanes.caffeine.cache.{Caffeine, CacheLoader, LoadingCache}
 
-  val simpleCache: LoadingCache[String, Option[Country]] = CacheBuilder.newBuilder.maximumSize(1000).expireAfterAccess(10, TimeUnit.MINUTES).build(new SimpleLoader())
+  val simpleCache: LoadingCache[String, Option[Country]] = Caffeine.newBuilder().maximumSize(1000).expireAfterAccess(30, TimeUnit.MINUTES).build(new SimpleLoader())
 
   def getCountry(countryCode : String) : Option[Country] = {
     simpleCache.get(countryCode)

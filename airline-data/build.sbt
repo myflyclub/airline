@@ -17,7 +17,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.play" %%  "play-json" % "2.10.6",
   "org.apache.commons" % "commons-math3" % "3.6.1",
   "com.mchange" % "c3p0" % "0.10.1",
-  "com.google.guava" % "guava" % "33.4.0-jre")
+  "com.github.ben-manes.caffeine" % "caffeine" % "3.2.0")
 
   
   

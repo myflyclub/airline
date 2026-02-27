@@ -7,7 +7,7 @@ import play.api.mvc._
 import controllers.AuthenticationObject.Authenticated
 
 import javax.inject.Inject
-import com.google.common.cache.{CacheBuilder, CacheLoader, LoadingCache}
+import com.github.benmanes.caffeine.cache.{Caffeine, CacheLoader, LoadingCache}
 import java.util.concurrent.TimeUnit
 import scala.concurrent.ExecutionContext
 
@@ -80,7 +80,7 @@ class RivalsApplication @Inject()(cc: ControllerComponents)(implicit ec: Executi
     }
 
   val rivalsCache: LoadingCache[Int, RivalsData] =
-    CacheBuilder.newBuilder()
+    Caffeine.newBuilder()
       .maximumSize(2)
       .expireAfterWrite(10, TimeUnit.MINUTES)
       .build(rivalsLoader)
@@ -92,14 +92,13 @@ class RivalsApplication @Inject()(cc: ControllerComponents)(implicit ec: Executi
       case Some(etag) if etag == s""""$currentCycle"""" =>
         NotModified
       case _ =>
-        val cycle = currentCycle
-        val data = rivalsCache.get(cycle)
+        val data = rivalsCache.get(currentCycle)
         Ok(Json.obj(
           "airlines" -> data.airlines,
           "history" -> data.history
         )).withHeaders(
           CACHE_CONTROL -> "no-cache",
-          ETAG -> s""""$cycle""""
+          ETAG -> s""""$currentCycle""""
         )
     }
   }
