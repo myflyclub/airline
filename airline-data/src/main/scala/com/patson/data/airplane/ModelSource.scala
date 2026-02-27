@@ -209,6 +209,20 @@ object ModelSource {
     }
   }
 
+  def deleteFavoriteModelId(airlineId : Int) = {
+    val connection = Meta.getConnection()
+
+    val preparedStatement = connection.prepareStatement("DELETE FROM " + AIRPLANE_MODEL_FAVORITE_TABLE + " WHERE airline = ?")
+
+    try {
+      preparedStatement.setInt(1, airlineId)
+      preparedStatement.executeUpdate()
+    } finally {
+      preparedStatement.close()
+      connection.close()
+    }
+  }
+
   def deleteAllFavoriteModelIds() = {
     val connection = Meta.getConnection()
 

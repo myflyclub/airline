@@ -5,6 +5,7 @@ import com.patson.data.airplane.ModelSource
 import java.util.Random
 import com.patson.data.{AirlineSource, AirplaneSource, AirportSource, BankSource, CycleSource, TutorialSource}
 import com.patson.model._
+import com.patson.model.AirlineType._
 import com.patson.model.airplane._
 import com.patson.util.AirportCache
 import controllers.AuthenticationObject.AuthenticatedAirline
@@ -30,7 +31,7 @@ class ProfileApplication @Inject()(cc: ControllerComponents) extends AbstractCon
         "airplanes" -> profile.airplanes,
         "reputation" -> profile.reputation,
         "airportText" -> profile.airport.displayText,
-        "loan" -> Json.toJson(profile.loan)(new LoanWrites(CycleSource.loadCycle()))
+        "loan" -> profile.loan.fold(JsNull: JsValue)(l => Json.toJson(l)(new LoanWrites(CycleSource.loadCycle())))
       )
       result
     }
@@ -74,12 +75,10 @@ class ProfileApplication @Inject()(cc: ControllerComponents) extends AbstractCon
   }
 
 
-  def generateProfiles(airline : Airline, airport : Airport) : List[Profile] = {
+  def generateInitialProfiles(airline: Airline, airport: Airport): List[Profile] = {
     val difficulty = airport.rating.overallDifficulty
     val capital = BASE_CAPITAL + difficulty * BONUS_PER_DIFFICULTY_POINT
-
     val profiles = ListBuffer[Profile]()
-
     val random = new Random(airport.id)
 
     val regionalAirplanes = generateAirplanes((capital * 2.9).toInt, 60 to 112, 4, airport, 82, airline, random)
@@ -94,7 +93,7 @@ class ProfileApplication @Inject()(cc: ControllerComponents) extends AbstractCon
         reputation = 0,
         cash = capital * 3,
         airport = airport,
-        loan = Bank.getLoan(airline.id, (capital / 2).toInt, BASE_INTEREST_RATE, CycleSource.loadCycle(), LOAN_YEARS)
+        loan = Some(Bank.getLoan(airline.id, (capital / 2).toInt, BASE_INTEREST_RATE, CycleSource.loadCycle(), LOAN_YEARS))
       )
       profiles.append(beginnerProfile)
     }
@@ -106,7 +105,7 @@ class ProfileApplication @Inject()(cc: ControllerComponents) extends AbstractCon
       cash = (capital * 2.5).toInt,
       airport = airport,
       rule = MegaHqAirline.description,
-      loan = Bank.getLoan(airline.id, (capital * 2).toInt, BASE_INTEREST_RATE * 0.8, CycleSource.loadCycle(), LOAN_YEARS)
+      loan = Some(Bank.getLoan(airline.id, (capital * 2).toInt, BASE_INTEREST_RATE * 0.8, CycleSource.loadCycle(), LOAN_YEARS))
     )
     profiles.append(loanProfile)
 
@@ -122,7 +121,7 @@ class ProfileApplication @Inject()(cc: ControllerComponents) extends AbstractCon
         quality = 35,
         rule = MegaHqAirline.description,
         airplanes = largeAirplanes,
-        loan = Bank.getLoan(airline.id, (capital * 4).toInt, BASE_INTEREST_RATE, CycleSource.loadCycle(), LOAN_YEARS * 2)
+        loan = Some(Bank.getLoan(airline.id, (capital * 4).toInt, BASE_INTEREST_RATE, CycleSource.loadCycle(), LOAN_YEARS * 2))
       )
       profiles.append(largeAirplaneProfile)
     }
@@ -134,7 +133,7 @@ class ProfileApplication @Inject()(cc: ControllerComponents) extends AbstractCon
       rule = MegaHqAirline.description,
       cash = (capital * 3).toInt + difficulty * BONUS_PER_DIFFICULTY_POINT, //receive double bonus for starting in small airport
       airport = airport,
-      loan = Bank.getLoan(airline.id, (capital * 1.75).toInt, BASE_INTEREST_RATE / 2, CycleSource.loadCycle(), LOAN_YEARS * 2)
+      loan = Some(Bank.getLoan(airline.id, (capital * 1.75).toInt, BASE_INTEREST_RATE / 2, CycleSource.loadCycle(), LOAN_YEARS * 2))
     )
     profiles.append(megaHQ)
 
@@ -151,7 +150,7 @@ class ProfileApplication @Inject()(cc: ControllerComponents) extends AbstractCon
         reputation = 20,
         quality = 0,
         airplanes = DiscountAirplanes,
-        loan = Bank.getLoan(airline.id, (capital * 2.25).toInt, BASE_INTEREST_RATE, CycleSource.loadCycle(), LOAN_YEARS)
+        loan = Some(Bank.getLoan(airline.id, (capital * 2.25).toInt, BASE_INTEREST_RATE, CycleSource.loadCycle(), LOAN_YEARS))
       )
       profiles.append(cheapAirplaneProfile)
     }
@@ -168,7 +167,7 @@ class ProfileApplication @Inject()(cc: ControllerComponents) extends AbstractCon
         reputation = 20,
         quality = 30,
         airplanes = regionalAirplanes,
-        loan = Bank.getLoan(airline.id, (capital * 2.25).toInt, BASE_INTEREST_RATE, CycleSource.loadCycle(), LOAN_YEARS)
+        loan = Some(Bank.getLoan(airline.id, (capital * 2.25).toInt, BASE_INTEREST_RATE, CycleSource.loadCycle(), LOAN_YEARS))
       )
       profiles.append(regionalProfile)
     }
@@ -186,12 +185,53 @@ class ProfileApplication @Inject()(cc: ControllerComponents) extends AbstractCon
         reputation = 25,
         quality = 70,
         airplanes = fancyAirplanes,
-        loan = Bank.getLoan(airline.id, (capital * 2).toInt, BASE_INTEREST_RATE, CycleSource.loadCycle(), LOAN_YEARS)
+        loan = Some(Bank.getLoan(airline.id, (capital * 2).toInt, BASE_INTEREST_RATE, CycleSource.loadCycle(), LOAN_YEARS))
       )
       profiles.append(luxuryAirlineProfile)
     }
 
     profiles.toList
+  }
+
+  def generateRebuildProfiles(airline: Airline, airport: Airport): List[Profile] = {
+    val types = List(LegacyAirline, MegaHqAirline, DiscountAirline, RegionalAirline, LuxuryAirline)
+    val cash = Math.min(airline.getBalance() / 2, 2000000000)
+    types.map { airlineType =>
+      val (description, quality) = airlineType match {
+        case LegacyAirline =>
+          ("The world is your oyster!", 35)
+        case MegaHqAirline =>
+          ("Your home town has charged you with connecting it to the world!", 0)
+        case DiscountAirline =>
+          ("Time to pack in the masses!", 0)
+        case RegionalAirline =>
+          ("Work with your alliance partners!", 30)
+        case LuxuryAirline =>
+          ("Profit from business passengers while gaining reputation by carrying the world's elite!", 70)
+        case _ =>
+          (s"Profile for ${airlineType.label}.", 0)
+      }
+      Profile(
+        name = s"${airlineType.label} Profile",
+        airlineType = airlineType,
+        description = description,
+        rule = airlineType.description,
+        cash = cash,
+        airport = airport,
+        airplanes = List.empty,
+        loan = None,
+        reputation = 0,
+        quality = quality,
+      )
+    }
+  }
+
+  def generateProfiles(airline: Airline, airport: Airport): List[Profile] = {
+    if (!airline.isInitialized) {
+      generateInitialProfiles(airline, airport)
+    } else {
+      generateRebuildProfiles(airline, airport)
+    }
   }
 
   def getProfiles(airlineId : Int, airportId : Int) = AuthenticatedAirline(airlineId) { request =>
@@ -208,39 +248,40 @@ class ProfileApplication @Inject()(cc: ControllerComponents) extends AbstractCon
   def buildHqWithProfile(airlineId : Int, airportId : Int, profileId : Int) = AuthenticatedAirline(airlineId) { request =>
     val airline = request.user
     buildHqWithProfileLock.synchronized {
-      if (!airline.isInitialized) {
-        val cycle = CycleSource.loadCycle()
-        val airport = AirportCache.getAirport(airportId, true).get
-        val profile = generateProfiles(airline, airport)(profileId)
-        val targetQuality = profile.quality
+      request.user.getHeadQuarter() match {
+        case Some(headquarters) =>
+          BadRequest("Cannot select profile with active HQ")
+        case None =>
+          val cycle = CycleSource.loadCycle()
+          val airport = AirportCache.getAirport(airportId, true).get
+          val profile = generateProfiles(airline, airport)(profileId)
+          val targetQuality = profile.quality
 
-        val base = AirlineBase(airline, airport, airport.countryCode, 1, cycle, true)
-        airline.airlineType = profile.airlineType
-        AirlineSource.updateAirlineType(airlineId, airline.airlineType.id)
-        AirlineSource.saveAirlineBase(base)
-        airline.setCountryCode(airport.countryCode)
-        airline.setReputation(profile.reputation)
-        airline.setCurrentServiceQuality(profile.quality)
-        airline.setTargetServiceQuality(targetQuality)
-        airline.setBalance(profile.cash)
-        airline.setSharesOutstanding(500_000_000)
+          val base = AirlineBase(airline, airport, airport.countryCode, 1, cycle, true)
+          airline.airlineType = profile.airlineType
+          AirlineSource.updateAirlineType(airlineId, airline.airlineType.id)
+          AirlineSource.saveAirlineBase(base)
+          airline.setCountryCode(airport.countryCode)
+          airline.setReputation(profile.reputation)
+          airline.setCurrentServiceQuality(profile.quality)
+          airline.setTargetServiceQuality(targetQuality)
+          airline.setBalance(profile.cash)
+          airline.setSharesOutstanding(500_000_000)
 
-        profile.airplanes.foreach(_.assignDefaultConfiguration())
-        AirplaneSource.saveAirplanes(profile.airplanes)
+          profile.airplanes.foreach(_.assignDefaultConfiguration())
+          AirplaneSource.saveAirplanes(profile.airplanes)
 
-        BankSource.saveLoan(profile.loan)
+          profile.loan.foreach(BankSource.saveLoan)
 
-        airline.setInitialized(true)
-        AirlineSource.saveAirlineInfo(airline, true)
-        val updatedAirline = AirlineSource.loadAirlineById(airlineId, true)
+          airline.setInitialized(true)
+          AirlineSource.saveAirlineInfo(airline, true)
+          val updatedAirline = AirlineSource.loadAirlineById(airlineId, true)
 
-        val bonus = 16
-        val gameWeeks = 12 * 4 + 6
-        AirlineSource.saveAirlineModifier(airline.id, DelegateBoostAirlineModifier(bonus, gameWeeks, cycle))
+          val bonus = 16
+          val gameWeeks = 12 * 4 + 6
+          AirlineSource.saveAirlineModifier(airline.id, DelegateBoostAirlineModifier(bonus, gameWeeks, cycle))
 
-        Ok(Json.toJson(updatedAirline))
-      } else {
-        BadRequest(s"${request.user} was already initialized")
+          Ok(Json.toJson(updatedAirline))
       }
     }
   }
