@@ -68,6 +68,23 @@
                 <button class="button ml-auto" id="allianceFlightMapBtn">Flight Map</button>
             </div>
 
+            <!-- Slogan (admin only) -->
+            <div id="sidebarSloganSection" style="display: none; margin-top: 6px;">
+                <div class="table">
+                    <div class="table-row">
+                        <div class="cell label">Slogan:</div>
+                        <div class="cell value">
+                            <div style="display: flex; align-items: center; gap: 4px;">
+                                <input type="text" id="allianceSloganInput" maxlength="90"
+                                    placeholder="Alliance slogan…" style="flex: 1; min-width: 0;">
+                                <button class="button" id="saveSloganBtn">Save</button>
+                            </div>
+                            <span id="sloganCharCount" class="warning" style="display: none; font-size: 0.85em;"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Tag color + logo (shown when logged in) -->
             <div id="sidebarTagSection" style="display: none;">
                 <div class="table">
@@ -75,8 +92,7 @@
                         <div class="cell label">Tag Color:</div>
                         <div class="cell value">
                             <input type="color" class="picker tagColor">
-                            <img src='@routes.Assets.versioned("/images/icons/arrow-circle-135.png")' class="clickable"
-                                id="resetAllianceLabelColorBtn">
+                            <img src='@routes.Assets.versioned("images/icons/reset.svg")' class="img-button svg" id="resetAllianceLabelColorBtn">
                         </div>
                     </div>
                     <div class="table-row">
@@ -84,10 +100,8 @@
                         <div class="cell value">
                             <span style="display: flex; align-items: center; gap: 4px;">
                                 <img class="allianceLogo" src="" style="height: 24px; width: auto; max-width: 60px;">
-                                <img src="/assets/images/icons/picture--plus.png" class="img-button"
-                                    id="uploadAllianceLogoBtn" style="display: none;">
-                                <img src='@routes.Assets.versioned("images/icons/gear.png")' class="img-button"
-                                    id="editAllianceLogoBtn" style="display: none;">
+                                <img src="/assets/images/icons/picture--plus.png" class="img-button" id="uploadAllianceLogoBtn" style="display: none;">
+                                <img src='@routes.Assets.versioned("images/icons/gear.png")' class="img-button" id="editAllianceLogoBtn" style="display: none;">
                             </span>
                         </div>
                     </div>

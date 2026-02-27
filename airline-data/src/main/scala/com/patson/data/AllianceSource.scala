@@ -564,4 +564,36 @@ object AllianceSource {
       connection.close()
     }
   }
+
+  def loadAllAllianceSlogans(): Map[Int, String] = {
+    val connection = Meta.getConnection()
+    try {
+      val preparedStatement = connection.prepareStatement(
+        "SELECT alliance, alliance_slogan FROM " + ALLIANCE_META_TABLE + " WHERE alliance_slogan IS NOT NULL")
+      val resultSet = preparedStatement.executeQuery()
+      val result = scala.collection.mutable.Map[Int, String]()
+      while (resultSet.next()) {
+        result(resultSet.getInt("alliance")) = resultSet.getString("alliance_slogan")
+      }
+      resultSet.close()
+      preparedStatement.close()
+      result.toMap
+    } finally {
+      connection.close()
+    }
+  }
+
+  def saveAllianceSlogan(allianceId: Int, slogan: String): Unit = {
+    val connection = Meta.getConnection()
+    try {
+      val preparedStatement = connection.prepareStatement(
+        "REPLACE INTO " + ALLIANCE_META_TABLE + " (alliance, alliance_slogan) VALUES (?, ?)")
+      preparedStatement.setInt(1, allianceId)
+      preparedStatement.setString(2, slogan)
+      preparedStatement.executeUpdate()
+      preparedStatement.close()
+    } finally {
+      connection.close()
+    }
+  }
 }

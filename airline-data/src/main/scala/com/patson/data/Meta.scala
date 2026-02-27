@@ -2081,6 +2081,19 @@ object Meta {
     )
     statement.execute()
     statement.close()
+
+    statement = connection.prepareStatement("DROP TABLE IF EXISTS " + ALLIANCE_META_TABLE)
+    statement.execute()
+    statement.close()
+
+    statement = connection.prepareStatement("CREATE TABLE " + ALLIANCE_META_TABLE + "(" +
+      "alliance INTEGER, " +
+      "alliance_slogan VARCHAR(256)" +
+      "FOREIGN KEY(alliance) REFERENCES " + ALLIANCE_TABLE + "(id) ON DELETE CASCADE ON UPDATE CASCADE" +
+      ")"
+    )
+    statement.execute()
+    statement.close()
   }
 
   def createAllianceStats(connection : Connection): Unit = {
@@ -2203,7 +2216,7 @@ object Meta {
       "movement INTEGER DEFAULT 0, " +
       "reputation_prize INTEGER DEFAULT 0, " +
       "PRIMARY KEY (cycle, ranking_type, key_hash), " +
-      "INDEX ranking_leaderboard_cycle_idx (cycle)" +
+      "INDEX ranking_leaderboard_cycle_idx (cycle, ranking_type, ranking)" +
       ")"
     )
     statement.execute()
