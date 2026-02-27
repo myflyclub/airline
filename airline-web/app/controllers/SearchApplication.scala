@@ -22,14 +22,13 @@ class SearchApplication @Inject()(cc: ControllerComponents) extends AbstractCont
       case Some(etag) if etag == s""""$currentCycle"""" =>
         NotModified
       case _ =>
-        val cycle = currentCycle
         val cacheKey = s"$fromAirportId-$toAirportId"
-        val json = Option(ResponseCache.searchRouteCache.getIfPresent(cacheKey)).filter(_._1 == cycle).map(_._2).getOrElse {
+        val json = Option(ResponseCache.searchRouteCache.getIfPresent(cacheKey)).filter(_._1 == currentCycle).map(_._2).getOrElse {
           val fresh = computeSearchRoute(fromAirportId, toAirportId)
-          ResponseCache.searchRouteCache.put(cacheKey, (cycle, fresh))
+          ResponseCache.searchRouteCache.put(cacheKey, (currentCycle, fresh))
           fresh
         }
-        Ok(json).withHeaders(CACHE_CONTROL -> "no-cache", ETAG -> s""""$cycle"""")
+        Ok(json).withHeaders(CACHE_CONTROL -> "no-cache", ETAG -> s""""$currentCycle"""")
     }
   }
 
@@ -304,14 +303,13 @@ class SearchApplication @Inject()(cc: ControllerComponents) extends AbstractCont
       case Some(etag) if etag == s""""$currentCycle"""" =>
         NotModified
       case _ =>
-        val cycle = currentCycle
         val cacheKey = s"$fromAirportId-$toAirportId"
-        val json = Option(ResponseCache.researchLinkCache.getIfPresent(cacheKey)).filter(_._1 == cycle).map(_._2).getOrElse {
+        val json = Option(ResponseCache.researchLinkCache.getIfPresent(cacheKey)).filter(_._1 == currentCycle).map(_._2).getOrElse {
           val fresh = computeResearchLink(fromAirportId, toAirportId)
-          ResponseCache.researchLinkCache.put(cacheKey, (cycle, fresh))
+          ResponseCache.researchLinkCache.put(cacheKey, (currentCycle, fresh))
           fresh
         }
-        Ok(json).withHeaders(CACHE_CONTROL -> "no-cache", ETAG -> s""""$cycle"""")
+        Ok(json).withHeaders(CACHE_CONTROL -> "no-cache", ETAG -> s""""$currentCycle"""")
     }
   }
 

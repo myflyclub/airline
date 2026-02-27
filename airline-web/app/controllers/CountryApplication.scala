@@ -108,14 +108,13 @@ class CountryApplication @Inject()(cc: ControllerComponents) extends AbstractCon
       case Some(etag) if etag == s""""$currentCycle"""" =>
         NotModified
       case _ =>
-        val cycle = currentCycle
-        val json: Option[JsValue] = countryJsonCache.get(countryCode).filter(_._1 == cycle).map(_._2).orElse {
+        val json: Option[JsValue] = countryJsonCache.get(countryCode).filter(_._1 == currentCycle).map(_._2).orElse {
           val fresh = getCountryJson(countryCode)
-          fresh.foreach { j => countryJsonCache(countryCode) = (cycle, j) }
+          fresh.foreach { j => countryJsonCache(countryCode) = (currentCycle, j) }
           fresh
         }
         json match {
-          case Some(j) => Ok(j).withHeaders(CACHE_CONTROL -> "no-cache", ETAG -> s""""$cycle"""")
+          case Some(j) => Ok(j).withHeaders(CACHE_CONTROL -> "no-cache", ETAG -> s""""$currentCycle"""")
           case None => NotFound
         }
     }
@@ -126,8 +125,7 @@ class CountryApplication @Inject()(cc: ControllerComponents) extends AbstractCon
       case Some(etag) if etag == s""""$currentCycle"""" =>
         NotModified
       case _ =>
-        val cycle = currentCycle
-        val json = titleProgressionCache.get(countryCode).filter(_._1 == cycle).map(_._2).orElse {
+        val json = titleProgressionCache.get(countryCode).filter(_._1 == currentCycle).map(_._2).orElse {
           CountryCache.getCountry(countryCode).map { country =>
             var result = Json.arr()
             Title.values.toList.sortBy(_.id).reverse.foreach { title =>
@@ -137,12 +135,12 @@ class CountryApplication @Inject()(cc: ControllerComponents) extends AbstractCon
                 "bonus" -> CountryAirlineTitle.getTitleBonus(title, country))
               result = result.append(titleJson)
             }
-            titleProgressionCache(countryCode) = (cycle, result)
+            titleProgressionCache(countryCode) = (currentCycle, result)
             result: JsValue
           }
         }
         json match {
-          case Some(j) => Ok(j).withHeaders(CACHE_CONTROL -> "no-cache", ETAG -> s""""$cycle"""")
+          case Some(j) => Ok(j).withHeaders(CACHE_CONTROL -> "no-cache", ETAG -> s""""$currentCycle"""")
           case None => NotFound
         }
     }

@@ -338,7 +338,7 @@
 										<div>
 											<img src='@routes.Assets.versioned("/images/icons/plus.svg")' class='img-button svg svg-monochrome svg-hover-green pr-1 py-1' onclick='increasePrice(`first`)'  title="Increase first price by 5%">
 											<img src='@routes.Assets.versioned("/images/icons/minus.svg")' class='img-button svg svg-monochrome svg-hover-red pr-1 py-1' onclick='decreasePrice(`first`)'  title="Decrease first price by 5%">
-											<img src='@routes.Assets.versioned("/images/icons/reset.svg")' class='img-button svg svg-monochrome pr-1 py-1' onclick='resetPrice()'  title="Reset to Default Ticket Prices">
+											<img src='@routes.Assets.versioned("images/icons/reset.svg")' class='img-button svg svg-monochrome pr-1 py-1' onclick='resetPrice()'  title="Reset to Default Ticket Prices">
 										</div>
 									</div>
 									<div class="m-0"><p class="py-1" id="planLFFirst">100%</p></div>
@@ -647,7 +647,7 @@
                                 <div class="flex-row gap-4 mt-4 px-8">
                                     <button type="button" class="button search" tabindex="103" onkeypress="searchButtonKeyPress(event, $(this))"
                                         onclick="searchAction(document.querySelector('div.searchFieldContainer input.fromAirport').dataset.selectedid, document.querySelector('div.searchFieldContainer input.toAirport').dataset.selectedid)">Search</button>
-                                    <img width="20px" class="img-button svg mr-auto" onclick="resetSearchInput($(this))" src='@routes.Assets.versioned("/images/icons/reset.svg")' title="reset">
+                                    <img width="20px" class="img-button svg mr-auto" onclick="resetSearchInput($(this))" src='@routes.Assets.versioned("images/icons/reset.svg")' title="reset">
                                 </div>
                             </div>
                     
@@ -749,7 +749,7 @@
                                 </div>
                                 <div class="flex-row">
                                     <button type="button" class="button search mt-4" tabindex="111" onkeypress="searchButtonKeyPress(event, $(this))" onclick="searchLinkHistory()">Search</button>
-                                    <img width="20px" class="clickable mr-auto" onclick="resetSearchInput($(this))" src='@routes.Assets.versioned("/images/icons/reset.svg")' title="reset">
+                                    <img width="20px" class="clickable mr-auto" onclick="resetSearchInput($(this))" src='@routes.Assets.versioned("images/icons/reset.svg")' title="reset">
                                 </div>
                                 <div id="historySearchResult" class="section flex-grow overflow-y-auto p-0 mt-2">
                                     <div class="table data w-full" style="min-width: 700px;">

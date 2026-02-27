@@ -97,41 +97,38 @@ class RankingApplication @Inject()(cc: ControllerComponents)(implicit ec: Execut
   }
 
   def getRankingsWithAirline(airlineId: Int) = AuthenticatedAirline(airlineId).async { request =>
-    // 3rd layer: ETAG; Read cycle once, evaluate immediately
-    val cycleOptFuture: Future[Option[Int]] = Future {
-      RankingLeaderboardSource.loadLatestCycle() // Do not block the primary thread!
+    
+    // Execute the O(1) query on the isolated database thread pool
+    val cycleFuture: Future[Int] = Future {
+      CycleSource.loadCycle() 
     }
 
-    cycleOptFuture.flatMap {
-      case None =>
-        Future.successful(Ok(Json.obj()).withHeaders(ETAG -> s""""0""""))
-      case Some(cycle) =>
-        request.headers.get(IF_NONE_MATCH) match {
-          case Some(etag) if etag == s""""$cycle"""" =>
-            Future.successful(NotModified)
-          case _ =>
-            // Interop: Convert Caffeine's CompletableFuture back to Scala's Future
-            val rankingsFuture: Future[Map[RankingType.Value, List[Ranking]]] =
-              rankingsCache.get(cycle).asScala
+    cycleFuture.flatMap { cycle =>
+      request.headers.get(IF_NONE_MATCH) match {
+        case Some(etag) if etag == s""""$cycle"""" =>
+          Future.successful(NotModified)
+        case _ =>
+          // Cache miss/stale: fetch new data
+          val rankingsFuture: Future[Map[RankingType.Value, List[Ranking]]] = rankingsCache.get(cycle).asScala
 
-            rankingsFuture.map { rankings =>
-              val airlineKey = RankingKey.AirlineKey(airlineId)
-              val topJson = getTopRankingsJson(rankings, cycle)
+          rankingsFuture.map { rankings =>
+            val airlineKey = RankingKey.AirlineKey(airlineId)
+            val topJson = getTopRankingsJson(rankings, cycle)
 
-              val rankingJson = topJson.foldLeft(Json.obj()) {
-                case (acc, (rankingType, topArr)) =>
-                  val allRankings = rankings.getOrElse(rankingType, Nil)
-                  val airlineExtra = allRankings.find(_.key == airlineKey).filter(_.ranking > MAX_ENTRY)
-                  val arr: JsValue = airlineExtra.fold(topArr: JsValue)(r => topArr :+ Json.toJson(r))
-                  acc + (rankingType.toString -> arr)
-              }
-
-              Ok(rankingJson).withHeaders(
-                CACHE_CONTROL -> "no-cache",
-                ETAG -> s""""$cycle""""
-              )
+            val rankingJson = topJson.foldLeft(Json.obj()) {
+              case (acc, (rankingType, topArr)) =>
+                val allRankings = rankings.getOrElse(rankingType, Nil)
+                val airlineExtra = allRankings.find(_.key == airlineKey).filter(_.ranking > MAX_ENTRY)
+                val arr: JsValue = airlineExtra.fold(topArr: JsValue)(r => topArr :+ Json.toJson(r))
+                acc + (rankingType.toString -> arr)
             }
-        }
+
+            Ok(rankingJson).withHeaders(
+              CACHE_CONTROL -> "no-cache",
+              ETAG -> s""""$cycle""""
+            )
+          }
+      }
     }
   }
 }

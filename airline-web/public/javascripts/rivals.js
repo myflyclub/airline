@@ -4,6 +4,7 @@ const Rivals = (() => {
     // State - Chart / Market
     // -------------------------------------------------------------------------
     let rivalsData = null;
+    let _rivalsEtag = null;
     let period = 'WEEKLY';
     let metric = 'price';
     let hiddenAirlines = {};
@@ -407,24 +408,28 @@ const Rivals = (() => {
     // SECTION: Market Data Loading
     // =========================================================================
 
-    function prefetch() {
+    async function prefetch() {
         if (rivalsData) return;
-        $.ajax({
-            url: '/rivals-data',
-            type: 'GET',
-            dataType: 'json',
-            success: function(data) {
-                rivalsData = data;
-                buildTypeFilter();
-                resetVisibilityToTop20();
-            },
-            error: function(jqXHR, textStatus) {
-                console.error('Rivals prefetch failed:', textStatus);
+        const headers = {}
+        if (_rivalsEtag) headers['If-None-Match'] = _rivalsEtag
+        try {
+            const res = await fetch('/rivals-data', { headers })
+            if (res.status === 304) return
+            if (!res.ok) {
+                console.error('Rivals prefetch failed:', res.status)
+                return
             }
-        });
+            const etag = res.headers.get('ETag')
+            if (etag) _rivalsEtag = etag
+            rivalsData = await res.json()
+            buildTypeFilter()
+            resetVisibilityToTop20()
+        } catch (e) {
+            console.error('Rivals prefetch failed:', e)
+        }
     }
 
-    function loadData() {
+    async function loadData() {
         if (rivalsData) {
             buildTypeFilter();
             resetVisibilityToTop20();
@@ -432,21 +437,25 @@ const Rivals = (() => {
             renderTicker();
             return;
         }
-        $.ajax({
-            url: '/rivals-data',
-            type: 'GET',
-            dataType: 'json',
-            success: function(data) {
-                rivalsData = data;
-                buildTypeFilter();
-                resetVisibilityToTop20();
-                renderChart();
-                renderTicker();
-            },
-            error: function(jqXHR, textStatus) {
-                console.error('Failed to load rivals market data:', textStatus);
+        const headers = {}
+        if (_rivalsEtag) headers['If-None-Match'] = _rivalsEtag
+        try {
+            const res = await fetch('/rivals-data', { headers })
+            if (res.status === 304) return
+            if (!res.ok) {
+                console.error('Failed to load rivals market data:', res.status)
+                return
             }
-        });
+            const etag = res.headers.get('ETag')
+            if (etag) _rivalsEtag = etag
+            rivalsData = await res.json()
+            buildTypeFilter()
+            resetVisibilityToTop20()
+            renderChart()
+            renderTicker()
+        } catch (e) {
+            console.error('Failed to load rivals market data:', e)
+        }
     }
 
     function resetVisibilityToTop20() {

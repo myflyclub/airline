@@ -16,8 +16,7 @@ class GenericTransitApplication @Inject()(cc: ControllerComponents) extends Abst
       case Some(etag) if etag == s""""$currentCycle"""" =>
         NotModified
       case _ =>
-        val cycle = currentCycle
-        val json = Option(ResponseCache.transitCache.getIfPresent(airportId)).filter(_._1 == cycle).map(_._2).getOrElse {
+        val json = Option(ResponseCache.transitCache.getIfPresent(airportId)).filter(_._1 == currentCycle).map(_._2).getOrElse {
           val genericTransits = (LinkSource.loadLinksByCriteria(List(("from_airport", airportId), ("transport_type", TransportType.GENERIC_TRANSIT.id))) ++
             LinkSource.loadLinksByCriteria(List(("to_airport", airportId), ("transport_type", TransportType.GENERIC_TRANSIT.id)))).map(_.asInstanceOf[GenericTransit])
           var resultJson = Json.arr()
@@ -39,13 +38,13 @@ class GenericTransitApplication @Inject()(cc: ControllerComponents) extends Abst
             }
             resultJson = resultJson.append(transitJson)
           }
-          ResponseCache.transitCache.put(airportId, (cycle, resultJson))
+          ResponseCache.transitCache.put(airportId, (currentCycle, resultJson))
           resultJson
         }
         Ok(json)
           .withHeaders(
             CACHE_CONTROL -> "no-cache",
-            ETAG -> s""""$cycle""""
+            ETAG -> s""""$currentCycle""""
           )
     }
   }

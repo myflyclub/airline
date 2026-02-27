@@ -1,4 +1,5 @@
 var logoModalConfirm = function() {}
+var _financesEtag = null
 var loadedIncomes = {}
 var loadedCashFlows = {}
 var loadedAirlineOps = {}
@@ -533,80 +534,102 @@ function updateAirlineDetails() {
 }
 
 
-function loadSheets() {
+async function loadSheets() {
 	var airlineId = activeAirline.id
-
-	//reset values
-    const periodKeys = ['WEEKLY', 'QUARTER', 'YEAR'];
-	loadedIncomes = Object.fromEntries(periodKeys.map(key => [key, []]));
-	loadedCashFlows = Object.fromEntries(periodKeys.map(key => [key, []]));
-	loadedAirlineOps = Object.fromEntries(periodKeys.map(key => [key, []]));
-	loadedAirlineStats = Object.fromEntries(periodKeys.map(key => [key, []]));
-	loadedAirlineReputation = Object.fromEntries(periodKeys.map(key => [key, []]));
+	const periodKeys = ['WEEKLY', 'QUARTER', 'YEAR']
 
 	sheetPages.financial = 0
 	sheetPages.stats = 0
 	officePeriod = 'WEEKLY'
 	document.querySelector('#officeCanvas select.period').value = officePeriod
 
+	const headers = {}
+	if (_financesEtag) headers['If-None-Match'] = _financesEtag
 
-	$.ajax({
-		type: 'GET',
-		url: "/airlines/" + airlineId + "/finances",
-	    contentType: 'application/json; charset=utf-8',
-	    dataType: 'json',
-	    success: function(data) {
-			//income sheet
-	    	var airlineIncomes = data.incomes
-	    	$.each(airlineIncomes, function(index, airlineIncome) { //group by period
-	    		loadedIncomes[airlineIncome.period].push(airlineIncome)
-	    	})
+	try {
+		const res = await fetch('/airlines/' + airlineId + '/finances', { method: 'GET', headers })
 
-			var totalPages = loadedIncomes[officePeriod].length
-	    	if (totalPages > 0) {
-	    		sheetPages.financial = totalPages - 1
-	    		updateIncomeSheet(loadedIncomes[officePeriod][sheetPages.financial])
-	    	}
-
-				updateIncomeChart(loadedIncomes[officePeriod])
-
-			//cash flow sheet
-	    	var airlineCashFlows = data.cashFlows
-	    	$.each(airlineCashFlows, function(index, airlineCashFlow) { //group by period
-	    		loadedCashFlows[airlineCashFlow.period].push(airlineCashFlow)
-	    	})
-
-			totalPages = loadedCashFlows[officePeriod].length
-	    	if (totalPages > 0) {
-	    		updateCashFlowSheet(loadedCashFlows[officePeriod][sheetPages.financial])
-	    	}
-
+		if (res.status === 304) {
+			// Re-render from existing loaded data without re-fetching
+			const totalIncomePages = loadedIncomes[officePeriod].length
+			if (totalIncomePages > 0) {
+				sheetPages.financial = totalIncomePages - 1
+				updateIncomeSheet(loadedIncomes[officePeriod][sheetPages.financial])
+				updateCashFlowSheet(loadedCashFlows[officePeriod][sheetPages.financial])
+			}
+			updateIncomeChart(loadedIncomes[officePeriod])
 			updateCashFlowChart(loadedCashFlows[officePeriod], loadedIncomes[officePeriod])
 
-            data.airlineStats.forEach(stat => {
-                loadedAirlineStats[stat.period].push(stat)
-            })
-
-			const airlineStat = data.airlineStats[data.airlineStats.length - 1] ?? null
-
 			sheetPages.stats = loadedAirlineStats[officePeriod].length > 0 ? loadedAirlineStats[officePeriod].length - 1 : 0
-
-			updateAirlineStatChart(loadedAirlineStats[officePeriod]);
-			updateOpsChart(loadedAirlineStats[officePeriod]);
-			updateAirlineReputationChart(loadedAirlineStats[officePeriod]);
-
-			const statData = loadedAirlineStats[officePeriod][sheetPages.stats] ?? airlineStat
-			updateAirlineOpSheet(statData)
-			updateAirlineStatSheet(statData)
-			updateAirlineReputationSheet(statData)
-			updateProgress(statData)
+			const statData304 = loadedAirlineStats[officePeriod][sheetPages.stats] ?? null
+			if (statData304) {
+				updateAirlineOpSheet(statData304)
+				updateAirlineStatSheet(statData304)
+				updateAirlineReputationSheet(statData304)
+				updateProgress(statData304)
+			}
+			updateAirlineStatChart(loadedAirlineStats[officePeriod])
+			updateOpsChart(loadedAirlineStats[officePeriod])
+			updateAirlineReputationChart(loadedAirlineStats[officePeriod])
 			renderSheetNav(getActiveSheetType())
-	    },
-	    error: function(jqXHR, textStatus, errorThrown) {
-            console.log(JSON.stringify(jqXHR));
-            console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
-	    }
-	});
+			return
+		}
+
+		// Reset loaded data for fresh response
+		loadedIncomes = Object.fromEntries(periodKeys.map(key => [key, []]))
+		loadedCashFlows = Object.fromEntries(periodKeys.map(key => [key, []]))
+		loadedAirlineOps = Object.fromEntries(periodKeys.map(key => [key, []]))
+		loadedAirlineStats = Object.fromEntries(periodKeys.map(key => [key, []]))
+		loadedAirlineReputation = Object.fromEntries(periodKeys.map(key => [key, []]))
+
+		if (!res.ok) {
+			console.log('AJAX error: ' + res.status)
+			return
+		}
+		const etag = res.headers.get('ETag')
+		if (etag) _financesEtag = etag
+		const data = await res.json()
+
+		var airlineIncomes = data.incomes
+		$.each(airlineIncomes, function(index, airlineIncome) {
+			loadedIncomes[airlineIncome.period].push(airlineIncome)
+		})
+		var totalPages = loadedIncomes[officePeriod].length
+		if (totalPages > 0) {
+			sheetPages.financial = totalPages - 1
+			updateIncomeSheet(loadedIncomes[officePeriod][sheetPages.financial])
+		}
+		updateIncomeChart(loadedIncomes[officePeriod])
+
+		var airlineCashFlows = data.cashFlows
+		$.each(airlineCashFlows, function(index, airlineCashFlow) {
+			loadedCashFlows[airlineCashFlow.period].push(airlineCashFlow)
+		})
+		totalPages = loadedCashFlows[officePeriod].length
+		if (totalPages > 0) {
+			updateCashFlowSheet(loadedCashFlows[officePeriod][sheetPages.financial])
+		}
+		updateCashFlowChart(loadedCashFlows[officePeriod], loadedIncomes[officePeriod])
+
+		data.airlineStats.forEach(stat => {
+			loadedAirlineStats[stat.period].push(stat)
+		})
+		const airlineStat = data.airlineStats[data.airlineStats.length - 1] ?? null
+		sheetPages.stats = loadedAirlineStats[officePeriod].length > 0 ? loadedAirlineStats[officePeriod].length - 1 : 0
+
+		updateAirlineStatChart(loadedAirlineStats[officePeriod])
+		updateOpsChart(loadedAirlineStats[officePeriod])
+		updateAirlineReputationChart(loadedAirlineStats[officePeriod])
+
+		const statData = loadedAirlineStats[officePeriod][sheetPages.stats] ?? airlineStat
+		updateAirlineOpSheet(statData)
+		updateAirlineStatSheet(statData)
+		updateAirlineReputationSheet(statData)
+		updateProgress(statData)
+		renderSheetNav(getActiveSheetType())
+	} catch (e) {
+		console.log('AJAX error: ' + e)
+	}
 }
 
 function updateIncomeChart(airlineIncomes) {

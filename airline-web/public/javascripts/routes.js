@@ -53,8 +53,9 @@ function backgroundLoad() {
 function initializeRoutes() {
     page('*', (ctx, next) => {
         const isLoggedIn = checkSessionGuard();
-
-        if (!isLoggedIn && ctx.path !== '/login/' || ctx.path === '/signup') {
+        // If not logged in and not already on login/signup, store original path and redirect
+        if (!isLoggedIn && ctx.path !== '/login/' && ctx.path !== '/signup') {
+            localStorage.setItem('postLoginRedirect', ctx.path);
             page.redirect('/login/');
         } else {
             next();
@@ -63,7 +64,18 @@ function initializeRoutes() {
 
     page('/login/', () => {
         document.title = 'Login';
-        showLoginPage();
+        showLoginPage({
+            onLoginSuccess: () => {
+                // After login, redirect to original path if available
+                const redirectPath = localStorage.getItem('postLoginRedirect');
+                if (redirectPath && redirectPath !== '/login/') {
+                    localStorage.removeItem('postLoginRedirect');
+                    page.show(redirectPath);
+                } else {
+                    page.show('/');
+                }
+            }
+        });
     });
 
     page('/logout/', () => {
@@ -81,14 +93,6 @@ function initializeRoutes() {
         } else {
             page.redirect('/login/');
         }
-    });
-
-    page('/airport/:iata?', async (ctx) => {
-        await requireMap();
-        const iata = ctx.params.iata ?? null;
-        document.title = iata ? `${iata.toUpperCase()} Airport` : 'Airport';
-        id = getAirportByAttribute(iata.toUpperCase(), 'iata').id || null;
-        showAirportDetails(id);
     });
 
     page('/map/', async () => {
@@ -119,6 +123,14 @@ function initializeRoutes() {
     page('/search/', async (ctx) => {
         await requireMap();
         showSearchCanvas();
+    });
+
+    page('/airport/:iata?', async (ctx) => {
+        backgroundLoad();
+        const iata = ctx.params.iata ?? null;
+        document.title = iata ? `${iata.toUpperCase()} Airport` : 'Airport';
+        id = getAirportByAttribute(iata.toUpperCase(), 'iata').id || null;
+        showAirportDetails(id);
     });
 
     page('/flights/:link?', (ctx) => {

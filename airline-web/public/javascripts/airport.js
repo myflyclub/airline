@@ -215,7 +215,7 @@ if (activeAirline) {
 
             var $relationshipDetailsIcon = $("#airportCanvas .openCountryRelationship")
             $relationshipDetailsIcon.data("relationship", countryData.countryRelationship)
-            $relationshipDetailsIcon.data("title", countryTitle ? countryTitle.title : "")
+            $relationshipDetailsIcon.data("title", countryTitle ? countryTitle : {})
             $relationshipDetailsIcon.data("countryCode", airport.countryCode)
 
             if (!baseDetails.baseScale) { //new base
@@ -786,7 +786,8 @@ function updateFacilityList(statistics) {
         var row = $(`<div class='table-row clickable' onClick='navigateTo("/rivals/${lounge.airlineId}")'></div>`)
         var allianceSpan = "-"
         if (lounge.allianceId) {
-            allianceSpan = "<div class='flex-row gap-0'>" + getAllianceLogoImg(lounge.allianceId) + htmlEncode(Alliance.loadedAlliancesById[lounge.allianceId].name) + "</div>"
+            const allianceName = Alliance.loadedAlliancesById[lounge.allianceId]?.name || ""
+            allianceSpan = "<div class='flex-row gap-0'>" + getAllianceLogoImg(lounge.allianceId) + htmlEncode(allianceName) + "</div>"
         }
         row.append("<div class='cell'>" + allianceSpan + "</div>")
         row.append("<div class='cell'>" + htmlEncode(lounge.airlineName) + "</div>")

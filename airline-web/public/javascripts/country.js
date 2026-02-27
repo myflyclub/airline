@@ -173,7 +173,7 @@ async function loadCountryDetails(countryCode) {
             var title = loadedCountriesByCode[countryCode].CountryTitle
             var $relationshipDetailsIcon = $("#countryDetails div.relationship .detailsIcon")
             $relationshipDetailsIcon.data("relationship", relationship)
-            $relationshipDetailsIcon.data("title", title.title)
+            $relationshipDetailsIcon.data("title", title)
             $relationshipDetailsIcon.data("countryCode", countryCode)
             $relationshipDetailsIcon.show()
 
@@ -312,7 +312,7 @@ function renderTitleProgressionItems($progression, titleInfoList, currentAirline
         }
         var $titleSpan = $('<span class="title tooltip progressionItem">')
         $titleSpan.text(titleInfo.description)
-        $titleSpan.data(titleInfo.title)
+        $titleSpan.data('title', titleInfo.title)
         if (titleInfo.title == currentAirlineTitle.title) {
           $titleSpan.addClass("selected")
         }
@@ -383,31 +383,6 @@ function showRelationshipDetailsModal(relationship, title, countryCode, closeCal
 
     $('#airlineCountryRelationshipModal').fadeIn(500)
 }
-
-
-
-//function refreshAssignedDelegates() {
-//    $('#airlineCountryRelationshipModal div.assignedDelegatesIcons').empty()
-//    var $delegateSection = $('#airlineCountryRelationshipModal .delegateSection')
-//    var originalDelegates = $delegateSection.data('originalDelegates')
-//    var assignedDelegateCount = $delegateSection.data('assignedDelegateCount')
-//
-//    if (assignedDelegateCount == 0) {
-//        $('#airlineCountryRelationshipModal div.assignedDelegatesIcons').append("<span>None</span>")
-//    }
-//
-//    $.each(originalDelegates.slice(0, assignedDelegateCount), function(index, assignedDelegate) {
-//            var delegateIcon = $('<img src="/assets/images/icons/delegate-level-' + assignedDelegate.level + '.png" title="' + assignedDelegate.levelDescription + "&nbsp;(level " + assignedDelegate.level + (assignedDelegate.nextLevelCycleCount ? " - promotion in " + assignedDelegate.nextLevelCycleCount + " week(s)" : "") + ')"/>')
-//            $('#airlineCountryRelationshipModal .assignedDelegatesIcons').append(delegateIcon)
-//    })
-//
-//    if (assignedDelegateCount > originalDelegates.length) {
-//        for (i = 0; i < assignedDelegateCount - originalDelegates.length; i ++) {
-//            var delegateIcon = $('<img src="/assets/images/icons/delegate-level-0.png" title="New"/>')
-//            $('#airlineCountryRelationshipModal .assignedDelegatesIcons').append(delegateIcon)
-//        }
-//    }
-//}
 
 function updateCountryDelegates() {
     var $delegateSection = $('#airlineCountryRelationshipModal .delegateSection')

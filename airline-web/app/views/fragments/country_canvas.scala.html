@@ -1,4 +1,4 @@
-				<div id="countryCanvas" class="canvas" style="height: 100%; display: none;">
+				<div id="countryCanvas" class="canvas" style="display: none;">
 					<div class="mainPanel section tight">
 						<div style="width: 100%; height: 100%; overflow: auto;">
 							<div id="countryTableHeader" class="table data" style="width: 100%; height: 20px; min-width: 640px;">
@@ -43,7 +43,7 @@
 							</div>
 							<div class="table-row">
 								<div class="label">Relationship with your airline:</div>
-								<div class="value relationship" style="display: flex; align-items: center;"><span class="total"></span><img src='@routes.Assets.versioned("/images/icons/gear.png")' title='Manage Relationship' class="clickable detailsIcon" onclick="showRelationshipDetailsModal($(this).data('relationship'), $(this).data('title'), $(this).data('countryCode'), showCountryView)"></div>
+								<div class="value relationship" style="display: flex; align-items: center;"><span class="total"></span><img src='@routes.Assets.versioned("/images/icons/gear.png")' title='Manage Relationship' class="clickable detailsIcon" onclick="const countryCode = $(this).data('countryCode'); showRelationshipDetailsModal($(this).data('relationship'), $(this).data('title'), countryCode, page.show('/country/' + countryCode))"></div>
 							</div>
 							<div class="table-row">
 								<div class="label">Your airline title with this country:</div>
@@ -91,6 +91,6 @@
 								</div>
 							</div>
 						</div>
-						<div id="countryDetailsSharesChart" style="height: 170px;"></div>
+						<div id="countryDetailsSharesChart" style="height: 250px;"></div>
 					</div>
 				</div>
