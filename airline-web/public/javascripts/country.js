@@ -121,7 +121,7 @@ function selectCountry(countryCode) {
 function updateAirlineTitle(title, $icon, $description) {
     var imgSrc
     if (title.title === "NATIONAL_AIRLINE") {
-        imgSrc = '/assets/images/icons/star.png'
+        imgSrc = '/assets/images/icons/star-full.svg'
     } else if (title.title === "PARTNERED_AIRLINE") {
         imgSrc = '/assets/images/icons/hand-shake.png'
     } else if (title.title === "PRIVILEGED_AIRLINE") {
@@ -129,7 +129,7 @@ function updateAirlineTitle(title, $icon, $description) {
     } else if (title.title === "ESTABLISHED_AIRLINE") {
         imgSrc = '/assets/images/icons/leaf-plant.png'
     } else if (title.title === "APPROVED_AIRLINE") {
-        imgSrc = '/assets/images/icons/tick.png'
+        imgSrc = '/assets/images/icons/tick.svg'
     }
     if (imgSrc) {
         $icon.attr('src', imgSrc)
@@ -178,7 +178,7 @@ function loadCountryDetails(countryCode) {
     		$("#countryCanvas .nationalAirlines").empty()
             if (country.nationalAirlines && country.nationalAirlines.length > 0) {
                 $.each(country.nationalAirlines, function(index, nationalAirline) {
-                    var championRow = $("<div class='table-row clickable' data-link='rival'><div class='cell'><img src='/assets/images/icons/star.png' style='vertical-align:middle;'>" + getAirlineLogoImg(nationalAirline.airlineId) + "<span style='font-weight: bold;'>" + getAirlineLabelSpan(nationalAirline.airlineId, nationalAirline.airlineName) + "</span> (" + nationalAirline.passengerCount + " passengers, " + nationalAirline.loyaltyBonus + " loyalty bonus)</div></div>")
+                    var championRow = $("<div class='table-row clickable' data-link='rival'><div class='cell'><img src='/assets/images/icons/star-full.svg' style='vertical-align:middle;'>" + getAirlineLogoImg(nationalAirline.airlineId) + "<span style='font-weight: bold;'>" + getAirlineLabelSpan(nationalAirline.airlineId, nationalAirline.airlineName) + "</span> (" + nationalAirline.passengerCount + " passengers, " + nationalAirline.loyaltyBonus + " loyalty bonus)</div></div>")
                     championRow.click(function() {
                         Rivals.show(nationalAirline.airlineId)
                     })

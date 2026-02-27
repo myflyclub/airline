@@ -7,7 +7,7 @@ html {
     --text-color-heading: #333;
     --background-1: #fffe;
     --background-2: #e8eaed;
-    --background-3: #ccc5;
+    --background-3: #ccc8;
     --input-background: #aaa3;
     --section-background-image: linear-gradient(180deg, #ffffff 0%, #f6f7f9 100%);
     --zing-background: linear-gradient(to bottom, #b0eea5, #7fd47a); 
@@ -47,7 +47,7 @@ html {
     --select-background-color: var(--background-3);
     --select-linear-gradient: linear-gradient(to bottom, #ffffff 0%,#e5e5e5 100%);
     --input-border-color: #b0c8f0;
-    --input-color: #CCC;
+    --input-color: #444;
     --input-background-color: var(--background-3);
     --placeholder-color: #747474aa;
     --loading-spinner-background: var(--background-1);
@@ -286,7 +286,7 @@ li.row, div.table-row {
 }
 @media screen and (min-width: 640px) {
     .canvas {
-        padding-left: 48px;
+        padding-left: 52px;
     }
 }
 
@@ -988,12 +988,19 @@ a:focus, button:focus {
     vertical-align: middle;
 }
 .img-button {
-    cursor: pointer;
-    opacity: .8;
-    transition: opacity .5s;
+  opacity: 0.85;
+  cursor: pointer;
+  transform: scale(1) translateZ(0); 
+  transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.2, 0, 0, 1);
 }
 .img-button:hover {
-    opacity: 1;
+  opacity: 1;
+  transform: scale(1.02) translateZ(0);
+}
+.img-button:active {
+  transform: scale(0.98) translateZ(0);
+  opacity: 0.95;
+  transition: transform 0.1s ease, opacity 0.1s ease; 
 }
 
 .button.selected {
@@ -1206,8 +1213,8 @@ html[data-theme='dark'] .section {
     margin-bottom: 8px;
 }
 
-.modal-content .table {
-    margin-bottom: 1rem;
+.modal-content h4 {
+    margin-top: 1rem;
 }
 
 .modal-content .button:first-of-type {
@@ -1641,10 +1648,18 @@ img.flag {
 }
 
 .svg {
-    width: 14px;
+    width: 16px;
     height: auto;
 }
-
+html[data-theme="dark"] .svg-monochrome {
+    filter: invert(100%);
+}
+.svg-hover-red:hover {
+    filter: invert(30%) sepia(87%) saturate(3031%) hue-rotate(338deg) brightness(90%) contrast(100%);
+}
+.svg-hover-green:hover {
+    filter: invert(52%) sepia(43%) saturate(1039%) hue-rotate(86deg) brightness(99%) contrast(91%);
+}
 .info.svg {
     width: 18px;
     margin-top: -2px;
@@ -2179,6 +2194,9 @@ i, .italic {
 .text-xs {
     font-size: 0.7rem
 }
+.text-xxs {
+    font-size: 0.55rem
+}
 .text-underline {
     text-decoration: underline;
     text-underline-offset: 2px;
@@ -2374,6 +2392,7 @@ i, .italic {
 .text-left { text-align: left; }
 .text-right { text-align: right; }
 .text-center { text-align: center; }
+.rounded { border-radius: 0px !important; }
 .rounded-none { border-radius: 0px !important; }
 .overflow-x-auto { overflow-x: auto !important; }
 .overflow-y-auto { overflow-x: auto !important; }
@@ -2940,7 +2959,7 @@ i, .italic {
     bottom: 0;
     left: 0;
     right: 0;
-    background-color: var(--background-3);
+    background-color: var(--background-2);
     color: var(--text-color);
     padding: 12px 28px 12px 48px;
     z-index: 99;

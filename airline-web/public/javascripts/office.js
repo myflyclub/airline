@@ -447,7 +447,7 @@ function writeMilestones(breakdowns) {
                 `<div style="width: 160px;justify-content: space-between;" class="flex-row py-1">
 					<div class="font-mono text-sm flex-align-center">
 						${commaSeparateNumber(cond.threshold)}
-						<img height="16" class="pl-1" src="/assets/images/icons/${metCondtion}.png">
+						<img height="16" class="pl-1 svg" src="/assets/images/icons/${metCondtion}.svg">
 					</div>
 					<div style="color:gold;display: flex;flex-direction: row;">
 						${cond.reward}
@@ -1321,7 +1321,7 @@ function updateChampionedCountriesDetails() {
     	    success: function(championedCountries) {
     	    	$(championedCountries).each(function(index, championDetails) {
     	    		var country = championDetails.country
-    	    		var row = $("<div class='table-row clickable' data-link='country' onclick=\"showCountryView('" + country.countryCode + "');\"></div>")
+    	    		var row = $("<div class='table-row clickable' data-link='country' onclick=\"navigateTo('/country/" + country.countryCode + "');\"></div>")
     	    		row.append("<div class='cell'>" + getRankingImg(championDetails.ranking) + "</div>")
     	    		row.append("<div class='cell'>" + getCountryFlagImg(country.countryCode) + country.name + "</div>")
     	    		$('#championedCountriesList').append(row)

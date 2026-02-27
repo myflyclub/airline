@@ -163,7 +163,7 @@ function editOilInventoryPolicy() {
 	    		row.append("<div class='cell'>" + option.description + "</div>")
 	    		row.append("<div class='cell' align='right'>" + '$' + commaSeparateNumber(option.price) + "</div>")
 	    		if (!result.rejection) {
-	    			row.append("<div class='cell' align='right'><img src='/assets/images/icons/tick.png' title='Pick this policy' class='button' onclick='setOilInventoryPolicy(" + option.id + ")'/></div>")
+	    			row.append("<div class='cell' align='right'><img src='/assets/images/icons/tick.svg' title='Pick this policy' class='button' onclick='setOilInventoryPolicy(" + option.id + ")'/></div>")
 	    		} else {
 	    			row.append("<div class='cell' align='right'><img src='/assets/images/icons/prohibition.png' class='button' title='" + result.rejection + "' onclick='exitOilInventoryPolicy()'/></div>")
 	    		}
@@ -231,9 +231,9 @@ function updateExistingContractsTable() {
 		row.append("<div class='cell' align='right'>" + '$' + commaSeparateNumber(contract.terminationPenalty) + "</div>")
 		row.append("<div class='cell' align='right'>" + contract.remainingDuration + " week(s)</div>")
 		if (!contract.rejection) {
-			row.append("<div class='cell'><img src='/assets/images/icons/cross.png' title='Terminate contract' class='button' onclick='terminateContract(" + contract.id + ")'/></div>")
+			row.append("<div class='cell'><img src='/assets/images/icons/cross.svg' title='Terminate contract' class='img-button svg' onclick='terminateContract(" + contract.id + ")'/></div>")
 		} else {
-			row.append("<div class='cell'><img src='/assets/images/icons/cross-grey.png' title='" + contract.rejection + "'/></div>")
+			row.append("<div class='cell'><img src='/assets/images/icons/cross.svg' title='" + contract.rejection + "' class='img-button svg'/></div>")
 		}
 		
 		contractsTable.append(row)

@@ -219,7 +219,7 @@ const Rivals = (() => {
             success: function(titles) {
                 $(titles.nationalAirlines).each(function(index, entry) {
                     const country = loadedCountriesByCode[entry.countryCode];
-                    const row = $(`<div class='table-row clickable' onclick="showCountryView('${entry.countryCode}');"></div>`);
+                    const row = $(`<div class='table-row clickable' onclick="navigateTo('/country/${entry.countryCode}');"></div>`);
                     row.append("<div class='cell'>" + getCountryFlagImg(entry.countryCode) + country.name + "</div>");
                     row.append("<div class='cell'>" + entry.bonus + "</div>");
                     $('#rivalDetailsModal .nationalAirlineCountryList').append(row);
@@ -231,7 +231,7 @@ const Rivals = (() => {
 
                 $(titles.partneredAirlines).each(function(index, entry) {
                     const country = loadedCountriesByCode[entry.countryCode];
-                    const row = $("<div class='table-row clickable' onclick=\"showCountryView('" + country.countryCode + "');\"></div>");
+                    const row = $("<div class='table-row clickable' onclick=\"navigateTo('/country/" + country.countryCode + "');\"></div>");
                     row.append("<div class='cell'>" + getCountryFlagImg(entry.countryCode) + country.name + "</div>");
                     row.append("<div class='cell'>" + entry.bonus + "</div>");
                     $('#rivalDetailsModal .partneredAirlineCountryList').append(row);

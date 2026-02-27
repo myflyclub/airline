@@ -9,17 +9,6 @@ function showLinkHistoryView() {
 		showWorldMap()
 	}
 
-	loadCurrentAirlineAlliance(function(allianceDetails) {
-		currentAirlineAllianceMembers = []
-		if (allianceDetails.allianceId) {
-			var alliance = Alliance.loadedAlliancesById[allianceDetails.allianceId]
-			if (alliance) {
-				$.each(alliance.members, function(index, member) {
-					currentAirlineAllianceMembers.push(member.airlineId)
-				})
-			}
-		}
-	})
 	AirlineMap.clearAllPaths() //clear all flight paths
 
     //populate control panel
@@ -231,7 +220,6 @@ function showLinkHistory() {
         $("#linkHistoryControlPanel .transitAirlineList .table-row.backward").show()
     }
 
-    var framesPerAnimation = 50
     clearHistoryFlightMarkers()
 
     // Update history paths visibility based on filter settings

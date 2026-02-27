@@ -208,10 +208,10 @@ function showFacilityModal(currentFacility) {
 function getLevelStarsImgs(level, maxLevel) {
 	var html = ""
 	for (i = 0 ; i < level; i ++) {
-		html += "<img src='/assets/images/icons/star.png'/>"
+		html += "<img class='svg' src='/assets/images/icons/star-full.svg'/>"
 	}
 	for (i = 0 ; i < maxLevel - level; i ++) {
-		html += "<img src='/assets/images/icons/star-empty.png'/>"
+		html += "<img class='svg' src='/assets/images/icons/star-empty.svg'/>"
 	}
 	return html
 }
