@@ -6,52 +6,44 @@ import com.patson.model._
 import java.sql.Connection
 
 import com.patson.model.bank.LoanInterestRate
+import scala.util.Using
 
 
 
 object BankSource {
 //case class Loan(airlineId : Int, principal : Long, annualRate : BigDecimal, creationCycle : Int, lastPaymentCycle : Int, term : Int, var id : Int = 0) extends IdObject {
   def saveLoan(loan: Loan) = {
-     //open the hsqldb
-    val connection = Meta.getConnection()
-    val preparedStatement = connection.prepareStatement("INSERT INTO " + LOAN_TABLE + "(airline, principal, annual_rate, creation_cycle, last_payment_cycle, term) VALUES(?,?,?,?,?,?)")
-    
-    try {
-      preparedStatement.setInt(1, loan.airlineId)
-      preparedStatement.setLong(2, loan.principal)
-      preparedStatement.setBigDecimal(3, loan.annualRate.bigDecimal)
-      preparedStatement.setInt(4, loan.creationCycle)
-      preparedStatement.setInt(5, loan.lastPaymentCycle)
-      preparedStatement.setInt(6, loan.term)
-      preparedStatement.executeUpdate()
-      preparedStatement.close()
-    } finally {
-      connection.close()
+    Using.resource(Meta.getConnection()) { connection =>
+      Using.resource(connection.prepareStatement("INSERT INTO " + LOAN_TABLE + "(airline, principal, annual_rate, creation_cycle, last_payment_cycle, term) VALUES(?,?,?,?,?,?)")) { preparedStatement =>
+        preparedStatement.setInt(1, loan.airlineId)
+        preparedStatement.setLong(2, loan.principal)
+        preparedStatement.setBigDecimal(3, loan.annualRate.bigDecimal)
+        preparedStatement.setInt(4, loan.creationCycle)
+        preparedStatement.setInt(5, loan.lastPaymentCycle)
+        preparedStatement.setInt(6, loan.term)
+        preparedStatement.executeUpdate()
+      }
     }
   }
   
   def updateLoanLastPayment(loanId: Int, lastPaymentCycle : Int) = {
-    val connection = Meta.getConnection()
-    try {
-      var deleteStatement = connection.prepareStatement("UPDATE " + LOAN_TABLE + " SET last_payment_cycle = ? WHERE id = ?")
-      deleteStatement.setInt(1, lastPaymentCycle)
-      deleteStatement.setInt(2, loanId)
-      deleteStatement.executeUpdate()
-    } finally {
-      connection.close()
+    Using.resource(Meta.getConnection()) { connection =>
+      Using.resource(connection.prepareStatement("UPDATE " + LOAN_TABLE + " SET last_payment_cycle = ? WHERE id = ?")) { statement =>
+        statement.setInt(1, lastPaymentCycle)
+        statement.setInt(2, loanId)
+        statement.executeUpdate()
+      }
     }
   }
   
   
   
   def deleteLoan(loanId : Int) = {
-    val connection = Meta.getConnection()
-    try {
-      var deleteStatement = connection.prepareStatement("DELETE FROM " + LOAN_TABLE + " WHERE id = ?")
-      deleteStatement.setInt(1, loanId)
-      deleteStatement.executeUpdate()
-    } finally {
-      connection.close()
+    Using.resource(Meta.getConnection()) { connection =>
+      Using.resource(connection.prepareStatement("DELETE FROM " + LOAN_TABLE + " WHERE id = ?")) { statement =>
+        statement.setInt(1, loanId)
+        statement.executeUpdate()
+      }
     }
   }
   
@@ -70,26 +62,23 @@ object BankSource {
   
   
   def loadLoansByCriteria(criteria : List[(String, Any)]) = {
-    val connection = Meta.getConnection()
-    val loans = ListBuffer[Loan]()  
-    try {
-      val statement = getQueryStatement(connection, criteria)
-      val resultSet = statement.executeQuery()
-      
-      while (resultSet.next()) {
-        loans += Loan(
-            airlineId = resultSet.getInt("airline"),
-            principal = resultSet.getLong("principal"),
-            annualRate = resultSet.getBigDecimal("annual_rate"),
-            creationCycle = resultSet.getInt("creation_cycle"),
-            lastPaymentCycle = resultSet.getInt("last_payment_cycle"),
-            term = resultSet.getInt("term"),
-            id = resultSet.getInt("id"))
+    Using.resource(Meta.getConnection()) { connection =>
+      Using.resource(getQueryStatement(connection, criteria)) { statement =>
+        Using.resource(statement.executeQuery()) { resultSet =>
+          val loans = ListBuffer[Loan]()
+          while (resultSet.next()) {
+            loans += Loan(
+                airlineId = resultSet.getInt("airline"),
+                principal = resultSet.getLong("principal"),
+                annualRate = resultSet.getBigDecimal("annual_rate"),
+                creationCycle = resultSet.getInt("creation_cycle"),
+                lastPaymentCycle = resultSet.getInt("last_payment_cycle"),
+                term = resultSet.getInt("term"),
+                id = resultSet.getInt("id"))
+          }
+          loans.toList
+        }
       }
-       
-       loans.toList
-    } finally {
-      connection.close()
     }
   }
   

@@ -8,17 +8,18 @@ import com.patson.util.AirplaneModelDiscountCache
 
 import java.sql.{ResultSet, Types}
 import scala.collection.mutable
+import scala.util.Using
 
 object ModelSource {
-  private[this] val BASE_QUERY = "SELECT * FROM " + AIRPLANE_MODEL_TABLE 
-  
+  private[this] val BASE_QUERY = "SELECT * FROM " + AIRPLANE_MODEL_TABLE
+
   def loadAllModels() = {
       loadModelsByCriteria(List.empty)
   }
-  
+
   def loadModelsByCriteria(criteria : List[(String, Any)]) = {
-    val queryString = new StringBuilder(BASE_QUERY) 
-      
+    val queryString = new StringBuilder(BASE_QUERY)
+
     if (!criteria.isEmpty) {
       queryString.append(" WHERE ")
       for (i <- 0 until criteria.size - 1) {
@@ -28,32 +29,26 @@ object ModelSource {
     }
     loadModelsByQuery(queryString.toString, criteria.map(_._2))
   }
+
   def loadModelsByQuery(queryString : String, parameters : Seq[Any] = Seq.empty) = {
-      //open the hsqldb
-      val connection = Meta.getConnection() 
-      
-      val preparedStatement = connection.prepareStatement(queryString)
-      
-      for (i <- 0 until parameters.size) {
-        preparedStatement.setObject(i + 1, parameters(i))
+    Using.resource(Meta.getConnection()) { connection =>
+      Using.resource(connection.prepareStatement(queryString)) { preparedStatement =>
+        for (i <- 0 until parameters.size) {
+          preparedStatement.setObject(i + 1, parameters(i))
+        }
+        Using.resource(preparedStatement.executeQuery()) { resultSet =>
+          val models = new ListBuffer[Model]()
+          while (resultSet.next()) {
+            models += getModelFromRow(resultSet)
+          }
+          models.toList
+        }
       }
-      
-      val resultSet = preparedStatement.executeQuery()
-      
-      val models = new ListBuffer[Model]()
-      while (resultSet.next()) {
-        models += getModelFromRow(resultSet)
-      }
-      
-      resultSet.close()
-      preparedStatement.close()
-      connection.close()
-      
-      models.toList
+    }
   }
-  
+
   def getModelFromRow(resultSet : ResultSet) = {
-     val model = Model( 
+     val model = Model(
           resultSet.getString("name"),
           resultSet.getString("family"),
           resultSet.getInt("capacity"),
@@ -72,7 +67,7 @@ object ModelSource {
      model.id = resultSet.getInt("id")
      model
   }
-  
+
   def loadModelById(id : Int) = {
       val result = loadModelsByCriteria(List(("id", id)))
       if (result.isEmpty) {
@@ -81,195 +76,154 @@ object ModelSource {
         Some(result(0))
       }
   }
-  
+
   def loadModelsWithinRange(range : Int) = {
-    val queryString = new StringBuilder(BASE_QUERY) 
-      
+    val queryString = new StringBuilder(BASE_QUERY)
+
     queryString.append(" WHERE fly_range >= ?")
     loadModelsByQuery(queryString.toString, Seq(range))
   }
-   
+
   def deleteAllModels() = {
-      //open the hsqldb
-      val connection = Meta.getConnection()
-      
-      var queryString = "DELETE FROM  " + AIRPLANE_MODEL_TABLE
-      
-      val preparedStatement = connection.prepareStatement(queryString)
-      
-      val deletedCount = preparedStatement.executeUpdate()
-      
-      preparedStatement.close()
-      connection.close()
-      
-      println("Deleted " + deletedCount + " model records")
-      deletedCount
-  }
-  
-  def updateModels(models : List[Model]) = {
-    val connection = Meta.getConnection()
-        
-    val preparedStatement = connection.prepareStatement("UPDATE " + AIRPLANE_MODEL_TABLE + " SET capacity = ?, quality = ?, ascent_burn = ?, cruise_burn = ?, speed = ?, fly_range = ?, price = ?, lifespan = ?, construction_time = ?, country_code = ?, manufacturer = ?, image_url = ?, family = ?, runway_requirement = ? WHERE name = ?")
-
-    connection.setAutoCommit(false)
-    models.foreach { 
-      model =>
-        preparedStatement.setString(15, model.name)
-        preparedStatement.setInt(1, model.capacity)
-        preparedStatement.setInt(2, model.quality)
-        preparedStatement.setDouble(3, model.ascentBurn)
-        preparedStatement.setDouble(4, model.cruiseBurn)
-        preparedStatement.setInt(5, model.speed)
-        preparedStatement.setInt(6, model.range)
-        preparedStatement.setInt(7, model.price)
-        preparedStatement.setInt(8, model.lifespan)
-        preparedStatement.setInt(9, model.constructionTime)
-        preparedStatement.setString(10, model.manufacturer.countryCode)
-        preparedStatement.setString(11, model.manufacturer.name)
-        preparedStatement.setString(12, model.imageUrl)
-        preparedStatement.setString(13, model.family)
-        preparedStatement.setInt(14, model.runwayRequirement)
-        preparedStatement.executeUpdate()
+    Using.resource(Meta.getConnection()) { connection =>
+      Using.resource(connection.prepareStatement("DELETE FROM  " + AIRPLANE_MODEL_TABLE)) { preparedStatement =>
+        val deletedCount = preparedStatement.executeUpdate()
+        println("Deleted " + deletedCount + " model records")
+        deletedCount
+      }
     }
-    preparedStatement.close()
-    connection.commit()
-    
-    connection.close()
   }
-  
-  
-  def saveModels(models : List[Model]) = {
-    val connection = Meta.getConnection()
-        
-        val preparedStatement = connection.prepareStatement("INSERT INTO " + AIRPLANE_MODEL_TABLE + "(name, capacity, quality, ascent_burn, cruise_burn, speed, fly_range, price, lifespan, construction_time, country_code, manufacturer, image_url, family, runway_requirement) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
 
-        connection.setAutoCommit(false)
-        models.foreach { 
-          model =>
-            preparedStatement.setString(1, model.name)
-            preparedStatement.setInt(2, model.capacity)
-            preparedStatement.setInt(3, model.quality)
-            preparedStatement.setDouble(4, model.ascentBurn)
-            preparedStatement.setDouble(5, model.cruiseBurn)
-            preparedStatement.setInt(6, model.speed)
-            preparedStatement.setInt(7, model.range)
-            preparedStatement.setInt(8, model.price)
-            preparedStatement.setInt(9, model.lifespan)
-            preparedStatement.setInt(10, model.constructionTime)
-            preparedStatement.setString(11, model.manufacturer.countryCode)
-            preparedStatement.setString(12, model.manufacturer.name)
-            preparedStatement.setString(13, model.imageUrl)
-            preparedStatement.setString(14, model.family)
-            preparedStatement.setInt(15, model.runwayRequirement)
-            preparedStatement.executeUpdate()
+  def updateModels(models : List[Model]) = {
+    Using.resource(Meta.getConnection()) { connection =>
+      connection.setAutoCommit(false)
+      Using.resource(connection.prepareStatement("UPDATE " + AIRPLANE_MODEL_TABLE + " SET capacity = ?, quality = ?, ascent_burn = ?, cruise_burn = ?, speed = ?, fly_range = ?, price = ?, lifespan = ?, construction_time = ?, country_code = ?, manufacturer = ?, image_url = ?, family = ?, runway_requirement = ? WHERE name = ?")) { preparedStatement =>
+        models.foreach { model =>
+          preparedStatement.setString(15, model.name)
+          preparedStatement.setInt(1, model.capacity)
+          preparedStatement.setInt(2, model.quality)
+          preparedStatement.setDouble(3, model.ascentBurn)
+          preparedStatement.setDouble(4, model.cruiseBurn)
+          preparedStatement.setInt(5, model.speed)
+          preparedStatement.setInt(6, model.range)
+          preparedStatement.setInt(7, model.price)
+          preparedStatement.setInt(8, model.lifespan)
+          preparedStatement.setInt(9, model.constructionTime)
+          preparedStatement.setString(10, model.manufacturer.countryCode)
+          preparedStatement.setString(11, model.manufacturer.name)
+          preparedStatement.setString(12, model.imageUrl)
+          preparedStatement.setString(13, model.family)
+          preparedStatement.setInt(14, model.runwayRequirement)
+          preparedStatement.executeUpdate()
         }
-        preparedStatement.close()
-        connection.commit()
-        
-        connection.close()
+      }
+      connection.commit()
+    }
+  }
+
+
+  def saveModels(models : List[Model]) = {
+    Using.resource(Meta.getConnection()) { connection =>
+      connection.setAutoCommit(false)
+      Using.resource(connection.prepareStatement("INSERT INTO " + AIRPLANE_MODEL_TABLE + "(name, capacity, quality, ascent_burn, cruise_burn, speed, fly_range, price, lifespan, construction_time, country_code, manufacturer, image_url, family, runway_requirement) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")) { preparedStatement =>
+        models.foreach { model =>
+          preparedStatement.setString(1, model.name)
+          preparedStatement.setInt(2, model.capacity)
+          preparedStatement.setInt(3, model.quality)
+          preparedStatement.setDouble(4, model.ascentBurn)
+          preparedStatement.setDouble(5, model.cruiseBurn)
+          preparedStatement.setInt(6, model.speed)
+          preparedStatement.setInt(7, model.range)
+          preparedStatement.setInt(8, model.price)
+          preparedStatement.setInt(9, model.lifespan)
+          preparedStatement.setInt(10, model.constructionTime)
+          preparedStatement.setString(11, model.manufacturer.countryCode)
+          preparedStatement.setString(12, model.manufacturer.name)
+          preparedStatement.setString(13, model.imageUrl)
+          preparedStatement.setString(14, model.family)
+          preparedStatement.setInt(15, model.runwayRequirement)
+          preparedStatement.executeUpdate()
+        }
+      }
+      connection.commit()
+    }
   }
 
   def saveFavoriteModelId(airlineId : Int, modelId : Int, startCycle: Int): Unit = {
-    val connection = Meta.getConnection()
-
-    val preparedStatement = connection.prepareStatement("REPLACE INTO " + AIRPLANE_MODEL_FAVORITE_TABLE + "(airline, model, start_cycle) VALUES(?,?,?)")
-
-    connection.setAutoCommit(false)
-    preparedStatement.setInt(1, airlineId)
-    preparedStatement.setInt(2, modelId)
-    preparedStatement.setInt(3, startCycle)
-
-    preparedStatement.executeUpdate()
-
-    preparedStatement.close()
-    connection.commit()
-    connection.close()
+    Using.resource(Meta.getConnection()) { connection =>
+      connection.setAutoCommit(false)
+      Using.resource(connection.prepareStatement("REPLACE INTO " + AIRPLANE_MODEL_FAVORITE_TABLE + "(airline, model, start_cycle) VALUES(?,?,?)")) { preparedStatement =>
+        preparedStatement.setInt(1, airlineId)
+        preparedStatement.setInt(2, modelId)
+        preparedStatement.setInt(3, startCycle)
+        preparedStatement.executeUpdate()
+      }
+      connection.commit()
+    }
   }
 
   def loadFavoriteModelId(airlineId : Int) : Option[(Int, Int)] = {
-    val connection = Meta.getConnection()
-
-    val preparedStatement = connection.prepareStatement("SELECT * FROM " + AIRPLANE_MODEL_FAVORITE_TABLE + " WHERE airline = ?")
-
-    try {
-      preparedStatement.setInt(1, airlineId)
-      val resultSet = preparedStatement.executeQuery()
-
-      val result =
-        if (resultSet.next()) {
-          Some((resultSet.getInt("model"), resultSet.getInt("start_cycle")))
-        } else {
-          None
+    Using.resource(Meta.getConnection()) { connection =>
+      Using.resource(connection.prepareStatement("SELECT * FROM " + AIRPLANE_MODEL_FAVORITE_TABLE + " WHERE airline = ?")) { preparedStatement =>
+        preparedStatement.setInt(1, airlineId)
+        Using.resource(preparedStatement.executeQuery()) { resultSet =>
+          if (resultSet.next()) {
+            Some((resultSet.getInt("model"), resultSet.getInt("start_cycle")))
+          } else {
+            None
+          }
         }
-      resultSet.close()
-      result
-    } finally {
-      preparedStatement.close()
-      connection.close()
+      }
     }
   }
 
   def deleteFavoriteModelId(airlineId : Int) = {
-    val connection = Meta.getConnection()
-
-    val preparedStatement = connection.prepareStatement("DELETE FROM " + AIRPLANE_MODEL_FAVORITE_TABLE + " WHERE airline = ?")
-
-    try {
-      preparedStatement.setInt(1, airlineId)
-      preparedStatement.executeUpdate()
-    } finally {
-      preparedStatement.close()
-      connection.close()
+    Using.resource(Meta.getConnection()) { connection =>
+      Using.resource(connection.prepareStatement("DELETE FROM " + AIRPLANE_MODEL_FAVORITE_TABLE + " WHERE airline = ?")) { preparedStatement =>
+        preparedStatement.setInt(1, airlineId)
+        preparedStatement.executeUpdate()
+      }
     }
   }
 
   def saveAirlineDiscount(airlineId : Int, discount : ModelDiscount): Unit = {
-    val connection = Meta.getConnection()
-
-    val preparedStatement = connection.prepareStatement("REPLACE INTO " + AIRPLANE_MODEL_AIRLINE_DISCOUNT_TABLE + "(airline, model, discount, discount_type, discount_reason, expiration_cycle) VALUES(?,?,?,?,?,?)")
-
-    connection.setAutoCommit(false)
-    preparedStatement.setInt(1, airlineId)
-    preparedStatement.setInt(2, discount.modelId)
-    preparedStatement.setDouble(3, discount.discount)
-    preparedStatement.setInt(4, discount.discountType.id)
-    preparedStatement.setInt(5, discount.discountReason.id)
-    discount.expirationCycle match {
-      case Some(expirationCycle) => preparedStatement.setInt(6, expirationCycle)
-      case None => preparedStatement.setNull(6, Types.INTEGER)
+    Using.resource(Meta.getConnection()) { connection =>
+      connection.setAutoCommit(false)
+      Using.resource(connection.prepareStatement("REPLACE INTO " + AIRPLANE_MODEL_AIRLINE_DISCOUNT_TABLE + "(airline, model, discount, discount_type, discount_reason, expiration_cycle) VALUES(?,?,?,?,?,?)")) { preparedStatement =>
+        preparedStatement.setInt(1, airlineId)
+        preparedStatement.setInt(2, discount.modelId)
+        preparedStatement.setDouble(3, discount.discount)
+        preparedStatement.setInt(4, discount.discountType.id)
+        preparedStatement.setInt(5, discount.discountReason.id)
+        discount.expirationCycle match {
+          case Some(expirationCycle) => preparedStatement.setInt(6, expirationCycle)
+          case None => preparedStatement.setNull(6, Types.INTEGER)
+        }
+        preparedStatement.executeUpdate()
+      }
+      connection.commit()
     }
-
-
-    preparedStatement.executeUpdate()
-
-    preparedStatement.close()
-    connection.commit()
-    connection.close()
   }
 
   def deleteAirlineDiscount(airlineId : Int, modelId : Int, discountReason : DiscountReason.Value) = {
-    val connection = Meta.getConnection()
-
-    val preparedStatement = connection.prepareStatement("DELETE FROM " + AIRPLANE_MODEL_AIRLINE_DISCOUNT_TABLE + " WHERE airline = ? AND model = ? AND discount_reason = ?")
-
-    connection.setAutoCommit(false)
-    preparedStatement.setInt(1, airlineId)
-    preparedStatement.setInt(2, modelId)
-    preparedStatement.setInt(3, discountReason.id)
-    preparedStatement.executeUpdate()
-
-    preparedStatement.close()
-    connection.commit()
-    connection.close()
+    Using.resource(Meta.getConnection()) { connection =>
+      connection.setAutoCommit(false)
+      Using.resource(connection.prepareStatement("DELETE FROM " + AIRPLANE_MODEL_AIRLINE_DISCOUNT_TABLE + " WHERE airline = ? AND model = ? AND discount_reason = ?")) { preparedStatement =>
+        preparedStatement.setInt(1, airlineId)
+        preparedStatement.setInt(2, modelId)
+        preparedStatement.setInt(3, discountReason.id)
+        preparedStatement.executeUpdate()
+      }
+      connection.commit()
+    }
   }
 
   def deleteAllAirlineDiscounts() = {
-    val connection = Meta.getConnection()
-
-    val preparedStatement = connection.prepareStatement("DELETE FROM " + AIRPLANE_MODEL_AIRLINE_DISCOUNT_TABLE)
-
-    preparedStatement.executeUpdate()
-    connection.close()
+    Using.resource(Meta.getConnection()) { connection =>
+      Using.resource(connection.prepareStatement("DELETE FROM " + AIRPLANE_MODEL_AIRLINE_DISCOUNT_TABLE)) { preparedStatement =>
+        preparedStatement.executeUpdate()
+      }
+    }
   }
 
   /**
@@ -309,67 +263,54 @@ object ModelSource {
     * @return Map[airlineId, discounts]
     */
   def loadAirlineDiscountsByQuery(queryString : String, parameters : Seq[Any] = Seq.empty) = {
-    //open the hsqldb
-    val connection = Meta.getConnection()
-
-    val preparedStatement = connection.prepareStatement(queryString)
-
-    for (i <- 0 until parameters.size) {
-      preparedStatement.setObject(i + 1, parameters(i))
+    Using.resource(Meta.getConnection()) { connection =>
+      Using.resource(connection.prepareStatement(queryString)) { preparedStatement =>
+        for (i <- 0 until parameters.size) {
+          preparedStatement.setObject(i + 1, parameters(i))
+        }
+        Using.resource(preparedStatement.executeQuery()) { resultSet =>
+          val discountsByAirlineId = new mutable.HashMap[Int, ListBuffer[ModelDiscount]]()
+          while (resultSet.next()) {
+            val airlineId = resultSet.getInt("airline")
+            val discounts = discountsByAirlineId.getOrElseUpdate(airlineId, ListBuffer())
+            val expirationCycleObject = resultSet.getObject("expiration_cycle")
+            val expirationCycle = if (expirationCycleObject == null) None else Some(expirationCycleObject.asInstanceOf[Int])
+            discounts.append(ModelDiscount(
+              resultSet.getInt("model"),
+              resultSet.getDouble("discount"),
+              DiscountType(resultSet.getInt("discount_type")),
+              DiscountReason(resultSet.getInt("discount_reason")),
+              expirationCycle
+            ))
+          }
+          discountsByAirlineId.view.mapValues(_.toList).toMap
+        }
+      }
     }
-
-
-    val resultSet = preparedStatement.executeQuery()
-
-
-    val discountsByAirlineId = new mutable.HashMap[Int, ListBuffer[ModelDiscount]]()
-    while (resultSet.next()) {
-      val airlineId = resultSet.getInt("airline")
-      val discounts = discountsByAirlineId.getOrElseUpdate(airlineId, ListBuffer())
-      val expirationCycleObject = resultSet.getObject("expiration_cycle")
-      val expirationCycle = if (expirationCycleObject == null) None else Some(expirationCycleObject.asInstanceOf[Int])
-      discounts.append(ModelDiscount(
-        resultSet.getInt("model"),
-        resultSet.getDouble("discount"),
-        DiscountType(resultSet.getInt("discount_type")),
-        DiscountReason(resultSet.getInt("discount_reason")),
-        expirationCycle
-      ))
-    }
-
-    resultSet.close()
-    preparedStatement.close()
-    connection.close()
-
-    discountsByAirlineId.view.mapValues(_.toList).toMap
   }
 
   def updateModelDiscounts(discounts : List[ModelDiscount]): Unit = {
-    val connection = Meta.getConnection()
-
-    val purgeStatement = connection.prepareStatement("DELETE FROM " + AIRPLANE_MODEL_DISCOUNT_TABLE)
-    purgeStatement.executeUpdate()
-    purgeStatement.close()
-    val preparedStatement = connection.prepareStatement("REPLACE INTO " + AIRPLANE_MODEL_DISCOUNT_TABLE + "(model, discount, discount_type, discount_reason, expiration_cycle) VALUES(?,?,?,?,?)")
-
-    connection.setAutoCommit(false)
-
-    discounts.foreach { discount =>
-      preparedStatement.setInt(1, discount.modelId)
-      preparedStatement.setDouble(2, discount.discount)
-      preparedStatement.setInt(3, discount.discountType.id)
-      preparedStatement.setInt(4, discount.discountReason.id)
-      discount.expirationCycle match {
-        case Some(expirationCycle) => preparedStatement.setInt(5, expirationCycle)
-        case None => preparedStatement.setNull(5, Types.INTEGER)
+    Using.resource(Meta.getConnection()) { connection =>
+      Using.resource(connection.prepareStatement("DELETE FROM " + AIRPLANE_MODEL_DISCOUNT_TABLE)) { purgeStatement =>
+        purgeStatement.executeUpdate()
       }
-      preparedStatement.executeUpdate()
+      connection.setAutoCommit(false)
+      Using.resource(connection.prepareStatement("REPLACE INTO " + AIRPLANE_MODEL_DISCOUNT_TABLE + "(model, discount, discount_type, discount_reason, expiration_cycle) VALUES(?,?,?,?,?)")) { preparedStatement =>
+        discounts.foreach { discount =>
+          preparedStatement.setInt(1, discount.modelId)
+          preparedStatement.setDouble(2, discount.discount)
+          preparedStatement.setInt(3, discount.discountType.id)
+          preparedStatement.setInt(4, discount.discountReason.id)
+          discount.expirationCycle match {
+            case Some(expirationCycle) => preparedStatement.setInt(5, expirationCycle)
+            case None => preparedStatement.setNull(5, Types.INTEGER)
+          }
+          preparedStatement.executeUpdate()
+        }
+      }
+      AirplaneModelDiscountCache.updateModelDiscounts(discounts)
+      connection.commit()
     }
-    AirplaneModelDiscountCache.updateModelDiscounts(discounts)
-
-    preparedStatement.close()
-    connection.commit()
-    connection.close()
   }
 
 
@@ -405,36 +346,27 @@ object ModelSource {
     * @return Map[airlineId, discounts]
     */
   def loadModelDiscountsByQuery(queryString : String, parameters : Seq[Any] = Seq.empty) = {
-    //open the hsqldb
-    val connection = Meta.getConnection()
-
-    val preparedStatement = connection.prepareStatement(queryString)
-
-    for (i <- 0 until parameters.size) {
-      preparedStatement.setObject(i + 1, parameters(i))
+    Using.resource(Meta.getConnection()) { connection =>
+      Using.resource(connection.prepareStatement(queryString)) { preparedStatement =>
+        for (i <- 0 until parameters.size) {
+          preparedStatement.setObject(i + 1, parameters(i))
+        }
+        Using.resource(preparedStatement.executeQuery()) { resultSet =>
+          val discounts = ListBuffer[ModelDiscount]()
+          while (resultSet.next()) {
+            val expirationCycleObject = resultSet.getObject("expiration_cycle")
+            val expirationCycle = if (expirationCycleObject == null) None else Some(expirationCycleObject.asInstanceOf[Int])
+            discounts.append(ModelDiscount(
+              resultSet.getInt("model"),
+              resultSet.getDouble("discount"),
+              DiscountType(resultSet.getInt("discount_type")),
+              DiscountReason(resultSet.getInt("discount_reason")),
+              expirationCycle
+            ))
+          }
+          discounts.toList
+        }
+      }
     }
-
-
-    val resultSet = preparedStatement.executeQuery()
-
-
-    val discounts = ListBuffer[ModelDiscount]()
-    while (resultSet.next()) {
-      val expirationCycleObject = resultSet.getObject("expiration_cycle")
-      val expirationCycle = if (expirationCycleObject == null) None else Some(expirationCycleObject.asInstanceOf[Int])
-      discounts.append(ModelDiscount(
-        resultSet.getInt("model"),
-        resultSet.getDouble("discount"),
-        DiscountType(resultSet.getInt("discount_type")),
-        DiscountReason(resultSet.getInt("discount_reason")),
-        expirationCycle
-      ))
-    }
-
-    resultSet.close()
-    preparedStatement.close()
-    connection.close()
-
-    discounts.toList
   }
 }
