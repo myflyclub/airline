@@ -100,7 +100,7 @@ class RankingApplication @Inject()(cc: ControllerComponents)(implicit ec: Execut
     
     // Execute the O(1) query on the isolated database thread pool
     val cycleFuture: Future[Int] = Future {
-      CycleSource.loadCycle() 
+      CycleSource.loadCycle() - 1 // Want last completed cycle, so -1
     }
 
     cycleFuture.flatMap { cycle =>

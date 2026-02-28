@@ -35,11 +35,11 @@
 			</div>
 		</div>
   		<div class="flex-align-center">
-			<span  style="padding: 0 4px;"><img class="clickable" src='@routes.Assets.versioned("/images/icons/24px/equalizer.png")' onclick="toggleSettings()" title="Settings"></span>
+			<span  style="padding: 0 4px;"><img style="width: 22px;" class="img-button svg svg-hover-blue svg-monochrome" src='@routes.Assets.versioned("images/icons/options.svg")' onclick="toggleSettings()" title="Settings"></span>
 			<div style="display: none;" id="logoutDiv" class="topBarItem">
 				<span id="currentUserName" class="label desktopOnly"></span>
 				<div class="button desktopOnly" onclick="logout()" style="width:90px">Logout</div>
-				<div class="mobileOnly" onclick="logout()"><img src='@routes.Assets.versioned("/images/icons/24px/logout.png")' title="Login"></div>
+				<div class="mobileOnly" onclick="logout()"><img src='@routes.Assets.versioned("images/icons/24px/logout.png")' title="Login"></div>
 			</div>
 			<div class="topBarItem no-highlight" id="discordDiv">
 				<a href="https://discord.gg/e6VgGswVep"  target="_blank">

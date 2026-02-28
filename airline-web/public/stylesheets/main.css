@@ -1660,6 +1660,9 @@ html[data-theme="dark"] .svg-monochrome {
 .svg-hover-green:hover {
     filter: invert(52%) sepia(43%) saturate(1039%) hue-rotate(86deg) brightness(99%) contrast(91%);
 }
+.svg-hover-blue:hover {
+    filter: invert(58%) sepia(35%) saturate(3620%) hue-rotate(174deg) brightness(102%) contrast(97%);
+}
 .info.svg {
     width: 18px;
     margin-top: -2px;

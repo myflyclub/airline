@@ -1,7 +1,9 @@
-function showLoginPage() {
+function showLoginPage(options = {}) {
     $('#loginPageOverlay').show();
     showLoginForm();
     $("#logoutDiv").hide();
+    // Store callback for login success
+    window.onLoginSuccessCallback = options.onLoginSuccess || null;
 }
 
 function hideLoginPage() {
@@ -72,7 +74,12 @@ async function loginFromPage() {
 
             await doPostLoginSetup(user);
 
-            navigateTo('/map/');
+            // Use callback if provided, otherwise default to /map/
+            if (typeof window.onLoginSuccessCallback === 'function') {
+                window.onLoginSuccessCallback();
+            } else {
+                navigateTo('/map/');
+            }
         }
 
         $('.login-page-btn').removeClass('loading');

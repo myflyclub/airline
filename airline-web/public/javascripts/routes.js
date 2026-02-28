@@ -64,18 +64,7 @@ function initializeRoutes() {
 
     page('/login/', () => {
         document.title = 'Login';
-        showLoginPage({
-            onLoginSuccess: () => {
-                // After login, redirect to original path if available
-                const redirectPath = localStorage.getItem('postLoginRedirect');
-                if (redirectPath && redirectPath !== '/login/') {
-                    localStorage.removeItem('postLoginRedirect');
-                    page.show(redirectPath);
-                } else {
-                    page.show('/');
-                }
-            }
-        });
+        showLoginPage();
     });
 
     page('/logout/', () => {
