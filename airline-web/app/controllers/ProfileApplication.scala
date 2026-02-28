@@ -201,7 +201,7 @@ class ProfileApplication @Inject()(cc: ControllerComponents) extends AbstractCon
         case LegacyAirline =>
           ("The world is your oyster!", 35)
         case MegaHqAirline =>
-          ("Your home town has charged you with connecting it to the world!", 0)
+          ("Your home town has charged you with connecting it to the world!", 30)
         case DiscountAirline =>
           ("Time to pack in the masses!", 0)
         case RegionalAirline =>
