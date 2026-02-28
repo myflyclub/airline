@@ -87,7 +87,7 @@ case class Airport(iata: String, icao: String, name: String, latitude: Double, l
     }
     allAirlineBonuses.asScala.toMap
   }
-  
+
   def getAirlineLoyalty(airlineId : Int) : Double = {
     if (!airlineAppealsLoaded) {
       throw new IllegalStateException("airline appeal is not properly initialized! If loaded from DB, please use fullload")
@@ -102,30 +102,30 @@ case class Airport(iata: String, icao: String, name: String, latitude: Double, l
 
   def isAirlineAppealsInitialized = airlineAppealsLoaded
 
-  
+
   def getAirlineBase(airlineId : Int) : Option[AirlineBase] = {
     if (!airlineBasesLoaded) {
       throw new IllegalStateException("airport base is not properly initialized! If loaded from DB, please use fullload")
     }
     airlineBases.get(airlineId)
   }
-  
+
   def getAirlineBases() : Map[Int, AirlineBase] = {
     airlineBases.toMap
   }
-  
+
   def getLoungeByAirline(airlineId : Int, activeOnly : Boolean = false) : Option[Lounge] = {
     loungesByAirline.get(airlineId).filter(!activeOnly || _.status == LoungeStatus.ACTIVE)
   }
-  
+
   def getLounges() : List[Lounge] = {
     loungesByAirline.values.toList
   }
-  
+
   def getLoungeByAlliance(alliance : Int, activeOnly : Boolean = false) : Option[Lounge] = {
     loungesByAlliance.get(alliance).filter(!activeOnly || _.status == LoungeStatus.ACTIVE)
   }
-  
+
   def getLounge(airlineId : Int, allianceIdOption : Option[Int], activeOnly : Boolean = false) : Option[Lounge] = {
      getLoungeByAirline(airlineId, activeOnly) match {
        case Some(lounge) => Some(lounge)
@@ -162,9 +162,9 @@ case class Airport(iata: String, icao: String, name: String, latitude: Double, l
 
     result.toString()
   }
-  
+
   def isFeaturesLoaded = featuresLoaded
-  
+
   def getFeatures() : List[AirportFeature] = {
     features.toList
   }
@@ -206,7 +206,7 @@ case class Airport(iata: String, icao: String, name: String, latitude: Double, l
     }
   }.toMap
 
-  
+
   def initAirlineAppeals(airlineBaseAppeals : Map[Int, AirlineAppeal], airlineBonuses : Map[Int, List[AirlineBonus]] = Map.empty) = {
     this.airlineBaseAppeals.clear()
     this.airlineBaseAppeals.asScala ++= airlineBaseAppeals
@@ -238,7 +238,7 @@ case class Airport(iata: String, icao: String, name: String, latitude: Double, l
     airlineBases.foreach { airlineBase =>
       this.airlineBases.put(airlineBase.airline.id, airlineBase)
     }
-    
+
     val result = mutable.HashMap[AirportBoostType.Value, ListBuffer[(String, Double)]]()
     airlineBases.foreach { airlineBase =>
       airlineBase.specializations.foreach {
@@ -252,7 +252,7 @@ case class Airport(iata: String, icao: String, name: String, latitude: Double, l
       }
     }
     specializationBoostFactors = result.view.mapValues(_.toList).toMap
-    
+
     airlineBasesLoaded = true
   }
   def initFeatures(features : List[AirportFeature]) = {
@@ -514,7 +514,7 @@ object Airport {
   )
 
   def travelRateAdjusted(fromPax: Int, baselineDemand: Int, airportSize: Int) : Double = {
-    val percentDemandMet = (0.9 * fromPax + 0.1 * baselineDemand) / baselineDemand //need to blend so randomizer doesn't create peaks that perpetuate  
+    val percentDemandMet = (0.9 * fromPax + 0.1 * baselineDemand) / baselineDemand //need to blend so randomizer doesn't create peaks that perpetuate
     val baseTravelRate = airportSize match {
       case 7 => 0.2
       case 6 => 0.3
@@ -545,9 +545,9 @@ object Airport {
         val assetFactors = airport.assetBoostFactors.getOrElse(boostType, List.empty).map {
           case (asset, boost) => (asset.name, boost.value)
         }
-        
+
         val specializationFactors = airport.specializationBoostFactors.getOrElse(boostType, List.empty)
-        
+
         assetFactors ++ specializationFactors
       }
     }

@@ -4,7 +4,7 @@ import com.patson.model.airplane.Model
 import com.patson.model.airplane.Model.Type
 import com.patson.DemandGenerator
 import com.patson.data.{CycleSource, GameConstants}
-import com.patson.model.AirportFeatureType.{AirportFeatureType, BUSH_HUB, DOMESTIC_AIRPORT, ELITE_CHARM, FINANCIAL_HUB, GATEWAY_AIRPORT, INTERNATIONAL_HUB, ISOLATED_TOWN, OLYMPICS_IN_PROGRESS, OLYMPICS_PREPARATIONS, UNKNOWN, VACATION_HUB}
+import com.patson.model.AirportFeatureType.{AirportFeatureType, BUSH_HUB, DOMESTIC_AIRPORT, ELITE_CHARM, FINANCIAL_HUB, GATEWAY_AIRPORT, INTERNATIONAL_HUB, ISOLATED_TOWN, OLYMPICS_IN_PROGRESS, OLYMPICS_PREPARATIONS, PRESTIGE_CHARM, UNKNOWN, VACATION_HUB}
 import com.patson.model.IsolatedTownFeature.HUB_RANGE_BRACKETS
 
 import java.util.concurrent.ThreadLocalRandom
@@ -30,6 +30,7 @@ abstract class AirportFeature {
       case GATEWAY_AIRPORT => "Gateway - Has increased demand with other gateway airports."
       case OLYMPICS_PREPARATIONS => "Preparing the Olympic Games."
       case OLYMPICS_IN_PROGRESS => "Year of the Olympic Games."
+      case PRESTIGE_CHARM => "Prestige Charm - Prestigious airport."
       case UNKNOWN => "Unknown"
     }
   }
@@ -49,6 +50,7 @@ object AirportFeature {
       case BUSH_HUB => BushHubFeature()
       case OLYMPICS_PREPARATIONS => OlympicsPreparationsFeature(strength)
       case OLYMPICS_IN_PROGRESS => OlympicsInProgressFeature(strength)
+      case PRESTIGE_CHARM => PrestigeFeature(strength)
     }
   }
 }
@@ -293,6 +295,32 @@ sealed case class IsolatedTownFeature(strength : Int) extends AirportFeature {
   }
 }
 
+sealed case class PrestigeFeature(strength : Int) extends AirportFeature {
+  val featureType = AirportFeatureType.PRESTIGE_CHARM
+
+  override def demandAdjustment(rawDemand: Double, passengerType: PassengerType.Value, airportId: Int, fromAirport: Airport, toAirport: Airport, affinity: Int, distance: Int) : Int = {
+    if (fromAirport.hasFeature(AirportFeatureType.PRESTIGE_CHARM) && toAirport.hasFeature(AirportFeatureType.PRESTIGE_CHARM) ) { //extra demand if both airports are gateway
+      val distanceMultiplier = {
+        if (distance <= 1250) {
+          0.2
+        } else if (distance <= 2500) {
+          0.4
+        } else if (distance <= 5000) {
+          0.6
+        } else {
+          0.8
+        }
+      }
+      val affinityMultiplier = (affinity.toDouble + 1.0) / 4.0 + 0.5
+      (Math.log(strength) * distanceMultiplier * affinityMultiplier).toInt
+    } else if (toAirport.id == airportId && fromAirport.countryCode == toAirport.countryCode && fromAirport.baseIncome >= 40000 && toAirport.hasFeature(AirportFeatureType.PRESTIGE_CHARM)) {
+      Math.min(Math.min(100, strength * 10), 3 + (rawDemand * 0.2).toInt) //add domestic demand to prestige charms, but only for rich airports
+    } else {
+      0
+    }
+  }
+}
+
 sealed case class OlympicsPreparationsFeature(strength : Int) extends AirportFeature {
   val featureType = AirportFeatureType.OLYMPICS_PREPARATIONS
   override val isDynamic = true
@@ -312,5 +340,5 @@ sealed case class OlympicsInProgressFeature(strength : Int) extends AirportFeatu
 
 object AirportFeatureType extends Enumeration {
     type AirportFeatureType = Value
-    val INTERNATIONAL_HUB, VACATION_HUB, FINANCIAL_HUB, ELITE_CHARM, DOMESTIC_AIRPORT, ISOLATED_TOWN, BUSH_HUB, GATEWAY_AIRPORT, OLYMPICS_PREPARATIONS, OLYMPICS_IN_PROGRESS, UNKNOWN = Value
+    val INTERNATIONAL_HUB, VACATION_HUB, FINANCIAL_HUB, ELITE_CHARM, DOMESTIC_AIRPORT, ISOLATED_TOWN, BUSH_HUB, GATEWAY_AIRPORT, OLYMPICS_PREPARATIONS, OLYMPICS_IN_PROGRESS, PRESTIGE_CHARM, UNKNOWN = Value
 }

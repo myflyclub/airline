@@ -39,7 +39,8 @@ package object controllers {
         "gradeDescription" -> airline.airlineGrade.description,
         "airlineCode" -> airline.getAirlineCode(),
         "baseCount" -> airline.getBases().size,
-        "type" -> airline.airlineType.label
+        "type" -> airline.airlineType.label,
+        "prestigePoints" -> airline.getPrestigePoints()
       )
 
       if (airline.getCountryCode().isDefined) {
@@ -183,7 +184,7 @@ package object controllers {
       link.setAssignedAirplanes(airplaneAssignments.toList.map {
         case (airplane, frequency) => (airplane, LinkAssignment(frequency, frequency * flightMinutesRequiredPerFlight))
       }.toMap)
-      //(json \ "id").asOpt[Int].foreach { link.id = _ } 
+      //(json \ "id").asOpt[Int].foreach { link.id = _ }
       JsSuccess(link)
     }
 
@@ -643,6 +644,7 @@ package object controllers {
               case f: InternationalHubFeature => featureJson = featureJson
               case f: FinancialHubFeature => featureJson = featureJson
               case f: VacationHubFeature => featureJson = featureJson
+              case f: PrestigeFeature => featureJson = featureJson
               case _ =>
             }
             featureJson
@@ -852,10 +854,10 @@ package object controllers {
       val parts = enumName.split("_")
       parts.head.toLowerCase + parts.tail.map(_.toLowerCase.capitalize).mkString
     }
-    
+
     override def writes(o : AirportWithChampionAndStats) : JsValue = {
       var result = Json.toJson(o.airport)(AirportIdWrites).asInstanceOf[JsObject]
-      
+
       // Add boost factors by type
       val boostFactorsJson = AirportBoostType.values.toList.flatMap { boostType =>
         val boostFactors = o.airport.boostFactorsByType.get(boostType)
@@ -871,11 +873,11 @@ package object controllers {
           None
         }
       }.toMap
-      
+
       if (boostFactorsJson.nonEmpty) {
         result = result + ("boostFactorsByType" -> JsObject(boostFactorsJson))
       }
-      
+
       result
     }
   }

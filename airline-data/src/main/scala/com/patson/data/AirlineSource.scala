@@ -350,6 +350,29 @@ object AirlineSource {
     }
   }
 
+  def sumPrestigePointsByHeadquarterAirport(airportId : Int) : Int = {
+    val connection = Meta.getConnection()
+    try {
+      val statement = connection.prepareStatement(
+        "SELECT SUM(ai.prestige_points) FROM " + AIRLINE_BASE_TABLE + " ab " +
+        "JOIN " + AIRLINE_INFO_TABLE + " ai ON ab.airline = ai.airline " +
+        "WHERE ab.airport = ? AND ab.headquarter = 1"
+      )
+      statement.setInt(1, airportId)
+      val resultSet = statement.executeQuery()
+      val sum = if (resultSet.next()) {
+        resultSet.getInt(1)
+      } else {
+        0
+      }
+      resultSet.close()
+      statement.close()
+      sum
+    } finally {
+      connection.close()
+    }
+  }
+
   def loadAirlineBaseByAirlineAndAirport(airlineId : Int, airportId : Int) : Option[AirlineBase] = {
     val result = loadAirlineBasesByCriteria(List(("airline", airlineId), ("airport", airportId)))
     if (result.isEmpty) {

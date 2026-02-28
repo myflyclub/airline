@@ -2,6 +2,8 @@ package com.patson.model
 
 import com.patson.model.Airline
 import com.patson.model.Airport
+import com.patson.model.AirportFeatureType
+import com.patson.model.PrestigeFeature
 import com.patson.data.PrestigeSource
 import com.patson.data.CycleSource
 
@@ -12,7 +14,24 @@ object Prestige {
     if (prestigePoints > 0) {
       PrestigeSource.createPrestige(airline.id, airport.id, airline.name, prestigePoints, CycleSource.loadCycle())
       airline.setPrestigePoints(airline.getPrestigePoints() + prestigePoints)
-      // TODO: Create/update prestige charm
+    }
+  }
+
+  /**
+   * Update the prestige charm at an airport based on total prestige points
+   * If total prestige is 0, removes the prestige charm
+   * Otherwise, upserts the prestige charm with the total as strength
+   */
+  def updatePrestigeCharmForAirport(airportId: Int): Unit = {
+    val prestigeFromTable = PrestigeSource.sumPrestigePointsByAirport(airportId)
+    val prestigeFromAirlines = com.patson.data.AirlineSource.sumPrestigePointsByHeadquarterAirport(airportId)
+    val totalPrestige = prestigeFromTable + prestigeFromAirlines
+
+    if (totalPrestige == 0) {
+      com.patson.data.AirportSource.deleteAirportFeature(airportId, AirportFeatureType.PRESTIGE_CHARM)
+    } else {
+      val prestigeCharm = PrestigeFeature(totalPrestige)
+      com.patson.data.AirportSource.saveAirportFeature(airportId, prestigeCharm)
     }
   }
 }
