@@ -359,6 +359,8 @@ object Airline {
   def resetAirline(airlineId : Int, newBalance : Long, resetExtendedInfo : Boolean = false) : Option[Airline] = {
     AirlineSource.loadAirlineById(airlineId, true) match {
       case Some(airline) =>
+        // Will need this for prestige charm update after prestige info is processed
+        val airlineHQ = airline.getHeadQuarter().get.airport
         // Update prestige info first before reputation is reset
         if (resetExtendedInfo) {
           airline.setInitialized(false)
@@ -367,8 +369,6 @@ object Airline {
         } else {
           Prestige.processPrestige(airline)
         }
-
-        // TODO: Reduce/Remove Airline HQ prestige charm
 
         //remove all links
         LinkSource.deleteLinksByAirlineId(airlineId)
@@ -385,6 +385,8 @@ object Airline {
         BankSource.loadLoansByAirline(airlineId).foreach { loan =>
           BankSource.deleteLoan(loan.id)
         }
+        // update prestige charm for the old airport HQ now prestige has been process and the airlines HQ cleared
+        Prestige.updatePrestigeCharmForAirport(airlineHQ.id)
         //remove all oil contract
         OilSource.deleteOilContractByCriteria(List(("airline", airlineId)))
         //remove any temp delegates

@@ -486,6 +486,8 @@ abstract class AirportAsset() extends IdObject{
                     feature.strength.toDouble / feature.MAX_STRENGTH * 0.3
                 case FINANCIAL_HUB =>
                     feature.strength.toDouble / feature.MAX_STRENGTH * 0.3
+                case PRESTIGE_CHARM =>
+                    feature.strength.toDouble / feature.MAX_STRENGTH * 0.2
                 case GATEWAY_AIRPORT =>
                     feature.strength.toDouble / feature.MAX_STRENGTH * 0.1
                 case _ => 0

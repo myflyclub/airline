@@ -81,7 +81,8 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
         "gradeCeiling" -> airline.airlineGrade.reputationCeiling,
         "airlineCode" -> airline.getAirlineCode(),
         "skipTutorial" -> airline.isSkipTutorial,
-        "initialized" -> airline.isInitialized
+        "initialized" -> airline.isInitialized,
+        "prestigePoints" -> airline.getPrestigePoints()
       ) ++ tracks
 
       airline.getCountryCode().map { countryCode =>

@@ -28,7 +28,7 @@ object AirportSource {
       connection.close()
     }
   }
-  
+
   def loadAirportsByIds(ids: List[Int], fullLoad: Boolean = false, loadFeatures: Boolean = false) = {
     if (ids.isEmpty) {
       List.empty
@@ -37,15 +37,15 @@ object AirportSource {
       for (i <- 0 until ids.size - 1) {
             queryString.append("?,")
       }
-      
+
       queryString.append("?)")
       loadAirportsByQueryString(queryString.toString(), ids, fullLoad, loadFeatures)
     }
   }
-  
+
   def loadAirportsByCriteria(criteria: List[(String, Any)], fullLoad: Boolean = false, loadFeatures: Boolean = false) = {
       var queryString = BASE_QUERY
-      
+
       if (!criteria.isEmpty) {
         queryString += " WHERE "
         for (i <- 0 until criteria.size - 1) {
@@ -53,7 +53,7 @@ object AirportSource {
         }
         queryString += criteria.last._1 + " = ?"
       }
-      
+
       loadAirportsByQueryString(queryString, criteria.map(_._2), fullLoad, loadFeatures)
   }
 
@@ -338,7 +338,7 @@ object AirportSource {
           airport.initLounges(lounges)
         }
       }
-      
+
       resultSet.close()
       preparedStatement.close()
       airportData.toList
@@ -546,7 +546,7 @@ object AirportSource {
     val connection = Meta.getConnection()
     try {
       val preparedStatement = connection.prepareStatement("INSERT INTO " + AIRPORT_TABLE + "(iata, icao, name, latitude, longitude, country_code, city, zone, airport_size, income, population, pop_middle_income, pop_elite, runway_length)  VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS)
-    
+
       connection.setAutoCommit(false)
       airports.foreach {
         airport =>
@@ -677,6 +677,7 @@ object AirportSource {
 
       featureStatement.close()
       AirportCache.refreshAirport(airportId)
+
       connection.commit()
     } finally {
       connection.close()
@@ -768,30 +769,30 @@ object AirportSource {
       case Some(city) =>
           //open the hsqldb
         val connection = Meta.getConnection()
-        try {  
+        try {
           val queryString = "SELECT * FROM " + AIRPORT_CITY_SHARE_TABLE + " WHERE city = ?"
-          
+
           val preparedStatement = connection.prepareStatement(queryString)
-          
+
           preparedStatement.setInt(1, cityId)
-          
+
           val resultSet = preparedStatement.executeQuery()
-          
+
           val airportShareList = new ListBuffer[(Airport, Double)]()
-          
+
           while (resultSet.next()) {
             AirportCache.getAirport(resultSet.getInt("airport")).foreach { airport =>
               airportShareList.append((airport, resultSet.getDouble("share")))
-            } 
+            }
           }
-          
+
           resultSet.close()
           preparedStatement.close()
           airportShareList.toList
         } finally {
           connection.close()
-        }        
-      case None => List.empty 
+        }
+      case None => List.empty
     }
   }
 
@@ -897,7 +898,7 @@ object AirportSource {
     val connection = Meta.getConnection()
     try {
       connection.setAutoCommit(false)
-      
+
       airportCityRelationships.foreach { case (airportId, relationships) =>
         relationships.foreach { case (city, share) =>
           val statement = connection.prepareStatement("INSERT INTO " + AIRPORT_CITY_SHARE_TABLE + "(airport, city, share) VALUES(?,?,?)")
@@ -908,7 +909,7 @@ object AirportSource {
           statement.close()
         }
       }
-      
+
       connection.commit()
       println(s"Saved ${airportCityRelationships.values.map(_.size).sum} city-airport relationships")
     } catch {
@@ -924,7 +925,7 @@ object AirportSource {
     val connection = Meta.getConnection()
     try {
       connection.setAutoCommit(false)
-      
+
       runways.foreach { runway =>
         val statement = connection.prepareStatement("INSERT INTO " + AIRPORT_RUNWAY_TABLE + "(airport, code, runway_type, length, lighted) VALUES(?,?,?,?,?)")
         statement.setInt(1, airportId)
@@ -935,7 +936,7 @@ object AirportSource {
         statement.executeUpdate()
         statement.close()
       }
-      
+
       connection.commit()
     } catch {
       case e: Exception =>
@@ -952,7 +953,7 @@ object AirportSource {
       val statement = connection.prepareStatement("SELECT * FROM " + AIRPORT_RUNWAY_TABLE + " WHERE airport = ?")
       statement.setInt(1, airportId)
       val resultSet = statement.executeQuery()
-      
+
       val runways = ListBuffer[Runway]()
       while (resultSet.next()) {
         val code = resultSet.getString("code")
@@ -961,7 +962,7 @@ object AirportSource {
         val lighted = resultSet.getBoolean("lighted")
         runways += Runway(length, code, runwayType, lighted)
       }
-      
+
       resultSet.close()
       statement.close()
       runways.toList
@@ -974,13 +975,13 @@ object AirportSource {
     val connection = Meta.getConnection()
     try {
       connection.setAutoCommit(false)
-      
+
       // Delete existing runways
       val purgeStatement = connection.prepareStatement("DELETE FROM " + AIRPORT_RUNWAY_TABLE + " WHERE airport = ?")
       purgeStatement.setInt(1, airportId)
       purgeStatement.executeUpdate()
       purgeStatement.close()
-      
+
       // Insert new runways
       runways.foreach { runway =>
         val statement = connection.prepareStatement("INSERT INTO " + AIRPORT_RUNWAY_TABLE + "(airport, code, runway_type, length, lighted) VALUES(?,?,?,?,?)")
@@ -992,7 +993,7 @@ object AirportSource {
         statement.executeUpdate()
         statement.close()
       }
-      
+
       connection.commit()
     } catch {
       case e: Exception =>

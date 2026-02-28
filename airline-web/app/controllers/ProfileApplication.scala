@@ -261,6 +261,9 @@ class ProfileApplication @Inject()(cc: ControllerComponents) extends AbstractCon
           airline.airlineType = profile.airlineType
           AirlineSource.updateAirlineType(airlineId, airline.airlineType.id)
           AirlineSource.saveAirlineBase(base)
+          Prestige.updatePrestigeCharmForAirport(airportId)
+          // So any prestige charm change can be reflected in the airport detail panel immediately
+          ResponseCache.airportDetailCache.invalidate(airportId)
           airline.setCountryCode(airport.countryCode)
           airline.setReputation(profile.reputation)
           airline.setCurrentServiceQuality(profile.quality)

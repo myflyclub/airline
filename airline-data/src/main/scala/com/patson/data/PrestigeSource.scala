@@ -34,4 +34,28 @@ object PrestigeSource {
       connection.close()
     }
   }
+
+  /**
+   * Sum all prestige points from the prestige table for a given airport
+   */
+  def sumPrestigePointsByAirport(airportId: Int): Int = {
+    val connection = Meta.getConnection()
+    try {
+      val statement = connection.prepareStatement("SELECT SUM(prestige_points) FROM " + PRESTIGE_TABLE + " WHERE airport = ?")
+      statement.setInt(1, airportId)
+      val resultSet = statement.executeQuery()
+      if (resultSet.next()) {
+        val sum = resultSet.getInt(1)
+        resultSet.close()
+        statement.close()
+        sum
+      } else {
+        resultSet.close()
+        statement.close()
+        0
+      }
+    } finally {
+      connection.close()
+    }
+  }
 }
