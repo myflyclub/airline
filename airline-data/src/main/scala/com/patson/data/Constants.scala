@@ -57,6 +57,7 @@ object Constants {
   val AIRPORT_ASSET_PROPERTY_HISTORY_TABLE = "airport_asset_property_history"
   val AIRPORT_ASSET_BOOST_HISTORY_TABLE = "airport_asset_boost_history"
   val DESTINATIONS_TABLE = "destinations"
+  val PRESTIGE_TABLE = "prestige"
 
   val AIRLINE_TRANSACTION_TABLE = "airline_transaction"
   val AIRLINE_TRANSACTION_INDEX_1 = "airline_transaction_index_1"
