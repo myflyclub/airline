@@ -295,7 +295,7 @@ sealed case class IsolatedTownFeature(strength : Int) extends AirportFeature {
   }
 }
 
-sealed case class PrestigeFeature(strength : Int) extends AirportFeature {
+sealed case class PrestigeFeature(baseStrength : Int, boosts : List[AirportBoost] = List.empty) extends AirportFeature {
   val featureType = AirportFeatureType.PRESTIGE_CHARM
 
   override def demandAdjustment(rawDemand: Double, passengerType: PassengerType.Value, airportId: Int, fromAirport: Airport, toAirport: Airport, affinity: Int, distance: Int) : Int = {
@@ -319,6 +319,8 @@ sealed case class PrestigeFeature(strength : Int) extends AirportFeature {
       0
     }
   }
+
+  override lazy val strength = baseStrength + boosts.filter(_.boostType == AirportBoostType.PRESTIGE_CHARM).map(_.value).sum.toInt
 }
 
 sealed case class OlympicsPreparationsFeature(strength : Int) extends AirportFeature {
