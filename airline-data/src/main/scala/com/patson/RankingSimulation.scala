@@ -115,7 +115,7 @@ object RankingSimulation {
     updatedRankings.put(RankingType.DOMESTIC_PAX, getAirportPairRanking(paxByAirportPair, (airport1, airport2) => airport1.countryCode == airport2.countryCode))
     updatedRankings.put(RankingType.PASSENGER_MILE, getPassengerMileRanking(flightConsumptionsByAirline, airlinesById))
     updatedRankings.put(RankingType.LINK_PROFIT_TOTAL, getLinkProfitTotalRanking(flightConsumptions, airlinesById))
-    updatedRankings.put(RankingType.AIRLINE_PRESTIGE, getAirlinePrestigeRanking(flightConsumptions, airlinesById))
+    updatedRankings.put(RankingType.AIRLINE_PRESTIGE, getAirlinePrestigeRanking(airlinesById))
 
     //alliance rankings
     updatedRankings.put(RankingType.ALLIANCE_TRAVELERS, getAllianceTravelersRanking(currentCycle))
