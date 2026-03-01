@@ -411,6 +411,8 @@ case class Airport(iata: String, icao: String, name: String, latitude: Double, l
             newFeatures.append(VacationHubFeature(0, boosts.map(_._2)))
           case com.patson.model.AirportBoostType.FINANCIAL_HUB =>
             newFeatures.append(FinancialHubFeature(0, boosts.map(_._2)))
+          case com.patson.model.AirportBoostType.PRESTIGE_CHARM =>
+            newFeatures.append(FinancialHubFeature(0, boosts.map(_._2)))
           case _ =>
         }
     }
