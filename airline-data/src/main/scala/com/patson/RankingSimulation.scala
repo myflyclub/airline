@@ -115,6 +115,7 @@ object RankingSimulation {
     updatedRankings.put(RankingType.DOMESTIC_PAX, getAirportPairRanking(paxByAirportPair, (airport1, airport2) => airport1.countryCode == airport2.countryCode))
     updatedRankings.put(RankingType.PASSENGER_MILE, getPassengerMileRanking(flightConsumptionsByAirline, airlinesById))
     updatedRankings.put(RankingType.LINK_PROFIT_TOTAL, getLinkProfitTotalRanking(flightConsumptions, airlinesById))
+    updatedRankings.put(RankingType.AIRLINE_PRESTIGE, getAirlinePrestigeRanking(flightConsumptions, airlinesById))
 
     //alliance rankings
     updatedRankings.put(RankingType.ALLIANCE_TRAVELERS, getAllianceTravelersRanking(currentCycle))
@@ -700,6 +701,23 @@ object RankingSimulation {
     }.toList.take(40) //40 max for now
   }
 
+  private[this] def getAirlinePrestigeRanking(airlinesById: Map[Int, Airline]): List[Ranking] = {
+    val prestigeByAirline: List[(Int, Int)] = airlinesById.map { case (airlineId, airline) =>
+      (airlineId, airline.getPrestigePoints())
+    }.toList.sortBy(_._2)(Ordering[Int].reverse)
+
+    prestigeByAirline.zipWithIndex.map {
+      case ((airlineId, prestige), index) =>
+        Ranking(
+          RankingType.AIRLINE_PRESTIGE,
+          key = AirlineKey(airlineId),
+          entry = airlinesById.getOrElse(airlineId, Airline.fromId(airlineId)),
+          ranking = index + 1,
+          rankedValue = prestige,
+        )
+    }.take(200)
+  }
+
   private[this] def updateMovements(previousRankings : Map[RankingType.Value, List[Ranking]], newRankings : Map[RankingType.Value, List[Ranking]]) = {
     val previousRankingsByKey : Map[RankingType.Value, Map[RankingKey, Int]] = previousRankings.view.mapValues { rankings =>
       rankings.map(ranking => (ranking.key, ranking.ranking)).toMap
@@ -723,7 +741,7 @@ object RankingSimulation {
   private[this] def getAllianceTravelersRanking(currentCycle: Int): List[Ranking] = {
     val allianceStats = AllianceSource.loadAllianceStatsByCycle(currentCycle)
     val sortedByTravelers = allianceStats.sortBy(_.travelerPax)(Ordering[Long].reverse)
-    
+
     sortedByTravelers.zipWithIndex.map {
       case (stats, index) => Ranking(
         RankingType.ALLIANCE_TRAVELERS,
@@ -739,7 +757,7 @@ object RankingSimulation {
   private[this] def getAllianceTouristRanking(currentCycle: Int): List[Ranking] = {
     val allianceStats = AllianceSource.loadAllianceStatsByCycle(currentCycle)
     val sortedByTourists = allianceStats.sortBy(_.touristPax)(Ordering[Long].reverse)
-    
+
     sortedByTourists.zipWithIndex.map {
       case (stats, index) => Ranking(
         RankingType.ALLIANCE_TOURISTS,
@@ -755,7 +773,7 @@ object RankingSimulation {
   private[this] def getAllianceEliteRanking(currentCycle: Int): List[Ranking] = {
     val allianceStats = AllianceSource.loadAllianceStatsByCycle(currentCycle)
     val sortedByElite = allianceStats.sortBy(_.elitePax)(Ordering[Long].reverse)
-    
+
     sortedByElite.zipWithIndex.map {
       case (stats, index) => Ranking(
         RankingType.ALLIANCE_ELITE,
@@ -771,7 +789,7 @@ object RankingSimulation {
   private[this] def getAllianceAirportRepRanking(currentCycle: Int): List[Ranking] = {
     val allianceStats = AllianceSource.loadAllianceStatsByCycle(currentCycle)
     val sortedByAirportRep = allianceStats.sortBy(_.airportRep)(Ordering[Int].reverse)
-    
+
     sortedByAirportRep.zipWithIndex.map {
       case (stats, index) => Ranking(
         RankingType.ALLIANCE_AIRPORT_REP,
@@ -787,7 +805,7 @@ object RankingSimulation {
   private[this] def getAllianceLoungeRanking(currentCycle: Int): List[Ranking] = {
     val allianceStats = AllianceSource.loadAllianceStatsByCycle(currentCycle)
     val sortedByLounge = allianceStats.sortBy(_.loungeVisit)(Ordering[Long].reverse)
-    
+
     sortedByLounge.zipWithIndex.map {
       case (stats, index) => Ranking(
         RankingType.ALLIANCE_LOUNGE,
