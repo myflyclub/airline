@@ -28,7 +28,6 @@ object AirportFeaturePatcher extends App {
 "BCN" -> 57, //Barcelona
 "DXB" -> 55, //Dubai
 "AMS" -> 55, //Amsterdam
-"JFK" -> 55, //New York
 "HKT" -> 54, //Phuket
 "USM" -> 52, //Na Thon (Ko Samui Island)
 "UTP" -> 52, //Rayong
@@ -46,6 +45,7 @@ object AirportFeaturePatcher extends App {
 "BKK" -> 48, //Bangkok
 "KIX" -> 48, //Osaka
 "SGN" -> 48,
+"JFK" -> 47, //New York
 "SIN" -> 47, //Singapore
 "CNX" -> 46, //Chiang Mai
 "CUZ" -> 46, //Cusco

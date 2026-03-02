@@ -119,6 +119,7 @@ case class AirlineBase(airline : Airline, airport : Airport, countryCode : Strin
 }
 
 object AirlineBase {
+  val BASE_STAFF_PER_LEVEL = 200
   def getOfficeStaffCapacity(scale : Int, isHeadquarters : Boolean) = {
     val base =
       if (isHeadquarters) {
@@ -130,7 +131,7 @@ object AirlineBase {
       if (isHeadquarters) {
         220 * scale
       } else {
-        200 * scale
+        BASE_STAFF_PER_LEVEL * scale
       }
 
     base + scaleBonus

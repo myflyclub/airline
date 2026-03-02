@@ -72,8 +72,8 @@ object AllianceEvent extends Enumeration {
 }
 
 object Alliance {
-  val MAX_MEMBER_NON_REGIONAL_COUNT = 5
-  val MAX_MEMBER_REGIONALS_COUNT = 2
+  val MAX_MEMBER_NON_REGIONAL_COUNT = 7
+  val MAX_MEMBER_REGIONALS_COUNT = 0
   val ESTABLISH_MIN_MEMBER_COUNT = 3
 
   /**
