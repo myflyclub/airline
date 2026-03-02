@@ -402,17 +402,27 @@ case class Airport(iata: String, icao: String, name: String, latitude: Double, l
 
   def computeFeatures() = {
     val newFeatures = ListBuffer[AirportFeature]()
-    assetBoostFactors.foreach {
-      case(boostType, boosts) =>
-        boostType match {
-          case com.patson.model.AirportBoostType.INTERNATIONAL_HUB =>
-            newFeatures.append(InternationalHubFeature(0, boosts.map(_._2)))
-          case com.patson.model.AirportBoostType.VACATION_HUB =>
-            newFeatures.append(VacationHubFeature(0, boosts.map(_._2)))
-          case com.patson.model.AirportBoostType.FINANCIAL_HUB =>
-            newFeatures.append(FinancialHubFeature(0, boosts.map(_._2)))
-          case _ =>
-        }
+    val hubBoostTypes = Set(
+      com.patson.model.AirportBoostType.INTERNATIONAL_HUB,
+      com.patson.model.AirportBoostType.VACATION_HUB,
+      com.patson.model.AirportBoostType.FINANCIAL_HUB,
+      com.patson.model.AirportBoostType.ELITE_CHARM
+    )
+    val allBoostedHubTypes = (assetBoostFactors.keySet ++ specializationBoostFactors.keySet).filter(hubBoostTypes)
+
+    allBoostedHubTypes.foreach { boostType =>
+      val assetBoosts = assetBoostFactors.getOrElse(boostType, List.empty).map(_._2)
+      val specBoosts = specializationBoostFactors.getOrElse(boostType, List.empty).map {
+        case (_, value) => AirportBoost(boostType, value)
+      }
+      val allBoosts = assetBoosts ++ specBoosts
+      boostType match {
+        case com.patson.model.AirportBoostType.INTERNATIONAL_HUB => newFeatures.append(InternationalHubFeature(0, allBoosts))
+        case com.patson.model.AirportBoostType.VACATION_HUB      => newFeatures.append(VacationHubFeature(0, allBoosts))
+        case com.patson.model.AirportBoostType.FINANCIAL_HUB     => newFeatures.append(FinancialHubFeature(0, allBoosts))
+        case com.patson.model.AirportBoostType.ELITE_CHARM        => newFeatures.append(EliteFeature(0, allBoosts))
+        case _ =>
+      }
     }
     (baseFeatures ++ newFeatures).groupBy(_.getClass).map {
       case(_, features) =>
@@ -420,9 +430,10 @@ case class Airport(iata: String, icao: String, name: String, latitude: Double, l
           features(0)
         } else { //should be 2
           features(0) match {
-            case basicFeature : InternationalHubFeature => InternationalHubFeature(basicFeature.baseStrength, features(1).asInstanceOf[InternationalHubFeature].boosts)
-            case basicFeature : FinancialHubFeature => FinancialHubFeature(basicFeature.baseStrength, features(1).asInstanceOf[FinancialHubFeature].boosts)
-            case basicFeature : VacationHubFeature => VacationHubFeature(basicFeature.baseStrength, features(1).asInstanceOf[VacationHubFeature].boosts)
+            case b : InternationalHubFeature => InternationalHubFeature(b.baseStrength, features(1).asInstanceOf[InternationalHubFeature].boosts)
+            case b : FinancialHubFeature     => FinancialHubFeature(b.baseStrength, features(1).asInstanceOf[FinancialHubFeature].boosts)
+            case b : VacationHubFeature      => VacationHubFeature(b.baseStrength, features(1).asInstanceOf[VacationHubFeature].boosts)
+            case b : EliteFeature            => EliteFeature(b.baseStrength, features(1).asInstanceOf[EliteFeature].boosts)
             case _ => features(0) //don't know how to merge
           }
         }

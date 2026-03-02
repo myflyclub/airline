@@ -14,6 +14,7 @@ abstract class AirportFeature {
   def strength : Int
   def featureType : AirportFeatureType.Value
   val strengthFactor : Double = strength.toDouble / MAX_STRENGTH
+  val isDynamic: Boolean = false
 
   def demandAdjustment(rawDemand: Double, passengerType: PassengerType.Value, airportId: Int, fromAirport: Airport, toAirport: Airport, affinity: Int, distance: Int) : Int
 
@@ -54,6 +55,7 @@ object AirportFeature {
 
 sealed case class InternationalHubFeature(baseStrength : Int, boosts : List[AirportBoost] = List.empty) extends AirportFeature {
   val featureType = AirportFeatureType.INTERNATIONAL_HUB
+  override val isDynamic = true
   override def demandAdjustment(rawDemand: Double, passengerType: PassengerType.Value, airportId: Int, fromAirport: Airport, toAirport: Airport, affinity: Int, distance: Int) : Int = {
     if (airportId == toAirport.id  && passengerType == PassengerType.TOURIST) { //only affect if as a destination
       val charmStrength = 0.0004 * strengthFactor
@@ -95,6 +97,7 @@ sealed case class InternationalHubFeature(baseStrength : Int, boosts : List[Airp
 
 sealed case class EliteFeature(baseStrength : Int, boosts : List[AirportBoost] = List.empty) extends AirportFeature {
   val featureType = AirportFeatureType.ELITE_CHARM
+  override val isDynamic = true
 
   override def demandAdjustment(rawDemand: Double, passengerType: PassengerType.Value, airportId: Int, fromAirport: Airport, toAirport: Airport, affinity: Int, distance: Int) : Int = {
     0
@@ -108,6 +111,7 @@ sealed case class EliteFeature(baseStrength : Int, boosts : List[AirportBoost] =
  */
 sealed case class VacationHubFeature(baseStrength : Int, boosts : List[AirportBoost] = List.empty) extends AirportFeature {
   val featureType = AirportFeatureType.VACATION_HUB
+  override val isDynamic = true
 
   override def demandAdjustment(rawDemand: Double, passengerType: PassengerType.Value, airportId: Int, fromAirport: Airport, toAirport: Airport, affinity: Int, distance: Int) : Int = {
     if (toAirport.id == airportId && passengerType == PassengerType.TOURIST) { //only affect if as a destination and tourists
@@ -146,6 +150,7 @@ sealed case class VacationHubFeature(baseStrength : Int, boosts : List[AirportBo
 
 sealed case class FinancialHubFeature(baseStrength : Int, boosts : List[AirportBoost] = List.empty) extends AirportFeature {
   val featureType = AirportFeatureType.FINANCIAL_HUB
+  override val isDynamic = true
   override def demandAdjustment(rawDemand: Double, passengerType: PassengerType.Value, airportId: Int, fromAirport: Airport, toAirport: Airport, affinity: Int, distance: Int) : Int = {
     if (passengerType == PassengerType.BUSINESS) {
       val hasFeatureInBothAirports = fromAirport.hasFeature(AirportFeatureType.FINANCIAL_HUB) && toAirport.hasFeature(AirportFeatureType.FINANCIAL_HUB)
@@ -290,6 +295,7 @@ sealed case class IsolatedTownFeature(strength : Int) extends AirportFeature {
 
 sealed case class OlympicsPreparationsFeature(strength : Int) extends AirportFeature {
   val featureType = AirportFeatureType.OLYMPICS_PREPARATIONS
+  override val isDynamic = true
   override def demandAdjustment(rawDemand: Double, passengerType: PassengerType.Value, airportId: Int, fromAirport: Airport, toAirport: Airport, affinity: Int, distance: Int) : Int = {
     0
   }
@@ -297,6 +303,7 @@ sealed case class OlympicsPreparationsFeature(strength : Int) extends AirportFea
 
 sealed case class OlympicsInProgressFeature(strength : Int) extends AirportFeature {
   val featureType = AirportFeatureType.OLYMPICS_IN_PROGRESS
+  override val isDynamic = true
   override def demandAdjustment(rawDemand: Double, passengerType: PassengerType.Value, airportId: Int, fromAirport: Airport, toAirport: Airport, affinity: Int, distance: Int) : Int = {
     0
   }
