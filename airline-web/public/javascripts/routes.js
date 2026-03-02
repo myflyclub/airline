@@ -1,23 +1,27 @@
 /**
- * Check if user has valid session, redirect to /login/ if on protected route without session.
- * @returns {boolean} true if session exists, false otherwise
+ * Check if user has an active, server-verified session.
+ * Uses the in-memory activeUser set by loadUser() — not localStorage,
+ * which can be stale after session expiry.
+ * @returns {boolean} true if session is verified, false otherwise
  */
 function checkSessionGuard() {
-    // Check localStorage first, then fallback to cookie (for server-side set cookies)
-    let sessionActive = localStorage.getItem('sessionActive') === 'true';
-    
-    if (!sessionActive) {
-        const match = document.cookie.match(/(?:^|; )sessionActive=([^;]*)/);
-        const sessionVal = match ? decodeURIComponent(match[1]) : null;
-        sessionActive = sessionVal === true || sessionVal === 'true' || sessionVal === '1';
-        
-        if (sessionActive) { // Migrate to localStorage
-             localStorage.setItem('sessionActive', 'true');
-        }
-    }
+    return typeof activeUser !== 'undefined' && activeUser !== null;
+}
 
-    console.log('✓ Session check:', sessionActive);
-    return sessionActive;
+/**
+ * Quick boot-time heuristic: did the user previously log in?
+ * Used only to decide whether to optimistically load session scripts.
+ * NOT authoritative — the server always has the final say via loadUser().
+ */
+function hasStoredSession() {
+    if (localStorage.getItem('sessionActive') === 'true') return true;
+    const match = document.cookie.match(/(?:^|; )sessionActive=([^;]*)/);
+    const val = match ? decodeURIComponent(match[1]) : null;
+    if (val === 'true' || val === '1') {
+        localStorage.setItem('sessionActive', 'true'); // migrate
+        return true;
+    }
+    return false;
 }
 
 async function requireMap() {
@@ -149,7 +153,6 @@ function initializeRoutes() {
             showAirplaneCanvas("hangar");
         }
     });
-
     page('/aircraft/', () => {
         backgroundLoad();
         document.title = 'Aircraft Market';
@@ -163,6 +166,11 @@ function initializeRoutes() {
         } else {
             showAirplaneCanvas("market");
         }
+    });
+    page('/aircraft-discounts/', () => {
+        backgroundLoad();
+        document.title = 'Aircraft Discounts';
+        showAirplaneCanvas("discounts");
     });
 
     page('/office/', () => {
