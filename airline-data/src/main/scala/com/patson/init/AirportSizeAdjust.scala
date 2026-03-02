@@ -154,6 +154,7 @@ object AirportSizeAdjust {
         //algeria
         "TMR" -> 3,
         //https://en.wikipedia.org/wiki/List_of_airports_in_Angola
+        "LAD" -> 3,
         "MSZ" -> 4,
         //https://en.wikipedia.org/wiki/List_of_the_busiest_airports_in_Argentina
         "MDZ" -> 5,
@@ -751,7 +752,7 @@ object AirportSizeAdjust {
         "CLD" -> 3,
         //metro Chicago
         "MDW" -> 6,
-        "RFD" -> 2,
+        "RFD" -> 3,
         "BMI" -> 3,
         "MLI" -> 4,
         "MSN" -> 5,

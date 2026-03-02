@@ -305,7 +305,7 @@ object LinkSimulation {
   def calculateFuelCost(model: Model, distance: Int, soldSeats: Int, capacity: Double, frequency: Int, cancellationCount: Int = 0): Int = {
     val loadFactor = FUEL_EMPTY_AIRCRAFT_BURN_PERCENT + (1 - FUEL_EMPTY_AIRCRAFT_BURN_PERCENT) * soldSeats.toDouble / capacity
     val distanceFactor = 1 + 0.1 * Math.pow(distance.toDouble / 800, FUEL_DISTANCE_EXPONENT * loadFactor)
-    val fuelCostPerRoundTrip = FUEL_UNIT_COST * model.capacity * distanceFactor * (model.ascentBurn * loadFactor + model.cruiseBurn * distance.toDouble / 800)
+    val fuelCostPerRoundTrip = FUEL_UNIT_COST * model.capacity * distanceFactor * (model.ascentBurn + model.cruiseBurn * distance.toDouble / 800)
 
     (fuelCostPerRoundTrip * (frequency - cancellationCount)).toInt
   }
@@ -601,11 +601,13 @@ object LinkSimulation {
     } else {
       airportStats.map { case (airport, (fromPax, allPax)) =>
         val airportStats = airportStatsLookup.getOrElse(airport.id, AirportStatistics(airport.id, 100, 100, 0.0, 0.0, 0.0))
-        val smallAirportBoost = 2 - (10 - airport.size).toDouble / 10.0
+        val smallAirportBoost = 1 + 1.5 * (10 - airport.size).toDouble / 10.0
         val localDemandMet = fromPax.toDouble / airportStats.baselineDemand
         val localTravelRate = Airport.travelRateAdjusted(fromPax, airportStats.baselineDemand, airport.size)
         val percentGlobally = allPax.toDouble / worldStats.totalPax
-        val rep = Math.max(airport.size, BigDecimal(Math.pow(localTravelRate, smallAirportBoost) * percentGlobally * Airport.GLOBAL_AIRPORT_REPUTATION_POOL).setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble)
+        val rep = {
+          Math.max(airport.size, BigDecimal(Math.pow(travelRate, 2) * percentGlobally * Airport.GLOBAL_AIRPORT_REPUTATION_POOL).setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble)
+        }
         AirportStatisticsUpdate(
           airport.id,
           fromPax,
