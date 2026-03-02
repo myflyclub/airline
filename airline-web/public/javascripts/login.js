@@ -11,6 +11,23 @@ function hideLoginPage() {
     $("#logoutDiv").show();
 }
 
+/**
+ * Clear client-side session state and show the login screen.
+ * Use when any API call returns 401/403 mid-session.
+ * Does NOT call /user-logout — the server already considers the session invalid.
+ */
+function handleUnauthorized() {
+    activeUser = null;
+    activeAirline = null;
+    airlineLabelColors = {};
+    localStorage.removeItem('sessionActive');
+    document.cookie = "sessionActive=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    $('.topBarDetails').hide();
+    $('#navPrimary').hide();
+    $('#navPrimaryToggle').hide();
+    navigateTo('/login/');
+}
+
 function showLoginForm() {
     $('#signupForm').hide();
     $('#loginForm').show();
@@ -109,11 +126,7 @@ async function loadUser() {
         })
 
         if (!response.ok) {
-            if (response.status === 400 || response.status === 401) {
-                // Session expired or invalid
-                console.log('Session restore failed: ' + response.status)
-            }
-            window.location.replace('/logout/')
+            // Session expired or invalid — let the caller clean up and re-route
             throw new Error('Session restore failed: ' + response.status)
         }
 

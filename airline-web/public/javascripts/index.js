@@ -254,9 +254,10 @@ async function initializeApp() {
         await loginReady;
         console.log('✓ Login scripts ready');
 
-        const hasSession = checkSessionGuard();
+        // Boot heuristic only — not authoritative. Server verified via loadUser() below.
+        const mightHaveSession = hasStoredSession();
 
-        if (hasSession) {
+        if (mightHaveSession) {
             // Await essential session scripts
             await Promise.all([_bgSessionScripts, _bgConstants]);
             console.log('✓ Session ready');
@@ -269,19 +270,28 @@ async function initializeApp() {
                 console.error('Failed to load post-login scripts:', err);
             }
 
+            let sessionRestored = false;
             try {
                 await loadUser();
+                sessionRestored = true;
                 console.log('✓ User session restored');
             } catch (err) {
-                if (err.message && err.message.includes('Session restore failed')) {
-                    localStorage.removeItem('sessionActive');
-                    document.cookie = "sessionActive=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
-                    return;
+                // Server rejected the session — clear stale client state
+                localStorage.removeItem('sessionActive');
+                document.cookie = "sessionActive=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
+                if (!err.message || !err.message.includes('Session restore failed')) {
+                    console.error('Error during session restore:', err);
                 }
-                console.error('Error during session restore:', err);
             }
 
             initializeRoutes();
+
+            if (!sessionRestored) {
+                // activeUser is null, so checkSessionGuard() returns false and the *
+                // route guard will redirect to /login/ — but be explicit here too.
+                page.redirect('/login/');
+                return;
+            }
 
             // Defer Chat App load
             if (window.requestIdleCallback) {
@@ -291,7 +301,7 @@ async function initializeApp() {
             }
 
         } else {
-            // Show login page immediately — heavy assets continue loading in background
+            // No stored session — show login page immediately
             initializeRoutes();
         }
         console.log('✓ Application initialized');
