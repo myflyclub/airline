@@ -176,8 +176,7 @@ class OilApplication @Inject()(cc: ControllerComponents) extends AbstractControl
       case None =>
         OilSource.saveOilContract(newContract)
         val cost = newContract.contractCost * -1
-        AirlineSource.adjustAirlineBalance(airlineId, cost)
-        AirlineSource.saveCashFlowItem(AirlineCashFlowItem(airlineId, CashFlowType.OIL_CONTRACT, cost))
+        AirlineSource.saveLedgerEntry(AirlineLedgerEntry(airlineId, currentCycle, LedgerType.OIL_CONTRACT, cost, Some(s"${volume}K bbls/wk, ${duration}wk")))
         Ok(Json.toJson(OilContractWithDetails(newContract, duration, 0, None)))
     }
   }
@@ -194,8 +193,7 @@ class OilApplication @Inject()(cc: ControllerComponents) extends AbstractControl
             case None =>
               OilSource.deleteOilContract(contract)
               val penalty = contract.contractTerminationPenalty(currentCycle) * -1
-              AirlineSource.adjustAirlineBalance(airlineId, penalty)
-              AirlineSource.saveCashFlowItem(AirlineCashFlowItem(airlineId, CashFlowType.OIL_CONTRACT, penalty))
+              AirlineSource.saveLedgerEntry(AirlineLedgerEntry(airlineId, currentCycle, LedgerType.OIL_CONTRACT, penalty, Some("Early termination penalty")))
               Ok(Json.obj("id" -> contract.id))
           }
         } else {

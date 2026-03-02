@@ -17,13 +17,13 @@
   			<div class="topBarDetails" style="display: none;">
                 <p class="currentTime label tooltip-attr tooltip-attr-bottom" data-tooltip="One week lasts ~ 30min and one year is 48 weeks or 24 hours in realtime. "></p>
                 <p class="tooltip-attr tooltip-attr-bottom" data-tooltip="An estimate of how long until next week."><img src='@routes.Assets.versioned("/images/icons/clock-moon-phase.png")' style="vertical-align: middle;"><span class="nextTickEstimation label" style="font-weight: bold;">Estimating...</span></p>
-                <p class="tooltip-attr tooltip-attr-bottom" data-tooltip="Available funds">$<span class="balance"></span></p>
+                <p class="tooltip-attr tooltip-attr-bottom" data-tooltip="Cash money">$<span class="balance"></span></p>
+                <p class="tooltip-attr tooltip-attr-bottom" data-tooltip="Action Points">⚡<span class="actionPoints"></span></p>
                 <p style="font-size: 13px;" class="currentAirline label font-display"></p>
                 <div class="reputationStars" id="topReputationStars"></div>
-                <div class="delegatesShortcut clickable" onclick="toggleDelegateStatusModal()"></div>
                 <div title="Latest Oil Price" class="latestOilPriceShortCut clickable" onclick="showOilCanvas()">
                     <img src='@routes.Assets.versioned("/images/icons/oil-barrel.png")'>
-                    <span class="oilprice label" style=""></span>
+                    <span class="oilprice label"></span>
 				</div>
   			</div>
   		</div>
@@ -31,6 +31,7 @@
 			<div class=" flex-row">
 				<b class="currentAirline label"></b>
 				<span>$<span class="balance label"></span></span>
+                <span>⚡<span class="actionPoints label"></span></span>
                 <span style="display: inline-block;" class="delegatesShortcut clickable" onclick="toggleDelegateStatusModal()"></span>
 			</div>
 		</div>

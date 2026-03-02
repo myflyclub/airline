@@ -54,7 +54,7 @@ function initializeRoutes() {
     page('*', (ctx, next) => {
         const isLoggedIn = checkSessionGuard();
         // If not logged in and not already on login/signup, store original path and redirect
-        if (!isLoggedIn && ctx.path !== '/login/' && ctx.path !== '/signup') {
+        if (!isLoggedIn && ctx.path !== '/login/' && ctx.path !== '/signup' && ctx.path !== '/logout/') {
             localStorage.setItem('postLoginRedirect', ctx.path);
             page.redirect('/login/');
         } else {

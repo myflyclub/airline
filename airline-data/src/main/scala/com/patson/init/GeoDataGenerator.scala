@@ -439,10 +439,8 @@ object GeoDataGenerator extends App {
         val airportCopy = airport.copy(baseIncome = normalizedIncome , basePopulation = population.toInt, basePopMiddleIncome = middleIncomePop, basePopElite = elitePopAdjusted)
         airportCopy
       }
-//    }.filter(_.population != 0).sortBy { airport =>
-    }.sortBy { airport =>
-      airport.baseIncome * airport.basePopulation
-    }
+    }.filter(_.basePopulation != 0)
+    .sortBy(_.basePopMiddleIncome)
 
     println(s"Calculated all airport pops & income")
 

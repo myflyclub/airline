@@ -396,7 +396,6 @@ function updateCountryDelegates() {
         data:  JSON.stringify({ 'delegateCount' : assignedDelegateCount }) ,
         dataType: 'json',
         success: function(result) {
-            updateTopBarDelegates(activeAirline.id)
             closeModal($('#airlineCountryRelationshipModal'))
         },
         error: function(jqXHR, textStatus, errorThrown) {
@@ -407,16 +406,58 @@ function updateCountryDelegates() {
 }
 
 
+function renderCountryDelegates(assignedCount) {
+    var $delegateSection = $('#airlineCountryRelationshipModal .delegateSection')
+    var availableCount = $delegateSection.data('availableDelegates') || 0
+    var $display = $('#countryDelegatesDisplay')
+    $display.empty()
+
+    var $row = $('<div style="display:flex; align-items:center; gap:4px; flex-wrap:wrap;"></div>')
+    var $icons = $('<div style="display:flex; align-items:center; flex-wrap:wrap; gap:2px;"></div>')
+
+    var $addBtn = $('<img class="img-button svg" src="/assets/images/icons/plus.svg" style="width:14px; height:14px;" title="Add delegate">')
+    if (availableCount <= 0) {
+        $addBtn.css('opacity', '0.35').attr('title', 'No delegates available')
+    } else {
+        $addBtn.css('cursor', 'pointer').on('click', function() {
+            var current = $delegateSection.data('assignedDelegateCount')
+            var avail = $delegateSection.data('availableDelegates')
+            $delegateSection.data('assignedDelegateCount', current + 1)
+            $delegateSection.data('availableDelegates', avail - 1)
+            renderCountryDelegates(current + 1)
+        })
+    }
+
+    var $removeBtn = $('<img class="img-button svg" src="/assets/images/icons/minus.svg" style="width:14px; height:14px;" title="Remove delegate">')
+    if (assignedCount <= 0) {
+        $removeBtn.css('opacity', '0.35')
+    } else {
+        $removeBtn.css('cursor', 'pointer').on('click', function() {
+            var current = $delegateSection.data('assignedDelegateCount')
+            var avail = $delegateSection.data('availableDelegates')
+            $delegateSection.data('assignedDelegateCount', current - 1)
+            $delegateSection.data('availableDelegates', avail + 1)
+            renderCountryDelegates(current - 1)
+        })
+    }
+
+    $row.append($icons).append($addBtn).append($removeBtn)
+    $display.append($row)
+    refreshAssignedDelegates(assignedCount, '#4a9eed', $icons)
+}
+
 function getCountryDelegatesSummary(countryCode) {
     $('#airlineCountryRelationshipModal div.delegateStatus').empty()
     var $delegateSection = $('#airlineCountryRelationshipModal .delegateSection')
-    var airlineId = activeAirline.id
     $delegateSection.removeData('assignedDelegateCount')
     $delegateSection.removeData('originalDelegates')
     $delegateSection.data("countryCode", countryCode)
 
     updateAirlineDelegateStatus($('#airlineCountryRelationshipModal div.delegateStatus'), function(delegateInfo) {
         $delegateSection.data("availableDelegates", delegateInfo.permanentAvailableCount)
+        if ($delegateSection.data('assignedDelegateCount') !== undefined) {
+            renderCountryDelegates($delegateSection.data('assignedDelegateCount'))
+        }
     })
 
 	$.ajax({
@@ -429,14 +470,11 @@ function getCountryDelegatesSummary(countryCode) {
             $('#airlineCountryRelationshipModal span.delegatesRequired').text(result.delegatesRequired)
 
             var countryDelegates = result.delegates
-            countryDelegates.sort(function(a, b) { //sort, the most senior comes first
-                return a.startCycle - b.startCycle
-            })
-            $delegateSection.data('originalDelegates', countryDelegates) //create a clone
+            countryDelegates.sort(function(a, b) { return a.startCycle - b.startCycle })
+            $delegateSection.data('originalDelegates', countryDelegates)
             $delegateSection.data('assignedDelegateCount', countryDelegates.length)
-            $delegateSection.data('delegatesRequired', result.delegatesRequired)
 
-            refreshAssignedDelegates($('#airlineCountryRelationshipModal .delegateSection'))
+            renderCountryDelegates(countryDelegates.length)
         },
         error: function(jqXHR, textStatus, errorThrown) {
                 console.log(JSON.stringify(jqXHR));

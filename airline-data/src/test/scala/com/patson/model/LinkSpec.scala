@@ -36,9 +36,9 @@ class LinkSpec(_system: ActorSystem) extends TestKit(_system) with ImplicitSende
 
       airline1Link.setAssignedAirplanes(
         scala.collection.immutable.Map(
-          Airplane(model, testAirline1, 0, purchasedCycle = 0, 100, 0, 0, configuration = config1) -> LinkAssignment(10, 6000)
-        , Airplane(model, testAirline1, 0, purchasedCycle = 0, 100, 0, 0, configuration = config2) -> LinkAssignment(10, 6000)
-        , Airplane(model, testAirline1, 0, purchasedCycle = 0, 100, 0, 0, configuration = config3) -> LinkAssignment(10, 6000)))
+          Airplane(model, testAirline1, 0, purchasedCycle = 0, 100, 0, configuration = config1) -> LinkAssignment(10, 6000)
+        , Airplane(model, testAirline1, 0, purchasedCycle = 0, 100, 0, configuration = config2) -> LinkAssignment(10, 6000)
+        , Airplane(model, testAirline1, 0, purchasedCycle = 0, 100, 0, configuration = config3) -> LinkAssignment(10, 6000)))
 
       assert(airline1Link.frequencyByClass(ECONOMY) == 30)
       assert(airline1Link.frequencyByClass(BUSINESS) == 20)

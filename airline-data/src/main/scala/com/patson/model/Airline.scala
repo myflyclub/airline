@@ -50,7 +50,8 @@ case class Airline(name: String, var airlineType: AirlineType = LegacyAirline, v
     airlineInfo.stockPrice *= (1 - isSellShares * ThreadLocalRandom.current().nextDouble(StockModel.STOCK_BUYBACK_MIN_CHANGE, StockModel.STOCK_BUYBACK_MAX_CHANGE))
     airlineInfo.balance += balanceChange - fee
     AirlineSource.saveAirlineInfo(this)
-    AirlineSource.saveCashFlowItem(AirlineCashFlowItem(id, CashFlowType.BUY_BACK, balanceChange - fee))
+    val currentCycle = com.patson.data.CycleSource.loadCycle()
+    AirlineSource.saveLedgerEntry(AirlineLedgerEntry(id, currentCycle, LedgerType.BUY_BACK, balanceChange - fee, Some(s"Stock ${if (isSellShares > 0) "sale" else "buyback"} of 1,000,000 shares at price ${airlineInfo.stockPrice} with fee $fee")))
     (airlineInfo.stockPrice, airlineInfo.sharesOutstanding, airlineInfo.balance)
   }
 
@@ -143,6 +144,9 @@ case class Airline(name: String, var airlineType: AirlineType = LegacyAirline, v
 
   def getBalance() = airlineInfo.balance
 
+  def getActionPoints() = airlineInfo.actionPoints
+  def setActionPoints(v: Double) = { airlineInfo.actionPoints = v }
+
   def getCurrentServiceQuality() = airlineInfo.currentServiceQuality
 
   def getTargetServiceQuality() : Int = airlineInfo.targetServiceQuality
@@ -208,21 +212,48 @@ case class DelegateInfo(availableCount : Int, boosts : List[DelegateBoostAirline
 
 }
 
-case class AirlineInfo(var balance : Long, var currentServiceQuality : Double, var stockPrice : Double, var sharesOutstanding : Int, var targetServiceQuality : Int, var reputation : Double, var minimumRenewalBalance: Long, var countryCode : Option[String] = None, var airlineCode : String = "", var skipTutorial : Boolean = false, var initialized : Boolean = false)
+case class AirlineInfo(var balance : Long, var currentServiceQuality : Double, var stockPrice : Double, var sharesOutstanding : Int, var targetServiceQuality : Int, var reputation : Double, var minimumRenewalBalance: Long, var actionPoints: Double = 0.0, var countryCode : Option[String] = None, var airlineCode : String = "", var skipTutorial : Boolean = false, var initialized : Boolean = false)
 
-object TransactionType extends Enumeration {
-  type TransactionType = Value
-  val CAPITAL_GAIN, CREATE_LINK = Value
+object LedgerType extends Enumeration {
+  type LedgerType = Value
+  // Link operations — recorded as weekly aggregates per airline
+  val LINK_REVENUE,
+      LINK_FUEL_COST,
+      LINK_FUEL_TAX,
+      LINK_CREW_COST,
+      LINK_AIRPORT_FEE,
+      LINK_INFLIGHT_COST,
+      LINK_MAINTENANCE_COST,
+      LINK_LOUNGE_COST,
+      LINK_DELAY_COMPENSATION = Value
+  // Operating overhead — weekly aggregates
+  val BASE_UPKEEP,
+      OVERTIME_COMPENSATION,
+      LOUNGE_UPKEEP,
+      LOUNGE_INCOME,
+      ASSET_EXPENSE,
+      ASSET_INCOME,
+      ADVERTISEMENT,
+      FUEL_COST = Value
+  // Financing — weekly aggregates
+  val LOAN_INTEREST,
+      LOAN_PRINCIPAL,
+      LOAN_DISBURSEMENT = Value
+  // Capital events — one entry per event
+  val BUY_AIRPLANE,
+      SELL_AIRPLANE,
+      BASE_CONSTRUCTION,
+      FACILITY_CONSTRUCTION,
+      OIL_CONTRACT,
+      ASSET_TRANSACTION,
+      PRIZE,
+      BUY_BACK,
+      CREATE_LINK = Value
 }
 
 object OtherIncomeItemType extends Enumeration {
   type OtherBalanceItemType = Value
-  val LOAN_INTEREST, BASE_UPKEEP, OVERTIME_COMPENSATION, LOUNGE_UPKEEP, LOUNGE_COST, LOUNGE_INCOME, ASSET_EXPENSE, ASSET_REVENUE, ADVERTISEMENT, DEPRECIATION, FUEL_PROFIT = Value
-}
-
-object CashFlowType extends Enumeration {
-  type CashFlowType = Value
-  val BASE_CONSTRUCTION, BUY_AIRPLANE, SELL_AIRPLANE, CREATE_LINK, FACILITY_CONSTRUCTION, OIL_CONTRACT, ASSET_TRANSACTION, PRIZE, BUY_BACK = Value
+  val LOAN_INTEREST, BASE_UPKEEP, OVERTIME_COMPENSATION, LOUNGE_UPKEEP, LOUNGE_INCOME, ASSET_EXPENSE, ASSET_REVENUE, ADVERTISEMENT, FUEL_COST = Value
 }
 
 object Period extends Enumeration {
@@ -239,8 +270,8 @@ object Period extends Enumeration {
 }
 
 
-case class AirlineTransaction(airlineId : Int, transactionType : TransactionType.Value, amount : Long, var cycle : Int = 0)
-case class AirlineIncome(airlineId : Int, profit : Long = 0, revenue: Long = 0, expense: Long = 0, stockPrice: Double = 0, totalValue: Long = 0, links : LinksIncome, transactions : TransactionsIncome, others : OthersIncome, period : Period.Value = Period.WEEKLY, var cycle : Int = 0) {
+case class AirlineLedgerEntry(airlineId : Int, cycle : Int, entryType : LedgerType.Value, amount : Long, description : Option[String] = None, id : Int = 0)
+case class AirlineIncome(airlineId : Int, profit : Long = 0, revenue: Long = 0, expense: Long = 0, stockPrice: Double = 0, totalValue: Long = 0, links : LinksIncome, others : OthersIncome, period : Period.Value = Period.WEEKLY, var cycle : Int = 0) {
   /**
    * Current income is expected to be QUARTER/YEAR. Adds parameter (WEEKLY income) to this current income object and return a new Airline income with period same as this object but cycle as the parameter
    */
@@ -252,7 +283,6 @@ case class AirlineIncome(airlineId : Int, profit : Long = 0, revenue: Long = 0, 
         stockPrice = (stockPrice + income2.stockPrice) / 2,
         totalValue = ((totalValue + income2.totalValue).toDouble / 2).toLong,
         links = links.update(income2.links),
-        transactions = transactions.update(income2.transactions),
         others = others.update(income2.others),
         period = period,
         cycle = income2.cycle)
@@ -274,20 +304,6 @@ case class LinksIncome(airlineId : Int, profit : Long = 0, revenue : Long = 0, e
         maintenanceCost = maintenanceCost + income2.maintenanceCost,
         loungeCost = loungeCost + income2.loungeCost,
         depreciation = depreciation + income2.depreciation,
-        period = period,
-        cycle = income2.cycle)
-  }
-}
-case class TransactionsIncome(airlineId : Int, profit : Long = 0, revenue: Long = 0, expense: Long = 0, capitalGain : Long = 0, createLink : Long = 0,  prize : Long = 0, buyBack : Long = 0, period : Period.Value = Period.WEEKLY, var cycle : Int = 0) {
-  def update(income2 : TransactionsIncome) : TransactionsIncome = {
-    TransactionsIncome(airlineId,
-        profit = profit + income2.profit,
-        revenue = revenue + income2.revenue,
-        expense = expense + income2.expense,
-        capitalGain = capitalGain + income2.capitalGain,
-        createLink = createLink + income2.createLink,
-        prize = prize + income2.prize,
-        buyBack = buyBack + income2.buyBack,
         period = period,
         cycle = income2.cycle)
   }
@@ -315,28 +331,7 @@ case class OthersIncome(airlineId : Int, profit : Long = 0, revenue: Long = 0, e
 }
 
 
-case class AirlineCashFlowItem(airlineId : Int, cashFlowType : CashFlowType.Value, amount : Long, var cycle : Int = 0)
-case class AirlineCashFlow(airlineId : Int, cashFlow : Long = 0, operation : Long = 0, loanInterest : Long = 0, loanPrincipal : Long = 0, baseConstruction : Long = 0, buyAirplane : Long = 0, sellAirplane : Long = 0,  createLink : Long = 0, facilityConstruction : Long = 0, oilContract : Long = 0, assetTransactions : Long = 0, period : Period.Value = Period.WEEKLY, var cycle : Int = 0) {
-/**
-   * Current income is expected to be QUARTER/YEAR. Adds parameter (WEEKLY income) to this current income object and return a new Airline income with period same as this object but cycle as the parameter
-   */
-  def update(cashFlow2 : AirlineCashFlow) : AirlineCashFlow = {
-    AirlineCashFlow(airlineId,
-        cashFlow = cashFlow + cashFlow2.cashFlow,
-        operation = operation + cashFlow2.operation,
-        loanInterest = loanInterest + cashFlow2.loanInterest,
-        loanPrincipal = loanPrincipal + cashFlow2.loanPrincipal,
-        baseConstruction = baseConstruction + cashFlow2.baseConstruction,
-        buyAirplane = buyAirplane + cashFlow2.buyAirplane,
-        sellAirplane = sellAirplane + cashFlow2.sellAirplane,
-        createLink = createLink + cashFlow2.createLink,
-        facilityConstruction = facilityConstruction + cashFlow2.facilityConstruction,
-        oilContract = oilContract + cashFlow2.oilContract,
-        assetTransactions = assetTransactions + cashFlow2.assetTransactions,
-        period = period,
-        cycle = cashFlow2.cycle)
-  }
-}
+
 
 object Airline {
   def fromId(id : Int) = {
@@ -355,7 +350,6 @@ object Airline {
         LinkSource.deleteLinksByAirlineId(airlineId)
         //remove all airplanes
         AirplaneSource.deleteAirplanesByCriteria(List(("owner", airlineId)));
-        ModelSource.deleteFavoriteModelId(airlineId);
         //remove all assets
         AirportAssetSource.loadAirportAssetsByAirline(airlineId).foreach { asset =>
           AirportAssetSource.deleteAirportAsset(asset.id)

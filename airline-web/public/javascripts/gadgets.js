@@ -15,13 +15,13 @@ function generateSimpleImageBar(imageSrc, count) {
     return containerDiv
 }
 
-function generateImageBar(imageEmpty, imageFill, count, containerDiv, valueInput, indexToValueFunction, valueToIndexFunction, callback) {
-    generateImageBarWithRowSize(imageEmpty, imageFill, count, containerDiv, valueInput, indexToValueFunction, valueToIndexFunction, 10, callback)
+function generateImageBar(imageEmpty, imageFill, count, containerDiv, valueInput, indexToValueFunction, valueToIndexFunction, callback, size = 16) {
+    generateImageBarWithRowSize(imageEmpty, imageFill, count, containerDiv, valueInput, indexToValueFunction, valueToIndexFunction, 10, callback, size)
 }
 /**
  * used by in setting route service stars & flight frequency
  **/
-function generateImageBarWithRowSize(imageEmpty, imageFill, count, containerDiv, valueInput, indexToValueFunction, valueToIndexFunction, rowSize, callback) {
+function generateImageBarWithRowSize(imageEmpty, imageFill, count, containerDiv, valueInput, indexToValueFunction, valueToIndexFunction, rowSize, callback, size = 16) {
 	containerDiv.empty()
 	var images = []
 
@@ -39,7 +39,7 @@ function generateImageBarWithRowSize(imageEmpty, imageFill, count, containerDiv,
 	}
 
 	for (i = 0 ; i < count ; i ++) {
-		var image = $("<img width='16px' height='auto' class='img-button'>")
+		var image = $("<img width='" + size + "px' height='auto' class='img-button'>")
 		image.attr("src", imageEmpty)
 
 		image.data('index', i)

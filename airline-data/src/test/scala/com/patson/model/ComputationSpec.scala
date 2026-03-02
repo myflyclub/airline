@@ -8,7 +8,7 @@ import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.testkit.ImplicitSender
 import org.apache.pekko.testkit.TestKit
 import com.patson.Util
-import com.patson.model.airplane.Model
+import com.patson.model.airplane.{Airplane, Model}
  
 class ComputationSpec(_system: ActorSystem) extends TestKit(_system) with ImplicitSender
   with AnyWordSpecLike with Matchers with BeforeAndAfterAll {
@@ -296,6 +296,52 @@ class ComputationSpec(_system: ActorSystem) extends TestKit(_system) with Implic
     
   }
   
+  "calculateAirplaneSellValue".must {
+    val airline = Airline.fromId(1)
+    val model = Model.modelByName("Airbus A320")
+
+    def makeAirplane(condition: Double, purchasePrice: Int): Airplane = Airplane(model, airline, constructedCycle = 0, purchasedCycle = 0, condition = condition, purchasePrice = purchasePrice)
+
+    println(model)
+
+    "return 80% of purchase price at full condition".in {
+      val airplane = makeAirplane(condition = Airplane.MAX_CONDITION, model.price)
+      val result = Computation.calculateAirplaneSellValue(airplane)
+      val expected = (model.price * 0.8).toInt
+      result shouldBe expected
+    }
+    "return 0 at zero condition".in {
+      val airplane = makeAirplane(condition = 0, model.price)
+      val result = Computation.calculateAirplaneSellValue(airplane)
+      result shouldBe 0
+    }
+    "scale linearly with condition".in {
+      val purchasePrice = model.price
+      // sell value = (condition / MAX_CONDITION) * purchasePrice * 0.8
+      val at80  = Computation.calculateAirplaneSellValue(makeAirplane(80, purchasePrice))
+      val at60  = Computation.calculateAirplaneSellValue(makeAirplane(60, purchasePrice))
+      val at40  = Computation.calculateAirplaneSellValue(makeAirplane(40, purchasePrice))
+      val at20  = Computation.calculateAirplaneSellValue(makeAirplane(20, purchasePrice))
+      at80 shouldBe (purchasePrice * 0.8 * 0.80).toInt
+      at60 shouldBe (purchasePrice * 0.8 * 0.60).toInt
+      at40 shouldBe (purchasePrice * 0.8 * 0.40).toInt
+      at20 shouldBe (purchasePrice * 0.8 * 0.20).toInt
+    }
+    "show cumulative cost of ownership at various sell conditions".in {
+      val purchasePrice = model.price
+      println("\nCost of ownership: buy at full price, sell at given condition")
+      println("Condition | Sell Value  | Net Cost")
+      for (cond <- List(80, 60, 40, 20)) {
+        val sellValue = Computation.calculateAirplaneSellValue(makeAirplane(cond, purchasePrice))
+        val usedFraction = (Airplane.MAX_CONDITION - cond).toDouble / Airplane.MAX_CONDITION.toDouble
+        val weeksUsed = model.lifespan.toDouble * usedFraction
+        val netCostPerWeek = (purchasePrice - sellValue).toDouble / weeksUsed
+        println(f"$cond%3d%%      | $sellValue%,11d | ${netCostPerWeek.toInt}%,11d")
+      }
+      true shouldBe true
+    }
+  }
+
   "calculateAffinityValue".must {
 //    "output airport pairs with high affinity value".in {
 //      import com.patson.data.{AirportSource,CountrySource}

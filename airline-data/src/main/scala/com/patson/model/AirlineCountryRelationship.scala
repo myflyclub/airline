@@ -126,7 +126,6 @@ object AirlineCountryRelationship {
         val currentCycle = CycleSource.loadCycle()
         val totalLevel : Int = DelegateSource.loadCountryDelegateByAirlineAndCountry(airline.id, countryCode).map(_.assignedTask.asInstanceOf[CountryDelegateTask].level(currentCycle)).sum
 
-
         val levelMultiplier = getDelegateBonusMultiplier(targetCountry)
         factors.put(DELEGATE(totalLevel), Math.round(totalLevel * levelMultiplier).toInt)
 
@@ -139,7 +138,7 @@ object AirlineCountryRelationship {
   val getDelegateBonusMultiplier = (country : Country) => {
     val ratioToModelPower = Computation.MODEL_COUNTRY_POWER / (country.airportPopulation * country.income.toDouble).toLong
     val logRatio = Math.max(0.1, Math.log10(ratioToModelPower * 100) / 2) //0.1 to 1
-    val levelMultiplier = 1 / logRatio
+    val levelMultiplier = 1.5 / logRatio
     Math.min(1.5, BigDecimal(levelMultiplier).setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble)
   }
 }

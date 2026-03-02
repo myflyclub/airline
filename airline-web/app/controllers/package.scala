@@ -3,7 +3,7 @@ import org.apache.pekko.stream.ActorMaterializer
 import com.patson.Util
 import com.patson.data._
 import com.patson.data.airplane._
-import com.patson.model.{AirlineBaseSpecialization, AirlineCashFlow, AirlineIncome, Computation, _}
+import com.patson.model.{AirlineBaseSpecialization, AirlineIncome, Computation, _}
 import com.patson.model.airplane._
 import com.patson.model.event.EventReward
 import com.patson.util.{AirlineCache, AllianceCache, AirportCache, AirportChampionInfo, ChampionUtil, CountryChampionInfo}
@@ -103,10 +103,9 @@ package object controllers {
         "purchasedCycle" -> JsNumber(airplane.purchasedCycle),
         "isReady" -> JsBoolean(airplane.isReady),
         "constructionTime" -> JsNumber(airplane.model.constructionTime),
-        "value" -> JsNumber(airplane.value),
+        "purchasePrice" -> JsNumber(airplane.purchasePrice),
         "sellValue" -> JsNumber(Computation.calculateAirplaneSellValue(airplane)),
         "dealerValue" -> JsNumber(airplane.dealerValue),
-        "dealerRatio" -> JsNumber(airplane.dealerRatio),
         "configurationId" -> JsNumber(airplane.configuration.id),
         "configuration" -> Json.obj("economy" -> airplane.configuration.economyVal, "business" -> airplane.configuration.businessVal, "first" -> airplane.configuration.firstVal),
         "homeAirportId" -> JsNumber(airplane.home.id),
@@ -318,7 +317,6 @@ package object controllers {
         "airlineName" -> JsString(base.airline.name),
         "scale" -> JsNumber(base.scale),
         "value" -> JsNumber(base.getValue),
-        "delegatesRequired" -> JsNumber(base.delegatesRequired),
         "headquarter" -> JsBoolean(base.headquarter),
         "foundedCycle" -> JsNumber(base.foundedCycle),
         "upkeepCurrentLevel" -> JsNumber(base.calculateUpkeep(base.scale - 1)),
@@ -411,11 +409,6 @@ package object controllers {
         "linksMaintenanceCost" -> JsNumber(airlineIncome.links.maintenanceCost),
         "linksLoungeCost" -> JsNumber(airlineIncome.links.loungeCost),
         "linksDepreciation" -> JsNumber(airlineIncome.links.depreciation),
-        "transactionsProfit" -> JsNumber(airlineIncome.transactions.profit),
-        "transactionsRevenue" -> JsNumber(airlineIncome.transactions.revenue),
-        "transactionsExpense" -> JsNumber(airlineIncome.transactions.expense),
-        "transactionsCapitalGain" -> JsNumber(airlineIncome.transactions.capitalGain),
-        "transactionsCreateLink" -> JsNumber(airlineIncome.transactions.createLink),
         "othersProfit" -> JsNumber(airlineIncome.others.profit),
         "othersRevenue" -> JsNumber(airlineIncome.others.revenue),
         "othersExpense" -> JsNumber(airlineIncome.others.expense),
@@ -432,26 +425,6 @@ package object controllers {
         "othersDepreciation" -> JsNumber(airlineIncome.others.depreciation),
         "period" -> JsString(airlineIncome.period.toString()),
         "cycle" -> JsNumber(airlineIncome.cycle)))
-    }
-  }
-
-  implicit object AirlineCashFlowWrite extends Writes[AirlineCashFlow] {
-    def writes(airlineCashFlow: AirlineCashFlow): JsValue = {
-      JsObject(List(
-        "airlineId" -> JsNumber(airlineCashFlow.airlineId),
-        "totalCashFlow" -> JsNumber(airlineCashFlow.cashFlow),
-        "operation" -> JsNumber(airlineCashFlow.operation),
-        "loanInterest" -> JsNumber(airlineCashFlow.loanInterest),
-        "loanPrincipal" -> JsNumber(airlineCashFlow.loanPrincipal),
-        "baseConstruction" -> JsNumber(airlineCashFlow.baseConstruction),
-        "buyAirplane" -> JsNumber(airlineCashFlow.buyAirplane),
-        "sellAirplane" -> JsNumber(airlineCashFlow.sellAirplane),
-        "createLink" -> JsNumber(airlineCashFlow.createLink),
-        "facilityConstruction" -> JsNumber(airlineCashFlow.facilityConstruction),
-        "oilContract" -> JsNumber(airlineCashFlow.oilContract),
-        "assetTransactions" -> JsNumber(airlineCashFlow.assetTransactions),
-        "period" -> JsString(airlineCashFlow.period.toString()),
-        "cycle" -> JsNumber(airlineCashFlow.cycle)))
     }
   }
 
@@ -934,7 +907,7 @@ package object controllers {
 
   class BusyDelegateWrites(currentCycle : Int) extends Writes[BusyDelegate] {
     override def writes(busyDelegate: BusyDelegate): JsValue = {
-      var busyDelegateJson = Json.obj("id" -> busyDelegate.id, "taskDescription" -> busyDelegate.assignedTask.description, "completed" -> busyDelegate.taskCompleted)
+      var busyDelegateJson = Json.obj("id" -> busyDelegate.id, "taskType" -> busyDelegate.assignedTask.getTaskType.toString, "taskDescription" -> busyDelegate.assignedTask.description, "completed" -> busyDelegate.taskCompleted)
       busyDelegate.availableCycle.map(_ - currentCycle).foreach {
         coolDown : Int => busyDelegateJson = busyDelegateJson + ("coolDown" -> JsNumber(coolDown))
       }

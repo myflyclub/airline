@@ -38,8 +38,8 @@ object Title extends Enumeration {
   }
 
   val relationshipBonus = (title : Title.Value) => title match {
-    case Title.NATIONAL_AIRLINE => 30
-    case Title.PARTNERED_AIRLINE => 15
+    case Title.NATIONAL_AIRLINE => 20
+    case Title.PARTNERED_AIRLINE => 10
     case _ => 0
   }
 

@@ -205,8 +205,7 @@ object EventReward {
 case class OlympicsVoteCashReward() extends EventReward(EventType.OLYMPICS, RewardCategory.OLYMPICS_VOTE, RewardOption.CASH) {
   val CASH_BONUS = 10000000 //10 millions
   override def applyReward(event: Event, airline : Airline) = {
-    AirlineSource.adjustAirlineBalance(airline.id, CASH_BONUS)
-    AirlineSource.saveCashFlowItem(AirlineCashFlowItem(airline.id, CashFlowType.PRIZE, CASH_BONUS))
+    AirlineSource.saveLedgerEntry(AirlineLedgerEntry(airline.id, CycleSource.loadCycle(), LedgerType.PRIZE, CASH_BONUS, Some("Olympics Vote Cash Reward")))
   }
 
   override val description: String = "$10,000,000 subsidy in cash"
@@ -235,8 +234,7 @@ case class OlympicsPassengerCashReward() extends EventReward(EventType.OLYMPICS,
 
   override def applyReward(event: Event, airline : Airline) = {
     val reward = computeReward(event.id, airline.id)
-    AirlineSource.adjustAirlineBalance(airline.id, reward)
-    AirlineSource.saveCashFlowItem(AirlineCashFlowItem(airline.id, CashFlowType.PRIZE, reward))
+    AirlineSource.saveLedgerEntry(AirlineLedgerEntry(airline.id, CycleSource.loadCycle(), LedgerType.PRIZE, reward, Some("Olympics Winner Reward")))
   }
 
   override val description: String = "$20,000,000 or $1500 * score (whichever is higher) cash reward"

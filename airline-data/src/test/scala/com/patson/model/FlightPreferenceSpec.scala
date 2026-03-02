@@ -82,7 +82,7 @@ class FlightPreferenceSpec(_system: ActorSystem) extends TestKit(_system) with I
   ): Link = {
     val link = Link(fromAirport, toAirport, testAirline, price, distance = distance, defaultCapacity, rawQuality = quality, linkDuration, frequency)
     link.setQuality(quality)
-    link.setTestingAssignedAirplanes(scala.collection.immutable.Map(Airplane(model, testAirline, 0, purchasedCycle = 0, 100, 0, 0) -> 1))
+    link.setTestingAssignedAirplanes(scala.collection.immutable.Map(Airplane(model, testAirline, 0, purchasedCycle = 0, 100, 0) -> 1))
     link
   }
 
@@ -268,7 +268,7 @@ class FlightPreferenceSpec(_system: ActorSystem) extends TestKit(_system) with I
 
       val shortLink = Link(fromAirport, nearbyToAirport, testAirline, shortPrice, distance = shortDistance, defaultCapacity, rawQuality = 50, shortDuration, 3)
       shortLink.setQuality(50)
-      shortLink.setTestingAssignedAirplanes(scala.collection.immutable.Map(Airplane(model, testAirline, 0, purchasedCycle = 0, 100, 0, 0) -> 1))
+      shortLink.setTestingAssignedAirplanes(scala.collection.immutable.Map(Airplane(model, testAirline, 0, purchasedCycle = 0, 100, 0) -> 1))
 
       val longDistance = 8000
       val longDuration = Computation.calculateDuration(model, longDistance)
@@ -276,7 +276,7 @@ class FlightPreferenceSpec(_system: ActorSystem) extends TestKit(_system) with I
 
       val longLink = Link(fromAirport, nearbyToAirport, testAirline, longPrice, distance = longDistance, defaultCapacity, rawQuality = 50, longDuration, 3)
       longLink.setQuality(50)
-      longLink.setTestingAssignedAirplanes(scala.collection.immutable.Map(Airplane(model, testAirline, 0, purchasedCycle = 0, 100, 0, 0) -> 1))
+      longLink.setTestingAssignedAirplanes(scala.collection.immutable.Map(Airplane(model, testAirline, 0, purchasedCycle = 0, 100, 0) -> 1))
 
       val preference = AppealPreference(fromAirport, ECONOMY, 1.0, 0, 1.0, 1)
 
@@ -637,7 +637,7 @@ class FlightPreferenceSpec(_system: ActorSystem) extends TestKit(_system) with I
         // Create lounge link
         val loungeLink = Link(loungeFromAirport, loungeToAirport, testAirline, classPrice, distance = distance, defaultCapacity, rawQuality = 50, duration, 14)
         loungeLink.setQuality(50)
-        loungeLink.setTestingAssignedAirplanes(scala.collection.immutable.Map(Airplane(model, testAirline, 0, purchasedCycle = 0, 100, 0, 0) -> 1))
+        loungeLink.setTestingAssignedAirplanes(scala.collection.immutable.Map(Airplane(model, testAirline, 0, purchasedCycle = 0, 100, 0) -> 1))
 
         val preference = AppealPreference(noLoungeAirport, linkClass, 1.0, 0, 1.0, 1)
         val loungePreference = AppealPreference(loungeFromAirport, linkClass, 1.0, 0, 1.0, 3)

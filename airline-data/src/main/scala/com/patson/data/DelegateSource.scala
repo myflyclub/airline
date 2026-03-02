@@ -3,6 +3,7 @@ package com.patson.data
 import java.sql.{Statement, Types}
 
 import com.patson.data.Constants._
+import com.patson.data.airplane.ModelSource
 import com.patson.model._
 import com.patson.model.campaign.Campaign
 import com.patson.util.{AirlineCache, AirportCache, CountryCache}
@@ -13,6 +14,10 @@ import scala.collection.mutable.ListBuffer
 
 object DelegateSource {
   private[this] val BASE_BUSY_DELEGATE_QUERY = "SELECT * FROM " + BUSY_DELEGATE_TABLE
+  val TOOLTIP_MANAGERS = List(
+    "Managers allow you to open more bases, more routes, lower aircraft prices, and more.",
+    "<b>Actioning</b>: Generate action points."
+  )
 
 
   /**
@@ -104,12 +109,14 @@ object DelegateSource {
       case(taskType, grouped) => {
         val delegateIdsOfThisTaskType = grouped.map(_._1)
         taskType match {
-          case DelegateTaskType.LINK_NEGOTIATION =>
-            result.addAll(loadLinkNegotiationTasks(delegateIdsOfThisTaskType))
           case DelegateTaskType.COUNTRY =>
             result.addAll(loadCountryTasks(delegateIdsOfThisTaskType))
           case DelegateTaskType.CAMPAIGN =>
             result.addAll(loadCampaignTasks(delegateIdsOfThisTaskType))
+          case DelegateTaskType.MANAGER_BASE =>
+            delegateIdsOfThisTaskType.foreach(id => result.put(id, ManagerBaseDelegateTask()))
+          case DelegateTaskType.MANAGER_AIRCRAFT_MODEL =>
+            result.addAll(loadAircraftModelTasks(delegateIdsOfThisTaskType))
         }
       }
     }
@@ -188,6 +195,86 @@ object DelegateSource {
 
   }
 
+  def loadAircraftModelTasks(delegateIds : List[Int]) : Map[Int, DelegateTask] = {
+    if (delegateIds.isEmpty) {
+      Map.empty[Int, DelegateTask]
+    } else {
+      val connection = Meta.getConnection()
+      try {
+        val delegateIdPhrase = delegateIds.mkString(",")
+        val preparedStatement = connection.prepareStatement(s"SELECT * FROM $AIRCRAFT_MODEL_DELEGATE_TASK_TABLE WHERE delegate IN ($delegateIdPhrase)")
+        val resultSet = preparedStatement.executeQuery()
+
+        val result = mutable.Map[Int, DelegateTask]()
+        val modelNameCache = mutable.Map[Int, String]()
+
+        while (resultSet.next()) {
+          val delegateId = resultSet.getInt("delegate")
+          val modelId = resultSet.getInt("aircraft_model_id")
+          val startCycle = resultSet.getInt("start_cycle")
+          val modelName = modelNameCache.getOrElseUpdate(modelId, ModelSource.loadModelById(modelId).map(_.name).getOrElse(s"Unknown ($modelId)"))
+          result.put(delegateId, DelegateTask.aircraftModel(startCycle, modelId, modelName))
+        }
+
+        resultSet.close()
+        preparedStatement.close()
+        result.toMap
+      } finally {
+        connection.close()
+      }
+    }
+  }
+
+  private[this] def saveAircraftModelTasks(delegates : List[BusyDelegate]) : Unit = {
+    val connection = Meta.getConnection()
+    val preparedStatement = connection.prepareStatement(s"INSERT INTO $AIRCRAFT_MODEL_DELEGATE_TASK_TABLE (delegate, aircraft_model_id, start_cycle) VALUES(?,?,?)")
+    try {
+      delegates.foreach { delegate =>
+        preparedStatement.setInt(1, delegate.id)
+        preparedStatement.setInt(2, delegate.assignedTask.asInstanceOf[AircraftModelDelegateTask].modelId)
+        preparedStatement.setInt(3, delegate.assignedTask.getStartCycle)
+        preparedStatement.executeUpdate()
+      }
+    } finally {
+      preparedStatement.close()
+      connection.close()
+    }
+  }
+
+  def loadAircraftModelDelegatesByAirlineAndModel(airlineId : Int, modelId : Int) : List[BusyDelegate] = {
+    val connection = Meta.getConnection()
+    try {
+      val preparedStatement = connection.prepareStatement(
+        s"SELECT bd.id, bd.available_cycle, amdt.aircraft_model_id, amdt.start_cycle " +
+        s"FROM $BUSY_DELEGATE_TABLE bd " +
+        s"JOIN $AIRCRAFT_MODEL_DELEGATE_TASK_TABLE amdt ON bd.id = amdt.delegate " +
+        s"WHERE bd.airline = ? AND amdt.aircraft_model_id = ?"
+      )
+      preparedStatement.setInt(1, airlineId)
+      preparedStatement.setInt(2, modelId)
+      val resultSet = preparedStatement.executeQuery()
+
+      val result = mutable.ListBuffer[BusyDelegate]()
+      val modelName = ModelSource.loadModelById(modelId).map(_.name).getOrElse(s"Unknown ($modelId)")
+      val airline = AirlineCache.getAirline(airlineId).get
+
+      while (resultSet.next()) {
+        val delegateId = resultSet.getInt("id")
+        val startCycle = resultSet.getInt("start_cycle")
+        val availableCycleObject = resultSet.getObject("available_cycle")
+        val availableCycle = if (availableCycleObject == null) None else Some(availableCycleObject.asInstanceOf[Int])
+        val task = DelegateTask.aircraftModel(startCycle, modelId, modelName)
+        result.append(BusyDelegate(airline, task, availableCycle, delegateId))
+      }
+
+      resultSet.close()
+      preparedStatement.close()
+      result.toList
+    } finally {
+      connection.close()
+    }
+  }
+
   /**
     *
     * @param campaigns
@@ -242,41 +329,6 @@ object DelegateSource {
       }
     }
   }
-
-  /**
-    *
-    * @param delegateIds
-    * @return key - delegateId
-    */
-  def loadLinkNegotiationTasks(delegateIds : List[Int]) = {
-    val connection = Meta.getConnection()
-    try {
-      val delegateIdPhrase = delegateIds.mkString(",")
-      val preparedStatement = connection.prepareStatement(s"SELECT * FROM $LINK_NEGOTIATION_TASK_TABLE WHERE delegate IN ($delegateIdPhrase)")
-      val resultSet = preparedStatement.executeQuery()
-
-      val result = mutable.Map[Int, DelegateTask]() //key delegateId
-
-
-      while (resultSet.next()) {
-        val delegateId = resultSet.getInt("delegate")
-        val fromAirport = AirportCache.getAirport(resultSet.getInt("from_airport")).get
-        val toAirport = AirportCache.getAirport(resultSet.getInt("to_airport")).get
-        val startCycle = resultSet.getInt("start_cycle")
-
-        result.put(delegateId, DelegateTask.linkNegotiation(startCycle, fromAirport, toAirport))
-      }
-
-      resultSet.close()
-      preparedStatement.close()
-
-      result.toMap
-    } finally {
-      connection.close()
-    }
-
-  }
-
 
   def updateBusyDelegateAvailableCycle(delegates : List[BusyDelegate]) : Unit = {
     val connection = Meta.getConnection()
@@ -340,10 +392,12 @@ object DelegateSource {
         taskType match {
           case DelegateTaskType.COUNTRY =>
             saveCountryTasks(delegatesOfThisTaskType)
-          case DelegateTaskType.LINK_NEGOTIATION =>
-            saveLinkNegotiationTasks(delegatesOfThisTaskType)
           case DelegateTaskType.CAMPAIGN =>
             saveCampaignTasks(delegatesOfThisTaskType)
+          case DelegateTaskType.MANAGER_BASE =>
+            // no per-task table; task_type in busy_delegate is sufficient
+          case DelegateTaskType.MANAGER_AIRCRAFT_MODEL =>
+            saveAircraftModelTasks(delegatesOfThisTaskType)
         }
       }
     }
@@ -381,29 +435,43 @@ object DelegateSource {
       preparedStatement.close()
       connection.close()
     }
-  }
-
-  private[this] def saveLinkNegotiationTasks(delegates : List[BusyDelegate]) = {
+  }  
+  
+  def countManagerBaseDelegatesByAirline(airlineId : Int) : Int = {
     val connection = Meta.getConnection()
-    val preparedStatement = connection.prepareStatement("INSERT INTO " + LINK_NEGOTIATION_TASK_TABLE + "(delegate, from_airport, to_airport, start_cycle) VALUES(?,?,?,?)")
     try {
-      delegates.foreach { delegate =>
-        preparedStatement.setInt(1, delegate.id)
-        preparedStatement.setInt(2, delegate.assignedTask.asInstanceOf[LinkNegotiationDelegateTask].fromAirport.id)
-        preparedStatement.setInt(3, delegate.assignedTask.asInstanceOf[LinkNegotiationDelegateTask].toAirport.id)
-        preparedStatement.setInt(4, delegate.assignedTask.getStartCycle)
-
-        preparedStatement.executeUpdate()
-      }
-    } finally {
+      val preparedStatement = connection.prepareStatement(
+        s"SELECT COUNT(*) FROM $BUSY_DELEGATE_TABLE WHERE airline = ? AND task_type = ?"
+      )
+      preparedStatement.setInt(1, airlineId)
+      preparedStatement.setInt(2, DelegateTaskType.MANAGER_BASE.id)
+      val rs = preparedStatement.executeQuery()
+      val count = if (rs.next()) rs.getInt(1) else 0
+      rs.close()
       preparedStatement.close()
+      count
+    } finally {
       connection.close()
     }
   }
- 
 
-  
-  
+  def deleteManagerBaseDelegates(airlineId : Int, count : Int) : Unit = {
+    if (count <= 0) return
+    val connection = Meta.getConnection()
+    try {
+      val preparedStatement = connection.prepareStatement(
+        s"DELETE FROM $BUSY_DELEGATE_TABLE WHERE airline = ? AND task_type = ? LIMIT ?"
+      )
+      preparedStatement.setInt(1, airlineId)
+      preparedStatement.setInt(2, DelegateTaskType.MANAGER_BASE.id)
+      preparedStatement.setInt(3, count)
+      preparedStatement.executeUpdate()
+      preparedStatement.close()
+    } finally {
+      connection.close()
+    }
+  }
+
   def deleteBusyDelegateByCriteria(criteria : List[(String, String, Any)]) = {
       //open the hsqldb
     val connection = Meta.getConnection()

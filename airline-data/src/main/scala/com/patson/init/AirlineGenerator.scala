@@ -519,8 +519,7 @@ object AirlineGenerator extends App {
       constructedCycle = 0,
       purchasedCycle = 0,
       condition = Airplane.MAX_CONDITION,
-      depreciationRate = 0,
-      value = model.price,
+      purchasePrice = model.price,
       home = homeAirport,
       configuration = AirplaneConfiguration.empty
     )
@@ -541,15 +540,39 @@ object AirlineGenerator extends App {
     val allLinks = LinkSource.loadAllLinks(LinkSource.SIMPLE_LOAD)
     val allFlightLinksByAirlineId = allLinks.filter(_.transportType == TransportType.FLIGHT).map(_.asInstanceOf[Link]).groupBy(_.airline.id)
     allAirlines.foreach(airline => {
-      val linksByFromAirportId = allFlightLinksByAirlineId.get(airline.id).getOrElse(List.empty).groupBy(_.from.id)
+      val linksByFromAirportId = allFlightLinksByAirlineId.getOrElse(airline.id, List.empty).groupBy(_.from.id)
+
+      var desiredManagerBaseDelegates = 0
+
       airline.bases.foreach { base =>
         val staffRequired = linksByFromAirportId.get(base.airport.id) match {
           case Some(links) => links.map(_.getCurrentOfficeStaffRequired).sum
           case None => 0
         }
         val idealBaseLevel: Int = if (base.headquarter) Math.round(staffRequired.toDouble / 80).toInt else Math.round(staffRequired.toDouble / 60).toInt
-        val updateBase = base.copy(scale = Math.max(1, idealBaseLevel))
+        val finalBaseLevel = Math.max(1, idealBaseLevel)
+
+        desiredManagerBaseDelegates += finalBaseLevel
+
+        val updateBase = base.copy(scale = finalBaseLevel)
         AirlineSource.saveAirlineBase(updateBase)
+      }
+
+      val currentManagerBaseDelegates = DelegateSource.countManagerBaseDelegatesByAirline(airline.id)
+      val delta = desiredManagerBaseDelegates - currentManagerBaseDelegates
+
+      if (delta > 0) {
+        val newDelegates = List.fill(delta) {
+          BusyDelegate(
+            airline = airline,
+            assignedTask = ManagerBaseDelegateTask(),
+            availableCycle = None,
+            id = 0 // will be assigned by saveBusyDelegates()
+          )
+        }
+        DelegateSource.saveBusyDelegates(newDelegates)
+      } else if (delta < 0) {
+        DelegateSource.deleteManagerBaseDelegates(airline.id, -delta)
       }
     })
   }

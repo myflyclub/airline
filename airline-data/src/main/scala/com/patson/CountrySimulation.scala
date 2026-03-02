@@ -38,23 +38,30 @@ object CountrySimulation {
     val countryChampionInfoEntries = ListBuffer[CountryChampionInfo]()
     marketSharesByCountryCode.foreach {
       case (countryCode, marketSharesByAirline) =>
-        val orderedMarketShares: List[(Int, Long)] = marketSharesByAirline.toList.sortBy(_._2).reverse
-        var nationalAirlineQuota = computeNationalAirlineCount(countriesByCode(countryCode))
-        var partneredAirlineQuota = computePartneredAirlineCount(countriesByCode(countryCode))
-        var ranking = 0
-        orderedMarketShares.foreach {
-          case (airlineId, pax) =>
-            ranking += 1
-            countryChampionInfoEntries.append(CountryChampionInfo(airlinesById(airlineId), countriesByCode(countryCode), pax, ranking))
+        val country = countriesByCode(countryCode)
 
-            val airline = airlinesById(airlineId)
-            if (nationalAirlineQuota > 0 && airline.getCountryCode() == Some(countryCode)) {
-              countryAirlineTitles.append(CountryAirlineTitle(Country.fromCode(countryCode), airline, Title.NATIONAL_AIRLINE))
-              nationalAirlineQuota -= 1
-            } else if (partneredAirlineQuota > 0) {
-              countryAirlineTitles.append(CountryAirlineTitle(Country.fromCode(countryCode), airline, Title.PARTNERED_AIRLINE))
-              partneredAirlineQuota -= 1
-            } //shortcut out?
+        // Champion ranking by market share (unchanged)
+        val orderedByMarketShare: List[(Int, Long)] = marketSharesByAirline.toList.sortBy(_._2).reverse
+        orderedByMarketShare.zipWithIndex.foreach { case ((airlineId, pax), index) =>
+          countryChampionInfoEntries.append(CountryChampionInfo(airlinesById(airlineId), country, pax, index + 1))
+        }
+
+        // Title assignment: top X airlines by AirlineCountryRelationship.relationship
+        val orderedByRelationship: List[Airline] =
+          marketSharesByAirline.keys.flatMap(airlinesById.get).toList
+            .map(airline => (airline, AirlineCountryRelationship.getAirlineCountryRelationship(countryCode, airline).relationship))
+            .sortBy(-_._2)
+            .map(_._1)
+
+        val nationalCount = computeNationalAirlineCount(country)
+        val partneredCount = computePartneredAirlineCount(country)
+
+        orderedByRelationship.zipWithIndex.foreach { case (airline, index) =>
+          if (index < nationalCount) {
+            countryAirlineTitles.append(CountryAirlineTitle(Country.fromCode(countryCode), airline, Title.NATIONAL_AIRLINE))
+          } else if (index < nationalCount + partneredCount) {
+            countryAirlineTitles.append(CountryAirlineTitle(Country.fromCode(countryCode), airline, Title.PARTNERED_AIRLINE))
+          }
         }
     }
 

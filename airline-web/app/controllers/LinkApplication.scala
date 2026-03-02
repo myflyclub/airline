@@ -353,14 +353,14 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
       return BadRequest("Link is rejected: " + rejectionReason.get);
     }
 
-    //if assign more delegates then available.
-    //However assigning no delegates should be allowed even if negative delegates
-    if (delegateCount > 0 && delegateCount > airline.getDelegateInfo().availableCount) {
-      return BadRequest(s"Assigning $delegateCount delegates but not enough available");
+    //if assign more action points then available.
+    //However assigning no action points should be allowed even if negative balance
+    if (delegateCount > 0 && delegateCount > airline.getActionPoints()) {
+      return BadRequest(s"Assigning $delegateCount action points but only ${airline.getActionPoints()} available")
     }
 
     if (delegateCount > NegotiationUtil.MAX_ASSIGNED_DELEGATE) {
-      return BadRequest(s"Assigning $delegateCount delegates > ${NegotiationUtil.MAX_ASSIGNED_DELEGATE}");
+      return BadRequest(s"Assigning $delegateCount action points > ${NegotiationUtil.MAX_ASSIGNED_DELEGATE}")
     }
 
     if (existingLink.isEmpty) {
@@ -397,8 +397,7 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
           LinkSource.saveLink(incomingLink) match {
             case Some(link) => {
               val cost = Computation.getLinkCreationCost(incomingLink.from, incomingLink.to)
-              AirlineSource.adjustAirlineBalance(request.user.id, cost * -1)
-              AirlineSource.saveCashFlowItem(AirlineCashFlowItem(request.user.id, CashFlowType.CREATE_LINK, cost * -1))
+              AirlineSource.saveLedgerEntry(AirlineLedgerEntry(request.user.id, currentCycle, LedgerType.CREATE_LINK, cost * -1, Some(s"${incomingLink.from.iata} \u2013 ${incomingLink.to.iata}")))
               link
             }
             case None =>
@@ -422,17 +421,10 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
     var result : JsObject = Json.toJson(resultLink).asInstanceOf[JsObject]
 
     negotiationResultOption.foreach { negotiationResult =>
-      //update delegate status
+      //deduct action points
+      AirlineSource.adjustAirlineActionPoints(airlineId, -delegateCount.toDouble)
+
       val cycle = CycleSource.loadCycle()
-      val task = DelegateTask.linkNegotiation(cycle, fromAirport, toAirport)
-      val coolDown = if (negotiationResult.isSuccessful) task.coolDown else task.coolDown / 2 //half cooldown if it was unsuccessful
-      val availableCycle = cycle + coolDown
-
-      val busyDelegates = (0 until delegateCount).toList.map { _ =>
-        BusyDelegate(airline, task, Some(availableCycle))
-      }
-
-      DelegateSource.saveBusyDelegates(busyDelegates)
 
       LinkSource.saveNegotiationCoolDown(resultLink.airline, resultLink.from, resultLink.to, cycle + Link.LINK_NEGOTIATION_COOL_DOWN)
 
@@ -445,7 +437,7 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
         val frequencyMonetaryBaseValue = frequencyChange.toLong * resultLink.getAssignedModel().get.capacity * resultLink.standardPrice(ECONOMY, PassengerType.TRAVELER)
         val monetaryBaseValue = Math.max(0, Math.max(capacityMonetaryBaseValue, frequencyMonetaryBaseValue))
 
-        val bonus = NegotiationUtil.getLinkBonus(resultLink, monetaryBaseValue, busyDelegates)
+        val bonus = NegotiationUtil.getLinkBonus(resultLink, monetaryBaseValue, List.empty)
         bonus.apply(airline)
         result = result + ("negotiationBonus" -> Json.obj("description" -> JsString(bonus.description), "intensity" -> JsNumber(bonus.intensity)))
       }
@@ -784,7 +776,7 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
         val estimatedDifficulty : Option[Double] =
           if (existingLink.isEmpty) {
             val mockedLink = Link(fromAirport, toAirport, airline, LinkClassValues.getInstance(), distance, LinkClassValues.getInstance(), 0, 0, frequency = 1, flightNumber)
-            val mockedAirplane = Airplane(Model.fromId(0), airline, 0, 0, 0, 0, 0)
+            val mockedAirplane = Airplane(Model.fromId(0), airline, 0, 0, 0, 0)
             mockedLink.setAssignedAirplanes(Map(mockedAirplane -> LinkAssignment(1, 0)))
             Some(NegotiationUtil.getLinkNegotiationInfo(airline, mockedLink, None).finalRequirementValue)
           } else {
@@ -1585,7 +1577,7 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
 
     var result = Json.obj(
       "negotiationInfo" -> Json.toJson(negotiationInfo)(NegotiationInfoWrites(incomingLink)),
-      "delegateInfo" -> Json.toJson(request.user.getDelegateInfo()),
+      "actionPoints" -> JsNumber(request.user.getActionPoints()),
       "toAirport" -> Json.toJson(incomingLink.to)(AirportSimpleWrites),
       "fromAirport" -> Json.toJson(incomingLink.from)(AirportSimpleWrites)
     )

@@ -68,6 +68,7 @@ object AirlineSource {
             airline.setSharesOutstanding(resultSet.getInt("shares_outstanding"))
             airline.setAirlineCode(resultSet.getString("airline_code"))
             airline.setMinimumRenewalBalance(resultSet.getLong("minimum_renewal_balance"))
+            airline.setActionPoints(resultSet.getDouble("action_point"))
             val countryCode = resultSet.getString("country_code")
             if (countryCode != null) {
               airline.setCountryCode(countryCode)
@@ -167,7 +168,8 @@ object AirlineSource {
     }
   }
 
-  def adjustAirlineBalance(airlineId : Int, delta : Long) = {
+  /** Private method; saveLedgerEntry is the public **/
+  private def adjustAirlineBalance(airlineId: Int, delta: Long) = {
     this.synchronized {
       Using.resource(Meta.getConnection()) { connection =>
         Using.resource(connection.prepareStatement("UPDATE " + AIRLINE_INFO_TABLE + " SET balance = balance + ? WHERE airline = ?")) { updateStatement =>
@@ -193,6 +195,39 @@ object AirlineSource {
     }
   }
 
+
+  def adjustAirlineActionPoints(airlineId : Int, delta : Double) = {
+    this.synchronized {
+      Using.resource(Meta.getConnection()) { connection =>
+        Using.resource(connection.prepareStatement("UPDATE " + AIRLINE_INFO_TABLE + " SET action_point = action_point + ? WHERE airline = ?")) { updateStatement =>
+          updateStatement.setDouble(1, delta)
+          updateStatement.setInt(2, airlineId)
+          updateStatement.executeUpdate()
+        }
+        AirlineCache.invalidateAirline(airlineId)
+      }
+    }
+  }
+
+  def adjustAirlineActionPointsBatch(deltas : Map[Int, Double]) = {
+    if (deltas.nonEmpty) {
+      this.synchronized {
+        Using.resource(Meta.getConnection()) { connection =>
+          connection.setAutoCommit(false)
+          Using.resource(connection.prepareStatement("UPDATE " + AIRLINE_INFO_TABLE + " SET action_point = action_point + ? WHERE airline = ?")) { updateStatement =>
+            deltas.foreach { case (airlineId, delta) =>
+              updateStatement.setDouble(1, delta)
+              updateStatement.setInt(2, airlineId)
+              updateStatement.addBatch()
+              AirlineCache.invalidateAirline(airlineId)
+            }
+            updateStatement.executeBatch()
+          }
+          connection.commit()
+        }
+      }
+    }
+  }
 
   def saveAirlineInfo(airline : Airline, updateBalance : Boolean = true) = {
     this.synchronized {
@@ -579,75 +614,74 @@ object AirlineSource {
   }
 
 
-  def saveTransaction(transaction : AirlineTransaction) = {
+  def saveLedgerEntry(entry : AirlineLedgerEntry) : Unit = {
+    if (entry.amount == 0) return
+    adjustAirlineBalance(entry.airlineId, entry.amount)
     Using.resource(Meta.getConnection()) { connection =>
-      Using.resource(connection.prepareStatement("INSERT INTO " + AIRLINE_TRANSACTION_TABLE + " VALUES(?, ?, ?, ?)")) { preparedStatement =>
-        preparedStatement.setInt(1, transaction.airlineId)
-        preparedStatement.setInt(2, transaction.transactionType.id)
-        preparedStatement.setDouble(3, transaction.amount)
-        //cannot use MainSimulation.currentWeek as this could be called from other projects apart from simulation
-        preparedStatement.setInt(4, CycleSource.loadCycle())
+      Using.resource(connection.prepareStatement("INSERT INTO " + AIRLINE_LEDGER_TABLE + "(airline, cycle, entry_type, amount, description) VALUES(?, ?, ?, ?, ?)")) { preparedStatement =>
+        preparedStatement.setInt(1, entry.airlineId)
+        preparedStatement.setInt(2, entry.cycle)
+        preparedStatement.setInt(3, entry.entryType.id)
+        preparedStatement.setLong(4, entry.amount)
+        entry.description match {
+          case Some(desc) => preparedStatement.setString(5, desc)
+          case None => preparedStatement.setNull(5, java.sql.Types.VARCHAR)
+        }
         preparedStatement.executeUpdate()
       }
     }
   }
 
-  def loadTransactions(cycle : Int) : List[AirlineTransaction] = {
+  def saveLedgerEntries(entries : List[AirlineLedgerEntry]) : Unit = {
+    val nonZero = entries.filter(_.amount != 0)
+    if (nonZero.isEmpty) return
+    nonZero.groupBy(_.airlineId).foreach { case (id, es) =>
+      adjustAirlineBalance(id, es.map(_.amount).sum)
+    }
     Using.resource(Meta.getConnection()) { connection =>
-      Using.resource(connection.prepareStatement("SELECT * FROM " + AIRLINE_TRANSACTION_TABLE + " WHERE cycle = ?")) { preparedStatement =>
-        preparedStatement.setInt(1, cycle)
-        Using.resource(preparedStatement.executeQuery()) { resultSet =>
-          val transactions = new ListBuffer[AirlineTransaction]()
-          while (resultSet.next()) {
-            transactions += AirlineTransaction(resultSet.getInt("airline"), TransactionType(resultSet.getInt("transaction_type")), resultSet.getLong("amount"))
+      Using.resource(connection.prepareStatement("INSERT INTO " + AIRLINE_LEDGER_TABLE + "(airline, cycle, entry_type, amount, description) VALUES(?, ?, ?, ?, ?)")) { preparedStatement =>
+        nonZero.foreach { entry =>
+          preparedStatement.setInt(1, entry.airlineId)
+          preparedStatement.setInt(2, entry.cycle)
+          preparedStatement.setInt(3, entry.entryType.id)
+          preparedStatement.setLong(4, entry.amount)
+          entry.description match {
+            case Some(desc) => preparedStatement.setString(5, desc)
+            case None => preparedStatement.setNull(5, java.sql.Types.VARCHAR)
           }
-          transactions.toList
+          preparedStatement.addBatch()
+        }
+        preparedStatement.executeBatch()
+      }
+    }
+  }
+
+  def loadLedgerEntriesByAirline(airlineId : Int, cycleRange : Option[(Int, Int)] = None) : List[AirlineLedgerEntry] = {
+    Using.resource(Meta.getConnection()) { connection =>
+      val sql = cycleRange match {
+        case Some((from, to)) => s"SELECT * FROM $AIRLINE_LEDGER_TABLE WHERE airline = ? AND cycle >= ? AND cycle <= ? ORDER BY id ASC"
+        case None => s"SELECT * FROM $AIRLINE_LEDGER_TABLE WHERE airline = ? ORDER BY id ASC"
+      }
+      Using.resource(connection.prepareStatement(sql)) { preparedStatement =>
+        preparedStatement.setInt(1, airlineId)
+        cycleRange.foreach { case (from, to) =>
+          preparedStatement.setInt(2, from)
+          preparedStatement.setInt(3, to)
+        }
+        Using.resource(preparedStatement.executeQuery()) { resultSet =>
+          val entries = new ListBuffer[AirlineLedgerEntry]()
+          while (resultSet.next()) {
+            entries += AirlineLedgerEntry(resultSet.getInt("airline"), resultSet.getInt("cycle"), LedgerType(resultSet.getInt("entry_type")), resultSet.getLong("amount"), Option(resultSet.getString("description")), resultSet.getInt("id"))
+          }
+          entries.toList
         }
       }
     }
   }
 
-  def deleteTransactions(cycleAndBefore : Int) = {
+  def deleteLedgerEntries(cycleAndBefore : Int) = {
     Using.resource(Meta.getConnection()) { connection =>
-      Using.resource(connection.prepareStatement("DELETE FROM " + AIRLINE_TRANSACTION_TABLE + " WHERE cycle <= ?")) { preparedStatement =>
-        preparedStatement.setInt(1, cycleAndBefore)
-        preparedStatement.executeUpdate()
-      }
-    }
-  }
-
-
-  def saveCashFlowItem(cashFlowItem : AirlineCashFlowItem) = {
-    Using.resource(Meta.getConnection()) { connection =>
-      Using.resource(connection.prepareStatement("INSERT INTO " + AIRLINE_CASH_FLOW_ITEM_TABLE + " VALUES(?, ?, ?, ?)")) { preparedStatement =>
-        preparedStatement.setInt(1, cashFlowItem.airlineId)
-        preparedStatement.setInt(2, cashFlowItem.cashFlowType.id)
-        preparedStatement.setDouble(3, cashFlowItem.amount)
-        //cannot use MainSimulation.currentWeek as this could be called from other projects apart from simulation
-        preparedStatement.setInt(4, CycleSource.loadCycle())
-        preparedStatement.executeUpdate()
-      }
-    }
-  }
-
-  def loadCashFlowItems(cycle : Int) : List[AirlineCashFlowItem] = {
-    Using.resource(Meta.getConnection()) { connection =>
-      Using.resource(connection.prepareStatement("SELECT * FROM " + AIRLINE_CASH_FLOW_ITEM_TABLE + " WHERE cycle = ?")) { preparedStatement =>
-        preparedStatement.setInt(1, cycle)
-        Using.resource(preparedStatement.executeQuery()) { resultSet =>
-          val transactions = new ListBuffer[AirlineCashFlowItem]()
-          while (resultSet.next()) {
-            transactions += AirlineCashFlowItem(resultSet.getInt("airline"), CashFlowType(resultSet.getInt("cash_flow_type")), resultSet.getLong("amount"))
-          }
-          transactions.toList
-        }
-      }
-    }
-  }
-
-  def deleteCashFlowItems(cycleAndBefore : Int) = {
-    Using.resource(Meta.getConnection()) { connection =>
-      Using.resource(connection.prepareStatement("DELETE FROM " + AIRLINE_CASH_FLOW_ITEM_TABLE + " WHERE cycle <= ?")) { preparedStatement =>
+      Using.resource(connection.prepareStatement("DELETE FROM " + AIRLINE_LEDGER_TABLE + " WHERE cycle <= ?")) { preparedStatement =>
         preparedStatement.setInt(1, cycleAndBefore)
         preparedStatement.executeUpdate()
       }
@@ -666,7 +700,9 @@ object AirlineSource {
 
   def saveSlogan(airlineId : Int, slogan : String) = {
     Using.resource(Meta.getConnection()) { connection =>
-      Using.resource(connection.prepareStatement("REPLACE INTO " + AIRLINE_SLOGAN_TABLE + " VALUES(?, ?)")) { preparedStatement =>
+      Using.resource(connection.prepareStatement(
+        "INSERT INTO " + AIRLINE_META_TABLE + " (airline, slogan) VALUES(?, ?) ON DUPLICATE KEY UPDATE slogan = VALUES(slogan)"
+      )) { preparedStatement =>
         preparedStatement.setInt(1, airlineId)
         preparedStatement.setString(2, slogan)
         preparedStatement.executeUpdate()
@@ -674,17 +710,48 @@ object AirlineSource {
     }
   }
 
-
   def loadSlogan(airlineId : Int) : Option[String] = {
     Using.resource(Meta.getConnection()) { connection =>
-      Using.resource(connection.prepareStatement(s"SELECT * FROM $AIRLINE_SLOGAN_TABLE WHERE airline = ?")) { preparedStatement =>
+      Using.resource(connection.prepareStatement(s"SELECT slogan FROM $AIRLINE_META_TABLE WHERE airline = ?")) { preparedStatement =>
         preparedStatement.setInt(1, airlineId)
         Using.resource(preparedStatement.executeQuery()) { resultSet =>
           if (resultSet.next()) {
-            Some(resultSet.getString("slogan"))
+            Option(resultSet.getString("slogan"))
           } else {
             None
           }
+        }
+      }
+    }
+  }
+
+  def saveFoundedCycle(airlineId : Int, cycle : Int) = {
+    Using.resource(Meta.getConnection()) { connection =>
+      Using.resource(connection.prepareStatement(
+        "INSERT INTO " + AIRLINE_META_TABLE + " (airline, founded_cycle) VALUES(?, ?) ON DUPLICATE KEY UPDATE founded_cycle = VALUES(founded_cycle)"
+      )) { preparedStatement =>
+        preparedStatement.setInt(1, airlineId)
+        preparedStatement.setInt(2, cycle)
+        preparedStatement.executeUpdate()
+      }
+    }
+  }
+
+  def loadFoundedCycles(airlineIds : List[Int]) : immutable.Map[Int, Int] = {
+    if (airlineIds.isEmpty) return immutable.Map.empty
+    Using.resource(Meta.getConnection()) { connection =>
+      val placeholder = airlineIds.map(_ => "?").mkString(",")
+      Using.resource(connection.prepareStatement(
+        s"SELECT airline, founded_cycle FROM $AIRLINE_META_TABLE WHERE airline IN ($placeholder) AND founded_cycle IS NOT NULL"
+      )) { preparedStatement =>
+        airlineIds.zipWithIndex.foreach { case (id, i) => preparedStatement.setInt(i + 1, id) }
+        Using.resource(preparedStatement.executeQuery()) { resultSet =>
+          val result = scala.collection.mutable.Map[Int, Int]()
+          while (resultSet.next()) {
+            result(resultSet.getInt("airline")) = resultSet.getInt("founded_cycle")
+          }
+          val immutableResult : immutable.Map[Int, Int] = result.toMap
+          immutableResult
         }
       }
     }

@@ -71,6 +71,7 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
         "type" -> airline.airlineType.label,
         "typeRules" -> airline.airlineType.description,
         "balance" -> airline.airlineInfo.balance,
+        "actionPoints" -> airline.getActionPoints(),
         "reputation" -> BigDecimal(airline.airlineInfo.reputation).setScale(2, BigDecimal.RoundingMode.HALF_EVEN),
         "fuelTaxRate" -> airline.fuelTaxRate,
         "serviceQuality" -> airline.airlineInfo.currentServiceQuality,
@@ -95,6 +96,7 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
       Json.obj(
         "id" -> airline.id,
         "balance" -> airline.airlineInfo.balance,
+        "actionPoints" -> airline.getActionPoints(),
         "reputation" -> BigDecimal(airline.airlineInfo.reputation).setScale(2, BigDecimal.RoundingMode.HALF_EVEN),
         "fuelTaxRate" -> airline.fuelTaxRate,
         "serviceQuality" -> airline.airlineInfo.currentServiceQuality,
@@ -309,8 +311,8 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
           result = result + ("baseScale" -> Json.toJson(base.scale))
 
           val linksFromThisBase = LinkSource.loadFlightLinksByFromAirportAndAirlineId(base.airport.id, airlineId, LinkSource.SIMPLE_LOAD)
-          val currentStaffRequired = (linksFromThisBase.map(_.getCurrentOfficeStaffRequired).sum * 10).toInt.toDouble / 10
-          val futureStaffRequired = (linksFromThisBase.map(_.getFutureOfficeStaffRequired).sum * 10).toInt.toDouble / 10
+          val currentStaffRequired = linksFromThisBase.map(_.getCurrentOfficeStaffRequired).sum
+          val futureStaffRequired = linksFromThisBase.map(_.getFutureOfficeStaffRequired).sum
           val staffCapacity = base.getOfficeStaffCapacity
           result = result + ("officeCapacity" ->
             Json.obj("staffCapacity" -> staffCapacity,
@@ -379,19 +381,21 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
       }
     }
 
-    //check delegates requirement
-    val delegatesAssignedToThisCountry = airline.getDelegateInfo().busyDelegates.filter { delegate =>
-      val targetCountryCode = targetBase.countryCode
-      delegate.assignedTask.getTaskType == DelegateTaskType.COUNTRY && delegate.assignedTask.asInstanceOf[CountryDelegateTask].country.countryCode == targetCountryCode
-    }
+    // Each base level except the first HQ requires 1 available delegate (auto-assigned as MANAGER_BASE)
+    if (!(targetBase.headquarter && targetBase.scale == 1)) {
+      val delegateInfo = airline.getDelegateInfo()
+      if (delegateInfo.availableCount < 1) {
+        return Some(s"Cannot build/upgrade this base. Requires at least 1 available delegate but only ${delegateInfo.availableCount} available")
+      }
 
-    val upgradeDelegatesRequired = if (targetBase.scale == 1) targetBase.delegatesRequired else targetBase.delegatesRequired - targetBase.copy(scale = targetBase.scale - 1).delegatesRequired
-    println(s"upgradeDelegatesRequired ${upgradeDelegatesRequired}")
-
-    val requiredDelegates = airline.getBases().filter(_.countryCode == targetBase.countryCode).map(_.delegatesRequired).sum
-    println(s"requiredDelegates ${requiredDelegates}")
-    if (delegatesAssignedToThisCountry.length < requiredDelegates) {
-      return Some(s"Cannot build/upgrade this base. Require $requiredDelegates delegate(s) assigned to ${CountryCache.getCountry(targetBase.countryCode).get.name} but only ${delegatesAssignedToThisCountry.length} assigned")
+      // Sanity check: existing MANAGER_BASE delegate count should match total base levels already managed
+      val expectedManagerBaseCount = airline.getBases().map { base =>
+        if (base.headquarter) Math.max(0, base.scale - 1) else base.scale
+      }.sum
+      val actualManagerBaseCount = DelegateSource.countManagerBaseDelegatesByAirline(airline.id)
+      if (actualManagerBaseCount != expectedManagerBaseCount) {
+        return Some(s"Delegate state inconsistency detected (expected $expectedManagerBaseCount base manager delegates, found $actualManagerBaseCount). Please try again or contact support.")
+      }
     }
 
     return None
@@ -534,11 +538,11 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
             //delete assets
             AirportAssetSource.loadAirportAssetsByAirline(airlineId).filter(_.airport.id == airportId).foreach { asset =>
               AirportAssetSource.deleteAirportAsset(asset.id)
-              AirlineSource.adjustAirlineBalance(airlineId, asset.sellValue)
-              AirlineSource.saveCashFlowItem(AirlineCashFlowItem(airlineId, CashFlowType.ASSET_TRANSACTION, asset.sellValue))
+              AirlineSource.saveLedgerEntry(AirlineLedgerEntry(airlineId, currentCycle, LedgerType.ASSET_TRANSACTION, asset.sellValue, Some(asset.name)))
             }
 
             base.delete()
+            DelegateSource.deleteManagerBaseDelegates(airlineId, base.scale)
             Ok(Json.toJson(base))
         }
       case None => //
@@ -568,8 +572,8 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
                 } else {
                   val updateBase = headquarter.copy(scale = inputBase.scale)
                   AirlineSource.saveAirlineBase(updateBase)
-                  AirlineSource.adjustAirlineBalance(request.user.id, -1 * cost)
-                  AirlineSource.saveCashFlowItem(AirlineCashFlowItem(airlineId, CashFlowType.BASE_CONSTRUCTION, -1 * cost))
+                  AirlineSource.saveLedgerEntry(AirlineLedgerEntry(airlineId, currentCycle, LedgerType.BASE_CONSTRUCTION, -1 * cost, Some(s"${headquarter.airport.iata} Lv${inputBase.scale}")))
+                  DelegateSource.saveBusyDelegates(List(BusyDelegate(airline, ManagerBaseDelegateTask(), None)))
                   Created(Json.toJson(updateBase))
                 }
               case None => //ok to add then
@@ -577,13 +581,12 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
                   BadRequest("airport id " + inputBase.airport.id + " not found!")
                 } {
                   airport => //TODO for now. Maybe update to Ad event later on
-                    val newBase = inputBase.copy(foundedCycle = CycleSource.loadCycle(), countryCode = airport.countryCode)
+                    val newBase = inputBase.copy(foundedCycle = currentCycle, countryCode = airport.countryCode)
                     AirlineSource.saveAirlineBase(newBase)
 
                     airline.setCountryCode(newBase.countryCode)
                     AirlineSource.saveAirlineInfo(airline, updateBalance = false)
-                    AirlineSource.adjustAirlineBalance(request.user.id, -1 * cost)
-                    AirlineSource.saveCashFlowItem(AirlineCashFlowItem(airlineId, CashFlowType.BASE_CONSTRUCTION, -1 * cost))
+                    AirlineSource.saveLedgerEntry(AirlineLedgerEntry(airlineId, currentCycle, LedgerType.BASE_CONSTRUCTION, -1 * cost, Some(s"${airport.iata} Lv${newBase.scale}")))
 
                     //assign airlinese that are not yet assigned
                     AirplaneSource.updateAirplanesDetails(AirplaneOwnershipCache.getOwnership(airlineId).map {
@@ -604,8 +607,8 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
                   if (base.scale + 1 == inputBase.scale) { //only allow one level at a time now
                     val updateBase = base.copy(scale = inputBase.scale)
                     AirlineSource.saveAirlineBase(updateBase)
-                    AirlineSource.adjustAirlineBalance(request.user.id, -1 * cost)
-                    AirlineSource.saveCashFlowItem(AirlineCashFlowItem(airlineId, CashFlowType.BASE_CONSTRUCTION, -1 * cost))
+                    AirlineSource.saveLedgerEntry(AirlineLedgerEntry(airlineId, currentCycle, LedgerType.BASE_CONSTRUCTION, -1 * cost, Some(s"${base.airport.iata} Lv${inputBase.scale}")))
+                    DelegateSource.saveBusyDelegates(List(BusyDelegate(airline, ManagerBaseDelegateTask(), None)))
                     Created(Json.toJson(updateBase))
                   } else {
                     BadRequest(s"Cannot upgrade existing base $base to $inputBase")
@@ -614,7 +617,7 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
                   AirportCache.getAirport(inputBase.airport.id, true).fold {
                     BadRequest("airport id " + inputBase.airport.id + " not found!")
                   } { airport =>
-                    val newBase = inputBase.copy(foundedCycle = CycleSource.loadCycle(), countryCode = airport.countryCode)
+                    val newBase = inputBase.copy(foundedCycle = currentCycle, countryCode = airport.countryCode)
                     newBase.allowAirline(airline) match {
                       case Left(requiredTitle) =>
                         if (airport.isGateway()) {
@@ -624,8 +627,8 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
                         }
                       case Right(_) =>
                         AirlineSource.saveAirlineBase(newBase)
-                        AirlineSource.adjustAirlineBalance(request.user.id, -1 * cost)
-                        AirlineSource.saveCashFlowItem(AirlineCashFlowItem(airlineId, CashFlowType.BASE_CONSTRUCTION, -1 * cost))
+                        AirlineSource.saveLedgerEntry(AirlineLedgerEntry(airlineId, currentCycle, LedgerType.BASE_CONSTRUCTION, -1 * cost, Some(s"${airport.iata} Lv${newBase.scale}")))
+                        DelegateSource.saveBusyDelegates(List(BusyDelegate(airline, ManagerBaseDelegateTask(), None)))
                         Created(Json.toJson(newBase))
                     }
                   }
@@ -653,6 +656,7 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
             val (updatingSpecs, purgingSpecs) = base.specializations.filter(!_.free).partition(_.scaleRequirement <= updateBase.scale) //remove spec that no longer able to support
             AirportSource.updateAirportBaseSpecializations(airportId, airlineId, updatingSpecs)
             purgingSpecs.foreach(_.unapply(request.user, base.airport))
+            DelegateSource.deleteManagerBaseDelegates(airlineId, 1)
 
             Ok("Base downgraded")
         }
@@ -761,8 +765,7 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
                   }
 
                   if (consideration.cost > 0) {
-                    AirlineSource.adjustAirlineBalance(request.user.id, -1 * consideration.cost)
-                    AirlineSource.saveCashFlowItem(AirlineCashFlowItem(airlineId, CashFlowType.FACILITY_CONSTRUCTION, -1 * consideration.cost))
+                    AirlineSource.saveLedgerEntry(AirlineLedgerEntry(airlineId, currentCycle, LedgerType.FACILITY_CONSTRUCTION, -1 * consideration.cost, Some(s"Lounge at ${lounge.airport.iata} Lv${lounge.level}")))
                   }
                   Ok(Json.toJson(consideration.newFacility))
                 }
@@ -804,10 +807,11 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
         NotModified
       case _ =>
         val incomes = IncomeSource.loadIncomesByAirline(airlineId).filter { statement => (statement.cycle + 1) % Period.numberWeeks(statement.period) == 0 }
-        val cashFlows = CashFlowSource.loadCashFlowsByAirline(airlineId).filter { statement => (statement.cycle + 1) % Period.numberWeeks(statement.period) == 0 }
+        val ledgerEntries = AirlineSource.loadLedgerEntriesByAirline(airlineId)
+        val ledgerJson = JsArray(ledgerEntries.map(e => Json.obj("id" -> e.id, "cycle" -> e.cycle, "entryType" -> e.entryType.toString, "amount" -> e.amount, "description" -> e.description)))
         val stats = AirlineStatisticsSource.loadAirlineStats(airlineId).filter { statement => (statement.cycle + 1) % Period.numberWeeks(statement.period) == 0 }
 
-        Ok(Json.obj("incomes" -> Json.toJson(incomes), "cashFlows" -> Json.toJson(cashFlows), "airlineStats" -> Json.toJson(stats)))
+        Ok(Json.obj("incomes" -> Json.toJson(incomes), "ledger" -> ledgerJson, "airlineStats" -> Json.toJson(stats)))
           .withHeaders(
             CACHE_CONTROL -> "no-cache",
             ETAG -> s""""$currentCycle""""
@@ -1177,7 +1181,7 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
       AirportSource.loadAirportBaseSpecializationsLastUpdate(airportId, airlineId) match {
         case Some(lastUpdate) =>
           val currentCycle = CycleSource.loadCycle()
-          val baseCooldown = if (AirlineCache.getAirline(airlineId).get.airlineGrade.level > 8) BaseSpecializationType.COOLDOWN else LinkNegotiationDelegateTask.COOL_DOWN
+          val baseCooldown = if (AirlineCache.getAirline(airlineId).get.airlineGrade.level > 8) BaseSpecializationType.COOLDOWN else 12
           if (baseCooldown + lastUpdate <= currentCycle) {
             0
           } else {
@@ -1209,7 +1213,7 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
   def setBaseSpecializations(airlineId: Int, airportId: Int) = AuthenticatedAirline(airlineId) { request =>
     val inputSpecializations = request.body.asInstanceOf[AnyContentAsJson].json.\("selectedSpecializations").as[List[String]].flatMap(AirlineBaseSpecialization.fromId(_))
 
-    val baseCooldown = if (AirlineCache.getAirline(airlineId).get.airlineGrade.level > 9) BaseSpecializationType.COOLDOWN else LinkNegotiationDelegateTask.COOL_DOWN
+    val baseCooldown = if (AirlineCache.getAirline(airlineId).get.airlineGrade.level > 9) BaseSpecializationType.COOLDOWN else 12
     val cooldown =
       AirportSource.loadAirportBaseSpecializationsLastUpdate(airportId, airlineId).map { lastUpdate =>
         val currentCycle = CycleSource.loadCycle()

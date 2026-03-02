@@ -157,7 +157,7 @@ var currentTickTimer
 var tickTimerCreator
 
 function updateTime(cycle, fraction, cycleDurationEstimation) {
-	$(".currentTime").attr("data-tooltip", "Year " + Math.floor(cycle / 48) + " & " + cycle % 48 + " weeks | One year is 48 weeks or ~ 24 hours in realtime; one week lasts ~ 30min.")
+	$(".currentTime").attr("data-tooltip", "Year " + Math.floor(cycle / 48) + " & " + cycle % 48 + " weeks | One week lasts ~ 30min and one year is 48 weeks or 24 hours in realtime.")
 	gameTimeStart = (cycle + fraction) * totalmillisecPerWeek
 
     var initialDurationTillNextTick

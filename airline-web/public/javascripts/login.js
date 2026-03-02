@@ -74,11 +74,13 @@ async function loginFromPage() {
 
             await doPostLoginSetup(user);
 
-            // Use callback if provided, otherwise default to /map/
+            // Use callback if provided, otherwise redirect to original page or /map/
             if (typeof window.onLoginSuccessCallback === 'function') {
                 window.onLoginSuccessCallback();
             } else {
-                navigateTo('/map/');
+                const redirect = localStorage.getItem('postLoginRedirect');
+                localStorage.removeItem('postLoginRedirect');
+                navigateTo(redirect || '/map/');
             }
         }
 

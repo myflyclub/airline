@@ -165,8 +165,8 @@ object LinkCommentUtil {
   }
 
   def getLoungeMetric(loungeLevelRequired: Int, link: Link, airline: Airline): TargetMetric = {
-    val fromLounge = link.from.getLounge(airline.id, airline.getAllianceId, activeOnly = true)
-    val toLounge = link.to.getLounge(airline.id, airline.getAllianceId, activeOnly = true)
+    val fromLounge = link.from.getLounge(airline.id, airline.getAllianceId(), activeOnly = true)
+    val toLounge = link.to.getLounge(airline.id, airline.getAllianceId(), activeOnly = true)
     val avgLoungeLevel = (fromLounge.map(_.level).getOrElse(0) + toLounge.map(_.level).getOrElse(0)) / 2.0
     val effectiveRequirement = Math.max(1.0, loungeLevelRequired.toDouble)
     TargetMetric(avgLoungeLevel, effectiveRequirement, higherIsBetter = true)
