@@ -15,6 +15,7 @@ const Rivals = (() => {
     // -------------------------------------------------------------------------
     let loadedById = {};
     let loadedLinks = [];
+    let foundedCycleById = {};
 
     // Exposed externally via window property (heatmap.js compatibility)
     let mapAirlineId;
@@ -106,6 +107,14 @@ const Rivals = (() => {
         $("#rivalDetailsModal .airlineType").text(rival.type + " Airline");
         $("#rivalDetailsModal .airlineCode").text(rival.airlineCode);
         $("#rivalDetailsModal .airlineSlogan").text(rival.slogan);
+
+        const foundedCycle = foundedCycleById[airlineId];
+        if (foundedCycle != null) {
+            $("#rivalDetailsModal .foundedDate").text(getGameDate(foundedCycle));
+            $("#rivalDetailsModal .foundedRow").show();
+        } else {
+            $("#rivalDetailsModal .foundedRow").hide();
+        }
         const color = airlineColors[airlineId];
         if (!color) {
             $("#rivalDetailsModal .airlineColorDot").hide();
@@ -449,6 +458,10 @@ const Rivals = (() => {
             const etag = res.headers.get('ETag')
             if (etag) _rivalsEtag = etag
             rivalsData = await res.json()
+            foundedCycleById = {};
+            rivalsData.airlines.forEach(function(a) {
+                if (a.foundedCycle != null) foundedCycleById[a.id] = a.foundedCycle;
+            });
             buildTypeFilter()
             resetVisibilityToTop20()
             renderChart()
