@@ -3,28 +3,26 @@ An opensource airline game.
 Forked from https://www.airline-club.com/
 Live at https://myfly.club/
 
-
-![Screenshot 1](https://user-images.githubusercontent.com/2895902/74759887-5a966380-522e-11ea-9e54-2252af63d5ea.gif)
-
 ## Dependencies
-- Java openjdk 11
+- Java openjdk 17
 - MySQL 8
 - Sbt
 
 ## Setup
 1. Create MySQL database matching values defined [here](https://github.com/patsonluk/airline/blob/master/airline-data/src/main/scala/com/patson/data/Constants.scala#L184).
-1. Define sbt JVM minimum resoures by setting `export SBT_OPTS="-Xms2g -Xmx8g"` in your CLI. Depending how you're running Java, you may need to enable more memory elsewhere too.
-1. Navigate to `airline-data` and run `sbt publishLocal`. If you see [encoding error](https://github.com/patsonluk/airline/issues/267), add character-set-server=utf8mb4 to your /etc/my.cnf and restart mysql. it's a unicode characters issue, see https://stackoverflow.com/questions/10957238/incorrect-string-value-when-trying-to-insert-utf-8-into-mysql-via-jdbc
+1. Maps are built using Protomaps. https://protomaps.com/
+  1. For a small private game, you can probably use their dev host for free. Create a key and update web application.conf `protomaps.apiKey` 
+  1. Or, we can probably host the map for you – reach out! 
+  1. Or, follow the protomaps.com instructions to setup your own Cloudflare R2 solution.
+1. For airport images, you will need a Google Places API key. Create one and update the web application.conf `google.apiKey`
+1. Now let's run the app! Navigate to `airline-data` and run `sbt publishLocal`.
 1. In `airline-data`, run `sbt run`, 
-    1. Then, choose the one that runs `MainInit`. It will take awhile to init everything.
-1. Set `google.mapKey` in [`application.conf`](https://github.com/patsonluk/airline/blob/master/airline-web/conf/application.conf#L69) with your google map API key value. Be careful with setting budget and limit, google gives some free credit but it CAN go over and you might get charged!
-1. For the "Flight search" function to work, install elastic search 7.x, see https://www.elastic.co/guide/en/elasticsearch/reference/current/install-elasticsearch.html . For windows, I recommand downloading the zip archive and just unzip it - the MSI installer did not work on my PC
-1. For airport image search and email service for user pw reset - refer to https://github.com/patsonluk/airline/blob/master/airline-web/README
-1. Now run the background simulation by staying in `airline-data`, run `sbt run`, select option `MainSimulation`. It should run the background simulation.
+    1. Then, choose #1 i.e. `MainInit`. It will take awhile to build the game universe.
 1. Open another terminal, navigate to `airline-web`, run the web server by `sbt run`
 1. The application should be accessible at `localhost:9000`
 
 ## Alternate Docker Setup
+*This hasn't been update in awhile*
 1. Install Docker & Docker-compose
 1. run `cp docker-compose.override.yaml.dist docker-compose.override.yaml` and then edit the new file with your preferred ports. Mysql only has to have exposed ports if you like to connect from outside docker
    1. If you plan to use this anything else than for development, adjust the credentials via environment variables

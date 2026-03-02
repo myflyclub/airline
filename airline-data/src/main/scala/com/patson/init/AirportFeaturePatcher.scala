@@ -1622,6 +1622,7 @@ GATEWAY_AIRPORT -> getGatewayAirports().map(iata => (iata, 0)).toMap) + (ELITE_C
     list -= "BTS"
     list -= "RMO"
     list -= "LJU"
+    list -= "MCM"
 
     //add extra ones for bigger countries
     list.appendAll(List(
