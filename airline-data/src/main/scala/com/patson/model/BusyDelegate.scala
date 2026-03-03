@@ -38,10 +38,14 @@ object CampaignDelegateTask {
   def cost = (principalAirportIncome : Int) => BASE_COST + principalAirportIncome
 }
 
+object LevelingDelegateTask {
+  val LEVEL_CYCLE_THRESHOLDS: List[Int] = List(4, 4 + 1 * 48, 4 + 3 * 48, 4 + 10 * 48)
+}
+
 abstract class LevelingDelegateTask(startCycle : Int, delegateTaskType: DelegateTaskType.Value) extends DelegateTask(startCycle, delegateTaskType) {
   override val coolDown: Int = 0
 
-  val LEVEL_CYCLE_THRESHOLDS = List(4, 4 + 1 * 48, 4 + 3 * 48, 4 + 10 * 48)
+  val LEVEL_CYCLE_THRESHOLDS: List[Int] = LevelingDelegateTask.LEVEL_CYCLE_THRESHOLDS
   val level = (currentCycle: Int) => {
     var levelWalker = 0
     val taskDuration = currentCycle - startCycle

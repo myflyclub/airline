@@ -58,7 +58,7 @@ object AirlineCountryRelationship {
 
   val DELEGATE = (delegateLevel : Int) => new RelationshipFactor {
     override val getDescription: String = {
-      s"Total delegate level ${delegateLevel}"
+      s"Total manager level ${delegateLevel}"
     }
   }
 
@@ -74,28 +74,23 @@ object AirlineCountryRelationship {
         //home country vs target country
         val relationship = countryRelationships.getOrElse((homeCountryCode, countryCode), 0)
         val multiplier = if (relationship >= 0) HOME_COUNTRY_POSITIVE_RELATIONSHIP_MULTIPLIER else HOME_COUNTRY_NEGATIVE_RELATIONSHIP_MULTIPLIER
-        val home_country_bonus = if (relationship >= 5) 20 else 0
+        val home_country_bonus = if (relationship >= 5) CountryAirlineTitle.PRIVILEGED_AIRLINE_RELATIONSHIP_THRESHOLD else 0
           factors.put(HOME_COUNTRY(countryMap(homeCountryCode), targetCountry, relationship), relationship * multiplier + home_country_bonus)
 
 
         val allTitles = CountryAirlineTitle.getTopTitlesByCountry(countryCode)
-        //country airline title by this airline
-        allTitles.find(_.airline.id == airline.id).foreach {
-          title => {
-            val relationshipBonus = Title.relationshipBonus(title.title)
-            factors.put(TITLE(title), relationshipBonus)
-          }
-        }
 
-        //country airline title on alliance member
+        //alliance member get bonus if other alliance member has national
         airline.getAllianceId().foreach { allianceId =>
-          val allNationAirlinesOfThisCountry = allTitles.filter(_.title == Title.NATIONAL_AIRLINE)
+          val partnerAirlinesOfThisCountry = allTitles.filter { airline =>
+            airline.title == Title.NATIONAL_AIRLINE || airline.title == Title.PARTNERED_AIRLINE
+          }
           val allianceMemberAirlineIds : List[Int] = AllianceSource.loadAllianceById(allianceId).get.members.filter(_.airline.id != airline.id).map(_.airline.id) //make sure it's not the current airline
 
           //use find, so it only returns the first match - no double bonus if 2 airlines are national
-          allNationAirlinesOfThisCountry.find(nationalAirline => allianceMemberAirlineIds.contains(nationalAirline.airline.id)).foreach { allianceMemberNationalAirline =>
-            val relationshipBonus = Title.relationshipBonus(allianceMemberNationalAirline.title) / 5
-            factors.put(ALLIANCE_MEMBER_TITLE(allianceMemberNationalAirline), relationshipBonus)
+          partnerAirlinesOfThisCountry.find(nationalAirline => allianceMemberAirlineIds.contains(nationalAirline.airline.id)).foreach { allianceMemberNationalAirline =>
+            val partnerBonus = 10
+            factors.put(ALLIANCE_MEMBER_TITLE(allianceMemberNationalAirline), partnerBonus)
           }
         }
 
@@ -106,19 +101,7 @@ object AirlineCountryRelationship {
               marketShareOfThisAirline => {
                 var percentage = BigDecimal(marketShareOfThisAirline.toDouble / marketShares.airlineShares.values.sum * 100)
                 percentage = percentage.setScale(2, BigDecimal.RoundingMode.HALF_UP)
-                val relationshipBonus : Int = percentage match {
-                  case x if x >= 50 => 40
-                  case x if x >= 25 => 30
-                  case x if x >= 10 => 25
-                  case x if x >= 5 => 20
-                  case x if x >= 2 => 15
-                  case x if x >= 1 => 10
-                  case x if x >= 0.5 => 8
-                  case x if x >= 0.1 => 6
-                  case x if x >= 0.02 => (x * 50).toInt
-                  case _ => 1
-                }
-                factors.put(MARKET_SHARE(percentage), relationshipBonus)
+                factors.put(MARKET_SHARE(percentage), getMarketShareRelationshipBonus(percentage))
               }
             }
           }
@@ -133,6 +116,19 @@ object AirlineCountryRelationship {
     }
 
     AirlineCountryRelationship(airline, targetCountry, factors.toMap)
+  }
+
+  def getMarketShareRelationshipBonus(percentage: BigDecimal): Int = percentage match {
+    case x if x >= 50 => 40
+    case x if x >= 25 => 30
+    case x if x >= 10 => 25
+    case x if x >= 5  => 20
+    case x if x >= 2  => 15
+    case x if x >= 1  => 10
+    case x if x >= 0.5 => 8
+    case x if x >= 0.1 => 6
+    case x if x >= 0.02 => (x * 50).toInt
+    case _             => 1
   }
 
   val getDelegateBonusMultiplier = (country : Country) => {

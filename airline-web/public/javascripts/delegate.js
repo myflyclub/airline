@@ -60,9 +60,9 @@ function refreshAirlineDelegateStatus($container, delegateInfo) {
     $container.empty()
 
     const FLOORS = [
-        { type: 'COUNTRY',                label: 'Country | Public Affairs' },
+        { type: 'COUNTRY',                label: 'Public Affairs' },
         { type: 'CAMPAIGN',               label: 'Advertising Campaigns' },
-        { type: 'MANAGER_BASE',           label: 'Flight Operations' },
+        { type: 'MANAGER_BASE',           label: 'Base Operations' },
         { type: 'MANAGER_AIRCRAFT_MODEL', label: 'Manufacturer Relations' },
         { type: '_AVAILABLE',             label: 'Actioning' },
     ]

@@ -511,6 +511,44 @@ object DelegateSource {
     }
   }
 
+  /**
+    * Batch load of total delegate levels per airline for a given country.
+    * Used by CountryAirlineTitle to compute top titles without N+1 queries.
+    * @return Map[airlineId, totalDelegateLevel]
+    */
+  def loadCountryDelegateLevelsByCountry(countryCode: String, currentCycle: Int): Map[Int, Int] = {
+    val connection = Meta.getConnection()
+    try {
+      val preparedStatement = connection.prepareStatement(
+        s"SELECT bd.airline, cdt.start_cycle FROM $BUSY_DELEGATE_TABLE bd " +
+        s"JOIN $COUNTRY_DELEGATE_TASK_TABLE cdt ON bd.id = cdt.delegate " +
+        s"WHERE cdt.country_code = ?"
+      )
+      preparedStatement.setString(1, countryCode)
+      val resultSet = preparedStatement.executeQuery()
+
+      val levelThresholds = LevelingDelegateTask.LEVEL_CYCLE_THRESHOLDS
+      def computeLevel(startCycle: Int): Int = {
+        val taskDuration = currentCycle - startCycle
+        levelThresholds.count(_ <= taskDuration)
+      }
+
+      val result = mutable.Map[Int, Int]()
+      while (resultSet.next()) {
+        val airlineId = resultSet.getInt("airline")
+        val startCycle = resultSet.getInt("start_cycle")
+        val level = computeLevel(startCycle)
+        result.put(airlineId, result.getOrElse(airlineId, 0) + level)
+      }
+
+      resultSet.close()
+      preparedStatement.close()
+      result.toMap
+    } finally {
+      connection.close()
+    }
+  }
+
 
   /**
     *

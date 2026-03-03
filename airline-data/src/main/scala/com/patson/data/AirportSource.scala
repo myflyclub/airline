@@ -6,7 +6,7 @@ import com.patson.util.{AirlineCache, AirportCache, AirportChampionInfo}
 
 import java.sql.{Statement, Types}
 import scala.collection.mutable.ListBuffer
-import scala.collection.{immutable, mutable}
+import scala.collection.mutable
 
 object AirportSource {
   private[this] val BASE_QUERY = "SELECT * FROM airport"
@@ -70,9 +70,9 @@ object AirportSource {
     }
   }
 
-  def getAirlineTitleBonuses(airport : Airport, countryAirlineTitleCache : mutable.HashMap[String, immutable.Map[Int, CountryAirlineTitle]]): Map[Int, List[AirlineBonus]] = {
-    //get airport bonus //for now no db
-    val airlineTitles: Map[Int, CountryAirlineTitle] = countryAirlineTitleCache.getOrElseUpdate(airport.countryCode, CountrySource.loadCountryAirlineTitlesByCountryCode(airport.countryCode).map(entry => (entry.airline.id, entry)).toMap)
+  def getAirlineTitleBonuses(airport : Airport): Map[Int, List[AirlineBonus]] = {
+    //get airport bonus; CountryAirlineTitle.getTopTitlesByCountry is Caffeine-backed, no extra cache needed
+    val airlineTitles: Map[Int, CountryAirlineTitle] = CountryAirlineTitle.getTopTitlesByCountry(airport.countryCode).map(entry => (entry.airline.id, entry)).toMap
 
     //map airline titles to bonus
     val bonusByAirlineId =  mutable.HashMap[Int, ListBuffer[AirlineBonus]]()
@@ -254,7 +254,6 @@ object AirportSource {
 
       val airportData = new ListBuffer[Airport]()
 
-      val countryAirlineTitleCache = mutable.HashMap[String, immutable.Map[Int, CountryAirlineTitle]]()
       val currentCycle = CycleSource.loadCycle()
 
       val airlineGlobalBonuses: Map[Int, List[AirlineBonus]] = //key is airline ID
@@ -321,7 +320,7 @@ object AirportSource {
           airlineBaseStatement.close()
           airport.initAirlineBases(airlineBases.toList)
 
-          val titleBonuses = getAirlineTitleBonuses(airport, countryAirlineTitleCache)
+          val titleBonuses = getAirlineTitleBonuses(airport)
           val campaignBonuses = getCampaignBonuses(airport, currentCycle)
           val luxuryAirlineBonunses = getLuxuryAirlineBonuses(airport)
           val airlineBonusesMutable = mutable.Map[Int, ListBuffer[AirlineBonus]]()

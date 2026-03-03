@@ -487,7 +487,8 @@ package object controllers {
   implicit object ChampionedCountriesWrites extends Writes[CountryChampionInfo] {
     def writes(info: CountryChampionInfo): JsValue = {
       Json.obj(
-        "country" -> Json.toJson(info.country),
+//        "country" -> Json.toJson(info.country),
+        "countryName" -> JsString(info.country.name),
         "airlineId" -> JsNumber(info.airline.id),
         "airlineName" -> JsString(info.airline.name),
         "ranking" -> JsNumber(info.ranking),

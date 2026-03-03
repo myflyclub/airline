@@ -1,6 +1,6 @@
 package com.patson.model.event
 
-import com.patson.data.{AirlineSource, AirportSource, CountrySource, CycleSource, EventSource}
+import com.patson.data.{AirlineSource, AirportSource, CycleSource, EventSource}
 import com.patson.model._
 
 import scala.collection.mutable
@@ -92,8 +92,8 @@ object Olympics {
   }
 
   def getVoteWeight(airline : Airline) : Int = {
-    val nationalAirlineTitles = CountrySource.loadCountryAirlineTitlesByCriteria(List(("airline", airline.id), ("title", Title.NATIONAL_AIRLINE)))
-    computeVoteWeight(airline, !nationalAirlineTitles.isEmpty)
+    val isNational = CountryAirlineTitle.getTopTitlesByAirline(airline.id).exists(_.title == Title.NATIONAL_AIRLINE)
+    computeVoteWeight(airline, isNational)
   }
   private def computeVoteWeight(airline : Airline, isNationalAirline : Boolean): Int = {
     var voteWeight =
@@ -109,9 +109,9 @@ object Olympics {
   }
 
   def getVoteWeights() : Map[Airline, Int] = {
-    val nationalAirlineIds = CountrySource.loadCountryAirlineTitlesByCriteria(List(("title", Title.NATIONAL_AIRLINE))).map(_.airline.id)
     AirlineSource.loadAllAirlines().map { airline =>
-      (airline, computeVoteWeight(airline, nationalAirlineIds.contains(airline.id)))
+      val isNational = CountryAirlineTitle.getTopTitlesByAirline(airline.id).exists(_.title == Title.NATIONAL_AIRLINE)
+      (airline, computeVoteWeight(airline, isNational))
     }.toMap
   }
 
