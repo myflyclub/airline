@@ -12,18 +12,6 @@ import scala.collection.mutable.ListBuffer
 
 class ChangeHistoryApplication @Inject()(cc: ControllerComponents) extends AbstractController(cc) {
   var currentCycle : Int = 0
-  implicit object AirportSearchResultWrites extends Writes[AirportSearchResult] {
-    def writes(airportSearchResult : AirportSearchResult) : JsValue = {
-      Json.obj(
-        "airportId" -> airportSearchResult.getId,
-        "airportName" -> airportSearchResult.getName,
-        "airportIata" -> airportSearchResult.getIata,
-        "airportCity" -> airportSearchResult.getCity,
-        "countryCode" -> airportSearchResult.getCountryCode,
-        "score" -> airportSearchResult.getScore)
-
-    }
-  }
 
   implicit object LinkChangeWrites extends Writes[LinkChange] {
     def writes(linkChange : LinkChange) : JsValue = {
@@ -44,8 +32,6 @@ class ChangeHistoryApplication @Inject()(cc: ControllerComponents) extends Abstr
       }
 
       capacityDeltaJson = capacityDeltaJson + ("total" -> JsNumber(linkChange.capacityDelta.total))
-
-
 
       Json.obj(
         "airlineId" -> linkChange.airline.id,
@@ -75,20 +61,17 @@ class ChangeHistoryApplication @Inject()(cc: ControllerComponents) extends Abstr
   }
 
 
-  def searchLinkHistory = Action { implicit request =>
+  def searchLinkHistory = Action(parse.json) { implicit request =>
     currentCycle = CycleSource.loadCycle()
-    val json = request.body.asInstanceOf[AnyContentAsJson].json
+    val json = request.body
     val capacityDelta = json.\("capacityDelta").asOpt[Int]
     val capacity = json.\("capacity").asOpt[Int]
     val fromAirportId = json.\("fromAirportId").asOpt[Int]
     val toAirportId = json.\("toAirportId").asOpt[Int]
     val fromCountryCode = json.\("fromCountryCode").asOpt[String]
     val toCountryCode = json.\("toCountryCode").asOpt[String]
-//    val fromZone = json.\("fromZone").asOpt[String]
-//    val toZone = json.\("toZone").asOpt[String]
     val airlineId = json.\("airlineId").asOpt[Int]
     val allianceId = json.\("allianceId").asOpt[Int]
-
 
     val criteria = ListBuffer[String]()
     val parameters = ListBuffer[Any]()
@@ -122,14 +105,6 @@ class ChangeHistoryApplication @Inject()(cc: ControllerComponents) extends Abstr
       criteria += "to_country = ?"
       parameters += value
     })
-//    fromZone.map( value =>  {
-//      criteria += "from_zone = ?"
-//      parameters += value
-//    })
-//    toZone.map( value =>  {
-//      criteria += "to_zone = ?"
-//      parameters += value
-//    })
     airlineId.map( value =>  {
       criteria += "airline = ?"
       parameters += value
@@ -149,7 +124,4 @@ class ChangeHistoryApplication @Inject()(cc: ControllerComponents) extends Abstr
     Ok(Json.toJson(entries))
   }
 
-
 }
-
-

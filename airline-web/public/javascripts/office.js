@@ -1,34 +1,125 @@
+var logoModalConfirm = function() {}
+var _financesEtag = null
 var loadedIncomes = {}
-var loadedCashFlows = {}
-var officeSheetPage = 0;
+var loadedLedger = []
+var loadedAirlineOps = {}
+var loadedAirlineStats = {}
+var loadedAirlineReputation = {}
 var officePeriod;
-
-var logoUploaderObj;
-var liveryUploaderObj;
-
 var companyValue = 0;
+
+const minPositiveLog = 0.2 //manually defined lower bound for log
+
+// --- Unified sheet system ---
+const SHEET_CONFIG = {
+	income: {
+		pageGroup: 'financial',
+		getData: () => loadedIncomes[officePeriod] ?? [],
+		updateSheet: data => updateIncomeSheet(data),
+		updateChart: () => updateIncomeChart(),
+		sheetId: 'incomeSheet',
+		chartIds: ['totalProfitChart'],
+	},
+	ledger: {
+		pageGroup: 'ledger',
+		getData: () => loadedLedger,
+		updateSheet: data => updateLedgerSheet(data),
+		updateChart: () => {},
+		sheetId: 'ledgerSheet',
+		chartIds: [],
+	},
+	airlineStat: {
+		pageGroup: 'stats',
+		getData: () => loadedAirlineStats[officePeriod] ?? [],
+		updateSheet: data => updateAirlineStatSheet(data),
+		updateChart: () => updateAirlineStatChart(),
+		sheetId: 'airlineStatsSheet',
+		chartIds: ['airlineStatsChart'],
+	},
+	airlineOp: {
+		pageGroup: 'stats',
+		getData: () => loadedAirlineStats[officePeriod] ?? [],
+		updateSheet: data => updateAirlineOpSheet(data),
+		updateChart: () => updateOpsChart(),
+		sheetId: 'opsSheet',
+		chartIds: ['opsChart'],
+	},
+	airlineReputation: {
+		pageGroup: 'stats',
+		getData: () => loadedAirlineStats[officePeriod] ?? [],
+		updateSheet: data => updateAirlineReputationSheet(data),
+		updateChart: () => updateAirlineReputationChart(),
+		sheetId: 'airlineReputationSheet',
+		chartIds: ['airlineReputationChart'],
+	},
+}
+
+const allSheetChartIds = new Set(Object.values(SHEET_CONFIG).flatMap(c => c.chartIds))
+const sheetPages = { financial: 0, ledger: 0, stats: 0 }
+
+function getActiveSheetType() {
+	return document.querySelector('#officeCanvas .sheetOptions .cell.selected')?.dataset.type
+}
+function getSheetPage(type) {
+	return sheetPages[SHEET_CONFIG[type].pageGroup]
+}
+function setSheetPage(type, page) {
+	sheetPages[SHEET_CONFIG[type].pageGroup] = page
+}
+
+function getPeriodLabel() {
+	return { WEEKLY: 'Week', QUARTER: 'Quarter', YEAR: 'Year' }[officePeriod] ?? officePeriod
+}
+
+function renderSheetNav(type) {
+	if (!type) return
+	const config = SHEET_CONFIG[type]
+	const data = config.getData()
+	const page = getSheetPage(type)
+	const entry = data[page]
+	const sheet = document.getElementById(config.sheetId)
+	if (!sheet) return
+
+	const label = type === 'ledger' ? 'Week' : getPeriodLabel()
+
+	let nav = sheet.querySelector('.sheet-nav')
+	if (!nav) {
+		nav = document.createElement('div')
+		nav.className = 'sheet-nav'
+
+		const prev = document.createElement('a')
+		prev.className = 'button-text prev'
+		prev.textContent = `\u2190 Prev ${label}`
+		prev.addEventListener('click', () => officeHistoryStep(-1))
+
+		const cycleEl = document.createElement('span')
+		cycleEl.className = 'officeCycleText text-xs'
+
+		const next = document.createElement('a')
+		next.className = 'button-text next'
+		next.textContent = `Next ${label} \u2192`
+		next.addEventListener('click', () => officeHistoryStep(1))
+
+		nav.append(prev, cycleEl, next)
+
+		const chart = sheet.querySelector('[id$="Chart"]')
+		if (chart) {
+			chart.after(nav)
+		} else {
+			sheet.prepend(nav)
+		}
+	}
+
+	// Update state
+	nav.querySelector('.button-text.prev').textContent = `\u2190 Prev ${label}`
+	nav.querySelector('.button-text.next').textContent = `Next ${label} \u2192`
+	nav.querySelector('.button-text.prev').classList.toggle('disabled', page <= 0)
+	nav.querySelector('.button-text.next').classList.toggle('disabled', page >= data.length - 1)
+	nav.querySelector('.officeCycleText').textContent = entry ? getGameDate(entry.cycle, entry.period, true) : ''
+}
 
 $( document ).ready(function() {
 	loadLogoTemplates()
-//	$('#colorpicker1').farbtastic($('#logoColor1'));
-//	$('#colorpicker2').farbtastic($('#logoColor2'));
-	
-//	var $box = $('#colorPicker1');
-//    $box.tinycolorpicker();
-//    var picker = $('#colorPicker1').data("plugin_tinycolorpicker");
-//    picker.setColor("#000000");
-//    $box.bind("change", function() {
-//        generateLogoPreview()
-//    });
-//
-//    $box = $('#colorPicker2');
-//    $box.tinycolorpicker();
-//    picker = $('#colorPicker2').data("plugin_tinycolorpicker");
-//    picker.setColor("#FFFFFF");
-//
-//    $box.bind("change", function() {
-//		generateLogoPreview()
-//    });
 
     $('#logoModal .picker.color1').val("#000000")
     $('#logoModal .picker.color2').val("#FFFFFF")
@@ -37,18 +128,26 @@ $( document ).ready(function() {
         generateLogoPreview()
     });
 
-    
     var $airlineColorPicker = $('#officeCanvas .airlineColor .picker')
     $airlineColorPicker.change(function() {
         setAirlineColor($(this).val())
     });
+
+    document.querySelectorAll('#officeCanvas .sheetOptions .cell[data-type]').forEach(tab => {
+        tab.addEventListener('click', () => selectSheet(tab))
+    })
+
+    document.querySelector('#officeCanvas select.period')?.addEventListener('change', function() {
+        changeOfficePeriod(this.value)
+    })
+
 })
 
 function showOfficeCanvas() {
 	setActiveDiv($("#officeCanvas"))
-	highlightTab($('.officeCanvasTab'))
 
 	updateAirlineDetails()
+	writeMilestones(activeAirline.reputationBreakdowns.breakdowns)
 	loadSheets();
 	updateResetAirlineInfo()
 	//updateAirlineDelegateStatus($('#officeCanvas .delegateStatus'))
@@ -63,13 +162,14 @@ function showOfficeCanvas() {
 	updateAirlineColorPicker()
 	updateHeadquartersMap($('#officeCanvas .headquartersMap'), activeAirline.id)
 	updateLiveryInfo()
+	updateManagerStatus()
 	loadSlogan(function(slogan) { $('#officeCanvas .slogan').val(slogan)})
 }
 
 function updateCampaignSummary() {
     $.ajax({
         type: 'GET',
-        url: "airlines/" + activeAirline.id + "/campaigns?fullLoad=false",
+        url: "/airlines/" + activeAirline.id + "/campaigns?fullLoad=false",
         contentType: 'application/json; charset=utf-8',
         dataType: 'json',
         success: function(result) {
@@ -97,7 +197,7 @@ function updateCampaignSummary() {
 function updateAirlineAssets() {
     $.ajax({
         type: 'GET',
-        url: "airlines/" + activeAirline.id + "/airport-assets",
+        url: "/airlines/" + activeAirline.id + "/airport-assets",
         contentType: 'application/json; charset=utf-8',
         dataType: 'json',
         success: function(result) {
@@ -144,7 +244,7 @@ function updateAirlineBases() {
         $('#officeCanvas .bases').children('.table-row').remove()
 
     var airlineId = activeAirline.id
-    	var url = "airlines/" + airlineId + "/office-capacity"
+    	var url = "/airlines/" + airlineId + "/office-capacity"
         $.ajax({
     		type: 'GET',
     		url: url,
@@ -152,12 +252,12 @@ function updateAirlineBases() {
     	    dataType: 'json',
     	    success: function(officeCapacity) {
     	    	 $(activeAirline.baseAirports).each(function(index, base) {
-                    var row = $("<div class='table-row clickable' data-link='airport' onclick='showAirportDetails(" + base.airportId+ ")'></div>")
+                    var row = $(`<div class='table-row clickable' data-link='airport' onclick='page("/airport/${base.airportCode}")'></div>`)
                     if (base.headquarter) {
-                        row.append($("<div class='cell'><img src='assets/images/icons/building-hedge.png' class='pr-1'><span style='font-size: 130%;vertical-align: top;'>" + base.scale + "</span></div><div class='cell'>" + getCountryFlagImg(base.countryCode) + base.city + " " + base.airportCode + "</div>"))
+                        row.append($("<div class='cell'><img src='/assets/images/icons/building-hedge.png' class='pr-1'><span style='font-size: 130%;vertical-align: top;'>" + base.scale + "</span></div><div class='cell'>" + getCountryFlagImg(base.countryCode) + base.city + " " + base.airportCode + "</div>"))
 
                     } else {
-                        row.append($("<div class='cell'><img src='assets/images/icons/building-low.png' class='pr-1'><span style='font-size: 130%;vertical-align: top;'>" + base.scale + "</span></div><div class='cell'>" + getCountryFlagImg(base.countryCode) + base.city + " " + base.airportCode + "</div>"))
+                        row.append($("<div class='cell'><img src='/assets/images/icons/building-low.png' class='pr-1'><span style='font-size: 130%;vertical-align: top;'>" + base.scale + "</span></div><div class='cell'>" + getCountryFlagImg(base.countryCode) + base.city + " " + base.airportCode + "</div>"))
                     }
                     var capacityInfo = officeCapacity[base.airportId]
                     var required = (capacityInfo.staffCapacity < capacityInfo.currentStaffRequired) ? "<span class='fatal'>" + capacityInfo.currentStaffRequired + "</span>" : capacityInfo.currentStaffRequired
@@ -188,7 +288,6 @@ function updateAirlineBases() {
                 if (!activeAirline.baseAirports || activeAirline.baseAirports.length == 0) {
                     $('#officeCanvas .bases').append("<div class='table-row'><div class='cell'></div></div>")
                 }
-                populateNavigation($('#officeCanvas .bases'))
     	    },
             error: function(jqXHR, textStatus, errorThrown) {
     	            console.log(JSON.stringify(jqXHR));
@@ -197,32 +296,89 @@ function updateAirlineBases() {
     	});
 }
 
-function setProgressWidth(elemId, current, past, next){
-    const percent = Math.max((current - past) / (next - past) * 100, 0)
-    const red = Math.max((percent > 15 ? 250 - (percent - 15) * 4 : 250).toFixed(0), 0)
-    const green = Math.min(percent * 3, 230)
-    $(elemId).css({'width': percent + "%", 'background-color': "rgba("+red+","+green+",0,0.65)"})
+function setProgressWidth(elemId, current, past, next, isLog = false){
+	let percent
+    next = next > 10e12 ? past + 1 : next //make infinite ceiling still "success"
+	if (!isLog) {
+		percent = Math.max((current - past) / (next - past) * 100, 0)
+	} else {
+		// Logarithmic scaling: map values into log space.
+		// We want percent = (log(current - past) - log(min)) / (log(max) - log(min)) * 100
+		// where min is a small positive number to avoid log(0).
+		const raw = current - past
+		const range = next - past
+		// Guard against non-positive range
+		if (range <= 0) {
+			percent = 0
+		} else {
+			const min = Math.max(minPositiveLog, Math.min(raw, range > 0 ? Math.min(1, range) : minPositiveLog))
+			// Use lower bound as tiny positive and upper bound as range
+			const lower = minPositiveLog
+			const upper = Math.max(range, minPositiveLog)
+			const clamped = Math.max(Math.min(raw, range), minPositiveLog)
+			const logLower = Math.log10(lower)
+			const logUpper = Math.log10(upper)
+			const logValue = Math.log10(clamped)
+			percent = (logValue - logLower) / (logUpper - logLower) * 100
+			percent = Math.max(percent, 0)
+		}
+	}
+
+	const red = Math.max((percent > 15 ? 250 - (percent - 15) * 4 : 250).toFixed(0), 0)
+	const green = Math.min(percent * 3, 230)
+	$(elemId).css({'width': percent + "%", 'background-color': "rgba("+red+","+green+",0,0.65)"})
 }
 
-function addProgressGrades(track, grades){
-    const progressBar = document.querySelector(`#${track}Progress .threshold-bar`);
-    const maxGrade = Math.max(...grades);
-    grades.forEach((grade, index) => {
-      const dot = document.createElement('div');
-      dot.classList.add('dot');
-      dot.title = `Level ${index + 1} at ${grade} ${track}`;
+function addProgressGrades(track, grades, prettyLabel, isLog = false, isCurrency = false) {
+	const progressBar = document.querySelector(`#${track}Progress .threshold-bar`);
+	if (!progressBar) return
 
-      const positionPercentage = (grade / maxGrade) * 100;
-      dot.style.left = `${positionPercentage}%`;
+	// remove any existing dots to avoid duplicates
+	const existing = progressBar.querySelectorAll('.dot')
+	existing.forEach(d => d.remove())
 
-      progressBar.appendChild(dot);
-    });
+	// If no grades, nothing to do
+	if (!grades || grades.length === 0) return
+
+	const maxGrade = Math.max(...grades)
+
+	// For log scaling, compute log-space bounds
+	let logMin = null
+	let logMax = null
+	if (isLog) {
+		const safeGrades = grades.map(g => Math.max(g, minPositiveLog))
+		logMin = Math.log10(minPositiveLog)
+		logMax = Math.log10(Math.max(...safeGrades))
+		if (logMax === logMin) {
+			// fallback to linear if all equal
+			isLog = false
+		}
+	}
+
+	grades.forEach((grade, index) => {
+	  const dot = document.createElement('div');
+	  dot.classList.add('dot','tooltip-attr');
+	  dot.dataset.tooltip = `Level ${index + 1} at ${isCurrency ? `$${grade.toFixed(2)}` : grade} ${prettyLabel}`;
+
+	  let positionPercentage
+	  if (!isLog) {
+		  positionPercentage = (grade / maxGrade) * 100
+	  } else {
+		  const safe = Math.max(grade, 1e-6)
+		  const logV = Math.log10(safe)
+		  positionPercentage = (logV - logMin) / (logMax - logMin) * 100
+	  }
+
+	  // clamp and apply
+	  positionPercentage = Math.min(100, Math.max(0, positionPercentage))
+	  dot.style.left = `${positionPercentage}%`;
+
+	  progressBar.appendChild(dot);
+	});
 }
 
-function updateProgress(stats, stockPrice){
-//    if(! stats && ! stockPrice){
-//        return null
-//    }
+function updateProgress(stats){
+  const stockPrice = activeAirline.stock ? activeAirline.stock.stockPrice : 0;
     const shortNumber = (number) => {
         if(number >= 10000){
             return (number / 1000).toFixed(0).toLocaleString() + "k"
@@ -231,103 +387,80 @@ function updateProgress(stats, stockPrice){
         }
     }
 
-    var $starBar = $(getGradeStarsImgs(activeAirline.gradeLevel - 2, 20))
+    var $starBar = $(getGradeStarsImgs(activeAirline.gradeLevel - 3, 20))
+    $('.reputationText').text(activeAirline.gradeDescription)
+    $('.reputationLevel').text("Level " + activeAirline.gradeLevel)
+    $('.reputationTrend').text((activeAirline.reputationBreakdowns.total).toFixed(0))
+    $('.reputationValueNext').text(activeAirline.gradeCeiling > 10e12 ? "∞" : activeAirline.gradeCeiling)
+    $('.reputationValuePrev').text(activeAirline.gradeFloor)
+    setProgressWidth("#reputationBar", activeAirline.reputation, activeAirline.gradeFloor, activeAirline.gradeCeiling)
 
     $('.reputationValueCurrent').text(activeAirline.reputation)
     $("#officeCanvas .reputationStars").html($starBar)
 
-//    $('.stockValueCurrent').text("$" + stockPrice.toFixed(2))
-    $('.touristsValueCurrent').text(shortNumber(activeAirline.tourists.tourists))
-    $('.elitesValueCurrent').text(shortNumber(activeAirline.elites.elites))
+    if (activeAirline.stock !== undefined) {
+        $('.stockValueCurrent').text("$" + stockPrice.toFixed(2))
+        $('.stockText').text(activeAirline.stock.stockDescription)
+        $('.stockLevel').text("Level " + activeAirline.stock.stockLevel)
+        $('.stockValueNext').text("$"+activeAirline.stock.stockCeiling)
+        setProgressWidth("#stockBar", stockPrice, 0, activeAirline.stock.grades.at(-1), true)
+        addProgressGrades("stock", activeAirline.stock.grades, "stock price", true, true)
+    }
 
-    $('.reputationText').text(activeAirline.gradeDescription)
-//    $('.stockText').text(activeAirline.stock.stockDescription)
-    $('.touristsText').text(activeAirline.tourists.touristsDescription)
-    $('.elitesText').text(activeAirline.elites.elitesDescription)
+    if (activeAirline.touristsTravelers !== undefined) {
+        const touristsTravelersCeiling = activeAirline.touristsTravelers.touristsTravelersCeiling > 10e12 ? "∞" : commaSeparateNumber(activeAirline.touristsTravelers.touristsTravelersCeiling)
+        $('.touristsTravelersValueCurrent').text(shortNumber(activeAirline.touristsTravelers.touristsTravelers))
+        $('.touristsTravelersText').text(activeAirline.touristsTravelers.touristsTravelersDescription)
+        $('.touristsTravelersLevel').text("Level " + activeAirline.touristsTravelers.touristsTravelersLevel)
+        $('.touristsTravelersValueNext').text(touristsTravelersCeiling)
+        setProgressWidth("#touristsTravelersBar", activeAirline.touristsTravelers.touristsTravelers, 0, activeAirline.touristsTravelers.grades.at(-1))
+        addProgressGrades("touristsTravelers", activeAirline.touristsTravelers.grades, "tourist & travelers")
+    }
 
-    $('.reputationLevel').text("Level " + activeAirline.gradeLevel)
-//    $('.stockLevel').text("Level " + activeAirline.stock.stockLevel)
-    $('.touristsLevel').text("Level " + activeAirline.tourists.touristsLevel)
-    $('.elitesLevel').text("Level " + activeAirline.elites.elitesLevel)
-
-    $('.reputationTrend').text((activeAirline.reputationBreakdowns.total).toFixed(0))
-    $('.reputationValueNext').text(activeAirline.gradeCeiling)
-//    $('.stockValueNext').text("$"+activeAirline.stock.stockCeiling)
-    $('.touristsValueNext').text(activeAirline.tourists.touristsCeiling)
-    $('.elitesValueNext').text(activeAirline.elites.elitesCeiling)
-    $('.reputationValuePrev').text(activeAirline.gradeFloor)
-
-    setProgressWidth("#reputationBar", activeAirline.reputation, activeAirline.gradeFloor, activeAirline.gradeCeiling)
-//    setProgressWidth("#stockBar", stockPrice, 0, activeAirline.stock.grades.at(-1))
-//    addProgressGrades("stock", activeAirline.stock.grades)
-    setProgressWidth("#touristsBar", activeAirline.tourists.tourists, 0, activeAirline.tourists.grades.at(-1))
-    addProgressGrades("tourists", activeAirline.tourists.grades)
-    setProgressWidth("#elitesBar", activeAirline.elites.elites, 0, activeAirline.elites.grades.at(-1))
-    addProgressGrades("elites", activeAirline.elites.grades)
-
-//    updateMilestones(activeAirline.reputationBreakdowns.breakdowns)
+    if (activeAirline.elites !== undefined) {
+        const eliteCeiling = activeAirline.elites.elitesCeiling > 10e12 ? "∞" : commaSeparateNumber(activeAirline.elites.elitesCeiling)
+        $('.elitesValueCurrent').text(shortNumber(activeAirline.elites.elites))
+        $('.elitesText').text(activeAirline.elites.elitesDescription)
+        $('.elitesLevel').text("Level " + activeAirline.elites.elitesLevel)
+        $('.elitesValueNext').text(eliteCeiling)
+        setProgressWidth("#elitesBar", activeAirline.elites.elites, 0, activeAirline.elites.grades.at(-1))
+        addProgressGrades("elites", activeAirline.elites.grades, "elites")
+    }
 }
 
-function updateMilestones(breakdowns) {
-  let total = 0;
+function writeMilestones(breakdowns) {
+    const $container = $('#milestones');
+    $container.empty();
 
-  for (const breakdown of breakdowns) {
-    if (breakdown.description.toLowerCase().includes("milestone")) {
-      total += breakdown.value;
-      if(breakdown.description === "Milestone Aircraft Types" && breakdown.value >= 0){
-        if(breakdown.value >= 5){
-            document.getElementById("m-aircraft1").src = "/assets/images/icons/tick.png"
-        }
-        if(breakdown.value >= 15){
-            document.getElementById("m-aircraft2").src = "/assets/images/icons/tick.png"
-        }
-        if(breakdown.value >= 25){
-            document.getElementById("m-aircraft3").src = "/assets/images/icons/tick.png"
-        }
-      } else if(breakdown.description === "Milestone Countries Served" && breakdown.value >= 0){
-        if(breakdown.value >= 15){
-            document.getElementById("m-country1").src = "/assets/images/icons/tick.png"
-        }
-        if(breakdown.value >= 30){
-            document.getElementById("m-country2").src = "/assets/images/icons/tick.png"
-        }
-        if(breakdown.value >= 45){
-            document.getElementById("m-country3").src = "/assets/images/icons/tick.png"
-        }
-        if(breakdown.value >= 75){
-            document.getElementById("m-country4").src = "/assets/images/icons/tick.png"
-        }
-      } else if(breakdown.description === "Milestone Codeshares" && breakdown.value >= 0){
-        if(breakdown.value >= 15){
-            document.getElementById("m-codeshares1").src = "/assets/images/icons/tick.png"
-        }
-        if(breakdown.value >= 30){
-            document.getElementById("m-codeshares2").src = "/assets/images/icons/tick.png"
-        }
-        if(breakdown.value >= 45){
-            document.getElementById("m-codeshares3").src = "/assets/images/icons/tick.png"
-        }
-        if(breakdown.value >= 75){
-            document.getElementById("m-codeshares4").src = "/assets/images/icons/tick.png"
-        }
-      } else if(breakdown.description === "Milestone Passenger Miles" && breakdown.value >= 0){
-        if(breakdown.value >= 15){
-            document.getElementById("m-pax1").src = "/assets/images/icons/tick.png"
-        }
-        if(breakdown.value >= 30){
-            document.getElementById("m-pax2").src = "/assets/images/icons/tick.png"
-        }
-        if(breakdown.value >= 45){
-            document.getElementById("m-pax3").src = "/assets/images/icons/tick.png"
-        }
-        if(breakdown.value >= 60){
-            document.getElementById("m-pax4").src = "/assets/images/icons/tick.png"
-        }
-      }
-    }
-  }
+    const milestones = gameConstants.milestones[activeAirline.type] || gameConstants.milestones.Legacy
 
-  return total;
+    milestones.forEach(milestone => {
+        const currentValue = breakdowns[milestone.name] ? breakdowns[milestone.name].value : 0;
+        const currentQuantityValue = breakdowns[milestone.name] ? breakdowns[milestone.name].quantityValue : 0;
+
+        const $col = $("<div></div>")
+        $col.append(
+            `<h5 class="mb-1">${milestone.description}</h5>`,
+            `<p class="pb-1 opacity-70 italic">@ ${commaSeparateNumber(currentQuantityValue)}</p>`,
+        );
+
+        milestone.conditions.forEach(cond => {
+            const metCondtion = currentValue >= cond.reward ? "tick" : "cross";
+            $col.append(
+                `<div style="width: 160px;justify-content: space-between;" class="flex-row py-1">
+					<div class="font-mono text-sm flex-align-center">
+						${commaSeparateNumber(cond.threshold)}
+						<img height="16" class="pl-1 svg" src="/assets/images/icons/${metCondtion}.svg">
+					</div>
+					<div style="color:gold;display: flex;flex-direction: row;">
+						${cond.reward}
+						<img height="16" src="/assets/images/icons/reputation.svg">
+					</div>
+				</div>
+			`);
+        });
+        $container.append($col);
+    });
 }
 
 function updateAirlineColorPicker() {
@@ -340,7 +473,7 @@ function updateAirlineColorPicker() {
 }
 
 function updateAirlineDetails() {
-    const airline = activeAirline
+  const airline = activeAirline
 	var breakdownList = $("<ul></ul>")
 	$.each(airline.reputationBreakdowns.breakdowns, function(index, breakdown) {
 		if (!breakdown.description.toLowerCase().includes("milestone")) {
@@ -348,154 +481,235 @@ function updateAirlineDetails() {
 		}
 	})
 
-    const milestoneValue = updateMilestones(airline.reputationBreakdowns.breakdowns)
-    breakdownList.append("<li>Milestones: <span class='rep-value'>" + milestoneValue.toFixed(2) + "</span></li>")
-    $('#officeCanvas .reputationDetails').html(breakdownList)
+  const milestoneValue = airline.reputationBreakdowns.milestoneTotal
+  breakdownList.append("<li>Milestones: <span class='rep-value'>" + milestoneValue.toFixed(2) + "</span></li>")
+  $('#officeCanvas .reputationDetails').html(breakdownList)
 
-    $('#officeCanvas .airlineName').text(airline.name)
-    $('#officeCanvas .airlineType').text(airline.type)
-    cancelAirlineRename()
-    if (isPremium()) {
-        if (airline.renameCooldown) {
-            disableButton($('#officeCanvas .airlineNameDisplaySpan .editButton'), "Cannot rename yet. Cooldown: " + toReadableDuration(airline.renameCooldown))
-        } else {
-            enableButton($('#officeCanvas .airlineNameDisplaySpan .editButton'))
-        }
-    } else {
-        disableButton($('#officeCanvas .airlineNameDisplaySpan .editButton'), "Airline rename is only available to Patreon members")
-    }
+  updateAllTextNodes('.airlineName', airline.name);
+  document.querySelector('.airlineType').textContent = airline.type;
+  const typeDescriptionEl = document.querySelector('.airlineTypeDescription');
+  typeDescriptionEl.innerHTML = '';
+  const rulesList = document.createElement('ul');
+  rulesList.classList.add('list-disc');
+  airline.typeRules.forEach(ruleText => {
+      const listItem = document.createElement('li');
+      listItem.textContent = ruleText;
+      listItem.classList.add('font-normal');
+      rulesList.appendChild(listItem);
+  });
+  typeDescriptionEl.appendChild(rulesList);
 
-    $('#airlineCode').text(airline.airlineCode)
-    $('#airlineCodeInput').val(airline.airlineCode)
-    $(".fuelTaxRate").text(airline.fuelTaxRate + "% ")
-    // $('#destinations').text(airline.destinations)
-    // $('#fleetSize').text(airline.fleetSize)
-    // $('#fleetAge').text(getYearMonthText(airline.fleetAge))
-//	    	$('#assets').text('$' + commaSeparateNumber(airline.assets))
-    // $('#officeCanvas .linkCount').text(airline.linkCount)
-    $('#minimumRenewalBalance').text('$' + commaSeparateNumber(airline.minimumRenewalBalance))
+  if (airline.hasOwnProperty('stock')) {
+    airline.tempStockPrice ??= airline.stock.stockPrice;
+    const brokerFee = gameConstants.stockConsts.brokerFeeBase + airline.stock.stockPrice * gameConstants.stockConsts.brokerFee * 1000000;
+    document.querySelector('.airlineStockPrice').textContent = "$" + commaSeparateNumber(airline.tempStockPrice);
+    document.querySelector('.airlineSharesOutstanding').textContent = commaSeparateNumber(airline.stock.sharesOutstanding);
+    document.querySelector('.airlineMarketCap').textContent = "$" + commaSeparateNumber(airline.stock.stockPrice * airline.stock.sharesOutstanding, "m");
+    document.querySelector('.stockBuyBackCost').textContent = "$" + commaSeparateNumber(1000000 * airline.tempStockPrice + brokerFee, "m");
+    document.querySelector('.stockSellRevenue').textContent = "$" + commaSeparateNumber(1000000 * airline.tempStockPrice - brokerFee, "m");
+  }
+
+  cancelAirlineRename()
+  if (isPremium()) {
+      if (airline.renameCooldown) {
+          disableButton($('#officeCanvas .airlineNameDisplaySpan .editButton'), "Cannot rename yet. Cooldown: " + toReadableDuration(airline.renameCooldown))
+      } else {
+          enableButton($('#officeCanvas .airlineNameDisplaySpan .editButton'))
+      }
+  } else {
+      disableButton($('#officeCanvas .airlineNameDisplaySpan .editButton'), "Airline rename is only available to Patreon members")
+  }
+
+  $('#airlineCode').text(airline.airlineCode)
+  $('#airlineCodeInput').val(airline.airlineCode)
+  $(".fuelTaxRate").text(airline.fuelTaxRate + "% ")
+
+  $('.linkCount').text(airline.extendedStats.linkCount)
+  $('.destinations').text(airline.extendedStats.destinations)
+  $('.countriesServed').text(airline.extendedStats.countriesServed)
+  $('.fleetSize').text(airline.extendedStats.fleetSize)
+  $('.fleetAge').text(airline.extendedStats.fleetAge)
+  $('.fleetCondition').text(airline.extendedStats.fleetCondition)
+  $('.fleetUtilization').text(airline.extendedStats.fleetUtilization)
+  $('#assets').text('$' + commaSeparateNumber(airline.assets))
+  $('#minimumRenewalBalance').text('$' + commaSeparateNumber(airline.minimumRenewalBalance))
 }
 
 
-function loadSheets() {
+async function loadSheets() {
 	var airlineId = activeAirline.id
-	//reset values
-	loadedIncomes = {}
-	loadedIncomes['WEEKLY'] = []
-	loadedIncomes['QUARTER'] = []
-	loadedIncomes['PERIOD'] = []
+	const periodKeys = ['WEEKLY', 'QUARTER', 'YEAR']
 
-	loadedCashFlows = {}
-    loadedCashFlows['WEEKLY'] = []
-    loadedCashFlows['QUARTER'] = []
-    loadedCashFlows['PERIOD'] = []
-
-	officeSheetPage = 0
+	sheetPages.financial = 0
+	sheetPages.stats = 0
 	officePeriod = 'WEEKLY'
-	$('#officeCanvas select.period').val(officePeriod)
+	document.querySelector('#officeCanvas select.period').value = officePeriod
 
-		
-	$.ajax({
-		type: 'GET',
-		url: "airlines/" + airlineId + "/finances",
-	    contentType: 'application/json; charset=utf-8',
-	    dataType: 'json',
-	    success: function(data) {
-	    	var airlineIncomes = data.incomes
-	    	//group by period
-	    	$.each(airlineIncomes, function(index, airlineIncome) {
-	    		loadedIncomes[airlineIncome.period].push(airlineIncome)
-	    	})
-	    	
-	    	var totalPages = loadedIncomes[officePeriod].length
-	    	if (totalPages > 0) {
-	    		officeSheetPage = totalPages - 1
-	    		updateIncomeSheet(loadedIncomes[officePeriod][officeSheetPage])
-	    	}
-	    	
-	    	updateIncomeChart()
-	    	
-	    	var airlineCashFlows = data.cashFlows
-	    	//group by period
-	    	$.each(airlineCashFlows, function(index, airlineCashFlow) {
-	    		loadedCashFlows[airlineCashFlow.period].push(airlineCashFlow)
-	    	})
-	    	
-	    	totalPages = loadedCashFlows[officePeriod].length
-	    	if (totalPages > 0) {
-	    		officeSheetPage = totalPages - 1
-	    		updateCashFlowSheet(loadedCashFlows[officePeriod][officeSheetPage])
-	    	}
-	    	
-	    	updateCashFlowChart()
+	const headers = {}
+	if (_financesEtag) headers['If-None-Match'] = _financesEtag
 
-			data.airlineStats.forEach(stat => {
-				stat.traveler = stat.total - (stat.tourists + stat.elites + stat.business);
-			});
+	try {
+		const res = await fetch('/airlines/' + airlineId + '/finances', { method: 'GET', headers })
 
-	    	plotAirlineStats(data.airlineStats, $("#officeCanvas #airlineStatsChart"))
-			plotOpsChart(data.airlineStats, $("#officeCanvas #opsChart"))
+		if (res.status === 304) {
+			// Re-render from existing loaded data without re-fetching
+			const totalIncomePages = loadedIncomes[officePeriod].length
+			if (totalIncomePages > 0) {
+				sheetPages.financial = totalIncomePages - 1
+				updateIncomeSheet(loadedIncomes[officePeriod][sheetPages.financial])
+			}
+			if (loadedLedger.length > 0) {
+				sheetPages.ledger = loadedLedger.length - 1
+				updateLedgerSheet(loadedLedger[sheetPages.ledger])
+			}
+			updateIncomeChart(loadedIncomes[officePeriod])
 
+			sheetPages.stats = loadedAirlineStats[officePeriod].length > 0 ? loadedAirlineStats[officePeriod].length - 1 : 0
+			const statData304 = loadedAirlineStats[officePeriod][sheetPages.stats] ?? null
+			if (statData304) {
+				updateAirlineOpSheet(statData304)
+				updateAirlineStatSheet(statData304)
+				updateAirlineReputationSheet(statData304)
+				updateProgress(statData304)
+			}
+			updateAirlineStatChart(loadedAirlineStats[officePeriod])
+			updateOpsChart(loadedAirlineStats[officePeriod])
+			updateAirlineReputationChart(loadedAirlineStats[officePeriod])
+			renderSheetNav(getActiveSheetType())
+			return
+		}
 
-	    	var stockPrice = loadedIncomes['WEEKLY'].length > 0 ? loadedIncomes['WEEKLY'][loadedIncomes['WEEKLY'].length - 1].stockPrice : null
-            const airlineStat = data.airlineStats[data.airlineStats.length - 1] ?? null
-			updateOpsDataSheet(airlineStat)
-			updateAirlineStatsSheet(airlineStat)
-            updateProgress(airlineStat, stockPrice)
-	    },
-	    error: function(jqXHR, textStatus, errorThrown) {
-            console.log(JSON.stringify(jqXHR));
-            console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
-	    }
-	});
+		// Reset loaded data for fresh response
+		loadedIncomes = Object.fromEntries(periodKeys.map(key => [key, []]))
+		loadedLedger = []
+		loadedAirlineOps = Object.fromEntries(periodKeys.map(key => [key, []]))
+		loadedAirlineStats = Object.fromEntries(periodKeys.map(key => [key, []]))
+		loadedAirlineReputation = Object.fromEntries(periodKeys.map(key => [key, []]))
+
+		if (!res.ok) {
+			console.log('AJAX error: ' + res.status)
+			return
+		}
+		const etag = res.headers.get('ETag')
+		if (etag) _financesEtag = etag
+		const data = await res.json()
+
+		var airlineIncomes = data.incomes
+		$.each(airlineIncomes, function(index, airlineIncome) {
+			loadedIncomes[airlineIncome.period].push(airlineIncome)
+		})
+		var totalPages = loadedIncomes[officePeriod].length
+		if (totalPages > 0) {
+			sheetPages.financial = totalPages - 1
+			updateIncomeSheet(loadedIncomes[officePeriod][sheetPages.financial])
+		}
+		updateIncomeChart(loadedIncomes[officePeriod])
+
+		const byCycle = {}
+		;(data.ledger || []).forEach(e => {
+			if (!byCycle[e.cycle]) byCycle[e.cycle] = { cycle: e.cycle, period: 'WEEKLY', entries: [] }
+			byCycle[e.cycle].entries.push(e)
+		})
+		loadedLedger = Object.keys(byCycle).sort((a, b) => parseInt(a) - parseInt(b)).map(c => byCycle[c])
+		if (loadedLedger.length > 0) {
+			sheetPages.ledger = loadedLedger.length - 1
+			updateLedgerSheet(loadedLedger[sheetPages.ledger])
+		}
+
+		data.airlineStats.forEach(stat => {
+			loadedAirlineStats[stat.period].push(stat)
+		})
+		const airlineStat = data.airlineStats[data.airlineStats.length - 1] ?? null
+		sheetPages.stats = loadedAirlineStats[officePeriod].length > 0 ? loadedAirlineStats[officePeriod].length - 1 : 0
+
+		updateAirlineStatChart(loadedAirlineStats[officePeriod])
+		updateOpsChart(loadedAirlineStats[officePeriod])
+		updateAirlineReputationChart(loadedAirlineStats[officePeriod])
+
+		const statData = loadedAirlineStats[officePeriod][sheetPages.stats] ?? airlineStat
+		updateAirlineOpSheet(statData)
+		updateAirlineStatSheet(statData)
+		updateAirlineReputationSheet(statData)
+		updateProgress(statData)
+		renderSheetNav(getActiveSheetType())
+	} catch (e) {
+		console.log('AJAX error: ' + e)
+	}
 }
 
-function updateIncomeChart() {
-	plotIncomeChart(loadedIncomes[officePeriod], officePeriod, $("#officeCanvas #totalProfitChart"))
+function updateIncomeChart(airlineIncomes) {
+	var incomes = airlineIncomes || loadedIncomes[officePeriod];
+	ensureChart('totalProfitChart', function() {
+		plotIncomeChart(incomes, officePeriod, 'totalProfitChart')
+	})
 }
 
-function updateCashFlowChart() {
-	plotCashFlowChart(loadedCashFlows[officePeriod], officePeriod, $("#officeCanvas #totalCashFlowChart"))
-	plotTotalValueChart(loadedIncomes[officePeriod], officePeriod, $("#officeCanvas #totalValueChart"))
+function updateLedgerChart() {
+	// Ledger view has no charts
+}
+
+function updateAirlineStatChart(stats) {
+	var data = stats || loadedAirlineStats[officePeriod];
+	ensureChart('airlineStatsChart', function() {
+		plotAirlineStats(data, officePeriod, 'airlineStatsChart')
+	})
+}
+
+function updateOpsChart(stats) {
+	var data = stats || loadedAirlineStats[officePeriod];
+	ensureChart('opsChart', function() {
+		plotOpsChart(data, officePeriod, 'opsChart')
+	})
+}
+
+function updateAirlineReputationChart(stats) {
+	var data = stats || loadedAirlineStats[officePeriod];
+	ensureChart('airlineReputationChart', function() {
+		plotAirlineReputationChart(data, officePeriod, 'airlineReputationChart')
+	})
+}
+
+// Helper: ensure chart for containerId is created if visible, otherwise destroyed
+function ensureChart(containerId, createCb) {
+	var $c = $('#' + containerId)
+	if ($c.length === 0) return
+	if ($c.is(':visible')) {
+		// create chart (plot-* functions will call ChartUtils.createChart)
+		try { createCb() } catch (e) { /* ignore create errors */ }
+	} else if (window.ChartUtils) {
+		window.ChartUtils.destroyChart($c.get(0))
+	}
 }
 
 function officeHistoryStep(step) {
-    var type = $('#officeCanvas .sheetOptions').find('.cell.selected').data('type')
-    var totalPages = loadedIncomes[officePeriod].length //income and cash flow should have same # of pages - just pick income arbitrarily
-    if (officeSheetPage + step < 0) {
-        officeSheetPage = 0
-    } else if (officeSheetPage + step >= totalPages) {
-        officeSheetPage = totalPages - 1
-    } else {
-        officeSheetPage = officeSheetPage + step
-    }
-
-    if (type === 'income') {
-        updateIncomeSheet(loadedIncomes[officePeriod][officeSheetPage])
-    } else if (type === 'cashFlow') {
-    	updateCashFlowSheet(loadedCashFlows[officePeriod][officeSheetPage])
-    }
+	const type = getActiveSheetType()
+	if (!type) return
+	const config = SHEET_CONFIG[type]
+	const data = config.getData()
+	const newPage = Math.max(0, Math.min(data.length - 1, getSheetPage(type) + step))
+	setSheetPage(type, newPage)
+	config.updateSheet(data[newPage])
+	renderSheetNav(type)
 }
 
-function changeOfficePeriod(period, type) {
-    var type = $('#officeCanvas .sheetOptions').find('.cell.selected').data('type')
-    officePeriod = period
-    if (type === 'income') {
-        var totalPages = loadedIncomes[officePeriod].length
-        officeSheetPage = totalPages - 1
-        updateIncomeSheet(loadedIncomes[officePeriod][officeSheetPage])
-        updateIncomeChart()
-    } else if (type === 'cashFlow') {
-        var totalPages = loadedCashFlows[officePeriod].length
-    	officeSheetPage = totalPages - 1
-    	updateCashFlowSheet(loadedCashFlows[officePeriod][officeSheetPage])
-    	updateCashFlowChart()
-    }
+function changeOfficePeriod(period) {
+	officePeriod = period
+	const type = getActiveSheetType()
+	if (!type || type === 'ledger') return  // ledger tab doesn't use periods
+	const config = SHEET_CONFIG[type]
+	const data = config.getData()
+	setSheetPage(type, Math.max(data.length - 1, 0))
+	config.updateSheet(data[getSheetPage(type)])
+	config.updateChart()
+	// Rebuild nav so period label and disabled states refresh
+	document.getElementById(config.sheetId)?.querySelector('.sheet-nav')?.remove()
+	renderSheetNav(type)
 }
 
 function updateIncomeSheet(airlineIncome) {
-	if (airlineIncome) {		
-		$("#officeCycleText").text(getGameDate(airlineIncome.cycle, airlineIncome.period))
+	if (airlineIncome) {
+        // updateAllTextNodes(".officeCycleText", getGameDate(airlineIncome.cycle, airlineIncome.period, true));
+		$().text(getGameDate(airlineIncome.cycle, airlineIncome.period, hasUnits = true))
 		$("#totalProfit").text('$' + commaSeparateNumber(airlineIncome.totalProfit))
         $("#totalRevenue").text('$' + commaSeparateNumber(airlineIncome.totalRevenue))
         $("#totalExpense").text('$' + commaSeparateNumber(airlineIncome.totalExpense))
@@ -508,15 +722,10 @@ function updateIncomeSheet(airlineIncome) {
         $("#linksFuelTax").text('$' + commaSeparateNumber(airlineIncome.linksFuelTax))
         $("#linksCrewCost").text('$' + commaSeparateNumber(airlineIncome.linksCrewCost))
         $("#linksInflightCost").text('$' + commaSeparateNumber(airlineIncome.linksInflightCost))
-        $("#linksMaintenance").text('$' + commaSeparateNumber(airlineIncome.linksMaintenanceCost))
+        $("#linksMaintenanceCost").text('$' + commaSeparateNumber(airlineIncome.linksMaintenanceCost))
         $("#linksLoungeCost").text('$' + commaSeparateNumber(airlineIncome.linksLoungeCost))
         $("#linksDepreciation").text('$' + commaSeparateNumber(airlineIncome.linksDepreciation))
         $("#linksDelayCompensation").text('$' + commaSeparateNumber(airlineIncome.linksDelayCompensation))
-        $("#transactionsProfit").text('$' + commaSeparateNumber(airlineIncome.transactionsProfit))
-        $("#transactionsRevenue").text('$' + commaSeparateNumber(airlineIncome.transactionsRevenue))
-        $("#transactionsExpense").text('$' + commaSeparateNumber(airlineIncome.transactionsExpense))
-        $("#transactionsCapitalGain").text('$' + commaSeparateNumber(airlineIncome.transactionsCapitalGain))
-        //$("#transactionsCreateLink").text('$' + commaSeparateNumber(airlineIncome.transactionsCreateLink))
         $("#othersProfit").text('$' + commaSeparateNumber(airlineIncome.othersProfit))
         $("#othersRevenue").text('$' + commaSeparateNumber(airlineIncome.othersRevenue))
         $("#othersExpense").text('$' + commaSeparateNumber(airlineIncome.othersExpense))
@@ -536,64 +745,73 @@ function updateIncomeSheet(airlineIncome) {
 }
 
 
-function changeCashFlowPeriod(period) {
-	officePeriod = period
-	var totalPages = loadedCashFlows[officePeriod].length
-	officeSheetPage = totalPages - 1
-	// updateAirlineStatsSheet(loadedIncomes[officePeriod][officeSheetPage].airlineStats)
-	updateCashFlowSheet(loadedCashFlows[officePeriod][officeSheetPage])
-	updateCashFlowChart()
+function formatLedgerType(type) {
+	return type.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ')
 }
 
-
-function updateCashFlowSheet(airlineCashFlow) {
-	if (airlineCashFlow) {
-		$("#officeCycleText").text(getGameDate(airlineCashFlow.cycle, airlineCashFlow.period))
-		$("#cashFlowSheet .totalCashFlow").text('$' + commaSeparateNumber(airlineCashFlow.totalCashFlow))
-        $("#cashFlowSheet .operation").text('$' + commaSeparateNumber(airlineCashFlow.operation))
-        $("#cashFlowSheet .loanInterest").text('$' + commaSeparateNumber(airlineCashFlow.loanInterest))
-        $("#cashFlowSheet .loanPrincipal").text('$' + commaSeparateNumber(airlineCashFlow.loanPrincipal))
-        $("#cashFlowSheet .baseConstruction").text('$' + commaSeparateNumber(airlineCashFlow.baseConstruction))
-        $("#cashFlowSheet .buyAirplane").text('$' + commaSeparateNumber(airlineCashFlow.buyAirplane))
-        $("#cashFlowSheet .sellAirplane").text('$' + commaSeparateNumber(airlineCashFlow.sellAirplane))
-        $("#cashFlowSheet .createLink").text('$' + commaSeparateNumber(airlineCashFlow.createLink))
-        $("#cashFlowSheet .facilityConstruction").text('$' + commaSeparateNumber(airlineCashFlow.facilityConstruction))
-        $("#cashFlowSheet .oilContract").text('$' + commaSeparateNumber(airlineCashFlow.oilContract))
-        $("#cashFlowSheet .assetTransactions").text('$' + commaSeparateNumber(airlineCashFlow.assetTransactions))
-	}
+function updateLedgerSheet(weekData) {
+	const $entries = $('#ledgerEntries')
+	$entries.empty()
+	if (!weekData) return
+	weekData.entries.forEach(entry => {
+		const $row = $('<div class="table-row"></div>')
+		$row.append('<div class="cell" style="flex: 0 0 68px; opacity: 0.5; font-size: 0.8em;">#' + entry.id + '</div>')
+		$row.append('<div class="cell" style="flex: 2;">' + formatLedgerType(entry.entryType) + '</div>')
+		$row.append('<div class="cell" style="flex: 3; opacity: 0.75;">' + (entry.description || '') + '</div>')
+		$row.append('<div class="cell" style="flex: 0 0 120px; text-align: right;">' + '$' + commaSeparateNumber(entry.amount) + '</div>')
+		$entries.append($row)
+	})
+	const total = weekData.entries.reduce((sum, e) => sum + e.amount, 0)
+	const sign = total < 0 ? '-' : ''
+	const $row = $('<div class="table-row"></div>')
+	$row.append('<div class="cell" style="flex: 0 0 68px;"></div>')
+	$row.append('<div class="cell h4" style="flex: 2;">Total:</div>')
+	$row.append('<div class="cell" style="flex: 3;"></div>')
+	$row.append('<div class="cell totalLedger" style="flex: 0 0 120px; text-align: right;">' + sign + '$' + commaSeparateNumber(Math.abs(total)) + '</div>')
+	$entries.append($row)
 }
 
-function updateAirlineStatsSheet(airlineStats) {
-    if (airlineStats) {
-        Object.keys(airlineStats).forEach((key) => {
-            const element = document.querySelector(`#airlineStatsSheet .${key}`);
-            if (element) {
-                element.textContent = commaSeparateNumber(airlineStats[key]);
-            }
-        });
-    }
+function updateAirlineStatSheet(airlineStats) {
+    if (!airlineStats) return
+    // updateAllTextNodes(".officeCycleText", getGameDate(airlineStats.cycle, airlineStats.period, true));
+    Object.keys(airlineStats).forEach(key => {
+        const element = document.querySelector(`#airlineStatsSheet .${key}`)
+        if (element) element.textContent = commaSeparateNumber(airlineStats[key])
+    })
 }
 
-function updateOpsDataSheet(opsData) {
-    if (opsData) {
-        Object.keys(opsData).forEach((key) => {
-            const element = document.querySelector(`#opsSheet .${key}`);
-            if (element) {
-                element.textContent = commaSeparateNumber(opsData[key]);
-            }
-        });
-    }
-	Object.keys(activeAirline.stats).forEach((key) => {
-		const element = document.querySelector(`#opsSheet .${key}`);
-		if (element) {
-			element.textContent = commaSeparateNumber(activeAirline.stats[key]);
-		}
-	});
+function updateAirlineOpSheet(opsData) {
+    if (!opsData) return
+    // updateAllTextNodes(".officeCycleText", getGameDate(opsData.cycle, opsData.period, true));
+    Object.keys(opsData).forEach(key => {
+        const element = document.querySelector(`#opsSheet .${key}`)
+        if (!element) return
+        element.textContent = opsData[key] < 1
+            ? commaSeparateNumber(opsData[key] * 100)
+            : commaSeparateNumber(opsData[key])
+        const metric = gameConstants?.stockMetrics?.[key.toLowerCase()]
+        if (metric) {
+            const normalizedValue = (opsData[key] - metric.floor) / (metric.target - metric.floor)
+            element.classList.remove('text-success', 'text-middling', 'text-danger', 'text-warning')
+            if (normalizedValue >= 0.8) element.classList.add('text-success')
+            else if (normalizedValue <= 0.2) element.classList.add('text-danger')
+            else if (normalizedValue <= 0.5) element.classList.add('text-warning')
+            else element.classList.add('text-middling')
+        }
+    })
+}
+
+function updateAirlineReputationSheet(airlineReputation) {
+    if (!airlineReputation) return
+    Object.keys(airlineReputation).forEach(key => {
+        const el = document.querySelector(`#airlineReputationSheet .${key}`)
+        if (el) el.textContent = commaSeparateNumber(airlineReputation[key])
+    })
 }
 
 function setTargetServiceQuality(targetServiceQuality) {
 	var airlineId = activeAirline.id
-	var url = "airlines/" + airlineId + "/target-service-quality"
+	var url = "/airlines/" + airlineId + "/target-service-quality"
 	if (!checkTargetServiceQualityInput(targetServiceQuality)) { //if invalid, then return
 	    return;
 	}
@@ -634,7 +852,7 @@ function checkTargetServiceQualityInput(input) {
 
 function setMinimumRenewalBalance(minimumRenewalBalance) {
 	var airlineId = activeAirline.id
-	var url = "airlines/" + airlineId + "/minimum-renewal-balance"
+	var url = "/airlines/" + airlineId + "/minimum-renewal-balance"
 	if (!checkEditMinimumRenewalBalanceInput(minimumRenewalBalance)) { //if invalid, then return
 	    return;
 	}
@@ -670,24 +888,21 @@ function checkEditMinimumRenewalBalanceInput(input) {
             return false;
 		} else {
             $("#minimumRenewalBalanceInputSpan .warning").hide()
-            return true;	
+            return true;
 		}
 	}
-
 }
 
 function setAirplaneRenewal(threshold) {
 	var airlineId = activeAirline.id
-	var url = "airlines/" + airlineId + "/airplane-renewal"
+	var url = "/airlines/" + airlineId + "/airplane-renewal"
 	var data
 	if (threshold) {
 		data = { "threshold" : parseInt(threshold) }
 	} else {
 		data = { "threshold" : -1 } //disable
-	} 
-		
-	
-		
+	}
+
 	$.ajax({
 		type: 'PUT',
 		url: url,
@@ -695,13 +910,52 @@ function setAirplaneRenewal(threshold) {
 	    contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
 	    success: function(result) {
-	    	updateAirplaneRenewalDetails()
+	    	if (result.threshold) {
+	    		$('#airplaneRenewal').text('Below ' + result.threshold + "%")
+	    		$('#airplaneRenewalInput').val(result.threshold)
+	    	} else {
+	    		$('#airplaneRenewal').text('-')
+	    		$('#airplaneRenewalInput').val(40)
+	    	}
+	    	$('#airplaneRenewalDisplaySpan').show()
+	    	$('#airplaneRenewalInputSpan').hide()
 	    },
         error: function(jqXHR, textStatus, errorThrown) {
 	            console.log(JSON.stringify(jqXHR));
 	            console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
 	    }
 	});
+}
+
+function doStockOp(operation = 'buyback') {
+  const buttons = document.querySelectorAll('.stockOpBtn');
+  buttons.forEach(button => {
+      button.disabled = true;
+  });
+	var url = `/airlines/${activeAirline.id}/stock-op/${operation}`
+	var data = {"sharesOutstanding": parseInt(activeAirline.stock.sharesOutstanding)}
+
+	$.ajax({
+		type: 'PUT',
+		url: url,
+	    data: JSON.stringify(data),
+	    contentType: 'application/json; charset=utf-8',
+	    dataType: 'json',
+	    success: function(result) {
+				activeAirline.stock.sharesOutstanding = result.sharesOutstanding
+				activeAirline.tempStockPrice = result.stockPrice
+				activeAirline.balance = result.balance
+        updateAirlineDetails()
+        refreshTopBar(activeAirline)
+        buttons.forEach(button => {
+            button.disabled = false;
+        });
+	    },
+        error: function(jqXHR, textStatus, errorThrown) {
+	            console.log(JSON.stringify(jqXHR));
+	            console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
+	    }
+	})
 }
 
 function editAirlineCode() {
@@ -719,7 +973,7 @@ function validateAirlineCode(airlineCode) {
 
 function setAirlineCode(airlineCode) {
 	var airlineId = activeAirline.id
-	var url = "airlines/" + airlineId + "/airline-code"
+	var url = "/airlines/" + airlineId + "/airline-code"
     var data = { "airlineCode" : airlineCode }
 	$.ajax({
 		type: 'PUT',
@@ -727,9 +981,10 @@ function setAirlineCode(airlineCode) {
 	    data: JSON.stringify(data),
 	    contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
-	    success: function(airline) {
-	    	activeAirline = airline
-	    	$('#airlineCode').text(airline.airlineCode)
+	    success: function(result) {
+	    	activeAirline.airlineCode = result.airlineCode
+	    	$('#airlineCode').text(result.airlineCode)
+	    	$('#airlineCodeInput').val(result.airlineCode)
 	    	$('#airlineCodeInputSpan').hide()
 	    	$('#airlineCodeDisplaySpan').show()
 	    },
@@ -762,7 +1017,7 @@ function editAirlineName() {
 
 function validateAirlineName(airlineName) {
     var airlineId = activeAirline.id
-    var url = "airlines/" + airlineId + "/airline-name"
+    var url = "/airlines/" + airlineId + "/airline-name"
     var data = { "airlineName" : airlineName }
     $.ajax({
         type: 'PUT',
@@ -790,7 +1045,7 @@ function validateAirlineName(airlineName) {
 function confirmAirlineRename(airlineName) {
     promptConfirm("Change airline name to <b>" + airlineName + "</b>? Can only rename every 30 days.", function() {
         var airlineId = activeAirline.id
-        var url = "airlines/" + airlineId + "/airline-name"
+        var url = "/airlines/" + airlineId + "/airline-name"
         var data = { "airlineName" : airlineName }
         $.ajax({
             type: 'PUT',
@@ -822,23 +1077,19 @@ function cancelAirlineRename() {
 }
 
 
-
-
-
 function loadLogoTemplates() {
 	$('#logoTemplates').empty()
 	$.ajax({
 		type: 'GET',
-		url: "logos/templates",
+		url: "/logos/templates",
 	    contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
 	    success: function(templates) {
-	    	//group by period
 	    	$.each(templates, function(index, templateIndex) {
-	    		$('#logoTemplates').append('<div style="padding: 3px; margin: 3px; float: left;" class="clickable" onclick="selectLogoTemplate(' + templateIndex + ')"><img src="logos/templates/' + templateIndex + '"></div>')
+	    		$('#logoTemplates').append('<div style="padding: 2px;" class="clickable" onclick="selectLogoTemplate(' + templateIndex + ')"><img style="width:48px;height:24px;border: 1px solid var(--border-color);" src="/logos/templates/' + templateIndex + '"></div>')
 	    	})
-	    	
-	    	
+
+
 	    },
 	    error: function(jqXHR, textStatus, errorThrown) {
             console.log(JSON.stringify(jqXHR));
@@ -848,6 +1099,7 @@ function loadLogoTemplates() {
 }
 
 function editAirlineLogo() {
+	logoModalConfirm = setAirlineLogo
 	var modal = $('#logoModal')
 	$('#logoTemplateIndex').val(0)
 	generateLogoPreview()
@@ -865,19 +1117,22 @@ function generateLogoPreview() {
 	var color1 = $('#logoModal .picker.color1').val()
     var color2 = $('#logoModal .picker.color2').val()
 
-	var url = "logos/preview?templateIndex=" + logoTemplate + "&color1=" + encodeURIComponent(color1) + "&color2=" + encodeURIComponent(color2)
+	var url = "/logos/templates/" + logoTemplate + "?color1=" + encodeURIComponent(color1) + "&color2=" + encodeURIComponent(color2) + "&dummy=" + Math.random()
+	if (logoTemplate >= 0) {
+	    url = "/logos/preview?templateIndex=" + logoTemplate + "&color1=" + encodeURIComponent(color1) + "&color2=" + encodeURIComponent(color2) + "&dummy=" + Math.random()
+	}
 	$('#logoPreview').empty();
-	$('#logoPreview').append('<img src="' + url + '">')
+	$('#logoPreview').append('<img style="width:128px;height:auto;border: 1px solid var(--border-color);" src="' + url + '">')
 }
 
 function setAirlineLogo() {
-	var logoTemplate = $('#logoTemplateIndex').val() 
+	var logoTemplate = $('#logoTemplateIndex').val()
 	var color1 = $('#logoModal .picker.color1').val()
     var color2 = $('#logoModal .picker.color2').val()
-	
-	var url = "airlines/" + activeAirline.id + "/set-logo?templateIndex=" + logoTemplate + "&color1=" + encodeURIComponent(color1) + "&color2=" + encodeURIComponent(color2)
+
+	var url = "/airlines/" + activeAirline.id + "/set-logo?templateIndex=" + logoTemplate + "&color1=" + encodeURIComponent(color1) + "&color2=" + encodeURIComponent(color2)
     $.ajax({
-		type: 'GET',
+		type: 'POST',
 		url: url,
 	    contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
@@ -892,9 +1147,9 @@ function setAirlineLogo() {
 }
 
 function setAirlineColor(color) {
-	var url = "airlines/" + activeAirline.id + "/set-color?color=" + encodeURIComponent(color)
+	var url = "/airlines/" + activeAirline.id + "/set-color?color=" + encodeURIComponent(color)
     $.ajax({
-		type: 'GET',
+		type: 'POST',
 		url: url,
 	    contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
@@ -918,41 +1173,20 @@ function showUploadLogo() {
 		$('#uploadLogoModal .uploadForbidden').show()
 		$('#uploadLogoModal .uploadPanel').hide()
 	}
-	
+
 	$('#uploadLogoModal').fadeIn(200)
 }
 
 
 function updateLogoUpload() {
-	$('#uploadLogoModal .uploadPanel .warning').hide()
-	if (logoUploaderObj) {
-		logoUploaderObj.reset()
-	}
-	
-	logoUploaderObj = $("#uploadLogoModal .uploadPanel .fileuploader").uploadFile({
-		url:"airlines/" + activeAirline.id + "/logo",
-		multiple:false,
-		dragDrop:false,
-		acceptFiles:"image/png",
-		fileName:"logoFile",
-		maxFileSize:100*1024,
-		onSuccess:function(files,data,xhr,pd)
-		{
-			if (data.success) {
-				$('#uploadLogoModal .uploadPanel .warning').hide()
-				closeModal($('#uploadLogoModal'))
-				updateAirlineLogo()
-			} else if (data.error) {
-				$('#uploadLogoModal .uploadPanel .warning').text(data.error)
-				$('#uploadLogoModal .uploadPanel .warning').show()
-			}
-			
-		}
-	});
+    initLogoUpload($("#uploadLogoModal .uploadPanel"), "/airlines/" + activeAirline.id + "/logo", "logoFile", function(data) {
+        closeModal($('#uploadLogoModal'))
+        updateAirlineLogo()
+    });
 }
 
 function updateLiveryInfo() {
-    $('#officeCanvas img.livery').attr('src', 'airlines/' + activeAirline.id + "/livery?dummy=" + Math.random())
+    $('#officeCanvas img.livery').attr('src', '/airlines/' + activeAirline.id + "/livery?dummy=" + Math.random())
 }
 
 function showUploadLivery() {
@@ -971,35 +1205,14 @@ function showUploadLivery() {
 
 
 function updateLiveryUpload() {
-	$('#uploadLiveryModal .uploadPanel .warning').hide()
-	if (liveryUploaderObj) {
-		liveryUploaderObj.reset()
-	}
-
-	liveryUploaderObj = $("#uploadLiveryModal .uploadPanel .fileuploader").uploadFile({
-		url:"airlines/" + activeAirline.id + "/livery",
-		multiple:false,
-		dragDrop:false,
-		acceptFiles:"image/png",
-		fileName:"liveryFile",
-		maxFileSize:1 * 1024 * 1024,
-		onSuccess:function(files,data,xhr,pd)
-		{
-			if (data.success) {
-				$('#uploadLiveryModal .uploadPanel .warning').hide()
-				closeModal($('#uploadLiveryModal'))
-				updateLiveryInfo()
-			} else if (data.error) {
-				$('#uploadLiveryModal .uploadPanel .warning').text(data.error)
-				$('#uploadLiveryModal .uploadPanel .warning').show()
-			}
-
-		}
-	});
+    initLogoUpload($("#uploadLiveryModal .uploadPanel"), "/airlines/" + activeAirline.id + "/livery", "liveryFile", function(data) {
+        closeModal($('#uploadLiveryModal'))
+        updateLiveryInfo()
+    });
 }
 
 function deleteLivery() {
-    var url = "airlines/" + activeAirline.id + "/livery"
+    var url = "/airlines/" + activeAirline.id + "/livery"
     $.ajax({
 		type: 'DELETE',
 		url: url,
@@ -1016,7 +1229,7 @@ function deleteLivery() {
 }
 
 function saveSlogan() {
-    var url = "airlines/" + activeAirline.id + "/slogan"
+    var url = "/airlines/" + activeAirline.id + "/slogan"
     $.ajax({
 		type: 'PUT',
 		url: url,
@@ -1036,7 +1249,7 @@ function saveSlogan() {
 }
 
 function loadSlogan(callback) {
-    var url = "airlines/" + activeAirline.id + "/slogan"
+    var url = "/airlines/" + activeAirline.id + "/slogan"
     $.ajax({
 		type: 'GET',
 		url: url,
@@ -1066,18 +1279,19 @@ function editMinimumRenewalBalance() {
 
 
 function updateServiceFundingDetails() {
-	$('#currentServiceQuality').text(activeAirline.serviceQuality)
-	
+    $('#currentServiceQuality').empty()
+    $('#currentServiceQuality').append($(getGradeStarsImgs(Math.round(activeAirline.serviceQuality/10))))
+
 	$('#targetServiceQuality').text(activeAirline.targetServiceQuality)
 	$('#targetServiceQualityInput').val(activeAirline.targetServiceQuality)
-	
+
 	$('#serviceFundingDisplaySpan').show()
 	$('#serviceFundingInputSpan').hide()
 
 	$('#fundingProjection').text('...')
 	$.ajax({
 		type: 'GET',
-		url: "airlines/" + activeAirline.id + "/service-funding-projection",
+		url: "/airlines/" + activeAirline.id + "/service-funding-projection",
 	    contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
 	    success: function(result) {
@@ -1088,7 +1302,7 @@ function updateServiceFundingDetails() {
 	            console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
 	    }
 	});
-	
+
 }
 
 function updateMinimumRenewalBalanceDetails() {
@@ -1108,7 +1322,7 @@ function editAirplaneRenewal() {
 function updateAirplaneRenewalDetails() {
 	$.ajax({
 		type: 'GET',
-		url: "airlines/" + activeAirline.id + "/airplane-renewal",
+		url: "/airlines/" + activeAirline.id + "/airplane-renewal",
 	    contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
 	    success: function(airplaneRenewal) {
@@ -1134,19 +1348,17 @@ function updateChampionedCountriesDetails() {
 
     	$.ajax({
     		type: 'GET',
-    		url: "airlines/" + activeAirline.id + "/championed-countries",
+    		url: "/airlines/" + activeAirline.id + "/championed-countries",
     	    contentType: 'application/json; charset=utf-8',
     	    dataType: 'json',
     	    success: function(championedCountries) {
     	    	$(championedCountries).each(function(index, championDetails) {
     	    		var country = championDetails.country
-    	    		var row = $("<div class='table-row clickable' data-link='country' onclick=\"showCountryView('" + country.countryCode + "');\"></div>")
+    	    		var row = $("<div class='table-row clickable' data-link='country' onclick=\"navigateTo('/country/" + country.countryCode + "');\"></div>")
     	    		row.append("<div class='cell'>" + getRankingImg(championDetails.ranking) + "</div>")
     	    		row.append("<div class='cell'>" + getCountryFlagImg(country.countryCode) + country.name + "</div>")
     	    		$('#championedCountriesList').append(row)
     	    	})
-
-    	    	populateNavigation($('#championedCountriesList'))
 
     	    	if ($(championedCountries).length == 0) {
     	    		var row = $("<div class='table-row'></div>")
@@ -1165,10 +1377,10 @@ function updateChampionedCountriesDetails() {
 
 function updateChampionedAirportsDetails() {
 	$('#championedAirportsList').children('div.table-row').remove()
-	
+
 	$.ajax({
 		type: 'GET',
-		url: "airlines/" + activeAirline.id + "/championed-airports",
+		url: "/airlines/" + activeAirline.id + "/championed-airports",
 	    contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
 	    success: function(championedAirports) {
@@ -1181,8 +1393,6 @@ function updateChampionedAirportsDetails() {
 	    		$('#championedAirportsList').append(row)
 	    	})
 
-	    	populateNavigation($('#championedAirportsList'))
-	    	
 	    	if ($(championedAirports).length == 0) {
 	    		var row = $("<div class='table-row'></div>")
 	    		row.append("<div class='cell'>-</div>")
@@ -1197,29 +1407,44 @@ function updateChampionedAirportsDetails() {
 	            console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
 	    }
 	});
-	
+
 }
 
 
-function selectSheet(tab, sheet) {
-    tab.siblings().removeClass("selected")
-	tab.addClass("selected")
-    var type = tab.data('type')
-    if (type === 'income') {
-        updateIncomeSheet(loadedIncomes[officePeriod][officeSheetPage])
-        updateIncomeChart()
-    } else if (type === 'cashFlow') {
-        updateCashFlowSheet(loadedCashFlows[officePeriod][officeSheetPage])
-    	updateCashFlowChart()
-    }
+function selectSheet(tabEl) {
+	const type = tabEl.dataset.type
+	const config = SHEET_CONFIG[type]
+	if (!config) return
 
-	sheet.siblings(".sheet").hide()
-	sheet.show()
+	tabEl.closest('.sheetOptions').querySelectorAll('.cell').forEach(el => el.classList.remove('selected'))
+	tabEl.classList.add('selected')
+
+	// Disable period dropdown for the ledger tab
+	const periodSelect = document.querySelector('#officeCanvas select.period')
+	if (periodSelect) periodSelect.disabled = (type === 'ledger')
+
+	const targetSheet = document.getElementById(config.sheetId)
+	targetSheet.parentElement.querySelectorAll('.sheet').forEach(sheet => {
+		if (sheet === targetSheet) {
+			sheet.style.display = ''
+		} else {
+			allSheetChartIds.forEach(id => {
+				const el = sheet.querySelector(`#${id}`)
+				if (el && window.ChartUtils) window.ChartUtils.destroyChart(el)
+			})
+			sheet.style.display = 'none'
+		}
+	})
+
+	const data = config.getData()
+	config.updateSheet(data[getSheetPage(type)])
+	config.updateChart()
+	renderSheetNav(type)
 }
 
 function updateResetAirlineInfo() {
 	var airlineId = activeAirline.id
-	var url = "airlines/" + airlineId + "/reset-consideration"
+	var url = "/airlines/" + airlineId + "/reset-consideration"
     $.ajax({
 		type: 'GET',
 		url: url,
@@ -1245,7 +1470,7 @@ function updateResetAirlineInfo() {
 	    	} else {
 	    		$("#officeCanvas #resetBalance").text('-' + commaSeparateNumber(result.overall * -1)) //to avoid the () negative number which could be confusing
 	    	}
-	    	
+
 	    	$('#popover-reset .airplanes').text(commaSeparateNumber(result.airplanes))
 	    	$('#popover-reset .bases').text(commaSeparateNumber(result.bases))
 	    	$('#popover-reset .assets').text(commaSeparateNumber(result.assets))
@@ -1264,12 +1489,12 @@ function updateResetAirlineInfo() {
 
 function resetAirline(keepAssets) {
 	$.ajax({
-		type: 'GET',
-		url: "airlines/" + activeAirline.id + "/reset?keepAssets=" + keepAssets,
+		type: 'POST',
+		url: "/airlines/" + activeAirline.id + "/reset?keepAssets=" + keepAssets,
 	    contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
 	    success: function() {
-	    	updateAllPanels(activeAirline.id)
+	    	updateAirlineInfo(activeAirline.id)
 	    	selectedLink = undefined
 	    	showWorldMap()
 	    },
@@ -1278,5 +1503,20 @@ function resetAirline(keepAssets) {
 	            console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
 	    }
 	});
-	
+
+}
+
+function updateManagerStatus() {
+    $.ajax({
+        type: 'GET',
+        url: '/delegates/airline/' + activeAirline.id,
+        contentType: 'application/json; charset=utf-8',
+        dataType: 'json',
+        success: function(delegateInfo) {
+            refreshAirlineDelegateStatus($('#managerStatus .managerGroups'), delegateInfo)
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            console.log('AJAX error: ' + textStatus + ' : ' + errorThrown)
+        }
+    })
 }

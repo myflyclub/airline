@@ -1,6 +1,7 @@
 package com.patson.data
 
 import java.sql.Statement
+import scala.util.Using
 
 import com.patson.LinkSimulation.PassengerTransportStats
 import com.patson.data.Constants._
@@ -62,33 +63,25 @@ object EventSource {
   }
 
   def saveOlympicsVoteRounds(eventId: Int, rounds : List[OlympicsVoteRound]) = {
-    val connection = Meta.getConnection()
-
-    val purgeStatement = connection.prepareStatement("DELETE FROM " + OLYMPIC_VOTE_ROUND_TABLE + " WHERE event = ?")
-    purgeStatement.setInt(1, eventId)
-    purgeStatement.execute()
-
-    val statement = connection.prepareStatement("REPLACE INTO " + OLYMPIC_VOTE_ROUND_TABLE + "(event, airport, round, vote) VALUES(?,?,?,?)")
-
-    connection.setAutoCommit(false)
-
-    try {
-      rounds.foreach { voteRound =>
-        voteRound.votes.foreach {
-          case(airport, vote) =>
-            statement.setInt(1, eventId)
-            statement.setInt(2, airport.id)
-            statement.setInt(3, voteRound.round)
-            statement.setInt(4, vote)
-            statement.executeUpdate()
+    Using.resource(Meta.getConnection()) { connection =>
+      Using.resource(connection.prepareStatement("DELETE FROM " + OLYMPIC_VOTE_ROUND_TABLE + " WHERE event = ?")) { purgeStatement =>
+        purgeStatement.setInt(1, eventId)
+        purgeStatement.execute()
+      }
+      connection.setAutoCommit(false)
+      Using.resource(connection.prepareStatement("REPLACE INTO " + OLYMPIC_VOTE_ROUND_TABLE + "(event, airport, round, vote) VALUES(?,?,?,?)")) { statement =>
+        rounds.foreach { voteRound =>
+          voteRound.votes.foreach {
+            case(airport, vote) =>
+              statement.setInt(1, eventId)
+              statement.setInt(2, airport.id)
+              statement.setInt(3, voteRound.round)
+              statement.setInt(4, vote)
+              statement.executeUpdate()
+          }
         }
       }
-
       connection.commit()
-    } finally {
-      purgeStatement.close()
-      statement.close()
-      connection.close()
     }
   }
 
@@ -161,57 +154,42 @@ object EventSource {
 
 
   def saveOlympicsCandidates(eventId: Int, airports : List[Airport]) = {
-    val connection = Meta.getConnection()
-
-    val purgeStatement = connection.prepareStatement("DELETE FROM " + OLYMPIC_CANDIDATE_TABLE + " WHERE event = ?")
-    purgeStatement.setInt(1, eventId)
-    purgeStatement.execute()
-
-    val statement = connection.prepareStatement("INSERT INTO " + OLYMPIC_CANDIDATE_TABLE + "(event, airport) VALUES(?,?)")
-
-    connection.setAutoCommit(false)
-
-    try {
-      airports.foreach { airport =>
-        statement.setInt(1, eventId)
-        statement.setInt(2, airport.id)
-
-        statement.executeUpdate()
+    Using.resource(Meta.getConnection()) { connection =>
+      Using.resource(connection.prepareStatement("DELETE FROM " + OLYMPIC_CANDIDATE_TABLE + " WHERE event = ?")) { purgeStatement =>
+        purgeStatement.setInt(1, eventId)
+        purgeStatement.execute()
       }
-
+      connection.setAutoCommit(false)
+      Using.resource(connection.prepareStatement("INSERT INTO " + OLYMPIC_CANDIDATE_TABLE + "(event, airport) VALUES(?,?)")) { statement =>
+        airports.foreach { airport =>
+          statement.setInt(1, eventId)
+          statement.setInt(2, airport.id)
+          statement.executeUpdate()
+        }
+      }
       connection.commit()
-    } finally {
-      statement.close()
-      connection.close()
     }
   }
 
   def saveOlympicsAffectedAirports(eventId: Int, airports : Map[Airport, List[Airport]]) = {
-    val connection = Meta.getConnection()
-
-    val purgeStatement = connection.prepareStatement("DELETE FROM " + OLYMPIC_AFFECTED_AIRPORT_TABLE + " WHERE event = ?")
-    purgeStatement.setInt(1, eventId)
-    purgeStatement.execute()
-
-    val statement = connection.prepareStatement("REPLACE INTO " + OLYMPIC_AFFECTED_AIRPORT_TABLE + "(event, principal_airport, affected_airport) VALUES(?,?,?)")
-
-    connection.setAutoCommit(false)
-
-    try {
-      airports.foreach {
-        case(principalAirport, affectedAirports) =>
-          affectedAirports.foreach { affectedAirport =>
-            statement.setInt(1, eventId)
-            statement.setInt(2, principalAirport.id)
-            statement.setInt(3, affectedAirport.id)
-            statement.executeUpdate()
-          }
-     }
-
+    Using.resource(Meta.getConnection()) { connection =>
+      Using.resource(connection.prepareStatement("DELETE FROM " + OLYMPIC_AFFECTED_AIRPORT_TABLE + " WHERE event = ?")) { purgeStatement =>
+        purgeStatement.setInt(1, eventId)
+        purgeStatement.execute()
+      }
+      connection.setAutoCommit(false)
+      Using.resource(connection.prepareStatement("REPLACE INTO " + OLYMPIC_AFFECTED_AIRPORT_TABLE + "(event, principal_airport, affected_airport) VALUES(?,?,?)")) { statement =>
+        airports.foreach {
+          case(principalAirport, affectedAirports) =>
+            affectedAirports.foreach { affectedAirport =>
+              statement.setInt(1, eventId)
+              statement.setInt(2, principalAirport.id)
+              statement.setInt(3, affectedAirport.id)
+              statement.executeUpdate()
+            }
+        }
+      }
       connection.commit()
-    } finally {
-      statement.close()
-      connection.close()
     }
   }
 

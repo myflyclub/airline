@@ -20,7 +20,7 @@ function updateSantaClausModal() {
     var table = $("#santaClausGuessTable")
     table.children(".table-row").remove()
 
-    var url = "santa-claus/attempt-status/" + activeAirportId + "/" + activeAirline.id
+    var url = "/santa-claus/attempt-status/" + activeAirportId + "/" + activeAirline.id
     $.ajax({
     		type: 'GET',
     		url: url,
@@ -116,7 +116,7 @@ function refreshBackgroundAnimation() {
 }
 
 function getAwardOptionsTable() {
-    var url = "santa-claus/award-options/" + activeAirline.id
+    var url = "/santa-claus/award-options/" + activeAirline.id
     var table = $("#santaClausRewardOptionsTable")
     table.children(".table-row").remove()
 
@@ -142,9 +142,9 @@ function getAwardOptionsTable() {
 }
 
 function pickSantaClassAward(optionId) {
-	var url = "santa-claus/pick-award/" + activeAirline.id + "/" + optionId
+	var url = "/santa-claus/pick-award/" + activeAirline.id + "/" + optionId
 	$.ajax({
-        		type: 'GET',
+        		type: 'POST',
         		url: url,
         	    contentType: 'application/json; charset=utf-8',
         	    dataType: 'json',
@@ -160,10 +160,10 @@ function pickSantaClassAward(optionId) {
 }
 
 function guessSantaClaus() {
-	var url = "santa-claus/guess/" + activeAirportId + "/" + activeAirline.id + "/" +  $("#santaClausModal .difficulty:checked").val()
+	var url = "/santa-claus/guess/" + activeAirportId + "/" + activeAirline.id + "/" +  $("#santaClausModal .difficulty:checked").val()
 
 	$.ajax({
-		type: 'GET',
+		type: 'POST',
 		url: url,
 	    contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
@@ -179,32 +179,32 @@ function guessSantaClaus() {
 
 
 
-var christmasMarker = false
-var snowflakeCount = 50
-function toggleChristmasMarker() {
-	if (!christmasMarker) {
-		currentAnimationStatus = true
-		christmasMarker = true
-		document.getElementById('christmasMusic').play()
-		$("body").addClass('christmas')
+// var christmasMarker = false
+// var snowflakeCount = 50
+// function toggleChristmasMarker() {
+// 	if (!christmasMarker) {
+// 		currentAnimationStatus = true
+// 		christmasMarker = true
+// 		document.getElementById('christmasMusic').play()
+// 		$("body").addClass('christmas')
 
-        putSnowflakes($("#main"), snowflakeCount)
-	} else {
-		christmasMarker = false
-		document.getElementById('christmasMusic').pause()
-		$.each(flightMarkers, function(index, markersByLinkId) {
-			$.each(markersByLinkId.markers, function(index2, marker) {
-				marker.icon = {
-			        url: "assets/images/markers/dot.png",
-			        origin: new google.maps.Point(0, 0),
-			        anchor: new google.maps.Point(6, 6),
-			    };
-			})
-		})
-		$("body").removeClass('christmas')
-		$("#main").children(".snowflake").remove()
-	}
-}
+//         putSnowflakes($("#main"), snowflakeCount)
+// 	} else {
+// 		christmasMarker = false
+// 		document.getElementById('christmasMusic').pause()
+// 		$.each(flightMarkers, function(index, markersByLinkId) {
+// 			$.each(markersByLinkId.markers, function(index2, marker) {
+// 				marker.icon = {
+// 			        url: "/assets/images/markers/dot.png",
+// 			        origin: new google.maps.Point(0, 0),
+// 			        anchor: new google.maps.Point(6, 6),
+// 			    };
+// 			})
+// 		})
+// 		$("body").removeClass('christmas')
+// 		$("#main").children(".snowflake").remove()
+// 	}
+// }
 
 //.snowflake:nth-of-type(1){left:10%;-webkit-animation-delay:1s,1s;animation-delay:1s,1s}
 //.snowflake:nth-of-type(2){left:20%;-webkit-animation-delay:6s,.5s;animation-delay:6s,.5s}
@@ -237,14 +237,14 @@ function removeSnowflakes(container) {
 
 
 var flightMarkerImageWeight = {
-	"assets/images/markers/dot.png" : 2000,
-	"assets/images/markers/christmas/snowflake.png" : 200,
-	"assets/images/markers/christmas/star.png" : 50,
-	"assets/images/markers/christmas/holly.png" : 20,
-	"assets/images/markers/christmas/bauble.png" : 20,
-	"assets/images/markers/christmas/candy-cane.png" : 10,
-	"assets/images/markers/christmas/gingerbread-man.png" : 10,
-	"assets/images/markers/christmas/santa-hat.png" : 2,
+	"/assets/images/markers/dot.png" : 2000,
+	"/assets/images/markers/christmas/snowflake.png" : 200,
+	"/assets/images/markers/christmas/star-full.svg" : 50,
+	"/assets/images/markers/christmas/holly.png" : 20,
+	"/assets/images/markers/christmas/bauble.png" : 20,
+	"/assets/images/markers/christmas/candy-cane.png" : 10,
+	"/assets/images/markers/christmas/gingerbread-man.png" : 10,
+	"/assets/images/markers/christmas/santa-hat.png" : 2,
 }
 
 var flightMarkerWeightTotal = 0

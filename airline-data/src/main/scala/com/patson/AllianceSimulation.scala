@@ -1,134 +1,98 @@
 package com.patson
 
-import com.patson.data.{AirlineSource, AllianceMissionSource, AllianceSource}
+import com.patson.data.{AirlineSource, AllianceSource}
 import com.patson.model._
-import com.patson.model.airplane.Airplane
 import com.patson.model.alliance._
 import com.patson.util.{AirlineCache, AirportChampionInfo, CountryChampionInfo}
 
-import scala.collection.{MapView, mutable}
-import scala.collection.mutable.ListBuffer
-import scala.util.Random
-
+import scala.collection.{immutable, mutable}
 
 object AllianceSimulation {
-  def simulate(cycle : Int, flightLinkResult : List[LinkConsumptionDetails], loungeResult : Map[Lounge, LoungeConsumptionDetails], airportChampionInfo : List[AirportChampionInfo], countryChampionInfo : List[CountryChampionInfo]) = {
-    AllianceSource.deleteAllianceStatsBeforeCutoff(cycle - AllianceMissionSimulation.MAX_HISTORY_DURATION)
+  val BOOKKEEPING_ENTRIES_COUNT = 25
 
-    val activeMissions =  AllianceMissionSource.loadAllianceMissionsAfterCutoff(cycle - AllianceMissionSimulation.MISSION_DURATION)
+  def simulate(flightLinkResult: List[LinkConsumptionDetails], loungeResult: List[LoungeConsumptionDetails], paxStatsByAirlineId: immutable.Map[Int, AirlinePaxStat], airportChampionInfo: List[AirportChampionInfo], cycle: Int): Unit = {
+    println("Tallying alliance stats...")
+    val allActiveAlliances = AllianceSource.loadAllAlliancesEstablished(true)
+    val airportRepByAirlineId: Map[Int, Int] = airportChampionInfo.groupBy(_.loyalist.airline.id).mapValues(_.map(_.reputationBoost).sum.toInt).toMap
+    val loungePaxByAirlineId: Map[Int, Int] = loungeResult.map(info => info.lounge.airline.id -> info.allianceVisitors).toMap
+    val flightProfitsByAirlineId: Map[Int, Int] = flightLinkResult.map(linkConsumption => linkConsumption.link.airline.id -> linkConsumption.profit).toMap
 
-    val eligibleAirlines = ListBuffer[Airline]() //only process airlines with active membership with established alliance
+    val allianceStatsList: List[AllianceStats] = allActiveAlliances.map { alliance =>
+      // Fold member stats into a single 8-tuple of totals
+      val memberTotals: (Long, Long, Long, Long, Int, Long, Long, Long) = alliance.members.foldLeft((0L, 0L, 0L, 0L, 0, 0L, 0L, 0L)) {
+        case ((travTot, busTot, eliteTot, tourTot, repTot, capTot, loungeTot, profitTot), allianceMember) =>
+          val airlineId = allianceMember.airline.id
+          val paxStats = paxStatsByAirlineId.getOrElse(airlineId, AirlinePaxStat.empty)
+          val traveler = paxStats.total - (paxStats.business + paxStats.tourists + paxStats.elites)
+          val airportRep = airportRepByAirlineId.getOrElse(airlineId, 0).toInt
+          val marketCap: Long = (allianceMember.airline.getSharesOutstanding().toLong * allianceMember.airline.getStockPrice()).toLong
+          val loungePax = loungePaxByAirlineId.getOrElse(airlineId, 0)
+          val flightProfit = flightProfitsByAirlineId.getOrElse(airlineId, 0)
 
-    val missionStartCycleByAllianceId = activeMissions.groupBy(_.allianceId).view.mapValues(_(0).startCycle)
-    val missionAirlines = ListBuffer[Airline]() //only airlines that have active membership BEFORE the mission starts
-    val eligibleAlliances = AllianceSource.loadAllAlliancesEstablished()
-    val missionAllianceIds = activeMissions.map(_.allianceId).toSet
-    val missionAlliances = eligibleAlliances.filter(alliance => missionAllianceIds.contains(alliance.id))
+          (
+            travTot + traveler,
+            busTot + paxStats.business,
+            eliteTot + paxStats.elites,
+            tourTot + paxStats.tourists,
+            repTot + airportRep,
+            capTot + marketCap,
+            loungeTot + loungePax,
+            profitTot + flightProfit
+          )
+      }
 
-    eligibleAlliances.foreach { alliance =>
-      alliance.members.foreach { member =>
-        if (member.role != AllianceRole.APPLICANT) {
-          eligibleAirlines.append(member.airline)
-          if (missionStartCycleByAllianceId.contains(alliance.id) && member.joinedCycle < missionStartCycleByAllianceId(alliance.id)) {
-            missionAirlines.append(member.airline)
-          }
+      AllianceStats(alliance, memberTotals._1, memberTotals._2, memberTotals._3, memberTotals._4, memberTotals._5, memberTotals._6, memberTotals._7, memberTotals._8, cycle)
+    }
+
+    AllianceSource.saveAllianceStats(allianceStatsList)
+
+    // Accumulate at period boundaries
+    if ((cycle + 1) % Period.numberWeeks(Period.QUARTER) == 0)
+      computeAndSaveAccumulation(cycle, allActiveAlliances, Period.QUARTER)
+    if ((cycle + 1) % Period.numberWeeks(Period.YEAR) == 0)
+      computeAndSaveAccumulation(cycle, allActiveAlliances, Period.YEAR)
+
+    // Period-aware purging
+    AllianceSource.deleteAllianceStatsBefore(cycle - BOOKKEEPING_ENTRIES_COUNT, Period.WEEKLY)
+    AllianceSource.deleteAllianceStatsBefore(cycle - BOOKKEEPING_ENTRIES_COUNT * Period.numberWeeks(Period.QUARTER), Period.QUARTER)
+    AllianceSource.deleteAllianceStatsBefore(cycle - BOOKKEEPING_ENTRIES_COUNT * Period.numberWeeks(Period.YEAR), Period.YEAR)
+  }
+
+  def computeAndSaveAccumulation(cycle: Int, alliances: List[Alliance], period: Period.Value): Unit = {
+    val periodWeeks = Period.numberWeeks(period)
+    val startCycle = cycle - (cycle % periodWeeks) + 1
+    val endCycle = cycle
+
+    val weeklyStatsByAlliance = AllianceSource.loadAllianceStatsByCycleRange(startCycle, endCycle, Period.WEEKLY)
+      .groupBy(_.alliance.id)
+
+    val periodStats = alliances.flatMap { alliance =>
+      weeklyStatsByAlliance.get(alliance.id).filter(_.nonEmpty).map { weeks =>
+        val count = weeks.length
+        val summed = weeks.reduce { (acc, week) =>
+          AllianceStats(
+            alliance = acc.alliance,
+            travelerPax = acc.travelerPax + week.travelerPax,
+            businessPax = acc.businessPax + week.businessPax,
+            elitePax = acc.elitePax + week.elitePax,
+            touristPax = acc.touristPax + week.touristPax,
+            airportRep = acc.airportRep + week.airportRep,
+            airlineMarketCap = acc.airlineMarketCap + week.airlineMarketCap,
+            loungeVisit = acc.loungeVisit + week.loungeVisit,
+            profit = acc.profit + week.profit,
+            cycle = cycle,
+            period = period
+          )
         }
+        // Average the per-member metrics; sum the flow metrics
+        summed.copy(
+          airportRep = summed.airportRep / count,
+          airlineMarketCap = summed.airlineMarketCap / count
+        )
       }
     }
 
-    val eligibleAirlineIds = eligibleAirlines.map(_.id)
-    val eligibleFlightLinkResult = flightLinkResult.filter(linkResult => eligibleAirlineIds.contains(linkResult.link.airline.id))
-    val eligibleLoungeVisit = loungeResult.filter {
-      case (lounge, _) => eligibleAirlineIds.contains(lounge.airline.id)
-    }.map(_._2).toList
-    val eligibleAirportChampionInfo = airportChampionInfo.filter(entry => eligibleAirlineIds.contains(entry.loyalist.airline.id))
-    val eligibleCountryChampionInfo = countryChampionInfo.filter(entry => eligibleAirlineIds.contains(entry.airline.id))
-
-    val eligibleStats = buildAllianceStats(cycle, eligibleAlliances, eligibleFlightLinkResult, eligibleLoungeVisit, eligibleAirportChampionInfo, eligibleCountryChampionInfo)
-
-//    val missionAirlineIds = missionAirlines.map(_.id)
-//    val missionFlightLinkResult = flightLinkResult.filter(linkResult => missionAirlineIds.contains(linkResult.link.airline.id))
-//    val missionLoungeVisit = loungeResult.filter {
-//      case (lounge, _) => missionAirlineIds.contains(lounge.airline.id)
-//    }.map(_._2).toList
-//    val missionAirportChampionInfo = airportChampionInfo.filter(entry => missionAirlineIds.contains(entry.loyalist.airline.id))
-//    val missionCountryChampionInfo = countryChampionInfo.filter(entry => missionAirlineIds.contains(entry.airline.id))
-
-//    val missionStats = buildAllianceStats(cycle, missionAlliances, missionFlightLinkResult, missionLoungeVisit, missionAirportChampionInfo, missionCountryChampionInfo)
-
-    AllianceSource.saveAllianceStats(eligibleStats)
-//    AllianceSource.saveAllianceMissionStats(missionStats)
-
-//    println("Alliance mission simulation")
-//    AllianceMissionSimulation.simulate(cycle, eligibleStats.map(entry => (entry.alliance.id, entry)).toMap, missionStats.map(entry => (entry.alliance.id, entry)).toMap)
+    AllianceSource.saveAllianceStats(periodStats)
   }
 
-  /**
-    *
-    * @param cycle
-    * @param flightLinkResult
-    * @param loungeVisits
-    * @param airportChampionInfo
-    * @param countryChampionInfo
-    * @return
-    */
-  def buildAllianceStats(cycle : Int, alliances : List[Alliance], flightLinkResult : List[LinkConsumptionDetails], loungeVisits : List[LoungeConsumptionDetails],  airportChampionInfo : List[AirportChampionInfo], countryChampionInfo : List[CountryChampionInfo]) : List[AllianceStats] = {
-    val linkResultByAllianceId : Map[Int, List[LinkConsumptionDetails]] = flightLinkResult.filter(_.link.airline.getAllianceId().isDefined).groupBy(_.link.airline.getAllianceId().get) //check isDefined in case something changed in between
-    val linkRidershipByAllianceId = mutable.HashMap[Int, LinkClassValues]()
-    val revenueByAllianceId =  mutable.HashMap[Int, Long]()
-    linkResultByAllianceId.foreach {
-      case(allianceId, linkResult) =>
-        val soldSeats = linkResult.map(_.link.soldSeats)
-        val revenue = linkResult.map(_.revenue.toLong).sum
-        val totalPaxByClass : Map[LinkClass, Int] = Map(ECONOMY -> soldSeats.map(_.economyVal).sum, BUSINESS -> soldSeats.map(_.businessVal).sum, FIRST -> soldSeats.map(_.firstVal).sum)
-        linkRidershipByAllianceId.put(allianceId, LinkClassValues.getInstanceByMap(totalPaxByClass))
-        revenueByAllianceId.put(allianceId, revenue)
-    }
-
-    val loungeVisitsByAllianceId = loungeVisits.filter(_.lounge.allianceId.isDefined).groupBy(_.lounge.allianceId.get).view.mapValues { consumptionEntries =>
-      consumptionEntries.map(_.selfVisitors.toLong).sum + consumptionEntries.map(_.allianceVisitors.toLong).sum
-    }
-
-    val airportRankingByAllianceId : MapView[Int, List[AirportRankingCount]] = airportChampionInfo.filter(_.loyalist.airline.getAllianceId().isDefined).groupBy(_.loyalist.airline.getAllianceId().get).view.mapValues { entriesByAlliance =>
-      entriesByAlliance.groupBy(entry => (entry.loyalist.airport.size, entry.ranking)).map {
-        case ((airportScale, ranking), championEntries) => AirportRankingCount(airportScale, ranking, championEntries.size)
-      }.toList
-    }
-
-    val countryRankingByAllianceId : MapView[Int, List[CountryRankingCount]] = countryChampionInfo.filter(_.airline.getAllianceId().isDefined).groupBy(_.airline.getAllianceId().get).view.mapValues { entriesByAlliance =>
-      entriesByAlliance.groupBy(entry => (getCountryPopulationThreshold(entry.country.airportPopulation), entry.ranking)).map {
-        case ((populationThreshold, ranking), championEntries) => CountryRankingCount(populationThreshold, ranking, championEntries.size)
-      }.toList
-    }
-
-    val loyalistByAllianceId : MapView[Int, Long] = airportChampionInfo.filter(_.loyalist.airline.getAllianceId().isDefined).groupBy(_.loyalist.airline.getAllianceId().get).view.mapValues { entriesByAlliance =>
-      entriesByAlliance.map(_.loyalist.amount.toLong).sum
-    }
-
-
-    alliances.map { alliance =>
-      AllianceStats(alliance,
-        linkRidershipByAllianceId.getOrElse(alliance.id, LinkClassValues.getInstance()),
-        loungeVisitsByAllianceId.getOrElse(alliance.id, 0),
-        loyalistByAllianceId.getOrElse(alliance.id, 0),
-        revenueByAllianceId.getOrElse(alliance.id, 0),
-        airportRankingByAllianceId.getOrElse(alliance.id, List.empty),
-        countryRankingByAllianceId.getOrElse(alliance.id, List.empty),
-        cycle)
-    }
-  }
-
-  def getCountryPopulationThreshold(population : Long) : Long = {
-    var walker = 0
-    COUNTRY_POPULATION_THRESHOLD.foreach { threshold =>
-      if (population < threshold) {
-        return walker
-      }
-      walker = threshold
-    }
-
-    walker
-  }
-  val COUNTRY_POPULATION_THRESHOLD = List(1_000_000, 10_000_000, 100_000_000)
 }
-

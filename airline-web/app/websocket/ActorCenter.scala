@@ -5,9 +5,9 @@ import org.apache.pekko.remote.{AssociatedEvent, DisassociatedEvent, RemotingLif
 import com.patson.model.Airline
 import com.patson.model.notice.{AirlineNotice, NoticeCategory, TrackingNotice}
 import com.patson.stream.{CycleCompleted, CycleInfo, KeepAlivePing, KeepAlivePong, ReconnectPing, SimulationEvent}
-import com.patson.util.{AirlineCache, AirplaneModelDiscountCache, AirplaneOwnershipCache, AirportCache}
+import com.patson.util.{AirlineCache, AirplaneOwnershipCache, AirportCache, AirportStatisticsCache}
 import com.typesafe.config.ConfigFactory
-import controllers.{AirlineTutorial, AirportUtil, GooglePhotoUtil, PromptUtil, SearchUtil}
+import controllers.{AirlineTutorial, AirportUtil, GooglePhotoUtil, ResponseCache}
 import models.PendingAction
 import play.api.libs.json.{JsNumber, Json}
 import websocket.chat.TriggerPing
@@ -114,12 +114,13 @@ sealed class LocalMainActor(remoteActor : ActorSelection) extends Actor {
         case CycleCompleted(cycle, cycleEndTime) =>
           println(s"${self.path} invalidating cache")
           MyWebSocketActor.lastSimulatedCycle = cycle
+          controllers.cachedCurrentCycle = cycle
           AirlineCache.invalidateAll()
           AirportCache.invalidateAll()
+          AirportStatisticsCache.invalidateAll()
           AirplaneOwnershipCache.invalidateAll()
-          AirplaneModelDiscountCache.invalidateAll()
+          ResponseCache.invalidateAll()
           AirportUtil.refreshAirports()
-          SearchUtil.refreshAlliances() //as sim might have deleted alliances
           if (bannerEnabled) {
             println("Banner is enabled. Refreshing banner on cycle complete")
             GooglePhotoUtil.refreshBanners()
@@ -138,6 +139,7 @@ sealed class LocalMainActor(remoteActor : ActorSelection) extends Actor {
 //    }
     case KeepAlivePing =>
       remoteActor ! KeepAlivePing
+      pendingResetTask.foreach(_.cancel())
       val resetTask = new ResetTask(self, remoteActor)
       timer.schedule(resetTask, resetTimeout)
       pendingResetTask = Some(resetTask)
@@ -152,7 +154,7 @@ sealed class LocalMainActor(remoteActor : ActorSelection) extends Actor {
   override def preStart() = {
     super.preStart()
     remoteActor ! "subscribe"
-    timer.scheduleAtFixedRate(new TimerTask {
+    timer.schedule(new TimerTask {
       override def run() : Unit = {
           self ! KeepAlivePing
       }
@@ -171,7 +173,7 @@ sealed class ReconnectActor(remoteActor : ActorSelection) extends Actor {
   override def preStart() = {
     super.preStart()
     context.system.eventStream.subscribe(self, classOf[RemotingLifecycleEvent])
-    remoteActor ! KeepAlivePing() //establish connection
+    remoteActor ! KeepAlivePing //establish connection
   }
   override def receive = {
     case lifeCycleEvent : DisassociatedEvent => {
@@ -191,6 +193,7 @@ sealed class ReconnectActor(remoteActor : ActorSelection) extends Actor {
         disconnected = false
       }
     }
+    case _ => // ignore unhandled messages (e.g. KeepAlivePong reply from initial connection ping)
   }
   def startPing(remoteActor : ActorSelection) = {
     new Thread() {
@@ -229,47 +232,7 @@ object ActorCenter {
 
 
   val reconnectActor = remoteSystem.actorOf(Props(classOf[ReconnectActor], remoteMainActor), "reconnect-actor")
-  reconnectActor ! remoteMainActor //why?
 
-
-
-
-//  sealed class PingActor extends Actor {
-//    override def preStart = {
-//      system.eventStream.subscribe(system.actorOf(Props[PingActor]), classOf[AssociationEvent])
-//      reconnect(Duration.zero)
-//    }
-//    override def receive = {
-//      case event : AssociationEvent  => println(event)
-//    }
-//  }
-
-//  def subscribe(f: (SimulationEvent, Any) => Option[Unit], subscriberId: String) = {
-//    val props = Props(classOf[LocalActor], f)
-//    val localSubscriber = system.actorOf(props, name = getLocalSubscriberName(subscriberId))
-//    system.eventStream.subscribe(localSubscriber, classOf[(SimulationEvent, Any)])
-//
-//    println("Subscriber " + localSubscriber.path + " subscribed to system event stream")
-//
-//    //now get updated cycle info once
-//    remoteMainActor.resolveOne()(Timeout(5000, TimeUnit.MILLISECONDS)).onComplete {
-//      case Success(actor) => actor.!("getCycleInfo")(localSubscriber)
-//      case Failure(exception) =>
-//        println(s"Remote main actor is no longer found... $exception")
-//    }
-//
-//  }
-
-
-//  def unsubscribe(subscriberid : String) = {
-//    system.actorSelection(system./(getLocalSubscriberName(subscriberid))).resolveOne()(Timeout(10, TimeUnit.SECONDS)).map {
-//      actorRef =>
-//        println("Unsubscribing " + actorRef.path)
-//        system.eventStream.unsubscribe(actorRef)
-//        actorRef ! PoisonPill
-//        actorRef
-//    }
-//  }
 
   def getLocalSubscriberName(subscriberId : String) = {
     "local-subscriber-" + subscriberId

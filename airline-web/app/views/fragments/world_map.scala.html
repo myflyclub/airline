@@ -1,0 +1,915 @@
+				<div id="worldMapCanvas">
+					<div id="map" class="mainPanel"
+						data-headquarter-marker='@routes.Assets.versioned("images/markers/headquarter.svg")'
+						data-base-marker='@routes.Assets.versioned("images/markers/base.svg")'
+						data-base-alliance-marker='@routes.Assets.versioned("images/markers/baseAlliance.svg")'
+						data-base-alliancehq-marker='@routes.Assets.versioned("images/markers/baseAllianceHQ.svg")'
+						data-large-airport-marker='@routes.Assets.versioned("images/markers/airport-darker.svg")'
+						data-medium-airport-marker='@routes.Assets.versioned("images/markers/airport.svg")'
+						data-small-airport-marker='@routes.Assets.versioned("images/markers/airport-lighter.svg")'
+						data-gateway-airport-marker='@routes.Assets.versioned("images/markers/airport-gateway.svg")'
+						data-domestic-airport-marker='@routes.Assets.versioned("images/markers/airport-domestic.svg")'
+						data-disabled-airport-marker='@routes.Assets.versioned("images/markers/airport-transparent.svg")'>
+					</div>
+					<div id="sidePanel" class="sidePanel mapOverlayPanel" style="display:none;">
+
+						<div class="section">
+							<div id="linkDetails" class="flex-container-width-half">
+								<div id="linkCurrentDetails">
+									<h4 class="section-title">Flight <span id="linkFlightCode"></span></h4>
+									<div class="pb-5" style="display:flex;">
+										<div class="link-decoration">
+											<div class="link-decoration-circle"></div>
+											<div class="link-decoration-line"></div>
+											<div class="link-decoration-circle"></div>
+										</div>
+										<div>
+											<p class="text-base pb-2 leading-tight"><a class="clickable" id="linkFromAirport"></a></p>
+											<p class="leading-snug"><span id="linkDistance"></span> | <span id="linkDuration"></span></p>
+											<p class="pb-2"><i id="linkAirplaneModel"></i></p>
+											<p class="text-base leading-tight"><a class="clickable" id="linkToAirport"></a></p>
+										</div>
+									</div>
+									<h5 class="leading-snug opacity-80">Price</h5>
+									<div class="class-values">
+										<p class="class-value-child-helper economy">economy</p>
+										<p class="class-value-child-helper business">business</p>
+										<p class="class-value-child-helper first">first class</p>
+									</div>
+									<div id="linkCurrentPrice" class="pb-3" style="display:flex; align-items:center; gap:6px;">
+									<div class="class-values text-base font-mono">
+										<span class="price-wrapper class-value-child"><input type="number" id="quickPriceEconomy" class="quick-price-input price-input" data-class="economy" min="1"/></span>
+										<span class="price-wrapper class-value-child"><input type="number" id="quickPriceBusiness" class="quick-price-input price-input" data-class="business" min="1"/></span>
+										<span class="price-wrapper class-value-child"><input type="number" id="quickPriceFirst" class="quick-price-input price-input" data-class="first" min="1"/></span>
+									</div>
+									<img id="quickPriceSave" src='@routes.Assets.versioned("images/icons/tick.svg")' class="svg img-button" style="display:none; width:18px;" title="Save prices" onclick="saveCurrentLinkPrice()"/>
+								</div>
+								<div id="quickPriceMessage" style="font-size:80%; min-height:1em; margin-top:-8px; padding-bottom:4px;"></div>
+									<h5 class="leading-snug opacity-80">Capacity</h5>
+									<div class="class-values">
+										<p class="class-value-child-helper economy">economy</p>
+										<p class="class-value-child-helper business">business</p>
+										<p class="class-value-child-helper first">first class</p>
+									</div>
+									<div class="pb-3">
+										<div class="text-base font-mono" id="linkCurrentCapacity"></div>
+										<div class="future" style="display:flex; align-items: center;">
+											<span class="capacity"></span><img class="info svg awaitingAirplanes" src='@routes.Assets.versioned("/images/icons/information.svg")' title="Capacity when all airplanes are delivered">
+										</div>
+									</div>
+									<input type="hidden" id="actionLinkId">
+									<input type="hidden" id="linkFromAirportId">
+									<input type="hidden" id="linkToAirportId">
+									<button type="button" class="button ml-0" id="editLinkButton" onclick="">Edit</button>
+									<button type="button" class="button" onclick="deselectLink()">Cancel</button>
+
+									<div class="divider"></div>
+                                    <fieldset class="pt-2" style="float: right;">
+                                        <div class="switch" style="width: 175px;">
+                                            <input type="radio" class="switch-input" id="switchlinkCurrentDetailsWeek" name="linkHistoryRange" value="1week" onchange="updateLinkHistory()"/>
+                                            <label for="switchlinkCurrentDetailsWeek" class="switch-label switch-label-off">Last Week</label>
+                                            <input type="radio" class="switch-input" id="switchlinkCurrentDetailsYear" name="linkHistoryRange" value="1year" onchange="updateLinkHistory()" checked/>
+                                            <label for="switchlinkCurrentDetailsYear" class="switch-label switch-label-on">1 Year Average</label>
+                                            <span class="switch-selection"></span>
+                                        </div>
+                                    </fieldset>
+                                    <h4 class="font-uppercase pt-2 pb-2" id="linkHistoryDate">
+                                        Last week:
+                                    </h4>
+									<div class="table data" id="linkHistoryDetails" style="width: 100%">
+										<div class="table-row">
+											<div class="label" style="width:45%">
+													Quality:
+											</div>
+											<div class="value"><span id="linkQuality"></span><div class="tooltip">
+												<img class="info svg" src='@routes.Assets.versioned("/images/icons/information.svg")'>
+												<span class="tooltiptext below" style="width: 280px;">
+													<p><b>Overall quality</b> is determined by:<br>
+														- Service stars on the route (30%)<br>
+														- Aircraft age of the route (20%)<br>
+														- Aircraft "Passenger Experience" rating (20%)<br>
+														- Company-wide employee quality (30%)<br>
+														</p>
+													</span>
+											</div></div>
+										</div>
+										<div class="table-row">
+											<div class="label">Price:</div>
+											<div class="value" id="linkHistoryPrice"></div>
+										</div>
+										<div class="table-row">
+											<div class="label">Capacity:</div>
+											<div class="value" id="linkHistoryCapacity"></div>
+										</div>
+										<div class="table-row">
+											<div class="label">Load Factor:</div>
+											<div class="value" id="linkLoadFactor"></div>
+										</div>
+										<div class="table-row">
+											<div class="label">Profit:</div>
+											<div class="value" id="linkProfit"></div>
+										</div>
+										<div class="table-row">
+											<div class="label">Revenue:</div>
+											<div class="value" id="linkRevenue"></div>
+										</div>
+										<div class="table-row">
+											<div class="label">Delays & Cancellations:</div>
+											<div class="value"><span id="linkDelays"></span> | <span id="linkCancellations"></span><div class="tooltip">
+                                              <img class="info svg" loading="lazy" src="/assets/images/icons/information.svg">
+                                              <span class="tooltiptext below" style="width: 380px;" id="tooltip_delays"></span>
+                                            </div></div>
+										</div>
+										<h4 class="section-title pt-3">Costs:</h4>
+										<div class="table-row">
+											<div class="label" style="width:45%">Fuel:</div>
+											<div class="value"><span id="linkFuelCost"></span> <div class="tooltip">
+												<img class="info svg" src='@routes.Assets.versioned("/images/icons/information.svg")'>
+												<span class="tooltiptext below" style="width: 280px;">
+													<p>Flight <b>fuel costs</b> use a normalized $70 fuel cost and don't include any fuel contracts.</p>
+												</span>
+											</div></div>
+										</div>
+										<div class="table-row">
+											<div class="label" style="width:45%"><span class="fuelTaxRate"></span>Fuel Tax:</div>
+											<div class="value"><span id="linkFuelTax"></span> <div class="tooltip">
+												<img class="info svg" src='@routes.Assets.versioned("/images/icons/information.svg")'>
+												<span class="tooltiptext below" style="width: 280px;">
+													<p><b>Fuel tax</b> increases as your airline's reputation increases.</p>
+												</span>
+											</div></div>
+										</div>
+										<div class="table-row">
+											<div class="label">Labor & Crew:</div>
+											<div class="value"><span id="linkCrewCost"></span> <div class="tooltip">
+												<img class="info svg" src='@routes.Assets.versioned("/images/icons/information.svg")'>
+												<span class="tooltiptext below" style="width: 280px;">
+													<p><b>Labor & Crew Costs</b> are based on the flight duration, flight capacity, and the company-wide "Target Employee Quality" set in the office.</p>
+												</span>
+											</div></div>
+										</div>
+										<div class="table-row">
+											<div class="label">Airport Fees:</div>
+											<div class="value"><span id="linkAirportFees"></span> <div class="tooltip">
+												<img class="info svg" src='@routes.Assets.versioned("/images/icons/information.svg")'>
+												<span class="tooltiptext below" style="width: 280px;">
+													<p><b>Airport Rentals & Fees</b> are higher with larger aircraft and at larger airports, especially very large airports.</p>
+												</span>
+											</div></div>
+										</div>
+										<div class="table-row">
+											<div class="label">Service Cost / Profit:</div>
+											<div class="value"><span id="linkServiceSupplies"></span> <div class="tooltip">
+												<img class="info svg" src='@routes.Assets.versioned("/images/icons/information.svg")'>
+												<span class="tooltiptext below" style="width: 280px;">
+													<p><b>Service Costs</b> are the product of flight service stars, flight duration, and sold seats multiplied by their class level.</p>
+													<p>That is, low service stars on an economy seats is very cheap; high service stars on first class seats is quite expensive.</p>
+												</span>
+											</div></div>
+										</div>
+										<div class="table-row">
+											<div class="label">Depreciation:</div>
+											<div class="value" id="linkDepreciation"></div>
+										</div>
+										<div class="table-row">
+											<div class="label">Lounge Use:</div>
+											<div class="value" id="linkLoungeCost"></div>
+										</div>
+										<div class="table-row">
+											<div class="label">Maintenance:</div>
+											<div class="value" id="linkMaintenance"></div>
+										</div>
+										<div class="table-row">
+											<div class="label">Delay Compensation:</div>
+											<div class="value" id="linkCompensation"></div>
+										</div>
+									</div>
+									<div class="flex-container-width-half gap-2 py-2">
+										<button type="button" class="button viewLinkComposition ml-0" onclick="showLinkComposition($('#actionLinkId').val())">Survey</button>
+										<button type="button" class="button viewLinkEvent mr-0" onclick="showLinkEventHistory($('#actionLinkId').val())">Events</button>
+										<button type="button" style="width:100%" class="button viewLinkHistory ml-0 mr-0" onclick="showLinkHistoryView()">Passenger Map</button>
+									</div>
+									<div class="divider"></div>
+									<h4 class="pt-2">
+										<span>Operators</span>
+										<img src='@routes.Assets.versioned("/images/icons/chart-up.png")' class="clickable" title="View Rival History" onclick="showLinkRivalHistory($('#actionLinkId').val())" style="vertical-align: text-bottom">
+										<img src='@routes.Assets.versioned("/images/icons/magnifier.png")' class="clickable" title="View Rival Details" onclick="showLinkRivalDetails($('#actionLinkId').val())" style="vertical-align: text-bottom">
+									</h4>
+									<div class="table data" id="linkCompetitons" style="width: 100%">
+										<div class='table-header'>
+											<div class="cell" style="width: 30%;"><h5>Airline</h5></div>
+											<div class="cell" style="width: 24%;"><h5>Price</h5></div>
+											<div class="cell" style="width: 20%;"><h5>Capacity</h5></div>
+                                            <div class="cell" style="width: 13%;"><h5>Quality</h5></div>
+                                            <div class="cell" style="width: 13%;"><h5>Freq.</h5></div>
+										</div>
+									</div>
+									<div id=linkCompetitionsPie></div>
+								</div>
+								<div id="linkCharts">
+									<textarea id="linkNotes" style="width: 90%; margin:1rem auto; border-radius: 0;" placeholder="Add your private notes here..."></textarea>
+									<fieldset>
+										<div class="switch" style="float: right;">
+											<input type="radio" class="switch-input" name="view" value="month" id="switchMonth" onchange="refreshLinkCharts()" checked>
+											<label for="switchMonth" class="switch-label switch-label-off">1 year</label>
+											<input type="radio" class="switch-input" name="view" value="quarter" id="switchQuarter" onchange="refreshLinkCharts()">
+											<label for="switchQuarter" class="switch-label switch-label-on">3 years</label>
+											<span class="switch-selection"></span>
+										</div>
+									</fieldset>
+									<div id="linkProfitChart" style="height: 180px; padding-bottom: 2rem;"></div>
+									<div id="linkRidershipChart" style="height: 260px; padding-bottom: 2rem;"></div>
+									<div id="linkRevenueChart" style="height: 260px; padding-bottom: 1rem;"></div>
+                                    <div id="linkLegend" class="pb-4 pl-12 flex-align-center"></div>
+									<div id="linkPriceChart" style="height: 260px; padding-bottom: 2rem;"></div>
+								</div>
+							</div>
+							<div id="planLinkDetails" style="width: 100%; display: none; max-width: 36rem;">
+								<div class="pb-4" style="display:flex;">
+									<div class="link-decoration">
+										<div class="link-decoration-circle"></div>
+										<div class="link-decoration-line"></div>
+										<div class="link-decoration-circle"></div>
+									</div>
+									<div>
+										<p class="text-lg pb-1"><a class="clickable" id="planLinkFromAirportName"></a><img class="img-button svg hover-rotate" src='@routes.Assets.versioned("images/icons/gear.svg")' id="planLinkFromAirportEditIcon" onclick="$('#planLinkFromAirportSelect').show()" title="Change From Airport"></p>
+										<div class="value"><select class="select-css" id="planLinkFromAirportSelect" onchange="planLink($(this).val(), $('#planLinkToAirportId').val())"></select></div>
+										<p class="leading-snug"><span id="planLinkDistance"></span> <i class="planLinkFlightType"></i></p>
+										<p class="text-lg"><a class="clickable" id="planLinkToAirportName"></a></p>
+									</div>
+								</div>
+
+								<div class="flex-row h-6">
+									<div style="width:162px"><p>Regulatory status at <span class="planToIata"></span>:</p></div>
+									<div style="width:calc(100% - 165px)"><p class="leading-snug">
+										<span id="planLinkToCountryTitle"><img class="airlineTitleIcon svg" style='display: none;'>&nbsp;<span class="airlineTitle titleCue"></span></span>,
+										<span id="planLinkToCountryRelationship">
+												<span class="total"></span>
+												<img class="pb-1 img-button svg hover-rotate detailsIcon titleCue" src='@routes.Assets.versioned("images/icons/gear.svg")' title='Manage Relationship' class="clickable detailsIcon titleCue" onclick="showRelationshipDetailsModal($(this).data('relationship'), $(this).data('title'), $(this).data('countryCode'))" style="vertical-align: middle;">
+											</span>
+									</p></div>
+								</div>
+								<div class="flex-row h-6">
+									<div style="width:162px"><p>Country relations:</p></div>
+									<div><p class="pl-1" id="planLinkMutualRelationship"></p></div>
+								</div>
+								<div class="flex-row pb-2">
+									<div style="width:162px"><p>Airport affinity:</p></div>
+									<div style="width:calc(100% - 165px)"><p class="leading-tight" id="planLinkAffinity"></p></div>
+								</div>
+
+								<div class="flex-row py-2">
+									<div style="width:162px"><p>Direct Demand:<br><small><i>at current prices</i></small></p></div>
+									<div class="h-4">
+										<span id="planLinkDirectDemand"></span>
+										<div class="tooltip pl-1">
+											<img class="info svg" src='@routes.Assets.versioned("/images/icons/information.svg")'>
+											<span class="tooltiptext below directDemandBreakdown" style="width: 280px;">
+												<div class="fromAirport py-2">
+													<h4>From <span class="airportLabel"></span></h4>
+													<p> Traveler: <span class="travelerDemand"></span></p>
+													<p> Business: <span class="businessDemand"></span></p>
+													<p> Tourist: <span class="touristDemand"></span></p>
+													<p> Elite: - / - / ??</p>
+												</div>
+												<div class="toAirport" class="py-2">
+													<h4>From <span class="airportLabel"></span></h4>
+													<p> Traveler: <span class="travelerDemand"></span></p>
+													<p> Business: <span class="businessDemand"></span></p>
+													<p> Tourist: <span class="touristDemand"></span></p>
+													<p> Elite: - / - / ??</p>
+												</div>
+												<p class="leading-snug py-1">Above is the total possible direct demand, however most traffic is indirect demand. Elite demand can't be estimated because it changes every cycle.</p>
+											</span>
+										</div>
+									</div>
+								</div>
+
+								<div class="table data py-2" id="planLinkCompetitors" style="width: 100%">
+									<div class='table-header'>
+										<div class="cell" style="width: 24%;"><p>Airline</p></div>
+										<div class="cell" style="width: 24%;"><p>Price</p></div>
+										<div class="cell" style="width: 24%;"><p>Capacity</p></div>
+										<div class="cell" style="width: 9%;"><p title="Frequency">Freq.</p></div>
+										<div class="cell" style="width: 9%;"><p title="Quality">Q.</p></div>
+										<div class="cell" style="width: 9%;"><p title="Load factor">L.F.</p></div>
+									</div>
+								</div>
+								<div class="flex-container-width-quarter pt-2">
+									<div></div>
+									<div class="h-8"><p>Set price</p></div>
+									<div class="h-8"><p class="leading-none h-7">Load factor<br><small style="font-size:10px">10 week average</small></p></div>
+									<div class="h-8"><p class="leading-none h-7">Percent<br><small style="font-size:10px">base price</small></p></div>
+								</div>
+								<div class="flex-container-width-quarter items-center economy">
+									<div>
+										<h5>Economy:</h5>
+										<div>
+											<img src='@routes.Assets.versioned("/images/icons/plus.svg")' class='img-button svg svg-monochrome svg-hover-green pr-1 pb-1' onclick='increasePrice(`economy`)'  title="Increase economy price by 5%">
+											<img src='@routes.Assets.versioned("/images/icons/minus.svg")' class='img-button svg svg-monochrome svg-hover-red pr-1 pb-1' onclick='decreasePrice(`economy`)'  title="Decrease economy price by 5%">
+										</div>
+									</div>
+									<div class="m-0"><span class="price-wrapper pr-8 w-42 text-base font-mono"><input type="text" id="planLinkEconomyPrice" data-class="economy" class="price-input"/></span></div>
+									<div><p class="py-1" id="planLFEconomy">100%</p></div>
+									<div><p class="py-1" id="planMarkupEconomy">100%</p></div>
+								</div>
+								<div class="flex-container-width-quarter items-center business">
+									<div class="m-0">
+										<h5>Business:</h5>
+										<div>
+											<img src='@routes.Assets.versioned("/images/icons/plus.svg")' class='img-button svg svg-monochrome svg-hover-green pr-1 pb-1' onclick='increasePrice(`business`)'  title="Increase business price by 5%">
+											<img src='@routes.Assets.versioned("/images/icons/minus.svg")' class='img-button svg svg-monochrome svg-hover-red pr-1 pb-1' onclick='decreasePrice(`business`)'  title="Decrease business price by 5%">
+										</div>
+									</div>
+									<div class="m-0"><span class="price-wrapper pr-8 w-42 text-base font-mono"><input type="text" id="planLinkBusinessPrice" data-class="business" class="price-input"/></span></div>
+									<div><p class="py-1" id="planLFBusiness">100%</p></div>
+									<div><p class="py-1" id="planMarkupBusiness">100%</p></div>
+								</div>
+								<div class="flex-container-width-quarter items-center first">
+									<div class="m-0">
+										<h5>First:</h5>
+										<div>
+											<img src='@routes.Assets.versioned("/images/icons/plus.svg")' class='img-button svg svg-monochrome svg-hover-green pr-1 pb-1' onclick='increasePrice(`first`)'  title="Increase first price by 5%">
+											<img src='@routes.Assets.versioned("/images/icons/minus.svg")' class='img-button svg svg-monochrome svg-hover-red pr-1 pb-1' onclick='decreasePrice(`first`)'  title="Decrease first price by 5%">
+										</div>
+									</div>
+									<div>
+										<div class="m-0"><span class="price-wrapper pr-8 w-42 text-base font-mono"><input type="text" id="planLinkFirstPrice" data-class="first" class="price-input"/></span></div>
+									</div>
+									<div class="m-0"><p class="py-1" id="planLFFirst">100%</p></div>
+									<div class="m-0"><p class="py-1" id="planMarkupFirst">100%</p></div>
+								</div>
+								<div class="flex-container-width-quarter items-center">
+									<div></div>
+									<div>
+										<img src='@routes.Assets.versioned("/images/icons/plus.svg")' class='img-button svg svg-monochrome svg-hover-green pr-1 py-1' onclick='increasePrice()'  title="Increase all prices by 5%">
+										<img src='@routes.Assets.versioned("/images/icons/minus.svg")' class='img-button svg svg-monochrome svg-hover-red pr-1 py-1' onclick='decreasePrice()'  title="Decrease all prices by 5%">
+										<img src='@routes.Assets.versioned("images/icons/reset.svg")' class='img-button svg pr-1 py-1' onclick='resetPrice()'  title="Reset to Default Ticket Prices">
+									</div>
+									<div></div>
+									<div></div>
+								</div>
+								<hr>
+
+								<div class="flex-container-width-third">
+									<div>
+										<h5 class="">Route quality</h5>
+										<p class="pt-2">Current quality:</p>
+										<div id="planLinkQuality"></div>
+										<p class="pt-2">Set route service stars:</p>
+										<div id="serviceLevelBar" data-empty-icon='@routes.Assets.versioned("/images/icons/star-empty.svg")' data-fill-icon='@routes.Assets.versioned("/images/icons/star-full.svg")'></div>
+										<input type="hidden" id="planLinkServiceLevel" value="1"/>
+									</div>
+									<div id="planLinkExpectedFromQuality">
+										<p class="strong pt-2">Expected from <span class="planFromIata"></span></p>
+										<p><span class="inline-block w-68">first:</span><span class="firstQuality w-68 inline-block"></span></p>
+										<p><span class="inline-block w-68">business:</span><span class="businessQuality w-68 inline-block"></span><p>
+										<p><span class="inline-block w-68">economy:</span><span class="economyQuality w-68 inline-block"></span></p>
+										<p><span class="inline-block w-68">discount:</span><span class="discountQuality w-68 inline-block"></span><p>
+									</div>
+									<div id="planLinkExpectedToQuality">
+										<p class="strong pt-2">From <span class="planToIata"></span></p>
+										<p><span class="inline-block w-68">first:</span><span class="firstQuality w-68 inline-block"></span></p>
+										<p><span class="inline-block w-68">business:</span><span class="businessQuality w-68 inline-block"></span></p>
+										<p><span class="inline-block w-68">economy:</span><span class="economyQuality w-68 inline-block"></span></p>
+										<p><span class="inline-block w-68">discount:</span><span class="discountQuality w-68 inline-block"></span></p>
+									</div>
+								</div>
+								<hr>
+
+								<div class="table py-2" style="width: 100%" id="planLinkExtendedDetails">
+									<input type="hidden" id="planLinkFromAirportId"/>
+									<input type="hidden" id="planLinkToAirportId"/>
+									<div class="table-row" id="planLinkModelRow">
+										<div class="label" style="width:30%;">Airplane Model (max freq):</div>
+										<div class="value" style="width:70%;"><select class="select-css" id="planLinkModelSelect" onchange="updatePlanLinkInfoWithModelSelected($(this).val()); updateModelInfo($(this).val())"></select></div>
+									</div>
+									<div class="table-row">
+										<div class="label">Flight Duration:</div>
+										<div class="value" id="planLinkDuration"></div>
+									</div>
+									<div class="table-row">
+										<div class="label">
+											<p>
+												<span>Available Airplanes:</span>
+												<div style="display: inline-block">
+													<div style="display:flex ; align-items: baseline;">
+														<input type="checkbox" onclick="toggleUtilizationRate($('#planLinkAirplaneSelect'), $(this))" class="toggleUtilizationRateBox"/>
+														<img src='@routes.Assets.versioned("/images/icons/clock-select-remain.png")' title="Toggle Utilization Rate">
+														<input type="checkbox" onclick="toggleCondition($('#planLinkAirplaneSelect'), $(this))" class="toggleConditionBox"/>
+														<img class="img-button svg hover-rotate" src='@routes.Assets.versioned("images/icons/gear.svg")' data-tooltip="Toggle Airplane Condition">
+													</div>
+												</div>
+											</p>
+										</div>
+										<div class="value">
+											<div class="noAirplaneHelp" style="display: none">
+												<div class="tooltip">
+													<img class="info svg" src='@routes.Assets.versioned("/images/icons/information.svg")'>
+													<h5>
+														<span class="tooltiptext below">
+															Purchase airplane
+															<img data-src='@routes.Assets.versioned("/images/clips/buy-airplane.gif")' loading="lazy" alt="">
+															Or assign airplane to this airport
+															<img data-src='@routes.Assets.versioned("/images/clips/change-airplane-base.gif")' loading="lazy" alt="">
+														 </span>
+													</h5>
+												</div>
+												No airplane with this model based in this airport
+											</div>
+											<div id="planLinkAirplaneSelect" style="display : inline-block;"></div>
+										</div>
+									</div>
+									<div class="table-row">
+										<div class="label">
+											<p>
+												<span>Flight Frequency:</span>
+												<div class="tooltip">
+													<img class="info svg" src='@routes.Assets.versioned("/images/icons/information.svg")'>
+													<span style="min-width:280px;" class="tooltiptext below">
+														Increase/decrease the flight frequency by selecting/deselecting the airplane icons. <br/><br/>
+														Higher frequencies increases passenger satisfaction and lowers perceived transfer costs.
+													</span>
+												</div>
+											</p>
+										</div>
+										<div class="value">
+											<div class="frequencyDetail table" style="width: 100%">
+												<div class="table-header">
+													<div class="cell" style="width: 15%; min-width: 60px;">Airplane</div>
+													<div class="cell" style="width: 25%">Config</div>
+													<div class="cell" style="width: 60%">Flight Frequency</div>
+												</div>
+											</div>
+											<div class="frequencyDetailTotal table" style="width: 100%">
+												<div class="table-header">
+													<div class="cell" style="width: 20%; min-width: 100px;"></div>
+													<div class="cell" style="width: 20%"></div>
+													<div class="cell" style="width: 60%"></div>
+												</div>
+												<div class="table-row">
+													<div class="cell"></div>
+													<div class="cell"></div>
+													<div class="cell">Total <span class="total"></span> flight(s) per week</div>
+												</div>
+											</div>
+										</div>
+									</div>
+									<div class="table-row" id="planLinkEstimatedDifficultyRow">
+										<div class="label">Difficulty:</div>
+										<div class="value" id="planLinkEstimatedDifficulty"></div>
+									</div>
+									<div class="table-row planLinkDelegateRefundRow">
+										<div class="label">Delegates returned:</div>
+										<div class="value planLinkDelegateRefund"></div>
+									</div>
+									<div class="table-row">
+										<div class="label">Capacity (Y/J/F):</div>
+										<div class="value">
+											<span id="planLinkCapacity"></span>
+											<div class="future">
+												<div style="display:flex; align-items: center;">
+													&nbsp;(<img class="info svg" class="awaitingAirplanes" src='@routes.Assets.versioned("/images/icons/information.svg")' title="Capacity when all airplanes are delivered"><span class="capacity"></span>)
+												</div>
+											</div>
+										</div>
+									</div>
+									<div class="table-row">
+										<div class="label">Staff Required:</div>
+										<div class="value" style="">
+											<span class="staffRequired"></span>
+											<span id="linkStaffBreakdownTooltip" class="tooltip">
+												<img class="info svg" src='@routes.Assets.versioned("/images/icons/information.svg")'>
+												<span class="tooltiptext alignLeft" style="width: 400px;">
+													<h4 style="margin-bottom: 12px;">Staff Required Breakdown <span class="airlineName"></span></h4>
+													<div class="table data" style="width: 100%;">
+														<div class="table-row">
+															<div class="label">Flight Type:</div>
+															<div class="value flightType"></div>
+														</div>
+														<div class="table-row">
+															<div class="label">Base support:</div>
+															<div class="value basic"></div>
+														</div>
+														<div class="table-row">
+															<div class="label">Frequency support:</div>
+															<div class="value frequency"></div>
+														</div>
+														<div class="table-row">
+															<div class="label">Capacity support:</div>
+															<div class="value capacity"></div>
+														</div>
+														<div class="table-row">
+															<div class="label">Modifier:</div>
+															<div class="value modifier"></div>
+														</div>
+													</div>
+													<p style="margin-top: 12px">Total: <span class="total"></span><br>
+                                                    <i>*note: minimum is 3</i></p>
+												</span>
+											</span>
+											<i class="pl-1 planLinkFlightType"></i>
+										</div>
+									</div>
+									<div class="table-row" id="planLinkSetupCostRow" style="display:none;">
+										<div class="label">Setup Cost:</div>
+										<div class="value" id="planLinkSetupCost"></div>
+									</div>
+								</div>
+								<div class="linkRejection warning">
+									<div><img src='@routes.Assets.versioned("/images/icons/prohibition.png")'><span id="linkRejectionReason"></span></div>
+								</div>
+								<div class="warningList">
+								</div>
+								<div class="overtimeCompensation warning" style="display: flex; align-items: center;">
+									<img src='/assets/images/icons/exclamation-red-frame.png'>&nbsp;
+									Exceeding operation capacity of current base. Extra overtime compensation of&nbsp;
+									$<span class="amount"></span>&nbsp;
+									will be charged per week for this change.
+								</div>
+								<div class="flex-container-width-half py-2 gap-2" style="max-width: 300px;">
+									<button type="button" class="button modifyLink ml-0" id="addLinkButton" onclick="linkConfirmation()">Create</button>
+									<button type="button" class="button modifyLink ml-0" id="updateLinkButton" onclick="linkConfirmation()">Update</button>
+									<button type="button" class="button mr-0" id="deleteLinkButton" onclick="promptConfirm('Delete this route?', deleteLink)">Delete</button>
+									<button type="button" class="button" id="cancelLinkButton" onclick="cancelPlanLink()">Cancel</button>
+								</div>
+							</div>
+						</div>
+		<!-- 		    	end details panel -->
+						<div id="extendedPanel" class="section" style="display: none;">
+							<div id="airplaneModelDetails" style="width: 100%; display: none;">
+								<div class="table">
+									<h4>Airplane Model Details</h4>
+									<div class="table-row">
+										<div class="label" style="width: 50%;"><h5>Model:</h5></div>
+										<div class="value" id="modelName"></div>
+									</div>
+									<div class="table-row">
+										<div class="label">Family:</div>
+										<div class="value modelFamily"></div>
+									</div>
+									<div class="table-row">
+										<div class="label">Capacity:</div>
+										<div class="value" id="capacity"></div>
+									</div>
+									<div class="table-row">
+										<div class="label">Range:</div>
+										<div class="value" id="range"></div>
+									</div>
+									<div class="table-row">
+										<div class="label">Ascent Fuel Burn:</div>
+										<div class="value" id="ascentBurn"></div>
+									</div>
+									<div class="table-row">
+										<div class="label">Cruise Fuel Burn:</div>
+										<div class="value" id="cruiseBurn"></div>
+									</div>
+									<div class="table-row">
+										<div class="label">Quality:</div>
+										<div class="value" id="airplaneTypeQuality"></div>
+									</div>
+									<div class="table-row">
+										<div class="label">Category:</div>
+										<div class="value" id="airplaneType"></div>
+									</div>
+									<div class="table-row">
+										<div class="label">Turnaround Time:</div>
+										<div class="value"><span class="turnaroundTime"></span>&nbsp;min</div>
+									</div>
+									<div class="table-row">
+										<div class="label">Runway required:</div>
+										<div class="value"><span class="runwayRequirement"></span>&nbsp;m</div>
+									</div>
+									<div class="table-row">
+										<div class="label">Speed:</div>
+										<div class="value" id="speed"></div>
+									</div>
+									<div class="table-row">
+										<div class="label">Lifespan:</div>
+										<div class="value" id="lifespan"></div>
+									</div>
+									<div class="table-row">
+										<div class="label">Manufacturer:</div>
+										<div class="value manufacturer"></div>
+									</div>
+									<div class="table-row">
+										<div class="label">Purchase Price:</div>
+										<div class="value price"></div>
+									</div>
+									<div class="table-row">
+										<div class="label">Delivery Time:</div>
+										<div class="value delivery"></div>
+									</div>
+									<div class="table-row aircraftNote">
+										<div class="label">Note:</div>
+										<div class="warning note"></div>
+									</div>
+									<button type="button" class="button add ml-0" onclick="promptBuyNewAirplane($('#airplaneModelDetails .selectedModel').val(), true, $('#planLinkFromAirportId').val())">Purchase</button>
+									<button type="button" class="button" onclick="showAirplaneBaseFromPlanLink($('#airplaneModelDetails .selectedModel').val())">Base</button>
+									<button type="button" class="button ml-0" onclick="AircraftConfig.showFromPlanLink($('#airplaneModelDetails .selectedModel').val())">Config</button>
+									<input type="hidden" class="selectedModel"/>
+								</div>
+							</div>
+						</div>
+	<!-- 				end extended panel -->
+				   </div>
+
+                    <div id="searchCanvas" class="vertical-group sidePanel mapOverlayPanel" style="display: none;">
+                        <div class="section mainSection">
+                            <div class="titlesContainer">
+                                <div class="titleSelection selected" data-search-type="route" onclick="refreshSearchDiv('route')">Tickets</div>
+                                <div class="titleSelection" data-search-type="history" onclick="refreshSearchDiv('history')">History</div>
+                                <div class="titleSelection" data-search-type="research" onclick="refreshSearchDiv('research')">Research</div>
+                            </div>
+                    
+                            <!-- shared for route and research-->
+                            <div class="searchFieldContainer mt-4">
+                                <div class="flex-row gap-4 px-8"> <!--from and to box-->
+                                    <div class="relative">
+                                        <div class="searchInput" data-search-type="airport">
+                                            <input type="text" tabindex="101" class="fromAirport" placeholder="From"
+                                                data-search-group="fromDestination" oninput="searchChange($(this))"
+                                                onfocus="$(this).select();" onfocusout="searchFocusOut($(this))"
+                                                onkeyup="searchKeyUp(event, $('div.searchFieldContainer input.fromAirport'))"
+                                                onkeydown="searchKeyDown(event, $('div.searchFieldContainer input.fromAirport'))">
+                                            <span class="spinner" style="display: none;"><img src='/assets/images/icons/spinner-plane.svg' style="height: 60px"></span>
+                                        </div>
+                                        <div class="searchResult"></div>
+                                    </div>
+                                    <div class="relative">
+                                        <div class="searchInput" data-search-type="airport">
+                                            <input type="text" tabindex="102" class="toAirport" placeholder="To"
+                                                data-search-group="toDestination" oninput="searchChange($(this))"
+                                                onfocus="$(this).select();" onfocusout="searchFocusOut($(this))"
+                                                onkeyup="searchKeyUp(event, $('div.searchFieldContainer input.toAirport'))"
+                                                onkeydown="searchKeyDown(event, $('div.searchFieldContainer input.toAirport'))">
+                                            <span class="spinner" style="display: none;"><img src='/assets/images/icons/spinner-plane.svg' style="height: 60px"></span>
+                                        </div>
+                                        <div class="searchResult"></div>
+                                    </div>
+                                </div>
+                    
+                                <div class="flex-row gap-4 mt-4 px-8">
+                                    <button type="button" class="button search" tabindex="103" onkeypress="searchButtonKeyPress(event, $(this))"
+                                        onclick="searchAction(document.querySelector('div.searchFieldContainer input.fromAirport').dataset.selectedid, document.querySelector('div.searchFieldContainer input.toAirport').dataset.selectedid)">Search</button>
+                                    <img width="20px" class="img-button svg mr-auto" onclick="resetSearchInput($(this))" src='@routes.Assets.versioned("images/icons/reset.svg")' title="reset">
+                                </div>
+                            </div>
+                    
+                            <div class="routeSearch searchContainer vertical-group flex-grow">
+                                <div id="routeSearchResult" class="overflow-y-auto flex-grow p-2"></div>
+                                <!-- need height otherwise the scroll would not work -->
+                                <div class="banner p-4">
+                                    <img src="" class="w-full">
+                                </div>
+                            </div>
+                            <div class="historySearch searchContainer vertical-group flex-grow">
+                                <div class="flex-container-width-half gap-8">
+                                    <div class="locationCriteria vertical-group gap-2">
+                                        <div class="searchCriterion flex-row gap-2"> <!-- Airport -->
+                                            <div class="relative">
+                                                <div class="searchInput" data-search-type="airport">
+                                                    <input type="text" tabindex="101" class="fromAirport"
+                                                        data-search-group="fromDestination" placeholder="From Airport (Any)"
+                                                        autocomplete="no" oninput="searchChange($(this))" onfocus="$(this).select();"
+                                                        onfocusout="searchFocusOut($(this))"
+                                                        onkeyup="searchKeyUp(event, $('div.historySearch input.fromAirport'))"
+                                                        onkeydown="searchKeyDown(event, $('div.historySearch input.fromAirport'))">
+                                                    <span class="spinner" style="display: none;"><img src='/assets/images/icons/spinner-plane.svg' style="height: 60px"></span>
+                                                </div>
+                                                <div class="searchResult"></div>
+                                            </div>
+                                            <div class="relative">
+                                                <div class="searchInput" data-search-type="airport">
+                                                    <input type="text" tabindex="102" class="toAirport" data-search-group="toDestination"
+                                                        placeholder="To Airport (Any)" autocomplete="no" oninput="searchChange($(this))"
+                                                        onfocus="$(this).select();" onfocusout="searchFocusOut($(this))"
+                                                        onkeyup="searchKeyUp(event, $('div.historySearch input.toAirport'))"
+                                                        onkeydown="searchKeyDown(event, $('div.historySearch input.toAirport'))">
+                                                    <span class="spinner" style="display: none;"><img src='/assets/images/icons/spinner-plane.svg' style="height: 60px"></span>
+                                                </div>
+                                                <div class="searchResult"></div>
+                                            </div>
+                                        </div>
+                                        <div class="searchCriterion flex-row gap-2"> <!-- Country -->
+                                            <div class="relative">
+                                                <div class="searchInput" data-search-type="country">
+                                                    <input type="text" tabindex="103" class="fromCountry"
+                                                        data-search-group="fromDestination" placeholder="From Country (Any)"
+                                                        autocomplete="no" oninput="searchChange($(this))" onfocus="$(this).select();"
+                                                        onfocusout="searchFocusOut($(this))"
+                                                        onkeyup="searchKeyUp(event, $('div.historySearch input.fromCountry'))"
+                                                        onkeydown="searchKeyDown(event, $('div.historySearch input.fromCountry'))">
+                                                    <span class="spinner" style="display: none;"><img src='/assets/images/icons/spinner-plane.svg' style="height: 60px"></span>
+                                                </div>
+                                                <div class="searchResult"></div>
+                                            </div>
+                                            <div class="relative">
+                                                <div class="searchInput" data-search-type="country">
+                                                    <input type="text" tabindex="104" class="toCountry" data-search-group="toDestination"
+                                                        placeholder="To Country (Any)" autocomplete="no" oninput="searchChange($(this))"
+                                                        onfocus="$(this).select();" onfocusout="searchFocusOut($(this))"
+                                                        onkeyup="searchKeyUp(event, $('div.historySearch input.toCountry'))"
+                                                        onkeydown="searchKeyDown(event, $('div.historySearch input.toCountry'))">
+                                                    <span class="spinner" style="display: none;"><img src='/assets/images/icons/spinner-plane.svg' style="height: 60px"></span>
+                                                </div>
+                                                <div class="searchResult"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="otherCriteria vertical-group gap-2">
+                                        <div class="flex-row gap-2">
+                                            <div class="searchCriterion relative">
+                                                <div class="searchInput" data-search-type="airline">
+                                                    <input type="text" tabindex="107" class="airline" data-search-group="entity"
+                                                        placeholder="Airline (Any)" autocomplete="no" oninput="searchChange($(this))"
+                                                        onfocus="$(this).select();" onfocusout="searchFocusOut($(this))"
+                                                        onkeyup="searchKeyUp(event, $('div.historySearch input.airline'))"
+                                                        onkeydown="searchKeyDown(event, $('div.historySearch input.airline'))">
+                                                    <span class="spinner" style="display: none;"><img src='/assets/images/icons/spinner-plane.svg' style="height: 60px"></span>
+                                                </div>
+                                                <div class="searchResult"></div>
+                                            </div>
+                                            <div class="searchCriterion relative">
+                                                <div class="searchInput" data-search-type="alliance">
+                                                    <input type="text" tabindex="108" class="alliance" data-search-group="entity"
+                                                        placeholder="Alliance (Any)" autocomplete="no" oninput="searchChange($(this))"
+                                                        onfocus="$(this).select();" onfocusout="searchFocusOut($(this))"
+                                                        onkeyup="searchKeyUp(event, $('div.historySearch input.alliance'))"
+                                                        onkeydown="searchKeyDown(event, $('div.historySearch input.alliance'))">
+                                                    <span class="spinner" style="display: none;"><img src='/assets/images/icons/spinner-plane.svg' style="height: 60px"></span>
+                                                </div>
+                                                <div class="searchResult"></div>
+                                            </div>
+                                        </div>
+                                        <div class="flex-row gap-2 items-center">
+                                            <div class="label pr-16">Capacity >=</div>
+                                            <div class="data"><input type="text" tabindex="109" class="capacity w-full" placeholder="Any" onfocusout="numberInputFocusOut($(this))"></div>
+                                        </div>
+                                        <div class="flex-row gap-2 items-center">
+                                            <div class="label pr-4">Capacity Change >=</div>
+                                            <div class="data"><input type="text" tabindex="109" class="capacityDelta w-full" placeholder="Any" onfocusout="numberInputFocusOut($(this))"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex-row">
+                                    <button type="button" class="button search mt-4" tabindex="111" onkeypress="searchButtonKeyPress(event, $(this))" onclick="searchLinkHistory()">Search</button>
+                                    <img width="20px" class="clickable mr-auto" onclick="resetSearchInput($(this))" src='@routes.Assets.versioned("images/icons/reset.svg")' title="reset">
+                                </div>
+                                <div id="historySearchResult" class="section flex-grow overflow-y-auto p-0 mt-2">
+                                    <div class="table data w-full" style="min-width: 700px;">
+                                        <div class="table-header sortHeader">
+                                            <div class="cell clickable" style="width: 7%" data-sort-property="cycleDelta" data-sort-order="decending">Cycle</div>
+                                            <div class="cell clickable" style="width: 12%" data-sort-property="airlineName" data-sort-order="ascending">Airline</div>
+                                            <div class="cell clickable" style="width: 15%" data-sort-property="fromAirportIata" data-sort-order="descending">From Airport</div>
+                                            <div class="cell clickable" style="width: 15%" data-sort-property="toAirportIata" data-sort-order="descending">To Airport</div>
+                                            <div class="cell clickable" style="width: 10%" data-sort-property="model" data-sort-order="ascending">Model</div>
+                                            <div class="cell clickable" style="width: 7%; text-align: right;" data-sort-property="capacityTotal" data-sort-order="ascending">Capacity (Freq.)</div>
+                                            <div class="cell clickable" style="width: 7%; text-align: right;" data-sort-property="capacityDeltaTotal" data-sort-order="descending">Cap Chg.</div>
+                                            <div class="cell" style="width: 14%">Price</div>
+                                            <div class="cell" style="width: 14%">Price Chg.</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow w-full overflow-y-auto" style="min-width: 700px;">
+                                        <div class="table data linkHistorySearchTable w-full"
+                                            style="table-layout: fixed; min-width: 700px;">
+                                            <div class="table-header">
+                                                <div class="cell" style="width: 7%; border-bottom: none;"></div>
+                                                <div class="cell" style="width: 12%; border-bottom: none;"></div>
+                                                <div class="cell" style="width: 15%; border-bottom: none;"></div>
+                                                <div class="cell" style="width: 15%; border-bottom: none;"></div>
+                                                <div class="cell" style="width: 10%; border-bottom: none;"></div>
+                                                <div class="cell" style="width: 7%; border-bottom: none;"></div>
+                                                <div class="cell" style="width: 7%; border-bottom: none;"></div>
+                                                <div class="cell" style="width: 14%; border-bottom: none;"></div>
+                                                <div class="cell" style="width: 14%; border-bottom: none;"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                    
+                            <div class="research searchContainer vertical-group flex-grow">
+                                <div id="researchSearchResult" class="overflow-y-auto flex-grow p-4">
+                                    <div class="flex-row gap-8 py-4 mx-auto" style="width: 600px; max-width:100%;">
+                                        <div class="fromAirport vertical-group items-center">
+                                            <img class="fromAirport roundImage" style="height: 150px; width:150px; max-height: 30vw; max-width: 30vw;">
+                                            <a class="fromAirportText clickable mt-2 font-bold block"></a>
+                                            <div class="table w-full">
+                                                <div class="table-row">
+                                                    <div class="label">Population</div>
+                                                    <div class="value population text-right pr-2"></div>
+                                                </div>
+                                                <div class="table-row">
+                                                    <div class="label">Income <small>Per Capita, PPP</small></div>
+                                                    <div class="value income text-right pr-2"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="toAirport vertical-group items-center">
+                                            <img class="toAirport roundImage" style="height: 150px; width:150px; max-height: 30vw; max-width: 30vw;">
+                                            <a class="toAirportText clickable mt-2 font-bold block"></a>
+                                            <div class="table w-full">
+                                                <div class="table-row">
+                                                    <div class="label">Population</div>
+                                                    <div class="value from population text-right pr-2"></div>
+                                                </div>
+                                                <div class="table-row">
+                                                    <div class="label">Income <small>Per Capita, PPP</small></div>
+                                                    <div class="value from income text-right pr-2"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="table mx-auto w-full mt-5 max-w-72">
+                                        <div class="table-row">
+                                            <p class="label">Relationship</p>
+                                            <div class="value text-right"><span class="relationship"></span></div>
+                                        </div>
+                                        <div class="table-row">
+                                            <p class="label">Affinities</p>
+                                            <div class="value text-right"><span class="affinities"></span></div>
+                                        </div>
+                                        <div class="table-row">
+                                            <p class="label">Distance</p>
+                                            <div class="value text-right"><span class="distance"></span>&nbsp;km</div>
+                                        </div>
+                                        <div class="table-row">
+                                            <p class="label">Flight Type</p>
+                                            <div class="value text-right"><span class="flightType"></span></div>
+                                        </div>
+                                        <div class="table-row">
+                                            <p class="label">Direct Demand</p>
+                                            <div class="value text-right">
+                                                <div class="demand">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                    
+                                    <h4 class="mt-8">Existing Flights</h4>
+                                    <div class="table data links w-full">
+                                        <div class='table-header'>
+                                            <div class="cell" style="width: 31%;">
+                                                <p>Airline</p>
+                                            </div>
+                                            <div class="cell" style="width: 21%;">
+                                                <p>Percent of Price</p>
+                                            </div>
+                                            <div class="cell" style="width: 21%;">
+                                                <p>Capacity</p>
+                                            </div>
+                                            <div class="cell" style="width: 9%;">
+                                                <p>Freq.</p>
+                                            </div>
+                                            <div class="cell" style="width: 9%;">
+                                                <p>Quality</p>
+                                            </div>
+                                            <div class="cell" style="width: 9%;">
+                                                <p>L.F.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="linksPie"></div>
+                    
+                                    <h4 class="mt-8 fromDemandHeading w-full">Demands from</h4>
+                                    <p class="py-2 opacity-80 italic">Each week different passenger "profiles" may fly. Below is a random
+                                        draw of what may be drawn. The total demand and passenger type is stable, +/- 10%.</p>
+                                    <div class="table data fromDemand w-full">
+                                        <div class='table-header'>
+                                            <div class="cell" style="width: 20%;">
+                                                <p>Class</p>
+                                            </div>
+                                            <div class="cell" style="width: 20%;">
+                                                <p>Type</p>
+                                            </div>
+                                            <div class="cell" style="width: 20%;">
+                                                <p>Profile</p>
+                                            </div>
+                                            <div class="cell" style="width: 15%;">
+                                                <p>Target Price</p>
+                                            </div>
+                                            <div class="cell" style="width: 15%;">
+                                                <p>Estimated Demand</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                    
+                                    <h4 class="mt-8 toDemandHeading w-full">Demands to</h4>
+                                    <div class="table data toDemand w-full">
+                                        <div class='table-header'>
+                                            <div class="cell" style="width: 20%;"><p>Class</p></div>
+                                            <div class="cell" style="width: 20%;"><p>Type</p></div>
+                                            <div class="cell" style="width: 20%;"><p>Profile</p></div>
+                                            <div class="cell" style="width: 15%;"><p>Target Price</p></div>
+                                            <div class="cell" style="width: 15%;"><p>Estimated Demand</p></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- end search canvas -->
+                    
+                    <!-- 	    	   end bottom panel -->
+                    </div>

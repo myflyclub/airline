@@ -9,3 +9,4 @@
 /.bash_history
 /airline-data/.bsp
 *.sql
+node_modules

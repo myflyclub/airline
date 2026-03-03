@@ -1,19 +1,19 @@
 .switch {
   position: relative;
-  margin: 0px auto;
   height: 18px;
-  width: 80px;
-  background: rgba(0, 0, 0, 0.25);
+  width: 150px;
+  background: var(--background-1);
+  border: 1px #333 solid;
   border-radius: 3px;
-  -webkit-box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px rgba(255, 255, 255, 0.1);
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px rgba(255, 255, 255, 0.1);
+  box-sizing: border-box;
+  display: flex;
 }
 
 .switch-label {
   position: relative;
   z-index: 2;
-  float: left;
-  width: 38px;
+  width: 50%;
   line-height: 18px;
   font-size: 10px;
   text-align: center;
@@ -31,12 +31,6 @@
   padding-right: 2px;
 }
 
-/*
- * Note: using adjacent or general sibling selectors combined with
- *       pseudo classes doesn't work in Safari 5.0 and Chrome 12.
- *       See this article for more info and a potential fix:
- *       http://css-tricks.com/webkit-sibling-bug/
- */
 .switch-input {
   display: none;
 }
@@ -44,14 +38,10 @@
   font-weight: bold;
   color: rgba(0, 0, 0, 0.65);
   text-shadow: 0 1px rgba(255, 255, 255, 0.25);
-  -webkit-transition: 0.15s ease-out;
-  -moz-transition: 0.15s ease-out;
-  -o-transition: 0.15s ease-out;
   transition: 0.15s ease-out;
 }
 .switch-input:checked + .switch-label-on ~ .switch-selection {
-  left: 40px;
-  /* Note: left: 50% doesn't transition in WebKit */
+  left: 49.5%;
 }
 
 .switch-selection {
@@ -60,19 +50,11 @@
   z-index: 1;
   top: 1px;
   left: 1px;
-  width: 39px;
+  width: 50.5%;
   height: 16px;
-  background: #65bd63;
+  background: var(--zing-background);
   border-radius: 3px;
-  background-image: -webkit-linear-gradient(top, #9dd993, #65bd63);
-  background-image: -moz-linear-gradient(top, #9dd993, #65bd63);
-  background-image: -o-linear-gradient(top, #9dd993, #65bd63);
-  background-image: linear-gradient(to bottom, #9dd993, #65bd63);
-  -webkit-box-shadow: inset 0 1px rgba(255, 255, 255, 0.5), 0 0 2px rgba(0, 0, 0, 0.2);
   box-shadow: inset 0 1px rgba(255, 255, 255, 0.5), 0 0 2px rgba(0, 0, 0, 0.2);
-  -webkit-transition: left 0.15s ease-out;
-  -moz-transition: left 0.15s ease-out;
-  -o-transition: left 0.15s ease-out;
   transition: left 0.15s ease-out;
 }
 .switch-blue .switch-selection {

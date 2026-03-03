@@ -221,7 +221,7 @@ object GenericTransitGenerator {
     val airports = AirportSource.loadAllAirports(true)
       .filter(_.population >= 500)
       .filter(_.runwayLength >= 500)
-      .sortBy { _.power }.reverse
+      .sortBy { _.basePopMiddleIncome }.reverse
 
     var counter = 0
     var progressCount = 0
@@ -241,7 +241,6 @@ object GenericTransitGenerator {
         else if (airport.size >= 6) 105
         else 65
       }
-      if (airport.size >= 7) 120 else 65
       val boundaryLongitude = calculateLongitudeBoundary(airport.latitude, airport.longitude, range)
       val airportsInRange = scala.collection.mutable.ListBuffer[(Airport, Double)]()
       

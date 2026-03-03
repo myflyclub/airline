@@ -4,6 +4,7 @@ import com.patson.data.{AirlineSource, BankSource, CycleSource}
 import com.patson.model.{Loan, _}
 import com.patson.model.bank.LoanInterestRate
 import controllers.AuthenticationObject.AuthenticatedAirline
+
 import javax.inject.Inject
 import play.api.data.{Form, Forms}
 import play.api.libs.json._
@@ -21,7 +22,6 @@ class BankApplication @Inject()(cc: ControllerComponents) extends AbstractContro
       JsObject(List(
         "rate" -> JsNumber(rate.annualRate),
         "cycle" -> JsNumber(rate.cycle)))
-
     }
   }
 
@@ -52,7 +52,7 @@ class BankApplication @Inject()(cc: ControllerComponents) extends AbstractContro
         Bank.getLoanOptions(requestedAmount).find( loanOption => loanOption.term == requestedTerm) match {
           case Some(loan) =>
             BankSource.saveLoan(loan.copy(airlineId = request.user.id, creationCycle = currentCycle))
-            AirlineSource.adjustAirlineBalance(request.user.id, loan.principal)
+            AirlineSource.saveLedgerEntry(AirlineLedgerEntry(request.user.id, currentCycle, LedgerType.LOAN_DISBURSEMENT, loan.principal))
             Ok(Json.toJson(loan)(new LoanWrites(currentCycle)))
           case None => BadRequest("Bad loan term [" + requestedTerm + "]")
         }
@@ -91,7 +91,7 @@ class BankApplication @Inject()(cc: ControllerComponents) extends AbstractContro
           if (balance < loan.earlyRepayment(currentCycle)) {
             BadRequest("Not enough cash to repay this loan")
           } else {
-            AirlineSource.adjustAirlineBalance(request.user.id, -1 * loan.earlyRepayment(currentCycle))
+            AirlineSource.saveLedgerEntry(AirlineLedgerEntry(request.user.id, currentCycle, LedgerType.LOAN_PAYMENT, -1 * loan.earlyRepayment(currentCycle)))
             BankSource.deleteLoan(loanId)
             Ok
           }
@@ -101,9 +101,17 @@ class BankApplication @Inject()(cc: ControllerComponents) extends AbstractContro
     }
   }
 
+  @volatile private var loanRatesCycle: Int = -1
+  @volatile private var loanRatesJson: JsValue = Json.arr()
+
   def getLoanInterestRates() = Action {
-    val currentCycle = CycleSource.loadCycle()
-    val rates = BankSource.loadLoanInterestRatesFromCycle(currentCycle - 100).sortBy(_.cycle)
-    Ok(Json.toJson(rates))
+    if (loanRatesCycle != currentCycle) {
+      loanRatesJson = Json.toJson(BankSource.loadLoanInterestRatesFromCycle(currentCycle - 100).sortBy(_.cycle))
+      loanRatesCycle = currentCycle
+    }
+    Ok(loanRatesJson)
+      .withHeaders(
+        ETAG -> s""""$currentCycle""""
+      )
   }
 }

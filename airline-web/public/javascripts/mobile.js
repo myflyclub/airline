@@ -1,13 +1,18 @@
 function showExtendedTopBarDetails() {
-    if ($('.extendedTopBarDetails').is(":hidden")) {
-        //$(".extendedTopBarDetails").show();
+    let isHidden = $(".extendedTopBarDetails").is(":hidden");
+    if (isHidden) {
+        $("#moreTopBarTab").css('transform', 'translateY(40px)');
         $(".extendedTopBarDetails").slideDown("slow", function(){
+            isHidden = false;
             setTimeout(function() {
-                $(".extendedTopBarDetails").slideUp("slow")
-            }, 5000)
-        })
+                $("#moreTopBarTab").css('transform', '');
+                $(".extendedTopBarDetails").slideUp("slow", function() {});
+                isHidden = true;
+            }, 12000);
+        });
     } else {
-        $(".extendedTopBarDetails").slideUp("slow")
+        $(".extendedTopBarDetails").slideUp("slow", function() {});
+        $("#moreTopBarTab").css('transform', '');
+        isHidden = true;
     }
-    //$(".extendedTopBarDetails").css("background-color", "#FFFFFF").show("slow")
 }

@@ -1,0 +1,68 @@
+@(message: String)
+
+	<div style="display: none;" class="extendedTopBarDetails flex-row items-center">
+        <p><span class="currentTime label"></span><span class="tooltip-attr" style="margin: 0px 10px" data-tooltip="An estimation of how long until next cycle/week"><img src='@routes.Assets.versioned("/images/icons/clock-moon-phase.png")' style="vertical-align: middle;"><span class="nextTickEstimation label" style="font-weight: bold;">-</span></span></p>
+        <p>Reputation: <span class="reputation label"></span><span class="reputationLevel label"></span></p>
+        <div style="margin-left:auto">
+            <a class="no-highlight px-2" href="https://discord.gg/e6VgGswVep"  target="_blank">
+                <img src='@routes.Assets.versioned("/images/buttons/Discord-Logo-Color.png")' loading="lazy" style="height: 24px" title="Official Discord">
+            </a>
+            <a class="no-highlight px-2" href="https://www.patreon.com/myflyclub/"  target="_blank">
+                <img class="" src='@routes.Assets.versioned("/images/buttons/patreon_mark_coral.jpg")' loading="lazy" style="height: 24px" title="Become a Patreon to support this project!">
+            </a>
+        </div>
+	</div>
+  	<div id="topBar" data-scroll="false" class="menubar">
+  		<div class="desktopOnly hide-empty">
+  			<div class="topBarDetails" style="display: none;">
+                <p class="currentTime label tooltip-attr tooltip-attr-bottom" data-tooltip="One week lasts ~ 30min and one year is 48 weeks or 24 hours in realtime. "></p>
+                <p class="tooltip-attr tooltip-attr-bottom" data-tooltip="An estimate of how long until next week."><img src='@routes.Assets.versioned("/images/icons/clock-moon-phase.png")' style="vertical-align: middle;"><span class="nextTickEstimation label" style="font-weight: bold;">Estimating...</span></p>
+                <p class="tooltip-attr tooltip-attr-bottom" data-tooltip="Cash money">$<span class="balance"></span></p>
+                <p class="tooltip-attr tooltip-attr-bottom" data-tooltip="Action Points">⚡<span class="actionPoints"></span></p>
+                <p style="font-size: 13px;" class="currentAirline label font-display"></p>
+                <div class="reputationStars" id="topReputationStars"></div>
+                <div title="Latest Oil Price" class="latestOilPriceShortCut clickable" onclick="showOilCanvas()">
+                    <img src='@routes.Assets.versioned("/images/icons/oil-barrel.png")'>
+                    <span class="oilprice label"></span>
+				</div>
+  			</div>
+  		</div>
+		<div class="mobileOnly">
+			<div class=" flex-row">
+				<b class="currentAirline label"></b>
+				<span>$<span class="balance label"></span></span>
+                <span>⚡<span class="actionPoints label"></span></span>
+                <span style="display: inline-block;" class="delegatesShortcut clickable" onclick="toggleDelegateStatusModal()"></span>
+			</div>
+		</div>
+  		<div class="flex-align-center">
+			<span  style="padding: 0 4px;"><img style="width: 22px;" class="img-button svg svg-hover-blue svg-monochrome" src='@routes.Assets.versioned("images/icons/options.svg")' onclick="toggleSettings()" title="Settings"></span>
+			<div style="display: none;" id="logoutDiv" class="topBarItem">
+				<span id="currentUserName" class="label desktopOnly"></span>
+				<div class="button desktopOnly" onclick="logout()" style="width:90px">Logout</div>
+				<div class="mobileOnly" onclick="logout()"><img src='@routes.Assets.versioned("images/icons/24px/logout.png")' title="Login"></div>
+			</div>
+			<div class="topBarItem no-highlight" id="discordDiv">
+				<a href="https://discord.gg/e6VgGswVep"  target="_blank">
+					<img src='@routes.Assets.versioned("/images/buttons/Discord-Logo-Color.png")' style="max-height: 30px; vertical-align: middle;" title="Official Discord">
+				</a>
+			</div>
+			<div class="topBarItem" id="patreonDiv">
+				<a href="https://www.patreon.com/myflyclub/"  target="_blank">
+					<img class="desktopOnly" src='@routes.Assets.versioned("/images/buttons/become_a_patron_button.png")' loading="lazy" style="max-height: 30px; vertical-align: middle;" title="Become a Patreon to support this project!">
+					<img class="mobileOnly" src='@routes.Assets.versioned("/images/buttons/patreon_mark_coral.jpg")' loading="lazy" style="max-height: 30px; vertical-align: middle;" title="Become a Patreon to support this project!">
+				</a>
+			</div>
+            <input type="hidden" id="floatMessage" value="@message"/>
+            <div id="floatMessageBox" style="height: 30px; width: 300px; display: none;"></div>
+		</div>
+	</div>
+	<div id="moreTopBarTab" class="mobileOnly" onclick="showExtendedTopBarDetails()">
+		<ul class="moreRow">
+			<li>
+				<span></span>
+				<span></span>
+				<span></span>
+			</li>
+		</ul>
+	</div>

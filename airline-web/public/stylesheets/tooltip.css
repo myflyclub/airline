@@ -4,25 +4,24 @@
     vertical-align: middle;
 }
 
-.tooltip > img {
+.tooltip > .info {
     height: 16px;
 }
 
+.tooltip ul {
+    list-style: disc;
+}
 
 .tooltip li {
     display: flex;
     align-items: center;
     margin: 4px 0;
 }
-.tooltip li:before {
-    content: url('/assets/images/markers/dot.png');
-}
-
 
 .tooltip .tooltiptext {
     visibility: hidden;
     background-color: var(--tooltip-background-color);
-    color: #fff;
+    color: var(--text-color);
     border-radius: 6px;
     padding: 16px;
     margin-bottom: 0.5rem;
@@ -34,24 +33,22 @@
     transition: opacity 0.3s;
     text-shadow: none;
     font-weight: normal;
-    max-width: 95vw;
-    box-shadow: var(--table-header-shadow);
+    max-width: 45vw;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18), 0 1px 4px rgba(0, 0, 0, 0.12);
 }
 
 .customTooltip .tooltiptext {
-    background-color: rgba(0, 0, 0, 0.8);
-    color: #fff;
+    background-color: var(--modal-background-color);
+    color: var(--text-color);
     border-radius: 6px;
     padding: 10px 10px;
-    z-index: 1;
-    /*opacity: 0;*/
+    z-index: 10;
     transition: opacity 0.3s;
     text-shadow: none;
     font-weight: normal;
-
 }
 .tooltiptext h4 {
-    color: #fff;
+    color: var(--text-color);
 }
 
 .tooltip .tooltiptext.alignLeft {
@@ -68,7 +65,7 @@
 	top: 125%;
 }
 
-.tooltip .tooltiptext img {
+.tooltip .tooltiptext .info {
 	border-radius: 0.5em 0.5em 0.5em 0.5em;
 }
 
@@ -95,8 +92,50 @@
 	border-color: transparent transparent #555 transparent;
 }
 
+.tooltip .list-disc li {
+    display: list-item;
+    font-size: 13px;
+    font-family: sans-serif;
+
+}
+
 .tooltip:hover .tooltiptext {
     visibility: visible;
     opacity: 1;
 }
 
+/* Simpler tooltip that's a a pure text data attr (replace title with data-tooltip) */
+.tooltip-attr {
+  position: relative; /* Required for positioning the tooltip */
+}
+
+.tooltip-attr::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  
+  bottom: 0%;
+  left: 100%;
+  transform: translateY(80%);
+  z-index: 99;
+  
+  background-color: var(--tooltip-background-color);
+  color: var(--text-color);
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 10px;
+  white-space: nowrap;
+  
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s;
+}
+
+.tooltip-attr:hover::after {
+  opacity: 1;
+  visibility: visible;
+}
+
+.tooltip-attr-bottom::after {
+    left: 0;
+    bottom: -8px;
+}

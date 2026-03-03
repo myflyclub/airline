@@ -26,7 +26,7 @@ object Patchers extends App {
           if (existingModel.price != model.price) { //adjust existing value
             val updatingAirplanes = AirplaneSource.loadAirplanesCriteria(List(("a.model", existingModel.id))).map { airplane =>
               val newValue = (model.price * airplane.condition / Airplane.MAX_CONDITION).toInt
-              airplane.copy(value = newValue);
+              airplane.copy(purchasePrice = newValue);
             }
             AirplaneSource.updateAirplanesDetails(updatingAirplanes)
           }
@@ -35,7 +35,11 @@ object Patchers extends App {
               val factor = model.capacity.toDouble / existingModel.capacity
               val newCapacity = ((configuration.economyVal * factor).toInt, (configuration.businessVal * factor).toInt , (configuration.firstVal * factor).toInt)
               val adjustmentDelta : Int = model.capacity - Math.ceil(newCapacity._1 * ECONOMY.spaceMultiplier + newCapacity._2 * BUSINESS.spaceMultiplier + newCapacity._3 * FIRST.spaceMultiplier).toInt
-              val newConfiguration = configuration.copy(economyVal = newCapacity._1 + adjustmentDelta, businessVal = newCapacity._2, firstVal = newCapacity._3)
+              val newConfiguration = if (configuration.economyVal == 0) {
+                configuration.copy(economyVal = newCapacity._1, businessVal = newCapacity._2, firstVal = newCapacity._3)
+              } else {
+                configuration.copy(economyVal = newCapacity._1 + adjustmentDelta, businessVal = newCapacity._2, firstVal = newCapacity._3)
+              }
               AirplaneSource.updateAirplaneConfiguration(newConfiguration)
               println(s"Configuration from $configuration to $newConfiguration")
             }
@@ -120,7 +124,7 @@ object Patchers extends App {
   def patchAirlineLogos() {
     AirlineSource.loadAllAirlines(false).foreach { airline =>
       if (airline.id <= 250) {
-        AirlineSource.saveLogo(airline.id, LogoGenerator.generateRandomLogo())
+        FileSource.saveLogo(airline.id, "airline", LogoGenerator.generateRandomLogo())
       }
     }
   }

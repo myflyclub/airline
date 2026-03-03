@@ -29,7 +29,7 @@ object UserSimulation {
       if (shouldResetPlayer(user, strictThreshold, generousThreshold)) {
         println(s"Resetting user $user with airlines ${user.getAccessibleAirlines()}")
         user.getAccessibleAirlines.foreach { airline =>
-          if (airline.airlineType != AirlineType.NON_PLAYER) {
+          if (airline.airlineType != NonPlayerAirline) {
             val resetBalance = Computation.getResetAmount(airline.id).overall
             Airline.resetAirline(airline.id, newBalance = resetBalance) match {
               case Some(airline) =>

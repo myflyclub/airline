@@ -4,6 +4,7 @@ var promptInterval
 var activePrompt
 var activeTutorial
 var tutorialsCompleted
+var noticesShown
 
 function initPrompts() {
     promptQueue = []
@@ -12,36 +13,17 @@ function initPrompts() {
         promptInterval = undefined
     }
     activePrompt = undefined
-//    if (activeAirline.headquarterAirport && !activeAirline.initialized) {
-//      $.ajax({
-//            type: 'GET',
-//            url: "airlines/" + activeAirline.id + "/profiles",
-//            data: { } ,
-//            contentType: 'application/json; charset=utf-8',
-//            dataType: 'json',
-//            success: function(profiles) {
-//                $.each(profiles, function(index, profile) {
-//                       //populate profile
-//                })
-//                queuePrompt('chooseProfile')
-//            },
-//            error: function(jqXHR, textStatus, errorThrown) {
-//                    console.log(JSON.stringify(jqXHR));
-//                    console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
-//            }
-//        });
-//
-//    }
 
-    $('.tab-icon').bind('click.tutorial', function() {
+    $('.nav-link').bind('click.tutorial', function() {
         var pageId = $(this).data('link')
         checkTutorial(pageId)
     })
     tutorialsCompleted = new Set()
+    noticesShown = new Set()
     tutorialQueue = []
     $.ajax({
             type: 'GET',
-            url: "airlines/" + activeAirline.id + "/completed-tutorial",
+            url: "/airlines/" + activeAirline.id + "/completed-tutorial",
             data: { } ,
             contentType: 'application/json; charset=utf-8',
             dataType: 'json',
@@ -90,7 +72,11 @@ function queueNotice(noticeJson) {
     }
 
     if (htmlId) {
-        queuePrompt(htmlId, noticeJson)
+        var noticeKey = category + ":" + noticeJson.id
+        if (!noticesShown.has(noticeKey)) {
+            noticesShown.add(noticeKey)
+            queuePrompt(htmlId, noticeJson)
+        }
     }
 }
 
@@ -127,7 +113,7 @@ function showPrompt() {
                 if ($(promptId).hasClass('notice')) {
                     $.ajax({
                         type: 'POST',
-                        url: "airlines/" + activeAirline.id + "/completed-notice/" + $(promptId).data('id') + "?category=" + $(promptId).data('category'),
+                        url: "/airlines/" + activeAirline.id + "/completed-notice/" + $(promptId).data('id') + "?category=" + $(promptId).data('category'),
                         data: { } ,
                         contentType: 'application/json; charset=utf-8',
                         dataType: 'json',
@@ -170,7 +156,7 @@ function closeNotice($promptModal) {
 
 //    $.ajax({
 //        type: 'POST',
-//        url: "airlines/" + activeAirline.id + "/completed-notice/" + $promptModal.data('id') + "?category=" + $promptModal.data('category'),
+//        url: "/airlines/" + activeAirline.id + "/completed-notice/" + $promptModal.data('id') + "?category=" + $promptModal.data('category'),
 //        data: { } ,
 //        contentType: 'application/json; charset=utf-8',
 //        dataType: 'json',
@@ -205,7 +191,7 @@ function queueTutorial(tutorial) {
 }
 
 function checkTutorial(flowId) {
-    if (activeUser && !activeAirline.skipTutorial) {
+    if (activeUser && activeAirline && !activeAirline.skipTutorial) {
         if (flowId === "worldMap" || flowId === "/") {
             if (!activeAirline.headquarterAirport) {
                 queueTutorial("tutorialWelcome")
@@ -248,7 +234,7 @@ function closeTutorial($tutorialModal) {
     tutorialsCompleted.add($tutorialModal.attr('id'))
     $.ajax({
         type: 'POST',
-        url: "airlines/" + activeAirline.id + "/completed-tutorial/" + $tutorialModal.attr('id') + "?category=" + $tutorialModal.data('category'),
+        url: "/airlines/" + activeAirline.id + "/completed-tutorial/" + $tutorialModal.attr('id') + "?category=" + $tutorialModal.data('category'),
         data: { } ,
 		contentType: 'application/json; charset=utf-8',
         dataType: 'json',
@@ -283,7 +269,7 @@ function setSkipTutorial(skipTutorial) {
 
     $.ajax({
         type: 'POST',
-        url: "airlines/" + activeAirline.id + "/tutorial?skipTutorial=" + skipTutorial,
+        url: "/airlines/" + activeAirline.id + "/tutorial?skipTutorial=" + skipTutorial,
         data: { } ,
         contentType: 'application/json; charset=utf-8',
         dataType: 'json',

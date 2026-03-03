@@ -1,7 +1,3 @@
-var map
-var airportMap
-var markers
-var baseMarkers = []
 var activeAirline
 var activeUser
 var selectedLink
@@ -10,147 +6,127 @@ var currentCycle
 var airlineColors = {}
 var airlineLabelColors = {}
 var polylines = []
-var airports = undefined
-var gameConstants
 var notes = {}
-
-$( document ).ready(function() {
-	mobileCheck()
-	$('#tutorialHtml').load('assets/html/tutorial.html')
-    $('#noticeHtml').load('assets/html/notice.html', initNotices)
-	populateNavigation()
-    history.replaceState({"onclickFunction" : "showWorldMap()"}, null, "/") //set the initial state
-
-	window.addEventListener('orientationchange', refreshMobileLayout)
-
-    populateLookups()
-	if ($.cookie('sessionActive')) {
-		loadUser(false)
-	} else {
-		hideUserSpecificElements()
-		refreshLoginBar()
-		getAirports();
-//		printConsole("Please log in")
-        showAbout();
-        refreshWallpaper()
-	}
-
-    registerEscape()
-    updateAirlineColors()
-	initTabGroup()
-	getGameConstants()
-
-	populateTooltips()
-	checkAutoplaySettings()
-
-	
-	if ($("#floatMessage").val()) {
-		showFloatMessage($("#floatMessage").val())
-	}
-	$(window).scroll(function()
-	{
-  		$('#floatBackButton').animate({top: ($(window).scrollTop() + 100) + "px" },{queue: false, duration: 350});
-	});
-
-	$('#chattext').jemoji({
-        folder : 'assets/images/emoji/'
-        //btn:    $('#emojiButton') //button is buggy and hard to select (not categorized), lets not enable it now
-    });
-
-    Splitting();
-    if (isIe()) {
-        //remove all laser elements, as IE cannot handle it
-        $(".laser").hide()
-    }
-
-})
-
-async function getGameConstants() {
-  const url = "game/constants";
-  try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`Response status: ${response.status}`);
-    }
-
-    gameConstants = await response.json();
-  } catch (error) {
-    console.error(error.message);
-  }
-}
-
-$(window).on('focus', function() {
-    if (selectedAirlineId) {
-        checkWebSocket(selectedAirlineId)
-    }
-})
+const GAME_COLORS = {
+    discounteconomy: "#78cd6b",
+    economy: "#57A34B",
+    business: "#4E79A7",
+    first: "#D6B018",
+    economyEmpty: "#346935",
+    businessEmpty: "#36466D",
+    firstEmpty: "#7A6925",
+    cancelled: "#D66061",
+    empty: "#DDDFDF",
+    tourist: "#c3a319",
+    elite: "#7A4A9D",
+    traveler: "#4ebc36",
+    travelersmalltown: "#4ebc36",
+    olympic: "#a7941d",
+    olympics: "#a7941d",
+    codeshares: "#4eafa4",
+    dealseeker: "#57A34B",
+    frequentflyer: "#2163aa",
+    brandsensitive: "#5f3a9f",
+    satisfaction: "#e3b80d",
+    rask: "#1e9b2b",
+    cask: "#e90e0e",
+};
 
 function registerEscape() {
     const modals = document.getElementsByClassName('modal')
 
     for (let i = 0; i < modals.length; i++) {
         const modal = modals[i];
-        modal.addEventListener('click', function(event) {
+        modal.addEventListener('click', function (event) {
             // 'event.target' is the specific element that was clicked; if the clicked element is the modal itself (and not a child element), hide the modal.
             if (event.target === modal) {
                 closeModal($(modal));
             }
         });
     }
-    
-    $(document).keyup(function(e) {
-         if (e.key === "Escape") { // escape key maps to keycode `27`
+
+    $(document).keyup(function (e) {
+        if (e.key === "Escape") { // escape key maps to keycode `27`
             var $topModal = $(".modal:visible").last()
             if ($topModal.length > 0) {
                 closeModal($topModal)
             } else {
-                closeAirportInfoPopup()
+                AirlineMap.closeAirportInfoPopup()
             }
         }
     });
 }
 
-
 function mobileCheck() {
-	if (isMobileDevice()) { //assume it's a less powerful device
-		refreshMobileLayout()
+	if (isMobileDevice()) {
+        $("#navPrimaryToggle").show();
+		currentAnimationStatus = false //turn off animation by default
+        registernavPrimaryToggle()
+        registerMobileGestures()
+	} else {
+        $("#navPrimaryToggle").hide()
+    }
+}
 
-		//turn off animation by default
-		currentAnimationStatus = false
-	}
+function setNavPrimaryState(expand) {
+    const nav = $('#navPrimary');
+    const toggle = $('#navPrimaryToggle');
+
+    toggle.attr('aria-expanded', expand);
+    nav.toggleClass('active', expand);
+
+    if (expand) {
+        toggle.find('.icon-open').hide();
+        toggle.find('.icon-close').show();
+    } else {
+        toggle.find('.icon-open').show();
+        toggle.find('.icon-close').hide();
+    }
+}
+
+function registernavPrimaryToggle() {
+    $('#navPrimaryToggle').off('click').on('click', function () {
+        const isExpanded = $(this).attr('aria-expanded') === 'true';
+        setNavPrimaryState(!isExpanded);
+    });
+}
+
+function registerMobileGestures() {
+    let touchstartX = 0;
+    let touchstartXPercent = 0;
+
+    document.addEventListener('touchstart', function(event) {
+        touchstartX = event.changedTouches[0].clientX;
+        touchstartXPercent = touchstartX / window.innerWidth;
+    }, { passive: true });
+
+    document.addEventListener('touchend', function(event) {
+        const touchendX = event.changedTouches[0].clientX;
+        const deltaX = touchendX - touchstartX;
+        const threshold = 50; // minimum distance for swipe
+
+        if (Math.abs(deltaX) > threshold) {
+            if (deltaX > 0) { // Swipe right
+                setNavPrimaryState(true);
+            } else if (touchstartXPercent < 0.2) { // Swipe left starting from left 20%
+                setNavPrimaryState(false);
+            }
+        }
+    }, { passive: true });
 }
 
 function isMobileDevice() {
-    return window.screen.availWidth < 1024
-}
-
-function refreshMobileLayout() {
-	if (window.screen.availWidth < window.screen.availHeight) { //only toggle layout change if it's landscape
-		$("#reputationLevel").hide()
-    } else {
-        $("#reputationLevel").show()
-	}
-	delete(map)
-	//yike, what if we miss something...the list below is kinda random
-	//initMap()
-	if (airports) {
-	    addMarkers(airports)
-    }
-	if (activeAirline) {
-	    updateLinksInfo()
-	    updateAirportMarkers(activeAirline)
-    }
+    return window.innerWidth< 1024
 }
 
 function showFloatMessage(message, timeout) {
 	timeout = timeout || 3000
 	$("#floatMessageBox").text(message)
-	var centerX = $("#floatMessageBox").parent().width() / 2 - $("#floatMessageBox").width() / 2 
-	$("#floatMessageBox").css({ top:"-=20px", left: centerX, opacity:100})
+	$("#floatMessageBox").css({top:"-=20px",left:0,opacity:100})
 	$("#floatMessageBox").show()
-	$("#floatMessageBox").animate({ top:"0px" }, "fast", function() {
+	$("#floatMessageBox").animate({ top:"34px" }, "fast", function() {
 		if (timeout > 0) {
-			setTimeout(function() { 
+			setTimeout(function() {
 				console.log("closing")
 				$('#floatMessageBox').animate({ top:"-=20px",opacity:0 }, "slow", function() {
 					$('#floatMessageBox').hide()
@@ -158,7 +134,7 @@ function showFloatMessage(message, timeout) {
 			}, timeout)
 		}
 	})
-	
+
 	//scroll the message box to the top offset of browser's scroll bar
 	$(window).scroll(function()
 	{
@@ -166,282 +142,19 @@ function showFloatMessage(message, timeout) {
 	});
 }
 
-function refreshLoginBar() {
-	if (!activeUser) {
-		$("#loginDiv").show();
-		$("#logoutDiv").hide();
-	} else {
-		$("#currentUserName").empty()
-		$("#currentUserName").append(activeUser.userName + getUserLevelImg(activeUser.level))
-		$("#logoutDiv").show();
-        $("#loginDiv").hide();
-	}
-}
-
-
-function loadUser(isLogin) {
-	var ajaxCall = {
-	  type: "POST",
-	  url: "login",
-	  success: function(user) {
-		  if (user) {
-		      closeAbout()
-		      activeUser = user
-			  $.cookie('sessionActive', 'true');
-			  $("#loginUserName").val("")
-			  $("#loginPassword").val("")
-
-			  if (isLogin) {
-			  	  showFloatMessage("Successfully logged in")
-				  showAnnoucement()
-			  }
-              refreshWallpaper()
-    		  refreshLoginBar()
-			  getAirports()
-			  showUserSpecificElements();
-			  updateChatTabs()
-			  initAdminActions()
-		  }
-		  if (user.airlineIds.length > 0) {
-			  selectAirline(user.airlineIds[0])
-			  loadAllCountries() //load country again for relationship
-			  //loadAllLogs()
-			  addAirlineSpecificMapControls(map)
-              initPrompts()
-		  }
-		  updateAirlineLabelColors()
-		  $('.button.login').removeClass('loading')
-
-	  },
-	    error: function(jqXHR, textStatus, errorThrown) {
-	    	if (jqXHR.status == 401) {
-	    		showFloatMessage("Incorrect username or password")
-	    	} else if (jqXHR.status == 400) {
-	    		showFloatMessage("Session expired. Please log in again")
-		    } else if (jqXHR.status == 403) {
-	    		showFloatMessage("You have been banned for violating the game rules. Please contact admins on Discord for assistance.")
-	    	} else {
-	    	    showFloatMessage("Error logging in, error code " + jqXHR.status + ". Please try again. Contact admins on Discord if the issue persists.")
-	            console.log(JSON.stringify(jqXHR));
-	            console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
-	    	}
-	    	$('.button.login').removeClass('loading')
-	    }
-	}
-	if (isLogin) {
-		var userName = $("#loginUserName").val()
-		var password = $("#loginPassword").val()
-		ajaxCall.headers = {
-			    "Authorization": "Basic " + btoa(userName + ":" + password)
-		}
-
-	}
-	
-	return $.ajax(ajaxCall);
-}
-
-function passwordLogin(e) {
-	if (e.keyCode === 13) {  //checks whether the pressed key is "Enter"
-		login()
-	}
-}
-
-function login()  {
-    $('.button.login').addClass('loading')
-    loadUser(true)
-}
-
-function onGoogleLogin(googleUser) {
-	var profile = googleUser.getBasicProfile();
-    console.log('ID: ' + profile.getId()); // Do not send to your backend! Use an ID token instead.
-	console.log('Name: ' + profile.getName());
-	console.log('Image URL: ' + profile.getImageUrl());
-	console.log('Email: ' + profile.getEmail()); // This is null if the 'email' scope is not present.
-	loginType='plain'
-}
-
-function logout() {
-	$.ajax
-	({
-	  type: "POST",
-	  url: "logout",
-	  async: false,
-	  success: function(message) {
-	    	console.log(message)
-	    	activeUser = null
-	    	activeAirline = null
-	    	airlineLabelColors = {}
-	    	hideUserSpecificElements()
-	    	$.removeCookie('sessionActive')
-	    	//refreshLoginBar()
-	    	//showFloatMessage("Successfully logged out")
-	    	location.reload();
-	    },
-	    error: function(jqXHR, textStatus, errorThrown) {
-	            console.log(JSON.stringify(jqXHR));
-	            console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
-	    }
-	});
-	
-	removeMarkers()
-}
-
-function showUserSpecificElements() {
-	$('.user-specific-tab').show()
-	$('.topBarDetails').show()
-	$('.topBarDetails').parent().removeClass('hide-empty') //hack to avoid empty floating div for modern layout
-}
-
-function hideUserSpecificElements() {
-	$('.user-specific-tab').hide()
-	$('.topBarDetails').hide()
-	$('.topBarDetails').parent().addClass('hide-empty') //hack to avoid empty floating div for modern layout
-}
-
-
-function initMap() {
-	initStyles()
-  map = new google.maps.Map(document.getElementById('map'), {
-	center: {lat: 20, lng: 150.644},
-   	zoom : 2,
-   	minZoom : 2,
-   	gestureHandling: 'greedy',
-   	styles: getMapStyles(),
-	mapTypeId: getMapTypes(),
-   	restriction: {
-                latLngBounds: { north: 85, south: -85, west: -180, east: 180 },
-              }
-  });
-	
-  google.maps.event.addListener(map, 'zoom_changed', function() {
-	    var zoom = map.getZoom();
-	    // iterate over markers and call setVisible
-	    $.each(markers, function( key, marker ) {
-	        marker.setVisible(isShowMarker(marker, zoom));
-	    })
-  });
-  
-  google.maps.event.addListener(map, 'maptypeid_changed', function() { 
-		var mapType = map.getMapTypeId();
-		$.cookie('currentMapTypes', mapType);
-  });
-
-  addCustomMapControls(map)
-}
-
-function addCustomMapControls(map) {
-//			<div id="toggleMapChristmasButton" class="googleMapIcon" onclick="toggleChristmasMarker()" align="center" style="display: none; margin-bottom: 10px;"><span class="alignHelper"></span><img src='@routes.Assets.versioned("images/icons/bauble.png")' title='Merry Christmas!' style="vertical-align: middle;"/></div>-->
-//			<div id="toggleMapAnimationButton" class="googleMapIcon" onclick="toggleMapAnimation()" align="center" style="display: none; margin-bottom: 10px;"><span class="alignHelper"></span><img src='@routes.Assets.versioned("images/icons/arrow-step-over.png")' title='toggle flight marker animation' style="vertical-align: middle;"/></div>-->
-//			<div id="toggleMapLightButton" class="googleMapIcon" onclick="toggleMapLight()" align="center" style="display: none;"><span class="alignHelper"></span><img src='@routes.Assets.versioned("images/icons/switch.png")' title='toggle dark/light themed map' style="vertical-align: middle;"/></div>-->
-   var toggleMapChristmasButton = $('<div id="toggleMapChristmasButton" class="googleMapIcon" onclick="toggleChristmasMarker()" align="center" style="display: none; margin-bottom: 10px;"><span class="alignHelper"></span><img src="assets/images/icons/bauble.png" title=\'Merry Christmas!\' style="vertical-align: middle;"/></div>')
-   var toggleMapAnimationButton = $('<div id="toggleMapAnimationButton" class="googleMapIcon" onclick="toggleMapAnimation()" align="center" style="margin-bottom: 10px;"><span class="alignHelper"></span><img src="assets/images/icons/arrow-step-over.png" title=\'toggle flight marker animation\' style="vertical-align: middle;"/></div>')
-   var toggleChampionButton = $('<div id="toggleChampionButton" class="googleMapIcon" onclick="toggleChampionMap()" align="center"  style="margin-bottom: 10px;"><span class="alignHelper"></span><img src="assets/images/icons/crown.png" title=\'toggle champion\' style="vertical-align: middle;"/></div>')
-   var toggleMapLightButton = $('<div id="toggleMapLightButton" class="googleMapIcon" onclick="toggleMapLight()" align="center" style="margin-bottom: 10px;"><span class="alignHelper"></span><img src="assets/images/icons/switch.png" title=\'toggle dark/light themed map\' style="vertical-align: middle;"/></div>')
-   var toggleAllianceBaseMapViewButton = $(`
-        <div id="toggleAllianceBaseMapViewButton" class="googleMapIcon" onclick="toggleAllianceBaseMapViewButton()" align="center" style="margin-bottom: 10px;">
-            <span class="alignHelper"></span>
-            <img src="assets/images/icons/puzzle.png" title=\'Toggle alliance bases\' style="vertical-align: middle;"/>
-        </div>
-    `)
-
-  toggleAllianceBaseMapViewButton.index = 0
-  toggleMapLightButton.index = 1
-  toggleMapAnimationButton.index = 2
-  toggleChampionButton.index = 3
-  toggleMapChristmasButton.index = 5
-
-
-  if ($("#map").height() > 500) {
-    map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(toggleAllianceBaseMapViewButton[0]);
-    map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(toggleMapLightButton[0]);
-    map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(toggleMapAnimationButton[0]);
-    map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(toggleChampionButton[0])
-    //map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(toggleHeatmapButton[0])
-
-    if (christmasFlag) {
-       map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(toggleMapChristmasButton[0]);
-       toggleMapChristmasButton.show()
-    }
-
-  } else {
-    map.controls[google.maps.ControlPosition.LEFT_BOTTOM].push(toggleAllianceBaseMapViewButton[0])
-    map.controls[google.maps.ControlPosition.LEFT_BOTTOM].push(toggleMapLightButton[0]);
-    map.controls[google.maps.ControlPosition.LEFT_BOTTOM].push(toggleMapAnimationButton[0]);
-    map.controls[google.maps.ControlPosition.LEFT_BOTTOM].push(toggleChampionButton[0])
-    //map.controls[google.maps.ControlPosition.LEFT_BOTTOM].push(toggleHeatmapButton[0])
-
-    if (christmasFlag) {
-       map.controls[google.maps.ControlPosition.LEFT_BOTTOM].push(toggleMapChristmasButton[0]);
-    }
-  }
-}
-
-function addAirlineSpecificMapControls(map) {
-    var toggleHeatmapButton = $('<div id="toggleMapHeatmapButton" class="googleMapIcon" onclick="toggleHeatmap()" align="center"  style="margin-bottom: 10px;"><span class="alignHelper"></span><img src="assets/images/icons/table-heatmap.png" title=\'toggle heatmap\' style="vertical-align: middle;"/></div>')
-
-    toggleHeatmapButton.index = 4
-
-    if ($("#map").height() > 500) {
-        map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].insertAt(3, toggleHeatmapButton[0])
-     } else {
-        map.controls[google.maps.ControlPosition.LEFT_BOTTOM].insertAt(3, toggleHeatmapButton[0])
-    }
-}
-
-function LinkHistoryControl(controlDiv, map) {
-    // Set CSS for the control border.
-    var controlUI = document.createElement('div');
-    controlUI.style.backgroundColor = '#fff';
-    controlUI.style.border = '2px solid #fff';
-    controlUI.style.borderRadius = '3px';
-    controlUI.style.boxShadow = ' 0px 1px 4px -1px rgba(0,0,0,.3)';
-    //controlUI.style.cursor = 'pointer';
-    controlUI.style.marginBottom = '22px';
-    controlUI.style.textAlign = 'center';
-    controlUI.title = 'Click to recenter the map';
-    controlUI.style.padding = '8px';
-    controlUI.style.margin= '10px';
-    controlUI.style.verticalAlign = 'middle';
-    controlDiv.appendChild(controlUI);
-    
-
-    $(controlUI).append("<img src='assets/images/icons/24-arrow-180.png' class='button' onclick='toggleLinkHistoryView(false)'  title='Toggle passenger history view'/>")
-    // Set CSS for the control interior.
-    $(controlUI).append("<span id='linkHistoryText' style='color: rgb(86, 86, 86); font-family: Roboto, Arial, sans-serif; font-size: 11px;'></span>");
-    
-    $(controlUI).append("<img src='assets/images/icons/24-arrow.png' class='button' onclick='toggleLinkHistoryView(false)'  title='Toggle passenger history view'/>")
-
-    // Setup the click event listeners: simply set the map to Chicago.
-    controlUI.addEventListener('click', function() {
-      map.setCenter(chicago);
-    });
-
-  }
-
-
-function updateAllPanels(airlineId) {
-	updateAirlineInfo(airlineId)
-	
-//	if (activeAirline) {
-//		if (christmasFlag) {
-//		    printConsole("Breaking news - Santa went missing!!! Whoever finds Santa will be rewarded handsomely! He could be hiding in one of the size 6 or above airports! View the airport page to track him down!", true, true)
-//		}
-//
-//	}
-	
-}
-
-//does not remove or add any components
 function refreshPanels(airlineId) {
 	$.ajax({
 		type: 'GET',
-		url: "airlines/" + airlineId,
+		url: "/airlines/" + airlineId,
 	    contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
 	    async: false,
 	    success: function(airline) {
-	    	activeAirline = airline
-	    	refreshTopBar(airline)
+            // shallow merge: only replace keys present in the response
+            Object.keys(airline).forEach(function(key) {
+                activeAirline[key] = airline[key]
+            })
+	    	refreshTopBar(activeAirline)
 	    	if ($("#worldMapCanvas").is(":visible")) {
 	    		refreshLinks()
 	    	}
@@ -449,7 +162,7 @@ function refreshPanels(airlineId) {
 	    		refreshLinkDetails(selectedLink)
 	    	}
 	    	if ($("#linksCanvas").is(":visible")) {
-	    		loadLinksTable()
+	    		loadLinksTable(null, true)
 	    	}
 	    },
 	    error: function(jqXHR, textStatus, errorThrown) {
@@ -468,7 +181,7 @@ var currentTickTimer
 var tickTimerCreator
 
 function updateTime(cycle, fraction, cycleDurationEstimation) {
-	$(".currentTime").attr("title", "Day " + Math.floor(cycle / 48) + " & " + cycle % 48 + " cycles")
+	$(".currentTime").attr("data-tooltip", "Year " + Math.floor(cycle / 48) + " & " + cycle % 48 + " weeks | One week lasts ~ 30min and one year is 48 weeks or 24 hours in realtime.")
 	gameTimeStart = (cycle + fraction) * totalmillisecPerWeek
 
     var initialDurationTillNextTick
@@ -479,16 +192,9 @@ function updateTime(cycle, fraction, cycleDurationEstimation) {
 
 	var wallClockStart = new Date()
 
-	//how much wall clock duration should be multiplied as game time duration
-	var timeMultiplier = cycleDurationEstimation > 0 ?
-	    totalmillisecPerWeek / cycleDurationEstimation :
-		totalmillisecPerWeek / (30 * 60 * 1000) //by default 30 minutes per week
-
-
 	if (currentTickTimer) {
 	    clearInterval(currentTickTimer)
 	}
-
 
     var updateTimerFunction = function() {
         var currentWallClock = new Date()
@@ -496,8 +202,6 @@ function updateTime(cycle, fraction, cycleDurationEstimation) {
 
         var durationTillNextTick = initialDurationTillNextTick - wallClockDurationSinceStart
 
-        var currentGameTime = gameTimeStart + wallClockDurationSinceStart * timeMultiplier
-        var currentGameDate = new Date(currentGameTime)
         $(".currentTime").text(padBefore(Math.floor(cycle / 48) + "." + cycle % 48, 2))
 
         if (hasTickEstimation) {
@@ -521,7 +225,7 @@ function updateTime(cycle, fraction, cycleDurationEstimation) {
 }
 
 
-// Handle tab visibility change
+// Handle browser tab visibility change
 document.addEventListener('visibilitychange', function () {
     clearInterval(currentTickTimer);
     if (!document.hidden && tickTimerCreator) {
@@ -531,99 +235,83 @@ document.addEventListener('visibilitychange', function () {
 });
 
 
-//function printConsole(message, messageLevel, activateConsole, persistMessage) {
-//	messageLevel = messageLevel || 1
-//	activateConsole = activateConsole || false
-//	persistMessage = persistMessage || false
-//	var messageClass
-//	if (messageLevel == 1) {
-//		messageClass = 'actionMessage'
-//	} else {
-//		messageClass = 'errorMessage'
-//	}
-//
-//	if (message == '') { //try to clear message, check if there was a persistent message
-//		var previousMessage = $('#console #consoleMessage').data('persistentMessage')
-//		if (previousMessage) {
-//			message = previousMessage
-//		}
-//	}
-//
-//	if (persistMessage) {
-//		$('#console #consoleMessage').data('persistentMessage', message)
-//	}
-//	var consoleVisible = $('#console #consoleMessage').is(':visible')
-//
-//	if (consoleVisible) {
-//		$('#console #consoleMessage').fadeOut('slow', function() { //fade out and reset positions
-//			$('#console #consoleMessage').text(message)
-//			$('#console #consoleMessage').removeClass().addClass(messageClass)
-//			$('#console #consoleMessage').fadeIn('slow')
-//		})
-//	} else {
-//		$('#console #consoleMessage').text(message)
-//		$('#console #consoleMessage').removeClass().addClass(messageClass)
-//		if (activateConsole) {
-//			$('#console #consoleMessage').fadeIn('slow')
-//		}
-//	}
-//}
-//
-//function toggleConsoleMessage() {
-//	if ($('#console #consoleMessage').is(':visible')) {
-//		$('#console #consoleMessage').fadeOut('slow')
-//	} else {
-//		$('#console #consoleMessage').fadeIn('slow')
-//	}
-//}
-
 function showWorldMap() {
+    hideMapOverlays();
 	setActiveDiv($('#worldMapCanvas'));
-	highlightTab($('.worldMapCanvasTab'))
 	$('#sidePanel').appendTo($('#worldMapCanvas'))
-	//closeAirportInfoPopup()
 	if (selectedLink) {
 		selectLinkFromMap(selectedLink, !activeAirportPopupInfoWindow) //do not refocus if there's a popup, stay where it is
 	}
 	checkTutorial('worldMap')
 }
 
-//switch to map view w/o considering leaving current tab
-function switchMap() {
-    var mapCanvas = $('#worldMapCanvas')
-    var existingActiveDiv = mapCanvas.siblings(":visible").filter(function (index) {
-		return $(this).css("clear") != "both"
-	})
-    if (existingActiveDiv.length > 0) {
-        existingActiveDiv.fadeOut(200, function() {
-            mapCanvas.fadeIn(200)
-        })
-    }
-}
+var ANNOUNCEMENT_VERSION = "2026-02-25"
 
 function showAnnoucement() {
-	// Get the modal
+	if (localStorage.getItem('announcementAgreed') === ANNOUNCEMENT_VERSION) {
+		return
+	}
 	var modal = $('#announcementModal')
-	// Get the <span> element that closes the modal
+	$('#announcementAgreeCheck').prop('checked', false)
 	$('#announcementContainer').empty()
-	$('#announcementContainer').load('assets/html/announcement.html')
+	$('#announcementContainer').load('/assets/html/announcement.html')
 
 	modal.fadeIn(1000)
 }
 
-function populateTooltips() {
+function onAnnouncementAgreeChange(checkbox) {
+	if (checkbox.checked) {
+		localStorage.setItem('announcementAgreed', ANNOUNCEMENT_VERSION)
+		closeModal($('#announcementModal'))
+	}
+}
+
+async function populateTooltips() {
+    /**
+     * Populate tooltips from server-side data, looks for id "tooltip_{objKey}"
+     */
+    const url = "/game/tooltips";
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`Response status: ${response.status}`);
+        }
+
+        const tooltips = await response.json();
+
+        for (const [objKey, tooltipArray] of Object.entries(tooltips)) {
+            const element = document.getElementById("tooltip_" + objKey);
+            if (element) {
+                const ulElement = document.createElement('ul');
+                ulElement.classList.add('list-disc');
+
+                tooltipArray.forEach(tooltipText => {
+                    const liElement = document.createElement('li');
+                    liElement.textContent = tooltipText;
+                    ulElement.appendChild(liElement);
+                });
+
+                element.innerHTML = '';
+                element.appendChild(ulElement);
+            }
+        }
+    } catch (error) {
+        console.error("Error loading tooltips:", error.message);
+    }
+
     //scan for all tooltips
     $.each($(".tooltip"), function() {
         var htmlSource = $(this).data("html")
         if (htmlSource) { //then load the html, otherwise leave it alone (older tooltips)
             $(this).empty()
-            $(this).load("assets/html/tooltip/" + htmlSource + ".html")
+            $(this).load("/assets/html/tooltip/" + htmlSource + ".html")
         }
     })
 
     populateDelegatesTooltips()
     populateDataPropertyTooltips()
 }
+
 function populateDelegatesTooltips() {
     var $html = $("<div></div>")
     $html.append("<p>Gained by leveling up your airline. Airline grade is determined by reputation points.</p>")
@@ -641,27 +329,7 @@ function populateDataPropertyTooltips() {
 
 }
 
-var airlineGradeLookup
-function populateLookups() {
-    loadAllCountries()
-//    $.ajax({
-//		type: 'GET',
-//		url: "lookups",
-//	    contentType: 'application/json; charset=utf-8',
-//	    dataType: 'json',
-//	    async: false,
-//	    success: function(result) {
-//	    	airlineGradeLookup = result.airlineGradeLookup
-//	    },
-//	    error: function(jqXHR, textStatus, errorThrown) {
-//	            console.log(JSON.stringify(jqXHR));
-//	            console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
-//	    }
-//	});
-}
-
 function showTutorial() {
-	// Get the modal
 	var modal = $('#tutorialModal')
 	modal.fadeIn(1000)
 }
@@ -679,7 +347,7 @@ function executeConfirmationTarget() {
 	var targetFunction = $('#confirmationModal .confirmationButton').data('targetFunction')
 	var targetFunctionParam = $('#confirmationModal .confirmationButton').data('targetFunctionParam')
 	if (typeof targetFunctionParam != 'undefined') {
-		targetFunction(targetFunctionParam) 
+		targetFunction(targetFunctionParam)
 	} else {
 		targetFunction()
 	}
@@ -702,7 +370,7 @@ function promptSelection(question, choices, targetFunction) {
 
 
 function updateAirlineColors() {
-	var url = "colors"
+	var url = "/colors"
     $.ajax({
 		type: 'GET',
 		url: url,
@@ -723,7 +391,7 @@ function updateAirlineLabelColors(callback) {
     airlineLabelColors = {}
     $.ajax({
             type: 'GET',
-            url: "airlines/" + activeAirline.id + "/airline-label-colors",
+            url: "/airlines/" + activeAirline.id + "/airline-label-colors",
             contentType: 'application/json; charset=utf-8',
             dataType: 'json',
             success: function(result) {
@@ -741,6 +409,110 @@ function updateAirlineLabelColors(callback) {
     });
 }
 
+function initLogoUpload($panel, uploadUrl, fileName, successCallback) {
+    const $input = $panel.find('.logoInput');
+    const $dropZone = $panel.find('.file-drop-zone');
+    const $previewContainer = $panel.find('.preview-container');
+    const $previewImg = $panel.find('.logo-preview');
+    const $prompt = $panel.find('.upload-prompt');
+    const $warning = $panel.find('.warning');
+    const $actions = $panel.find('.actions');
+    const $uploadBtn = $panel.find('.uploadButton');
+
+    // Reset
+    resetLogoUpload($panel);
+
+    // File selection handler
+    $input.off('change').on('change', function(e) {
+        handleFileSelect(e.target.files[0]);
+    });
+
+    // Drag and drop handlers
+    $dropZone.off('dragover dragenter').on('dragover dragenter', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $(this).addClass('drag-over');
+    });
+
+    $dropZone.off('dragleave drop').on('dragleave drop', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $(this).removeClass('drag-over');
+        if (e.type === 'drop') {
+            handleFileSelect(e.originalEvent.dataTransfer.files[0]);
+        }
+    });
+
+    function handleFileSelect(file) {
+        if (!file) return;
+
+        if (!file.type.startsWith('image/')) {
+            showError("Please select an image file.");
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            $previewImg.attr('src', e.target.result);
+            $previewContainer.show();
+            $prompt.hide();
+            $actions.show();
+            $warning.hide();
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function showError(msg) {
+        $warning.text(msg).show();
+    }
+
+    $uploadBtn.off('click').on('click', function() {
+        const file = $input[0].files[0] || (typeof $dropZone.data('file') !== 'undefined' ? $dropZone.data('file') : null);
+        if (!file && !$input[0].files[0]) {
+            showError("Please select a file first.");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append(fileName, $input[0].files[0] || $dropZone.data('file'));
+
+        $uploadBtn.prop('disabled', true).text('Uploading...');
+
+        fetch(uploadUrl, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => { throw new Error(err.error || 'Upload failed'); });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                successCallback(data);
+            } else {
+                showError(data.error || "Upload failed");
+            }
+        })
+        .catch(error => {
+            showError(error.message);
+        })
+        .finally(() => {
+            $uploadBtn.prop('disabled', false).text('Upload');
+        });
+    });
+}
+
+function resetLogoUpload($panel) {
+    $panel.find('.logoInput').val('');
+    $panel.find('.preview-container').hide();
+    $panel.find('.logo-preview').attr('src', '');
+    $panel.find('.upload-prompt').show();
+    $panel.find('.actions').hide();
+    $panel.find('.warning').hide();
+}
+
 function assignAirlineColors(dataSet, colorProperty) {
 	$.each(dataSet, function(index, entry) {
 		if (entry[colorProperty]) {
@@ -752,148 +524,3 @@ function assignAirlineColors(dataSet, colorProperty) {
 	})
 }
 
-function populateNavigation(parent) { //change all the tabs to do fake url
-    if (!parent) {
-        parent = $(":root")
-    }
-
-    parent.find('[data-link]').andSelf().filter('[data-link]').each(function() {
-        $(this).off('click.nav')
-
-        var path = $(this).data("link") != "/" ? ("nav-" + $(this).data("link")) : "/"
-
-        var onbackFunction = $(this).attr("onback") //prefer onback function, so we can pass a flag
-        if (onbackFunction !== undefined) {
-            $(this).on('click.nav', function() {
-                history.pushState({ "onbackFunction" : onbackFunction}, null, path);
-            })
-        } else {
-            var onclickFunction = $(this).attr("onclick")
-
-            //console.log(path + " " + onclickFunction)
-
-            $(this).on('click.nav', function() {
-                history.pushState({ "onclickFunction" : onclickFunction}, null, path);
-            })
-        }
-//
-//        if (onclickFunction) {
-//            eval(onclickFunction)
-//        }
-    })
-}
-
-let tabGroupState = {}
-
-function showTabGroup() {
-    if (tabGroupState.hideTimeout) {
-        clearTimeout(tabGroupState.hideTimeout)
-        tabGroupState.hideTimeout = undefined
-    }
-    $('#tabGroup').fadeIn(200)
-}
-
-function hideTabGroup(waitDuration) {
-    if (tabGroupState.hideTimeout) {
-        clearTimeout(tabGroupState.hideTimeout)
-    }
-    var timeout = setTimeout(() => $('#tabGroup').fadeOut(500), waitDuration ? waitDuration : 2000)
-    tabGroupState.hideTimeout = timeout
-}
-
-function initTabGroup() {
-    //$('#tabGroup .left-tab').bind('mouseout', () => { console.log('out'); hideTabGroup })
-    //$("#tabGroup").mouseenter(() => showTabGroup()).mouseleave(() => { console.log('out'); hideTabGroup() })
-
-
-    $("#tabGroup .tab-icon").on('mouseenter touchstart', function() {
-        $(this).closest('.left-tab').find('.label').show();
-    });
-
-    $("#tabGroup .tab-icon").on('mouseleave touchend', function() {
-        $(this).closest('.left-tab').find('.label').hide();
-    });
-
-
-//    $("#canvas").on( "swiperight", function( e ) {
-//        if ($('#canvas')[0].scrollLeft == 0) {
-//            showTabGroup()
-//            hideTabGroup(5000)
-//        }
-//    });
-    $("#canvas").on('touchstart', function(e) {
-        var swipe = e.originalEvent.touches,
-        startX = swipe[0].pageX;
-        startY = swipe[0].pageY;
-        $(this).on('touchmove', function(e) {
-            var contact = e.originalEvent.touches,
-            endX = contact[0].pageX,
-            endY = contact[0].pageY,
-            distanceX = endX - startX;
-            distanceY = endY - startY
-            if (Math.abs(distanceX) > Math.abs(distanceY) && distanceX > 30 && $('#main')[0].scrollLeft == 0) {
-                showTabGroup()
-                hideTabGroup(5000)
-            }
-        })
-        .one('touchend', function() {
-            $(this).off('touchmove touchend');
-        });
-    });
-
-    $("#tabGroupCue").on('mouseenter touchstart',
-        function() {
-            showTabGroup()
-        }
-    )
-    $("#tabGroupCue").on('mouseleave touchend',
-        function() {
-             hideTabGroup(5000)
-        }
-    )
-
-    $("#tabGroup").on('mouseenter touchstart',
-        function() {
-            showTabGroup()
-        }
-    )
-    $("#tabGroup").on('mouseleave touchend',
-        function() {
-             hideTabGroup()
-        }
-    )
-}
-
-function checkAutoplaySettings() {
-    var autoplayEnabled = true
-    if (localStorage.getItem("autoplay")){
-      autoplayEnabled = localStorage.getItem("autoplay") === 'true'
-    } else {
-      localStorage.setItem('autoplay', autoplayEnabled)
-    }
-    $('input.autoplay').prop('checked', autoplayEnabled)
-}
-
-function toggleAutoplay() {
-    localStorage.setItem('autoplay', $('input.autoplay').is(':checked'))
-}
-
-window.addEventListener('popstate', function(e) {
-    if (e.state) {
-        if (e.state.onbackFunction) {
-            eval(e.state.onbackFunction) //onback has higher precedence
-        } else if (e.state.onclickFunction) {
-            eval(e.state.onclickFunction)
-        }
-    }
-});
-
-const debounce = (callback, wait) => {
-  let timeoutId = null;
-  return (...args) => {
-    window.clearTimeout(timeoutId);
-    timeoutId = window.setTimeout(() => {
-      callback(...args);
-    }, wait);
-  };
-}

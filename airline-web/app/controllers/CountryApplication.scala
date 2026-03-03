@@ -12,28 +12,66 @@ import scala.math.BigDecimal.int2bigDecimal
 
 
 class CountryApplication @Inject()(cc: ControllerComponents) extends AbstractController(cc) {
-  def getAllCountries(airlineId : Option[Int]) = Action {
+
+  /**
+   * Static country data
+   */
+  def getAllCountries() = Action {
     val countries = CountrySource.loadAllCountries().filter(_.airportPopulation > 0)
+    val airportsByCountryCode = AirportSource.loadAllAirports().filter(_.popMiddleIncome > 0).groupBy(_.countryCode)
 
-    airlineId match {
-      case None => Ok(Json.toJson(countries))
-      case Some(airlineId) => {
-        AirlineCache.getAirline(airlineId, true) match {
-          case None => Ok(Json.toJson(countries))
+    val airportCountsByCountryCode = airportsByCountryCode.view.mapValues { airports =>
+      val smallAirportCount = airports.count(airport => airport.size <= 2)
+      val mediumAirportCount = airports.count(airport => airport.size >= 3 && airport.size <= 5)
+      val largeAirportCount = airports.count(airport => airport.size >= 6)
+      Json.obj(
+        "smallAirportCount" -> smallAirportCount,
+        "mediumAirportCount" -> mediumAirportCount,
+        "largeAirportCount" -> largeAirportCount
+      )
+    }
+
+    val result = countries.map { country =>
+      val countryJson = Json.toJson(country).as[JsObject]
+      val airportCountJson = airportCountsByCountryCode.getOrElse(country.countryCode, Json.obj())
+      country.countryCode -> (countryJson ++ airportCountJson)
+    }.toMap
+    Ok(Json.toJson(result))
+      .withHeaders(
+        CACHE_CONTROL -> "public, max-age=2419200",
+        ETAG -> s""""$currentApiVersion"""", // Use version as ETag
+        EXPIRES -> java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME
+          .format(java.time.ZonedDateTime.now().plusWeeks(4))
+      )
+  }
+
+  /**
+   * Per-cycle country data
+   *
+   * @param airlineId
+   * @return
+   */
+  def getAllCountriesWithAirlineDetails(airlineId: Int) = AuthenticatedAirline(airlineId) { request =>
+    request.headers.get(IF_NONE_MATCH) match {
+      case Some(etag) if etag == s""""$currentCycle"""" =>
+        NotModified
+      case _ =>
+        val countries = CountrySource.loadAllCountries().filter(_.airportPopulation > 0)
+
+        AirlineCache.getAirline(airlineId, fullLoad = true) match {
+          case None => NotFound
           case Some(airline) =>
-            val baseCountByCountryCode = airline.getBases().groupBy(_.countryCode).view.mapValues(_.length)
             var result = Json.arr()
-
+            val baseCountByCountryCode = airline.getBases().groupBy(_.countryCode).view.mapValues(_.length)
+            val delegatesByCountryCode = airline.getDelegateInfo().busyDelegates.filter(_.assignedTask.getTaskType == DelegateTaskType.COUNTRY).map(_.assignedTask.asInstanceOf[CountryDelegateTask]).groupBy(_.country.countryCode)
             val mutualRelationships: Map[String, Int] =
               airline.getCountryCode() match {
                 case Some(homeCountryCode) => CountrySource.getCountryMutualRelationships(homeCountryCode)
                 case None => Map.empty[String, Int]
               }
 
-            val delegatesByCountryCode = airline.getDelegateInfo().busyDelegates.filter(_.assignedTask.getTaskType == DelegateTaskType.COUNTRY).map(_.assignedTask.asInstanceOf[CountryDelegateTask]).groupBy(_.country.countryCode)
-
             countries.foreach { country =>
-              var countryJson : JsObject = Json.toJson(country).asInstanceOf[JsObject]
+              var countryJson: JsObject = Json.obj("countryCode" -> country.countryCode)
               baseCountByCountryCode.get(country.countryCode).foreach { baseCount =>
                 countryJson = countryJson + ("baseCount" -> JsNumber(baseCount))
               }
@@ -42,69 +80,75 @@ class CountryApplication @Inject()(cc: ControllerComponents) extends AbstractCon
               }
 
               if (airline.getHeadQuarter().isDefined) {
-                val relationship : Int = mutualRelationships.get(country.countryCode).getOrElse(0)
+                val relationship: Int = mutualRelationships.getOrElse(country.countryCode, 0)
                 countryJson = countryJson + ("mutualRelationship" -> JsNumber(relationship))
 
-                val airlineCountryRelationship = AirlineCountryRelationship.getAirlineCountryRelationship(country.countryCode, airline).relationship
+                val airlineCountryRelationship = AirlineCountryRelationship.getAirlineCountryRelationship(country.countryCode, airline)
                 countryJson = countryJson + ("countryRelationship" -> Json.toJson(airlineCountryRelationship))
                 val title = CountryAirlineTitle.getTitle(country.countryCode, airline)
-                countryJson = countryJson + (("CountryTitle")-> Json.toJson(title))
+                countryJson = countryJson + (("CountryTitle") -> Json.toJson(title))
               }
-
               result = result.append(countryJson)
             }
 
             Ok(result)
+              .withHeaders(
+                CACHE_CONTROL -> "no-cache",
+                ETAG -> s""""$currentCycle""""
+              )
         }
-      }
     }
   }
 
-  def getCountryAirlineDetails(countryCode : String, airlineId : Int) = AuthenticatedAirline(airlineId) { request =>
-    val relationship = AirlineCountryRelationship.getAirlineCountryRelationship(countryCode, request.user)
+  private val countryJsonCache = new scala.collection.concurrent.TrieMap[String, (Int, JsValue)]()
+  private val titleProgressionCache = new scala.collection.concurrent.TrieMap[String, (Int, JsValue)]()
 
-    var result = Json.obj("relationship" -> relationship)
-    val title = CountryAirlineTitle.getTitle(countryCode, request.user)
-    result = result + ("title" -> Json.toJson(title))
-
-    Ok(result)
-  }
-
-  def getCountry(countryCode : String) = Action {
-    getCountryJson(countryCode) match {
-      case Some(jsonObject) =>
-        Ok(jsonObject)
-      case None => NotFound
-    } 
-  }
-
-
-
-  def getCountryAirlineTitleProgression(countryCode : String) = Action {
-    var result = Json.arr()
-    CountryCache.getCountry(countryCode) match {
-      case Some(country) =>
-        Title.values.toList.sortBy(_.id).reverse.foreach { title =>
-          val titleJson = Json.obj("title" -> title.toString,
-            "description" -> Title.description(title),
-            "requirements" -> CountryAirlineTitle.getTitleRequirements(title, country),
-            "bonus" -> CountryAirlineTitle.getTitleBonus(title, country))
-          result = result.append(titleJson)
+  def getCountry(countryCode: String) = Action { request =>
+    request.headers.get(IF_NONE_MATCH) match {
+      case Some(etag) if etag == s""""$currentCycle"""" =>
+        NotModified
+      case _ =>
+        val json: Option[JsValue] = countryJsonCache.get(countryCode).filter(_._1 == currentCycle).map(_._2).orElse {
+          val fresh = getCountryJson(countryCode)
+          fresh.foreach { j => countryJsonCache(countryCode) = (currentCycle, j) }
+          fresh
         }
-
-        Ok(result)
-      case None => NotFound
+        json match {
+          case Some(j) => Ok(j).withHeaders(CACHE_CONTROL -> "no-cache", ETAG -> s""""$currentCycle"""")
+          case None => NotFound
+        }
     }
-
   }
 
-  def getCountryJson(countryCode : String) : Option[JsObject] = {
+  def getCountryAirlineTitleProgression(countryCode: String) = Action { request =>
+    request.headers.get(IF_NONE_MATCH) match {
+      case Some(etag) if etag == s""""$currentCycle"""" =>
+        NotModified
+      case _ =>
+        val json = titleProgressionCache.get(countryCode).filter(_._1 == currentCycle).map(_._2).orElse {
+          CountryCache.getCountry(countryCode).map { country =>
+            var result = Json.arr()
+            Title.values.toList.sortBy(_.id).reverse.foreach { title =>
+              val titleJson = Json.obj("title" -> title.toString,
+                "description" -> Title.description(title),
+                "requirements" -> CountryAirlineTitle.getTitleRequirements(title, country),
+                "bonus" -> CountryAirlineTitle.getTitleBonus(title, country))
+              result = result.append(titleJson)
+            }
+            titleProgressionCache(countryCode) = (currentCycle, result)
+            result: JsValue
+          }
+        }
+        json match {
+          case Some(j) => Ok(j).withHeaders(CACHE_CONTROL -> "no-cache", ETAG -> s""""$currentCycle"""")
+          case None => NotFound
+        }
+    }
+  }
+
+  def getCountryJson(countryCode: String): Option[JsObject] = {
     CountryCache.getCountry(countryCode).map { country =>
       var jsonObject: JsObject = Json.toJson(country).asInstanceOf[JsObject]
-      val airports = AirportSource.loadAirportsByCountry(countryCode)
-      val smallAirportCount = airports.count { airport => airport.size <= 2 }
-      val mediumAirportCount = airports.count { airport => airport.size >= 3 && airport.size <= 4 }
-      val largeAirportCount = airports.count { airport => airport.size >= 5 }
 
       val allBases = AirlineSource.loadAirlineBasesByCountryCode(countryCode)
 
@@ -113,23 +157,13 @@ class CountryApplication @Inject()(cc: ControllerComponents) extends AbstractCon
       }
 
       jsonObject = jsonObject.asInstanceOf[JsObject] ++
-        Json.obj("smallAirportCount" -> smallAirportCount,
-          "mediumAirportCount" -> mediumAirportCount,
-          "largeAirportCount" -> largeAirportCount,
+        Json.obj(
           "headquartersCount" -> headquarters.length,
-          "basesCount" -> bases.length)
-      //val allAirlines = AirlineSource.loadAllAirlines(false).map(airline => (airline.id, airline)).toMap
+          "basesCount" -> bases.length
+        )
       CountrySource.loadMarketSharesByCountryCode(countryCode).foreach { marketShares => //if it has market share data
         val champions = ChampionUtil.getCountryChampionInfoByCountryCode(countryCode).sortBy(_.ranking)
-        var championsJson = Json.toJson(champions)
-        //        var x = 0
-        //        for (x <- 0 until champions.size) {
-        //          val airline = allAirlines(champions(x)._1)
-        //          val passengerCount = champions(x)._2
-        //          val ranking = x + 1
-        //          val reputationBoost = Computation.computeReputationBoost(country, ranking)
-        //          championsJson = championsJson :+ Json.obj("airline" -> Json.toJson(airline), "passengerCount" -> JsNumber(passengerCount), "ranking" -> JsNumber(ranking), "reputationBoost" -> JsNumber(reputationBoost))
-        //        }
+        val championsJson = Json.toJson(champions)
 
         jsonObject = jsonObject.asInstanceOf[JsObject] + ("champions" -> championsJson)
 
@@ -139,11 +173,12 @@ class CountryApplication @Inject()(cc: ControllerComponents) extends AbstractCon
           case countryAirlineTitle =>
             val CountryAirlineTitle(country, airline, title) = countryAirlineTitle
             val share: Long = marketShares.airlineShares.getOrElse(airline.id, 0L)
+            val relationship = AirlineCountryRelationship.getAirlineCountryRelationship(countryCode, airline).relationship
             title match {
               case Title.NATIONAL_AIRLINE =>
-                nationalAirlinesJson = nationalAirlinesJson.append(Json.obj("airlineId" -> airline.id, "airlineName" -> airline.name, "passengerCount" -> share, "loyaltyBonus" -> countryAirlineTitle.loyaltyBonus))
+                nationalAirlinesJson = nationalAirlinesJson.append(Json.obj("airlineId" -> airline.id, "airlineName" -> airline.name, "passengerCount" -> share, "loyaltyBonus" -> countryAirlineTitle.loyaltyBonus, "relationship" -> relationship))
               case Title.PARTNERED_AIRLINE =>
-                partneredAirlinesJson = partneredAirlinesJson.append(Json.obj("airlineId" -> airline.id, "airlineName" -> airline.name, "passengerCount" -> share, "loyaltyBonus" -> countryAirlineTitle.loyaltyBonus))
+                partneredAirlinesJson = partneredAirlinesJson.append(Json.obj("airlineId" -> airline.id, "airlineName" -> airline.name, "passengerCount" -> share, "loyaltyBonus" -> countryAirlineTitle.loyaltyBonus, "relationship" -> relationship))
             }
         }
 
@@ -163,9 +198,9 @@ class CountryApplication @Inject()(cc: ControllerComponents) extends AbstractCon
       var jsonArray = Json.arr()
       shares.foreach { share =>
         jsonArray = jsonArray :+ JsObject(List(
-        "airlineId" -> JsNumber(share._1.id),
-        "airlineName" -> JsString(share._1.name),
-        "passengerCount" -> JsNumber(share._2)
+          "airlineId" -> JsNumber(share._1.id),
+          "airlineName" -> JsString(share._1.name),
+          "passengerCount" -> JsNumber(share._2)
         ))
       }
       jsonArray

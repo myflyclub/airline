@@ -3,16 +3,14 @@
 #live-chat {
 	bottom: 0;
 	font-size: 12px;
-	left: -12px;
+	right: 0px;
 	position: fixed;
 	width: 50px;
 	z-index: 99;
-	border-radius: 0px 5px 0 0;
 }
 
 #live-chat header {
-	background: var(--chat-background);
-	backdrop-filter: var(--backdrop-filter);
+	background: var(--background-1);
 	border-radius: 5px 5px 0 0;
 	color: var(--text-color);
 	cursor: pointer;
@@ -21,7 +19,7 @@
 	border-bottom: 1px solid rgb(168, 168, 168);
 }
 #live-chat i {
-	background-image:url("../../assets/images/icons/32px/balloon-chat-red.png");
+	background-image:url("../../assets/images/icons/chat-red.svg");
 	background-size: contain, cover;
 	height: 32px;
 	width: 32px;
@@ -142,7 +140,6 @@
 
 .chat {
 	background: var(--chat-current-background);
-	backdrop-filter: var(--backdrop-filter);
 }
 
 .chat-history {

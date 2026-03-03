@@ -2,21 +2,20 @@ var loadedLoans = {}
 
 function showBankCanvas() {
 	setActiveDiv($("#bankCanvas"))
-	highlightTab($('.bankCanvasTab'))
 	loadInterestRateChart()
 	loadNewLoanDetails() 
     loadOutstandingLoans()
 }
 
 function loadInterestRateChart() {
-	var url = "loan-interest-rates"
+	var url = "/loan-interest-rates"
 	$.ajax({
 		type: 'GET',
 		url: url,
 	    contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
 	    success: function(oilPrices) {
-	    	plotLoanInterestRatesChart(oilPrices, $("#bankCanvas #loanInterestRateChart"))
+	    	plotLoanInterestRatesChart(oilPrices, "loanInterestRateChart")
 	    },
         error: function(jqXHR, textStatus, errorThrown) {
 	            console.log(JSON.stringify(jqXHR));
@@ -29,7 +28,7 @@ function loadInterestRateChart() {
 
 function loadNewLoanDetails() {
 	$('#newLoanMaxAmount').text('-')
-	var url = "airlines/" + activeAirline.id + "/max-loan"
+	var url = "/airlines/" + activeAirline.id + "/max-loan"
 	$.ajax({
 		type: 'GET',
 		url: url,
@@ -65,7 +64,7 @@ function loadNewLoanDetails() {
 
 function loadLoanOptions(amount) {
 	formatNumberInput($("#newLoanAmount"))
-	var url = "airlines/" + activeAirline.id + "/loan-options?loanAmount=" + parseNumber(amount)
+	var url = "/airlines/" + activeAirline.id + "/loan-options?loanAmount=" + parseNumber(amount)
 	$.ajax({
 		type: 'GET',
 		url: url,
@@ -102,14 +101,14 @@ function updateNewLoanOptionsTable(loanOptions) {
 		    promptConfirm("Confirm taking out this loan with term " + loanOption.loanTerm + " weeks?", action)
 
 		}
-		var cell = $("<div class='cell'><img src='assets/images/icons/money--plus.png' title='Borrow with this Term' class='button'></div>").appendTo(row)
+		var cell = $("<div class='cell'><img src='/assets/images/icons/money--plus.png' title='Borrow with this Term' class='button'></div>").appendTo(row)
 		cell.find('.button').click(loanFunction)
 		optionsTable.append(row)
 	});
 }
 
 function takeoutLoan(amount, term) {
-	var url = "airlines/" + activeAirline.id + "/loans"
+	var url = "/airlines/" + activeAirline.id + "/loans"
 	$.ajax({
 		type: 'POST',
 		url: url,
@@ -139,7 +138,7 @@ function loadOutstandingLoans() {
 }
 
 function loadOutstandingLoansTable() {
-	var url = "airlines/" + activeAirline.id + "/loans"
+	var url = "/airlines/" + activeAirline.id + "/loans"
 	loadedLoans = {}
 	$.ajax({
 		type: 'GET',
@@ -179,7 +178,7 @@ function updateOutstandingLoansTable() {
 		row.append("<div class='cell' align='right'>" + '$' + commaSeparateNumber(loan.earlyRepaymentFee) + "</div>")
 		row.append("<div class='cell' align='right'>" + '$' + commaSeparateNumber(loan.earlyRepayment) + "</div>")
 		if (loan.earlyRepayment <= activeAirline.balance) {
-			row.append("<div class='cell'><img src='assets/images/icons/money--minus.png' title='Pay off early' class='button' onclick='repayLoan(" + loan.id + ")'/></div>")
+			row.append("<div class='cell'><img src='/assets/images/icons/money--minus.png' title='Pay off early' class='button' onclick='repayLoan(" + loan.id + ")'/></div>")
 		} else {
 			row.append("<div class='cell'></div>")
 		}
@@ -204,7 +203,7 @@ function updateOutstandingLoansTable() {
 
 
 function repayLoan(loanId) {
-	var url = "airlines/" + activeAirline.id + "/loans/" + loanId
+	var url = "/airlines/" + activeAirline.id + "/loans/" + loanId
 	$.ajax({
 		type: 'DELETE',
 		url: url,

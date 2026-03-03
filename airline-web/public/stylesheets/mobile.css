@@ -1,33 +1,47 @@
 /* mobile (portrait) ----------- */
-@media only screen
-and (max-device-width : 640px) {
-    html {
-        --top-bar-background-color : #FFFFFF;
-    }
-    html[data-theme='dark'] {
-        --backdrop-filter: none;
-        --text-color: #DDDDDD;
-        --top-bar-background-color: rgba(0, 0, 0, 0.4);
-    }
-/*and (orientation : portrait or max-device-width : 1024px) {*/
+@media only screen and (max-device-width : 640px) {
     .mainPanel, #map {
-        height: calc(75dvh - 32px);
+        height: calc(100dvh - 34px);
         width: 100%;
     }
-    .mainPanel {
+    .mainPanel:not(#map) {
         overflow: scroll !important;
     }
-    .section {
 
+    div.section, .modal-content {
+        padding: 8px;
     }
 
-    div.section, div.selectedSection, .modal-content {
-        padding: 8px;
+    .extendedTopBarDetails {
+        position: absolute;
+        top: var(--mobile-header-height);
+        z-index: 100000;
+        height: var(--mobile-header-more-height);
+        box-shadow: var(--shadow-1);
+    }
+
+    #topBar>.mobileOnly {
+        background-color: var(--background-1);
+        border-bottom-right-radius: 6px;
+        width: 100%;
+        height: var(--mobile-header-height);
+        display: flex;
+        align-items: center;
+        padding-right: 8px;
+    }
+
+    #moreTopBarTab li {
+        border: none !important;
+        box-shadow: var(--shadow-1) !important;
+    }
+
+    .max-w-screen-nav {
+        max-width: 100vw;
     }
 
     .verticalGroup, .sidePanel, .officeCanvasLeftGroup, .officeCanvasRightGroup, #airportDetails>.verticalGroup, .officeCanvasLeftGroup .verticalGroup, #rankingCanvas .verticalGroup, #eventCanvas .verticalGroup, .campaignDetails .verticalGroup,
     #allianceCanvas .verticalGroup {
-        width: unset%
+        width: unset;
     }
 
     #canvas {
@@ -45,6 +59,7 @@ and (max-device-width : 640px) {
         top: calc(75dvh - 32px);
         left: 2px;
     }
+
     .table-container-y {
         max-height: calc(75dvh - 30px - 32px - 20px - 32px); /*adding all other divs...*/
     }
@@ -68,11 +83,8 @@ and (max-device-width : 640px) {
         width: 100% !important;
     }
 
-    .googleMapIcon, .gmnoprint, .gm-fullscreen-control {
+    .mapIcon {
         display: none;
-    }
-
-    #oilPriceChart, #loanInterestRateChart {
     }
 
     .moreRow {
@@ -85,7 +97,7 @@ and (max-device-width : 640px) {
     }
 
     .moreRow li, .extendedTopBarDetails {
-        background-color: var(--top-bar-background-color);
+        background-color: var(--background-1);
     }
 
     .moreRow li {
@@ -95,7 +107,7 @@ and (max-device-width : 640px) {
       border-bottom-left-radius: 6px;
       border-bottom-right-radius: 6px;
       padding: 0 30px;
-      border-top-color: var(--top-bar-background-color);
+      border-top-color: var(--background-1);
     }
 
     .moreRow li span {
@@ -108,15 +120,12 @@ and (max-device-width : 640px) {
         transition: all 0.3s linear;
     }
 
-
     .mobileOnly {
-        visibility: visible;
         display: unset;
     }
 
     .desktopOnly, div.button.desktopOnly {
-        visibility: hidden;
-        display: none;
+        display: none !important;
     }
 
     .canvas {
@@ -129,11 +138,13 @@ and (max-device-width : 640px) {
     }
 
     .menubar {
-        min-height: 30px;
-        overflow: hidden;
         width: 100%;
         z-index: 999;
         background-image: var(--background-gradient-image);
+    }
+
+    #floatMessageBox{
+        width: 100vw;
     }
 
     .table.data {
@@ -154,6 +165,7 @@ and (max-device-width : 640px) {
 
     .topBarItem, #patreonDiv {
         margin: 0px 4px;
+        display: none;
     }
 
     #routeSearchResult {
@@ -172,25 +184,4 @@ and (max-device-width : 640px) {
         font-size: 2.5vw;
         line-height: 1;
     }
-
-    .flex-container-width-half > div {
-        width: 100% !important;
-    }
-
-    .item-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 12px;
-      width: 100%;
-    }
-
-    .item {
-        width: 150px;
-        height: unset;
-    }
-
-    .i-label {
-        height: unset;
-    }
-
 }

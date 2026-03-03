@@ -1,84 +1,71 @@
-var port = window.location.port
+var wsUri = (function() {
+    var protocol = window.location.protocol == "https:" ? "wss:" : "ws:"
+    var port = window.location.port || (window.location.protocol == "https:" ? 443 : 80)
+    return protocol + "//" + window.location.hostname + ":" + port + "/wsWithActor"
+})()
 
-var wsProtocol
-
-if (window.location.protocol == "https:"){
-	wsProtocol = "wss:"
-	if (!port) {
-		port = 443
-	}
-} else {
-	wsProtocol = "ws:"
-	if (!port) {
-		port = 80
-	}
-}
-
-var wsUri = wsProtocol + "//" +  window.location.hostname + ":" + port + "/wsWithActor";
-var websocket;
+var websocket
 var selectedAirlineId
+var reconnectAttempts = 0
+var maxReconnectDelay = 30000
 
-function checkWebSocket(selectedAirlineId) {
-    if (websocket.readyState === WebSocket.CLOSED) {
-        connectWebSocket(selectedAirlineId)
+function checkWebSocket(airlineId) {
+    if (!websocket || websocket.readyState === WebSocket.CLOSED) {
+        connectWebSocket(airlineId)
     }
 }
 
 function connectWebSocket(airlineId) {
-	websocket = new WebSocket(wsUri); 
-	websocket.onopen = function(evt) {
-		sendMessage(airlineId)  //send airlineId to indicate we want to listen to messages for this airline Id
-		console.log("successfully open socket on airline " + airlineId)
-	}; 
-	websocket.onclose = function(evt) { onClose(evt) }; 
-	websocket.onmessage = function(evt) { onMessage(evt) }; 
-	websocket.onerror = function(evt) { onError(evt) }; 
+    websocket = new WebSocket(wsUri)
+    websocket.onopen = function() {
+        reconnectAttempts = 0
+        wsSend(airlineId)
+        console.log("websocket open for airline " + airlineId)
+    }
+    websocket.onclose = function() {
+        if (selectedAirlineId) {
+            var delay = Math.min(1000 * Math.pow(2, reconnectAttempts), maxReconnectDelay)
+            reconnectAttempts++
+            setTimeout(function() { connectWebSocket(selectedAirlineId) }, delay)
+        }
+    }
+    websocket.onmessage = function(evt) {
+        var json = JSON.parse(evt.data)
+        if (json.ping) { console.debug("ping : " + json.ping); return }
+        console.log("websocket message : " + evt.data)
+        if (json.messageType == "cycleInfo") {
+            updateTime(json.cycle, json.fraction, json.cycleDurationEstimation)
+        } else if (json.messageType == "cycleCompleted") {
+            if (selectedAirlineId) {
+                var jitter = Math.floor(Math.random() * 8000)
+                setTimeout(function() { updateAirlineInfo(selectedAirlineId); loadAirportsDynamic() }, jitter)
+            }
+        } else if (json.messageType == "broadcastMessage") {
+            queuePrompt("broadcastMessagePopup", json.message)
+        } else if (json.messageType == "airlineMessage") {
+            queuePrompt("airlineMessagePopup", json.message)
+        } else if (json.messageType == "notice") {
+            queueNotice(json)
+        } else if (json.messageType == "tutorial") {
+            queueTutorialByJson(json)
+        } else if (json.messageType == "pendingAction") {
+            handlePendingActions(json.actions)
+        } else {
+            console.warn("unknown message type " + evt.data)
+        }
+    }
+    websocket.onerror = function(evt) { console.log(evt) }
 }
 
 function initWebSocket(airlineId) {
-	selectedAirlineId = airlineId
-	connectWebSocket(airlineId)
+    selectedAirlineId = airlineId
+    connectWebSocket(airlineId)
 }
 
-function onClose(evt) {}  
-function onMessage(evt) { //right now the message is just the cycle #, so refresh the panels
-	var json = JSON.parse(evt.data)
-	if (json.ping) { //ok
-	    console.debug("ping : " + json.ping)
-        return
-    }
-	console.log("websocket received message : " + evt.data)
-	
-	if (json.messageType == "cycleInfo") { //update time
-		updateTime(json.cycle, json.fraction, json.cycleDurationEstimation)
-//	} else if (json.messageType == "cycleStart") { //update time
-//		updateTime(json.cycle, 0)
-	} else if (json.messageType == "cycleCompleted") {
-		if (selectedAirlineId) {
-			refreshPanels(selectedAirlineId)
-		}
-	} else if (json.messageType == "broadcastMessage") {
-        queuePrompt("broadcastMessagePopup", json.message)
-    } else if (json.messageType == "airlineMessage") {
-        queuePrompt("airlineMessagePopup", json.message)
-    } else if (json.messageType == "notice") {
-        queueNotice(json)
-    } else if (json.messageType == "tutorial") {
-        queueTutorialByJson(json)
-    } else if (json.messageType == "pendingAction") {
-        handlePendingActions(json.actions)
+function wsSend(message) {
+    if (websocket.readyState === 1) {
+        websocket.send(message)
     } else {
-		console.warn("unknown message type " + evt.data)
-	}
-}  
-function onError(evt) {
-	console.log(evt)
-} 
-
-function sendMessage(message) {
-	if (websocket.readyState === 1) {
-		websocket.send(message);
-	} else {
-		setTimeout(function() { sendMessage(message) }, 1000)
-	}
+        setTimeout(function() { wsSend(message) }, 1000)
+    }
 }

@@ -1,1 +1,0 @@
-DELETE FROM alert WHERE category = 0 AND target_id NOT IN (SELECT id FROM link)

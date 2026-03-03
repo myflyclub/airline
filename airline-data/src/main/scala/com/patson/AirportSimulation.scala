@@ -11,26 +11,13 @@ import scala.collection.mutable.{ListBuffer, Map, Set}
 import scala.math.BigDecimal.RoundingMode
 
 object AirportSimulation {
-  val LOYALTY_AUTO_INCREMENT_WITH_HQ = 0.05
-  val LOYALTY_AUTO_INCREMENT_WITH_BASE = 0.02
-  val LOYALTY_AUTO_INCREMENT_MAX_WITH_HQ = 30 //how much loyalty will increment to just because of being a HQ
-  val LOYALTY_AUTO_INCREMENT_MAX_WITH_BASE = 15 //how much loyalty will increment to just because of being a HQ
-  val LOYALTY_DECREMENT_BY_MINOR_DELAY = 0.5 //if all flights have minor delay
-  val LOYALTY_DECREMENT_BY_MAJOR_DELAY = 2 //if all flights have major delay
-  val LOYALTY_DECREMENT_BY_CANCELLATION = 4 //if all flights are cancelled
-  
-  private[patson] val LOYALTY_INCREMENT_BY_FLIGHTS = 1.0
-  private[patson] val LOYALTY_DECREMENT_BY_FLIGHTS = 1.0
 
-
-  def airportSimulation(cycle: Int, flightLinkResult : List[LinkConsumptionDetails], linkRidershipDetails : immutable.Map[(PassengerGroup, Airport, Route), Int]) = {
+  def airportSimulation(cycle: Int, linkRidershipDetails : immutable.Map[(PassengerGroup, Airport, Route), Int]) = {
     println("starting airport simulation")
     println("loading all airports")
     //do decay
     val allAirports = AirportSource.loadAllAirports(true)
     println("finished loading all airports")
-
-    val flightLinks = LinkSource.loadAllLinks(LinkSource.ID_LOAD).filter(_.transportType == TransportType.FLIGHT).map(_.asInstanceOf[Link])
 
     //update the loyalist on airports based on link consumption
     println("Adjust loyalist by link consumptions")
@@ -40,8 +27,6 @@ object AirportSimulation {
     updateLoungeStatus(allAirports, linkRidershipDetails)
 
     println("Finished loyalist simulation")
-
-    AirportSource.purgeAirlineAppealBonus(cycle)
 
     championInfo
   }
@@ -55,8 +40,8 @@ object AirportSimulation {
   }
 
   def processChampionInfoChanges(previousInfo : List[AirportChampionInfo], newInfo : List[AirportChampionInfo], currentCycle : Int) = {
-    val previousInfoByAirlineId : Predef.Map[Int, List[AirportChampionInfo]] = previousInfo.filter(_.loyalist.airline.airlineType != AirlineType.NON_PLAYER).groupBy(_.loyalist.airline.id)
-    val newInfoByAirlineId : Predef.Map[Int, List[AirportChampionInfo]] = newInfo.filter(_.loyalist.airline.airlineType != AirlineType.NON_PLAYER).groupBy(_.loyalist.airline.id)
+    val previousInfoByAirlineId : Predef.Map[Int, List[AirportChampionInfo]] = previousInfo.filter(_.loyalist.airline.airlineType != NonPlayerAirline).groupBy(_.loyalist.airline.id)
+    val newInfoByAirlineId : Predef.Map[Int, List[AirportChampionInfo]] = newInfo.filter(_.loyalist.airline.airlineType != NonPlayerAirline).groupBy(_.loyalist.airline.id)
 
     val airlineIds = (previousInfoByAirlineId.keySet ++ newInfoByAirlineId.keySet)
     val logs = ListBuffer[Log]()
@@ -110,7 +95,7 @@ object AirportSimulation {
 
     existingLoyalistByAirportId = decayLoyalists(allAirports, existingLoyalistByAirportId)
 
-    val (updatingLoyalists,deletingLoyalists) = computeLoyalists(allAirports, linkRidershipDetails, existingLoyalistByAirportId)
+    val (updatingLoyalists, deletingLoyalists, allAirportPaxCounts) = computeLoyalists(linkRidershipDetails, existingLoyalistByAirportId)
     println(s"Updating ${updatingLoyalists.length} loyalists entries")
     LoyalistSource.updateLoyalists(updatingLoyalists)
 
@@ -125,7 +110,6 @@ object AirportSimulation {
     val newInfo = ChampionUtil.computeAirportChampionInfo(allLoyalists)
     processChampionInfoChanges(previousInfo, newInfo, cycle)
     AirportSource.updateChampionInfo(newInfo)
-
 
     println("Done computing champions")
 
@@ -142,7 +126,7 @@ object AirportSimulation {
     newInfo
   }
 
-  val DECAY_RATE = 0.00025 //1 loyalist disappears per 4000 per week
+  val DECAY_RATE = 0.0008 //1 loyalist disappears per 1250 per week
   private[patson] def decayLoyalists(allAirports : List[Airport], existingLoyalistByAirportId : immutable.Map[Int, List[Loyalist]]) : immutable.Map[Int, List[Loyalist]] = {
     val updatingLoyalists, deletingLoyalists = ListBuffer[Loyalist]()
     val r = new Random()
@@ -183,15 +167,21 @@ object AirportSimulation {
     result
   }
 
-  val MAX_LOYALIST_FLIP_RATIO = 1
   val NEUTRAL_SATISFACTION = 0.6
-  private[patson] def computeLoyalists(allAirports : List[Airport], linkRidershipDetails : immutable.Map[(PassengerGroup, Airport, Route), Int], existingLoyalistByAirportId : immutable.Map[Int, List[Loyalist]]) = {
+  /**
+   *
+   * @param linkRidershipDetails
+   * @param existingLoyalistByAirportId
+   * @return updatingLoyalists, deletingLoyalists, allAirportPaxCounts
+   *
+   */
+  private[patson] def computeLoyalists(linkRidershipDetails: immutable.Map[(PassengerGroup, Airport, Route), Int], existingLoyalistByAirportId : immutable.Map[Int, List[Loyalist]]): (List[Loyalist], List[Loyalist], immutable.Map[Int, Int]) = {
     val result = ListBuffer[Loyalist]() //airlineId, amount
+    val allAirportPaxCounts = mutable.Map[Int, Int]() //airportId, amount
 
     linkRidershipDetails.groupBy(_._1._1.fromAirport).foreach {
       case ((fromAirport, passengersFromThisAirport)) =>
         val loyalistIncrementOfAirlines = Map[Int, Int]() //airlineId, delta
-        //passengersFromThisAirport.filter(_._1._1.preference.loyaltySensitivity > 0).toList.foreach { //only count pax that actually cares about loyalty now
         passengersFromThisAirport.toList.foreach {
           case ((passengerGroup, toAirport, route), paxCount) =>
             val totalDistance = route.links.map(_.link.distance).sum
@@ -200,10 +190,11 @@ object AirportSimulation {
               val link = linkConsideration.link
               val preferredLinkClass = passengerGroup.preference.preferredLinkClass
               val standardPrice = Pricing.computeStandardPrice(link, preferredLinkClass, passengerGroup.passengerType)
-              val loadFactor = link.soldSeats.totalwithSeatSize / link.capacity.totalwithSeatSize
 
-              val satisfaction = Computation.computePassengerSatisfaction(linkConsideration.cost, standardPrice, loadFactor)
+              val airportPax = allAirportPaxCounts.getOrElse(link.from.id, 0) + paxCount
+              allAirportPaxCounts.put(link.from.id, airportPax)
 
+              val satisfaction = Computation.computePassengerSatisfaction(linkConsideration.cost, standardPrice, link.getLoadFactor, link.getDelayRatio)
 
               var conversionRatio =
                 if (satisfaction < NEUTRAL_SATISFACTION) {
@@ -225,17 +216,12 @@ object AirportSimulation {
         //put a map of current royalist status to draw which loyalist to flip
         val loyalistDistribution = ListBuffer[(Int, Int)]() //airlineId, threshold
         var walker = 0
-        val existingLoyalistOfThisAirport = existingLoyalistByAirportId.get(fromAirport.id).getOrElse(List.empty).map(entry => (entry.airline.id, entry.amount)).toMap
+        val existingLoyalistOfThisAirport = existingLoyalistByAirportId.getOrElse(fromAirport.id, List.empty).map(entry => (entry.airline.id, entry.amount)).toMap
         existingLoyalistOfThisAirport.foreach {
           case(airlineId, loyalistAmount) =>
             walker = walker + loyalistAmount
             loyalistDistribution.append((airlineId, walker))
         }
-//        if (loyalistDistribution.length == 4) {
-//          println(s"distribution $loyalistDistribution")
-//        }
-
-//        val flippedLoyalists = mutable.Map[Int, Int]() //airlineId, flipped amount
 
         val CHUNK_SIZE = 5
         val updatingLoyalists = mutable.HashMap[Int, Int]() //airlineId, amount
@@ -251,7 +237,7 @@ object AirportSimulation {
                 val chunk = if (remainingIncrement <= CHUNK_SIZE) remainingIncrement else CHUNK_SIZE
 
                 //Has to compare pop vs total, as  in rare scenario fromAirport.population < existingLoyalistOfThisAirport.values.sum, for example demolished property that +pop
-                val flipTrigger = ThreadLocalRandom.current().nextInt(Math.max(fromAirport.popMiddleIncome, totalLoyalist).toInt)
+                val flipTrigger = ThreadLocalRandom.current().nextInt(Math.max(1, Math.max(fromAirport.popMiddleIncome, totalLoyalist).toInt))
 
                 val flippedAirlineIdOption = loyalistDistribution.find {
                   case (airlineId : Int, threshold : Int) => flipTrigger < threshold
@@ -307,7 +293,8 @@ object AirportSimulation {
           case (airlineId, amount) => result.append(Loyalist(fromAirport, AirlineCache.getAirline(airlineId).getOrElse(Airline.fromId(airlineId)), amount))
         }
     }
-    result.toList.partition(_.amount > 0)
+    val (positive, nonPositive) = result.toList.partition(_.amount > 0)
+    (positive, nonPositive, allAirportPaxCounts.toMap)
   }
 
   def updateLoungeStatus(allAirports : List[Airport], linkRidershipDetails : Predef.Map[(PassengerGroup, Airport, Route), Int]) = {
@@ -326,16 +313,18 @@ object AirportSimulation {
       }.groupBy(_._1).view.mapValues(_.map(_._2).sum)
     }
 
-
     allAirports.foreach { airport =>
       if (!airport.getLounges().isEmpty) {
         val airlineIdsWithBase = airport.getAirlineBases().keys.toList
         //println(s"AIRPORT $airport : ${passengersByAirport.get(airport).map(_.toList)}")
         val airlinesByPassengers : List[(Airline, Int)] = passengersByAirport.get(airport).map(_.toList).getOrElse(List.empty).filter {
           case (airline, _) => airlineIdsWithBase.contains(airline.id) //only count airlines that has a base here
-        }
+        }.groupBy(_._1.getAllianceId())
+         .collect { case (Some(_), airlines) => airlines.maxBy(_._2) }
+         .toList
+         .sortBy(_._2)
 
-        val eligibleAirlines = airlinesByPassengers.sortBy(_._2).takeRight(airport.getLounges()(0).getActiveRankingThreshold).map(_._1)
+        val eligibleAirlines = airlinesByPassengers.takeRight(airport.getLounges().head.getActiveRankingThreshold).map(_._1)
         airport.getLounges().foreach { lounge =>
           val newStatus =
             if (eligibleAirlines.contains(lounge.airline)) {
@@ -351,24 +340,6 @@ object AirportSimulation {
         }
       }
     }
-  }
-
-  private[patson] val getPenalty : Seq[LinkConsumptionDetails] => Double = consumptionDetails => {
-      //add penalty for delays and cancellation
-      val totalCapacity = consumptionDetails.map { _.link.capacity.total }.sum
-      if (totalCapacity > 0) {
-        val totalMinorDelayCapacity = consumptionDetails.filter(_.link.frequency > 0).map { linkConsumption => linkConsumption.link.capacity.total * linkConsumption.link.minorDelayCount / linkConsumption.link.frequency }.sum
-        val totalMajorDelayCapacity = consumptionDetails.filter(_.link.frequency > 0).map { linkConsumption => linkConsumption.link.capacity.total * linkConsumption.link.majorDelayCount / linkConsumption.link.frequency}.sum
-        val totalCancellationCapacity = consumptionDetails.filter(_.link.frequency > 0).map { linkConsumption => linkConsumption.link.capacity.total * linkConsumption.link.cancellationCount / linkConsumption.link.frequency}.sum
-      
-        val minorDelayPercentage = totalMinorDelayCapacity.toDouble / totalCapacity
-        val majorDelayPercentage = totalMajorDelayCapacity.toDouble / totalCapacity
-        val cancellationPercentage = totalCancellationCapacity.toDouble / totalCapacity
-        
-        minorDelayPercentage * LOYALTY_DECREMENT_BY_MINOR_DELAY + majorDelayPercentage * LOYALTY_DECREMENT_BY_MAJOR_DELAY + cancellationPercentage * LOYALTY_DECREMENT_BY_CANCELLATION
-      } else {
-        0
-      }
   }
   
 }

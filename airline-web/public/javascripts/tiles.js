@@ -34,7 +34,7 @@ function drawTiles($container, tiles) {
 function updateHeadquartersMap($container, airlineId) {
 	$.ajax({
 		type: 'GET',
-		url: "airlines/" + airlineId + "/headquarters-map",
+		url: "/airlines/" + airlineId + "/headquarters-map",
 	    contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
 	    success: function(tiles) {

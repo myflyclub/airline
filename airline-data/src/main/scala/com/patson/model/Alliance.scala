@@ -1,10 +1,7 @@
 package com.patson.model
 
-import scala.collection.mutable.ListBuffer
-import com.patson.data.{AllianceSource, CountrySource, CycleSource}
+import com.patson.data.{AllianceSource, CycleSource}
 import com.patson.model.AllianceEvent.{BOOT_ALLIANCE, LEAVE_ALLIANCE, PROMOTE_LEADER, REJECT_ALLIANCE}
-import com.patson.util.{AirlineCache, ChampionUtil}
-import play.api.libs.json.Json
 
 import scala.math.BigDecimal.RoundingMode
 
@@ -75,25 +72,9 @@ object AllianceEvent extends Enumeration {
 }
 
 object Alliance {
-  val MAX_MEMBER_NON_REGIONAL_COUNT = 5
-  val MAX_MEMBER_REGIONALS_COUNT = 2
+  val MAX_MEMBER_NON_REGIONAL_COUNT = 7
+  val MAX_MEMBER_REGIONALS_COUNT = 0
   val ESTABLISH_MIN_MEMBER_COUNT = 3
-
-  val getReputationBonus: (Int => Double) = { (ranking: Int) =>
-    if (ranking == 1) {
-      30
-    } else if (ranking == 2) {
-      26
-    } else if (ranking == 3) {
-      22
-    } else if (ranking == 4) {
-      19
-    } else if (ranking == 5) {
-      17
-    } else {
-      Math.max(20 - ranking, 8)
-    }
-  }
 
   /**
     *
@@ -101,23 +82,10 @@ object Alliance {
     * @return Map[Alliance, (ranking, champion points)] . Take note that ranking starts with 1 as the top alliance
     */
   def getRankings(alliances: List[Alliance]): Map[Alliance, (Int, BigDecimal)] = {
-    //val countryChampions = ChampionUtil.getAllCountryChampionInfo()
-    val airportChampionsByAirlineId = ChampionUtil.loadAirportChampionInfo().groupBy(_.loyalist.airline.id)
-    val alliancesWithChampionPoints: List[(Alliance, BigDecimal)] = alliances.filter(_.status == AllianceStatus.ESTABLISHED).map {
+    val alliancesWithChampionPoints = alliances.filter(_.status == AllianceStatus.ESTABLISHED).map {
       alliance =>
-        var allianceChampionPoints: BigDecimal = 0.0
-        alliance.members.foreach { allianceMember =>
-          val memberChampionPoints: BigDecimal =
-            if (allianceMember.role == AllianceRole.APPLICANT) { //do not add champion points from applicant
-              0
-            } else {
-              BigDecimal(airportChampionsByAirlineId.get(allianceMember.airline.id).map(_.map(_.reputationBoost).sum).getOrElse(0.0))
-            }
-          //println(s"${allianceMember.airline.name} => " + memberChampionPoints)
-          allianceChampionPoints = allianceChampionPoints + memberChampionPoints
-        }
-
-        (alliance, allianceChampionPoints.setScale(2, RoundingMode.HALF_UP))
+        val allianceReputation : Double = alliance.members.filter(_.role != AllianceRole.APPLICANT).map(_.airline.getReputation()).sum
+        (alliance, BigDecimal.valueOf(allianceReputation).setScale(2, RoundingMode.HALF_UP))
     }
 
     val alliancesWithRanking = alliancesWithChampionPoints.sortBy(_._2)(Ordering.BigDecimal.reverse).zipWithIndex.map {

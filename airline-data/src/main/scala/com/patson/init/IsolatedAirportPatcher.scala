@@ -41,6 +41,9 @@ object IsolatedAirportPatcher {
       if (GameConstants.ISOLATED_COUNTRIES.contains(airport.countryCode) && airport.size <= 4 || GameConstants.ISOLATED_ISLAND_AIRPORTS.contains(airport.iata)) {
         isolationLevel += 1
       }
+      if (airport.iata == "IPC") {
+        isolationLevel = 15 //this is to give it range to reach SCL
+      }
       if (isolationLevel > 0) {
         isolationByAirport.put(airport, isolationLevel)
       }

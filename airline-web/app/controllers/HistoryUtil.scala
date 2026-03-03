@@ -3,7 +3,7 @@ package controllers
 import java.util
 import java.util.concurrent.TimeUnit
 
-import com.google.common.cache.{CacheBuilder, CacheLoader, LoadingCache}
+import com.github.benmanes.caffeine.cache.{Caffeine, CacheLoader, LoadingCache}
 import com.patson.data.{ConsumptionHistorySource, CycleSource}
 import com.patson.model.{PassengerType, _}
 import models.{LinkHistory, RelatedLink}
@@ -170,7 +170,7 @@ object HistoryUtil {
 
       consumptionCacheOfCycle = consumptionCache.get(targetCycle)
       if (consumptionCacheOfCycle == null) {
-        val cache: LoadingCache[Int, Map[Route, (PassengerType.Value, Int)]] = CacheBuilder.newBuilder.maximumSize(500).expireAfterAccess(10, TimeUnit.MINUTES).build(new SimpleLoader(targetCycle))
+        val cache: LoadingCache[Int, Map[Route, (PassengerType.Value, Int)]] = Caffeine.newBuilder().maximumSize(500).expireAfterAccess(10, TimeUnit.MINUTES).build(new SimpleLoader(targetCycle))
         consumptionCache.put(targetCycle, cache)
         consumptionCacheOfCycle = cache
       }

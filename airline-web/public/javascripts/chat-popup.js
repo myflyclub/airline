@@ -4,13 +4,13 @@ $('#live-chat header span i').on('click', function() {
 			var final_state = $(this).is(':hidden');
 			if (final_state) {
 				//Collapsed
-				$("#live-chat").css({"left":"10px", "width":"52px"});
+				$("#live-chat").css({"right":"0px", "width":"52px"});
 				//$("#live-chat h4").text("");
 				$("#live-chat h4").hide();
 				$(".chatOption").hide();
 			} else {
 				//Expanded
-				$("#live-chat").css({"left":"10px", "width":"500px", "max-width": "95%"});
+				$("#live-chat").css({"right":"0px", "width":"500px", "max-width": "95%"});
 				//$("#live-chat h4").text("Game Chat");
 				$("#live-chat h4").show();
 				$(".chatOption").show();

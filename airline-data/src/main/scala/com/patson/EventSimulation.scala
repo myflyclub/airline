@@ -3,6 +3,7 @@ package com.patson
 import com.patson.data.{AirportSource, CycleSource, EventSource, LinkStatisticsSource}
 import com.patson.model.event.{EventType, Olympics, OlympicsAirlineVote, OlympicsAirlineVoteWithWeight, OlympicsVoteRound}
 import com.patson.model.{Airline, Airport, AirportFeatureType, Computation, OlympicsInProgressFeature, OlympicsPreparationsFeature}
+import com.patson.util.AirportCache
 
 import scala.collection.{MapView, mutable}
 import scala.collection.mutable.ListBuffer
@@ -79,6 +80,8 @@ object EventSimulation {
             AirportSource.deleteAirportFeature(airport.id, AirportFeatureType.OLYMPICS_PREPARATIONS)
             AirportSource.saveAirportFeature(airport.id, OlympicsInProgressFeature(1))
           }
+        case _ =>
+          // No action needed for other years
       }
     }
 
@@ -94,7 +97,7 @@ object EventSimulation {
   val CANDIDATE_MIN_POP_MIDDLE_INCOME = 3_000_000
 
   def selectCandidates() : List[Airport] = {
-    selectCandidates(AirportSource.loadAllAirports())
+    selectCandidates(AirportCache.getAllAirports())
   }
 
   val PREVIOUS_CANIDATE_AIRPORTS = 3
@@ -111,14 +114,15 @@ object EventSimulation {
       Olympics.getSelectedAirport(olympics.id).map(_.zone.split("-")(0))
     }
 
-    val previousCanidateAirports: List[Airport] = previousOlympics.takeRight(3).map(_.asInstanceOf[Olympics]).flatMap { olympics =>
+    val allPreviousCandidateAirports: List[Airport] = previousOlympics.takeRight(3).map(_.asInstanceOf[Olympics]).flatMap { olympics =>
       Olympics.getCandidates(olympics.id).filter { airport =>
         !cooldownCountries.contains(airport.countryCode) &&
           !cooldownZones.contains(airport.zone.split("-")(0))
       }
-    }.takeRight(PREVIOUS_CANIDATE_AIRPORTS)
+    }.distinct
+    val previousCandidateAirports = Random.shuffle(allPreviousCandidateAirports).take(PREVIOUS_CANIDATE_AIRPORTS)
 
-    val randomizedAirports: List[Airport] = previousCanidateAirports ++ Random.shuffle(allAirports.filter { airport =>
+    val randomizedAirports: List[Airport] = previousCandidateAirports ++ Random.shuffle(allAirports.filter { airport =>
       airport.size >= CANDIDATE_MIN_SIZE &&
       !cooldownCountries.contains(airport.countryCode) &&
       !cooldownZones.contains(airport.zone.split("-")(0)) ||
@@ -143,7 +147,7 @@ object EventSimulation {
 
   val AFFECT_RADIUS = 80 //80km
   def simulateOlympicsAffectedAirport(principalAirport : Airport): List[Airport] = {
-    Computation.getDomesticAirportWithinRange(principalAirport, AFFECT_RADIUS).filter {
+    Computation.getAirportWithinRange(principalAirport, AFFECT_RADIUS).filter {
       _.population > 0
     }
   }
@@ -197,7 +201,7 @@ object EventSimulation {
   val BASE_PASSENGER_GOAL = 2000
   val GOAL_BASE_FACTOR = 0.85 //85% of the max possible pax?
   def simulateOlympicsPassengerGoals(olympics: Olympics) = {
-    val allLinkStats = LinkStatisticsSource.loadLinkStatisticsByCriteria(List.empty)
+    val allLinkStats = LinkStatisticsSource.loadLinkStatisticsByCriteria(List.empty).filter(_.key.airline.id != 0) //local connections have airline Id of 0
     val passengersByAirline: MapView[Airline, Int] = allLinkStats.groupBy(_.key.airline).view.mapValues(_.map(_.passengers).sum)
     val totalPassengers = passengersByAirline.values.sum
 

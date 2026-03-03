@@ -5,74 +5,63 @@ import com.patson.data._
 import com.patson.model.Scheduling.{TimeSlot, TimeSlotStatus}
 import com.patson.model.airplane.{Airplane, AirplaneConfiguration, Model}
 import com.patson.model.{Link, _}
-import com.patson.util.{AirlineCache, AirportCache, ChampionUtil}
+import com.patson.model.event.Olympics
+import com.patson.util.{AirlineCache, AirplaneOwnershipCache, AirportCache, AirportStatisticsCache, ChampionUtil}
 import controllers.AuthenticationObject.AuthenticatedAirline
-import controllers.WeatherUtil.{Coordinates, Weather}
-import play.api.data.Form
-import play.api.data.Forms.{mapping, number}
 import play.api.libs.json.{Json, _}
 import play.api.mvc._
 
-import java.util.Random
 import javax.inject.Inject
+import scala.collection.mutable
 import scala.collection.mutable.{ListBuffer, Set}
 import scala.math.BigDecimal.RoundingMode
 
 
 class Application @Inject()(cc: ControllerComponents, val configuration: play.api.Configuration) extends AbstractController(cc) {
-  object AirportSimpleWrites extends Writes[Airport] {
-    def writes(airport: Airport): JsValue = {
-      JsObject(List(
-      "id" -> JsNumber(airport.id),
-      "name" -> JsString(airport.name),
-      "iata" -> JsString(airport.iata),
-      "city" -> JsString(airport.city),
-      "latitude" -> JsNumber(airport.latitude),
-      "longitude" -> JsNumber(airport.longitude),
-      "countryCode" -> JsString(airport.countryCode),
-      "zone" -> JsString(airport.zone.split("-")(0))))
-      
-    }
-  }
- 
+
   implicit object AirportShareWrites extends Writes[(Airport, Double)] {
     def writes(airportShare: (Airport, Double)): JsValue = {
       JsObject(List(
-      "airportName" -> JsString(airportShare._1.name),    
-      "airportId" -> JsNumber(airportShare._1.id),
-      "share" -> JsNumber(BigDecimal(airportShare._2).setScale(4, BigDecimal.RoundingMode.HALF_EVEN))))
+        "airportName" -> JsString(airportShare._1.name),
+        "airportId" -> JsNumber(airportShare._1.id),
+        "share" -> JsNumber(BigDecimal(airportShare._2).setScale(4, BigDecimal.RoundingMode.HALF_EVEN))))
     }
   }
-  
-   implicit object AirportPassengersWrites extends Writes[(Airport, Int)] {
+
+  implicit object AirportPassengersWrites extends Writes[(Airport, Int)] {
     def writes(airportPassenger: (Airport, Int)): JsValue = {
       JsObject(List(
-      "airportName" -> JsString(airportPassenger._1.name),    
-      "airportId" -> JsNumber(airportPassenger._1.id),
-      "passengers" -> JsNumber(airportPassenger._2)))
+        "airportName" -> JsString(airportPassenger._1.name),
+        "airportId" -> JsNumber(airportPassenger._1.id),
+        "passengers" -> JsNumber(airportPassenger._2)))
     }
   }
-   implicit object AirlinePassengersWrites extends Writes[(Airline, Int)] {
-     def writes(airlinePassenger: (Airline, Int)): JsValue = {
+
+  implicit object AirlinePassengersWrites extends Writes[(Airline, Int)] {
+    def writes(airlinePassenger: (Airline, Int)): JsValue = {
       JsObject(List(
-      "airlineName" -> JsString(airlinePassenger._1.name),    
-      "airlineId" -> JsNumber(airlinePassenger._1.id),
-      "passengers" -> JsNumber(airlinePassenger._2)))
+        "airlineName" -> JsString(airlinePassenger._1.name),
+        "airlineId" -> JsNumber(airlinePassenger._1.id),
+        "passengers" -> JsNumber(airlinePassenger._2)))
     }
   }
-   
+
   implicit object TimeSlotAssignmentWrites extends Writes[(TimeSlot, Link, TimeSlotStatus)] {
-     def writes(timeSlotAssignment: (TimeSlot, Link, TimeSlotStatus)): JsValue = {
-      val link = timeSlotAssignment._2 
+    def writes(timeSlotAssignment: (TimeSlot, Link, TimeSlotStatus)): JsValue = {
+      val link = timeSlotAssignment._2
       JsObject(List(
-      "timeSlotDay" -> JsNumber(timeSlotAssignment._1.dayOfWeek),    
-      "timeSlotTime" -> JsString("%02d".format(timeSlotAssignment._1.hour) + ":" + "%02d".format(timeSlotAssignment._1.minute)),
-      "airline" -> JsString(link.airline.name),
-      "airlineId" -> JsNumber(link.airline.id),
-      "flightCode" -> JsString(LinkUtil.getFlightCode(link.airline, link.flightNumber)),
-      "destination" -> JsString(if (!link.to.city.isEmpty()) { link.to.city } else { link.to.name }),
-      "statusCode" -> JsString(timeSlotAssignment._3.code),
-      "statusText" -> JsString(timeSlotAssignment._3.text)
+        "timeSlotDay" -> JsNumber(timeSlotAssignment._1.dayOfWeek),
+        "timeSlotTime" -> JsString("%02d".format(timeSlotAssignment._1.hour) + ":" + "%02d".format(timeSlotAssignment._1.minute)),
+        "airline" -> JsString(link.airline.name),
+        "airlineId" -> JsNumber(link.airline.id),
+        "flightCode" -> JsString(LinkUtil.getFlightCode(link.airline, link.flightNumber)),
+        "destination" -> JsString(if (link.to.city.nonEmpty) {
+          link.to.city
+        } else {
+          link.to.name
+        }),
+        "statusCode" -> JsString(timeSlotAssignment._3.code),
+        "statusText" -> JsString(timeSlotAssignment._3.text)
       ))
     }
   }
@@ -95,429 +84,469 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
     }
   }
 
-  implicit object AirportGradeInfoWrites extends Writes[AirportRating] {
-    def writes(entry: AirportRating): JsValue = {
-      Json.obj(
-        "economicRating" -> entry.economicPowerRating,
-        "competitionRating" -> entry.competitionRating,
-        "countryRating" -> entry.countryPowerRating,
-        "difficulty" -> entry.overallDifficulty,
-        "features" -> JsArray(entry.features.sortBy(_.featureType.id).map { airportFeature =>
-          Json.obj("type" -> airportFeature.featureType.toString(), "strength" -> airportFeature.strength, "title" -> airportFeature.getDescription)
-        })
-      )
-    }
-  }
-
-  
-  def index = Action {
+  // path parameter is captured but ignored - page.js handles routing
+  def index(path: String = "") = Action { implicit request =>
     implicit lazy val config = configuration
     Ok(views.html.index(""))
   }
-  def test = Action {
-    Ok(views.html.test())
-  }
-
-  def getCurrentCycle() = Action  {
-    Ok(Json.obj("cycle" -> CycleSource.loadCycle()))
-  }
-
-
-
-
-  def getAirports(@deprecated count : Int) = Action { //count is no longer used
-    //val selectedAirports = cachedAirportsByPower.takeRight(count)
-    Ok(Json.toJson(AirportUtil.visibleAirports))
-  }
   
-  def getAirport(airportId : Int, image : Boolean) = Action {
-     AirportCache.getAirport(airportId, true) match {
-       case Some(airport) =>
-         var result = Json.toJson(airport).asInstanceOf[JsObject]
-         //find links going to this airport too, send simplified data
-//         val links = LinkSource.loadFlightLinksByFromAirport(airportId, LinkSource.ID_LOAD) ++ LinkSource.loadFlightLinksByToAirport(airportId, LinkSource.ID_LOAD)
-//         val linkCountJson = links.groupBy { _.airline.id }.foldRight(Json.obj()) {
-//           case((airlineId, links), foldJson) => foldJson + (airlineId.toString() -> JsNumber(links.length))
-//         }
-//         result = result + ("linkCounts" -> linkCountJson)
-
-         if (image) {
-           val cityImageUrl = GoogleImageUtil.getCityImageUrl(airport);
-           if (cityImageUrl != null) {
-             result = result + ("cityImageUrl" -> JsString(cityImageUrl.toString))
-           }
-           val airportImageUrl = GoogleImageUtil.getAirportImageUrl(airport);
-           if (airportImageUrl != null) {
-             result = result + ("airportImageUrl" -> JsString(airportImageUrl.toString))
-           }
-         }
-
-         Ok(result)
-       case None => NotFound
-     }
+  def getCurrentCycle() = Action { request =>
+    request.headers.get(IF_NONE_MATCH) match {
+      case Some(etag) if etag == s""""$currentCycle"""" =>
+        NotModified
+      case _ =>
+        Ok(Json.obj("cycle" -> currentCycle))
+          .withHeaders(
+            ETAG -> s""""$currentCycle""""
+          )
+    }
   }
 
-  def getAirportImages(airportId : Int) = Action {
+  def getCacheStats() = Action {
+    Ok(Json.obj(
+      "airportCache" -> AirportCache.getCacheStats,
+      "airlineCache" -> AirlineCache.getCacheStats,
+    ))
+  }
+
+  def clearCache() = Action {
+    AirlineCache.invalidateAll()
+    AirportCache.invalidateAll()
+    AirportCache.getAllAirports()
+    AirportStatisticsCache.invalidateAll()
+    AirplaneOwnershipCache.invalidateAll()
+    ResponseCache.invalidateAll()
+    Ok(Json.toJson("Cache cleared"))
+  }
+
+  /**
+   * Static airport data
+   */
+  def getAirportsStatic() = Action {
+    Ok(Json.toJson(AirportCache.getAllAirports())(AirportsGeoJsonWrites))
+      .withHeaders(
+        CACHE_CONTROL -> "public, max-age=2419200",
+        ETAG -> s""""$currentApiVersion"""", // Use version as ETag
+        EXPIRES -> java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME
+          .format(java.time.ZonedDateTime.now().plusWeeks(4))
+      )
+  }
+
+  /**
+   * Dynamic airport data
+   * - boostFactorsByType: base specialization, assets
+   * - loyalist data
+   * - linkCount
+   *
+   */
+  @volatile private var airportsJsonCycle: Int = -1
+  @volatile private var airportsJson: JsValue = Json.obj()
+
+  private def buildAirportsJson(airportData: List[models.AirportWithChampionAndStats]): JsValue = {
+    val championsObject = JsObject(
+      airportData.filter(_.champion.isDefined).map { a =>
+        var obj = Json.toJson(a)(AirportWithChampionWrites).asInstanceOf[JsObject] +
+          ("travelRate" -> JsNumber(a.travelRate)) +
+          ("reputation" -> JsNumber(a.reputation))
+        a.congestion.foreach { c => obj = obj + ("congestion" -> JsNumber(c)) }
+        a.airport.id.toString -> obj
+      }.toMap
+    )
+    val boostsObject = JsObject(
+      airportData.filter { a =>
+        AirportBoostType.values.exists(a.airport.boostFactorsByType.get(_).nonEmpty)
+      }.map { a =>
+        a.airport.id.toString -> Json.toJson(a)(AirportBoostOnlyWrites)
+      }.toMap
+    )
+    val dynamicFeaturesObject = JsObject(
+      airportData.flatMap { a =>
+        val dynFeatures = a.airport.getFeatures().filter {
+          case hub: InternationalHubFeature => hub.boosts.nonEmpty
+          case hub: VacationHubFeature      => hub.boosts.nonEmpty
+          case hub: FinancialHubFeature     => hub.boosts.nonEmpty
+          case hub: EliteFeature            => hub.boosts.nonEmpty
+          case _: OlympicsPreparationsFeature => true
+          case _: OlympicsInProgressFeature   => true
+          case _                              => false
+        }
+        if (dynFeatures.nonEmpty) {
+          Some(a.airport.id.toString -> JsArray(dynFeatures.sortBy(_.featureType.id).map { f =>
+            Json.obj("type" -> f.featureType.toString, "strength" -> f.strength, "title" -> f.getDescription)
+          }))
+        } else None
+      }.toMap
+    )
+    Json.obj("champions" -> championsObject, "boosts" -> boostsObject, "dynamicFeatures" -> dynamicFeaturesObject)
+  }
+
+  def getAirports() = Action { request =>
+    request.headers.get(IF_NONE_MATCH) match {
+      case Some(etag) if etag == s""""$currentCycle"""" =>
+        NotModified
+      case _ =>
+        if (airportsJsonCycle != currentCycle) {
+          airportsJson = buildAirportsJson(AirportUtil.cachedAirportChampions)
+          airportsJsonCycle = currentCycle
+        }
+        Ok(airportsJson)
+          .withHeaders(
+            CACHE_CONTROL -> "no-cache",
+            ETAG -> s""""$currentCycle""""
+          )
+    }
+  }
+
+  def getAirportImages(airportId: Int) = Action {
     AirportCache.getAirport(airportId, false) match {
       case Some(airport) =>
-        var result = Json.obj()
-        val cityImageUrl = GoogleImageUtil.getCityImageUrl(airport);
-        if (cityImageUrl != null) {
-          result = result + ("cityImageUrl" -> JsString(cityImageUrl.toString))
-        }
-        val airportImageUrl = GoogleImageUtil.getAirportImageUrl(airport);
-        if (airportImageUrl != null) {
-          result = result + ("airportImageUrl" -> JsString(airportImageUrl.toString))
-        }
+        val cityImage = GoogleImageUtil.getCityImage(airport)
+        val cityImageUrl: String = if (cityImage != null && cityImage.url != null) cityImage.url.toString else ""
+        val cityImageCaption: String = if (cityImage != null && cityImage.placeName != null) cityImage.placeName else ""
+        val airportImage = GoogleImageUtil.getAirportImage(airport)
+        val airportImageUrl: String = if (airportImage != null && airportImage.url != null) airportImage.url.toString else ""
+        val airportImageCaption: String = if (airportImage != null && airportImage.placeName != null) airportImage.placeName else ""
 
-        Ok(result)
+        Ok(Json.obj(
+          "cityImageUrl" -> JsString(cityImageUrl),
+          "cityImageCaption" -> JsString(cityImageCaption),
+          "airportImageUrl" -> JsString(airportImageUrl),
+          "airportImageCaption" -> JsString(airportImageCaption),
+        ))
+          .withHeaders(
+            CACHE_CONTROL -> "public, max-age=2419200",
+            ETAG -> s""""$currentApiVersion"""",
+            EXPIRES -> java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME
+              .format(java.time.ZonedDateTime.now().plusWeeks(8))
+          )
       case None => NotFound
     }
   }
 
+  /**
+   * Extended static airport details; can be cached forever
+   *
+   * @param airportId
+   * @return
+   */
+  def getAirportDetailStatic(airportId: Int) = Action {
+    AirportCache.getAirport(airportId) match {
+      case Some(airport) =>
+        val destinations = DestinationSource.loadDestinationsByAirport(airportId)
+        val cities = AirportSource.loadCitiesServed(airportId)
+        val runways: List[Runway] = AirportSource.loadAirportRunways(airportId)
+        val dummyLounge: Lounge = Lounge(Airline("airline 1"), None, airport, "", 1, LoungeStatus.INACTIVE, 0)
+        val tooltip_lounge = List(
+          s"To get lounge approval, your alliance must be in the top ${dummyLounge.getActiveRankingThreshold} by premium passenger count and you must have the most premium passengers in your alliance.",
+          "Premium passengers will pay higher ticket prices if you have a lounge",
+          "Lounges can be upgraded to level 4; base levels 3, 6, 9, 12 required"
+        )
 
-  def getImage(airport : Airport, phrases : List[String]) = {
-    airport.name
+        Ok(
+          Json.toJson(airport)(AirportSimpleWrites).asInstanceOf[JsObject] +
+            ("icao" -> Json.toJson(airport.icao)) +
+            ("destinations" -> Json.toJson(destinations)) +
+            ("citiesServed" -> Json.toJson(cities.map { case (city, cityShare) =>
+              Json.toJson(city).as[JsObject] ++ Json.obj("cityShare" -> cityShare)
+            })) +
+            ("runways" -> JsArray(runways.sortBy(_.length).reverse.map { runway: Runway =>
+              Json.obj("type" -> runway.runwayType.toString(), "length" -> runway.length, "code" -> runway.code)
+            })) +
+            ("tooltipLounge" -> JsArray(tooltip_lounge.map(JsString(_))))
+        )
+          .withHeaders(
+            CACHE_CONTROL -> "public, max-age=2419200",
+            ETAG -> s""""$currentApiVersion"""",
+            EXPIRES -> java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME
+              .format(java.time.ZonedDateTime.now().plusWeeks(8))
+          )
+      case None => NotFound
+    }
   }
 
-
-//  def getAirportSlotsByAirline(airportId : Int, airlineId : Int) = Action {
-//    AirportCache.getAirport(airportId, true) match {
-//       case Some(airport) =>
-//         val maxSlots = airport.getMaxSlotAssignment(airlineId)
-//         val assignedSlots = airport.getAirlineSlotAssignment(airlineId)
-//         val preferredSlots = airport.getPreferredSlotAssignment(airlineId)
-//         Ok(Json.obj("assignedSlots" -> JsNumber(assignedSlots), "maxSlots" -> JsNumber(maxSlots), "preferredSlots" -> JsNumber(preferredSlots)))
-//       case None => NotFound
-//     }
-//  }
-  
-  def getAirportSharesOnCity(cityId : Int) = Action {
-    Ok(Json.toJson(AirportSource.loadAirportSharesOnCity(cityId)))
+  /**
+   * Extended airport details for all / any airline; dynamically updates after each cycle
+   *
+   * @param airportId
+   * @return
+   */
+  def getAirportDetail(airportId: Int) = Action { request =>
+    request.headers.get(IF_NONE_MATCH) match {
+      case Some(etag) if etag == s""""$currentCycle"""" =>
+        NotModified
+      case _ =>
+        val json: Option[JsValue] = Option(ResponseCache.airportDetailCache.getIfPresent(airportId)).filter(_._1 == currentCycle).map(_._2).orElse {
+          computeAirportDetailJson(airportId).map { j => ResponseCache.airportDetailCache.put(airportId, (currentCycle, j)); j }
+        }
+        json match {
+          case Some(j) => Ok(j).withHeaders(CACHE_CONTROL -> "no-cache", ETAG -> s""""$currentCycle"""")
+          case None => NotFound
+        }
+    }
   }
-  
-  def getAirportLinkStatistics(airportId : Int) = Action {
-    AirportCache.getAirport(airportId, true) match {
-      case Some(airport) => { 
-        //group things up
+
+  private def computeAirportDetailJson(airportId: Int): Option[JsValue] = {
+    AirportCache.getAirport(airportId, fullLoad = true) match {
+      case Some(airport) =>
+        //group things up, filtering out local connects (id 0)
         val flightsFromThisAirport = LinkStatisticsSource.loadLinkStatisticsByFromAirport(airportId, LinkStatisticsSource.SIMPLE_LOAD)
         val flightsToThisAirport = LinkStatisticsSource.loadLinkStatisticsByToAirport(airportId, LinkStatisticsSource.SIMPLE_LOAD)
-        val departureOrArrivalFlights = flightsFromThisAirport.filter { _.key.isDeparture} ++ flightsToThisAirport.filter { _.key.isDestination }
-        val connectionFlights = flightsFromThisAirport.filterNot { _.key.isDeparture} ++ flightsToThisAirport.filterNot { _.key.isDestination }
+        val connectionPaxGroups = flightsFromThisAirport.filter(_.key.airline.id != 0).filterNot {
+          _.key.isDeparture
+        } ++ flightsToThisAirport.filter(_.key.airline.id != 0).filterNot {
+          _.key.isDestination
+        } //airline id == 0 is local connection
+        val originPaxGroups = flightsFromThisAirport.filter(_.key.isDeparture).filter(_.key.airline.id != 0)
+        val destinationPaxGroups = flightsToThisAirport.filter(_.key.isDestination).filter(_.key.airline.id != 0)
 
-        val flightDepartureByAirline = flightsFromThisAirport.groupBy { _.key.airline }
-        val flightDestinationByAirline = flightsToThisAirport.groupBy { _.key.airline }
-        
-        val departureOrArrivalPassengers = departureOrArrivalFlights.map{ _.passengers }.sum
-        val transitPassengers = connectionFlights.map{ _.passengers }.sum
-          
-        
-        val statisticsDepartureByAirline : List[(Airline, Int)] = flightDepartureByAirline.foldRight(List[(Airline, Int)]()) { 
+        val departurePassengers = originPaxGroups.map(_.passengers).sum
+        val destinationPassengers = destinationPaxGroups.map(_.passengers).sum
+        val transitPassengers = connectionPaxGroups.map {
+          _.passengers
+        }.sum
+
+        val statisticsTotalByAirline: List[(Airline, Int)] = (originPaxGroups ++ destinationPaxGroups ++ connectionPaxGroups).groupBy(_.key.airline).foldRight(List[(Airline, Int)]()) {
           case ((airline, statistics), foldList) =>
-            val totalPassengersOfThisAirline = statistics.foldLeft(0)( _ + _.passengers) //all the passengers of this airline
+            val totalPassengersOfThisAirline = statistics.foldLeft(0)(_ + _.passengers) //all the passengers of this airline
             (airline, totalPassengersOfThisAirline) :: foldList
-        }
-        val statisticsArrivalByAirline : List[(Airline, Int)] = flightDestinationByAirline.foldRight(List[(Airline, Int)]()) { 
+        }.sortBy(_._2).reverse
+
+        val statisticsOriginPaxByAirline: List[(Airline, Int)] = originPaxGroups.groupBy(_.key.airline).foldRight(List[(Airline, Int)]()) {
           case ((airline, statistics), foldList) =>
-            val totalPassengersOfThisAirline = statistics.foldLeft(0)( _ + _.passengers) //all the passengers of this airline
+            val totalPassengersOfThisAirline = statistics.foldLeft(0)(_ + _.passengers) //all the passengers of this airline, if pax are origin
             (airline, totalPassengersOfThisAirline) :: foldList
+        }.sortBy(_._2).reverse
+
+        //        val statisticsDestinationPaxByAirline : List[(Airline, Int)] = destinationPaxGroups.groupBy(_.key.airline).foldRight(List[(Airline, Int)]()) {
+        //          case ((airline, statistics), foldList) =>
+        //            val totalPassengersOfThisAirline = statistics.foldLeft(0)( _ + _.passengers) //all the passengers of this airline, if pax are origin
+        //            (airline, totalPassengersOfThisAirline) :: foldList
+        //        }.sortBy(_._2).reverse
+
+        val statisticsPremiumPaxByAirline: List[(Airline, Int)] = (originPaxGroups ++ destinationPaxGroups ++ connectionPaxGroups).groupBy(_.key.airline).foldRight(List[(Airline, Int)]()) {
+          case ((airline, statistics), foldList) =>
+            val totalPassengersOfThisAirline = statistics.foldLeft(0)(_ + _.premiumPax)
+            (airline, totalPassengersOfThisAirline) :: foldList
+        }.sortBy(_._2).reverse
+
+        val localPaxByAirport: Map[Airport, Int] =
+          flightsFromThisAirport.filter(_.key.airline.id == 0).groupBy(_.key.toAirport).view.mapValues(_.map(_.passengers).sum).toMap ++
+            flightsToThisAirport.filter(_.key.airline.id == 0).groupBy(_.key.fromAirport).view.mapValues(_.map(_.passengers).sum).toMap
+
+        val linksFrom = LinkSource.loadFlightLinksByFromAirport(airportId)
+        val links = linksFrom ++ LinkSource.loadFlightLinksByToAirport(airportId)
+
+        val airlineStats = links.filter { link =>
+          linksFrom.map(_.airline.id).contains(link.airline.id) //only need airlines with from links
+        }.groupBy(_.airline.id).map { case (airlineId, airlineLinks) =>
+          val linkCount = airlineLinks.size
+          val avgDistance = (airlineLinks.map { link =>
+            link.distance * link.frequency
+          }.sum.toDouble / airlineLinks.map(_.frequency).sum).toInt
+          val avgFrequency = (airlineLinks.map(_.frequency).sum.toDouble / airlineLinks.size).toInt
+          val airlineSlogan = airlineLinks.head.airline.slogan.getOrElse("")
+          val airlineType = airlineLinks.head.airline.airlineType.label
+
+          (airlineId, (airlineType, airlineSlogan, avgDistance, avgFrequency, linkCount))
         }
-        
-        val links = LinkSource.loadFlightLinksByFromAirport(airportId) ++ LinkSource.loadFlightLinksByToAirport(airportId)
-        
-        val servedCountries = Set[String]()
-        val servedAirports = Set[Airport]()
-        val airlines = Set[Airline]()
-        var flightFrequency = 0;
-        val linkCountByAirline = links.groupBy(_.airline.id).view.mapValues(_.size).toMap
-        
+
+        val aircraftStats = links.flatMap(link =>
+          link.getAssignedModel().map(model => model.name -> link.capacity.total)
+        ).toMap
+
+        val flightFrequency = links.map(_.frequency).sum
+        val linkAvgDistance = (links.map(_.distance).sum.toDouble / links.size).toInt
+        val linksCapacity = links.map(_.capacity.total).sum
+        val linksLF = ((departurePassengers + destinationPassengers + connectionPaxGroups.map(_.passengers).sum).toDouble / links.map(_.capacity.total).sum * 100).toInt
+        val linksIntl = (links.filter { link =>
+          link.to.countryCode != link.from.countryCode
+        }.map(_.capacity.total).sum.toDouble / linksCapacity * 100).toInt
+
+        val servedCountries = mutable.Set[String]()
+        val servedAirports = mutable.Set[Airport]()
+        val airlineCount = mutable.Set[Int]()
         links.foreach { link =>
           servedCountries.add(link.from.countryCode)
           servedCountries.add(link.to.countryCode)
+          airlineCount.add(link.airline.id)
           if (link.from.id != airportId) {
             servedAirports.add(link.from)
           } else {
             servedAirports.add(link.to)
           }
-          airlines.add(link.airline)
-          flightFrequency = flightFrequency + link.frequency
         }
-        
+
         val loungesStats = LoungeHistorySource.loadLoungeConsumptionsByAirportId(airport.id)
-        val loungesWithVisitors = loungesStats.map { _.lounge.airline.id }
-        val emptyLoungesStats = ListBuffer[LoungeConsumptionDetails]() 
-        //now some lounge might be newly built or have no visitors
+        val loungesWithVisitors = loungesStats.map {
+          _.lounge.airline.id
+        }
+        val emptyLoungesStats = ListBuffer[LoungeConsumptionDetails]()
+
         AirlineSource.loadLoungesByAirportId(airportId).foreach { lounge =>
           if (!loungesWithVisitors.contains(lounge.airline.id)) {
             emptyLoungesStats += LoungeConsumptionDetails(lounge = lounge, selfVisitors = 0, allianceVisitors = 0, cycle = 0)
           }
         }
-         
-        
-        
-        Ok(Json.obj("connectedCountryCount" -> servedCountries.size,
-                    "connectedAirportCount" -> (servedAirports.size), //do not count itself
-                    "airlineCount" -> airlines.size,
-                    "linkCount" -> links.size,
-                    "linkCountByAirline" -> linkCountByAirline.foldLeft(Json.arr()) {
-                      case(jsonArray, (airlineId, linkCount)) => jsonArray :+ Json.obj("airlineId" -> JsNumber(airlineId), "linkCount"-> JsNumber(linkCount))
-                    },
-                    "flightFrequency" -> flightFrequency,
-                    "bases" -> Json.toJson(airport.getAirlineBases().values),
-                    "lounges" -> Json.toJson(loungesStats ++ emptyLoungesStats),
-                    "departureOrArrivalPassengers" -> departureOrArrivalPassengers, 
-                    "transitPassengers" -> transitPassengers,
-                    "airlineDeparture" -> Json.toJson(statisticsDepartureByAirline),
-                    "airlineArrival" -> Json.toJson(statisticsArrivalByAirline),
-                    "rating" -> Json.toJson(airport.rating)))
-      }
-      case None => NotFound
+
+        Some(
+          Json.toJson(airport)(AirportExtendedWrites).asInstanceOf[JsObject] ++
+            Json.obj(
+              "connectedCountryCount" -> servedCountries.size,
+              "connectedAirportCount" -> (servedAirports.size), //do not count itself
+              "airlineCount" -> airlineCount.size,
+              "linkCount" -> links.size,
+              "linkAvgDistance" -> linkAvgDistance,
+              "linkCountByAirline" -> airlineStats.foldLeft(Json.arr()) {
+                case (jsonArray, (airlineId, (airlineType, airlineSlogan, avgDistance, avgFrequency, linkCount))) => jsonArray :+ Json.obj("airlineId" -> JsNumber(airlineId), "linkCount" -> JsNumber(linkCount), "avgDistance" -> JsNumber(avgDistance), "avgFrequency" -> JsNumber(avgFrequency), "airlineType" -> JsString(airlineType.toString), "airlineSlogan" -> JsString(airlineSlogan.toString))
+              },
+              "flightFrequency" -> flightFrequency,
+              "bases" -> Json.toJson(airport.getAirlineBases().values),
+              "lounges" -> Json.toJson(loungesStats ++ emptyLoungesStats),
+              "departurePassengers" -> departurePassengers,
+              "destinationPassengers" -> destinationPassengers,
+              "transitPassengers" -> transitPassengers,
+              "localPaxByAirport" -> Json.toJson(localPaxByAirport),
+              "airlinePax" -> statisticsTotalByAirline,
+              "airlinePremiumPax" -> statisticsPremiumPaxByAirline,
+              "airlineOrigin" -> statisticsOriginPaxByAirline,
+              //          "airlineDestination" -> statisticsDestinationPaxByAirline,
+              "aircraftStats" -> aircraftStats,
+              "totalSeats" -> Json.toJson(linksCapacity),
+              "linksLF" -> Json.toJson(linksLF),
+              "linksIntl" -> Json.toJson(linksIntl)
+            )
+        )
+        case None => None
     }
-    
   }
-  
-  def getDepartures(airportId : Int, dayOfWeek : Int, hour : Int, minute : Int) = Action {
-    val links = LinkSource.loadFlightLinksByFromAirport(airportId, LinkSource.SIMPLE_LOAD) ++ (LinkSource.loadFlightLinksByToAirport(airportId, LinkSource.SIMPLE_LOAD).map { link => link.copy(from = link.to, to = link.from) })
-    
-    val map = Map[Int, String]()
-    
-    val currentTime = TimeSlot(dayOfWeek = dayOfWeek, hour = hour, minute = minute)
-    
-    val linkConsumptions : Map[Int, LinkConsumptionDetails] = LinkSource.loadLinkConsumptionsByLinksId(links.map(_.id)).map( linkConsumption => (linkConsumption.link.id, linkConsumption)).toMap
-    
-    val airport = AirportCache.getAirport(airportId, false).get
-    val weather = WeatherUtil.getWeather(new Coordinates(airport.latitude, airport.longitude))
-    
-    val random = new Random()
-    random.setSeed(airport.id) //so generate same result every time
-    
-    val timeSlotLinkList : List[(TimeSlot, Link, TimeSlotStatus)] = links.flatMap { link => link.schedule.map { scheduledTimeSlot => (scheduledTimeSlot, link) }}.map {
-      case (timeslot, link) => (timeslot, link, if (dayOfWeek == 6 && timeslot.dayOfWeek == 0) { timeslot.totalMinutes + 7 * 24 * 60 } else { timeslot.totalMinutes })
-    }.filter {
-      case(timeslot, _, wrappedMinutes) => wrappedMinutes >= currentTime.totalMinutes && wrappedMinutes <= currentTime.totalMinutes + 24 * 60   
-    }.map {
-      case (timeslot, link, wrappedMinutes) => (timeslot, link, getTimeSlotStatus(linkConsumptions.get(link.id), timeslot, currentTime, weather, random), wrappedMinutes)
-    }.sortBy {
-      case (timeslot, _, _, wrappedMinutes) => wrappedMinutes 
-    }.map {
-      case (timeslot, link, status, wrappedMinutes) => (timeslot, link, status) 
-    }
-    
-    var result = Json.obj("timeslots" -> Json.toJson(timeSlotLinkList))
-    
-    if (weather != null) {
-      result = result + ("weatherIcon" -> JsString("http://openweathermap.org/img/w/" + weather.getIcon + ".png")) + ("weatherDescription" -> JsString(weather.getDescription)) + ("temperature" -> JsNumber(weather.getTemperature))
-    }
-    
-    Ok(result)
-  }
-  
-  def getTimeSlotStatus(linkConsumptionOption : Option[LinkConsumptionDetails], scheduledTime : TimeSlot, currentTime : TimeSlot, weather : Weather, random : Random) : TimeSlotStatus = {
-    var isMinorDelay = false
-    var isMajorDelay = false
-    var isCancelled = false
-    var delayAmount = 0
-    
-    linkConsumptionOption.map { linkConsumption =>
-      getWeatherError(weather, random) match {
-        case(r1, r2, r3) => {
-          isMinorDelay = r1
-          isMajorDelay = r2
-          isCancelled = r3
+
+  def getAirportLinkConsumptions(fromAirportId: Int, toAirportId: Int) = Action { request =>
+    request.headers.get(IF_NONE_MATCH) match {
+      case Some(etag) if etag == s""""$currentCycle"""" =>
+        NotModified
+      case _ =>
+        val competitorLinkConsumptions = (LinkSource.loadFlightLinksByAirports(fromAirportId, toAirportId, LinkSource.ID_LOAD) ++ LinkSource.loadFlightLinksByAirports(toAirportId, fromAirportId, LinkSource.ID_LOAD)).flatMap { link =>
+          LinkSource.loadLinkConsumptionsByLinkId(link.id, 1)
         }
-      }
-      
-      val cancellationMarker = linkConsumption.link.cancellationCount
-      val majorDelayMarker = cancellationMarker + linkConsumption.link.majorDelayCount
-      val minorDelayMarker = majorDelayMarker +  linkConsumption.link.minorDelayCount
-      
-      val flightInterval = 60 * 24 * 7 / linkConsumption.link.frequency 
-      val flightIndex = scheduledTime.totalMinutes / flightInterval  //nth flight on this route within this week
-      
-      val randomizedFlightIndex = (flightIndex + random.nextInt(linkConsumption.link.frequency)) % linkConsumption.link.frequency
-      
-      //println(cancellationMarker + "|" + majorDelayMarker + "|" + minorDelayMarker + " RI " + randomizedFlightIndex)
-      //if u r unlucky enough to be smaller or equal to marker than BOOM!
-      if (randomizedFlightIndex < cancellationMarker) {
-        isCancelled = true
-      } else if  (randomizedFlightIndex < majorDelayMarker) {
-        isMajorDelay = true
-      } else if  (randomizedFlightIndex < minorDelayMarker) {
-        isMinorDelay = true
-      }
-      
-      
-      if (isMajorDelay) {
-        delayAmount = 5 * 60 + randomizedFlightIndex * 30        
-      } else if (isMinorDelay) {
-        delayAmount =  20 + 100 / (randomizedFlightIndex + 1) //within 2 hours        
-      }
-    }
-    
-    if (isCancelled) {
-      TimeSlotStatus("CANCELLED", "Cancelled")
-    } else if (isMajorDelay || isMinorDelay) {
-      val newTime = scheduledTime.increment(delayAmount)
-      TimeSlotStatus("DELAY", "Delayed " + "%02d".format(newTime.hour) + ":" + "%02d".format(newTime.minute)) 
-    } else if (scheduledTime.totalMinutes - currentTime.totalMinutes < 0) { // wrap around time, thats ok 
-      TimeSlotStatus("ON_TIME", "On Time")
-    } else if (scheduledTime.totalMinutes - currentTime.totalMinutes <= 10) {
-      TimeSlotStatus("GATE_CLOSED", "Gate Closed") 
-    } else if (scheduledTime.totalMinutes - currentTime.totalMinutes <= 20) {
-      TimeSlotStatus("FINAL_CALL", "Final Call")
-    } else if (scheduledTime.totalMinutes - currentTime.totalMinutes <= 30) {
-      TimeSlotStatus("BOARDING", "Boarding")
-    } else {
-      TimeSlotStatus("ON_TIME", "On Time")
-    }
-     
-  }
-  
-  def getWeatherError(weather : Weather, random : Random) : (Boolean, Boolean, Boolean) = {
-    
-    val errorChance : Double = //chance for Major delay/cancellation
-    if (weather.getWindSpeed() >= 30) { //hurricane
-      1; //all cancelled or major delay
-    } else if (weather.getWindSpeed() >= 25) {
-      0.9;
-    } else if (weather.getWindSpeed() >= 20) {
-      0.6;
-    } else if (weather.getWindSpeed() >= 20) {
-      0.3;
-    } else { //other weather conditions
-      val weatherId : Int = weather.getWeatherId()
-      if (weatherId / 100 == 2) { //thunderstorm
-        if (weatherId == 202 || weatherId == 212 || weatherId == 221) {
-          0.8
-        } else {
-          0.2
-        }
-      } else if (weatherId / 100 == 5) { //rain
-        if (weatherId == 502 || weatherId == 503) {
-          0.30
-        } else if (weatherId == 504) {
-          0.50 
-        } else if (weatherId == 522) {
-          0.30
-        } else if (weatherId == 531) {
-          0.50
-        } else {
-          0.0
-        }
-      } else if (weatherId / 100 == 6) { //snow
-        if (weatherId == 601) {
-          0.30
-        } else if (weatherId == 602) {
-          0.80 
-        } else {
-          0.10
-        }
-      } else {
-        0
-      }
-    }   
-    
-    if (errorChance == 0) {
-      (false, false, false)
-    } else {
-       var randomNumber : Double = random.nextDouble()
-       
-       randomNumber = randomNumber * 100 - (randomNumber * 100).toInt  //somehow nextDouble doesnt give evenly distributed number...
-       if (randomNumber <= errorChance) { //too bad...HIT!
-         if (random.nextDouble < 0.3) { 
-           (false, false, true) // cancellation
-         } else {
-           (false, true, false)  //major delay
-         }
-       } else if (randomNumber / 2 <= errorChance) { //ok..minor delay
-         (true, false, false)
-       } else {
-         (false, false, false)  //safe...
-       }
+        Ok(Json.toJson(competitorLinkConsumptions.filter(_.link.capacity.total > 0).map { linkConsumption => Json.toJson(linkConsumption)(SimpleLinkConsumptionWrite) }.toSeq)).withHeaders(
+          CACHE_CONTROL -> "no-cache",
+          ETAG -> s""""$currentCycle""""
+        )
     }
   }
-  
-  
-  def getAirportLinkConsumptions(fromAirportId : Int, toAirportId : Int) = Action {
-    val competitorLinkConsumptions = (LinkSource.loadFlightLinksByAirports(fromAirportId, toAirportId, LinkSource.ID_LOAD) ++ LinkSource.loadFlightLinksByAirports(toAirportId, fromAirportId, LinkSource.ID_LOAD)).flatMap { link =>
-      LinkSource.loadLinkConsumptionsByLinkId(link.id, 1)
-    }
-    Ok(Json.toJson(competitorLinkConsumptions.filter(_.link.capacity.total > 0).map { linkConsumption => Json.toJson(linkConsumption)(SimpleLinkConsumptionWrite) }.toSeq))
-  }
-  
-  def getLinksByAirport(airportId : Int) = Action {
+
+  def getLinksByAirport(airportId: Int) = Action {
     val linksByToAirport = LinkSource.loadFlightLinksByFromAirport(airportId).groupBy(_.to)
     val linksByFromAirport = LinkSource.loadFlightLinksByToAirport(airportId).groupBy(_.from)
 
-    val linksByOtherAirport : Map[Airport, List[Link]]= linksByToAirport ++ linksByFromAirport.map {
+    val linksByOtherAirport: Map[Airport, List[Link]] = linksByToAirport ++ linksByFromAirport.map {
       case (airport, links) => (airport, links ++ linksByToAirport.getOrElse(airport, List.empty[Link]))
     }
-
 
     Ok(Json.toJson(linksByOtherAirport.toList.sortBy(_._2.map(_.futureCapacity().total).sum).reverse.map {
       case (otherAirport, links) =>
         Json.obj(
-          "remoteAirport" -> Json.toJson(otherAirport)(AirportSimpleWrites),
+          "remoteAirport" -> Json.toJson(otherAirport)(AirportMapWrites),
           "capacity" -> links.map(_.futureCapacity()).foldLeft(LinkClassValues.getInstance())((x, y) => x + y),
           "frequency" -> links.map(_.futureFrequency()).sum,
-          "operators" -> Json.toJson( links.sortBy(_.futureCapacity().total).reverse.map { link =>
+          "operators" -> Json.toJson(links.sortBy(_.futureCapacity().total).reverse.map { link =>
             Json.obj(
               "airlineId" -> link.airline.id,
-            "airlineName" -> link.airline.name,
-            "capacity" -> link.futureCapacity(),
-            "frequency" -> link.frequency)
+              "airlineName" -> link.airline.name,
+              "capacity" -> link.futureCapacity(),
+              "frequency" -> link.frequency)
           }))
     }))
+      .withHeaders(
+        CACHE_CONTROL -> "no-cache",
+        ETAG -> s""""$currentCycle""""
+      )
   }
 
   val MAX_LOYALIST_HISTORY_AIRLINE = 5
 
-  def getAirportLoyalistData(airportId : Int, airlineIdOption : Option[Int]) = Action {
-    val currentLoyalistEntries = LoyalistSource.loadLoyalistsByAirportId(airportId)
-    val currentLoyalistByAirlineId = currentLoyalistEntries.map(entry => (entry.airline.id,  entry)).toMap
-    val historyEntries = LoyalistSource.loadLoyalistsHistoryByAirportId(airportId)
-    val airlineDeltas = ListBuffer[(Airline, Int)]()
-    val airport = AirportCache.getAirport(airportId).get
-    val currentCycle = CycleSource.loadCycle()
-    var result =
-      historyEntries.toList.sortBy(_._1).lastOption match {
-        case Some((lastCycle, lastEntry)) =>
-          val topAirlineIds = lastEntry.sortBy(_.entry.amount).takeRight(MAX_LOYALIST_HISTORY_AIRLINE).map(_.entry.airline.id).toSet
-          val reportingAirlineIds : List[Int] = airlineIdOption match {
-            case Some(airlineId) => (topAirlineIds + airlineId).toList
-            case None => topAirlineIds.toList
-          }
-
-          val referenceCycle = AirportSimulation.getHistoryCycle(currentCycle, -2) //get something further in the past for more stable number
-          val processedEntries : List[(Int, List[LoyalistHistory])] = historyEntries.toList.sortBy(_._1).map {
-            case((cycle, entries)) =>
-              val entriesByAirlineId = entries.map(entry => (entry.entry.airline.id, entry)).toMap
-              val paddedEntries = reportingAirlineIds.map {  reportingAirlineId =>
-                entriesByAirlineId.getOrElse(reportingAirlineId, LoyalistHistory(Loyalist(airport, AirlineCache.getAirline(reportingAirlineId).get, 0), cycle)) //pad with zero entries
+  def getAirportLoyalistData(airportId: Int, airlineIdOption: Option[Int]) = Action { request =>
+    request.headers.get(IF_NONE_MATCH) match {
+      case Some(etag) if etag == s""""$currentCycle"""" =>
+        NotModified
+      case _ =>
+        val currentLoyalistEntries = LoyalistSource.loadLoyalistsByAirportId(airportId)
+        val currentLoyalistByAirlineId = currentLoyalistEntries.map(entry => (entry.airline.id, entry)).toMap
+        val historyEntries = LoyalistSource.loadLoyalistsHistoryByAirportId(airportId)
+        val airlineDeltas = ListBuffer[(Airline, Int)]()
+        val airport = AirportCache.getAirport(airportId).get
+        val currentCycle = CycleSource.loadCycle()
+        var result =
+          historyEntries.toList.sortBy(_._1).lastOption match {
+            case Some((lastCycle, lastEntry)) =>
+              val topAirlineIds = lastEntry.sortBy(_.entry.amount).takeRight(MAX_LOYALIST_HISTORY_AIRLINE).map(_.entry.airline.id).toSet
+              val reportingAirlineIds: List[Int] = airlineIdOption match {
+                case Some(airlineId) => (topAirlineIds + airlineId).toList
+                case None => topAirlineIds.toList
               }
 
+              val referenceCycle = AirportSimulation.getHistoryCycle(currentCycle, -2) //get something further in the past for more stable number
+              val processedEntries: List[(Int, List[LoyalistHistory])] = historyEntries.toList.sortBy(_._1).map {
+                case ((cycle, entries)) =>
+                  val entriesByAirlineId = entries.map(entry => (entry.entry.airline.id, entry)).toMap
+                  val paddedEntries = reportingAirlineIds.map { reportingAirlineId =>
+                    entriesByAirlineId.getOrElse(reportingAirlineId, LoyalistHistory(Loyalist(airport, AirlineCache.getAirline(reportingAirlineId).get, 0), cycle)) //pad with zero entries
+                  }
 
-              if (cycle == referenceCycle) {
-                val cycleDelta = currentCycle - cycle
-                reportingAirlineIds.foreach { reportingAirlineId =>
-                  val previousLoyalistCount = entriesByAirlineId.get(reportingAirlineId).map(_.entry.amount).getOrElse(0)
-                  airlineDeltas.append((AirlineCache.getAirline(reportingAirlineId).get, (currentLoyalistByAirlineId.get(reportingAirlineId).map(_.amount).getOrElse(0) - previousLoyalistCount) / cycleDelta))
-                }
+
+                  if (cycle == referenceCycle) {
+                    val cycleDelta = currentCycle - cycle
+                    reportingAirlineIds.foreach { reportingAirlineId =>
+                      val previousLoyalistCount = entriesByAirlineId.get(reportingAirlineId).map(_.entry.amount).getOrElse(0)
+                      airlineDeltas.append((AirlineCache.getAirline(reportingAirlineId).get, (currentLoyalistByAirlineId.get(reportingAirlineId).map(_.amount).getOrElse(0) - previousLoyalistCount) / cycleDelta))
+                    }
+                  }
+
+                  (cycle, paddedEntries)
               }
 
-              (cycle, paddedEntries)
+              Json.obj("current" -> currentLoyalistEntries, "history" -> processedEntries, "airlineDeltas" -> airlineDeltas.toList.sortBy(_._2)(Ordering[Int].reverse))
+            case None =>
+              Json.obj("current" -> currentLoyalistEntries)
           }
 
-          Json.obj("current" -> currentLoyalistEntries, "history" -> processedEntries, "airlineDeltas" -> airlineDeltas.toList.sortBy(_._2)(Ordering[Int].reverse))
-        case None =>
-          Json.obj("current" -> currentLoyalistEntries)
-      }
-    Ok(result)
+        Ok(result).withHeaders(
+          CACHE_CONTROL -> "no-cache",
+          ETAG -> s""""$currentCycle""""
+        )
+    }
   }
 
+  /**
+   * game tooltips
+   * tooltips written next to game logic to ensure consistency
+   */
+  def getTooltips() = Action {
+
+    val tooltips = Json.obj(
+      "satisfaction" -> JsArray(Computation.TOOLTIP_SATISFACTION.map(JsString(_))),
+      "olympics" -> JsArray(Olympics.TOOLTIP.map(JsString(_))),
+      "delays" -> JsArray(LinkSimulation.TOOLTIP_DELAYS.map(JsString(_))),
+      "congestion" -> JsArray(Airport.TOOLTIP_CONGESTION.map(JsString(_))),
+      "stock_eps" -> JsArray(StockModel.TOOLTIP_STOCK_EPS.map(JsString(_))),
+      "stock_pask" -> JsArray(StockModel.TOOLTIP_STOCK_PASK.map(JsString(_))),
+    )
+
+    Ok(tooltips)
+      .withHeaders(
+        CACHE_CONTROL -> "public, max-age=2419200",
+        ETAG -> s""""$currentApiVersion"""", // Use version as ETag
+        EXPIRES -> java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME
+          .format(java.time.ZonedDateTime.now().plusWeeks(4))
+      )
+  }
+
+  /**
+   * Static game constants / rules
+   */
   def getGameRules() = Action {
     var scaleProgressionResult = Json.arr()
-    (1 to 18).map { scale =>
+    (1 to 15).foreach { scale =>
       var perScaleResult = Json.obj("scale" -> scale)
       var maxFrequencyJson = Json.obj()
       var maxFrequencyDomesticJson = Json.obj()
@@ -525,13 +554,18 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
         maxFrequencyJson = maxFrequencyJson + (group.toString -> JsNumber(NegotiationUtil.getMaxFrequencyByGroup(scale, group, false)))
         maxFrequencyDomesticJson = maxFrequencyDomesticJson + (group.toString -> JsNumber(NegotiationUtil.getMaxFrequencyByGroup(scale, group, true)))
       }
-      perScaleResult =  perScaleResult +
+      perScaleResult = perScaleResult +
         ("maxFrequency" -> maxFrequencyJson) +
         ("maxFrequencyDomestic" -> maxFrequencyDomesticJson) +
         ("baseStaffCapacity" -> JsNumber(AirlineBase.getOfficeStaffCapacity(scale, isHeadquarters = false))) +
         ("headquartersStaffCapacity" -> JsNumber(AirlineBase.getOfficeStaffCapacity(scale, isHeadquarters = true)))
       scaleProgressionResult = scaleProgressionResult.append(perScaleResult)
     }
+
+    val airportFees = Json.obj(
+      "airplaneType" -> Airport.SLOT_FEES_AIRPLANE_SIZE.map { case (modelType, fee) => modelType.label.toString -> JsNumber(fee) },
+      "airportSize" -> JsArray(Airport.SLOT_FEES_AIRPORT_SIZE.toList.sortBy(_._1).map { case (size, fee) => JsNumber(fee) })
+    )
 
     val linkClasses: List[LinkClass] = List(DISCOUNT_ECONOMY, ECONOMY, BUSINESS, FIRST)
     implicit val linkClassWrites: Writes[LinkClass] = new Writes[LinkClass] {
@@ -562,9 +596,9 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
         "Large Prop" -> JsNumber(Model.TIME_TO_CRUISE_PROPELLER_MEDIUM),
         "Small Jet" -> JsNumber(Model.TIME_TO_CRUISE_SMALL),
         "Regional Jet" -> JsNumber(Model.TIME_TO_CRUISE_REGIONAL),
-        "Narrow-body" ->  JsNumber(Model.TIME_TO_CRUISE_MEDIUM),
-        "Narrow-body XL" ->  JsNumber(Model.TIME_TO_CRUISE_MEDIUM),
-        "Helicopter" ->  JsNumber(Model.TIME_TO_CRUISE_HELICOPTER),
+        "Narrow-body" -> JsNumber(Model.TIME_TO_CRUISE_MEDIUM),
+        "Narrow-body XL" -> JsNumber(Model.TIME_TO_CRUISE_MEDIUM),
+        "Helicopter" -> JsNumber(Model.TIME_TO_CRUISE_HELICOPTER),
         "Airship" -> JsNumber(Model.TIME_TO_CRUISE_HELICOPTER),
         "Other" -> JsNumber(Model.TIME_TO_CRUISE_OTHER),
       )
@@ -579,59 +613,171 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
       "crewEQExponent" -> JsNumber(LinkSimulation.CREW_EQ_EXPONENT),
     )
 
+    val milestonesJson = JsObject(
+      AirlineMilestones.milestonesByAirlineType.map { case (airlineType, milestones) =>
+        airlineType.label -> JsArray(
+          milestones.map { milestone =>
+            Json.obj(
+              "name" -> milestone.name,
+              "description" -> milestone.description,
+              "conditions" -> milestone.conditions.map { cond =>
+                Json.obj(
+                  "threshold" -> cond.threshold,
+                  "reward" -> cond.reward
+                )
+              }
+            )
+          }
+        )
+      }
+    )
+
+    val stockModel = JsObject(
+      StockModel.allMetrics.map { case (key, metric) =>
+        key -> Json.obj(
+          "value" -> metric.value,
+          "floor" -> metric.floor,
+          "target" -> metric.target
+        )
+      }
+    )
+    val stockConsts = Json.obj(
+      "brokerFee" -> JsNumber(StockModel.STOCK_BROKER_FEE),
+      "brokerFeeBase" -> JsNumber(StockModel.STOCK_BROKER_FEE_BASE),
+      "minChange" -> JsNumber(StockModel.STOCK_BUYBACK_MIN_CHANGE),
+      "maxChange" -> JsNumber(StockModel.STOCK_BUYBACK_MAX_CHANGE)
+    )
+
     val result = Json.obj(
       "baseScaleProgression" -> scaleProgressionResult,
       "linkPrice" -> linkPrice,
       "linkClassValues" -> linkClassJson,
       "aircraft" -> aircraft,
-      "linkCosts" -> linkCosts
+      "airportFees" -> airportFees,
+      "linkCosts" -> linkCosts,
+      "milestones" -> milestonesJson,
+      "stockMetrics" -> stockModel,
+      "stockConsts" -> stockConsts
     )
+
     Ok(result)
+      .withHeaders(
+        CACHE_CONTROL -> "public, max-age=2419200",
+        ETAG -> s""""$currentApiVersion"""", // Use version as ETag
+        EXPIRES -> java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME
+          .format(java.time.ZonedDateTime.now().plusWeeks(4))
+      )
   }
 
-  def getAirportChampions(airportId : Int, airlineId : Option[Int]) = Action {
-    var result = Json.obj()
-    var champsJson = Json.arr()
+  def getAirportChampions(airportId: Int, airlineId: Option[Int]) = Action { request =>
+    request.headers.get(IF_NONE_MATCH) match {
+      case Some(etag) if etag == s""""$currentCycle"""" =>
+        NotModified
+      case _ =>
+        var result = Json.obj()
+        var champsJson = Json.arr()
 
-    val airport = AirportCache.getAirport(airportId, true).get
-    val champsSortedByRank = ChampionUtil.loadAirportChampionInfoByAirport(airportId).sortBy(_.ranking)
-    champsSortedByRank.foreach { info =>
-      champsJson = champsJson.append(Json.toJson(info).asInstanceOf[JsObject] + ("loyalty" -> JsNumber(BigDecimal(airport.getAirlineLoyalty(info.loyalist.airline.id)).setScale(2, RoundingMode.HALF_EVEN))))
-    }
-    result = result + ("champions" -> champsJson)
-    val maxRep = ChampionUtil.computeFullReputationBoost(airport, 1)
-    result = result + ("maxRep" -> JsNumber(maxRep))
-    airlineId.foreach { airlineId =>
-      if (champsSortedByRank.find(_.loyalist.airline.id == airlineId).isEmpty) { //query airline not a champ, now see check ranking
-        val loyalistsSorted = LoyalistSource.loadLoyalistsByAirportId(airportId).sortBy(_.amount).reverse
-        loyalistsSorted.find(_.airline.id == airlineId) match {
-          case Some(entry) =>
-            val rank = loyalistsSorted.indexOf(entry) + 1
-            val loyalty = BigDecimal(airport.getAirlineLoyalty(airlineId)).setScale(2, RoundingMode.HALF_EVEN)
-            result = result + ("currentAirline" -> (Json.toJson(entry).asInstanceOf[JsObject] + ("ranking" -> JsNumber(rank)) + ("loyalty" -> JsNumber(loyalty))))
-          case None => //nothing
+        val airport = AirportCache.getAirport(airportId, true).get
+        val champsSortedByRank = ChampionUtil.loadAirportChampionInfoByAirport(airportId).sortBy(_.ranking)
+        champsSortedByRank.foreach { info =>
+          champsJson = champsJson.append(Json.toJson(info).asInstanceOf[JsObject] + ("loyalty" -> JsNumber(BigDecimal(airport.getAirlineLoyalty(info.loyalist.airline.id)).setScale(2, RoundingMode.HALF_EVEN))))
         }
-      }
+        result = result + ("champions" -> champsJson)
+        //    val maxRep = ChampionUtil.computeFullReputationBoost(airport, 1)
+        //    result = result + ("maxRep" -> JsNumber(maxRep))
+        airlineId.foreach { airlineId =>
+          if (champsSortedByRank.find(_.loyalist.airline.id == airlineId).isEmpty) { //query airline not a champ, now see check ranking
+            val loyalistsSorted = LoyalistSource.loadLoyalistsByAirportId(airportId).sortBy(_.amount).reverse
+            loyalistsSorted.find(_.airline.id == airlineId) match {
+              case Some(entry) =>
+                val rank = loyalistsSorted.indexOf(entry) + 1
+                val loyalty = BigDecimal(airport.getAirlineLoyalty(airlineId)).setScale(2, RoundingMode.HALF_EVEN)
+                result = result + ("currentAirline" -> (Json.toJson(entry).asInstanceOf[JsObject] + ("ranking" -> JsNumber(rank)) + ("loyalty" -> JsNumber(loyalty))))
+              case None => //nothing
+            }
+          }
+        }
+        Ok(result).withHeaders(
+          CACHE_CONTROL -> "no-cache",
+          ETAG -> s""""$currentCycle""""
+        )
     }
-    Ok(result)
   }
 
-//  def getAirportProjects(airportId : Int) = Action {
-//    val airportProjects = AirportSource.loadAirportProjectsByAirport(airportId)
-//    Ok(Json.toJson(airportProjects))
-//  }
-//
-//  def addAirportProject(airlineId : Int, airportId : Int) = AuthenticatedAirline(airlineId) { request =>
-//     val airline = request.user
-//
-//     //TODO validate airline can do it
-//     val newProject = request.body.asInstanceOf[AnyContentAsJson].json.as[AirportProject]
-//     AirportSource.saveAirportProject(newProject)
-//     Ok(Json.toJson(newProject))
-//  }
-      
-  
-  def options(path: String) = Action {
+
+  def getAirportDemand(airportId: Int) = Action { request =>
+    request.headers.get(IF_NONE_MATCH) match {
+      case Some(etag) if etag == s""""$currentCycle"""" =>
+        NotModified
+      case _ =>
+        val json = Option(ResponseCache.demandCache.getIfPresent(airportId)).filter(_._1 == currentCycle).map(_._2).getOrElse {
+          val result = computeAirportDemandJson(airportId, currentCycle)
+          ResponseCache.demandCache.put(airportId, (currentCycle, result))
+          result
+        }
+        Ok(json).withHeaders(CACHE_CONTROL -> "no-cache", ETAG -> s""""$currentCycle"""")
+    }
+  }
+
+  private def computeAirportDemandJson(airportId: Int, cycle: Int): JsValue = {
+    AirportCache.getAirport(airportId) match {
+      case None => Json.arr()
+      case Some(fromAirport) =>
+        val ticketed = ConsumptionHistorySource.loadTopConsumptionsByFromAirport(airportId, 35)
+        val missed   = MissedDemandSource.loadByFromAirport(airportId)
+
+        // Convert ticketed entries to json candidates
+        // airline IDs come from the passenger_link_history JOIN in the query itself
+        val ticketedCandidates: List[JsObject] = ticketed.flatMap { e =>
+          AirportCache.getAirport(e.toAirportId).map { toAirport =>
+            val distance = Computation.calculateDistance(fromAirport, toAirport)
+            val flightCategory = Computation.getFlightCategory(fromAirport, toAirport)
+            val linkClass = LinkClass.fromCode(e.preferredLinkClass)
+            val paxType = PassengerType.apply(e.passengerType)
+            val standardPrice = Pricing.computeStandardPrice(distance, flightCategory, linkClass, paxType, fromAirport.income)
+            Json.obj(
+              "toAirportId"       -> toAirport.id,
+              "toAirportName"     -> toAirport.city,
+              "toAirportIata"     -> toAirport.iata,
+              "passengerCount"    -> e.passengerCount,
+              "passengerType"     -> PassengerType.label(paxType),
+              "preferredLinkClass"-> linkClass.prettyLabel,
+              "standardPrice"     -> standardPrice,
+              "isMissed"          -> false,
+              "airlineIds"        -> Json.toJson(e.airlineIds)
+            )
+          }
+        }
+
+        // Convert missed entries to json candidates
+        val missedCandidates: List[JsObject] = missed.flatMap { e =>
+          AirportCache.getAirport(e.toAirportId).map { toAirport =>
+            val distance = Computation.calculateDistance(fromAirport, toAirport)
+            val flightCategory = Computation.getFlightCategory(fromAirport, toAirport)
+            val linkClass = LinkClass.fromCode(e.preferredLinkClass)
+            val paxType = PassengerType.apply(e.passengerType)
+            val standardPrice = Pricing.computeStandardPrice(distance, flightCategory, linkClass, paxType, fromAirport.income)
+            Json.obj(
+              "toAirportId"       -> toAirport.id,
+              "toAirportName"     -> toAirport.city,
+              "toAirportIata"     -> toAirport.iata,
+              "passengerCount"    -> e.passengerCount,
+              "passengerType"     -> PassengerType.label(paxType),
+              "preferredLinkClass"-> linkClass.prettyLabel,
+              "standardPrice"     -> standardPrice,
+              "isMissed"          -> true,
+              "airlineIds"        -> Json.arr()
+            )
+          }
+        }
+
+        val rng = new scala.util.Random(cycle.toLong * airportId)
+        val pool = rng.shuffle(ticketedCandidates).take(22) ++ missedCandidates
+        Json.toJson(rng.shuffle(pool).take(21))
+    }
+  }
+
+  def options(path: String): Action[AnyContent] = Action {
     Ok("").withHeaders(
       "Access-Control-Allow-Methods" -> "GET, POST, PUT, DELETE, OPTIONS",
       "Access-Control-Allow-Headers" -> "Accept, Origin, Content-type, X-Json, X-Prototype-Version, X-Requested-With, Authorization",
@@ -640,9 +786,9 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
     )
   }
 
-  def redirect(path: String, any : String) = Action {
+  def redirect(path: String, any: String): Action[AnyContent] = Action {
     Redirect(path)
   }
 
-  case class LinkInfo(fromId : Int, toId : Int, price : Double, capacity : Int)
+  case class LinkInfo(fromId: Int, toId: Int, price: Double, capacity: Int)
 }

@@ -15,16 +15,16 @@ function generateSimpleImageBar(imageSrc, count) {
     return containerDiv
 }
 
-function generateImageBar(imageEmpty, imageFill, count, containerDiv, valueInput, indexToValueFunction, valueToIndexFunction, callback) {
-    generateImageBarWithRowSize(imageEmpty, imageFill, count, containerDiv, valueInput, indexToValueFunction, valueToIndexFunction, 10, callback)
+function generateImageBar(imageEmpty, imageFill, count, containerDiv, valueInput, indexToValueFunction, valueToIndexFunction, callback, size = 16) {
+    generateImageBarWithRowSize(imageEmpty, imageFill, count, containerDiv, valueInput, indexToValueFunction, valueToIndexFunction, 10, callback, size)
 }
 /**
  * used by in setting route service stars & flight frequency
  **/
-function generateImageBarWithRowSize(imageEmpty, imageFill, count, containerDiv, valueInput, indexToValueFunction, valueToIndexFunction, rowSize, callback) {
+function generateImageBarWithRowSize(imageEmpty, imageFill, count, containerDiv, valueInput, indexToValueFunction, valueToIndexFunction, rowSize, callback, size = 16) {
 	containerDiv.empty()
 	var images = []
-	
+
 	if (!indexToValueFunction || !valueToIndexFunction) {
 		indexToValueFunction = function(index) { return index + 1 }
 		valueToIndexFunction = function(value) { return value - 1 }
@@ -37,20 +37,17 @@ function generateImageBarWithRowSize(imageEmpty, imageFill, count, containerDiv,
 			valueInput.val(indexToValueFunction(count - 1))
 		}
 	}
-	
 
 	for (i = 0 ; i < count ; i ++) {
-		var image = $("<img width='16px' height='auto' class='button'>")
+		var image = $("<img width='" + size + "px' height='auto' class='img-button'>")
 		image.attr("src", imageEmpty)
-		//image.click({index : i}, updateImageBar)
 
 		image.data('index', i)
 		image.click(updateImageBar)
-		//image.click(function () { valueInput.val($(this).data('index')); })
 		image.click(function () {
 			var newValue = indexToValueFunction($(this).data('index'))
 			var oldValue = parseInt(valueInput.val())
-			valueInput.val(newValue); 
+			valueInput.val(newValue);
 			if (callback) {
 				callback(oldValue, newValue)
 			}
@@ -59,24 +56,22 @@ function generateImageBarWithRowSize(imageEmpty, imageFill, count, containerDiv,
 
 		containerDiv.append(image)
 		images.push(image)
-		
+
 		if ((i + 1) % rowSize == 0) {
 			containerDiv.append("<br/>")
 		}
 	}
-	
+
 	if (valueInput.val()) {
-		//updateImageBarBySelectedIndex(valueInput.val())
 		updateImageBarBySelectedIndex(valueToIndexFunction(valueInput.val()))
 	}
-	
+
 	function updateImageBar(event) {
 		var index = $(this).data('index')
 		updateImageBarBySelectedIndex(index)
 	}
 	function resetImageBar() {
 		if (valueInput.val()) {
-		  //var index = valueInput.val()
 	      var index = valueToIndexFunction(valueInput.val())
 		  updateImageBarBySelectedIndex(index)
 		}
@@ -91,33 +86,6 @@ function generateImageBarWithRowSize(imageEmpty, imageFill, count, containerDiv,
 		}
 	}
 }
-
-
-function shimmeringDiv(div) {
-	var originalBackgroundColor = div.css("backgroundColor")
-	var originalColor = div.css("color")
-	div.animate( { backgroundColor:'#EDFBFF', color: '#6093e7' }, 1000, function() {
-		div.animate({backgroundColor: originalBackgroundColor, color : originalColor }, 1000)
-		//div.toggle( "bounce", { times: 3 }, "slow" )
-	})
-	setTimeout(function() { shimmeringDiv(div) }, 5000)
-}
-
-//function fadeOutMarker(marker) {
-//	marker.opacities = [0.8, 0.6, 0.4, 0.2, 0]
-//	fadeOutMarkerRecursive(marker)
-//}
-//function fadeOutMarkerRecursive(marker) {
-//	if (marker.opacities.length > 0) {
-//    	marker.setOpacity(marker.opacities[0])
-//    	marker.opacities.shift()
-//    	var icon = marker.getIcon()
-//    	icon.anchor = new google.maps.Point(icon.anchor.x, icon.anchor.y + 2),
-//    	setTimeout(function() { fadeOutMarkerRecursive(marker) }, 50)
-//	} else {
-//		marker.setMap(null)
-//	}
-//}
 
 function fadeInMarker(marker) {
 	marker.opacities = [0.2, 0.4, 0.6, 0.8, 1.0]
@@ -141,10 +109,10 @@ function toLinkPercentOfBasePrices(priceValues, basePrice) {
 
 function toLinkClassValueString(linkValues, prefix = "", suffix = "", displayDiscountEconomy = false) {
     const formatValue = (value) => value > 0 ? (value >= 10000 ? commaSeparateNumber(value) : value) : '-';
-    
+
     const discountValue = linkValues.discountEconomy || 0;
     const economyValue = (linkValues.economy || 0) + (!displayDiscountEconomy ? discountValue : 0);
-    
+
     const values = {
         discount: formatValue(discountValue),
         economy: formatValue(economyValue),
@@ -152,7 +120,7 @@ function toLinkClassValueString(linkValues, prefix = "", suffix = "", displayDis
         first: formatValue(linkValues.first)
     };
 
-    const parts = displayDiscountEconomy 
+    const parts = displayDiscountEconomy
         ? [values.discount, values.economy, values.business, values.first]
         : [values.economy, values.business, values.first];
 
@@ -169,7 +137,7 @@ function toLinkClassDiv(linkValues, prefix, suffix) {
 	var economyValue = linkValues.hasOwnProperty('economy') ? linkValues.economy : '-'
 	var businessValue = linkValues.hasOwnProperty('business') ? linkValues.business : '-'
 	var firstValue = linkValues.hasOwnProperty('first') ? linkValues.first : '-'
-	return `<div class="class-values"><p class="class-value-child text-base font-mono">${prefix + economyValue + suffix}</p><p class="class-value-child text-base font-mono">${prefix + businessValue + suffix}</p><p class="class-value-child text-base font-mono">${prefix + firstValue + suffix}</p></div>`
+	return `<div class="class-values"><p class="class-value-child text-base font-mono economy">${prefix + economyValue + suffix}</p><p class="class-value-child text-base font-mono business">${prefix + businessValue + suffix}</p><p class="class-value-child text-base font-mono first">${prefix + firstValue + suffix}</p></div>`
 }
 
 function changeColoredElementValue(element, newValue) {
@@ -177,11 +145,11 @@ function changeColoredElementValue(element, newValue) {
 	if ($.isNumeric(newValue)) {
 		element.data('numericValue', parseFloat(newValue))
 	}
-	
+
 	if (!element.is(':animated') && $.isNumeric(oldValue) && $.isNumeric(newValue)) { //only do coloring for numeric values
 		var originalColor = element.css("color")
 		var originalBackgroundColor = element.css("background-color")
-		
+
 		if (parseFloat(oldValue) < parseFloat(newValue)) {
 			element.animate({"background-color" : "#A1D490", "color" : "#248F00"}, 1000, function() {
 				element.animate({backgroundColor: originalBackgroundColor, color : originalColor }, 2000, function() {
@@ -214,13 +182,49 @@ function changeColoredElementValue(element, newValue) {
 	}
 }
 
-function commaSeparateNumber(val){
-	var isNegative = val < 0
-	val = Math.abs(val)
-    while (/(\d+)(\d{3})/.test(val.toString())){
-      val = val.toString().replace(/(\d+)(\d{3})/, '$1'+','+'$2');
+function commaSeparateNumber(val, shorthand = "") {
+    var isNegative = val < 0
+    val = Math.abs(Math.trunc(Number(val) * 1000) / 1000)
+    if (shorthand === "auto") {
+        if (val >= 2500000000) {
+            shorthand = "b"
+        } else if (val >= 2000000) {
+            shorthand = "m"
+        } else if (val >= 2500) {
+            shorthand = "k"
+        } else {
+            shorthand = ""
+        }
     }
-    return isNegative ? ('(' + val + ')') : val;
+    if (shorthand === "k") val /= 1000
+    if (shorthand === "m") val /= 1000000
+    if (shorthand === "b") val /= 1000000000
+    if (shorthand.length > 0) val = val.toFixed(1) //for shorthand, always show 1 decimal place
+    while (/(\d+)(\d{3})/.test(val.toString())) {
+        val = val.toString().replace(/(\d+)(\d{3})/, '$1' + ',' + '$2');
+    }
+    return isNegative ? ('(' + val + shorthand + ')') : val + shorthand;
+}
+
+/**
+ * @value {number} 1-10
+ * @width {number} in px
+ * @returns {html} 5 stars, either full, half, or empty
+ **/
+function getGradeStarsImgs(value, width = 16) {
+	const halfStar = value % 2
+	const fullStars = Math.floor(value / 2)
+	let html = ""
+	for (let i = 0 ; i < fullStars; i ++) {
+		html += `<img width='${width}' src='/assets/images/icons/star-full.svg'/>`
+	}
+	if (halfStar) {
+		html += `<img width='${width}' src='/assets/images/icons/star-half.svg'/>`
+	}
+	for (let i = 0 ; i < 5 - fullStars - halfStar; i ++) {
+		html += `<img width='${width}' src='/assets/images/icons/star-empty.svg'/>`
+	}
+	return html
 }
 
 function getCountryFlagImg(countryCode, height = "11px") {
@@ -238,26 +242,59 @@ function getCountryFlagImg(countryCode, height = "11px") {
 }
 
 function getCountryFlagUrl(countryCode) {
-    return countryCode ? `assets/images/flags/${countryCode}.svg` : '';
+    return countryCode ? `/assets/images/flags/${countryCode}.svg` : ``;
 }
 
 function getAirlineLogoImg(airlineId) {
-	return "<img class='logo' loading='lazy' width='24px' height='12px' src='" + "/airlines/" + airlineId + "/logo'/>"
+	return `<img class='logo' loading='lazy' width='36px' height='auto' alt='Airline Logo' src='/airlines/${airlineId}/logo'/>`
 }
 
+function getAllianceLogoImg(allianceId, slogan = '') {
+	const tooltipAttr = slogan ? ` data-tooltip="${slogan.replace(/"/g, '&quot;')}"` : '';
+	return `<img class='logo-alliance' loading='lazy' width='36px' height='18px' src='/alliances/${allianceId}/logo'${tooltipAttr}/>`
+}
 
-function getAirlineLabelSpan(airlineId, airlineName) {
-    var $airlineLabelSpan = $('<span>' + airlineName + '</span>')
+function getAllianceOrAirlineLogoImg(allianceId, airlineId) {
+    let allianceSrc = "/alliances/" + allianceId + "/logo"
+    let airlineSrc = "/airlines/" + airlineId + "/logo"
+
+    let img = document.createElement('img');
+    img.className = 'logo';
+    img.loading = 'lazy';
+    img.src = airlineSrc;
+
+    // Preload alliance image and swap on success
+    let preload = new Image();
+    preload.onload = function() {
+        try {
+            img.src = allianceSrc;
+            img.className = 'logo-alliance';
+        } catch (e) {
+            // swallow
+        }
+    };
+    preload.onerror = function() { /* swallow network errors */ };
+    preload.src = allianceSrc;
+
+    return img;
+}
+
+function getAirlineLabelSpan(airlineId, airlineName, elementType = 'span') {
+    var $airlineLabelSpan = $('<' + elementType + '>' + airlineName + '</' + elementType + '>')
 	if (airlineLabelColors[airlineId]) {
 	    $airlineLabelSpan.css('color', '#' + airlineLabelColors[airlineId])
 	}
 	return $airlineLabelSpan[0].outerHTML
 }
 
-function getAirlineSpan(airlineId, airlineName) {
-    var $airlineSpan = $('<span></span>')
+function getAirlineSpan(airlineId, airlineName, tooltip = null) {
+    var $airlineSpan = $('<span class="flex-align-center"></span>')
 	$airlineSpan.append(getAirlineLogoImg(airlineId))
 	$airlineSpan.append(getAirlineLabelSpan(airlineId, airlineName))
+	if (tooltip) {
+		$airlineSpan.append(`<div class="tooltiptext below" style="min-width: 140px; padding: 12px">${tooltip}</div>`)
+        $airlineSpan.addClass('tooltip')
+	}
 
 	return $airlineSpan[0].outerHTML
 }
@@ -272,25 +309,25 @@ function getAirlineLogoSpan(airlineId, airlineName) {
 function getUserLevelImg(level) {
 	if (level <= 0) {
 		return ""
-	} 
+	}
 	var levelTitle
 	var levelIcon
 	if (level == 1) {
-		levelIcon = "assets/images/icons/medal-bronze-premium.png"
+		levelIcon = "/assets/images/icons/medal-bronze-premium.png"
 		levelTitle = "Patreon : Bronze"
 	} else if (level == 2) {
-		levelIcon = "assets/images/icons/medal-silver-premium.png"
+		levelIcon = "/assets/images/icons/medal-silver-premium.png"
 		levelTitle = "Patreon : Silver"
 	} else if (level == 3) {
-		levelIcon = "assets/images/icons/medal-red-premium.png"
+		levelIcon = "/assets/images/icons/medal-red-premium.png"
 		levelTitle = "Patreon : Gold"
 	}
-	
+
 	if (levelIcon) {
 		return "<img src='" + levelIcon + "' title='" + levelTitle + "' style='vertical-align:middle;'/>"
 	} else {
 		return ""
-	} 
+	}
 }
 
 function getAdminImg(adminStatus) {
@@ -298,7 +335,7 @@ function getAdminImg(adminStatus) {
 		return ""
 	}
 
-	var	levelIcon = "assets/images/icons/star.png"
+	var	levelIcon = "/assets/images/icons/star-full.svg"
     var levelTitle = "Game Admin"
 
 	if (levelIcon) {
@@ -316,11 +353,11 @@ function getUserModifiersSpan(modifiers) {
     var result = ""
     $.each(modifiers, function(index, modifier) {
         if (modifier == "WARNED") {
-           result += "<span><img src='assets/images/icons/exclamation.png' title='" + modifier + "' style='vertical-align:middle;'/></span>"
+           result += "<span><img src='/assets/images/icons/exclamation.png' title='" + modifier + "' style='vertical-align:middle;'/></span>"
         } else if (modifier == "CHAT_BANNED") {
-           result += "<span><img src='assets/images/icons/mute.png' title='" + modifier + "' style='vertical-align:middle;'/></span>"
+           result += "<span><img src='/assets/images/icons/mute.png' title='" + modifier + "' style='vertical-align:middle;'/></span>"
         } else if (modifier == "BANNED") {
-           result += "<span><img src='assets/images/icons/prohibition.png' title='" + modifier + "' style='vertical-align:middle;'/></span>"
+           result += "<span><img src='/assets/images/icons/prohibition.png' title='" + modifier + "' style='vertical-align:middle;'/></span>"
         } else {
            result += "<span>" + modifier + "</span>"
         }
@@ -336,9 +373,9 @@ function getAirlineModifiersSpan(modifiers) {
     var result = ""
     $.each(modifiers, function(index, modifier) {
         if (modifier == "NERFED") {
-           result += "<span><img src='assets/images/icons/ghost.png' title='" + modifier + "' style='vertical-align:middle;'/></span>"
+           result += "<span><img src='/assets/images/icons/ghost.png' title='" + modifier + "' style='vertical-align:middle;'/></span>"
         } else if (modifier == "BANNER_LOYALTY_BOOST") {
-            result += "<span><img src='assets/images/icons/megaphone.png' title='Banner contest winner!' style='vertical-align:middle;'/></span>"
+            result += "<span><img src='/assets/images/icons/megaphone.png' title='Banner contest winner!' style='vertical-align:middle;'/></span>"
         }
 //        } else { //let's no show modifiers that are not listed for now. since they could be common
 //           result += "<span>" + modifier + "</span>"
@@ -350,27 +387,36 @@ function getRankingImg(ranking, limitToTop3 = false) {
 	var rankingIcon
 	var rankingTitle
 	if (ranking == 1) {
-		rankingIcon = "assets/images/icons/crown.png"
+		rankingIcon = "/assets/images/icons/crown.png"
 		rankingTitle = "1st place"
 	} else if (ranking == 2) {
-		rankingIcon = "assets/images/icons/crown-silver.png"
+		rankingIcon = "/assets/images/icons/crown-silver.png"
 		rankingTitle = "2nd place"
 	} else if (ranking == 3) {
-		rankingIcon = "assets/images/icons/crown-bronze.png"
+		rankingIcon = "/assets/images/icons/crown-bronze.png"
     	rankingTitle = "3rd place"
 	} else if (ranking <= 10 && limitToTop3 !== true) {
-		rankingIcon = "assets/images/icons/trophy-" + ranking + ".png"
+		rankingIcon = "/assets/images/icons/trophy-" + ranking + ".png"
 		rankingTitle = ranking + "th place"
 	} else if (ranking <= 20 && limitToTop3 !== true) {
-		rankingIcon = "assets/images/icons/counter-" + ranking + ".png"
+		rankingIcon = "/assets/images/icons/counter-" + ranking + ".png"
         rankingTitle = ranking + "th place"
 	}
-	
+
 	if (rankingIcon) {
 		return "<img src='" + rankingIcon + "' title='" + rankingTitle + "' style='vertical-align:middle; padding-right: 2px;'/>";
 	} else {
 		return "";
 	}
+}
+
+function toHoursAndMinutes(totalMinutes) {
+	const hours = Math.floor(totalMinutes / 60);
+	const minutes = totalMinutes % 60;
+	if(minutes < 10) {
+		return { hours, minutes: "0" + minutes };
+	}
+	return { hours, minutes };
 }
 
 function getDurationText(duration) {
@@ -399,7 +445,7 @@ function getOpennessIcon(openness, size=null, isDomesticAirport=false, isGateway
 	var description
 	var icon
 	if (size && size <= 2 && ! isGateway ){
-        description = "No International Flights"
+        description = "International Flights Forbidden"
         icon = "prohibition.png"
     } else if (isDomesticAirport){
 	    description = "Only Small-sized International Flights"
@@ -411,14 +457,14 @@ function getOpennessIcon(openness, size=null, isDomesticAirport=false, isGateway
 		description = "No International to International Transfers"
 		icon = "globe--exclamation.png"
 	}
-	return "<img src='assets/images/icons/" + icon + "' title='" + description + "'/>"
+	return "<img src='/assets/images/icons/" + icon + "' title='" + description + "'/>"
 }
 
 function getOpennessSpan(openness, size=null, isDomesticAirport=false, isGateway=false, iconOnly=false) {
 	var description
 	var icon
     if (size && size <= 2 && ! isGateway ){
-        description = "No International Flights"
+        description = "International Flights Forbidden"
         icon = "prohibition.png"
     } else if (isDomesticAirport){
         description = "Only Small-sized International Flights"
@@ -430,7 +476,7 @@ function getOpennessSpan(openness, size=null, isDomesticAirport=false, isGateway
 		description = "No International to International Connections"
 		icon = "globe--exclamation.png"
 	}
-	return iconOnly ? "<img src='assets/images/icons/" + icon + "' title='" + description + "'/>" : "" + description + "&nbsp;<img src='assets/images/icons/" + icon + "'/>"
+	return iconOnly ? "<img src='/assets/images/icons/" + icon + "' title='" + description + "'/>" : "" + description + "&nbsp;<img src='/assets/images/icons/" + icon + "'/>"
 }
 
 function scrollToRow($matchingRow, $container) {
@@ -446,12 +492,21 @@ Get a span with value and a tool tip of breakdown
 */
 function getBoostSpan(finalValue, boosts, $tooltip, prepend = "") {
     var $valueSpan = $('<span>' + prepend + commaSeparateNumber(finalValue) + '</span>')
-    if (boosts) {
+    // Only treat boosts as present when it's a non-empty collection (array or object)
+    var hasBoosts = boosts && (Array.isArray(boosts) ? boosts.length > 0 : Object.keys(boosts).length > 0)
+    if (hasBoosts) {
         $valueSpan.css('color', '#41A14D')
         $tooltip.find('.table .table-row').remove()
         var $table = $tooltip.find('.table')
         $.each(boosts, function(index, entry) {
-            var $row = $('<div class="table-row"><div class="cell" style="width: 70%;">' + entry.description + '</div><div class="cell" style="width: 30%; text-align:right;">+' + commaSeparateNumber(entry.boost) + '</div></div>')
+            // support both {description, boost} and {source, value} shapes
+            var description = entry.description || entry.source || ''
+            var boostVal = (entry.boost !== undefined && entry.boost !== null) ? entry.boost : entry.value
+            // fallback to 0 for safe formatting
+            if (boostVal === undefined || boostVal === null) {
+                boostVal = 0
+            }
+            var $row = $('<div class="table-row"><div class="cell" style="width: 70%;">' + description + '</div><div class="cell" style="width: 30%; text-align:right;">+' + commaSeparateNumber(boostVal) + '</div></div>')
             $row.css('color', 'white')
             $table.append($row)
         })
@@ -487,11 +542,11 @@ function sortPreserveOrder(array, property, ascending) {
 		ascending = true
 	}
     var sortOrder = 1;
-    
+
     if(!ascending) {
         sortOrder = -1;
     }
-    
+
 	var sortArray = array.map(function(data, idx){
 	    return {idx:idx, data:data}
 	})
@@ -514,7 +569,7 @@ function sortPreserveOrder(array, property, ascending) {
 	var result = sortArray.map(function(val){
 	    return val.data
 	});
-	
+
 	return result;
 }
 
@@ -523,18 +578,23 @@ function sortByProperty(property, ascending) {
 		ascending = true
 	}
     var sortOrder = 1;
-    
+
     if(!ascending) {
         sortOrder = -1;
     }
-    
+
+    var keys = property.split('.')
+
     return function (a,b) {
-    	var aVal = a[property]
-    	var bVal = b[property]
+    	var aVal = keys.reduce(function(obj, key) { return obj == null ? undefined : obj[key] }, a)
+    	var bVal = keys.reduce(function(obj, key) { return obj == null ? undefined : obj[key] }, b)
     	if (Array.isArray(aVal) && Array.isArray(bVal)) {
     		aVal = aVal.length
     		bVal = bVal.length
     	}
+    	if (aVal == null && bVal == null) return 0;
+    	if (aVal == null) return 1;
+    	if (bVal == null) return -1;
     	var result = (aVal < bVal) ? -1 : (aVal > bVal) ? 1 : 0;
         return result * sortOrder;
     }
@@ -563,7 +623,7 @@ function getAirportSpan(airport) {
 
 function setActiveDiv(activeDiv, callback) {
 	var existingActiveDiv = activeDiv.siblings(":visible").filter(function (index) {
-		return $(this).css("clear") != "both"
+		return $(this).css("clear") != "both" && $(this).css("position") != "fixed"
 	})
 	if (!callback && activeDiv.data("initCallback")) {
         callback = activeDiv.data("initCallback")
@@ -582,13 +642,13 @@ function setActiveDiv(activeDiv, callback) {
 		    }
 			return false;
 		} else {
-			activeDiv.siblings().hide();
+			activeDiv.siblings().filter(function() { return $(this).css("position") != "fixed"; }).hide();
 			activeDiv.addClass('active')
     	    activeDiv.fadeIn(200, callback);
 		}
 	}
 
-	
+
 	activeDiv.parent().show()
 	return true;
 }
@@ -600,25 +660,27 @@ function hideActiveDiv(activeDiv) {
 	}
 }
 
+/**
+ * Show a map overlay panel inside #worldMapCanvas, hiding any other visible overlay panels.
+ */
+function showMapOverlay(overlay) {
+    $('#worldMapCanvas > .mapOverlayPanel').not(overlay).hide();
+    overlay.fadeIn(200);
+}
+
+/**
+ * Hide all map overlay panels inside #worldMapCanvas.
+ */
+function hideMapOverlays() {
+    $('#worldMapCanvas > .mapOverlayPanel').fadeOut(200);
+}
+
 function toggleOnOff(element) {
 	if (element.is(":visible")){
 		element.fadeOut(200)
 	} else {
 		element.fadeIn(200)
 	}
-}
-
-/**
- * Performs UI change to highlighting a tab (and unhighlighting others) 
- * @param tab
- * @returns
- */
-function highlightTab(tab) {
-//	tab.siblings().children("span").removeClass("selected")
-//	//highlight the selected model
-//	tab.children("span").addClass("selected")
-    tab.siblings().find('.tab-icon').removeClass('selected')
-    tab.find('.tab-icon').addClass('selected')
 }
 
 function highlightSwitch(selectedSwitch) {
@@ -648,17 +710,11 @@ function closeAllModals() {
 
 function disableButton(button, reason) {
     $(button).addClass("disabled")
-//    if ($(button).is(':input')) { //then have to manually add overlay
-//       $(button).after('<div class="overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 50, 50, 0.2)"></div>')
-//    }
 
     $(button).each(function() {
       $(this).data("originalClickFunction", $(this).attr("onclick"))
     })
 
-//    if (!$(button).data("replacedTitle")) { //only store the title if it was NOT replaced (ie the original one)
-//        $(button).data("originalTitle", $(button).attr("title"))
-//    }
     if (isTouchDevice()) {
         $(button).find(".touchTitle").remove()
         if (reason) {
@@ -690,48 +746,6 @@ function disableButton(button, reason) {
     }
 }
 
-var googleZoomRatio = [
-    { 20 : 1128.497220 },
-    { 19 : 2256.994440 },
-    { 18 : 4513.988880 },
-    { 17 : 9027.977761 },
-    { 16 : 18055.955520 },
-    { 15 : 36111.911040 },
-    { 14 : 72223.822090 },
-    { 13 : 144447.644200 },
-    { 12 : 288895.288400 },
-    { 11 : 577790.576700 },
-    { 10 : 1155581.153000 },
-    { 9  : 2311162.307000 },
-    { 8  : 4622324.614000 },
-    { 7  : 9244649.227000 },
-    { 6  : 18489298.450000 },
-    { 5  : 36978596.910000 },
-    { 4  : 73957193.820000 },
-    { 3  : 147914387.600000 },
-    { 2  : 295828775.300000 },
-    { 1  : 591657550.500000 }
-]
-
-function getGoogleZoomLevel(distanceMeterAsMaxDimension, $container, latitude) {
-  var dimension = Math.min($container.width(), $container.height())
-  var result = 1
-  var adjustmentRatio = 5000 //just a relative number
-  $.each(googleZoomRatio, function(index, entry) {
-     var zoom = Object.keys(entry)[0];
-     var ratio = entry[zoom]
-     if (ratio * dimension > distanceMeterAsMaxDimension * adjustmentRatio) {
-        result = parseInt(zoom)
-        return false;
-     }
-  })
-  if (result <= 8 && result > 1 && (latitude > 45 || latitude < -45)) {
-    result -= 1
-  }
-  return result
-}
-
-
 function enableButton(button) {
     $(button).removeClass("disabled")
 
@@ -748,10 +762,6 @@ function enableButton(button) {
              $(this).next('div.overlay').remove()
         }
     })
-
-
-    //remove tooltip
-
 
     if (isTouchDevice()) {
         $(button).find(".touchTitle").remove()
@@ -789,21 +799,6 @@ function addTooltipHtml($target, html, css) {
     $target.append($descriptionSpan)
 }
 
-function isIe() {
-   if (/MSIE 10/i.test(navigator.userAgent)) {
-      // This is internet explorer 10
-      return true;
-   }
-
-   if (/MSIE 9/i.test(navigator.userAgent) || /rv:11.0/i.test(navigator.userAgent)) {
-      return true;
-   }
-
-   if (/Edge\/\d./i.test(navigator.userAgent)){
-      return true;
-   }
-}
-
 function isTouchDevice() {
   try {
     document.createEvent("TouchEvent");
@@ -812,7 +807,6 @@ function isTouchDevice() {
     return false;
   }
 }
-
 
 function bindEnter(bindToElement, actionFunction) {
    $(bindToElement).keyup(function(ev) {
@@ -909,15 +903,156 @@ function parseNumber(_str) {
     }
 }
 
-function getGameDate(cycle, period = "WEEKLY") {
+function getGameDate(cycle, period = "WEEKLY", hasUnits = false) {
     const periods = Math.floor(cycle / 48)
     const remainder = cycle % 48
+    const remainderUnit = hasUnits ? " Week " : ""
+    const periodUnit = hasUnits ? " Year " : ""
+    const seperator = hasUnits ? "," : "/"
 
     if (period == "WEEKLY") {
-        return `${periods}.${remainder}`;
+        return `${remainderUnit}${remainder}${seperator}${periodUnit}${periods}`;
     } else if (period == "QUARTER") {
-        return `${periods}.${remainder - 3} - ${periods}.${remainder}`;
-    } else if (period == "PERIOD") {
-        return `${periods - 1}.${remainder} - ${periods}.${remainder}`;
+        return `${remainderUnit}${remainder - 3}${seperator}${periodUnit}${periods} - ${remainderUnit}${remainder}${seperator}${periodUnit}${periods}`;
+    } else if (period == "YEAR") {
+        return `${remainderUnit}${remainder}${seperator}${periodUnit}${periods - 1} - ${remainderUnit}${remainder}${seperator}${periodUnit}${periods}`;
     }
+}
+/**
+ * Updates all text nodes matching the selector
+ * @param {string} selector 
+ * @param {string} updateText 
+ */
+function updateAllTextNodes(selector, updateText) {
+    document.querySelectorAll(selector).forEach(el => {
+        el.textContent = updateText;
+    });
+}
+/**
+ * Creates a DOM element from an HTML string.
+ * @param {string} html - The HTML string to parse.
+ * @returns {HTMLElement | null} The first element created from the string.
+ */
+function htmlToElement(html) {
+    const template = document.createElement('template');
+    template.innerHTML = html.trim();
+    return template.content.firstElementChild;
+}
+
+/**
+ * Changes the color of DOM elements based on current value vs target value comparison
+ * Uses a gradient color system: red for below target, neutral for on target, green for above target
+ * consumes localStorage theme: light or dark mode
+ * 
+ * @param {number} currentValue - The current numeric value
+ * @param {number} targetValue - The target numeric value to compare against
+ * @param {string} domQueryString - CSS selector string to find elements
+ * @param {boolean} inverse - If true, inverts the color logic (lower values are better)
+ */
+function updateElementColorsByValue(currentValue, targetValue, domQueryString, inverse = false) {
+    const elements = document.querySelectorAll(domQueryString);
+    const lightMode = localStorage.getItem("theme") ?? 'dark'
+    
+    let ratio = currentValue / targetValue;
+    
+    // If inverse is true, flip the ratio logic (lower is better)
+    if (inverse) {
+        ratio = targetValue / currentValue;
+    }
+    
+    let color;
+    
+    // Set base color based on mode
+    const baseColor = lightMode === 'dark' ? 255 : 0; // black for light mode, white for dark mode
+    
+    if (ratio > 0.95 && ratio < 1.05) {
+        // close to target - base color (black in light mode, white in dark mode)
+        color = `rgb(${baseColor}, ${baseColor}, ${baseColor})`;
+    } else if (ratio <= 0.95) {
+        // Below target (or above target if inverse) - gradient from dark red to light red to base color
+        if (ratio <= 0.5) {
+            // Very low (0-50% of target) - dark red to medium red
+            const intensity = Math.max(0, ratio * 2); // 0 to 1
+            if (lightMode) {
+                const red = 139 + Math.floor((255 - 139) * intensity); // 139 to 255
+                color = `rgb(${red}, 0, 0)`;
+            } else {
+                const red = 139 + Math.floor((255 - 139) * intensity); // 139 to 255
+                color = `rgb(${red}, 0, 0)`;
+            }
+        } else {
+            // Moderately low (50-100% of target) - medium red to light red to base color
+            const intensity = (ratio - 0.5) * 2; // 0 to 1
+            if (lightMode) {
+                const red = 255 - Math.floor(255 * intensity);
+                const green = Math.floor(baseColor * intensity);
+                const blue = Math.floor(baseColor * intensity);
+                color = `rgb(${red}, ${green}, ${blue})`;
+            } else {
+                const red = 255 - Math.floor(255 * intensity);
+                const green = Math.floor(255 * intensity);
+                const blue = Math.floor(255 * intensity);
+                color = `rgb(${red}, ${green}, ${blue})`;
+            }
+        }
+    } else {
+        // Above target (or below target if inverse) - gradient from base color to light green to bright green
+        if (ratio <= 2) {
+            // Moderately high (100-200% of target) - base color to light green to medium green
+            const intensity = (ratio - 1); // 0 to 1
+            if (lightMode) {
+                const red = baseColor - Math.floor(baseColor * intensity);
+                const green = Math.min(255, baseColor + Math.floor((255 - baseColor) * intensity));
+                const blue = baseColor - Math.floor(baseColor * intensity);
+                color = `rgb(${red}, ${green}, ${blue})`;
+            } else {
+                const red = 255 - Math.floor(255 * intensity);
+                const green = 255;
+                const blue = 255 - Math.floor(255 * intensity);
+                color = `rgb(${red}, ${green}, ${blue})`;
+            }
+        } else {
+            // Very high (200%+ of target) - medium green to bright green
+            const intensity = Math.min(1, (ratio - 2) / 2); // 0 to 1, capped at 1
+            const green = 255 - Math.floor(100 * intensity); // 255 to 155
+            color = `rgb(0, ${green}, 0)`;
+        }
+    }
+    
+    elements.forEach(element => {
+        element.style.color = color;
+    });
+}
+
+// Pretty-print dataset labels and format values when needed
+function prettyLabel(prop, value, { currency = false } = {}) {
+    // Convert camelCase / snake_case / dot.notation to Title Case
+    let label = String(prop)
+        .replace(/([a-z0-9])([A-Z])/g, '$1 $2') // camelCase -> space
+        .replace(/[_\.\-]+/g, ' ') // snake_case or dot.case -> space
+        .trim()
+        .split(' ')
+        .map(w => w.length > 1 ? (w[0].toUpperCase() + w.slice(1).toLowerCase()) : w.toUpperCase())
+        .join(' ');
+
+    if (value === undefined || value === null) {
+        // when no value supplied, return just the pretty label
+        return label;
+    }
+
+    if (currency && !isNaN(Number(value))) {
+        return label + ': $' + commaSeparateNumber(value, 'auto');
+    }
+
+    return label + ': ' + value;
+}
+
+const debounce = (callback, wait) => {
+    let timeoutId = null;
+    return (...args) => {
+        window.clearTimeout(timeoutId);
+        timeoutId = window.setTimeout(() => {
+            callback(...args);
+        }, wait);
+    };
 }

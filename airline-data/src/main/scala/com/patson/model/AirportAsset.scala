@@ -453,8 +453,7 @@ abstract class AirportAsset() extends IdObject{
         case Some(_) => //need to create a new list
             blueprint.assetType.baseBoosts.map { baseBoost =>
                 baseBoost.boostType match {
-                    case AirportBoostType.INCOME =>
-                        baseBoost.copy(value = Computation.computeIncomeLevelBoostFromLevel(airport.baseIncome, baseBoost.value)) //income level boost need adjustments for high income country
+                    case AirportBoostType.INCOME => baseBoost.copy(value = 1.2 * airport.baseIncome)
                     case _ => baseBoost
                 }
             }
@@ -487,6 +486,8 @@ abstract class AirportAsset() extends IdObject{
                     feature.strength.toDouble / feature.MAX_STRENGTH * 0.3
                 case FINANCIAL_HUB =>
                     feature.strength.toDouble / feature.MAX_STRENGTH * 0.3
+                case PRESTIGE_CHARM =>
+                    feature.strength.toDouble / feature.MAX_STRENGTH * 0.2
                 case GATEWAY_AIRPORT =>
                     feature.strength.toDouble / feature.MAX_STRENGTH * 0.1
                 case _ => 0
@@ -836,32 +837,6 @@ object AirportAsset {
             countryStats.append((countryCode, paxCount.toLong))
         }
         countryStats.toList
-    }
-}
-
-
-case class AirportBoost(boostType : AirportBoostType.Value, value : Double) //the value is of 1/100 for some attributes
-
-
-object AirportBoostType extends Enumeration {
-    type AirportBoostType = Value
-    val POPULATION, INCOME, INTERNATIONAL_HUB, ELITE_CHARM, VACATION_HUB, FINANCIAL_HUB = Value
-    val getLabel = (boostType : AirportBoostType.Value) => boostType match {
-        case POPULATION => "Airport Population"
-        case INCOME => "Airport Income Level"
-        case INTERNATIONAL_HUB => "International Hub Strength"
-        case ELITE_CHARM => "Elite Strength"
-        case VACATION_HUB => "Vacation Hub Strength"
-        case FINANCIAL_HUB => "Financial Hub Strength"
-    }
-
-    val getValueType = (boostType : AirportBoostType.Value) => boostType match {
-        case POPULATION => classOf[Long]
-        case INCOME => classOf[Double]
-        case INTERNATIONAL_HUB => classOf[Double]
-        case ELITE_CHARM => classOf[Double]
-        case VACATION_HUB =>  classOf[Double]
-        case FINANCIAL_HUB => classOf[Double]
     }
 }
 

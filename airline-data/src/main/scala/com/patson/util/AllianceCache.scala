@@ -8,10 +8,10 @@ import com.patson.model._
 
 object AllianceCache {
 
-  import com.google.common.cache.{CacheBuilder, CacheLoader, LoadingCache}
+  import com.github.benmanes.caffeine.cache.{Caffeine, CacheLoader, LoadingCache}
 
-  val detailedCache: LoadingCache[Int, Option[Alliance]] = CacheBuilder.newBuilder.maximumSize(1000).expireAfterAccess(10, TimeUnit.MINUTES).build(new DetailedLoader())
-  val simpleCache: LoadingCache[Int, Option[Alliance]] = CacheBuilder.newBuilder.maximumSize(1000).expireAfterAccess(10, TimeUnit.MINUTES).build(new SimpleLoader())
+  val detailedCache: LoadingCache[Int, Option[Alliance]] = Caffeine.newBuilder().maximumSize(1000).expireAfterAccess(10, TimeUnit.MINUTES).build(new DetailedLoader())
+  val simpleCache: LoadingCache[Int, Option[Alliance]] = Caffeine.newBuilder().maximumSize(1000).expireAfterAccess(10, TimeUnit.MINUTES).build(new SimpleLoader())
 
   def getAlliance(allianceId : Int, fullLoad : Boolean = false) : Option[Alliance] = {
     if (fullLoad) {

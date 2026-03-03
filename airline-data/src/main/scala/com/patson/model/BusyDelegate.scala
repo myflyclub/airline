@@ -16,8 +16,7 @@ abstract class DelegateTask(startCycle : Int, taskType : DelegateTaskType.Value)
 object DelegateTask {
   val country = (startCycle : Int, country : Country) => CountryDelegateTask(startCycle, country)
   val campaign = (startCycle : Int, campaign : Campaign) => CampaignDelegateTask(startCycle, campaign)
-  val linkNegotiation = (startCycle : Int, fromAirport : Airport, toAirport : Airport) => LinkNegotiationDelegateTask(startCycle, fromAirport, toAirport)
-
+  val aircraftModel = (startCycle : Int, modelId : Int, modelName : String) => AircraftModelDelegateTask(startCycle, modelId, modelName)
 }
 
 case class CountryDelegateTask(startCycle : Int, country: Country) extends LevelingDelegateTask(startCycle, DelegateTaskType.COUNTRY) {
@@ -39,10 +38,14 @@ object CampaignDelegateTask {
   def cost = (principalAirportIncome : Int) => BASE_COST + principalAirportIncome
 }
 
+object LevelingDelegateTask {
+  val LEVEL_CYCLE_THRESHOLDS: List[Int] = List(4, 4 + 1 * 48, 4 + 3 * 48, 4 + 10 * 48)
+}
+
 abstract class LevelingDelegateTask(startCycle : Int, delegateTaskType: DelegateTaskType.Value) extends DelegateTask(startCycle, delegateTaskType) {
   override val coolDown: Int = 0
 
-  val LEVEL_CYCLE_THRESHOLDS = List(4, 1 * 52, 3 * 52, 10 * 52)
+  val LEVEL_CYCLE_THRESHOLDS: List[Int] = LevelingDelegateTask.LEVEL_CYCLE_THRESHOLDS
   val level = (currentCycle: Int) => {
     var levelWalker = 0
     val taskDuration = currentCycle - startCycle
@@ -76,16 +79,20 @@ abstract class LevelingDelegateTask(startCycle : Int, delegateTaskType: Delegate
   }
 }
 
-case class LinkNegotiationDelegateTask(startCycle : Int, fromAirport : Airport, toAirport : Airport) extends DelegateTask(startCycle, DelegateTaskType.LINK_NEGOTIATION) {
-  override val description: String = s"Flight from ${fromAirport.displayText} to ${toAirport.displayText}"
-  override val coolDown: Int = LinkNegotiationDelegateTask.COOL_DOWN
+case class ManagerBaseDelegateTask() extends DelegateTask(0, DelegateTaskType.MANAGER_BASE) {
+  override val description: String = "Managing base"
+  override val coolDown: Int = 0
 }
 
-object LinkNegotiationDelegateTask {
-  val COOL_DOWN = 12
+case class AircraftModelDelegateTask(startCycle : Int, modelId : Int, modelName : String) extends LevelingDelegateTask(startCycle, DelegateTaskType.MANAGER_AIRCRAFT_MODEL) {
+  override val description: String = s"Managing manufacturer relationship for $modelName"
+}
+
+object AircraftModelDelegateTask {
+  val MAX_MANAGERS_PER_MODEL = 2
 }
 
 object DelegateTaskType extends Enumeration {
   type DelegateTaskType = Value
-  val COUNTRY, LINK_NEGOTIATION, CAMPAIGN = Value
+  val COUNTRY, CAMPAIGN, MANAGER_BASE, MANAGER_AIRCRAFT_MODEL = Value
 }

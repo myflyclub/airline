@@ -5,6 +5,7 @@ import com.patson.model.{Airline, Airport, Country}
 import com.patson.model.event._
 import com.patson.util.AirportCache
 import controllers.AuthenticationObject.AuthenticatedAirline
+
 import javax.inject.Inject
 import play.api.libs.json._
 import play.api.mvc._
@@ -16,7 +17,6 @@ import scala.collection.mutable.ListBuffer
 class OlympicsApplication @Inject()(cc: ControllerComponents) extends AbstractController(cc) {
   implicit object OlympicsWrites extends Writes[Olympics] {
     def writes(olympics: Olympics): JsValue = {
-      val currentCycle = CycleSource.loadCycle()
       val remainingDuration =
         if (currentCycle > olympics.startCycle + olympics.duration) {
           0
@@ -51,71 +51,80 @@ class OlympicsApplication @Inject()(cc: ControllerComponents) extends AbstractCo
     val allOlympics : List[Olympics] = EventSource.loadEvents().filter(_.eventType == EventType.OLYMPICS).map(_.asInstanceOf[Olympics])
 
     Ok(Json.toJson(allOlympics))
+      .withHeaders(
+        ETAG -> s""""$currentCycle""""
+      )
   }
 
   def getOlympicsDetails(eventId : Int) = Action {
+    val json = Option(ResponseCache.olympicsDetailsCache.getIfPresent(eventId)).filter(_._1 == currentCycle).map(_._2).getOrElse {
+      var result = Json.obj()
 
-    var result = Json.obj()
+      var candidatesJson = Json.arr()
 
-    var candidatesJson = Json.arr()
-
-    EventSource.loadOlympicsAffectedAirports(eventId).foreach {
-      case(principalAirport, affectedAirports) =>
-        val airportJson = Json.toJson(principalAirport).asInstanceOf[JsObject] + ("affectedAirports" -> Json.toJson(affectedAirports))
-        candidatesJson = candidatesJson.append(airportJson)
-    }
-
-    result = result + ("candidates" -> candidatesJson)
-
-    val votingRounds = EventSource.loadOlympicsVoteRounds(eventId)
-    if (!votingRounds.isEmpty) {
-      val eliminatedCandidatesByRound = ListBuffer[Airport]()
-
-      for (i <- 1 until votingRounds.length) {
-        val previousCandidates = votingRounds(i - 1).votes.keys
-        val currentCandidates = votingRounds(i).votes.keys
-        eliminatedCandidatesByRound.append(previousCandidates.toSet.removedAll(currentCandidates).iterator.next())
+      EventSource.loadOlympicsAffectedAirports(eventId).foreach {
+        case(principalAirport, affectedAirports) =>
+          val airportJson = Json.toJson(principalAirport).asInstanceOf[JsObject] + ("affectedAirports" -> Json.toJson(affectedAirports))
+          candidatesJson = candidatesJson.append(airportJson)
       }
 
-      var votingRoundsJson = Json.arr()
+      result = result + ("candidates" -> candidatesJson)
 
+      val votingRounds = EventSource.loadOlympicsVoteRounds(eventId)
+      if (!votingRounds.isEmpty) {
+        val eliminatedCandidatesByRound = ListBuffer[Airport]()
 
-      votingRounds.foreach { round =>
-        var votesJson = Json.obj()
-        round.votes.foreach {
-          case (airport, vote) => votesJson = votesJson + (airport.id.toString -> JsNumber(vote))
+        for (i <- 1 until votingRounds.length) {
+          val previousCandidates = votingRounds(i - 1).votes.keys
+          val currentCandidates = votingRounds(i).votes.keys
+          eliminatedCandidatesByRound.append(previousCandidates.toSet.removedAll(currentCandidates).iterator.next())
         }
 
-        var votingRoundJson = Json.obj("votes" -> votesJson)
+        var votingRoundsJson = Json.arr()
 
-        val eliminatedIndex = round.round - 1
-        if (eliminatedIndex < eliminatedCandidatesByRound.size) {
-          val eliminatedAirport = eliminatedCandidatesByRound(eliminatedIndex)
-          votingRoundJson = votingRoundJson +  ("eliminatedAirport" -> Json.toJson(eliminatedAirport))
+
+        votingRounds.foreach { round =>
+          var votesJson = Json.obj()
+          round.votes.foreach {
+            case (airport, vote) => votesJson = votesJson + (airport.id.toString -> JsNumber(vote))
+          }
+
+          var votingRoundJson = Json.obj("votes" -> votesJson)
+
+          val eliminatedIndex = round.round - 1
+          if (eliminatedIndex < eliminatedCandidatesByRound.size) {
+            val eliminatedAirport = eliminatedCandidatesByRound(eliminatedIndex)
+            votingRoundJson = votingRoundJson +  ("eliminatedAirport" -> Json.toJson(eliminatedAirport))
+          }
+
+          votingRoundsJson = votingRoundsJson.append(votingRoundJson)
         }
 
-        votingRoundsJson = votingRoundsJson.append(votingRoundJson)
+        result = result + ("votingRounds" -> votingRoundsJson)
+        Olympics.getSelectedAirport(eventId).foreach { selectedAirport =>
+          result = result + ("selectedAirport", Json.toJson(selectedAirport))
+        }
+      }
+      EventSource.loadEventById(eventId) match {
+        case Some(olympics: Olympics) =>
+          if (!olympics.isActive(currentCycle)) { //only load total pax after the olympics is over
+            val stats = EventSource.loadOlympicsCountryStats(eventId)
+            val totalPassengers : Int = stats.view.values.map {
+              case statsOfAnCountry => statsOfAnCountry.map(_.transported).sum
+            }.sum
+            result = result + ("totalPassengers" -> JsNumber(totalPassengers))
+          }
+        case _ =>
       }
 
-      result = result + ("votingRounds" -> votingRoundsJson)
-      Olympics.getSelectedAirport(eventId).foreach { selectedAirport =>
-        result = result + ("selectedAirport", Json.toJson(selectedAirport))
-      }
-    }
-    EventSource.loadEventById(eventId) match {
-      case Some(olympics: Olympics) =>
-        val currentCycle = CycleSource.loadCycle()
-        if (!olympics.isActive(currentCycle)) { //only load total pax after the olympics is over
-          val stats = EventSource.loadOlympicsCountryStats(eventId)
-          val totalPassengers : Int = stats.view.values.map {
-            case statsOfAnCountry => statsOfAnCountry.map(_.transported).sum
-          }.sum
-          result = result + ("totalPassengers" -> JsNumber(totalPassengers))
-        }
-      case _ =>
+      ResponseCache.olympicsDetailsCache.put(eventId, (currentCycle, result))
+      result
     }
 
-    Ok(result)
+    Ok(json)
+      .withHeaders(
+        ETAG -> s""""$currentCycle""""
+      )
   }
 
   def getOlympicsAirlineVotes(airlineId : Int, eventId : Int) = AuthenticatedAirline(airlineId) { request =>
@@ -142,7 +151,6 @@ class OlympicsApplication @Inject()(cc: ControllerComponents) extends AbstractCo
     Ok(result)
   }
 
-  val PASSENGER_AWARD_CLAIM_DURATION = 52 //52 weeks
   def getOlympicsAirlinePassengerDetails(airlineId : Int, eventId : Int) = AuthenticatedAirline(airlineId) { request =>
     var result = Json.obj()
 
@@ -245,7 +253,7 @@ class OlympicsApplication @Inject()(cc: ControllerComponents) extends AbstractCo
         EventSource.loadOlympicsAirlineGoal(eventId, airlineId) match {
           case Some(goal) =>
             if (totalScore >= goal) {
-              if (olympics.startCycle + olympics.duration + PASSENGER_AWARD_CLAIM_DURATION < currentCycle) {
+              if (olympics.startCycle + olympics.duration * 2 < currentCycle) {
                 Left("Cannot redeem reward, it has already been expired")
               } else if (olympics.isActive(currentCycle)) {
                 Left("Cannot yet claim reward, olympics still active")
@@ -284,6 +292,9 @@ class OlympicsApplication @Inject()(cc: ControllerComponents) extends AbstractCo
         EventSource.saveOlympicsAirlineVote(eventId, OlympicsAirlineVote(request.user, airportPrecedences.toList))
       }
       Ok(precedenceJson)
+        .withHeaders(
+          ETAG -> s""""$currentCycle""""
+        )
     }
   }
 
@@ -360,6 +371,9 @@ class OlympicsApplication @Inject()(cc: ControllerComponents) extends AbstractCo
       case None =>
     }
     Ok(result)
+      .withHeaders(
+        ETAG -> s""""$currentCycle""""
+      )
   }
 
   def getOlympicsVoteRewardOptions(airlineId : Int, eventId : Int) = AuthenticatedAirline(airlineId) { request =>

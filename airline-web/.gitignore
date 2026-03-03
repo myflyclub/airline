@@ -1,6 +1,7 @@
 logs
 target
 /.idea
+.bloop
 /.idea_modules
 /.classpath
 /.project
@@ -14,3 +15,5 @@ target
 /conf/gmail-credentials.json
 /conf/google-oauth-credentials.json
 /google-tokens/
+/data/logos/
+/project/metals.sbt

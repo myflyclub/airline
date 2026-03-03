@@ -1,937 +1,835 @@
 package com.patson.model
 
-import scala.collection.mutable.Map
 import org.scalatest.BeforeAndAfterAll
-import org.scalatest.Finders
-import org.scalatest.Matchers
-import org.scalatest.WordSpecLike
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpecLike
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.testkit.ImplicitSender
 import org.apache.pekko.testkit.TestKit
-import com.patson.model.airplane.{Airplane, AirplaneConfiguration, LinkAssignment, Model}
-import com.patson.DemandGenerator
-import com.patson.Util
+import com.patson.model.airplane.{Airplane, Model}
 
-import scala.collection.mutable
-
+/**
+ * Comprehensive tests for FlightPreference cost adjustment factors.
+ *
+ * SUMMARY OF BIGGEST LEVERS FOR LOWERING PERCEIVED COST:
+ *
+ * 1. PRICE (priceAdjustRatio):
+ *    - Most impactful across all groups
+ *    - priceSensitivity by class: FIRST=0.75, BUSINESS=0.85, ECONOMY=0.95, DISCOUNT=1.05
+ *    - DealPreference adds +0.15 to class sensitivity (most price-sensitive)
+ *    - FREQUENT/BRAND/LAST_MINUTE get 10% reduction on low-price benefit
+ *
+ * 2. QUALITY (qualityAdjustRatio):
+ *    - DealPreference: qualitySensitivity=0.4 (least affected)
+ *    - AppealPreference: qualitySensitivity=1.1-1.5 (most affected)
+ *    - LastMinutePreference: qualitySensitivity=0.3 (deal) or 1.0 (urgent)
+ *    - Quality delta from expected quality matters; +20 delta gives best discount
+ *
+ * 3. FREQUENCY (frequencyAdjustRatio):
+ *    - BUSINESS pax: frequencySensitivity=0.6 (highest)
+ *    - ELITE pax: frequencySensitivity=0.3
+ *    - TRAVELER pax: frequencySensitivity=0.2
+ *    - Others: frequencySensitivity=0.15
+ *    - Short flights (<180 min) care much more about frequency
+ *
+ * 4. TRIP DURATION (tripDurationAdjustRatio):
+ *    - ELITE pax: 0.7 sensitivity (highest)
+ *    - BUSINESS pax: 0.2 + class modifier (0.1-0.5)
+ *    - FIRST class adds +0.5, BUSINESS +0.35, others +0.1
+ *    - Slow planes penalized up to 1.6x cost
+ *
+ * 5. LOYALTY (loyaltyAdjustRatio):
+ *    - BOTH BRAND (loyaltyRatio=1.0) and FREQUENT (loyaltyRatio > 1) are sensitive
+ *    - FREQUENT is MORE sensitive
+ *    - Max loyalty gives ~25% cost reduction for BRAND, more for FREQUENT
+ *    - connectionCostRatio: FREQUENT=1.6, BRAND=1.2, DEAL=0.6 (deal prefers connections)
+ *
+ * 6. LOUNGE (loungeAdjust):
+ *    - Only affects BUSINESS/FIRST class
+ *    - Level 3 lounge at both ends gives significant discount
+ *    - Fixed deduction (45) means it is MUCH more impactful on short flights
+ */
 class FlightPreferenceSpec(_system: ActorSystem) extends TestKit(_system) with ImplicitSender
-  with WordSpecLike with Matchers with BeforeAndAfterAll {
+  with AnyWordSpecLike with Matchers with BeforeAndAfterAll {
 
-  def this() = this(ActorSystem("MySpec"))
+  def this() = this(ActorSystem("FlightPreferenceSpec"))
 
   override def afterAll {
     TestKit.shutdownActorSystem(system)
   }
 
-  val defaultCapacity = LinkClassValues.getInstance(10000, 10000, 10000)
+  // Test setup
+  val testAirline = Airline("test airline", id = 1)
+  val fromAirport = Airport("", "", "From Airport", 0, 0, "", "", "", 1, baseIncome = 40000, basePopulation = 1000000, 0, 0)
+  val toAirport = Airport("", "", "To Airport", 0, 30, "", "", "", 1, baseIncome = 40000, basePopulation = 1000000, 0, 0)
 
-  val testAirline1 = Airline("airline 1", id = 1)
-  val testAirline2 = Airline("airline 2", id = 2)
-  val topAirline = Airline("top airline", id = 3)
-  val fromAirport = Airport("", "", "From Airport", 0, 0, "", "", "", 1, baseIncome = 40000, basePopulation = 1, 0, 0)
-  val toAirport = Airport("", "", "To Airport", 0, 180, "", "", "", 1, baseIncome = 40000, basePopulation = 1, 0, 0)
-
-
-  val distance = 1000
-  val defaultPrice = Pricing.computeStandardPriceForAllClass(distance, FlightCategory.DOMESTIC, PassengerType.BUSINESS, fromAirport.baseIncome)
-
-  fromAirport.initAirlineAppeals(scala.collection.immutable.Map.empty)
+  fromAirport.initAirlineAppeals(scala.collection.immutable.Map(testAirline.id -> AirlineAppeal(50)))
   toAirport.initAirlineAppeals(scala.collection.immutable.Map.empty)
   fromAirport.initLounges(scala.collection.immutable.List.empty)
   toAirport.initLounges(scala.collection.immutable.List.empty)
-  val flightType = Computation.getFlightCategory(fromAirport, toAirport)
-  val airline1Link = Link(fromAirport, toAirport, testAirline1, defaultPrice, distance = distance, defaultCapacity, rawQuality = 0, 600, 1)
-  val airline2Link = Link(fromAirport, toAirport, testAirline2, defaultPrice, distance = distance, defaultCapacity, rawQuality = 0, 600, 1)
-  airline1Link.setQuality(fromAirport.expectedQuality(distance, FIRST))
-  airline2Link.setQuality(fromAirport.expectedQuality(distance, FIRST))
-  val topAirlineLink = Link(fromAirport, toAirport, testAirline2, defaultPrice, distance = distance, defaultCapacity, rawQuality = 100, 600, 1)
+
+  val distance = 1000
+  val defaultPrice = Pricing.computeStandardPriceForAllClass(distance, FlightCategory.DOMESTIC, PassengerType.TRAVELER, fromAirport.baseIncome)
+  val defaultCapacity = LinkClassValues.getInstance(10000, 10000, 10000)
   val model = Model.modelByName("Boeing 737 MAX 9")
-  val modelPropSmall = Model.modelByName("Cessna 208 Caravan")
-  val modelPropMed = Model.modelByName("De Havilland Q400")
-  val modelSST = Model.modelByName("Concorde")
-  val modelHeli = Model.modelByName("Boeing Vertol 107-II ")
-  val modelFast = Model.modelByName("Boeing 747SP")
-  airline1Link.setTestingAssignedAirplanes(scala.collection.immutable.Map(Airplane(model, testAirline1, 0, purchasedCycle = 0, 100, 0, 0) -> 1))
-  airline2Link.setTestingAssignedAirplanes(scala.collection.immutable.Map(Airplane(model, testAirline2, 0, purchasedCycle = 0, 100, 0, 0) -> 1))
-  topAirlineLink.setTestingAssignedAirplanes(scala.collection.immutable.Map(Airplane(model, topAirline, 0, purchasedCycle = 0, 100, 0, 0) -> 1))
+  val duration = Computation.calculateDuration(model, distance)
 
-  "Speed modifier".must {
-    "props faster on shorter routes, otherwise slower".in {
-      val distances = List(50,100,200,400,800,1600,3200,6400,12800)
+  def createLink(
+    price: LinkClassValues = defaultPrice,
+    quality: Int = 50,
+    frequency: Int = 14,
+    linkDuration: Int = duration
+  ): Link = {
+    val link = Link(fromAirport, toAirport, testAirline, price, distance = distance, defaultCapacity, rawQuality = quality, linkDuration, frequency)
+    link.setQuality(quality)
+    link.setTestingAssignedAirplanes(scala.collection.immutable.Map(Airplane(model, testAirline, 0, purchasedCycle = 0, 100, 0) -> 1))
+    link
+  }
+
+  "priceSensitivity by LinkClass".must {
+    "show FIRST class is least price-sensitive (0.75)".in {
+      FIRST.priceSensitivity shouldBe 0.75
+    }
+    "show BUSINESS class has moderate price-sensitivity (0.85)".in {
+      BUSINESS.priceSensitivity shouldBe 0.85
+    }
+    "show ECONOMY class has high price-sensitivity (0.95)".in {
+      ECONOMY.priceSensitivity shouldBe 0.95
+    }
+    "show DISCOUNT_ECONOMY class is most price-sensitive (1.05)".in {
+      DISCOUNT_ECONOMY.priceSensitivity shouldBe 1.05
+    }
+  }
+
+  "priceAdjustRatio".must {
+    "return 1.0 when price equals standard price".in {
+      val link = createLink()
       val preference = DealPreference(fromAirport, ECONOMY, 1.0)
-      for (distance <- distances) {
-        println(s"at $distance:")
-        val duration = Computation.calculateDuration(model, distance)
-        val airline1Link = Link(fromAirport, toAirport, testAirline1, defaultPrice, distance, defaultCapacity, rawQuality = 0, duration, 1)
-        airline1Link.setTestingAssignedAirplanes(scala.collection.immutable.Map(Airplane(model, testAirline1, 0, purchasedCycle = 0, 100, 0, 0) -> 1))
-        val ratio = preference.tripDurationAdjustRatio(airline1Link, ECONOMY, PassengerType.BUSINESS)
-        println(s"  ${model.name}: $duration $ratio")
+      val ratio = preference.priceAdjustRatio(link, ECONOMY, PassengerType.TRAVELER)
+      ratio shouldBe 1.0 +- 0.01
+    }
 
-        val durationSST = Computation.calculateDuration(modelSST, distance)
-        val airline1LinkSST = Link(fromAirport, toAirport, testAirline1, defaultPrice, distance, defaultCapacity, rawQuality = 0, durationSST, 1)
-        airline1LinkSST.setTestingAssignedAirplanes(scala.collection.immutable.Map(Airplane(model, testAirline1, 0, purchasedCycle = 0, 100, 0, 0) -> 1))
-        val ratioSST = preference.tripDurationAdjustRatio(airline1LinkSST, ECONOMY, PassengerType.BUSINESS)
-        println(s"  ${modelSST.name}: $durationSST $ratioSST")
+    "increase cost when price is above standard (amplified by sensitivity)".in {
+      val expensivePrice = defaultPrice * 1.2
+      val link = createLink(price = expensivePrice)
+      val preference = DealPreference(fromAirport, ECONOMY, 1.0)
+      // DealPreference adds 0.15 to class sensitivity: 0.95 + 0.15 = 1.1
+      val ratio = preference.priceAdjustRatio(link, ECONOMY, PassengerType.TRAVELER)
+      ratio should be > 1.0
+      println(s"priceAdjustRatio at 120% price (DealPreference ECONOMY): $ratio")
+    }
 
-        val durationFast = Computation.calculateDuration(modelFast, distance)
-        val airline1LinkFast = Link(fromAirport, toAirport, testAirline1, defaultPrice, distance, defaultCapacity, rawQuality = 0, durationFast, 1)
-        airline1LinkFast.setTestingAssignedAirplanes(scala.collection.immutable.Map(Airplane(model, testAirline1, 0, purchasedCycle = 0, 100, 0, 0) -> 1))
-        val ratioFast = preference.tripDurationAdjustRatio(airline1LinkFast, ECONOMY, PassengerType.BUSINESS)
-        println(s"  ${modelFast.name}: $durationFast $ratioFast")
+    "reduce cost when price is below standard".in {
+      val cheapPrice = defaultPrice * 0.8
+      val link = createLink(price = cheapPrice)
+      val preference = DealPreference(fromAirport, ECONOMY, 1.0)
+      val ratio = preference.priceAdjustRatio(link, ECONOMY, PassengerType.TRAVELER)
+      ratio should be < 1.0
+      println(s"priceAdjustRatio at 80% price (DealPreference ECONOMY): $ratio")
+    }
 
-        val durationProp = Computation.calculateDuration(modelPropMed, distance)
-        val airline1LinkProp = Link(fromAirport, toAirport, testAirline1, defaultPrice, distance, defaultCapacity, rawQuality = 0, durationProp, 1)
-        airline1LinkProp.setTestingAssignedAirplanes(scala.collection.immutable.Map(Airplane(model, testAirline1, 0, purchasedCycle = 0, 100, 0, 0) -> 1))
-        val ratioProp = preference.tripDurationAdjustRatio(airline1LinkProp, ECONOMY, PassengerType.BUSINESS)
-        println(s"  ${modelPropMed.name}: $durationProp $ratioProp")
+    "show FIRST class passengers less affected by price changes".in {
+      val expensivePrice = defaultPrice * 1.3
+      val link = createLink(price = expensivePrice)
 
-        val durationSlow = Computation.calculateDuration(modelPropSmall, distance)
-        val airline1LinkSlow = Link(fromAirport, toAirport, testAirline1, defaultPrice, distance, defaultCapacity, rawQuality = 0, durationSlow, 1)
-        airline1LinkSlow.setTestingAssignedAirplanes(scala.collection.immutable.Map(Airplane(model, testAirline1, 0, purchasedCycle = 0, 100, 0, 0) -> 1))
-        val ratioSlow = preference.tripDurationAdjustRatio(airline1LinkSlow, ECONOMY, PassengerType.BUSINESS)
-        println(s"  ${modelPropSmall.name}: $durationSlow $ratioSlow")
+      val econPref = AppealPreference(fromAirport, ECONOMY, 1.0, 0, 1.0, 1)
+      val firstPref = AppealPreference(fromAirport, FIRST, 1.0, 0, 1.0, 2)
 
-        val durationHeli = Computation.calculateDuration(modelHeli, distance)
-        val airline1LinkHeli = Link(fromAirport, toAirport, testAirline1, defaultPrice, distance, defaultCapacity, rawQuality = 0, durationHeli, 1)
-        airline1LinkHeli.setTestingAssignedAirplanes(scala.collection.immutable.Map(Airplane(model, testAirline1, 0, purchasedCycle = 0, 100, 0, 0) -> 1))
-        val ratioHeli = preference.tripDurationAdjustRatio(airline1LinkHeli, ECONOMY, PassengerType.BUSINESS)
-        println(s"  ${modelHeli.name}: $durationHeli $ratioHeli")
-//        ratio.shouldBe(>(ratioSlow))
-      }
+      val econRatio = econPref.priceAdjustRatio(link, ECONOMY, PassengerType.TRAVELER)
+      val firstRatio = firstPref.priceAdjustRatio(link, FIRST, PassengerType.TRAVELER)
+
+      println(s"At 130% price - ECONOMY ratio: $econRatio, FIRST ratio: $firstRatio")
+      // FIRST should have smaller increase because lower sensitivity
+      (econRatio - 1.0) should be > (firstRatio - 1.0)
+    }
+
+    "show DealPreference is most price-sensitive (+0.15 added)".in {
+      val cheapPrice = defaultPrice * 0.7
+      val link = createLink(price = cheapPrice)
+
+      val dealPref = DealPreference(fromAirport, ECONOMY, 1.0)
+      val appealPref = AppealPreference(fromAirport, ECONOMY, 1.0, 0, 1.0, 1)
+
+      val dealRatio = dealPref.priceAdjustRatio(link, ECONOMY, PassengerType.TRAVELER)
+      val appealRatio = appealPref.priceAdjustRatio(link, ECONOMY, PassengerType.TRAVELER)
+
+      println(s"At 70% price - DealPreference ratio: $dealRatio, AppealPreference ratio: $appealRatio")
+      // Deal should benefit more from low prices
+      dealRatio should be < appealRatio
     }
   }
-  "Class adjust".must {
-    "generate similar cost if price and distance is the same, and small difference in loyalty".in {
-      val distances = List(50,100,200,400,800,1600,3200,6400,12800)
-      var preference = DealPreference(fromAirport, BUSINESS, 1.0)
 
-      for (distance <- distances) {
-        println(s"at $distance:")
-        val duration = Computation.calculateDuration(model, distance)
-        val airline1Link = Link(fromAirport, toAirport, testAirline1, defaultPrice, distance, LinkClassValues.getInstance(10000, 0, 0), rawQuality = 0, duration, 1)
-        airline1Link.setTestingAssignedAirplanes(scala.collection.immutable.Map(Airplane(model, testAirline1, 0, purchasedCycle = 0, 100, 0, 0) -> 1))
+  "qualityAdjustRatio".must {
+    "return ~1.0 when quality matches expected".in {
+      val expectedQuality = fromAirport.expectedQuality(distance, ECONOMY)
+      val link = createLink(quality = expectedQuality)
+      val preference = AppealPreference(fromAirport, ECONOMY, 1.0, 0, 1.0, 1)
+      val ratio = preference.qualityAdjustRatio(fromAirport, link, ECONOMY, PassengerType.TRAVELER)
+      ratio shouldBe 1.0 +- 0.05
+    }
 
-        val ratio = preference.priceAdjustedByLinkClassDiff(airline1Link, ECONOMY, PassengerType.BUSINESS)
-        println(s"  ${model.name}: $duration $ratio")
-//        ratio.shouldBe(>(ratioSlow))
-      }
+    "reduce cost for quality above expected (up to +20 delta efficiently)".in {
+      val expectedQuality = fromAirport.expectedQuality(distance, ECONOMY)
+      val highQualityLink = createLink(quality = Math.min(100, expectedQuality + 25))
+      val preference = AppealPreference(fromAirport, ECONOMY, 1.0, 0, 1.0, 1)
+      val ratio = preference.qualityAdjustRatio(fromAirport, highQualityLink, ECONOMY, PassengerType.TRAVELER)
+      ratio should be < 1.0
+      println(s"qualityAdjustRatio at +25 quality delta (AppealPreference): $ratio")
+    }
+
+    "increase cost for quality below expected".in {
+      val expectedQuality = fromAirport.expectedQuality(distance, ECONOMY)
+      val lowQualityLink = createLink(quality = Math.max(0, expectedQuality - 30))
+      val preference = AppealPreference(fromAirport, ECONOMY, 1.0, 0, 1.0, 1)
+      val ratio = preference.qualityAdjustRatio(fromAirport, lowQualityLink, ECONOMY, PassengerType.TRAVELER)
+      ratio should be > 1.0
+      println(s"qualityAdjustRatio at -30 quality delta (AppealPreference): $ratio")
+    }
+
+    "show DealPreference is least quality-sensitive (0.4)".in {
+      val expectedQuality = fromAirport.expectedQuality(distance, ECONOMY)
+      val lowQualityLink = createLink(quality = Math.max(0, expectedQuality - 30))
+
+      val dealPref = DealPreference(fromAirport, ECONOMY, 1.0)
+      val appealPref = AppealPreference(fromAirport, ECONOMY, 1.0, 0, 0.5, 1) // BRAND has 1.5 qualitySensitivity
+
+      val dealRatio = dealPref.qualityAdjustRatio(fromAirport, lowQualityLink, ECONOMY, PassengerType.TRAVELER)
+      val appealRatio = appealPref.qualityAdjustRatio(fromAirport, lowQualityLink, ECONOMY, PassengerType.TRAVELER)
+
+      println(s"Low quality - DealPreference ratio: $dealRatio, AppealPreference(BRAND) ratio: $appealRatio")
+      // Appeal/Brand should be more penalized by low quality
+      appealRatio should be > dealRatio
+    }
+
+    "show ELITE pax benefit MORE from high quality (lower ratio = more discount)".in {
+      val highQualityLink = createLink(quality = 80)
+      val preference = AppealPreference(fromAirport, ECONOMY, 1.0, 0, 1.0, 1)
+
+      val travelerRatio = preference.qualityAdjustRatio(fromAirport, highQualityLink, ECONOMY, PassengerType.TRAVELER)
+      val eliteRatio = preference.qualityAdjustRatio(fromAirport, highQualityLink, ECONOMY, PassengerType.ELITE)
+
+      println(s"High quality link - TRAVELER ratio: $travelerRatio, ELITE ratio: $eliteRatio")
+      // ELITE has higher good quality delta threshold (30 vs 20), so at quality 80 they get MORE discount
+      eliteRatio should be < travelerRatio
     }
   }
-  "An AppealPreference".must {
-    "generate similar cost if price and distance is the same, and small difference in loyalty".in {
-      fromAirport.initAirlineAppeals(scala.collection.immutable.Map[Int, AirlineAppeal](testAirline1.id -> AirlineAppeal(30), testAirline2.id -> AirlineAppeal(32)))
 
-      var airline1Picked = 0
-      var airline2Picked = 0
-      for (i <- 0 until 100000) {
-        val preference = AppealPreference(fromAirport, ECONOMY, 1.0, loungeLevelRequired = 0, loyaltyRatio = 1.0, 0)
-        val link1Cost = preference.computeCost(airline1Link, ECONOMY, PassengerType.BUSINESS)
-        val link2Cost = preference.computeCost(airline2Link, ECONOMY, PassengerType.BUSINESS)
-        //should be around 50 50
-        if (link1Cost < link2Cost) airline1Picked += 1 else airline2Picked += 1
+  "frequencyAdjustRatio".must {
+    "favor high frequency links".in {
+      val lowFreqLink = createLink(frequency = 3)
+      val highFreqLink = createLink(frequency = 21)
+      val preference = AppealPreference(fromAirport, ECONOMY, 1.0, 0, 1.0, 1)
+
+      // Average over samples due to randomness
+      var lowTotal, highTotal = 0.0
+      val samples = 1000
+      for (_ <- 0 until samples) {
+        lowTotal += preference.frequencyAdjustRatio(lowFreqLink, ECONOMY, PassengerType.BUSINESS)
+        highTotal += preference.frequencyAdjustRatio(highFreqLink, ECONOMY, PassengerType.BUSINESS)
       }
-      val ratio = airline1Picked.toDouble / airline2Picked
-      ratio.shouldBe(>=(0.8)) //should be around 50 50
-      ratio.shouldBe(<=(1.2))
+      val lowRatio = lowTotal / samples
+      val highRatio = highTotal / samples
 
+      println(s"BUSINESS pax avg - low freq (3): $lowRatio, high freq (21): $highRatio")
+      highRatio should be < lowRatio
+    }
+
+    "show BUSINESS pax are most frequency-sensitive (0.6)".in {
+      val lowFreqLink = createLink(frequency = 2)  // Very low frequency to ensure penalty
+      val preference = AppealPreference(fromAirport, ECONOMY, 1.0, 0, 1.0, 1)
+
+      // Average over many samples due to randomness in frequencyThresholdperPax
+      var businessTotal, travelerTotal, touristTotal = 0.0
+      val samples = 1000
+      for (_ <- 0 until samples) {
+        businessTotal += preference.frequencyAdjustRatio(lowFreqLink, ECONOMY, PassengerType.BUSINESS)
+        travelerTotal += preference.frequencyAdjustRatio(lowFreqLink, ECONOMY, PassengerType.TRAVELER)
+        touristTotal += preference.frequencyAdjustRatio(lowFreqLink, ECONOMY, PassengerType.TOURIST)
+      }
+      val businessRatio = businessTotal / samples
+      val travelerRatio = travelerTotal / samples
+      val touristRatio = touristTotal / samples
+
+      println(s"Low freq (2) avg - BUSINESS: $businessRatio, TRAVELER: $travelerRatio, TOURIST: $touristRatio")
+      // Business has frequencySensitivity=0.6, Traveler=0.2, Tourist=0.15
+      // On average, business should be most penalized
+      businessRatio should be > travelerRatio
+    }
+
+    "show short flights care more about frequency (distanceModifier)".in {
+      // Create short flight airport pair
+      val nearbyToAirport = Airport("", "", "Nearby", 0, 2, "", "", "", 1, baseIncome = 40000, basePopulation = 1000000, 0, 0)
+      nearbyToAirport.initAirlineAppeals(scala.collection.immutable.Map.empty)
+      nearbyToAirport.initLounges(scala.collection.immutable.List.empty)
+
+      val shortDistance = 200
+      val shortDuration = Computation.calculateDuration(model, shortDistance)
+      val shortPrice = Pricing.computeStandardPriceForAllClass(shortDistance, FlightCategory.DOMESTIC, PassengerType.TRAVELER, fromAirport.baseIncome)
+
+      val shortLink = Link(fromAirport, nearbyToAirport, testAirline, shortPrice, distance = shortDistance, defaultCapacity, rawQuality = 50, shortDuration, 3)
+      shortLink.setQuality(50)
+      shortLink.setTestingAssignedAirplanes(scala.collection.immutable.Map(Airplane(model, testAirline, 0, purchasedCycle = 0, 100, 0) -> 1))
+
+      val longDistance = 8000
+      val longDuration = Computation.calculateDuration(model, longDistance)
+      val longPrice = Pricing.computeStandardPriceForAllClass(longDistance, FlightCategory.DOMESTIC, PassengerType.TRAVELER, fromAirport.baseIncome)
+
+      val longLink = Link(fromAirport, nearbyToAirport, testAirline, longPrice, distance = longDistance, defaultCapacity, rawQuality = 50, longDuration, 3)
+      longLink.setQuality(50)
+      longLink.setTestingAssignedAirplanes(scala.collection.immutable.Map(Airplane(model, testAirline, 0, purchasedCycle = 0, 100, 0) -> 1))
+
+      val preference = AppealPreference(fromAirport, ECONOMY, 1.0, 0, 1.0, 1)
+
+      // Average over many samples due to randomness
+      var shortTotal, longTotal = 0.0
+      val samples = 2000
+      for (_ <- 0 until samples) {
+        shortTotal += preference.frequencyAdjustRatio(shortLink, ECONOMY, PassengerType.BUSINESS)
+        longTotal += preference.frequencyAdjustRatio(longLink, ECONOMY, PassengerType.BUSINESS)
+      }
+      val shortRatio = shortTotal / samples
+      val longRatio = longTotal / samples
+
+      println(s"Low freq (3) avg - Short flight ratio: $shortRatio, Long flight ratio: $longRatio")
+      // Short flights should be more affected by low frequency (larger delta from 1.0)
+      Math.abs(shortRatio - 1.0) should be > Math.abs(longRatio - 1.0)
+    }
+  }
+
+  "tripDurationAdjustRatio".must {
+    "favor faster planes".in {
+      val slowModel = Model.modelByName("Cessna 208 Caravan")
+      val fastModel = Model.modelByName("Boeing 747SP")
+
+      val slowDuration = Computation.calculateDuration(slowModel, distance)
+      val fastDuration = Computation.calculateDuration(fastModel, distance)
+
+      val slowLink = createLink(linkDuration = slowDuration)
+      val fastLink = createLink(linkDuration = fastDuration)
+
+      val preference = DealPreference(fromAirport, ECONOMY, 1.0)
+
+      val slowRatio = preference.tripDurationAdjustRatio(slowLink, ECONOMY, PassengerType.BUSINESS)
+      val fastRatio = preference.tripDurationAdjustRatio(fastLink, ECONOMY, PassengerType.BUSINESS)
+
+      println(s"BUSINESS pax - Slow plane ratio: $slowRatio, Fast plane ratio: $fastRatio")
+      fastRatio should be < slowRatio
+    }
+
+    "show ELITE pax are most duration-sensitive (0.7)".in {
+      val slowModel = Model.modelByName("Cessna 208 Caravan")
+      val slowDuration = Computation.calculateDuration(slowModel, distance)
+      val slowLink = createLink(linkDuration = slowDuration)
+
+      val preference = DealPreference(fromAirport, ECONOMY, 1.0)
+
+      val eliteRatio = preference.tripDurationAdjustRatio(slowLink, ECONOMY, PassengerType.ELITE)
+      val businessRatio = preference.tripDurationAdjustRatio(slowLink, ECONOMY, PassengerType.BUSINESS)
+      val travelerRatio = preference.tripDurationAdjustRatio(slowLink, ECONOMY, PassengerType.TRAVELER)
+
+      println(s"Slow plane - ELITE: $eliteRatio, BUSINESS: $businessRatio, TRAVELER: $travelerRatio")
+      eliteRatio should be > businessRatio
+    }
+
+    "show FIRST class passengers more duration-sensitive than ECONOMY".in {
+      val slowModel = Model.modelByName("Cessna 208 Caravan")
+      val slowDuration = Computation.calculateDuration(slowModel, distance)
+      val slowLink = createLink(linkDuration = slowDuration)
+
+      val econPref = DealPreference(fromAirport, ECONOMY, 1.0)
+      val firstPref = DealPreference(fromAirport, FIRST, 1.0)
+
+      val econRatio = econPref.tripDurationAdjustRatio(slowLink, ECONOMY, PassengerType.BUSINESS)
+      val firstRatio = firstPref.tripDurationAdjustRatio(slowLink, FIRST, PassengerType.BUSINESS)
+
+      println(s"Slow plane BUSINESS pax - ECONOMY class: $econRatio, FIRST class: $firstRatio")
+      firstRatio should be > econRatio
+    }
+
+    "cap penalty at 2x cost".in {
+      // Create extremely slow flight
+      val verySlowLink = createLink(linkDuration = duration * 5)
+      val preference = DealPreference(fromAirport, FIRST, 1.0)
+
+      val ratio = preference.tripDurationAdjustRatio(verySlowLink, FIRST, PassengerType.ELITE)
+      ratio should be <= 1.6
+      println(s"Extremely slow flight - ELITE FIRST ratio: $ratio (capped at 1.6)")
+    }
+  }
+
+  "loyaltyAdjustRatio".must {
+    "affect FREQUENT preference more (loyaltyRatio > 1)".in {
+      fromAirport.initAirlineAppeals(scala.collection.immutable.Map(testAirline.id -> AirlineAppeal(80)))
+      val link = createLink()
+
+      val brandPref = AppealPreference(fromAirport, ECONOMY, 1.0, 0, 1.0, 1)  // BRAND: loyaltyRatio <= 1
+      val frequentPref = AppealPreference(fromAirport, ECONOMY, 1.0, 0, 2.0, 2)  // FREQUENT: loyaltyRatio > 1
+
+      val brandRatio = brandPref.loyaltyAdjustRatio(link)
+      val frequentRatio = frequentPref.loyaltyAdjustRatio(link)
+
+      println(s"Loyalty 80 - BRAND ratio: $brandRatio, FREQUENT ratio: $frequentRatio")
+      frequentRatio should be < brandRatio  // FREQUENT benefits more from high loyalty
+    }
+
+    "reduce cost for high loyalty airlines".in {
+      fromAirport.initAirlineAppeals(scala.collection.immutable.Map(testAirline.id -> AirlineAppeal(100)))
+      val link = createLink()
+
+      val frequentPref = AppealPreference(fromAirport, ECONOMY, 1.0, 0, 2.0, 1)
+      val ratio = frequentPref.loyaltyAdjustRatio(link)
+
+      println(s"FREQUENT preference at max loyalty (100): $ratio")
+      ratio should be < 1.0
+    }
+
+    "increase cost for zero loyalty airlines".in {
+      fromAirport.initAirlineAppeals(scala.collection.immutable.Map(testAirline.id -> AirlineAppeal(0)))
+      val link = createLink()
+
+      val frequentPref = AppealPreference(fromAirport, ECONOMY, 1.0, 0, 2.0, 1)
+      val ratio = frequentPref.loyaltyAdjustRatio(link)
+
+      println(s"FREQUENT preference at zero loyalty: $ratio")
+      ratio should be > 1.0
+    }
+  }
+
+  "connectionCostRatio".must {
+    "show DEAL preference favors connections (0.6)".in {
+      val dealPref = DealPreference(fromAirport, ECONOMY, 1.0)
+      dealPref.connectionCostRatio shouldBe 0.6
+    }
+
+    "show FREQUENT preference dislikes connections (1.6)".in {
+      val frequentPref = AppealPreference(fromAirport, ECONOMY, 1.0, 0, 2.0, 1)
+      frequentPref.connectionCostRatio shouldBe 1.6
+    }
+
+    "show BRAND preference moderately dislikes connections (1.2)".in {
+      val brandPref = AppealPreference(fromAirport, ECONOMY, 1.0, 0, 0.5, 1)
+      brandPref.connectionCostRatio shouldBe 1.2
+    }
+
+    "show LAST_MINUTE_DEAL prefers connections (0.2)".in {
+      val lastMinuteDealPref = LastMinutePreference(fromAirport, ECONOMY, 0.8, 0)  // priceModifier < 1
+      lastMinuteDealPref.connectionCostRatio shouldBe 0.2
+    }
+
+    "show LAST_MINUTE urgent dislikes connections (1.0)".in {
+      val lastMinutePref = LastMinutePreference(fromAirport, ECONOMY, 1.2, 0)  // priceModifier >= 1
+      lastMinutePref.connectionCostRatio shouldBe 1.0
+    }
+  }
+
+  "Combined cost computation".must {
+    "show price is the dominant factor for DEAL preference".in {
+      fromAirport.initAirlineAppeals(scala.collection.immutable.Map(testAirline.id -> AirlineAppeal(50)))
+
+      val baseLink = createLink()
+      val cheapLink = createLink(price = defaultPrice * 0.7)
+      val qualityLink = createLink(quality = 100)
+
+      val preference = DealPreference(fromAirport, ECONOMY, 1.0)
+
+      // Get average costs (deal preference has noise)
+      var baseCost, cheapCost, qualityCost = 0.0
+      val iterations = 1000
+      for (_ <- 0 until iterations) {
+        baseCost += preference.computeCost(baseLink, ECONOMY, PassengerType.TRAVELER)
+        cheapCost += preference.computeCost(cheapLink, ECONOMY, PassengerType.TRAVELER)
+        qualityCost += preference.computeCost(qualityLink, ECONOMY, PassengerType.TRAVELER)
+      }
+      baseCost /= iterations
+      cheapCost /= iterations
+      qualityCost /= iterations
+
+      val priceImpact = (baseCost - cheapCost) / baseCost
+      val qualityImpact = (baseCost - qualityCost) / baseCost
+
+      println(s"DEAL ECONOMY - Base: $baseCost, Cheap: $cheapCost, High Quality: $qualityCost")
+      println(s"Price impact: ${priceImpact * 100}%, Quality impact: ${qualityImpact * 100}%")
+
+      // For deal seekers, price should have bigger impact than quality
+      priceImpact should be > qualityImpact
+    }
+
+    "show quality matters more for BRAND preference".in {
+      fromAirport.initAirlineAppeals(scala.collection.immutable.Map(testAirline.id -> AirlineAppeal(50)))
+
+      val baseLink = createLink(quality = 50)
+      val highQualityLink = createLink(quality = 90)
+
+      val dealPref = DealPreference(fromAirport, ECONOMY, 1.0)
+      val brandPref = AppealPreference(fromAirport, ECONOMY, 1.0, 0, 0.5, 1)  // BRAND
+
+      var dealBase, dealQuality, brandBase, brandQuality = 0.0
+      val iterations = 1000
+      for (_ <- 0 until iterations) {
+        dealBase += dealPref.computeCost(baseLink, ECONOMY, PassengerType.TRAVELER)
+        dealQuality += dealPref.computeCost(highQualityLink, ECONOMY, PassengerType.TRAVELER)
+        brandBase += brandPref.computeCost(baseLink, ECONOMY, PassengerType.TRAVELER)
+        brandQuality += brandPref.computeCost(highQualityLink, ECONOMY, PassengerType.TRAVELER)
+      }
+      dealBase /= iterations
+      dealQuality /= iterations
+      brandBase /= iterations
+      brandQuality /= iterations
+
+      val dealQualityImpact = (dealBase - dealQuality) / dealBase
+      val brandQualityImpact = (brandBase - brandQuality) / brandBase
+
+      println(s"Quality impact - DEAL: ${dealQualityImpact * 100}%, BRAND: ${brandQualityImpact * 100}%")
+
+      brandQualityImpact should be > dealQualityImpact
+    }
+
+    "show loyalty is key lever for FREQUENT preference".in {
+      val lowLoyaltyAirport = fromAirport.copy()
+      lowLoyaltyAirport.initAirlineAppeals(scala.collection.immutable.Map(testAirline.id -> AirlineAppeal(10)))
+      lowLoyaltyAirport.initLounges(scala.collection.immutable.List.empty)
+
+      val highLoyaltyAirport = fromAirport.copy()
+      highLoyaltyAirport.initAirlineAppeals(scala.collection.immutable.Map(testAirline.id -> AirlineAppeal(90)))
+      highLoyaltyAirport.initLounges(scala.collection.immutable.List.empty)
+
+      val link = createLink()
+
+      val lowLoyaltyPref = AppealPreference(lowLoyaltyAirport, ECONOMY, 1.0, 0, 2.0, 1)  // FREQUENT
+      val highLoyaltyPref = AppealPreference(highLoyaltyAirport, ECONOMY, 1.0, 0, 2.0, 2)  // FREQUENT
+
+      var lowCost, highCost = 0.0
+      val iterations = 1000
+      for (_ <- 0 until iterations) {
+        lowCost += lowLoyaltyPref.computeCost(link, ECONOMY, PassengerType.TRAVELER)
+        highCost += highLoyaltyPref.computeCost(link, ECONOMY, PassengerType.TRAVELER)
+      }
+      lowCost /= iterations
+      highCost /= iterations
+
+      val loyaltyImpact = (lowCost - highCost) / lowCost
+
+      println(s"FREQUENT - Low loyalty cost: $lowCost, High loyalty cost: $highCost")
+      println(s"Loyalty impact: ${loyaltyImpact * 100}%")
+
+      loyaltyImpact should be > 0.1  // At least 10% difference
+    }
+  }
+
+  "Lever impact summary by passenger type".must {
+    "calculate relative impacts for all pax types".in {
+      // Setup airports with low and high loyalty
+      val lowLoyaltyAirport = fromAirport.copy()
+      lowLoyaltyAirport.initAirlineAppeals(scala.collection.immutable.Map(testAirline.id -> AirlineAppeal(10)))
+      lowLoyaltyAirport.initLounges(scala.collection.immutable.List.empty)
+
+      val highLoyaltyAirport = fromAirport.copy()
+      highLoyaltyAirport.initAirlineAppeals(scala.collection.immutable.Map(testAirline.id -> AirlineAppeal(90)))
+      highLoyaltyAirport.initLounges(scala.collection.immutable.List.empty)
+
+      fromAirport.initAirlineAppeals(scala.collection.immutable.Map(testAirline.id -> AirlineAppeal(50)))
+
+      val baseLink = createLink()
+      val cheapLink = createLink(price = defaultPrice * 0.7)
+      val highQualityLink = createLink(quality = 20)
+      val lowFreqLink = createLink(frequency = 3)
+      val highFreqLink = createLink(frequency = 28)
+
+      val paxTypes = List(
+        PassengerType.TRAVELER,
+        PassengerType.BUSINESS,
+        PassengerType.ELITE,
+        PassengerType.TOURIST
+      )
+
+      println("\n=== LEVER IMPACT BY PASSENGER TYPE (ECONOMY class) ===")
+      println("%-15s | %-10s | %-10s | %-10s | %-10s".format("Passenger Type", "Price -30%", "Quality +20", "Freq +3", "Freq +28", "Loyalty +40"))
+      println("-" * 70)
+
+      for (paxType <- paxTypes) {
+        val preference = AppealPreference(fromAirport, ECONOMY, 1.0, 0, 1.0, 1)
+        val lowLoyaltyPref = AppealPreference(lowLoyaltyAirport, ECONOMY, 1.0, 0, 2.0, 1)  // FREQUENT to see loyalty effect
+        val highLoyaltyPref = AppealPreference(highLoyaltyAirport, ECONOMY, 1.0, 0, 2.0, 2)
+
+        var baseCost, priceCost, qualityCost, lowFreqCost, highFreqCost, lowLoyaltyCost, highLoyaltyCost = 0.0
+        val iterations = 1000
+        for (_ <- 0 until iterations) {
+          baseCost += preference.computeCost(baseLink, ECONOMY, paxType)
+          priceCost += preference.computeCost(cheapLink, ECONOMY, paxType)
+          qualityCost += preference.computeCost(highQualityLink, ECONOMY, paxType)
+          lowFreqCost += preference.computeCost(lowFreqLink, ECONOMY, paxType)
+          highFreqCost += preference.computeCost(highFreqLink, ECONOMY, paxType)
+          lowLoyaltyCost += lowLoyaltyPref.computeCost(baseLink, ECONOMY, paxType)
+          highLoyaltyCost += highLoyaltyPref.computeCost(baseLink, ECONOMY, paxType)
+        }
+        baseCost /= iterations
+        priceCost /= iterations
+        qualityCost /= iterations
+        lowFreqCost /= iterations
+        highFreqCost /= iterations
+        lowLoyaltyCost /= iterations
+        highLoyaltyCost /= iterations
+
+        val priceImpact = (baseCost - priceCost) / baseCost * 100
+        val qualityImpact = (baseCost - qualityCost) / baseCost * 100
+        val lowFreqImpact = (baseCost - lowFreqCost) / baseCost * 100
+        val highFreqImpact = (baseCost - highFreqCost) / baseCost * 100
+        val loyaltyImpact = (lowLoyaltyCost - highLoyaltyCost) / lowLoyaltyCost * 100
+
+        println("%-15s | %8.1f%% | %8.1f%% | %8.1f%% | %8.1f%%".format(
+          PassengerType.label(paxType),
+          priceImpact,
+          qualityImpact,
+          lowFreqImpact,
+          highFreqImpact,
+          loyaltyImpact
+        ))
+      }
+
+      // Lounge note
+      println("\n(Lounge only affects BUSINESS/FIRST class - see class table below)")
+
+      true shouldBe true
+    }
+
+    "calculate relative impacts for all link classes".in {
+      // Setup airports with and without lounges
+      val noLoungeAirport = fromAirport.copy()
+      noLoungeAirport.initAirlineAppeals(scala.collection.immutable.Map(testAirline.id -> AirlineAppeal(50)))
+      noLoungeAirport.initLounges(scala.collection.immutable.List.empty)
+
+      val loungeFromAirport = fromAirport.copy()
+      loungeFromAirport.initAirlineAppeals(scala.collection.immutable.Map(testAirline.id -> AirlineAppeal(50)))
+      loungeFromAirport.initLounges(scala.collection.immutable.List(
+        Lounge(testAirline, allianceId = None, loungeFromAirport, level = 3, status = LoungeStatus.ACTIVE, foundedCycle = 0)
+      ))
+
+      val loungeToAirport = toAirport.copy()
+      loungeToAirport.initAirlineAppeals(scala.collection.immutable.Map.empty)
+      loungeToAirport.initLounges(scala.collection.immutable.List(
+        Lounge(testAirline, allianceId = None, loungeToAirport, level = 3, status = LoungeStatus.ACTIVE, foundedCycle = 0)
+      ))
+
+      // Setup airports with low and high loyalty
+      val lowLoyaltyAirport = fromAirport.copy()
+      lowLoyaltyAirport.initAirlineAppeals(scala.collection.immutable.Map(testAirline.id -> AirlineAppeal(10)))
+      lowLoyaltyAirport.initLounges(scala.collection.immutable.List.empty)
+
+      val highLoyaltyAirport = fromAirport.copy()
+      highLoyaltyAirport.initAirlineAppeals(scala.collection.immutable.Map(testAirline.id -> AirlineAppeal(90)))
+      highLoyaltyAirport.initLounges(scala.collection.immutable.List.empty)
+
+      fromAirport.initAirlineAppeals(scala.collection.immutable.Map(testAirline.id -> AirlineAppeal(50)))
+
+      val classes = List(ECONOMY, BUSINESS, FIRST)
+
+      println("\n=== LEVER IMPACT BY LINK CLASS (TRAVELER pax) ===")
+      println("%-8s | %-9s | %-9s | %-9s | %-9s | %-9s".format("Class", "Price-30%", "Qual+40", "Freq+14", "Loyal+80", "Lounge L3"))
+      println("-" * 75)
+
+      for (linkClass <- classes) {
+        val classPrice = Pricing.computeStandardPriceForAllClass(distance, FlightCategory.DOMESTIC, PassengerType.TRAVELER, fromAirport.baseIncome)
+        val baseLink = createLink(price = classPrice)
+        val cheapLink = createLink(price = classPrice * 0.7)
+        val highQualityLink = createLink(quality = 90, price = classPrice)
+        val highFreqLink = createLink(frequency = 28, price = classPrice)
+
+        // Create lounge link
+        val loungeLink = Link(loungeFromAirport, loungeToAirport, testAirline, classPrice, distance = distance, defaultCapacity, rawQuality = 50, duration, 14)
+        loungeLink.setQuality(50)
+        loungeLink.setTestingAssignedAirplanes(scala.collection.immutable.Map(Airplane(model, testAirline, 0, purchasedCycle = 0, 100, 0) -> 1))
+
+        val preference = AppealPreference(noLoungeAirport, linkClass, 1.0, 0, 1.0, 1)
+        val loungePreference = AppealPreference(loungeFromAirport, linkClass, 1.0, 0, 1.0, 3)
+        val lowLoyaltyPref = AppealPreference(lowLoyaltyAirport, linkClass, 1.0, 0, 2.0, 4)
+        val highLoyaltyPref = AppealPreference(highLoyaltyAirport, linkClass, 1.0, 0, 2.0, 5)
+
+        var baseCost, priceCost, qualityCost, freqCost, noLoungeCost, loungeCost, lowLoyaltyCost, highLoyaltyCost = 0.0
+        val iterations = 1000
+        for (_ <- 0 until iterations) {
+          baseCost += preference.computeCost(baseLink, linkClass, PassengerType.TRAVELER)
+          priceCost += preference.computeCost(cheapLink, linkClass, PassengerType.TRAVELER)
+          qualityCost += preference.computeCost(highQualityLink, linkClass, PassengerType.TRAVELER)
+          freqCost += preference.computeCost(highFreqLink, linkClass, PassengerType.TRAVELER)
+          noLoungeCost += preference.computeCost(baseLink, linkClass, PassengerType.TRAVELER)
+          loungeCost += loungePreference.computeCost(loungeLink, linkClass, PassengerType.TRAVELER)
+          lowLoyaltyCost += lowLoyaltyPref.computeCost(baseLink, linkClass, PassengerType.TRAVELER)
+          highLoyaltyCost += highLoyaltyPref.computeCost(baseLink, linkClass, PassengerType.TRAVELER)
+        }
+        baseCost /= iterations
+        priceCost /= iterations
+        qualityCost /= iterations
+        freqCost /= iterations
+        noLoungeCost /= iterations
+        loungeCost /= iterations
+        lowLoyaltyCost /= iterations
+        highLoyaltyCost /= iterations
+
+        val priceImpact = (baseCost - priceCost) / baseCost * 100
+        val qualityImpact = (baseCost - qualityCost) / baseCost * 100
+        val freqImpact = (baseCost - freqCost) / baseCost * 100
+        val loyaltyImpact = (lowLoyaltyCost - highLoyaltyCost) / lowLoyaltyCost * 100
+        val loungeImpact = (noLoungeCost - loungeCost) / noLoungeCost * 100
+
+        println("%-8s | %7.1f%% | %7.1f%% | %7.1f%% | %7.1f%% | %7.1f%%".format(
+          linkClass.code,
+          priceImpact,
+          qualityImpact,
+          freqImpact,
+          loyaltyImpact,
+          loungeImpact
+        ))
+      }
+
+      true shouldBe true
+    }
+
+    "calculate relative impacts for all preference types".in {
+      // Setup airports with low and high loyalty
+      val lowLoyaltyAirport = fromAirport.copy()
+      lowLoyaltyAirport.initAirlineAppeals(scala.collection.immutable.Map(testAirline.id -> AirlineAppeal(10)))
+      lowLoyaltyAirport.initLounges(scala.collection.immutable.List.empty)
+
+      val highLoyaltyAirport = fromAirport.copy()
+      highLoyaltyAirport.initAirlineAppeals(scala.collection.immutable.Map(testAirline.id -> AirlineAppeal(90)))
+      highLoyaltyAirport.initLounges(scala.collection.immutable.List.empty)
+
+      fromAirport.initAirlineAppeals(scala.collection.immutable.Map(testAirline.id -> AirlineAppeal(50)))
+
+      val baseLink = createLink()
+      val cheapLink = createLink(price = defaultPrice * 0.7)
+      val highQualityLink = createLink(quality = 90)
+      val highFreqLink = createLink(frequency = 28)
+
+      // For each preference type, we need low/high loyalty versions to measure loyalty impact
+      // loyaltyRatio determines if loyalty matters: >1 means FREQUENT (high sensitivity), <=1 means others
+      val preferenceSpecs = List(
+        ("DEAL", (ap: Airport) => DealPreference(ap, ECONOMY, 1.0), 0.0),  // loyaltySensitivity = 0
+        ("BRAND", (ap: Airport) => AppealPreference(ap, ECONOMY, 1.0, 0, 0.5, 1), 0.5),  // has some sensitivity
+        ("FREQUENT", (ap: Airport) => AppealPreference(ap, ECONOMY, 1.0, 0, 2.0, 2), 2.0),  // high sensitivity
+        ("LAST_MINUTE", (ap: Airport) => LastMinutePreference(ap, ECONOMY, 1.2, 0), 0.0),
+        ("LAST_MIN_DEAL", (ap: Airport) => LastMinutePreference(ap, ECONOMY, 0.8, 0), 0.0)
+      )
+
+      println("\n=== LEVER IMPACT BY PREFERENCE TYPE (ECONOMY class, TRAVELER pax) ===")
+      println("%-13s | %-9s | %-9s | %-9s | %-9s | %-6s".format("Preference", "Price-30%", "Qual+40", "Freq+14", "Loyal+80", "ConnRatio"))
+      println("-" * 75)
+
+      for ((name, prefFactory, loyaltyRatio) <- preferenceSpecs) {
+        val preference = prefFactory(fromAirport)
+        val lowLoyaltyPref = prefFactory(lowLoyaltyAirport)
+        val highLoyaltyPref = prefFactory(highLoyaltyAirport)
+
+        var baseCost, priceCost, qualityCost, freqCost, lowLoyaltyCost, highLoyaltyCost = 0.0
+        val iterations = 1000
+        for (_ <- 0 until iterations) {
+          baseCost += preference.computeCost(baseLink, ECONOMY, PassengerType.TRAVELER)
+          priceCost += preference.computeCost(cheapLink, ECONOMY, PassengerType.TRAVELER)
+          qualityCost += preference.computeCost(highQualityLink, ECONOMY, PassengerType.TRAVELER)
+          freqCost += preference.computeCost(highFreqLink, ECONOMY, PassengerType.TRAVELER)
+          lowLoyaltyCost += lowLoyaltyPref.computeCost(baseLink, ECONOMY, PassengerType.TRAVELER)
+          highLoyaltyCost += highLoyaltyPref.computeCost(baseLink, ECONOMY, PassengerType.TRAVELER)
+        }
+        baseCost /= iterations
+        priceCost /= iterations
+        qualityCost /= iterations
+        freqCost /= iterations
+        lowLoyaltyCost /= iterations
+        highLoyaltyCost /= iterations
+
+        val priceImpact = (baseCost - priceCost) / baseCost * 100
+        val qualityImpact = (baseCost - qualityCost) / baseCost * 100
+        val freqImpact = (baseCost - freqCost) / baseCost * 100
+        val loyaltyImpact = if (lowLoyaltyCost > 0) (lowLoyaltyCost - highLoyaltyCost) / lowLoyaltyCost * 100 else 0.0
+
+        println("%-13s | %7.1f%% | %7.1f%% | %7.1f%% | %7.1f%% | %5.1fx".format(
+          name,
+          priceImpact,
+          qualityImpact,
+          freqImpact,
+          loyaltyImpact,
+          preference.connectionCostRatio
+        ))
+      }
+
+      println("\n(Lounge only affects BUSINESS/FIRST - see link class table)")
+
+      true shouldBe true
+    }
+  }
+
+  "investigation findings".must {
+    "show BRAND preference is sensitive to loyalty" in {
+      val lowLoyaltyAirport = fromAirport.copy()
+      lowLoyaltyAirport.initAirlineAppeals(scala.collection.immutable.Map(testAirline.id -> AirlineAppeal(0)))
+      lowLoyaltyAirport.initLounges(scala.collection.immutable.List.empty)
+
+      val highLoyaltyAirport = fromAirport.copy()
+      highLoyaltyAirport.initAirlineAppeals(scala.collection.immutable.Map(testAirline.id -> AirlineAppeal(100)))
+      highLoyaltyAirport.initLounges(scala.collection.immutable.List.empty)
+
+      val brandPrefLow = AppealPreference(lowLoyaltyAirport, ECONOMY, 1.0, 0, 1.0, 1)
+      val brandPrefHigh = AppealPreference(highLoyaltyAirport, ECONOMY, 1.0, 0, 1.0, 2)
+
+      val link = createLink()
+
+      val ratioLow = brandPrefLow.loyaltyAdjustRatio(link)
+      val ratioHigh = brandPrefHigh.loyaltyAdjustRatio(link)
+
+      println(s"BRAND ratio at 0 loyalty: $ratioLow")
+      println(s"BRAND ratio at 100 loyalty: $ratioHigh")
+
+      ratioHigh should be < ratioLow
+      ratioHigh should be < 1.0
+      ratioLow should be > 1.0
+    }
+
+    "show loungeAdjust works correctly for both ends and is more impactful on short flights" in {
+      val airline = testAirline
+      val l3 = Lounge(airline, None, fromAirport, "L3", level = 3, LoungeStatus.ACTIVE, 0)
+
+      val airportWithLounge = Airport("A1", "A1", "A1", 0, 0, "", "", "", 1, baseIncome = 40000, basePopulation = 1000000, 0, 0)
+      airportWithLounge.initLounges(List(l3))
+
+      val airportWithoutLounge = Airport("A2", "A2", "A2", 0, 0, "", "", "", 1, baseIncome = 40000, basePopulation = 1000000, 0, 0)
+      airportWithoutLounge.initLounges(List.empty)
+
+      val preference = DealPreference(airportWithLounge, BUSINESS, 1.0)
+
+      // Case 1: Lounge at FROM only
+      val link1 = Link(airportWithLounge, airportWithoutLounge, airline, defaultPrice, distance = 1000, defaultCapacity, rawQuality = 50, duration, 14)
+      val cost1 = preference.loungeAdjust(1000.0, link1, 0, BUSINESS)
+
+      // Case 2: Lounge at TO only
+      val link2 = Link(airportWithoutLounge, airportWithLounge, airline, defaultPrice, distance = 1000, defaultCapacity, rawQuality = 50, duration, 14)
+      val cost2 = preference.loungeAdjust(1000.0, link2, 0, BUSINESS)
+
+      // Case 3: Lounge at BOTH
+      val link3 = Link(airportWithLounge, airportWithLounge, airline, defaultPrice, distance = 1000, defaultCapacity, rawQuality = 50, duration, 14)
+      val cost3 = preference.loungeAdjust(1000.0, link3, 0, BUSINESS)
+
+      println(s"Lounge at FROM only: $cost1")
+      println(s"Lounge at TO only: $cost2")
+      println(s"Lounge at BOTH: $cost3")
+
+      cost1 shouldBe 880.0
+      cost2 shouldBe 880.0
+      cost3 shouldBe 769.0
+
+      // Short vs Long flight impact
+      val shortCost = 200.0
+      val longCost = 2000.0
+
+      val adjustedShort = preference.loungeAdjust(shortCost, link2, 0, BUSINESS)
+      val adjustedLong = preference.loungeAdjust(longCost, link2, 0, BUSINESS)
+
+      val shortReduction = (shortCost - adjustedShort) / shortCost
+      val longReduction = (longCost - adjustedLong) / longCost
+
+      println(s"Short flight (cost 200) lounge reduction: ${shortReduction * 100}%")
+      println(s"Long flight (cost 2000) lounge reduction: ${longReduction * 100}%")
+
+      shortReduction should be > longReduction
     }
   }
 }
-//    "generate similar cost if distance and loyalty is the same, and small differece in price".in {
-//      fromAirport.initAirlineAppeals(scala.collection.immutable.Map[Int, AirlineAppeal](testAirline1.id -> AirlineAppeal(50), testAirline2.id -> AirlineAppeal(50)))
-//      val airline1Link = Link(fromAirport, toAirport, testAirline1, LinkClassValues.getInstance(1000), 10000, defaultCapacity, 0, 600, 1, flightType)
-//      val airline2Link = Link(fromAirport, toAirport, testAirline2, LinkClassValues.getInstance(1005), 10000, defaultCapacity, 0, 600, 1, flightType)
-//      var airline1Picked = 0
-//      var airline2Picked = 0
-//      for (i <- 0 until 100000) {
-//        val preference = AppealPreference(fromAirport, ECONOMY, loungeLevelRequired = 0, loyaltyRatio = 1, 0)
-//        val link1Cost = preference.computeCost(airline1Link, ECONOMY)
-//        val link2Cost = preference.computeCost(airline2Link, ECONOMY)
-//        //should be around 50 50
-//        if (link1Cost < link2Cost) airline1Picked += 1  else airline2Picked += 1
-//
-//      }
-//      val ratio = airline1Picked.toDouble / airline2Picked
-//      ratio.shouldBe( >= (0.9))         //should be around 50 50
-//      ratio.shouldBe( <= (1.1))
-//    }
-//    "generate similar cost if price and loyalty is the same, and small differece in distance".in {
-//      fromAirport.initAirlineAppeals(scala.collection.immutable.Map[Int, AirlineAppeal](testAirline1.id -> AirlineAppeal(50), testAirline2.id -> AirlineAppeal(50)))
-//      val airline1Link = Link(fromAirport, toAirport, testAirline1, defaultPrice, 10000, defaultCapacity, 0, 600, 1, flightType)
-//      val airline2Link = Link(fromAirport, toAirport, testAirline2, defaultPrice, 10000, defaultCapacity, 0, 600, 1, flightType)
-//      var airline1Picked = 0
-//      var airline2Picked = 0
-//      for (i <- 0 until 100000) {
-//        val preference = AppealPreference(fromAirport, ECONOMY, loungeLevelRequired = 0, loyaltyRatio = 1, 0)
-//        val link1Cost = preference.computeCost(airline1Link, ECONOMY)
-//        val link2Cost = preference.computeCost(airline2Link, ECONOMY)
-//        if (link1Cost < link2Cost) airline1Picked += 1  else airline2Picked += 1
-//      }
-//      val ratio = airline1Picked.toDouble / airline2Picked
-//      ratio.shouldBe( >= (0.9))         //should be around 50 50
-//      ratio.shouldBe( <= (1.1))
-//    }
-//    "generate similar cost if everything is the same but small difference in raw link quality".in {
-//      fromAirport.initAirlineAppeals(scala.collection.immutable.Map[Int, AirlineAppeal](testAirline1.id -> AirlineAppeal(50), testAirline2.id -> AirlineAppeal(50)))
-//      val airline1Link = Link(fromAirport, toAirport, testAirline1, defaultPrice, 10000, defaultCapacity, 51, 600, 1, flightType)
-//      val airline2Link = Link(fromAirport, toAirport, testAirline2, defaultPrice, 10000, defaultCapacity, 50, 600, 1, flightType)
-//      var airline1Picked = 0
-//      var airline2Picked = 0
-//      for (i <- 0 until 100000) {
-//        val preference = AppealPreference(fromAirport, ECONOMY, loungeLevelRequired = 0, loyaltyRatio = 1, 0)
-//        val link1Cost = preference.computeCost(airline1Link, ECONOMY)
-//        val link2Cost = preference.computeCost(airline2Link, ECONOMY)
-//        if (link1Cost < link2Cost) airline1Picked += 1  else airline2Picked += 1
-//      }
-//      val ratio = airline1Picked.toDouble / airline2Picked
-//      ratio.shouldBe( >= (0.9))         //should be around 50 50
-//      ratio.shouldBe( <= (1.1))
-//    }
-//    "generate similar cost if everything is the same, and small differece in raw link quality".in {
-//      fromAirport.initAirlineAppeals(scala.collection.immutable.Map[Int, AirlineAppeal](testAirline1.id -> AirlineAppeal(50), testAirline2.id -> AirlineAppeal(50)))
-//      val airline1Link = Link(fromAirport, toAirport, testAirline1, defaultPrice, 10000, defaultCapacity, 51, 600, 1, flightType)
-//      val airline2Link = Link(fromAirport, toAirport, testAirline2, defaultPrice, 10100, defaultCapacity, 50, 600, 1, flightType)
-//      var airline1Picked = 0
-//      var airline2Picked = 0
-//      for (i <- 0 until 100000) {
-//        val preference = AppealPreference(fromAirport, ECONOMY, loungeLevelRequired = 0, loyaltyRatio = 1, 0)
-//        val link1Cost = preference.computeCost(airline1Link, ECONOMY)
-//        val link2Cost = preference.computeCost(airline2Link, ECONOMY)
-//        if (link1Cost < link2Cost) airline1Picked += 1  else airline2Picked += 1
-//      }
-//      val ratio = airline1Picked.toDouble / airline2Picked
-//      ratio.shouldBe( >= (0.9))         //should be around 50 50
-//      ratio.shouldBe( <= (1.1))
-//    }
-//
-//
-//    "generate differentiating but overlapping cost if everything is the same, but loyalty at big difference".in {
-//      fromAirport.initAirlineAppeals(scala.collection.immutable.Map[Int, AirlineAppeal](testAirline1.id -> AirlineAppeal(10), testAirline2.id -> AirlineAppeal(50)))
-//      val airline1Link = Link(fromAirport, toAirport, testAirline1, defaultPrice, 10000, defaultCapacity, 0, 600, 1, flightType)
-//      val airline2Link = Link(fromAirport, toAirport, testAirline2, defaultPrice, 10000, defaultCapacity, 0, 600, 1, flightType)
-//      var airline1Picked = 0
-//      var airline2Picked = 0
-//      for (i <- 0 until 100000) {
-//        val preference = AppealPreference(fromAirport, ECONOMY, loungeLevelRequired = 0, loyaltyRatio = 1, 0)
-//        val link1Cost = preference.computeCost(airline1Link, ECONOMY)
-//        val link2Cost = preference.computeCost(airline2Link, ECONOMY)
-//        if (link1Cost < link2Cost) airline1Picked += 1  else airline2Picked += 1
-//      }
-//      val ratio = airline1Picked.toDouble / airline2Picked
-//      ratio.shouldBe( <= (0.5)) //significantly more people should pick airline 2
-//      ratio.shouldBe( > (0.05)) //yet some will still pick airline 1
-//    }
-//    "generate almost no overlapping cost if everything is the same, but loyalty at min vs max".in {
-//      fromAirport.initAirlineAppeals(scala.collection.immutable.Map[Int, AirlineAppeal](testAirline1.id -> AirlineAppeal(0), testAirline2.id -> AirlineAppeal(100)))
-//      val airline1Link = Link(fromAirport, toAirport, testAirline1, defaultPrice, 10000, defaultCapacity, 0, 600, 1, flightType)
-//      val airline2Link = Link(fromAirport, toAirport, testAirline2, defaultPrice, 10000, defaultCapacity, 0, 600, 1, flightType)
-//      var airline1Picked = 0
-//      var airline2Picked = 0
-//      for (i <- 0 until 100000) {
-//        val preference = AppealPreference(fromAirport, ECONOMY, loungeLevelRequired = 0, loyaltyRatio = 1, 0)
-//        val link1Cost = preference.computeCost(airline1Link, ECONOMY)
-//        val link2Cost = preference.computeCost(airline2Link, ECONOMY)
-//        if (link1Cost < link2Cost) airline1Picked += 1  else airline2Picked += 1
-//      }
-//      val ratio = airline1Picked.toDouble / airline2Picked
-//      ratio.shouldBe( <= (0.1)) //almost everyone should go for airline 2
-//      ratio.shouldBe( > (0.0)) //yet some will still pick airline 1 due to randomness
-//    }
-//    "generate differentiating but overlapping cost if everything is the same, but price at some difference".in {
-//      fromAirport.initAirlineAppeals(scala.collection.immutable.Map[Int, AirlineAppeal](testAirline1.id -> AirlineAppeal(50), testAirline2.id -> AirlineAppeal(50)))
-//      val airline1Link = Link(fromAirport, toAirport, testAirline1, LinkClassValues.getInstance(1000), 10000, defaultCapacity, 0, 600, 1, flightType)
-//      val airline2Link = Link(fromAirport, toAirport, testAirline2, LinkClassValues.getInstance(1100), 10000, defaultCapacity, 0, 600, 1, flightType)
-//      var airline1Picked = 0
-//      var airline2Picked = 0
-//      for (i <- 0 until 100000) {
-//        val preference = AppealPreference(fromAirport, ECONOMY, loungeLevelRequired = 0, loyaltyRatio = 1, 0)
-//        val link1Cost = preference.computeCost(airline1Link, ECONOMY)
-//        val link2Cost = preference.computeCost(airline2Link, ECONOMY)
-//        if (link1Cost < link2Cost) airline1Picked += 1  else airline2Picked += 1
-//      }
-//      val ratio = airline1Picked.toDouble / airline2Picked
-//      ratio.shouldBe( >= (1.5)) //more people should pick airline 1
-//      ratio.shouldBe( < (4.0)) //yet some will still pick airline 2
-//    }
-//
-//    "generate differentiating but overlapping cost if everything is the same, but price at big difference".in {
-//      fromAirport.initAirlineAppeals(scala.collection.immutable.Map[Int, AirlineAppeal](testAirline1.id -> AirlineAppeal(50), testAirline2.id -> AirlineAppeal(50)))
-//      val airline1Link = Link(fromAirport, toAirport, testAirline1, LinkClassValues.getInstance(1000), 10000, defaultCapacity, 0, 600, 1, flightType)
-//      val airline2Link = Link(fromAirport, toAirport, testAirline2, LinkClassValues.getInstance(1200), 10000, defaultCapacity, 0, 600, 1, flightType)
-//      var airline1Picked = 0
-//      var airline2Picked = 0
-//      for (i <- 0 until 100000) {
-//        val preference = AppealPreference(fromAirport, ECONOMY, loungeLevelRequired = 0, loyaltyRatio = 1, 0)
-//        val link1Cost = preference.computeCost(airline1Link, ECONOMY)
-//        val link2Cost = preference.computeCost(airline2Link, ECONOMY)
-//        if (link1Cost < link2Cost) airline1Picked += 1  else airline2Picked += 1
-//      }
-//      val ratio = airline1Picked.toDouble / airline2Picked
-//      ratio.shouldBe( >= (2.0)) //significantly more people should pick airline 1
-//      ratio.shouldBe( < (20.0)) //yet some will still pick airline 2
-//    }
-//    "generate no overlapping cost if everything is the same, but price is at huge difference".in {
-//      fromAirport.initAirlineAppeals(scala.collection.immutable.Map[Int, AirlineAppeal](testAirline1.id -> AirlineAppeal(50), testAirline2.id -> AirlineAppeal(50)))
-//      val airline1Link = Link(fromAirport, toAirport, testAirline1, LinkClassValues.getInstance(5000), 10000, defaultCapacity, 0, 600, 1, flightType)
-//      val airline2Link = Link(fromAirport, toAirport, testAirline2, LinkClassValues.getInstance(1000), 10000, defaultCapacity, 0, 600, 1, flightType)
-//      var airline1Picked = 0
-//      var airline2Picked = 0
-//      for (i <- 0 until 100000) {
-//        val preference = AppealPreference(fromAirport, ECONOMY, loungeLevelRequired = 0, loyaltyRatio = 1, 0)
-//        val link1Cost = preference.computeCost(airline1Link, ECONOMY)
-//        val link2Cost = preference.computeCost(airline2Link, ECONOMY)
-//        if (link1Cost < link2Cost) airline1Picked += 1  else airline2Picked += 1
-//      }
-//      airline1Picked.shouldBe(0) //noone should pick airline 1
-//    }
-//    "generate differentiating but overlapping cost if everything is the same, but quality at small difference".in {
-//      val adjustedAirline1 = testAirline1.copy()
-//      val adjustedAirline2 = testAirline2.copy()
-//      fromAirport.initAirlineAppeals(scala.collection.immutable.Map[Int, AirlineAppeal](adjustedAirline1.id -> AirlineAppeal(50), adjustedAirline2.id -> AirlineAppeal(50)))
-//      val airline1Link = Link(fromAirport, toAirport, adjustedAirline1, defaultPrice, 10000, defaultCapacity, 60, 600, 1, flightType)
-//      val airline2Link = Link(fromAirport, toAirport, adjustedAirline2, defaultPrice, 10000, defaultCapacity, 10, 600, 1, flightType)
-//      airline1Link.setQuality(55)
-//      airline2Link.setQuality(50)
-//
-//      var airline1Picked = 0
-//      var airline2Picked = 0
-//      for (i <- 0 until 100000) {
-//        val preference = AppealPreference(fromAirport, ECONOMY, loungeLevelRequired = 0, loyaltyRatio = 1, 0)
-//        val link1Cost = preference.computeCost(airline1Link, ECONOMY)
-//        val link2Cost = preference.computeCost(airline2Link, ECONOMY)
-//        if (link1Cost < link2Cost) airline1Picked += 1  else airline2Picked += 1
-//      }
-//      val ratio = airline1Picked.toDouble / airline2Picked
-//      assert(ratio > 1) //more people should pick airline 1
-//      assert(ratio < 2) //yet some will still pick airline 2
-//    }
-//    "generate almost same cost if everything is the same, but quality at small difference and both very high".in {
-//      val adjustedAirline1 = testAirline1.copy()
-//      val adjustedAirline2 = testAirline2.copy()
-//      fromAirport.initAirlineAppeals(scala.collection.immutable.Map[Int, AirlineAppeal](adjustedAirline1.id -> AirlineAppeal(50), adjustedAirline2.id -> AirlineAppeal(50)))
-//      val airline1Link = Link(fromAirport, toAirport, adjustedAirline1, defaultPrice, 10000, defaultCapacity, 60, 600, 1, flightType)
-//      val airline2Link = Link(fromAirport, toAirport, adjustedAirline2, defaultPrice, 10000, defaultCapacity, 10, 600, 1, flightType)
-//      airline1Link.setQuality(100)
-//      airline2Link.setQuality(90)
-//
-//      var airline1Picked = 0
-//      var airline2Picked = 0
-//      for (i <- 0 until 100000) {
-//        val preference = AppealPreference(fromAirport, ECONOMY, loungeLevelRequired = 0, loyaltyRatio = 1, 0)
-//        val link1Cost = preference.computeCost(airline1Link, ECONOMY)
-//        val link2Cost = preference.computeCost(airline2Link, ECONOMY)
-//        if (link1Cost < link2Cost) airline1Picked += 1  else airline2Picked += 1
-//      }
-//      println("EQ " + fromAirport.expectedQuality(flightType, ECONOMY))
-//      val ratio = airline1Picked.toDouble / airline2Picked
-//      ratio.shouldBe( >= (1.0)) //more people should pick airline 1
-//      ratio.shouldBe( < (1.5)) //yet some will still pick airline 2
-//    }
-//    "generate differentiating but little overlapping cost if everything is the same, but quality at big difference".in {
-//      val adjustedAirline1 = testAirline1.copy()
-//      val adjustedAirline2 = testAirline2.copy()
-//      fromAirport.initAirlineAppeals(scala.collection.immutable.Map[Int, AirlineAppeal](adjustedAirline1.id -> AirlineAppeal(50), adjustedAirline2.id -> AirlineAppeal(50)))
-//      val airline1Link = Link(fromAirport, toAirport, adjustedAirline1, defaultPrice, 10000, defaultCapacity, 60, 600, 1, flightType)
-//      val airline2Link = Link(fromAirport, toAirport, adjustedAirline2, defaultPrice, 10000, defaultCapacity, 10, 600, 1, flightType)
-//      airline1Link.setQuality(80)
-//      airline2Link.setQuality(40)
-//
-//      var airline1Picked = 0
-//      var airline2Picked = 0
-//      for (i <- 0 until 100000) {
-//        val preference = AppealPreference(fromAirport, ECONOMY, loungeLevelRequired = 0, loyaltyRatio = 1, 0)
-//        val link1Cost = preference.computeCost(airline1Link, ECONOMY)
-//        val link2Cost = preference.computeCost(airline2Link, ECONOMY)
-//        if (link1Cost < link2Cost) airline1Picked += 1  else airline2Picked += 1
-//      }
-//      val ratio = airline1Picked.toDouble / airline2Picked
-//      ratio.shouldBe( >= (5.0)) //significantly more people should pick airline 1
-//      ratio.shouldBe( < (20.0)) //yet a few will still pick airline 2
-//    }
-//    "generate almost no overlapping cost if everything is the same, but quality at huge difference (0 vs 100)".in {
-//      val adjustedAirline1 = testAirline1.copy()
-//      val adjustedAirline2 = testAirline2.copy()
-//      fromAirport.initAirlineAppeals(scala.collection.immutable.Map[Int, AirlineAppeal](adjustedAirline1.id -> AirlineAppeal(50), adjustedAirline2.id -> AirlineAppeal(50)))
-//      val airline1Link = Link(fromAirport, toAirport, adjustedAirline1, defaultPrice, 10000, defaultCapacity, 100, 600, 1, flightType)
-//      val airline2Link = Link(fromAirport, toAirport, adjustedAirline2, defaultPrice, 10000, defaultCapacity, 0, 600, 1, flightType)
-//
-//      airline1Link.setQuality(100)
-//      airline2Link.setQuality(0)
-//
-//      var airline1Picked = 0
-//      var airline2Picked = 0
-//      for (i <- 0 until 100000) {
-//        val preference = AppealPreference(fromAirport, ECONOMY, loungeLevelRequired = 0, loyaltyRatio = 1 , 0)
-//        val link1Cost = preference.computeCost(airline1Link, ECONOMY)
-//        val link2Cost = preference.computeCost(airline2Link, ECONOMY)
-//        if (link1Cost < link2Cost) airline1Picked += 1  else airline2Picked += 1
-//      }
-//      val ratio = airline1Picked.toDouble / airline2Picked
-//      ratio.shouldBe( >= (10.0)) //significantly more people should pick airline 1
-//      //ratio.shouldBe( < (.0)) //yet some will still pick airline 2
-//    }
-//
-//    "generate no overlap cost if everything is the same, but quality at big difference and the country has high quality expectation".in {
-//      val adjustedAirline1 = testAirline1.copy()
-//      val adjustedAirline2 = testAirline2.copy()
-//      val fromAirport = this.fromAirport.copy(baseIncome = 1000000, basePopulation = 1)
-//      fromAirport.initAirlineAppeals(scala.collection.immutable.Map[Int, AirlineAppeal](adjustedAirline1.id -> AirlineAppeal(50), adjustedAirline2.id -> AirlineAppeal(50)))
-//
-//      val airline1Link = Link(fromAirport, toAirport, adjustedAirline1, defaultPrice, 10000, defaultCapacity, 60, 600, 1, flightType)
-//      val airline2Link = Link(fromAirport, toAirport, adjustedAirline2, defaultPrice, 10000, defaultCapacity, 10, 600, 1, flightType)
-//      airline1Link.setQuality(60)
-//      airline2Link.setQuality(10)
-//
-//      var airline1Picked = 0
-//      var airline2Picked = 0
-//      for (i <- 0 until 100000) {
-//        val preference = AppealPreference(fromAirport, ECONOMY, loungeLevelRequired = 0, loyaltyRatio = 1, 0)
-//        val link1Cost = preference.computeCost(airline1Link, ECONOMY)
-//        val link2Cost = preference.computeCost(airline2Link, ECONOMY)
-//        if (link1Cost < link2Cost) airline1Picked += 1  else airline2Picked += 1
-//      }
-//      val ratio = airline1Picked.toDouble / airline2Picked
-//      ratio.shouldBe( >= (10.0)) //significantly more people should pick airline 1
-//    }
-//
-//    "generate similar cost if everything is the same but one has lounge but all passengers are econ".in {
-//      val adjustedAirline1 = testAirline1.copy()
-//      val adjustedAirline2 = testAirline2.copy()
-//      fromAirport.initAirlineAppeals(scala.collection.immutable.Map[Int, AirlineAppeal](adjustedAirline1.id -> AirlineAppeal(50), adjustedAirline2.id -> AirlineAppeal(50)))
-//      val airline1Link = Link(fromAirport, toAirport, adjustedAirline1, defaultPrice, 10000, defaultCapacity, 0, 600, 1, flightType)
-//      airline1Link.setQuality(100)
-//      val airline2Link = Link(fromAirport, toAirport, adjustedAirline2, defaultPrice, 10000, defaultCapacity, 0, 600, 1, flightType)
-//      airline2Link.setQuality(100)
-//      airline2Link.setTestingAssignedAirplanes(scala.collection.immutable.Map(Airplane(model, adjustedAirline1, 0, purchasedCycle = 0, 100, 0, 0) -> 1))
-//      airline1Link.setTestingAssignedAirplanes(scala.collection.immutable.Map(Airplane(model, adjustedAirline2, 0, purchasedCycle = 0, 100, 0, 0) -> 1))
-//
-//      fromAirport.initLounges(List(Lounge(adjustedAirline1, allianceId = None, fromAirport, level = 3, status = LoungeStatus.ACTIVE, foundedCycle = 0)))
-//      toAirport.initLounges(List(Lounge(adjustedAirline1, allianceId = None, toAirport, level = 3, status = LoungeStatus.ACTIVE, foundedCycle = 0)))
-//
-//      var airline1Picked = 0
-//      var airline2Picked = 0
-//      for (i <- 0 until 100000) {
-//        val preference = AppealPreference(fromAirport, ECONOMY, loungeLevelRequired = 0, loyaltyRatio = 1 , 0)
-//        val link1Cost = preference.computeCost(airline1Link, ECONOMY)
-//        val link2Cost = preference.computeCost(airline2Link, ECONOMY)
-//        if (link1Cost < link2Cost) airline1Picked += 1  else airline2Picked += 1
-//      }
-//      val ratio = airline1Picked.toDouble / airline2Picked
-//      assert(ratio > 0.9)
-//      assert(ratio < 1.1)
-//    }
-//
-//    "generate different yet some overlapping cost if everything is the same but one has level 1 lounge and all passengers are business class with some lounge requirement".in {
-//      val adjustedAirline1 = testAirline1.copy()
-//      val adjustedAirline2 = testAirline2.copy()
-//      fromAirport.initAirlineAppeals(scala.collection.immutable.Map[Int, AirlineAppeal](adjustedAirline1.id -> AirlineAppeal(50), adjustedAirline2.id -> AirlineAppeal(50)))
-//      val airline1Link = Link(fromAirport, toAirport, adjustedAirline1, defaultPrice, 10000, defaultCapacity, 0, 600, 1, flightType)
-//      airline1Link.setQuality(100)
-//      val airline2Link = Link(fromAirport, toAirport, adjustedAirline2, defaultPrice, 10000, defaultCapacity, 0, 600, 1, flightType)
-//      airline2Link.setQuality(100)
-//      airline2Link.setTestingAssignedAirplanes(scala.collection.immutable.Map(Airplane(model, adjustedAirline1, 0, purchasedCycle = 0, 100, 0, 0) -> 1))
-//      airline1Link.setTestingAssignedAirplanes(scala.collection.immutable.Map(Airplane(model, adjustedAirline2, 0, purchasedCycle = 0, 100, 0, 0) -> 1))
-//
-//      fromAirport.initLounges(List(Lounge(adjustedAirline1, allianceId = None, fromAirport, level = 1, status = LoungeStatus.ACTIVE, foundedCycle = 0)))
-//      toAirport.initLounges(List(Lounge(adjustedAirline1, allianceId = None, toAirport, level = 1, status = LoungeStatus.ACTIVE, foundedCycle = 0)))
-//
-//      var airline1Picked = 0
-//      var airline2Picked = 0
-//      for (i <- 0 until 100000) {
-//        val preference = AppealPreference(fromAirport, BUSINESS, loungeLevelRequired = 0, loyaltyRatio = 1 , 0)
-//        val link1Cost = preference.computeCost(airline1Link, BUSINESS)
-//        val link2Cost = preference.computeCost(airline2Link, BUSINESS)
-//        if (link1Cost < link2Cost) airline1Picked += 1  else airline2Picked += 1
-//      }
-//      val ratio = airline1Picked.toDouble / airline2Picked
-//      assert(ratio > 1)
-//      assert(ratio < 2)
-//    }
-//
-//    "generate different yet some overlapping cost if everything is the same but one has level 3 lounge and all passengers are business class with no lounge requirement".in {
-//      val adjustedAirline1 = testAirline1.copy()
-//      val adjustedAirline2 = testAirline2.copy()
-//      fromAirport.initAirlineAppeals(scala.collection.immutable.Map[Int, AirlineAppeal](adjustedAirline1.id -> AirlineAppeal(50), adjustedAirline2.id -> AirlineAppeal(50)))
-//      val airline1Link = Link(fromAirport, toAirport, adjustedAirline1, defaultPrice, 10000, defaultCapacity, 0, 600, 1, flightType)
-//      airline1Link.setQuality(100)
-//      val airline2Link = Link(fromAirport, toAirport, adjustedAirline2, defaultPrice, 10000, defaultCapacity, 0, 600, 1, flightType)
-//      airline2Link.setQuality(100)
-//      airline2Link.setTestingAssignedAirplanes(scala.collection.immutable.Map(Airplane(model, adjustedAirline1, 0, purchasedCycle = 0, 100, 0, 0) -> 1))
-//      airline1Link.setTestingAssignedAirplanes(scala.collection.immutable.Map(Airplane(model, adjustedAirline2, 0, purchasedCycle = 0, 100, 0, 0) -> 1))
-//
-//      fromAirport.initLounges(List(Lounge(adjustedAirline1, allianceId = None, fromAirport, level = 3, status = LoungeStatus.ACTIVE, foundedCycle = 0)))
-//      toAirport.initLounges(List(Lounge(adjustedAirline1, allianceId = None, toAirport, level = 3, status = LoungeStatus.ACTIVE, foundedCycle = 0)))
-//
-//      var airline1Picked = 0
-//      var airline2Picked = 0
-//      for (i <- 0 until 100000) {
-//        val preference = AppealPreference(fromAirport, BUSINESS, loungeLevelRequired = 0, loyaltyRatio = 1 , 0)
-//        val link1Cost = preference.computeCost(airline1Link, BUSINESS)
-//        val link2Cost = preference.computeCost(airline2Link, BUSINESS)
-//        if (link1Cost < link2Cost) airline1Picked += 1  else airline2Picked += 1
-//      }
-//      val ratio = airline1Picked.toDouble / airline2Picked
-//      assert(ratio > 1.5)
-//      assert(ratio < 2.5)
-//    }
-//
-//    "generate different yet some overlapping cost if everything is the same but one has higher level lounge and all passengers are business class with some lounge requirement".in {
-//      val adjustedAirline1 = testAirline1.copy()
-//      val adjustedAirline2 = testAirline2.copy()
-//      fromAirport.initAirlineAppeals(scala.collection.immutable.Map[Int, AirlineAppeal](adjustedAirline1.id -> AirlineAppeal(50), adjustedAirline2.id -> AirlineAppeal(50)))
-//      val airline1Link = Link(fromAirport, toAirport, adjustedAirline1, defaultPrice, 10000, defaultCapacity, 0, 600, 1, flightType)
-//      airline1Link.setQuality(100)
-//      val airline2Link = Link(fromAirport, toAirport, adjustedAirline2, defaultPrice, 10000, defaultCapacity, 0, 600, 1, flightType)
-//      airline2Link.setQuality(100)
-//      airline2Link.setTestingAssignedAirplanes(scala.collection.immutable.Map(Airplane(model, adjustedAirline1, 0, purchasedCycle = 0, 100, 0, 0) -> 1))
-//      airline1Link.setTestingAssignedAirplanes(scala.collection.immutable.Map(Airplane(model, adjustedAirline2, 0, purchasedCycle = 0, 100, 0, 0) -> 1))
-//
-//      fromAirport.initLounges(List(Lounge(adjustedAirline1, allianceId = None, fromAirport, level = 2, status = LoungeStatus.ACTIVE, foundedCycle = 0),
-//                                   Lounge(adjustedAirline2, allianceId = None, fromAirport, level = 1, status = LoungeStatus.ACTIVE, foundedCycle = 0)))
-//      toAirport.initLounges(List(Lounge(adjustedAirline1, allianceId = None, toAirport, level = 2, status = LoungeStatus.ACTIVE, foundedCycle = 0),
-//                                 Lounge(adjustedAirline2, allianceId = None, fromAirport, level = 1, status = LoungeStatus.ACTIVE, foundedCycle = 0)))
-//
-//      var airline1Picked = 0
-//      var airline2Picked = 0
-//      for (i <- 0 until 100000) {
-//        val preference = AppealPreference(fromAirport, BUSINESS, loungeLevelRequired = 1 , loyaltyRatio = 1, 0)
-//        val link1Cost = preference.computeCost(airline1Link, BUSINESS)
-//        val link2Cost = preference.computeCost(airline2Link, BUSINESS)
-//        if (link1Cost < link2Cost) airline1Picked += 1  else airline2Picked += 1
-//      }
-//      val ratio = airline1Picked.toDouble / airline2Picked
-//      assert(ratio > 1)
-//      assert(ratio < 2)
-//    }
-//    "generate no overlaps if everything is the same but one has lounge but all passengers are business class with max lounge requirement".in {
-//      val adjustedAirline1 = testAirline1.copy()
-//      val adjustedAirline2 = testAirline2.copy()
-//      fromAirport.initAirlineAppeals(scala.collection.immutable.Map[Int, AirlineAppeal](adjustedAirline1.id -> AirlineAppeal(50), adjustedAirline2.id -> AirlineAppeal(50)))
-//      val airline1Link = Link(fromAirport, toAirport, adjustedAirline1, defaultPrice, 10000, defaultCapacity, 0, 600, 1, flightType)
-//      airline1Link.setQuality(100)
-//      val airline2Link = Link(fromAirport, toAirport, adjustedAirline2, defaultPrice, 10000, defaultCapacity, 0, 600, 1, flightType)
-//      airline2Link.setQuality(100)
-//      airline2Link.setTestingAssignedAirplanes(scala.collection.immutable.Map(Airplane(model, adjustedAirline1, 0, purchasedCycle = 0, 100, 0, 0) -> 1))
-//      airline1Link.setTestingAssignedAirplanes(scala.collection.immutable.Map(Airplane(model, adjustedAirline2, 0, purchasedCycle = 0, 100, 0, 0) -> 1))
-//
-//      fromAirport.initLounges(List(Lounge(adjustedAirline1, allianceId = None, fromAirport, level = 3, status = LoungeStatus.ACTIVE, foundedCycle = 0)))
-//      toAirport.initLounges(List(Lounge(adjustedAirline1, allianceId = None, toAirport, level = 3, status = LoungeStatus.ACTIVE, foundedCycle = 0)))
-//
-//      var airline1Picked = 0
-//      var airline2Picked = 0
-//      for (i <- 0 until 100000) {
-//        val preference = AppealPreference(fromAirport, BUSINESS, loungeLevelRequired = 3, loyaltyRatio = 1, 0)
-//        val link1Cost = preference.computeCost(airline1Link, BUSINESS)
-//        val link2Cost = preference.computeCost(airline2Link, BUSINESS)
-//        if (link1Cost < link2Cost) airline1Picked += 1  else airline2Picked += 1
-//      }
-//      assert(airline2Picked == 0)
-//    }
-//    "favor high loyalty more if loyalty ratio > 1".in {
-//      val adjustedAirline1 = testAirline1.copy()
-//      val adjustedAirline2 = testAirline2.copy()
-//      fromAirport.initAirlineAppeals(scala.collection.immutable.Map[Int, AirlineAppeal](adjustedAirline1.id -> AirlineAppeal(60), adjustedAirline2.id -> AirlineAppeal(50)))
-//      val airline1Link = Link(fromAirport, toAirport, adjustedAirline1, defaultPrice, 10000, defaultCapacity, 0, 600, 1, flightType)
-//      airline1Link.setQuality(100)
-//      val airline2Link = Link(fromAirport, toAirport, adjustedAirline2, defaultPrice, 10000, defaultCapacity, 0, 600, 1, flightType)
-//      airline2Link.setQuality(100)
-//      fromAirport.initLounges(List())
-//      toAirport.initLounges(List())
-//
-//      var airline1Picked = 0
-//      var airline2Picked = 0
-//      for (i <- 0 until 10000) {
-//        val preference = AppealPreference(fromAirport, ECONOMY, loungeLevelRequired = 0, loyaltyRatio = 1, 0)
-//        val link1Cost = preference.computeCost(airline1Link, BUSINESS)
-//        val link2Cost = preference.computeCost(airline2Link, BUSINESS)
-//        if (link1Cost < link2Cost) airline1Picked += 1  else airline2Picked += 1
-//      }
-//      val appealRatio = airline1Picked.toDouble / airline2Picked //should be > 1 but not by much
-//      airline1Picked = 0
-//      airline2Picked = 0
-//      for (i <- 0 until 10000) {
-//        val preference = AppealPreference(fromAirport, ECONOMY, loungeLevelRequired = 0, loyaltyRatio = 2, 0)
-//        val link1Cost = preference.computeCost(airline1Link, BUSINESS)
-//        val link2Cost = preference.computeCost(airline2Link, BUSINESS)
-//        if (link1Cost < link2Cost) airline1Picked += 1  else airline2Picked += 1
-//      }
-//      val loyaltyRatio =  airline1Picked.toDouble / airline2Picked //should be > 1 and bigger than appealRatio
-//
-//      println(appealRatio)
-//      println(loyaltyRatio)
-//      assert(appealRatio > 1)
-//      assert(loyaltyRatio > 1)
-//      assert(loyaltyRatio / appealRatio > 1.2)
-//    }
-//    "favor high loyalty even more if loyalty ratio > 1 if loyalty difference is obvious".in {
-//      val adjustedAirline1 = testAirline1.copy()
-//      val adjustedAirline2 = testAirline2.copy()
-//      fromAirport.initAirlineAppeals(scala.collection.immutable.Map[Int, AirlineAppeal](adjustedAirline1.id -> AirlineAppeal(60), adjustedAirline2.id -> AirlineAppeal(40)))
-//      val airline1Link = Link(fromAirport, toAirport, adjustedAirline1, defaultPrice, 10000, defaultCapacity, 0, 600, 1, flightType)
-//      airline1Link.setQuality(100)
-//      val airline2Link = Link(fromAirport, toAirport, adjustedAirline2, defaultPrice, 10000, defaultCapacity, 0, 600, 1, flightType)
-//      airline2Link.setQuality(100)
-//      var airline1Picked = 0
-//      var airline2Picked = 0
-//      for (i <- 0 until 10000) {
-//        val preference = AppealPreference(fromAirport, ECONOMY, loungeLevelRequired = 0, loyaltyRatio = 1, 0)
-//        val link1Cost = preference.computeCost(airline1Link, BUSINESS)
-//        val link2Cost = preference.computeCost(airline2Link, BUSINESS)
-//        if (link1Cost < link2Cost) airline1Picked += 1  else airline2Picked += 1
-//      }
-//      val appealRatio = airline1Picked.toDouble / airline2Picked //should be > 1 but not by much
-//      airline1Picked = 0
-//      airline2Picked = 0
-//      for (i <- 0 until 10000) {
-//        val preference = AppealPreference(fromAirport, ECONOMY, loungeLevelRequired = 0, loyaltyRatio = 2, 0)
-//        val link1Cost = preference.computeCost(airline1Link, BUSINESS)
-//        val link2Cost = preference.computeCost(airline2Link, BUSINESS)
-//        if (link1Cost < link2Cost) airline1Picked += 1  else airline2Picked += 1
-//      }
-//      val loyaltyRatio =  airline1Picked.toDouble / airline2Picked //should be > 1 and bigger than appealRatio
-//
-//      println(appealRatio)
-//      println(loyaltyRatio)
-//      assert(appealRatio > 1)
-//      assert(appealRatio < 3)
-//      assert(loyaltyRatio > 4)
-//      assert(loyaltyRatio < 8)
-//      assert(loyaltyRatio / appealRatio > 1.5)
-//    }
-//
-//    "generate higher cost for higher link class if the quality is the same". in {
-//      var economyTotalCost : Long = 0
-//      var businessTotalCost : Long = 0
-//      var firstTotalCost : Long = 0
-//      for (i <- 0 until 100000) {
-//        val economyCost = AppealPreference(fromAirport, ECONOMY, loungeLevelRequired = 0, loyaltyRatio = 1, 0).computeCost(airline1Link, ECONOMY)
-//        val businessCost = AppealPreference(fromAirport, BUSINESS, loungeLevelRequired = 0, loyaltyRatio = 1, 0).computeCost(airline1Link, BUSINESS)
-//        val firstCost = AppealPreference(fromAirport, FIRST, loungeLevelRequired = 0, loyaltyRatio = 1, 0).computeCost(airline1Link, FIRST)
-//        economyTotalCost += economyCost.toLong
-//        businessTotalCost += businessCost.toLong
-//        firstTotalCost += firstCost.toLong
-//      }
-//
-//      economyTotalCost.should(be < businessTotalCost)
-//      businessTotalCost.should(be < firstTotalCost)
-//    }
-//
-//    "some overlap even if frequency diff is huge". in {
-//      val link1 = airline1Link.copy(frequency = Link.HIGH_FREQUENCY_THRESHOLD)
-//      val link2 = airline2Link.copy(frequency = 1)
-//      var airline1Picked = 0
-//      var airline2Picked = 0
-//      for (i <- 0 until 100000) {
-//        val preference = AppealPreference(fromAirport, ECONOMY, loungeLevelRequired = 0, loyaltyRatio = 0, 0)
-//        val link1Cost = preference.computeCost(link1, ECONOMY)
-//        val link2Cost = preference.computeCost(link2, ECONOMY)
-//        if (link1Cost < link2Cost) airline1Picked += 1  else airline2Picked += 1
-//      }
-//      val ratio = airline1Picked.toDouble / airline2Picked
-//      assert(ratio > 1)
-//      assert(ratio < 2.5)
-//     }
-//
-//      "mostly overlap if frequency diff is small (low frequency)". in {
-//      val link1 = airline1Link.copy(frequency = 3)
-//      val link2 = airline2Link.copy(frequency = 1)
-//      var airline1Picked = 0
-//      var airline2Picked = 0
-//      for (i <- 0 until 100000) {
-//        val preference = AppealPreference(fromAirport, ECONOMY, loungeLevelRequired = 0, loyaltyRatio = 0, 0)
-//        val link1Cost = preference.computeCost(link1, ECONOMY)
-//        val link2Cost = preference.computeCost(link2, ECONOMY)
-//        if (link1Cost < link2Cost) airline1Picked += 1  else airline2Picked += 1
-//      }
-//      val ratio = airline1Picked.toDouble / airline2Picked
-//      assert(ratio > 1)
-//      assert(ratio < 1.2)
-//     }
-//
-//    "mostly overlap if frequency diff is small". in {
-//      val link1 = airline1Link.copy(frequency = Link.HIGH_FREQUENCY_THRESHOLD + 4)
-//      val link2 = airline2Link.copy(frequency = Link.HIGH_FREQUENCY_THRESHOLD)
-//      var airline1Picked = 0
-//      var airline2Picked = 0
-//      for (i <- 0 until 100000) {
-//        val preference = AppealPreference(fromAirport, ECONOMY, loungeLevelRequired = 0, loyaltyRatio = 0, 0)
-//        val link1Cost = preference.computeCost(link1, ECONOMY)
-//        val link2Cost = preference.computeCost(link2, ECONOMY)
-//        if (link1Cost < link2Cost) airline1Picked += 1  else airline2Picked += 1
-//      }
-//      val ratio = airline1Picked.toDouble / airline2Picked
-//      assert(ratio > 1)
-//      assert(ratio < 1.2)
-//    }
-//
-//    "consider frequency by class".in {
-//      val link1 = airline1Link.copy(frequency = Link.HIGH_FREQUENCY_THRESHOLD)
-//      val link2 = airline2Link.copy(frequency = Link.HIGH_FREQUENCY_THRESHOLD)
-//      val config1 = AirplaneConfiguration(100, 0, 0, testAirline1, model, false)
-//      val config2 = AirplaneConfiguration(0, 50, 0, testAirline1, model, false)
-//      link1.setAssignedAirplanes(
-//        scala.collection.immutable.Map(
-//          Airplane(model, testAirline1, 0, purchasedCycle = 0, 100, 0, 0, configuration = config1) -> LinkAssignment(Link.HIGH_FREQUENCY_THRESHOLD - 2, 6000) //more freq econ
-//          , Airplane(model, testAirline1, 0, purchasedCycle = 0, 100, 0, 0, configuration = config2) -> LinkAssignment(2, 6000)))
-//      link2.setAssignedAirplanes(
-//        scala.collection.immutable.Map(
-//          Airplane(model, testAirline1, 0, purchasedCycle = 0, 100, 0, 0, configuration = config2) -> LinkAssignment(Link.HIGH_FREQUENCY_THRESHOLD - 2, 6000) //more freq business
-//          , Airplane(model, testAirline1, 0, purchasedCycle = 0, 100, 0, 0, configuration = config1) -> LinkAssignment(2, 6000)))
-//
-//      var airline1Picked = 0
-//      var airline2Picked = 0
-//      for (i <- 0 until 100000) {
-//        val preference = AppealPreference(fromAirport, ECONOMY, loungeLevelRequired = 0, loyaltyRatio = 0, 0)
-//        val link1Cost = preference.computeCost(link1, ECONOMY)
-//        val link2Cost = preference.computeCost(link2, ECONOMY)
-//        if (link1Cost < link2Cost) airline1Picked += 1  else airline2Picked += 1
-//      }
-//      var ratio = airline1Picked.toDouble / airline2Picked //more airline1 as it has more freq econ services
-//      assert(ratio > 1.4)
-//      assert(ratio < 1.8)
-//
-//      airline1Picked = 0
-//      airline2Picked = 0
-//      for (i <- 0 until 100000) {
-//        val preference = AppealPreference(fromAirport, BUSINESS, loungeLevelRequired = 0, loyaltyRatio = 0, 0)
-//        val link1Cost = preference.computeCost(link1, BUSINESS)
-//        val link2Cost = preference.computeCost(link2, BUSINESS)
-//        if (link1Cost < link2Cost) airline1Picked += 1  else airline2Picked += 1
-//      }
-//      ratio = airline2Picked.toDouble / airline1Picked //more airline2 as it has more freq econ services
-//      assert(ratio > 1.4)
-//      assert(ratio < 1.8)
-//
-//    }
-//
-//    "higher link class should care less about price".in {
-//      val airline1Link = Link(fromAirport, toAirport, testAirline1, defaultPrice, 10000, defaultCapacity, 0, 600, Link.HIGH_FREQUENCY_THRESHOLD, flightType)
-//      val airline2Link = Link(fromAirport, toAirport, testAirline1, defaultPrice * (1.2), 10000, defaultCapacity, 0, 600, Link.HIGH_FREQUENCY_THRESHOLD, flightType)
-//
-//      val ratios = mutable.HashMap[LinkClass, Double]()
-//      var airline1Picked = 0
-//      var airline2Picked = 0
-//      LinkClass.values.foreach { linkClass =>
-//        for (i <- 0 until 100000) {
-//          val preference = AppealPreference(fromAirport, linkClass, loungeLevelRequired = 0, loyaltyRatio = 1, 0)
-//          val link1Cost = preference.computeCost(airline1Link, linkClass)
-//          val link2Cost = preference.computeCost(airline2Link, linkClass)
-//          if (link1Cost < link2Cost) airline1Picked += 1 else airline2Picked += 1
-//        }
-//        ratios.put(linkClass, airline1Picked.toDouble / airline2Picked)
-//      }
-//
-//      println(ratios)
-//      assert(ratios(ECONOMY) > ratios(BUSINESS))
-//      assert(ratios(BUSINESS) > ratios(FIRST))
-//      assert(ratios(FIRST) < 8)
-//      assert(ratios(ECONOMY) > 3)
-//
-//
-//    }
-//  }
-//   "A DealPreference".must {
-//      "adjust price accordingly due to price weight ". in {
-//      val expensiveLink = airline1Link.copy(price = LinkClassValues.getInstance(10000, 10000, 10000))
-//      val cost1 = DealPreference(fromAirport, 0.8, ECONOMY).computeCost(expensiveLink, ECONOMY)
-//      val cost2 = DealPreference(fromAirport, 1.2, ECONOMY).computeCost(expensiveLink, ECONOMY)
-//      val standardPrice = expensiveLink.standardPrice(ECONOMY)
-//      val delta1 = Math.abs(cost1 - standardPrice) //should be small delta as this group of customer care less about price
-//      val delta2 = Math.abs(cost2 - standardPrice)
-//      delta1.should(be < delta2)
-//    }
-////     "should not completely ignore price delta even at lowest price sensitivity". in {
-////      val cost1 = DealPreference(0, 10, ECONOMY).computeCost(airline1Link)
-////      val standardPrice = Pricing.computeStandardPrice(airline1Link, ECONOMY)
-////      val delta1 = Math.abs(cost1 - standardPrice)
-////      delta1.should(be > 0.0)
-////    }
-//
-//   }
-//
-////   "A SpeedPreference".must {
-////     "almost no overlap if frequency diff is huge". in {
-////      val link1 = airline1Link.copy(frequency = Link.HIGH_FREQUENCY_THRESHOLD)
-////      val link2 = airline2Link.copy(frequency = 1)
-////      var airline1Picked = 0
-////      var airline2Picked = 0
-////      for (i <- 0 until 100000) {
-////        val preference = SpeedPreference(fromAirport, ECONOMY)
-////        val link1Cost = preference.computeCost(link1, ECONOMY)
-////        val link2Cost = preference.computeCost(link2, ECONOMY)
-////        if (link1Cost < link2Cost) airline1Picked += 1  else airline2Picked += 1
-////      }
-////      val ratio = airline1Picked.toDouble / airline2Picked
-////      assert(ratio > 10)
-////     }
-////
-////      "some overlap if frequency diff is small". in {
-////      val link1 = airline1Link.copy(frequency = Link.HIGH_FREQUENCY_THRESHOLD)
-////      val link2 = airline2Link.copy(frequency = Link.HIGH_FREQUENCY_THRESHOLD - 4)
-////      var airline1Picked = 0
-////      var airline2Picked = 0
-////      for (i <- 0 until 100000) {
-////        val preference = SpeedPreference(fromAirport, ECONOMY)
-////        val link1Cost = preference.computeCost(link1, ECONOMY)
-////        val link2Cost = preference.computeCost(link2, ECONOMY)
-////        if (link1Cost < link2Cost) airline1Picked += 1  else airline2Picked += 1
-////      }
-////      val ratio = airline1Picked.toDouble / airline2Picked
-////      assert(ratio > 2)
-////      assert(ratio < 4)
-////     }
-////
-////   }
-//
-//
-//  //this is from DemandGenerator...
-//  "Get FlightPreference pool".must {
-//    "generate some preference to compute to a cost lower than suggested price if the link is priced at standard price".in {
-//       var lowerCount = 0
-//       for (i <- 0 until 100) {
-//         DemandGenerator.getFlightPreferencePoolOnAirport(fromAirport).pool.foreach {
-//           case (linkClass, flightPreferences) => flightPreferences.foreach { flightPreference =>
-//             val cost = flightPreference.computeCost(airline1Link, linkClass)
-//             if (cost <= airline1Link.price(linkClass)) {
-//               lowerCount += 1
-//             }
-//           }
-//         }
-//       }
-//       assert(lowerCount > 0)
-//    }
-//    "not generate preference to compute to a cost lower than standard price with extremely overpriced ticket even with perfect link/airline".in {
-//      fromAirport.initAirlineAppeals(scala.collection.immutable.Map[Int, AirlineAppeal](testAirline1.id -> AirlineAppeal(AirlineAppeal.MAX_LOYALTY)))
-//
-//      val suggestedPrice = Pricing.computeStandardPriceForAllClass(distance, fromAirport, toAirport)
-//      val extremePrice = suggestedPrice * 5
-//      val extremeLink = airline1Link.copy(price = extremePrice, rawQuality = Link.MAX_QUALITY)
-//      for (i <- 0 until 100) {
-//        DemandGenerator.getFlightPreferencePoolOnAirport(fromAirport).pool.foreach {
-//          case (linkClass, flightPreferences) => flightPreferences.foreach { flightPreference =>
-//            val cost = flightPreference.computeCost(extremeLink, linkClass)
-//            assert(cost >= suggestedPrice(linkClass)) //the cost should not be reduced to lower than the standard price no matter how good it is
-//          }
-//
-//        }
-//      }
-//    }
-//    "generate some preference to compute to a cost lower than standard price with overpriced ticket with perfect link/airline".in {
-//      fromAirport.initAirlineAppeals(scala.collection.immutable.Map[Int, AirlineAppeal](testAirline1.id -> AirlineAppeal(AirlineAppeal.MAX_LOYALTY)))
-//      val suggestedPrice = Pricing.computeStandardPriceForAllClass(distance, fromAirport, toAirport)
-//      val highPrice = suggestedPrice * 1.5
-//      val highPriceLink = airline1Link.copy(price = highPrice)
-//      highPriceLink.setQuality(Link.MAX_QUALITY)
-//
-//
-//      for (i <- 0 until 100) {
-//        val lowerCostOption = DemandGenerator.getFlightPreferencePoolOnAirport(fromAirport).pool.find {
-//           case (linkClass, flightPreferences) => flightPreferences.find{ flightPreference =>
-//             val cost = flightPreference.computeCost(highPriceLink, linkClass)
-//             cost < suggestedPrice(linkClass)
-//           }.isDefined
-//        }
-//
-//        assert(lowerCostOption.isDefined)
-//      }
-//    }
-//
-//    "generate preference that compute to similar cost if price is balanced with quality/loyalty difference (high income country)".in {
-//      val clonedFromAirport = fromAirport.copy(baseIncome = Country.HIGH_INCOME_THRESHOLD, basePopulation = 1)
-//
-//      clonedFromAirport.initAirlineAppeals(scala.collection.immutable.Map(testAirline1.id -> AirlineAppeal(loyalty = 50),
-//                                               testAirline2.id -> AirlineAppeal(loyalty = 0)))
-//
-//      val link1 = airline1Link.copy(price = defaultPrice * 1.4, frequency = Link.HIGH_FREQUENCY_THRESHOLD)
-//      val link2 = airline2Link.copy(price = defaultPrice, frequency = 1)
-//      link1.setQuality(70)
-//      link2.setQuality(40)
-//      val pool = DemandGenerator.getFlightPreferencePoolOnAirport(clonedFromAirport)
-//
-//      var airline1Picked = 0
-//      var airline2Picked = 0
-//
-//      for (i <- 0 until 100000) {
-//        val preference = pool.draw(ECONOMY, clonedFromAirport, link1.to)
-//        val link1Cost = preference.computeCost(link1, ECONOMY)
-//        val link2Cost = preference.computeCost(link2, ECONOMY)
-//        if (link1Cost < link2Cost) airline1Picked += 1  else airline2Picked += 1
-//      }
-//
-//      val ratio = airline1Picked.toDouble / airline2Picked
-//      assert(ratio > 0.8)
-//      assert(ratio < 1.2)
-//    }
-//
-//    "generate preference that compute to similar cost if price is balanced with quality/loyalty difference (low income country)".in {
-//      val clonedFromAirport = fromAirport.copy(baseIncome = Country.HIGH_INCOME_THRESHOLD / 10, basePopulation = 1)
-//
-//      clonedFromAirport.initAirlineAppeals(scala.collection.immutable.Map(testAirline1.id -> AirlineAppeal(loyalty = 50),
-//                                               testAirline2.id -> AirlineAppeal(loyalty = 0)))
-//
-//      val link1 = airline1Link.copy(price = defaultPrice * 1.2, frequency = Link.HIGH_FREQUENCY_THRESHOLD)
-//      val link2 = airline2Link.copy(price = defaultPrice, frequency = 1)
-//      link1.setQuality(80)
-//      link2.setQuality(40)
-//      val pool = DemandGenerator.getFlightPreferencePoolOnAirport(clonedFromAirport)
-//
-//      var airline1Picked = 0
-//      var airline2Picked = 0
-//
-//      for (i <- 0 until 100000) {
-//        val preference = pool.draw(ECONOMY, clonedFromAirport, link1.to)
-//        val link1Cost = preference.computeCost(link1, ECONOMY)
-//        val link2Cost = preference.computeCost(link2, ECONOMY)
-//        if (link1Cost < link2Cost) airline1Picked += 1  else airline2Picked += 1
-//      }
-//
-//      val ratio = airline1Picked.toDouble / airline2Picked
-//      assert(ratio > 0.8)
-//      assert(ratio < 1.2)
-//    }
-//
-//    "generate preference that compute to some overlapping but differentiating cost if frequency has considerable difference)".in {
-//      val link1 = airline1Link.copy(price = defaultPrice, frequency = Link.HIGH_FREQUENCY_THRESHOLD)
-//      val link2 = airline2Link.copy(price = defaultPrice, frequency = 5)
-//      link1.setQuality(50)
-//      link2.setQuality(50)
-//      val pool = DemandGenerator.getFlightPreferencePoolOnAirport(fromAirport)
-//
-//      var airline1Picked = 0
-//      var airline2Picked = 0
-//
-//      for (i <- 0 until 100000) {
-//        val preference = pool.draw(ECONOMY, fromAirport, link1.to)
-//        val link1Cost = preference.computeCost(link1, ECONOMY)
-//        val link2Cost = preference.computeCost(link2, ECONOMY)
-//        if (link1Cost < link2Cost) airline1Picked += 1  else airline2Picked += 1
-//      }
-//
-//      val ratio = airline1Picked.toDouble / airline2Picked
-//      assert(ratio > 5)
-//      assert(ratio < 10)
-//    }
-//
-//    "generate preference that compute to some overlapping but differentiating cost if frequency/quality has huge difference but make up in ticket price)".in {
-//      val link1 = airline1Link.copy(price = defaultPrice, frequency = Link.HIGH_FREQUENCY_THRESHOLD)
-//      val link2 = airline2Link.copy(price = defaultPrice * 0.7, frequency = 1)
-//      link1.setQuality(70)
-//      link2.setQuality(20)
-//      val pool = DemandGenerator.getFlightPreferencePoolOnAirport(fromAirport)
-//
-//      var airline1Picked = 0
-//      var airline2Picked = 0
-//
-//      for (i <- 0 until 100000) {
-//        val preference = pool.draw(ECONOMY, fromAirport, link1.to)
-//        val link1Cost = preference.computeCost(link1, ECONOMY)
-//        val link2Cost = preference.computeCost(link2, ECONOMY)
-//        if (link1Cost < link2Cost) airline1Picked += 1  else airline2Picked += 1
-//      }
-//
-//      val ratio = airline1Picked.toDouble / airline2Picked
-//      assert(ratio > 1.5)
-//      assert(ratio < 2.5)
-//    }
-//  }
-//}

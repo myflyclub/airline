@@ -3,7 +3,7 @@ package com.patson.patch
 import java.sql.Connection
 
 import com.mchange.v2.c3p0.ComboPooledDataSource
-import com.patson.CountrySimulation
+
 import com.patson.data.Constants.{DATABASE_CONNECTION, DATABASE_PASSWORD, DATABASE_USER, DB_DRIVER}
 import com.patson.data.{AirlineSource, AirplaneSource, LinkSource, Meta}
 import com.patson.init.actorSystem
@@ -264,9 +264,7 @@ object Version1_1Patcher extends App {
   }
 
   def patchCountryAirlineTitles() = {
-    println("Simulating country airline titles")
-    CountrySimulation.simulate(0)
-    println("Finished country airline simulation")
+    // Country airline titles are now computed on-the-fly; no DB patching needed
   }
   
 

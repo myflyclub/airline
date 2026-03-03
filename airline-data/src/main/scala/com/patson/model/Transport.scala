@@ -38,18 +38,36 @@ abstract class Transport extends IdObject{
     soldSeats.total
   }
 
+  def getLoadFactor: Double = {
+    if (getTotalCapacity <= 0) {
+      return 0.0
+    }
+    getTotalSoldSeats.toDouble / getTotalCapacity.toDouble
+  }
 
-  def addSoldSeats(soldSeats : LinkClassValues) = {
+  /**
+   *
+   * @return 0-1 ratio of "delay" per frequency
+   */
+  def getDelayRatio: Double = {
+    if (frequency == 0){
+      return 0.0
+    } else {
+      Math.max(0, 1 - (minorDelayCount * Link.DELAY_MINOR_ONTIME + majorDelayCount * Link.DELAY_MAJOR_ONTIME + cancellationCount * Link.CANCELLATION_ONTIME) / frequency)
+    }
+  }
+
+  def addSoldSeats(soldSeats : LinkClassValues): Unit = {
     this.soldSeats = this.soldSeats + soldSeats;
     this.availableSeats = this.availableSeats - soldSeats;
   }
 
-  def addSoldSeatsByClass(linkClass : LinkClass, soldSeats : Int) = {
+  def addSoldSeatsByClass(linkClass : LinkClass, soldSeats : Int): Unit = {
     val soldSeatsClassValues = LinkClassValues.getInstanceByMap(Map(linkClass -> soldSeats))
     addSoldSeats(soldSeatsClassValues)
   }
 
-  def addCancelledSeats(cancelledSeats : LinkClassValues) = {
+  def addCancelledSeats(cancelledSeats : LinkClassValues): Unit = {
     this.cancelledSeats = this.cancelledSeats + cancelledSeats;
     this.availableSeats = this.availableSeats - cancelledSeats;
   }
@@ -57,7 +75,7 @@ abstract class Transport extends IdObject{
   def standardPrice(linkClass : LinkClass, paxType: PassengerType.Value) : Int = {
     var price = standardPrice.get((linkClass, paxType))
     if (price == null.asInstanceOf[Int]) {
-      price = Pricing.computeStandardPrice(distance, Computation.getFlightCategory(from, to), linkClass, paxType, from.baseIncome)
+      price = Pricing.computeStandardPrice(distance, Computation.getFlightCategory(from, to), linkClass, paxType, from.income)
       standardPrice.put((linkClass, paxType), price)
     }
     price
@@ -96,7 +114,6 @@ abstract class Transport extends IdObject{
         }
       }
     }
-
     return None
   }
 }

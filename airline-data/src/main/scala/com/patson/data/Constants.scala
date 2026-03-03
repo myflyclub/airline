@@ -4,6 +4,7 @@ import com.typesafe.config.ConfigFactory
 
 object Constants {
   val CYCLE_TABLE = "cycle"
+  val CYCLE_PHASE_TABLE = "cycle_phase_length"
   val CITY_TABLE = "city"
   val AIRPORT_TABLE = "airport"
   val AIRPORT_INDEX_1 = "airport_index_1"
@@ -12,7 +13,6 @@ object Constants {
   val AIRPORT_CITY_SHARE_TABLE = "airport_city"
   val AIRPORT_FEATURE_TABLE = "airport_feature"
   val AIRPORT_FEATURE_INDEX_1 = "airport_feature_index_1"
-  val AIRPORT_IMAGE_TABLE = "airport_image"
   val AIRPORT_AIRLINE_APPEAL_BONUS_TABLE = "airport_airline_appeal_bonus"
   val AIRPORT_AIRLINE_APPEAL_BONUS_INDEX_1 =  "airport_airline_appeal_bonus_index_1"
   val AIRPORT_RUNWAY_TABLE = "airport_runway"
@@ -44,14 +44,12 @@ object Constants {
   val LINK_STATISTICS_INDEX_2 = "link_statistics_index_2"
   val LINK_STATISTICS_INDEX_3 = "link_statistics_index_3"
   val LINK_STATISTICS_INDEX_4 = "link_statistics_index_4"
-  val WATCHED_LINK_TABLE = "watched_link"
   val AIRLINE_TABLE = "airline"
   val AIRLINE_INFO_TABLE = "airline_info"
   val AIRLINE_BASE_TABLE = "airline_base"
   val AIRLINE_BASE_INDEX_1 = "airline_base_index_1"
   val AIRLINE_BASE_INDEX_2 = "airline_base_index_2"
   val AIRLINE_BASE_INDEX_3 = "airline_base_index_3"
-  val AIRPORT_LOYALTY_TABLE = "loyalty"
   val AIRPORT_ASSET_TABLE = "airport_asset"
   val AIRPORT_ASSET_BLUEPRINT_TABLE = "airport_asset_blueprint"
   val AIRPORT_ASSET_PROPERTY_TABLE = "airport_asset_property"
@@ -59,14 +57,8 @@ object Constants {
   val AIRPORT_ASSET_PROPERTY_HISTORY_TABLE = "airport_asset_property_history"
   val AIRPORT_ASSET_BOOST_HISTORY_TABLE = "airport_asset_boost_history"
   val DESTINATIONS_TABLE = "destinations"
+  val PRESTIGE_TABLE = "prestige"
 
-  val AIRLINE_APPEAL_TABLE = "airline_appeal"
-  val AIRLINE_APPEAL_INDEX_1 = "airline_appeal_index_1"
-  val AIRLINE_APPEAL_INDEX_2 = "airline_appeal_index_2"
-  val AIRLINE_TRANSACTION_TABLE = "airline_transaction"
-  val AIRLINE_TRANSACTION_INDEX_1 = "airline_transaction_index_1"
-  val AIRLINE_TRANSACTION_INDEX_2 = "airline_transaction_index_2"
-  val AIRLINE_CASH_FLOW_ITEM_TABLE = "airline_cash_flow_item"
   val AIRLINE_BASE_SPECIALIZATION_TABLE = "airline_base_specialization"
   val AIRLINE_BASE_SPECIALIZATION_LAST_UPDATE_TABLE = "airline_base_specialization_last_update"
   val AIRLINE_REPUTATION_BREAKDOWN = "airline_reputation_breakdown"
@@ -74,13 +66,9 @@ object Constants {
   val AIRLINE_MODIFIER_INDEX_PREFIX = "airline_modifier_index_"
   val AIRLINE_MODIFIER_PROPERTY_TABLE = "airline_modifier_property"
 
-  val AIRLINE_STATISTICS_TABLE = "airline_statistics"
-  val AIRLINE_OPERATIONS_STRATEGY = "airline_operations_strategy"
   val INCOME_TABLE = "income"
   val CASH_FLOW_TABLE = "cash_flow"
-  val AIRLINE_LOGO_TABLE = "airline_logo"
-  val AIRLINE_LIVERY_TABLE = "airline_livery"
-  val AIRLINE_SLOGAN_TABLE = "airline_slogan"
+  val AIRLINE_META_TABLE = "airline_meta"
   val AIRLINE_NAME_HISTORY_TABLE = "airline_name_history"
   val ALLIANCE_TABLE = "alliance"
   val ALLIANCE_MEMBER_TABLE = "alliance_member"
@@ -92,12 +80,11 @@ object Constants {
   val AIRPLANE_CONFIGURATION_TEMPLATE_INDEX_1 ="airplane_configuration_template_index_1"
   val AIRPLANE_CONFIGURATION_TEMPLATE_INDEX_2 = "airplane_configuration_template_index_2"
   val LINKS_INCOME_TABLE = "links_income"
-  val TRANSACTIONS_INCOME_TABLE = "transactions_income"
   val OTHERS_INCOME_TABLE = "others_income"
+  val AIRLINE_LEDGER_TABLE = "airline_ledger"
+  val AIRLINE_LEDGER_INDEX_1 = "airline_ledger_index_1"
+  val AIRLINE_LEDGER_INDEX_2 = "airline_ledger_index_2"
   val AIRPLANE_MODEL_TABLE = "airplane_model"
-  val AIRPLANE_MODEL_FAVORITE_TABLE = "airplane_model_favorite"
-  val AIRPLANE_MODEL_AIRLINE_DISCOUNT_TABLE = "airplane_model_airline_discount"
-  val AIRPLANE_MODEL_DISCOUNT_TABLE = "airplane_model_discount"
   val AIRPLANE_TABLE = "airplane"
   val AIRPLANE_INDEX_1 = "airplane_index_1"
   val AIRPLANE_INDEX_2 = "airplane_index_2"
@@ -109,17 +96,14 @@ object Constants {
   val BANNED_IP_TABLE = "banned_ip"
   val USER_UUID_TABLE = "user_uuid"
   val USER_AIRLINE_TABLE = "user_airline"
-  val VIP_ROUTE_TABLE = "vip_route"
-  val VIP_ROUTE_ENTRY_TABLE = "vip_route_entry"
-  val PASSENGER_HISTORY_TABLE = "passenger_history"
-  val PASSENGER_HISTORY_TABLE_TEMP = "passenger_history_temp"
-  val PASSENGER_HISTORY_INDEX_1 = "passenger_history_index_1"
-  val PASSENGER_HISTORY_INDEX_2 = "passenger_history_index_2"
-  val PASSENGER_HISTORY_INDEX_3 = "passenger_history_index_3"
+  val PASSENGER_LINK_HISTORY_TABLE = "passenger_link_history"
+  val PASSENGER_LINK_HISTORY_TABLE_TEMP = "passenger_link_history_temp"
+  val PASSENGER_ROUTE_HISTORY_TABLE = "passenger_route_history"
+  val PASSENGER_ROUTE_HISTORY_TABLE_TEMP = "passenger_route_history_temp"
+  val PASSENGER_MISSED_DEMAND_TABLE = "passenger_missed_demand"
   val LOAN_TABLE = "loan"
   val LOUNGE_TABLE = "lounge"
   val LOUNGE_CONSUMPTION_TABLE = "lounge_consumption"
-  val SHUTTLE_SERVICE_TABLE = "shuttle_service"
   val OIL_CONTRACT_TABLE = "oil_contract"
   val OIL_PRICE_TABLE = "oil_price"
   val OIL_CONSUMPTION_HISTORY_TABLE = "oil_consumption_history"
@@ -146,7 +130,6 @@ object Constants {
   val GOOGLE_RESOURCE_TABLE ="google_resource"
   val BUSY_DELEGATE_TABLE = "busy_delegate"
   val COUNTRY_DELEGATE_TASK_TABLE = "country_delegate_task"
-  val STRATEGY_DELEGATE_TASK_TABLE = "strategy_delegate_task"
   val LINK_NEGOTIATION_TASK_TABLE = "link_negotiation_delegate_task"
   val LINK_NEGOTIATION_COOL_DOWN_TABLE = "link_negotiation_cool_down"
   val LOYALIST_TABLE = "loyalist"
@@ -155,9 +138,8 @@ object Constants {
   val COMPLETED_TUTORIAL_TABLE = "completed_tutorial"
   val COMPLETED_NOTICE_TABLE = "completed_notice"
   val TRACKING_NOTICE_TABLE = "tracking_notice"
-  val AIRPORT_ANIMATION_TABLE = "airport_animation"
   val ADMIN_LOG_TABLE = "admin_log"
-  val USER_WALLPAPER_TABLE = "user_wallpaper"
+  val RANKING_LEADERBOARD_TABLE = "ranking_leaderboard"
 
   val NOTES_AIRLINE_TABLE = "notes_airline"
   val NOTES_AIRPORT_TABLE = "notes_airport"
@@ -166,6 +148,7 @@ object Constants {
   val CAMPAIGN_TABLE = "campaign"
   val CAMPAIGN_AREA_TABLE = "campaign_area"
   val CAMPAIGN_DELEGATE_TASK_TABLE = "campaign_delegate_task"
+  val AIRCRAFT_MODEL_DELEGATE_TASK_TABLE = "airplane_model_delegate_task"
 
   val ALLIANCE_MISSION_TABLE = "alliance_mission"
   val ALLIANCE_MISSION_PROPERTY_TABLE = "alliance_mission_property"
@@ -173,7 +156,6 @@ object Constants {
   val ALLIANCE_MISSION_REWARD_TABLE = "alliance_mission_reward"
   val ALLIANCE_MISSION_REWARD_PROPERTY_TABLE = "alliance_mission_reward_property"
 
-  val ALLIANCE_STATS_TABLE = "alliance_stats"
   val ALLIANCE_MISSION_STATS_TABLE = "alliance_mission_stats"
 
   val LINK_NEGOTIATION_DISCOUNT_TABLE = "link_negotiation_discount"
@@ -181,6 +163,10 @@ object Constants {
   val ALLIANCE_LABEL_COLOR_BY_ALLIANCE_TABLE = "alliance_label_color_by_alliance"
   val ALLIANCE_LABEL_COLOR_BY_AIRLINE_TABLE = "alliance_label_color_by_airline"
 
+  val AIRLINE_STATISTICS_TABLE = "airline_statistics"
+  val ALLIANCE_STATS_TABLE = "alliance_stats"
+  val AIRPORT_STATISTICS_TABLE = "airport_statistics"
+  val WORLD_STATISTICS_TABLE = "world_statistics"
 
   //Christmas Event
   val SANTA_CLAUS_INFO_TABLE = "santa_claus_info"
@@ -194,10 +180,8 @@ object Constants {
   println("!!!!!!!!!!!!!!!DB HOST IS " + DB_HOST)
   val SCHEMA_NAME = if (configFactory.hasPath("mysqldb.schema")) configFactory.getString("mysqldb.schema") else sys.env.get("DB_NAME").getOrElse("airline")
 
-  //val DATABASE_CONNECTION = "jdbc:mysql://" + DB_HOST + "/airline?rewriteBatchedStatements=true&useSSL=false&autoReconnect=true&useUnicode=true&characterEncoding=utf-8"
-  val DATABASE_CONNECTION = "jdbc:mysql://" + DB_HOST + "/" + SCHEMA_NAME +"?rewriteBatchedStatements=true&useSSL=false&autoReconnect=true&useUnicode=true&characterEncoding=utf-8&allowPublicKeyRetrieval=true" + dbParams
-  // val DATABASE_CONNECTION = "jdbc:mysql://localhost:3306/airline_v2_1?socket=/tmp/mysql_3306.sock?rewriteBatchedStatements=true&useSSL=false&autoReconnect=true&useUnicode=true&characterEncoding=utf-8"
-  val DB_DRIVER = "com.mysql.jdbc.Driver"
+  val DATABASE_CONNECTION = "jdbc:mysql://" + DB_HOST + "/" + SCHEMA_NAME +"?rewriteBatchedStatements=true&sslMode=DISABLED&useUnicode=true&characterEncoding=utf-8&allowPublicKeyRetrieval=true&socketTimeout=300000&connectTimeout=10000" + dbParams
+  val DB_DRIVER = "com.mysql.cj.jdbc.Driver"
   val DATABASE_USER = if (configFactory.hasPath("mysqldb.user")) configFactory.getString("mysqldb.user") else sys.env.get("DB_USER").getOrElse("mfc01")
   val DATABASE_PASSWORD = if (configFactory.hasPath("mysqldb.password")) configFactory.getString("mysqldb.password") else sys.env.get("DB_PASSWORD").getOrElse("ghEtmwBdnXYBQH4")
 

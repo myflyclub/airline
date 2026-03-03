@@ -9,11 +9,8 @@
       html, body { height: 100%; margin: 0; padding: 0; }
       #map { height: 100%; }
     </style>
-    <link rel="stylesheet" type="text/css" href="@routes.Assets.versioned("css-templates/treviso/css/style.css")">
-    <link rel="stylesheet" type="text/css" href="@routes.Assets.versioned("stylesheets/main.css")">
-	  <link rel="stylesheet" type="text/css" href="@routes.Assets.versioned("stylesheets/new-style.css")">
-    <script src="@routes.Assets.versioned("javascripts/libs/jquery-2.1.4.js")"></script>
-    <script src="@routes.Assets.versioned("javascripts/libs/jquery.cookie.js")"></script>
+    <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/main.css")'>
+    <script src="https://code.jquery.com/jquery-4.0.0.min.js" crossorigin="anonymous"></script>
   </head>
   <body>
 
@@ -33,8 +30,7 @@
 	        </fieldset>
 	        <div class="actions">
 	        	<div class="button" onclick="$(this).parents('form:first').submit()">Submit</div>
-	            <!--  <input type="submit" class="button" value="Sign Up"> -->
-	            <a href="@routes.Application.index" class="btn">Cancel</a>
+	            <a href="/" class="btn">Cancel</a>
 	        </div>
         </div>
 	</div>

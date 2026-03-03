@@ -1,0 +1,59 @@
+				<div id="bankCanvas" class="canvas" style="height: 100%; display: none; min-width: 600px;">
+					<div class="vertical-group bankCanvasLeftGroup">
+						<div class="section tight">
+							<h4 class="py-4">Interest Rate History</h4>
+							<div id="loanInterestRateChart"></div>
+						</div>
+					</div>
+					<div class="vertical-group bankCanvasRightGroup">
+					<!--  new loan -->
+						<div class="section">
+							<h4 class="py-2">New Loan</h4>
+							<div class="table" style="width: 100%; margin-bottom: 15px; min-width: 400px;">
+								<div class="table-row">
+									<div class="label">Available Loan:</div>
+									<div class="value">
+										<span  id="newLoanMaxAmount"></span>
+										<span id="newLoanRejectionSpan">
+											<img src='@routes.Assets.versioned("/images/icons/prohibition.png")'>
+											<span id="newLoanRejection" class="warning"></span>
+										</span>
+									</div>
+								</div>
+								<div class="table-row" id="newLoanAmountRow">
+									<div class="label">Borrow Amount:</div>
+									<div class="value"><input type="text" id="newLoanAmount" oninput="loadLoanOptions($(this).val())"/></div>
+								</div>
+							</div>
+							<div id="newLoanOptions" class="overflow-x-auto">
+								<h4 class="py-2">Loan Options</h4>
+								<div class="table data" id="newLoanOptionsTable">
+									<div class="table-header">
+										<div class="cell" style="width: 15%" align="right">Principal</div>
+										<div class="cell" style="width: 12%" align="right">Interest Rate</div>
+										<div class="cell" style="width: 20%" align="right">Interest</div>
+										<div class="cell" style="width: 20%" align="right">Total Payment</div>
+										<div class="cell" style="width: 25%" align="right">Weekly Payment</div>
+										<div class="cell" style="width: 8%; min-width: 44px;">&nbsp;</div>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="section">
+							<h4>Outstanding Loans</h4>
+							<div class="table data" id="outstandingLoansTable">
+								<div class="table-header">
+									<div class="cell" style="width: 15%" align="right">Principal</div>
+									<div class="cell" style="width: 15%" align="right">Interest</div>
+									<div class="cell" style="width: 8%" align="right">Interest Rate</div>
+									<div class="cell" style="width: 15%" align="right">Remaining Payment</div>
+									<div class="cell" style="width: 15%" align="right">Weekly Payment</div>
+									<div class="cell" style="width: 15%" align="right">Early Repayment Fee</div>
+									<div class="cell" style="width: 15%" align="right">Early Repayment Amount</div>
+									<div class="cell" style="width: 8%;  min-width: 44px;">&nbsp;</div>
+								</div>
+							</div>
+						</div>
+					</div>
+		<!--          end loan list -->
+				</div>

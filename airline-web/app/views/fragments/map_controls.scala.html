@@ -1,0 +1,58 @@
+	<div id="linkHistoryControlPanel" class="mapControlPanel" style="display: none; width: 500px; max-width: 95vw;">
+		<div style="float: left; width : 50%">
+			<h4>Top Connections</h4>
+			<div style="width : 90%" class="transitAirlineList table data">
+			</div>
+		</div>
+		<div style="float: left; width : 50%">
+			<div class="pb-2">
+				<input class="showAlliance" type="checkbox" checked="checked" onclick="showLinkHistory()">Alliance
+				<input class="showOther" type="checkbox" checked="checked" onclick="showLinkHistory()">Other
+				<input class="showAnimation" type="checkbox" checked="checked" onclick="showLinkHistory()">Animated
+			</div>
+			<div class="pb-2" title="Filter PAX traffic by class, take note this applied to the current select flight, related flights shown could be of different classes">
+				<input class="showEconomy" type="checkbox" checked="checked" onclick="loadLinkHistory(selectedLink)">Economy
+				<input class="showBusiness" type="checkbox" checked="checked" onclick="loadLinkHistory(selectedLink)">Business
+				<input class="showFirst" type="checkbox" checked="checked" onclick="loadLinkHistory(selectedLink)">First
+			</div>
+			<div style="width : 100%" class="routeList pb-2">
+			</div>
+			<div style="display: flex; align-items: center;">
+				<img class="clickable prev" title="View passenger map of previous week" src='@routes.Assets.versioned("/images/icons/arrow-180.png")'/>
+				<span style="width: 95px;"><span class="cycleDeltaText"></span>&nbsp;week(s) ago</span>
+				<img class="clickable next" title="View passenger map of next week" src='@routes.Assets.versioned("/images/icons/arrow.png")'/>
+			</div>
+			<button type="button" title="Exit Passenger Map" class="button glow exitPaxMap" onclick="hideLinkHistoryView()" style="margin-top: auto">Exit Passenger Map</button>
+		</div>
+	</div>
+	  <div id="heatmapControlPanel" class="mapControlPanel" style="display: none; width: 250px; flex-direction: column; align-items:center">
+		  <h4>Influence Heatmap</h4>
+		  <div style="display: flex; align-items: center;">
+			  <img class="clickable prevPrev" title="100 weeks backward" src='@routes.Assets.versioned("/images/icons/control-double-180.png")'/>
+			  <img class="clickable prev" title="10 weeks backward" src='@routes.Assets.versioned("/images/icons/control-180.png")'/>
+			  <span style="width: 95px; margin: 0 15px 0 15px;"><span class="cycleDeltaText"></span>&nbsp;weeks ago</span>
+			  <img class="clickable next" title="10 weeks forward" src='@routes.Assets.versioned("/images/icons/control.png")'/>
+			  <img class="clickable nextNext" title="100 weeks forward" src='@routes.Assets.versioned("/images/icons/control-double.png")'/>
+		  </div>
+		  <form>
+		  <input type="radio" name="heatmapType" value="loyalistImpact" checked/>Impact
+		  <input type="radio" name="heatmapType" value="loyalistTrend"/>Trend
+		  </form>
+
+		  <div class="button glow" onclick="closeHeatmap()" style="margin-top : 10px; width: 140px;">Hide Heatmap Overlay</div>
+
+	  </div>
+
+  	<div id="topAirportLinksPanel" class="mapControlPanel" style="display: none; width: 600px; max-width: 95vw;">
+		<h4>Top Destinations</h4>
+	  	<div style="width : 100%; display: flex; flex-direction: column;">
+		  <div style="width : 100%" class="topDestinations table data">
+			  <div class="table-header">
+				  <div class="cell" style="width: 20%; min-width: 100px;">Destination</div>
+				  <div class="cell" style="width: 30%">Cap (Freq)</div>
+				  <div class="cell" style="width: 50%">Operators</div>
+			  </div>
+		  </div>
+		  <button type="button" class="button glow" onclick="AirlineMap.hideAirportLinksView()" style="margin-top: 8px; align-self: center;">Exit Airport Flight Map</button>
+	  </div>
+	</div>

@@ -2,11 +2,12 @@ package com.patson
 
 import com.patson.model.event.{OlympicsAirlineVote, OlympicsAirlineVoteWithWeight, OlympicsVoteRound}
 import com.patson.model.{PassengerType, _}
-import org.scalatest.{Matchers, WordSpecLike}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpecLike
 
 import scala.collection.mutable.ListBuffer
 
-class EventSimulationSpec extends WordSpecLike with Matchers {
+class EventSimulationSpec extends AnyWordSpecLike with Matchers {
   val DEFAULT_RELATIONSHIP = 0
   val countries = List(Country.fromCode("A"), Country.fromCode("B"), Country.fromCode("C"), Country.fromCode("D"), Country.fromCode("E"), Country.fromCode("F"))
 
@@ -15,7 +16,7 @@ class EventSimulationSpec extends WordSpecLike with Matchers {
   countries.foreach { country =>
     val countryCode = country.countryCode
     for (i <- 1 to 10) {
-      val airport = Airport("", "", "", latitude = 0, longitude = 0, countryCode = countryCode, "", "", size = i, baseIncome = 1000, basePopulation = EventSimulation.CANDIDATE_MIN_POP_MIDDLE_INCOME, popMiddleIncome = EventSimulation.CANDIDATE_MIN_POP_MIDDLE_INCOME, 0, id = airportId)
+      val airport = Airport("", "", "", latitude = 0, longitude = 0, countryCode = countryCode, "", "", size = i, baseIncome = 1000, basePopulation = EventSimulation.CANDIDATE_MIN_POP_MIDDLE_INCOME, basePopMiddleIncome = EventSimulation.CANDIDATE_MIN_POP_MIDDLE_INCOME, 0, id = airportId)
       airports.append(airport)
       airportId += 1
 

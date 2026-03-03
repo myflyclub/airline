@@ -4,9 +4,9 @@ import com.patson.data.AirplaneSource
 import com.patson.model.airplane.Airplane
 
 object AirplaneOwnershipCache {
-  import com.google.common.cache.{CacheBuilder, CacheLoader, LoadingCache}
+  import com.github.benmanes.caffeine.cache.{Caffeine, CacheLoader, LoadingCache}
 
-  val simpleCache: LoadingCache[Int, AirplaneOwnershipInfo] = CacheBuilder.newBuilder.maximumSize(10000).build(new SimpleLoader())
+  val simpleCache: LoadingCache[Int, AirplaneOwnershipInfo] = Caffeine.newBuilder().maximumSize(10000).build(new SimpleLoader())
 
   def getOwnershipInfo(airlineId : Int) : AirplaneOwnershipInfo = {
     simpleCache.get(airlineId)

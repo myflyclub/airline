@@ -273,8 +273,7 @@ class AirportAssetApplication @Inject()(cc: ControllerComponents) extends Abstra
             } else {
               //OK
               AirportAssetSource.deleteAirportAsset(assetId)
-              AirlineSource.adjustAirlineBalance(airline.id, asset.sellValue)
-              AirlineSource.saveCashFlowItem(AirlineCashFlowItem(airline.id, CashFlowType.ASSET_TRANSACTION, asset.sellValue))
+              AirlineSource.saveLedgerEntry(AirlineLedgerEntry(airline.id, currentCycle, LedgerType.ASSET_TRANSACTION, asset.sellValue, Some(asset.name)))
               Ok(Json.toJson(asset)(OwnedAirportAssetWrites))
             }
           case None =>
@@ -333,8 +332,7 @@ class AirportAssetApplication @Inject()(cc: ControllerComponents) extends Abstra
                 }
 
                 AirportAssetSource.updateAirportAsset(newAsset)
-                AirlineSource.adjustAirlineBalance(airline.id, -1 * newAsset.cost)
-                AirlineSource.saveCashFlowItem(AirlineCashFlowItem(airline.id, CashFlowType.ASSET_TRANSACTION, -1 * newAsset.cost))
+                AirlineSource.saveLedgerEntry(AirlineLedgerEntry(airline.id, currentCycle, LedgerType.ASSET_TRANSACTION, -1 * newAsset.cost, Some(s"${newAsset.name} Lv${newAsset.level}")))
                 Ok(Json.toJson(newAsset)(OwnedAirportAssetWrites))
             }
         }

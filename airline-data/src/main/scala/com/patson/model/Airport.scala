@@ -1,29 +1,22 @@
 package com.patson.model
 
-import com.google.common.cache.{CacheBuilder, CacheLoader, LoadingCache}
+import com.github.benmanes.caffeine.cache.{Caffeine, CacheLoader, LoadingCache}
 import com.patson.data.{AirportSource, CountrySource, DestinationSource, GameConstants}
-import com.patson.model.AirlineBaseSpecialization.{POWERHOUSE, PowerhouseSpecialization}
 import com.patson.model.AirportAssetType.{PassengerCostModifier, TransitModifier}
 import com.patson.model.airplane.Model
 
-import java.util.concurrent.ConcurrentHashMap
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.jdk.CollectionConverters._
 import AirportFeatureType._
-import com.patson.model.FlightCategory.FlightCategory
 import com.patson.model.airplane.Model.Type.HELICOPTER
 
-case class Airport(iata : String, icao : String, name : String, latitude : Double, longitude : Double, countryCode : String, city : String, zone : String, var size : Int, baseIncome : Int, basePopulation : Long, popMiddleIncome : Int = 0, popElite : Int = 0, var runwayLength : Int = Airport.MIN_RUNWAY_LENGTH, var id : Int = 0) extends IdObject {
-  var shouldLoadCities = false
-  lazy val citiesServed = loadCitiesServed()
+case class Airport(iata: String, icao: String, name: String, latitude: Double, longitude: Double, countryCode: String, city: String, zone: String, var size: Int, baseIncome: Int, basePopulation: Int, basePopMiddleIncome: Int = 0, basePopElite: Int = 0, var runwayLength : Int = Airport.MIN_RUNWAY_LENGTH, var id : Int = 0) extends IdObject {
   private[this] val airlineBaseAppeals = new java.util.HashMap[Int, AirlineAppeal]() //base appeals
   private[this] val airlineAdjustedAppeals = new java.util.HashMap[Int, AirlineAppeal]() //base appeals + bonus
   private[this] val allAirlineBonuses = new java.util.HashMap[Int, List[AirlineBonus]]() //bonus appeals
   private[this] var airlineAppealsLoaded = false
-//  private[this] val slotAssignments = scala.collection.mutable.Map[Int, Int]()
-//  private[this] var slotAssignmentsLoaded = false
-  private[this] val airlineBases = scala.collection.mutable.Map[Int, AirlineBase]()
+  private[model] val airlineBases = scala.collection.mutable.Map[Int, AirlineBase]()
   private[this] var airlineBasesLoaded = false
   private[this] val baseFeatures = ListBuffer[AirportFeature]()
   private[this] var featuresLoaded = false
@@ -35,102 +28,36 @@ case class Airport(iata : String, icao : String, name : String, latitude : Doubl
   lazy val assetPassengerCostModifiers = getPassengerCostModifiers()
 
 
-  private[this] var runways = List.empty[Runway]
-  //private[this] var loungesLoaded = false
-
-  private[this] var airportImageUrl : Option[String] = None
-  private[this] var cityImageUrl : Option[String] = None
-
   private[model] var country : Option[Country] = None
 
-  //val baseIncome = if (basePopulation > 0) (power / basePopulation).toInt  else 0
+  private[model] var assetBoostFactors : Map[AirportBoostType.Value, List[(AirportAsset, AirportBoost)]] = Map.empty
+  private[model] var specializationBoostFactors : Map[AirportBoostType.Value, List[(String, Double)]] = Map.empty
 
+  @deprecated lazy val baseIncomeLevel = baseIncome
+  @deprecated lazy val incomeLevel = baseIncomeLevel + incomeLevelBoost
+  @deprecated lazy val incomeLevelBoost = boostFactorsByType.get(AirportBoostType.INCOME).map(_._2).sum
 
-  private[this] var assetBoostFactors : Map[AirportBoostType.Value, List[(AirportAsset, AirportBoost)]] = Map.empty
+  /**
+   * These are the four critical variables for demand generation, modded by dynamic boost factors
+   */
+  lazy val income: Int = baseIncome + incomeBoost
+  lazy val population: Int = basePopulation + populationBoost
+  lazy val popMiddleIncome: Int = basePopMiddleIncome + populationBoost
+  lazy val popElite: Int = basePopElite + eliteBoost
 
-  val baseIncomeLevel = Computation.getIncomeLevel(baseIncome)
-  lazy val incomeLevelBoost = boostFactorsByType.get(AirportBoostType.INCOME).map(_._2).sum
+  lazy val boostFactorsByType: LoadingCache[AirportBoostType.Value, List[(String, Double)]] = Caffeine.newBuilder().build(Airport.createBoostFactorsLoader(this))
+  lazy val incomeBoost: Int = boostFactorsByType.get(AirportBoostType.INCOME).map(_._2).sum.toInt
+  lazy val populationBoost: Int = boostFactorsByType.get(AirportBoostType.POPULATION).map(_._2).sum.toInt
+  lazy val eliteBoost: Int = boostFactorsByType.get(AirportBoostType.ELITE).map(_._2).sum.toInt
 
-//  lazy val incomeLevelBoostFactors : Map[String, Double] = {
-//    (assetBoostFactors.getOrElse(AirportBoostType.INCOME, List.empty).map {
-//      case (asset, boost) => (asset.name, boost.value)
-//    } ++ airlineBases.values.flatMap { airlineBase =>
-//      airlineBase.specializations.filter(_ == POWERHOUSE).map { spec =>
-//        val description = s"${airlineBase.airline.name} Powerhouse"
-//        (description, spec.asInstanceOf[PowerhouseSpecialization].incomeLevelBoost(this))
-//      }
-//    }).toMap
-//  }
-
-  lazy val incomeLevel = baseIncomeLevel + incomeLevelBoost
-  lazy val income = if (incomeLevelBoost == 0) baseIncome else Computation.fromIncomeLevel(incomeLevel) //have to deduce from income level (after boost)
-
-
-  lazy val populationBoost = boostFactorsByType.get(AirportBoostType.POPULATION).map(_._2).sum.toInt
-  val boostFactorsByType :  LoadingCache[AirportBoostType.Value, List[(String, Double)]]  = CacheBuilder.newBuilder.build(new BoostFactorsLoader())
-
-  class BoostFactorsLoader extends CacheLoader[AirportBoostType.Value, List[(String, Double)]] {
-    override def load(boostType : AirportBoostType.Value) : List[(String, Double)] = {
-      var result = assetBoostFactors.getOrElse(boostType, List.empty).map {
-        case (asset, boost) => (asset.name, boost.value)
-      }
-      if (boostType == AirportBoostType.INCOME || boostType == AirportBoostType.POPULATION) { //okay for now but not great to have special cases like these
-        result = result ++ airlineBases.values.flatMap { airlineBase =>
-          airlineBase.specializations.filter(_ == POWERHOUSE).map { spec =>
-            val description = s"${airlineBase.airline.name} Powerhouse"
-            val powerHouseSpec = spec.asInstanceOf[PowerhouseSpecialization]
-            val boost = boostType match {
-              case AirportBoostType.INCOME => powerHouseSpec.incomeLevelBoost(Airport.this)
-              case AirportBoostType.POPULATION => powerHouseSpec.populationBoost
-              case _ => 0
-            }
-
-            (description, boost)
-          }
-        }
-      }
-      result
-    }
-  }
-
-
-  lazy val population = basePopulation + populationBoost
-  lazy val power = income * population.toLong
-  val basePower = baseIncome * basePopulation.toLong
-  lazy val features : List[AirportFeature] = computeFeatures()
-  lazy val rating =  AirportRating.rateAirport(this)
-
-  lazy val destinations : List[Destination] = DestinationSource.loadDestinationsByAirport(this.id).getOrElse(List.empty)
-
-  def addCityServed(city : City, share : Double) {
-    shouldLoadCities = true //do not lazy load city anymore, this is only used by Airport creation which later on should remove this method and that logic should just keep its own set of cities
-    citiesServed += Tuple2(city, share)
-  }
-
-  def loadCitiesServed(): ListBuffer[(City, Double)] =  {
-    //then do NOT load from DB, this is kinda hacky, this used to be controlled by DB load and converted to lazy loading
-    //but some older code would "innocently" reference citiesServed, while it used to be okay, since it was not a detailed load
-    //but after the lazy loading conversion they got loaded all of the sudden. So we are using `shouldLoadCities` as
-    //a flag to retain that behavior. Only fully loaded Airport will have ability to load (even thou lazily) the city served
-    if (!shouldLoadCities || id == 0) {
-      ListBuffer.empty
-    } else {
-      AirportSource.loadCitiesServed(id).to(collection.mutable.ListBuffer)
-    }
-  }
+  lazy val features: List[AirportFeature] = computeFeatures()
+  lazy val rating: AirportRating =  AirportRating.rateAirport(this)
 
   def getAirlineAdjustedAppeals() : Map[Int, AirlineAppeal] = {
     if (!airlineAppealsLoaded) {
       throw new IllegalStateException("airline appeal is not properly initialized! If loaded from DB, please use fullload")
     }
     airlineAdjustedAppeals.asScala.toMap
-  }
-
-  def getAirlineBaseAppeals() : Map[Int, AirlineAppeal] = {
-    if (!airlineAppealsLoaded) {
-      throw new IllegalStateException("airline appeal is not properly initialized! If loaded from DB, please use fullload")
-    }
-    airlineBaseAppeals.asScala.toMap
   }
 
   def getAirlineBaseAppeal(airlineId : Int) : AirlineAppeal = {
@@ -145,24 +72,7 @@ case class Airport(iata : String, icao : String, name : String, latitude : Doubl
     }
   }
 
-  def setRunways(runways : List[Runway]) = {
-    this.runways = runways
-    if (runways.length > 0) {
-      val maxRunwayLength = runways.sortBy(_.length).reverse.head.length
-      this.runwayLength = maxRunwayLength.toInt
-    }
-    if (this.runwayLength < Airport.MIN_RUNWAY_LENGTH) {
-      if (this.name.contains("Heli")) {
-        10
-      } else {
-        this.runwayLength = Airport.MIN_RUNWAY_LENGTH
-      }
-    }
-  }
 
-  def getRunways() = {
-    runways
-  }
 
   def getAirlineBonuses(airlineId : Int) : List[AirlineBonus] = {
     if (!airlineAppealsLoaded) {
@@ -177,7 +87,7 @@ case class Airport(iata : String, icao : String, name : String, latitude : Doubl
     }
     allAirlineBonuses.asScala.toMap
   }
-  
+
   def getAirlineLoyalty(airlineId : Int) : Double = {
     if (!airlineAppealsLoaded) {
       throw new IllegalStateException("airline appeal is not properly initialized! If loaded from DB, please use fullload")
@@ -192,30 +102,30 @@ case class Airport(iata : String, icao : String, name : String, latitude : Doubl
 
   def isAirlineAppealsInitialized = airlineAppealsLoaded
 
-  
+
   def getAirlineBase(airlineId : Int) : Option[AirlineBase] = {
     if (!airlineBasesLoaded) {
       throw new IllegalStateException("airport base is not properly initialized! If loaded from DB, please use fullload")
     }
     airlineBases.get(airlineId)
   }
-  
+
   def getAirlineBases() : Map[Int, AirlineBase] = {
     airlineBases.toMap
   }
-  
+
   def getLoungeByAirline(airlineId : Int, activeOnly : Boolean = false) : Option[Lounge] = {
     loungesByAirline.get(airlineId).filter(!activeOnly || _.status == LoungeStatus.ACTIVE)
   }
-  
+
   def getLounges() : List[Lounge] = {
     loungesByAirline.values.toList
   }
-  
+
   def getLoungeByAlliance(alliance : Int, activeOnly : Boolean = false) : Option[Lounge] = {
     loungesByAlliance.get(alliance).filter(!activeOnly || _.status == LoungeStatus.ACTIVE)
   }
-  
+
   def getLounge(airlineId : Int, allianceIdOption : Option[Int], activeOnly : Boolean = false) : Option[Lounge] = {
      getLoungeByAirline(airlineId, activeOnly) match {
        case Some(lounge) => Some(lounge)
@@ -227,10 +137,10 @@ case class Airport(iata : String, icao : String, name : String, latitude : Doubl
   }
 
   def getZoneAffinities() : String = {
-    val affinites = zone.split("-").filter(_ != "None|")
-    val domestics = affinites.filterNot(_.startsWith("|")).filterNot(_.endsWith("|"))
-    val internationals = affinites.filter(_.endsWith("|")).map(_.dropRight(1))
-    val diasporas = affinites.filter(_.startsWith("|")).map(_.drop(4) + " diaspora").toSet
+    val affinities = zone.split("-").filter(_ != "None|")
+    val domestics = affinities.filterNot(_.startsWith("|")).filterNot(_.endsWith("|"))
+    val internationals = affinities.filter(_.endsWith("|")).map(_.dropRight(1))
+    val diasporas = affinities.filter(_.startsWith("|")).map(_.drop(4) + " diaspora").toSet
 
     val result = new StringBuilder()
 
@@ -252,23 +162,28 @@ case class Airport(iata : String, icao : String, name : String, latitude : Doubl
 
     result.toString()
   }
-  
+
   def isFeaturesLoaded = featuresLoaded
-  
+
   def getFeatures() : List[AirportFeature] = {
     features.toList
   }
 
   def hasFeature(targetFeature: AirportFeatureType): Boolean = {
-    baseFeatures.find(_.featureType == targetFeature).isDefined
+    baseFeatures.exists(_.featureType == targetFeature)
   }
 
-  def isGateway() = {
-    baseFeatures.find(_.featureType == AirportFeatureType.GATEWAY_AIRPORT).isDefined
+  def isGateway(): Boolean = {
+    baseFeatures.exists(_.featureType == AirportFeatureType.GATEWAY_AIRPORT)
   }
 
-  def isDomesticAirport() = {
-    baseFeatures.find(_.featureType == AirportFeatureType.DOMESTIC_AIRPORT).isDefined
+  def isDomesticAirport(): Boolean = {
+    baseFeatures.exists(_.featureType == AirportFeatureType.DOMESTIC_AIRPORT)
+  }
+
+  def isOrangeAirport: Boolean = {
+    (baseFeatures.exists(_.featureType == AirportFeatureType.DOMESTIC_AIRPORT)
+    || this.size <= 3 && baseFeatures.exists(_.featureType == AirportFeatureType.BUSH_HUB))
   }
 
   def initAirlineAppealsComputeLoyalty(airlineBonuses : Map[Int, List[AirlineBonus]] = Map.empty, loyalistEntries : List[Loyalist]) = {
@@ -291,7 +206,7 @@ case class Airport(iata : String, icao : String, name : String, latitude : Doubl
     }
   }.toMap
 
-  
+
   def initAirlineAppeals(airlineBaseAppeals : Map[Int, AirlineAppeal], airlineBonuses : Map[Int, List[AirlineBonus]] = Map.empty) = {
     this.airlineBaseAppeals.clear()
     this.airlineBaseAppeals.asScala ++= airlineBaseAppeals
@@ -323,6 +238,21 @@ case class Airport(iata : String, icao : String, name : String, latitude : Doubl
     airlineBases.foreach { airlineBase =>
       this.airlineBases.put(airlineBase.airline.id, airlineBase)
     }
+
+    val result = mutable.HashMap[AirportBoostType.Value, ListBuffer[(String, Double)]]()
+    airlineBases.foreach { airlineBase =>
+      airlineBase.specializations.foreach {
+        case contributor: AirportBoostContributor =>
+          val contributions = contributor.getAirportBoostContributions(this, airlineBase.airline)
+          contributions.foreach { case (boostType, (description, value)) =>
+            val list = result.getOrElseUpdate(boostType, ListBuffer[(String, Double)]())
+            list.append((description, value))
+          }
+        case _ => // Non-contributing specializations
+      }
+    }
+    specializationBoostFactors = result.view.mapValues(_.toList).toMap
+
     airlineBasesLoaded = true
   }
   def initFeatures(features : List[AirportFeature]) = {
@@ -383,6 +313,7 @@ case class Airport(iata : String, icao : String, name : String, latitude : Doubl
       }
     }
   }
+
   def computeTransitDiscount(fromLinkConsideration : LinkConsideration, toLinkConsideration : LinkConsideration, paxGroup : PassengerGroup): Double = {
     if (transitModifiers.isEmpty) {
       0
@@ -391,10 +322,6 @@ case class Airport(iata : String, icao : String, name : String, latitude : Doubl
         transitModifier.computeTransitDiscount(fromLinkConsideration, toLinkConsideration, paxGroup)
       }.sum
     }
-  }
-
-  def addFeature(feature : AirportFeature) = {
-    this.baseFeatures += feature
   }
 
   def initLounges(lounges : List[Lounge]) = {
@@ -411,35 +338,15 @@ case class Airport(iata : String, icao : String, name : String, latitude : Doubl
     val baseSlotFee = if (airplaneModel.airplaneType == HELICOPTER) {
       2
     } else {
-      size match {
-        case 1 => 2 //small airport
-        case 2 => 4
-        case 3 => 8
-        case 4 => 16
-        case 5 => 32
-        case 6 => 64
-        case 7 => 88
-        case _ => 112 //mega
-      }
+      Airport.SLOT_FEES_AIRPORT_SIZE.getOrElse(size, 2)
     }
 
-    import Model.Type._
-    val multiplier: Double = airplaneModel.airplaneType match {
-      case REGIONAL => 3
-      case MEDIUM => 4
-      case MEDIUM_XL => 5
-      case LARGE => 8
-      case EXTRA_LARGE => 10
-      case JUMBO => 16
-      case JUMBO_XL => 18
-      case SUPERSONIC => 12
-      case _ => 2
-    }
+    val multiplier: Double = Airport.SLOT_FEES_AIRPLANE_SIZE.getOrElse(airplaneModel.airplaneType, 2.0)
 
     //apply discount if it's a base
     val discount = getAirlineBase(airline.id) match {
       case Some(airlineBase) =>
-        if (airlineBase.headquarter) 0.8 else 0.9 //headquarter 20% off, base 10% off
+        if (airlineBase.headquarter) 0.8 else 1.0 //headquarter 20% off
       case None =>
         1 //no discount
     }
@@ -454,7 +361,6 @@ case class Airport(iata : String, icao : String, name : String, latitude : Doubl
       } else {
         size - 1
       }
-
     soldSeats * perSeat
   }
 
@@ -474,14 +380,7 @@ case class Airport(iata : String, icao : String, name : String, latitude : Doubl
     Math.max(0, Math.min(100,classBaseline(linkClass) + incomeBaseline + distanceMod).toInt)
   }
 
-  private[this] def getCountry() : Country = {
-    if (country.isEmpty) {
-      country = CountrySource.loadCountryByCode(countryCode)
-    }
-    country.get
-  }
-
-  //airport range
+  //airport range, only used when generating airport stats
   lazy val airportRadius : Int = {
     if (GameConstants.COUNTRIES_SUB_SAHARAN.contains(countryCode)) {
       300
@@ -503,27 +402,38 @@ case class Airport(iata : String, icao : String, name : String, latitude : Doubl
 
   def computeFeatures() = {
     val newFeatures = ListBuffer[AirportFeature]()
-    assetBoostFactors.foreach {
-      case(boostType, boosts) =>
-        boostType match {
-          case com.patson.model.AirportBoostType.INTERNATIONAL_HUB =>
-            newFeatures.append(InternationalHubFeature(0, boosts.map(_._2)))
-          case com.patson.model.AirportBoostType.VACATION_HUB =>
-            newFeatures.append(VacationHubFeature(0, boosts.map(_._2)))
-          case com.patson.model.AirportBoostType.FINANCIAL_HUB =>
-            newFeatures.append(FinancialHubFeature(0, boosts.map(_._2)))
-          case _ =>
-        }
+    val hubBoostTypes = Set(
+      com.patson.model.AirportBoostType.INTERNATIONAL_HUB,
+      com.patson.model.AirportBoostType.VACATION_HUB,
+      com.patson.model.AirportBoostType.FINANCIAL_HUB,
+      com.patson.model.AirportBoostType.ELITE_CHARM
+    )
+    val allBoostedHubTypes = (assetBoostFactors.keySet ++ specializationBoostFactors.keySet).filter(hubBoostTypes)
+
+    allBoostedHubTypes.foreach { boostType =>
+      val assetBoosts = assetBoostFactors.getOrElse(boostType, List.empty).map(_._2)
+      val specBoosts = specializationBoostFactors.getOrElse(boostType, List.empty).map {
+        case (_, value) => AirportBoost(boostType, value)
+      }
+      val allBoosts = assetBoosts ++ specBoosts
+      boostType match {
+        case com.patson.model.AirportBoostType.INTERNATIONAL_HUB => newFeatures.append(InternationalHubFeature(0, allBoosts))
+        case com.patson.model.AirportBoostType.VACATION_HUB      => newFeatures.append(VacationHubFeature(0, allBoosts))
+        case com.patson.model.AirportBoostType.FINANCIAL_HUB     => newFeatures.append(FinancialHubFeature(0, allBoosts))
+        case com.patson.model.AirportBoostType.ELITE_CHARM        => newFeatures.append(EliteFeature(0, allBoosts))
+        case _ =>
+      }
     }
     (baseFeatures ++ newFeatures).groupBy(_.getClass).map {
-      case(clazz, features) =>
+      case(_, features) =>
         if (features.size <= 1) {
           features(0)
         } else { //should be 2
           features(0) match {
-            case basicFeature : InternationalHubFeature => InternationalHubFeature(basicFeature.baseStrength, features(1).asInstanceOf[InternationalHubFeature].boosts)
-            case basicFeature : FinancialHubFeature => FinancialHubFeature(basicFeature.baseStrength, features(1).asInstanceOf[FinancialHubFeature].boosts)
-            case basicFeature : VacationHubFeature => VacationHubFeature(basicFeature.baseStrength, features(1).asInstanceOf[VacationHubFeature].boosts)
+            case b : InternationalHubFeature => InternationalHubFeature(b.baseStrength, features(1).asInstanceOf[InternationalHubFeature].boosts)
+            case b : FinancialHubFeature     => FinancialHubFeature(b.baseStrength, features(1).asInstanceOf[FinancialHubFeature].boosts)
+            case b : VacationHubFeature      => VacationHubFeature(b.baseStrength, features(1).asInstanceOf[VacationHubFeature].boosts)
+            case b : EliteFeature            => EliteFeature(b.baseStrength, features(1).asInstanceOf[EliteFeature].boosts)
             case _ => features(0) //don't know how to merge
           }
         }
@@ -535,9 +445,8 @@ case class AirlineAppeal(loyalty : Double)
 object AirlineAppeal {
   val MAX_LOYALTY = 100
 }
-case class AirlineBonus(bonusType : BonusType.Value, bonus : AirlineAppeal, expirationCycle : Option[Int]) {
-  val isExpired : Int => Boolean = currentCycle => expirationCycle.isDefined && currentCycle > expirationCycle.get
-}
+
+case class AirlineBonus(bonusType : BonusType.Value, bonus : AirlineAppeal, expirationCycle : Option[Int])
 
 object BonusType extends Enumeration {
   type BonusType = Value
@@ -568,6 +477,81 @@ object Airport {
   val MAJOR_AIRPORT_LOWER_THRESHOLD = 5
   val HIGH_INCOME = 80000
   val MIN_RUNWAY_LENGTH = 750
+  val CONGESTION_MODERATE = 60
+  val CONGESTION_HIGH = 100
+  val TOOLTIP_CONGESTION = List(
+    s"Congestion increases likelihood of delays, especially when it's over $CONGESTION_HIGH%",
+    s"Negotiations become more difficult when congestion is over $CONGESTION_MODERATE% and much harder when over $CONGESTION_HIGH% as slots have to be coordinated."
+  )
+  val GLOBAL_AIRPORT_REPUTATION_POOL = 11000
+  val SLOT_FEES_AIRPORT_SIZE: Map[Int, Int] = Map(
+    1 -> 2,
+    2 -> 4,
+    3 -> 8,
+    4 -> 16,
+    5 -> 32,
+    6 -> 64,
+    7 -> 88,
+    8 -> 112,
+    9 -> 112,
+    10 -> 112,
+  )
+  val SLOT_FEES_AIRPLANE_SIZE: Map[Model.Type.Value, Double] = Map(
+    Model.Type.AIRSHIP -> 1.0,
+    Model.Type.HELICOPTER -> 1.5,
+    Model.Type.PROPELLER_SMALL -> 2.0,
+    Model.Type.SMALL -> 2.0,
+    Model.Type.PROPELLER_MEDIUM -> 2.0,
+    Model.Type.REGIONAL -> 3.0,
+    Model.Type.REGIONAL_XL -> 3.25,
+    Model.Type.MEDIUM -> 3.25,
+    Model.Type.MEDIUM_XL -> 3.5,
+    Model.Type.LARGE -> 6.0,
+    Model.Type.EXTRA_LARGE -> 8.0,
+    Model.Type.JUMBO -> 12.0,
+    Model.Type.JUMBO_XL -> 16.0,
+    Model.Type.SUPERSONIC -> 16.0,
+  )
+
+  def travelRateAdjusted(fromPax: Int, baselineDemand: Int, airportSize: Int) : Double = {
+    val percentDemandMet = (0.9 * fromPax + 0.1 * baselineDemand) / baselineDemand //need to blend so randomizer doesn't create peaks that perpetuate
+    val baseTravelRate = airportSize match {
+      case 7 => 0.2
+      case 6 => 0.3
+      case 5 => 0.4
+      case 4 => 0.5
+      case 3 => 0.6
+      case 2 => 0.7
+      case 1 => 0.8
+      case _ => 0.15
+    }
+    val modified = if (percentDemandMet < 0.7) {
+      baseTravelRate + percentDemandMet
+    } else if (percentDemandMet < 2.0) {
+      val fadeFactor = (2.0 - percentDemandMet) / 1.3
+      (baseTravelRate * fadeFactor) + percentDemandMet
+    } else {
+      percentDemandMet
+    }
+    Math.min(modified, 8.0)
+  }
+
+  /**
+   * Creates a boost factors loader for the given airport.
+   */
+  def createBoostFactorsLoader(airport: Airport): CacheLoader[AirportBoostType.Value, List[(String, Double)]] = {
+    new CacheLoader[AirportBoostType.Value, List[(String, Double)]] {
+      override def load(boostType: AirportBoostType.Value): List[(String, Double)] = {
+        val assetFactors = airport.assetBoostFactors.getOrElse(boostType, List.empty).map {
+          case (asset, boost) => (asset.name, boost.value)
+        }
+
+        val specializationFactors = airport.specializationBoostFactors.getOrElse(boostType, List.empty)
+
+        assetFactors ++ specializationFactors
+      }
+    }
+  }
 }
 
 case class Runway(length : Int, code : String, runwayType : RunwayType.Value, lighted : Boolean)

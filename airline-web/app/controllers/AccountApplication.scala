@@ -4,32 +4,21 @@ import java.util.UUID
 import com.patson.Authentication
 import com.patson.data.UserSource
 import com.patson.model._
-import com.typesafe.config.ConfigFactory
-
 import javax.inject.{Inject, Singleton}
 import models._
 import play.api.data.Forms._
 import play.api.data._
-import play.api.libs.json.Json
 import play.api.mvc._
-import views._
+import play.api.Configuration
+import services.EmailService // Import the new service
 
 @Singleton
-class AccountApplication @Inject()(cc: ControllerComponents) extends AbstractController(cc) with play.api.i18n.I18nSupport {
-  private[this] val configFactory = ConfigFactory.load()
-  private[this] val fromEmail =
-    if (configFactory.hasPath("server.email")) {
-      configFactory.getString("server.email")
-    } else {
-      "info@airline-club.com"
-    }
+class AccountApplication @Inject()(
+    cc: ControllerComponents, 
+    emailService: EmailService, // Inject the EmailService
+    config: Configuration       // Inject Play's Configuration safely
+) extends AbstractController(cc) with play.api.i18n.I18nSupport {
 
-  /**
-   * Sign Up Form definition.
-   *
-   * Once defined it handle automatically, ,
-   * validation, submission, errors, redisplaying, ...
-   */
   val form: Form[PasswordReset] = Form(
     
     // Define a mapping that will handle User values
@@ -105,7 +94,7 @@ class AccountApplication @Inject()(cc: ControllerComponents) extends AbstractCon
     println("token is " + resetToken)
     UserSource.loadResetUser(resetToken) match {
     case Some(username) => {
-      Ok(html.passwordReset(form.fill(PasswordReset(resetToken, ""))))
+      Ok(views.html.passwordReset(form.fill(PasswordReset(resetToken, ""))))
     }
       case None => Forbidden
     }
@@ -114,19 +103,12 @@ class AccountApplication @Inject()(cc: ControllerComponents) extends AbstractCon
   }
   
   def forgotId() = Action { implicit request =>
-    Ok(html.forgotId(forgotIdForm.fill(ForgotId(""))))
+    Ok(views.html.forgotId(forgotIdForm.fill(ForgotId(""))))
   }
   
   def forgotPassword() = Action { implicit request =>
-    Ok(html.forgotPassword(forgotPasswordForm.fill(ForgotPassword("", ""))))
-  }
-  
-//  def sendEmail() = Action {
-//    EmailUtil.sendEmail("patson_luk@hotmail.com", "info@airline-club.com", "testing", "testing");
-//    Ok(Json.obj())
-//  }
-  
-  
+    Ok(views.html.forgotPassword(forgotPasswordForm.fill(ForgotPassword("", ""))))
+  }  
   
   /**
    * Handle form submission.
@@ -136,22 +118,19 @@ class AccountApplication @Inject()(cc: ControllerComponents) extends AbstractCon
       // Form has errors, redisplay it
       errors => {
         println(errors)
-        BadRequest(html.passwordReset(errors))
+        BadRequest(views.html.passwordReset(errors))
       }, 
-      userInput => {
+      userInput =>
           UserSource.loadResetUser(userInput.token) match {
-            case Some(username) => {
+            case Some(username) =>
               println("Resetting user for " + username)
               Authentication.createUserSecret(username, userInput.password)
               UserSource.deleteResetUser(userInput.token)
               Redirect("/")
-            }
-            case None => {
+            case None =>
               println("TOKEN " + userInput.token)
               Forbidden
-            }
           }
-      }
     )
   }
   
@@ -160,48 +139,43 @@ class AccountApplication @Inject()(cc: ControllerComponents) extends AbstractCon
    */
   def forgotIdSubmit = Action { implicit request =>
     forgotIdForm.bindFromRequest().fold(
-      // Form has errors, redisplay it
       errors => {
         println(errors)
-        BadRequest(html.forgotId(errors))
+        BadRequest(views.html.forgotId(errors))
       }, 
       userInput => {
           val users = UserSource.loadUsersByCriteria(List(("email", userInput.email)))
           if (users.size > 0) {
             println("Sending email for forgot ID " + users)
-            EmailUtil.sendEmail(userInput.email, fromEmail, "Forgot User Name from airline-club.com", getForgotIdMessage(users))
+            emailService.sendEmail(userInput.email, "Forgot User Name from airline-club.com", getForgotIdMessage(users))
           } else {
             println("Sending email for forgot ID but email " + userInput.email + " has no account!")
           }
-          Ok(html.checkEmail())
+          Ok(views.html.checkEmail())
       }
     )
   }
   
    def forgotPasswordSubmit = Action { implicit request =>
     forgotPasswordForm.bindFromRequest().fold(
-      // Form has errors, redisplay it
       errors => {
         println(errors)
-        BadRequest(html.forgotPassword(errors))
+        BadRequest(views.html.forgotPassword(errors))
       }, 
       userInput => {
           val user = UserSource.loadUserByUserName(userInput.userName).get
           if (user.email == userInput.email) {
             println("Sending email for reset password " + user)
             val scheme = if (request.secure) "https://" else "http://"
-            val host = request.headers.get("X-Forwarded-Host") match {
-              case Some(host) => host
-              case None => request.host
-            }
+            val host = request.headers.get("X-Forwarded-Host").getOrElse(request.host)
 
             val baseUrl = s"$scheme$host/password-reset"
-            EmailUtil.sendEmail(user.email, fromEmail, "Reset password for airline-club.com", getResetPasswordMessage(user, baseUrl))
+            emailService.sendEmail(user.email, "Reset password for airline-club.com", getResetPasswordMessage(user, baseUrl))
           } else {
             println("Want to reset password for " + user.userName + " but email does not match!")
           }
           
-          Ok(html.checkEmail())
+          Ok(views.html.checkEmail())
       }
     )
   }
