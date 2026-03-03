@@ -63,9 +63,9 @@ object GeoDataGenerator extends App {
 
     buildCountryData(airports)
 
-    GenericTransitGenerator.generateGenericTransit()
+    AirportStatsInit.initAirportStats()
 
-//    AssetBlueprintGenerator.generateAssets(airports)
+    GenericTransitGenerator.generateGenericTransit()
 
     Await.result(actorSystem.terminate(), Duration.Inf)
   }
@@ -443,8 +443,6 @@ object GeoDataGenerator extends App {
     .sortBy(_.basePopMiddleIncome)
 
     println(s"Calculated all airport pops & income")
-
-    AirportStatsInit.initAirportStats()
 
     (airports, cityAirportRelationshipsByIata)
   }
