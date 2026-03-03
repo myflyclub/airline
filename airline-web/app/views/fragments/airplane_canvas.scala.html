@@ -147,8 +147,8 @@
 									<div class="sectionContainer" style="display: flex; flex-wrap: wrap;">
 									</div>
                                     <div class="flex-row px-2 pb-1">
-                                        <div><input type="checkbox" onclick="toggleUtilizationRate($('#airplaneCanvas .hangar .sectionContainer'), $(this))" class="toggleUtilizationRateBox"><img src='@routes.Assets.versioned("/images/icons/clock-select-remain.png")' title="Toggle Utilization Rate"/></div>
-                                        <div><input type="checkbox" onclick="toggleCondition($('#airplaneCanvas .hangar .sectionContainer'), $(this))" class="toggleConditionBox"><img src='@routes.Assets.versioned("/images/icons/gear.png")' title="Toggle Airplane Condition"/></div>
+                                        <div><input type="checkbox" onclick="toggleUtilizationRate($('#airplaneCanvas .hangar .sectionContainer'), $(this))" class="toggleUtilizationRateBox"><img src='@routes.Assets.versioned("/images/icons/clock-select-remain.png")' data-tooltip="Toggle Utilization Rate"/></div>
+                                        <div><input type="checkbox" onclick="toggleCondition($('#airplaneCanvas .hangar .sectionContainer'), $(this))" class="toggleConditionBox"><img class="img-button svg hover-rotate" src='@routes.Assets.versioned("images/icons/gear.svg")' data-tooltip="Toggle Airplane Condition"/></div>
                                         <div class="ml-auto flex-align-center">
                                             <div class="tooltip-attr flex-align-center" data-tooltip="Check this to select multiple aircraft">
                                                 <input type="checkbox" onclick="togglePlaneSelect()">

@@ -46,6 +46,11 @@ object AirlineSimulation {
     val currentCycle = MainSimulation.currentWeek
     val airportChampionsByAirlineId : immutable.Map[Int, List[AirportChampionInfo]] = ChampionUtil.loadAirportChampionInfo().groupBy(_.loyalist.airline.id)
 
+    val allAirlineStatsByAirlineId: immutable.Map[Int, List[AirlineStat]] = AirlineStatisticsSource.loadAirlineStatsForAirlineIds(allAirlines.map(_.id)).groupBy(_.airlineId) //used for stock price
+    val latestQuarterStatsByAirlineId: immutable.Map[Int, AirlineStat] = allAirlineStatsByAirlineId.flatMap {
+        case (airlineId, stats) => stats.filter(_.period == Period.QUARTER).maxByOption(_.cycle).map(stat => (airlineId, stat))
+    }
+
     var startTime = System.currentTimeMillis()
     val leaderboardsByAirlineId = RankingSimulation.process(cycle, allAirlines, flightLinkResult, loungeResult, paxStats)
     Util.outputTimeDiff(startTime, "Generating rankings took")
@@ -184,6 +189,10 @@ object AirlineSimulation {
         val perCost = (actualFuelCost / barrelsUsed * 100).toInt.toDouble / 100
         s"Average cost is ~ $perCost per barrel"
       }
+      val carbonTaxDescription = {
+        val taxRate = airline.fuelTaxRate
+        s"Paying ${taxRate} rate%"
+      }
 
       othersSummary.put(OtherIncomeItemType.FUEL_COST, actualFuelCost.toLong)
 
@@ -222,35 +231,28 @@ object AirlineSimulation {
 
       // Record weekly ledger entries
       if (!isBankrupt) {
-        val weeklyLinksLedger = flightLinkResultByAirline.get(airline.id).map { linkConsumptions =>
-          List(
-            AirlineLedgerEntry(airline.id, currentCycle, LedgerType.LINK_REVENUE, linkConsumptions.map(_.revenue).sum),
-            AirlineLedgerEntry(airline.id, currentCycle, LedgerType.LINK_FUEL_COST, -linkConsumptions.map(_.fuelCost).sum),
-            AirlineLedgerEntry(airline.id, currentCycle, LedgerType.LINK_CREW_COST, -linkConsumptions.map(_.crewCost).sum),
-            AirlineLedgerEntry(airline.id, currentCycle, LedgerType.LINK_AIRPORT_FEE, -linkConsumptions.map(_.airportFees).sum),
-            AirlineLedgerEntry(airline.id, currentCycle, LedgerType.LINK_INFLIGHT_COST, -linkConsumptions.map(_.inflightCost).sum),
-            AirlineLedgerEntry(airline.id, currentCycle, LedgerType.LINK_MAINTENANCE_COST, -linkConsumptions.map(_.maintenanceCost).sum),
-            AirlineLedgerEntry(airline.id, currentCycle, LedgerType.LINK_LOUNGE_COST, -linkConsumptions.map(_.loungeCost).sum),
-            AirlineLedgerEntry(airline.id, currentCycle, LedgerType.LINK_DELAY_COMPENSATION, -linkConsumptions.map(_.delayCompensation).sum)
-            //don't record fuel or deprecation here as they're purchased outside links
-          )
-        }.getOrElse(List.empty)
-
-        val companyLedger = List(
-          AirlineLedgerEntry(airline.id, currentCycle, LedgerType.BASE_UPKEEP, othersSummary.getOrElse(OtherIncomeItemType.BASE_UPKEEP, 0L)),
-          AirlineLedgerEntry(airline.id, currentCycle, LedgerType.OVERTIME_COMPENSATION, othersSummary.getOrElse(OtherIncomeItemType.OVERTIME_COMPENSATION, 0L)),
-          AirlineLedgerEntry(airline.id, currentCycle, LedgerType.LOUNGE_UPKEEP, othersSummary.getOrElse(OtherIncomeItemType.LOUNGE_UPKEEP, 0L)),
-          AirlineLedgerEntry(airline.id, currentCycle, LedgerType.LOUNGE_INCOME, othersSummary.getOrElse(OtherIncomeItemType.LOUNGE_INCOME, 0L)),
-          AirlineLedgerEntry(airline.id, currentCycle, LedgerType.ASSET_EXPENSE, othersSummary.getOrElse(OtherIncomeItemType.ASSET_EXPENSE, 0L)),
-          AirlineLedgerEntry(airline.id, currentCycle, LedgerType.ASSET_INCOME, othersSummary.getOrElse(OtherIncomeItemType.ASSET_REVENUE, 0L)),
-          AirlineLedgerEntry(airline.id, currentCycle, LedgerType.ADVERTISEMENT, othersSummary.getOrElse(OtherIncomeItemType.ADVERTISEMENT, 0L)),
-          AirlineLedgerEntry(airline.id, currentCycle, LedgerType.FUEL_COST, othersSummary.getOrElse(OtherIncomeItemType.FUEL_COST, 0L), Some(fuelCostDescription)),
-          AirlineLedgerEntry(airline.id, currentCycle, LedgerType.LOAN_INTEREST, othersSummary.getOrElse(OtherIncomeItemType.LOAN_INTEREST, 0L)),
-          AirlineLedgerEntry(airline.id, currentCycle, LedgerType.LOAN_PRINCIPAL, -1 * loanPrincipal)
+        val weeklyLedger = List(
+            AirlineLedgerEntry(airline.id, currentCycle, LedgerType.LINK_REVENUE, linksIncome.revenue),
+            AirlineLedgerEntry(airline.id, currentCycle, LedgerType.LINK_CREW_COST, linksIncome.crewCost),
+            AirlineLedgerEntry(airline.id, currentCycle, LedgerType.LINK_AIRPORT_FEE, linksIncome.airportFee),
+            AirlineLedgerEntry(airline.id, currentCycle, LedgerType.LINK_INFLIGHT_COST, linksIncome.inflightCost),
+            AirlineLedgerEntry(airline.id, currentCycle, LedgerType.LINK_MAINTENANCE_COST, linksIncome.maintenanceCost),
+            AirlineLedgerEntry(airline.id, currentCycle, LedgerType.LINK_LOUNGE_COST, linksIncome.loungeCost),
+            AirlineLedgerEntry(airline.id, currentCycle, LedgerType.LINK_DELAY_COMPENSATION, linksIncome.delayCompensation),
+            //don't record fuel or deprecation here as they're purchased outside links         
+            AirlineLedgerEntry(airline.id, currentCycle, LedgerType.BASE_UPKEEP, othersSummary.getOrElse(OtherIncomeItemType.BASE_UPKEEP, 0L)),
+            AirlineLedgerEntry(airline.id, currentCycle, LedgerType.OVERTIME_COMPENSATION, othersSummary.getOrElse(OtherIncomeItemType.OVERTIME_COMPENSATION, 0L)),
+            AirlineLedgerEntry(airline.id, currentCycle, LedgerType.LOUNGE_UPKEEP, othersSummary.getOrElse(OtherIncomeItemType.LOUNGE_UPKEEP, 0L)),
+            AirlineLedgerEntry(airline.id, currentCycle, LedgerType.LOUNGE_INCOME, othersSummary.getOrElse(OtherIncomeItemType.LOUNGE_INCOME, 0L)),
+            AirlineLedgerEntry(airline.id, currentCycle, LedgerType.ASSET_EXPENSE, othersSummary.getOrElse(OtherIncomeItemType.ASSET_EXPENSE, 0L)),
+            AirlineLedgerEntry(airline.id, currentCycle, LedgerType.ASSET_INCOME, othersSummary.getOrElse(OtherIncomeItemType.ASSET_REVENUE, 0L)),
+            AirlineLedgerEntry(airline.id, currentCycle, LedgerType.ADVERTISEMENT, othersSummary.getOrElse(OtherIncomeItemType.ADVERTISEMENT, 0L)),
+            AirlineLedgerEntry(airline.id, currentCycle, LedgerType.FUEL_COST, othersSummary.getOrElse(OtherIncomeItemType.FUEL_COST, 0L), Some(fuelCostDescription)),
+            AirlineLedgerEntry(airline.id, currentCycle, LedgerType.CARBON_TAX, linksIncome.fuelTax, Some(carbonTaxDescription)),
+            AirlineLedgerEntry(airline.id, currentCycle, LedgerType.LOAN_PAYMENT, -1 * loanPayment)
         )
 
-        val completeLedger = weeklyLinksLedger ++ companyLedger
-        allLedgerEntries ++= completeLedger
+        allLedgerEntries ++= weeklyLedger
       }
       //saving all at the very end
 
@@ -447,7 +449,7 @@ object AirlineSimulation {
       val stockPrice = if (isBankrupt) {
          0.0
       } else {
-        updateStockPrice(airline.getStockPrice(), airlineWeeklyStats, currentInterestRate)
+        StockModel.updateStockPrice(airline.getStockPrice(), airlineWeeklyStats, latestQuarterStatsByAirlineId.get(airline.id), currentInterestRate)
       }
       airline.setStockPrice(stockPrice)
 
@@ -609,41 +611,6 @@ object AirlineSimulation {
     }
     
     (totalLoanPayment, totalLoanInterest)
-  }
-
-  def updateStockPrice(stockPrice: Double, stats: AirlineStat, currentInterestRate: Double): Double = {
-    val sizeAdjust = Math.min(1, Math.max(0.001, stats.eps / 0.6)) //small airlines shouldn't go too high
-
-    val metricEPS = StockModel.getMetricValue("eps", stats.eps)
-    val metricPASK = StockModel.getMetricValue("pask", stats.RASK - stats.CASK)
-    val metricSF = StockModel.getMetricValue("satisfaction", stats.satisfaction)
-    val metricLinks = StockModel.getMetricValue("link_count", stats.linkCount)
-    val metricOnTime = StockModel.getMetricValue("on_time", stats.onTime) * sizeAdjust
-    val metricCodeshares = StockModel.getMetricValue("codeshares", stats.codeshares)
-    val metricLeaderboard = StockModel.getMetricValue("rep_leaderboards", stats.repLeaderboards)
-    val metricCash = StockModel.getMetricValue("months_cash_on_hand", stats.cashOnHand / 4)
-    val metricInterest = StockModel.getMetricValue("interest", currentInterestRate) * sizeAdjust
-
-    var newPrice = metricEPS
-    newPrice += metricPASK
-    newPrice += metricSF
-    newPrice += metricLinks
-    newPrice += metricOnTime
-    newPrice += metricCodeshares
-    newPrice += metricLeaderboard
-    newPrice += metricCash
-    newPrice += metricInterest
-
-//    println(s"StockPrice metrics: $newPrice, adjust=$sizeAdjust, EPS=$metricEPS, PASK=$metricPASK, SF=$metricSF, Links=$metricLinks, OnTime=$metricOnTime, Airport=$metricAirport, Codeshares=$metricCodeshares, Leaderboard=$metricLeaderboard, Cash=$metricCash, Interest=$metricInterest")
-
-
-    val result = if (newPrice > stockPrice) {
-      stockPrice * 0.15 + Math.pow(Math.max(0.01, newPrice), StockModel.STOCK_EXPONENT) / 10 * 0.85
-    } else {
-      //price falls slower, making buybacks more impactful
-      stockPrice * 0.6 + Math.pow(Math.max(0.01, newPrice), StockModel.STOCK_EXPONENT) / 10 * 0.4
-    }
-    BigDecimal(result).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble
   }
 
   val getNewQuality : (Double, Double) => Double = (currentQuality, targetQuality) =>  {

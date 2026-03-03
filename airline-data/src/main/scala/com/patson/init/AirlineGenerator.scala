@@ -549,7 +549,7 @@ object AirlineGenerator extends App {
           case Some(links) => links.map(_.getCurrentOfficeStaffRequired).sum
           case None => 0
         }
-        val idealBaseLevel: Int = if (base.headquarter) Math.round(staffRequired.toDouble / AirlineBase.BASE_STAFF_PER_LEVEL).toInt else Math.round(staffRequired.toDouble / 60).toInt
+        val idealBaseLevel: Int = if (base.headquarter) Math.round(staffRequired.toDouble / AirlineBase.BASE_STAFF_PER_LEVEL).toInt else Math.round(0.2 + staffRequired.toDouble / AirlineBase.BASE_STAFF_PER_LEVEL).toInt
         val finalBaseLevel = Math.max(1, idealBaseLevel)
 
         desiredManagerBaseDelegates += finalBaseLevel

@@ -260,7 +260,7 @@ function updateAirlineBases() {
                         row.append($("<div class='cell'><img src='/assets/images/icons/building-low.png' class='pr-1'><span style='font-size: 130%;vertical-align: top;'>" + base.scale + "</span></div><div class='cell'>" + getCountryFlagImg(base.countryCode) + base.city + " " + base.airportCode + "</div>"))
                     }
                     var capacityInfo = officeCapacity[base.airportId]
-                    var required = (capacityInfo.staffCapacity < capacityInfo.currentStaffRequired) ? "<span class='fatal'>" + capacityInfo.currentStaffRequired.toFixed(1) + "</span>" : capacityInfo.currentStaffRequired.toFixed(1)
+                    var required = (capacityInfo.staffCapacity < capacityInfo.currentStaffRequired) ? "<span class='fatal'>" + capacityInfo.currentStaffRequired + "</span>" : capacityInfo.currentStaffRequired
 
                     if (capacityInfo.currentStaffRequired != capacityInfo.futureStaffRequired) {
                         row.append($("<div class='cell'>" + required + " | " + capacityInfo.staffCapacity + "<span>(future: " + capacityInfo.futureStaffRequired + ")</span></div>"))

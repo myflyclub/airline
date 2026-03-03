@@ -1,27 +1,3 @@
-const GAME_COLORS = {
-    discounteconomy: "#78cd6b",
-    economy: "#57A34B",
-    business: "#4E79A7",
-    first: "#D6B018",
-    economyEmpty: "#346935",
-    businessEmpty: "#36466D",
-    firstEmpty: "#7A6925",
-    cancelled: "#D66061",
-    empty: "#DDDFDF",
-    tourist: "#fbfe66ff",
-    elite: "#7A4A9D",
-    traveler: "#4ebc36",
-    travelersmalltown: "#4ebc36",
-    olympic: "#D8A62F",
-    olympics: "#D8A62F",
-    codeshares: "#4eafa4",
-    dealseeker: "#57A34B",
-    frequentflyer: "#2163aa",
-    brandsensitive: "#5f3a9f",
-    satisfaction: "#e3b80d",
-    rask: "#1e9b2b",
-    cask: "#e90e0e",
-};
 // helper to lookup chart color case-insensitively with fallback
 function getChartColor(key, fallback) {
     if (key === null || key === undefined || key === '') {

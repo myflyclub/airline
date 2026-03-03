@@ -91,7 +91,7 @@ class BankApplication @Inject()(cc: ControllerComponents) extends AbstractContro
           if (balance < loan.earlyRepayment(currentCycle)) {
             BadRequest("Not enough cash to repay this loan")
           } else {
-            AirlineSource.saveLedgerEntry(AirlineLedgerEntry(request.user.id, currentCycle, LedgerType.LOAN_PRINCIPAL, -1 * loan.earlyRepayment(currentCycle)))
+            AirlineSource.saveLedgerEntry(AirlineLedgerEntry(request.user.id, currentCycle, LedgerType.LOAN_PAYMENT, -1 * loan.earlyRepayment(currentCycle)))
             BankSource.deleteLoan(loanId)
             Ok
           }

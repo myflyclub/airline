@@ -28,7 +28,7 @@ object StockModel {
     "codeshares" ->           StockMetric(4, 100, 100000),
     "rep_leaderboards" ->     StockMetric(4, 0, 200),
     "months_cash_on_hand" ->  StockMetric(4, 48, 12),
-    "interest" ->             StockMetric(4, 0.19, 0)
+    "interest" ->             StockMetric(8, 0.19, 0)
   )
 
   /**
@@ -38,9 +38,43 @@ object StockModel {
    * @param airlineValue
    * @return Double
    */
-  def getMetricValue(metricKey: String, airlineValue: Double): Double = {
+  private def getMetricValue(metricKey: String, airlineValue: Double): Double = {
     val metric: StockMetric = allMetrics.getOrElse(metricKey, StockMetric(0, 0, 0))
     val targetPercent = 1 - (metric.target - airlineValue) / (metric.target - metric.floor)
     metric.value * Math.max(0, Math.min(1, targetPercent))
   }
+
+  private def getStockScore(stats: AirlineStat, currentInterestRate: Double): Double = {
+    val sizeAdjust = (stats.eps / 0.6).max(0.001).min(1.0)
+
+    Seq(
+      StockModel.getMetricValue("eps", stats.eps),
+      StockModel.getMetricValue("pask", stats.RASK - stats.CASK),
+      StockModel.getMetricValue("satisfaction", stats.satisfaction),
+      StockModel.getMetricValue("link_count", stats.linkCount),
+      StockModel.getMetricValue("on_time", stats.onTime) * sizeAdjust,
+      StockModel.getMetricValue("codeshares", stats.codeshares),
+      StockModel.getMetricValue("rep_leaderboards", stats.repLeaderboards),
+      StockModel.getMetricValue("months_cash_on_hand", stats.cashOnHand / 4),
+      StockModel.getMetricValue("interest", currentInterestRate) * sizeAdjust
+    ).sum
+  }
+
+  def updateStockPrice(stockPrice: Double, weeklyStats: AirlineStat, quarterStats: Option[AirlineStat], currentInterestRate: Double): Double = {
+    val weeklyScore = getStockScore(weeklyStats, currentInterestRate)
+    val quarterScore = quarterStats.map(getStockScore(_, currentInterestRate)).getOrElse(weeklyScore)
+
+    val quarterlyBlendWeight = 0.4
+    val blendedScore = weeklyScore * (1 - quarterlyBlendWeight) + quarterScore * quarterlyBlendWeight
+
+    val result = if (blendedScore > stockPrice) {
+      stockPrice * 0.15 + Math.pow(Math.max(0.01, blendedScore), StockModel.STOCK_EXPONENT) / 10 * 0.85
+    } else {
+      //price falls slower, making buybacks more impactful
+      stockPrice * 0.6 + Math.pow(Math.max(0.01, blendedScore), StockModel.STOCK_EXPONENT) / 10 * 0.4
+    }
+    BigDecimal(result).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble
+  }
+
+
 }

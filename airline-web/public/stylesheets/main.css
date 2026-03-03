@@ -40,7 +40,7 @@ html {
     --scrollbar-color: hsl(0, 0%, 60%) hsl(0, 0%, 80%);
     --scrollbar-shadow-color: rgba(0, 0, 0, 0.5);
     --tooltip-background-color: rgba(240, 240, 240, 1.0);
-    --modal-background-color: var(--background-1);
+    --modal-background-color: var(--background-2);
     --modal-content-background-image: var(--section-background-image);
     --chat-current-background: #ffffff;
     --chat-shadow: inset 0 0 2px white, 0 0 3px rgba(0, 0, 0, 0.5);
@@ -54,7 +54,7 @@ html {
     --fallback-background: var(--background-3);
     --highlight-text-color: #dddddd;
     --shadow-1: 0px 0px 2px 0px rgba(0, 0, 0, 0.3);
-    --shadow-2: 0px 0px 2px 0px rgba(0, 0, 0, 0.5);
+    --shadow-2: 0px 0px 8px 1px rgba(0, 0, 0, 0.4);
     --placeholderBlurColorLight: #c0c5d0;
     --placeholderBlurColorDark: #111518;
     --mobile-header-height: 28px;
@@ -204,8 +204,9 @@ p {
     font-size: 12px;
 }
 
-p.info {
+.info {
     font-style: italic;
+    font-weight: normal;
     color: var(--text-color);
     opacity: 0.8;
 }
@@ -770,7 +771,6 @@ li.row, div.table-row {
 }
 .table .table-header .cell.selected, .progressionItem.selected {
     background: var(--table-header-selected-background);
-    box-shadow: var(--table-header-selected-shadow);
     color: var(--table-selected-color);
     text-shadow: var(--table-header-selected-text-shadow);
 }
@@ -988,14 +988,14 @@ a:focus, button:focus {
     vertical-align: middle;
 }
 .img-button {
-  opacity: 0.85;
+  opacity: 0.8;
   cursor: pointer;
   transform: scale(1) translateZ(0); 
   transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.2, 0, 0, 1);
 }
 .img-button:hover {
   opacity: 1;
-  transform: scale(1.02) translateZ(0);
+  transform: scale(1.08) translateZ(0);
 }
 .img-button:active {
   transform: scale(0.98) translateZ(0);
@@ -1148,7 +1148,7 @@ button:disabled {
 
 .section, .modal-content {
     border-radius: 0.5em;
-    box-shadow: var(--shadow-1);
+    box-shadow: var(--shadow-2);
     padding: 20px 20px 32px 20px;
     box-sizing:border-box;
 }
@@ -1257,6 +1257,7 @@ html[data-theme='dark'] .section {
 
 .modal-content h4 {
     margin-top: 1rem;
+    opacity: 0.85;
 }
 
 .modal-content .button:first-of-type {
@@ -1286,7 +1287,7 @@ html[data-theme='dark'] .section {
     grid-gap: 1.25rem;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     width: 100%;
-    margin: 10px 0 20px;
+    margin: 10px 0 40px;
 }
 .modal-grid-options-320 {
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -2097,6 +2098,18 @@ span.glow, img.glow {
     border-radius: 2px;
 }
 
+.hover-rotate {
+  transform: scale(1) rotate(0deg) translateZ(0) !important; 
+  transition: opacity 0.2s ease, transform 1s cubic-bezier(0.2, 0, 0, 1);
+}
+.hover-rotate:hover {
+  box-shadow: var(--table-header-selected-shadow);
+  transform: scale(1.02) rotate(60deg) translateZ(0) !important;
+}
+.hover-rotate:active {
+  transform: scale(0.98) rotate(60deg) translateZ(0) !important;
+}
+
 @keyframes glow {
     from {
         box-shadow: 0 0 5px -5px #C0D4F8;
@@ -2525,6 +2538,7 @@ i, .italic {
     margin: 12px auto;
     width: max-content;
 }
+.pull-left { float: left; }
 
 /* ========================================
    Utility Classes - Flex Containers

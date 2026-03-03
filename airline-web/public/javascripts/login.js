@@ -172,6 +172,9 @@ async function doPostLoginSetup(user) {
     // Airline-specific setup
     if (user.airlineIds && user.airlineIds.length > 0) {
         await selectAirline(user.airlineIds[0]);
+        if (window.AirlineMap && activeAirline) {
+            AirlineMap.centerOnHQ(activeAirline, 8);
+        }
         initPrompts();
         updateAirlineLabelColors();
         try {

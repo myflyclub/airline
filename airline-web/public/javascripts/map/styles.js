@@ -43,9 +43,9 @@ const PALETTES = {
         boundary: '#7890a8',
         boundaryOpacity: 0.7,
         runwayGlow: '#ffffff',
-        runway: '#5a6470',
-        taxiway: '#7a8898',
-        roads: '#707880',
+        runway: '#4c545e',
+        taxiway: '#6f7b89',
+        roads: '#97a2ac',
         rail: '#5588bb',
         buildings: '#bcc4d0',
         buildingsLandmark: '#9aa4b4',
@@ -153,7 +153,7 @@ function createTheme(name) {
             protomaps: {
                 type: 'vector',
                 tiles: [`https://api.protomaps.com/tiles/v4/{z}/{x}/{y}.mvt?key=${window.protomapsKey}`],
-                maxzoom: isDark ? 15 : 9,
+                maxzoom: 12,
                 attribution: '<a href="https://protomaps.com">Protomaps</a> | <a href="https://openstreetmap.org">OSM</a>'
             }
         },

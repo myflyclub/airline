@@ -232,7 +232,7 @@
 										<div class="link-decoration-circle"></div>
 									</div>
 									<div>
-										<p class="text-lg pb-1"><a class="clickable" id="planLinkFromAirportName"></a><img id="planLinkFromAirportEditIcon" src='@routes.Assets.versioned("/images/icons/gear.png")' class='clickable' onclick="$('#planLinkFromAirportSelect').show()"  title="Change From Airport"></p>
+										<p class="text-lg pb-1"><a class="clickable" id="planLinkFromAirportName"></a><img class="img-button svg hover-rotate" src='@routes.Assets.versioned("images/icons/gear.svg")' id="planLinkFromAirportEditIcon" onclick="$('#planLinkFromAirportSelect').show()" title="Change From Airport"></p>
 										<div class="value"><select class="select-css" id="planLinkFromAirportSelect" onchange="planLink($(this).val(), $('#planLinkToAirportId').val())"></select></div>
 										<p class="leading-snug"><span id="planLinkDistance"></span> <i class="planLinkFlightType"></i></p>
 										<p class="text-lg"><a class="clickable" id="planLinkToAirportName"></a></p>
@@ -245,7 +245,7 @@
 										<span id="planLinkToCountryTitle"><img class="airlineTitleIcon svg" style='display: none;'>&nbsp;<span class="airlineTitle titleCue"></span></span>,
 										<span id="planLinkToCountryRelationship">
 												<span class="total"></span>
-												<img class="pb-1 clickable detailsIcon titleCue" src='@routes.Assets.versioned("/images/icons/gear.png")' title='Manage Relationship' class="clickable detailsIcon titleCue" onclick="showRelationshipDetailsModal($(this).data('relationship'), $(this).data('title'), $(this).data('countryCode'))" style="vertical-align: middle;">
+												<img class="pb-1 img-button svg hover-rotate detailsIcon titleCue" src='@routes.Assets.versioned("images/icons/gear.svg")' title='Manage Relationship' class="clickable detailsIcon titleCue" onclick="showRelationshipDetailsModal($(this).data('relationship'), $(this).data('title'), $(this).data('countryCode'))" style="vertical-align: middle;">
 											</span>
 									</p></div>
 								</div>
@@ -397,7 +397,7 @@
 														<input type="checkbox" onclick="toggleUtilizationRate($('#planLinkAirplaneSelect'), $(this))" class="toggleUtilizationRateBox"/>
 														<img src='@routes.Assets.versioned("/images/icons/clock-select-remain.png")' title="Toggle Utilization Rate">
 														<input type="checkbox" onclick="toggleCondition($('#planLinkAirplaneSelect'), $(this))" class="toggleConditionBox"/>
-														<img src='@routes.Assets.versioned("/images/icons/gear.png")' title="Toggle Airplane Condition">
+														<img class="img-button svg hover-rotate" src='@routes.Assets.versioned("images/icons/gear.svg")' data-tooltip="Toggle Airplane Condition">
 													</div>
 												</div>
 											</p>

@@ -218,8 +218,6 @@ object LedgerType extends Enumeration {
   type LedgerType = Value
   // Link operations — recorded as weekly aggregates per airline
   val LINK_REVENUE,
-      LINK_FUEL_COST,
-      LINK_FUEL_TAX,
       LINK_CREW_COST,
       LINK_AIRPORT_FEE,
       LINK_INFLIGHT_COST,
@@ -234,10 +232,10 @@ object LedgerType extends Enumeration {
       ASSET_EXPENSE,
       ASSET_INCOME,
       ADVERTISEMENT,
-      FUEL_COST = Value
+      FUEL_COST,
+      CARBON_TAX = Value
   // Financing — weekly aggregates
-  val LOAN_INTEREST,
-      LOAN_PRINCIPAL,
+  val LOAN_PAYMENT,
       LOAN_DISBURSEMENT = Value
   // Capital events — one entry per event
   val BUY_AIRPLANE,

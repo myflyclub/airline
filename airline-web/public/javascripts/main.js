@@ -7,6 +7,30 @@ var airlineColors = {}
 var airlineLabelColors = {}
 var polylines = []
 var notes = {}
+const GAME_COLORS = {
+    discounteconomy: "#78cd6b",
+    economy: "#57A34B",
+    business: "#4E79A7",
+    first: "#D6B018",
+    economyEmpty: "#346935",
+    businessEmpty: "#36466D",
+    firstEmpty: "#7A6925",
+    cancelled: "#D66061",
+    empty: "#DDDFDF",
+    tourist: "#c3a319",
+    elite: "#7A4A9D",
+    traveler: "#4ebc36",
+    travelersmalltown: "#4ebc36",
+    olympic: "#a7941d",
+    olympics: "#a7941d",
+    codeshares: "#4eafa4",
+    dealseeker: "#57A34B",
+    frequentflyer: "#2163aa",
+    brandsensitive: "#5f3a9f",
+    satisfaction: "#e3b80d",
+    rask: "#1e9b2b",
+    cask: "#e90e0e",
+};
 
 function registerEscape() {
     const modals = document.getElementsByClassName('modal')

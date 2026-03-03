@@ -4,7 +4,7 @@
 						<div class="section min-w-52 max-w-260px">
 							<h2 class="text-center text-underline">
 								<span class="airlineName">Airline Name</span>
-								<span class="clickable editButton"><img src='@routes.Assets.versioned("/images/icons/gear.png")'style="vertical-align: middle;" onclick="editAirlineName()"/></span>
+                                <img class="img-button svg hover-rotate" src='@routes.Assets.versioned("images/icons/gear.svg")' onclick="editAirlineName()"/>
 							</h2>
 							<span class="airlineNameInputSpan" style="display: none;">
 								<input id="airlineNameInput" class="airlineNameInput" type="text" />
@@ -48,7 +48,7 @@
 							<p>Target Employee Quality:
 								<span id="serviceFundingDisplaySpan">
 									<span id="targetServiceQuality"></span>
-									<img src='@routes.Assets.versioned("/images/icons/gear.png")' class='img-button' style="vertical-align: sub;" onclick="editTargetServiceQuality()"/>
+									<img class="img-button svg hover-rotate" src='@routes.Assets.versioned("images/icons/gear.svg")' onclick="editTargetServiceQuality()"/>
 								</span>
 								<span id="serviceFundingInputSpan">
 									<input id="targetServiceQualityInput" type="number" size="3" maxlength="3" onkeyup="checkTargetServiceQualityInput($(this).val())"/>
@@ -74,7 +74,7 @@
 							<p>Auto Renewal:
 								<span id="airplaneRenewalDisplaySpan">
 									<span id="airplaneRenewal"></span>
-									<img src='@routes.Assets.versioned("/images/icons/gear.png")' class='img-button' style="vertical-align: sub;" onclick="editAirplaneRenewal()"/>
+									<img class="img-button svg hover-rotate" src='@routes.Assets.versioned("images/icons/gear.svg")' onclick="editAirplaneRenewal()"/>
 								</span>
 								<span id="airplaneRenewalInputSpan" style="display:none;">
 									Condition Below&nbsp;<input id="airplaneRenwalInput" type="number" maxlength="2" size="2"/>% Age
@@ -84,7 +84,7 @@
 							</p>
 							<p class="pb-4">Minimum Balance: Above <span id="minimumRenewalBalanceDisplaySpan">
 								<span id="minimumRenewalBalance"></span>
-									<img src='@routes.Assets.versioned("/images/icons/gear.png")' class='img-button' style="vertical-align: sub;" onclick="editMinimumRenewalBalance()"/>
+									<img class="img-button svg hover-rotate" src='@routes.Assets.versioned("images/icons/gear.svg")' onclick="editMinimumRenewalBalance()"/>
 								</span>
 								<span id="minimumRenewalBalanceInputSpan" style="display:none;">
 									Minimum balance&nbsp;<input id="minimumRenewalBalanceInput" type="number" maxlength="12" size="2" onkeyup="checkEditMinimumRenewalBalanceInput($(this).val())"/>
@@ -349,15 +349,15 @@
 								</div>
 							</div>
 <!-- end income statement -->
-							<div style="display: none;" id="ledgerSheet" class="contents">
-								<div class="table data rounded-none">
+							<div style="display: none;" id="ledgerSheet" class="sheet">
+								<div class="table data mt-4 p-0 rounded-none">
 									<div class="table-header">
 										<div class="cell" style="flex: 0 0 68px;">Tx #</div>
 										<div class="cell" style="flex: 2;">Type</div>
 										<div class="cell" style="flex: 4;">Description</div>
 										<div class="cell" style="flex: 0 0 120px; text-align: right;">Amount</div>
 									</div>
-									<div id="ledgerEntries" class="display-contents"></div>
+									<div id="ledgerEntries" class="contents"></div>
 								</div>
                                 <p class="text-sm opacity-80 pt-8">The ledger shows all credits and debits to your airline balance. It is the most accurate and fundamental record of your financial activity.</p>
 							</div>
@@ -526,11 +526,11 @@
                                     <div class="cell value">
                                         <span id="airlineCodeDisplaySpan">
                                             <span id="airlineCode"></span>
-                                            <img src='@routes.Assets.versioned("/images/icons/gear.png")' class='img-button' style="vertical-align: middle;" onclick="editAirlineCode()" />
+                                            <img class="img-button svg hover-rotate" src='@routes.Assets.versioned("images/icons/gear.svg")' onclick="editAirlineCode()" />
                                         </span>
                                         <span id="airlineCodeInputSpan" style="display: none;">
                                             <input id="airlineCodeInput" type="text" onkeyup="validateAirlineCode($(this).val())" />
-                                            <img src='@routes.Assets.versioned("/images/icons/tick.svg")' class='img-button' style="vertical-align: middle;" onclick="setAirlineCode($('#airlineCodeInput').val())" />
+                                            <img class="img-button svg hover-rotate" src='@routes.Assets.versioned("/images/icons/tick.svg")' onclick="setAirlineCode($('#airlineCodeInput').val())" />
                                             <span class="warning" style="display:none;">Code should be exactly 2 letters</span>
                                         </span>
                                     </div>
@@ -546,7 +546,7 @@
                                     <div class="cell value">
                                         <img class="airlineLogo" src='#'>
                                         <div class="flex-row pt-1 pb-4">
-                                            <img src='@routes.Assets.versioned("/images/icons/gear.png")' class='img-button' style="vertical-align: middle;" onclick="editAirlineLogo()" />
+                                            <img class="img-button svg hover-rotate" src='@routes.Assets.versioned("images/icons/gear.svg")'  data-tooltip="Edit Logo" onclick="editAirlineLogo()" />
                                             <img src='@routes.Assets.versioned("/images/icons/picture--plus.png")' data-tooltip='Upload custom logo' class='img-button' style="vertical-align: middle;" onclick="showUploadLogo()" />
                                         </div>
                                     </div>
@@ -602,8 +602,8 @@
 
                         <div class="section" >
 							<div style="display: flex; align-items: base-line;">
-								<span><h4>Campaigns</h4></span>
-								<span><img src='@routes.Assets.versioned("/images/icons/gear.png")' class='img-button' onclick="showCampaignModal()" title="View/Edit Campaigns"/></span>
+								<span><h4>Advertising Campaigns</h4></span>
+								<img class="img-button svg hover-rotate" src='@routes.Assets.versioned("images/icons/gear.svg")' onclick="showCampaignModal()" data-tooltip="View/Edit Campaigns"/></span>
 							</div>
 							<div class="campaignSummary table data" style="width: 100%; height: 20px;">
 								<div class="table-header">
