@@ -193,9 +193,6 @@ object Meta {
       "stock_price DOUBLE DEFAULT 0," +
       "reputation DECIMAL(6,2)," +
       "country_code CHAR(2)," +
-      "airline_code CHAR(2)," +
-      "color CHAR(7)," +
-      "skip_tutorial TINYINT," +
       "initialized TINYINT," +
       "minimum_renewal_balance INTEGER DEFAULT 0," +
       "prestige_points INTEGER UNSIGNED," +
@@ -634,6 +631,9 @@ object Meta {
       "airline INTEGER, " +
       "slogan VARCHAR(256), " +
       "founded_cycle INTEGER, " +
+      "airline_code CHAR(2) DEFAULT NULL, " +
+      "color CHAR(7) DEFAULT NULL, " +
+      "skip_tutorial TINYINT NOT NULL DEFAULT 0, " +
       "PRIMARY KEY (airline)," +
       "FOREIGN KEY(airline) REFERENCES " + AIRLINE_TABLE + "(id) ON DELETE CASCADE ON UPDATE CASCADE" +
       ")")

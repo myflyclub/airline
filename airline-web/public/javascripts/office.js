@@ -910,7 +910,15 @@ function setAirplaneRenewal(threshold) {
 	    contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
 	    success: function(result) {
-	    	updateAirplaneRenewalDetails()
+	    	if (result.threshold) {
+	    		$('#airplaneRenewal').text('Below ' + result.threshold + "%")
+	    		$('#airplaneRenewalInput').val(result.threshold)
+	    	} else {
+	    		$('#airplaneRenewal').text('-')
+	    		$('#airplaneRenewalInput').val(40)
+	    	}
+	    	$('#airplaneRenewalDisplaySpan').show()
+	    	$('#airplaneRenewalInputSpan').hide()
 	    },
         error: function(jqXHR, textStatus, errorThrown) {
 	            console.log(JSON.stringify(jqXHR));
@@ -973,9 +981,10 @@ function setAirlineCode(airlineCode) {
 	    data: JSON.stringify(data),
 	    contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
-	    success: function(airline) {
-	    	activeAirline = airline
-	    	$('#airlineCode').text(airline.airlineCode)
+	    success: function(result) {
+	    	activeAirline.airlineCode = result.airlineCode
+	    	$('#airlineCode').text(result.airlineCode)
+	    	$('#airlineCodeInput').val(result.airlineCode)
 	    	$('#airlineCodeInputSpan').hide()
 	    	$('#airlineCodeDisplaySpan').show()
 	    },

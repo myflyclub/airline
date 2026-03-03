@@ -75,12 +75,8 @@ case class Airline(name: String, var airlineType: AirlineType = LegacyAirline, v
     airlineInfo.countryCode
   }
 
-  def setAirlineCode(airlineCode : String) = {
-    airlineInfo.airlineCode = airlineCode
-  }
-
   def getAirlineCode() = {
-    airlineInfo.airlineCode
+    airlineMeta.airlineCode.getOrElse(getDefaultAirlineCode())
   }
 
   def getMinimumRenewalBalance() = {
@@ -91,12 +87,8 @@ case class Airline(name: String, var airlineType: AirlineType = LegacyAirline, v
     airlineInfo.prestigePoints
   }
 
-  def setSkipTutorial(value : Boolean) = {
-    airlineInfo.skipTutorial = value
-  }
-
   def isSkipTutorial = {
-    airlineInfo.skipTutorial
+    airlineMeta.skipTutorial
   }
 
   def setInitialized(value : Boolean) = {
@@ -153,6 +145,7 @@ case class Airline(name: String, var airlineType: AirlineType = LegacyAirline, v
   def getBalance() = airlineInfo.balance
 
   def getActionPoints() = airlineInfo.actionPoints
+  /** Updated in-memory by adjustAirlineActionPoints/adjustAirlineActionPointsBatch. Do not call saveAirlineInfo() to persist this value. */
   def setActionPoints(v: Double) = { airlineInfo.actionPoints = v }
 
   def getCurrentServiceQuality() = airlineInfo.currentServiceQuality
@@ -187,6 +180,7 @@ case class Airline(name: String, var airlineType: AirlineType = LegacyAirline, v
     code
   }
 
+  lazy val airlineMeta: AirlineMeta = AirlineSource.loadAirlineMeta(id)
   lazy val slogan = AirlineSource.loadSlogan(id)
   lazy val previousNames = AirlineSource.loadPreviousNameHistory(id).sortBy(_.updateTimestamp.getTime)(Ordering.Long.reverse).map(_.name)
 
@@ -220,7 +214,9 @@ case class DelegateInfo(availableCount : Int, boosts : List[DelegateBoostAirline
 
 }
 
-case class AirlineInfo(var balance : Long, var currentServiceQuality : Double, var stockPrice : Double, var sharesOutstanding : Int, var targetServiceQuality : Int, var reputation : Double, var minimumRenewalBalance: Long, var actionPoints: Double = 0.0, var countryCode : Option[String] = None, var airlineCode : String = "", var skipTutorial : Boolean = false, var initialized : Boolean = false)
+case class AirlineInfo(var balance : Long, var currentServiceQuality : Double, var stockPrice : Double, var sharesOutstanding : Int, var targetServiceQuality : Int, var reputation : Double, var minimumRenewalBalance: Long, var actionPoints: Double = 0.0, var countryCode : Option[String] = None, var initialized : Boolean = false, var prestigePoints: Int = 0)
+
+case class AirlineMeta(airlineCode: Option[String] = None, color: Option[String] = None, skipTutorial: Boolean = false)
 
 object LedgerType extends Enumeration {
   type LedgerType = Value

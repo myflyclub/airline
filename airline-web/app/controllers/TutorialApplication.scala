@@ -18,13 +18,11 @@ class TutorialApplication @Inject()(cc: ControllerComponents) extends AbstractCo
   }
 
   def setSkipTutorial(airlineId: Int, skipTutorial: Boolean)= AuthenticatedAirline(airlineId) { request =>
-    val airline = request.user
-    airline.setSkipTutorial(skipTutorial)
-    AirlineSource.saveAirlineInfo(airline, false)
+    AirlineSource.saveSkipTutorial(airlineId, skipTutorial)
     if (!skipTutorial) { //resetting
       TutorialSource.deleteTutorialsByAirline(airlineId)
     }
 
-    Ok(Json.toJson(airline))
+    Ok(Json.toJson(request.user))
   }
 }

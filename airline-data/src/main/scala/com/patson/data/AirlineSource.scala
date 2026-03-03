@@ -66,14 +66,13 @@ object AirlineSource {
             airline.setTargetServiceQuality(resultSet.getInt("target_service_quality"))
             airline.setStockPrice(resultSet.getDouble("stock_price"))
             airline.setSharesOutstanding(resultSet.getInt("shares_outstanding"))
-            airline.setAirlineCode(resultSet.getString("airline_code"))
             airline.setMinimumRenewalBalance(resultSet.getLong("minimum_renewal_balance"))
             airline.setActionPoints(resultSet.getDouble("action_point"))
+            airline.setPrestigePoints(resultSet.getInt("prestige_points"))
             val countryCode = resultSet.getString("country_code")
             if (countryCode != null) {
               airline.setCountryCode(countryCode)
             }
-            airline.setSkipTutorial(resultSet.getBoolean("skip_tutorial"))
             airline.setInitialized(resultSet.getBoolean("initialized"))
             airlines += airline
           }
@@ -134,16 +133,16 @@ object AirlineSource {
             println("Id is " + generatedId)
             airline.id = generatedId
 
-            Using.resource(connection.prepareStatement("INSERT INTO " + AIRLINE_INFO_TABLE + "(airline, balance, service_quality, target_service_quality, stock_price, shares_outstanding, reputation, country_code, airline_code, minimum_renewal_balance) VALUES(?,?,?,?,?,?,?,?,?,?)")) { infoStatement =>
+            Using.resource(connection.prepareStatement("INSERT INTO " + AIRLINE_INFO_TABLE + "(airline, balance, action_point, service_quality, target_service_quality, stock_price, shares_outstanding, reputation, country_code, minimum_renewal_balance) VALUES(?,?,?,?,?,?,?,?,?,?)")) { infoStatement =>
               infoStatement.setInt(1, airline.id)
               infoStatement.setLong(2, airline.getBalance())
-              infoStatement.setDouble(3, airline.getCurrentServiceQuality())
-              infoStatement.setInt(4, airline.getTargetServiceQuality())
-              infoStatement.setDouble(5, airline.getStockPrice())
-              infoStatement.setInt(6, airline.getSharesOutstanding())
-              infoStatement.setDouble(7, airline.getReputation())
-              infoStatement.setString(8, airline.getCountryCode().orNull)
-              infoStatement.setString(9, airline.getAirlineCode())
+              infoStatement.setDouble(3, airline.getActionPoints())
+              infoStatement.setDouble(4, airline.getCurrentServiceQuality())
+              infoStatement.setInt(5, airline.getTargetServiceQuality())
+              infoStatement.setDouble(6, airline.getStockPrice())
+              infoStatement.setInt(7, airline.getSharesOutstanding())
+              infoStatement.setDouble(8, airline.getReputation())
+              infoStatement.setString(9, airline.getCountryCode().orNull)
               infoStatement.setLong(10, airline.getMinimumRenewalBalance())
               infoStatement.executeUpdate()
             }
@@ -209,17 +208,23 @@ object AirlineSource {
     }
   }
 
-  def adjustAirlineActionPointsBatch(deltas : Map[Int, Double]) = {
+  def adjustAirlineActionPoints(airline: Airline, delta: Double): Unit = {
+    airline.setActionPoints(airline.getActionPoints() + delta)
+    adjustAirlineActionPoints(airline.id, delta)
+  }
+
+  def adjustAirlineActionPointsBatch(deltas : Map[Airline, Double]) = {
     if (deltas.nonEmpty) {
       this.synchronized {
         Using.resource(Meta.getConnection()) { connection =>
           connection.setAutoCommit(false)
           Using.resource(connection.prepareStatement("UPDATE " + AIRLINE_INFO_TABLE + " SET action_point = action_point + ? WHERE airline = ?")) { updateStatement =>
-            deltas.foreach { case (airlineId, delta) =>
+            deltas.foreach { case (airline, delta) =>
+              airline.setActionPoints(airline.getActionPoints() + delta)
               updateStatement.setDouble(1, delta)
-              updateStatement.setInt(2, airlineId)
+              updateStatement.setInt(2, airline.id)
               updateStatement.addBatch()
-              AirlineCache.invalidateAirline(airlineId)
+              AirlineCache.invalidateAirline(airline.id)
             }
             updateStatement.executeBatch()
           }
@@ -235,7 +240,7 @@ object AirlineSource {
       if (updateBalance) {
         query += "balance = ?, "
       }
-      query += "service_quality = ?, target_service_quality = ?, stock_price = ?, shares_outstanding = ?, reputation = ?, country_code = ?, airline_code = ?, skip_tutorial = ?, initialized = ?, minimum_renewal_balance = ? WHERE airline = ?"
+      query += "action_point = ?, service_quality = ?, target_service_quality = ?, stock_price = ?, shares_outstanding = ?, reputation = ?, country_code = ?, initialized = ?, minimum_renewal_balance = ?, prestige_points = ? WHERE airline = ?"
 
       Using.resource(Meta.getConnection()) { connection =>
         Using.resource(connection.prepareStatement(query)) { updateStatement =>
@@ -245,6 +250,8 @@ object AirlineSource {
             index += 1
             updateStatement.setLong(index, airline.getBalance())
           }
+          index += 1
+          updateStatement.setDouble(index, airline.getActionPoints())
           index += 1
           updateStatement.setDouble(index, airline.getCurrentServiceQuality())
           index += 1
@@ -258,13 +265,11 @@ object AirlineSource {
           index += 1
           updateStatement.setString(index, airline.getCountryCode().orNull)
           index += 1
-          updateStatement.setString(index, airline.getAirlineCode())
-          index += 1
-          updateStatement.setBoolean(index, airline.isSkipTutorial)
-          index += 1
           updateStatement.setBoolean(index, airline.isInitialized)
           index += 1
           updateStatement.setLong(index, airline.getMinimumRenewalBalance())
+          index += 1
+          updateStatement.setInt(index, airline.getPrestigePoints())
           index += 1
           updateStatement.setInt(index, airline.id)
           updateStatement.executeUpdate()
@@ -277,9 +282,9 @@ object AirlineSource {
   def saveAirlineCode(airlineId : Int, airlineCode : String) = {
     this.synchronized {
       Using.resource(Meta.getConnection()) { connection =>
-        Using.resource(connection.prepareStatement("UPDATE " + AIRLINE_INFO_TABLE + " SET airline_code = ? WHERE airline = ?")) { updateStatement =>
-          updateStatement.setString(1, airlineCode)
-          updateStatement.setInt(2, airlineId)
+        Using.resource(connection.prepareStatement("INSERT INTO " + AIRLINE_META_TABLE + " (airline, airline_code) VALUES(?, ?) ON DUPLICATE KEY UPDATE airline_code = VALUES(airline_code)")) { updateStatement =>
+          updateStatement.setInt(1, airlineId)
+          updateStatement.setString(2, airlineCode)
           updateStatement.executeUpdate()
         }
         AirlineCache.invalidateAirline(airlineId)
@@ -289,7 +294,7 @@ object AirlineSource {
 
   def saveAirlinesInfo(airlines : List[Airline]) = {
     this.synchronized {
-      val query = "UPDATE " + AIRLINE_INFO_TABLE + " SET service_quality = ?, target_service_quality = ?, stock_price = ?, shares_outstanding = ?, reputation = ?, minimum_renewal_balance = ? WHERE airline = ?"
+      val query = "UPDATE " + AIRLINE_INFO_TABLE + " SET service_quality = ?, target_service_quality = ?, stock_price = ?, shares_outstanding = ?, reputation = ?, minimum_renewal_balance = ?, prestige_points = ? WHERE airline = ?"
 
       Using.resource(Meta.getConnection()) { connection =>
         connection.setAutoCommit(false)
@@ -308,6 +313,8 @@ object AirlineSource {
             updateStatement.setDouble(index, airline.getReputation())
             index += 1
             updateStatement.setLong(index, airline.getMinimumRenewalBalance())
+            index += 1
+            updateStatement.setInt(index, airline.getPrestigePoints())
             index += 1
             updateStatement.setInt(index, airline.id)
             updateStatement.addBatch()
@@ -813,19 +820,21 @@ object AirlineSource {
 
 
   def saveColor(airlineId : Int, color : String) = {
-    Using.resource(Meta.getConnection()) { connection =>
-      Using.resource(connection.prepareStatement("UPDATE " + AIRLINE_INFO_TABLE + " SET color = ? WHERE airline = ?")) { preparedStatement =>
-        preparedStatement.setString(1, color)
-        preparedStatement.setInt(2, airlineId)
-        preparedStatement.executeUpdate()
+    this.synchronized {
+      Using.resource(Meta.getConnection()) { connection =>
+        Using.resource(connection.prepareStatement("INSERT INTO " + AIRLINE_META_TABLE + " (airline, color) VALUES(?, ?) ON DUPLICATE KEY UPDATE color = VALUES(color)")) { preparedStatement =>
+          preparedStatement.setInt(1, airlineId)
+          preparedStatement.setString(2, color)
+          preparedStatement.executeUpdate()
+        }
+        AirlineCache.invalidateAirline(airlineId)
       }
-      AirlineCache.invalidateAirline(airlineId)
     }
   }
 
   def getColors() = {
     Using.resource(Meta.getConnection()) { connection =>
-      Using.resource(connection.prepareStatement("SELECT airline, color FROM " + AIRLINE_INFO_TABLE + " WHERE color IS NOT NULL")) { preparedStatement =>
+      Using.resource(connection.prepareStatement("SELECT airline, color FROM " + AIRLINE_META_TABLE + " WHERE color IS NOT NULL")) { preparedStatement =>
         Using.resource(preparedStatement.executeQuery()) { resultSet =>
           val colors = scala.collection.mutable.Map[Int, String]()
           while (resultSet.next()) {
@@ -833,6 +842,38 @@ object AirlineSource {
           }
           colors.toMap
         }
+      }
+    }
+  }
+
+  def loadAirlineMeta(airlineId: Int): AirlineMeta = {
+    Using.resource(Meta.getConnection()) { connection =>
+      Using.resource(connection.prepareStatement("SELECT airline_code, color, skip_tutorial FROM " + AIRLINE_META_TABLE + " WHERE airline = ?")) { preparedStatement =>
+        preparedStatement.setInt(1, airlineId)
+        Using.resource(preparedStatement.executeQuery()) { resultSet =>
+          if (resultSet.next()) {
+            AirlineMeta(
+              airlineCode = Option(resultSet.getString("airline_code")),
+              color = Option(resultSet.getString("color")),
+              skipTutorial = resultSet.getBoolean("skip_tutorial")
+            )
+          } else {
+            AirlineMeta()
+          }
+        }
+      }
+    }
+  }
+
+  def saveSkipTutorial(airlineId: Int, skipTutorial: Boolean) = {
+    this.synchronized {
+      Using.resource(Meta.getConnection()) { connection =>
+        Using.resource(connection.prepareStatement("INSERT INTO " + AIRLINE_META_TABLE + " (airline, skip_tutorial) VALUES(?, ?) ON DUPLICATE KEY UPDATE skip_tutorial = VALUES(skip_tutorial)")) { preparedStatement =>
+          preparedStatement.setInt(1, airlineId)
+          preparedStatement.setBoolean(2, skipTutorial)
+          preparedStatement.executeUpdate()
+        }
+        AirlineCache.invalidateAirline(airlineId)
       }
     }
   }

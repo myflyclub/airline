@@ -249,6 +249,8 @@ object AirlineGenerator extends App {
     println(s"generating $name at ${hqAirport.iata} with ${modelFamily.toString()}")
 
     AirlineSource.saveAirlines(List(airline))
+    AirlineSource.saveAirlineCode(airline.id, airline.getDefaultAirlineCode())
+    AirlineSource.saveSkipTutorial(airline.id, true)
     UserSource.setUserAirline(user, airline)
     AirlineSource.saveAirlineInfo(airline, false)
     AirlineSource.saveAirplaneRenewal(airline.id, 60)
@@ -285,9 +287,7 @@ object AirlineGenerator extends App {
     airline.setCurrentServiceQuality(currentServiceQuality)
     airline.setSharesOutstanding(400000000)
     airline.setReputation(reputation)
-    airline.setSkipTutorial(true)
     airline.setCountryCode(hqAirport.countryCode)
-    airline.setAirlineCode(airline.getDefaultAirlineCode())
     airline
   }
 

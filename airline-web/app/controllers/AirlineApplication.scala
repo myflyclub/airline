@@ -102,7 +102,6 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
         "fuelTaxRate" -> airline.fuelTaxRate,
         "serviceQuality" -> airline.airlineInfo.currentServiceQuality,
         "targetServiceQuality" -> airline.airlineInfo.targetServiceQuality,
-        "skipTutorial" -> airline.isSkipTutorial,
       )
     }
   }
@@ -1013,10 +1012,8 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
 
       airlineCode = airlineCode.toUpperCase()
 
-      val airline = request.user
-      airline.setAirlineCode(airlineCode)
       AirlineSource.saveAirlineCode(airlineId, airlineCode)
-      Ok(Json.toJson(airline))
+      Ok(Json.obj("airlineCode" -> airlineCode))
     } else {
       BadRequest("Cannot Set airline Code")
     }

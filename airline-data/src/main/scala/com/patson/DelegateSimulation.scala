@@ -16,7 +16,7 @@ object DelegateSimulation {
         else 0.1
 
       val gained = rate * available
-      if (gained > 0) Some(airline.id -> gained) else None
+      if (gained > 0) Some(airline -> gained) else None
     }.to(scala.collection.mutable.Map)
 
     AirlineSource.adjustAirlineActionPointsBatch(apDeltas)

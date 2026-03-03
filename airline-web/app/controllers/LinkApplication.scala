@@ -422,7 +422,7 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
 
     negotiationResultOption.foreach { negotiationResult =>
       //deduct action points
-      AirlineSource.adjustAirlineActionPoints(airlineId, -delegateCount.toDouble)
+      AirlineSource.adjustAirlineActionPoints(airline, -delegateCount.toDouble)
 
       val cycle = CycleSource.loadCycle()
 

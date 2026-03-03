@@ -37,7 +37,6 @@ package object controllers {
         "reputation" -> airline.getReputation(),
         "gradeValue" -> airline.airlineGrade.level,
         "gradeDescription" -> airline.airlineGrade.description,
-        "airlineCode" -> airline.getAirlineCode(),
         "baseCount" -> airline.getBases().size,
         "type" -> airline.airlineType.label,
         "prestigePoints" -> airline.getPrestigePoints()
