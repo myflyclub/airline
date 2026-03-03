@@ -50,6 +50,7 @@ class RivalsApplication @Inject()(cc: ControllerComponents)(implicit ec: Executi
             "currentPrice" -> BigDecimal(airline.getStockPrice()).setScale(2, BigDecimal.RoundingMode.HALF_UP),
             "alliance" -> JsString(airlineAllianceMap.getOrElse(airline.id, "")),
             "foundedCycle" -> foundedCycles.get(airline.id).fold(JsNull: JsValue)(c => JsNumber(c))
+            "prestigePoints" -> airline.getPrestigePoints()
           )
         })
 

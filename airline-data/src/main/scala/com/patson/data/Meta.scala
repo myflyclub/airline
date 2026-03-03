@@ -198,6 +198,7 @@ object Meta {
       "skip_tutorial TINYINT," +
       "initialized TINYINT," +
       "minimum_renewal_balance INTEGER DEFAULT 0," +
+      "prestige_points INTEGER UNSIGNED," +
       "FOREIGN KEY(airline) REFERENCES " + AIRLINE_TABLE + "(id) ON DELETE CASCADE ON UPDATE CASCADE" +
       ")")
 
@@ -281,6 +282,7 @@ object Meta {
     createAirportStatistics(connection)
     createWorldStatistics(connection)
     createRankingLeaderboard(connection)
+    createPrestige(connection)
 
     statement = connection.prepareStatement("CREATE TABLE " + AIRPORT_CITY_SHARE_TABLE + "(" +
       "airport INTEGER," +
@@ -2113,6 +2115,26 @@ object Meta {
       "INDEX ranking_leaderboard_cycle_idx (cycle, ranking_type, ranking)" +
       ")"
     )
+    statement.execute()
+    statement.close()
+  }
+
+  def createPrestige(connection: Connection): Unit = {
+    var statement = connection.prepareStatement("DROP TABLE IF EXISTS " + PRESTIGE_TABLE)
+    statement.execute()
+    statement.close()
+
+    statement = connection.prepareStatement("CREATE TABLE " + PRESTIGE_TABLE + "(" +
+      "id INTEGER PRIMARY KEY AUTO_INCREMENT," +
+      "airline INTEGER, " +
+      "airport INTEGER, " +
+      "airline_name VARCHAR(256), " +
+      "prestige_points INTEGER UNSIGNED, " +
+      "cycle INTEGER, " +
+      "FOREIGN KEY(airport) REFERENCES " + AIRPORT_TABLE + "(id) ON DELETE CASCADE ON UPDATE CASCADE" +
+      ")"
+    )
+
     statement.execute()
     statement.close()
   }

@@ -94,6 +94,8 @@ function updateRankingTable(rankingType, rankings) {
         rankingTable = $('#stockRank')
     } else if (rankingType == "AIRLINE_VALUE") {
         rankingTable = $('#airlineValueRank')
+        } else if (rankingType == "AIRLINE_PRESTIGE") {
+        rankingTable = $('#airlinePrestigeRank')
     } else if (rankingType == "AIRPORT") {
         rankingTable = $('#airportRank')
     } else if (rankingType == "INTERNATIONAL_PAX") {
@@ -166,7 +168,7 @@ function getRankingRow(ranking) {
         row.append("<div class='cell'>" + entry + "</div>")
     }
     row.append("<div class='cell' style='text-align: right;'>" + commaSeparateNumber(ranking.rankedValue) + "</div>")
-    
+
     if (ranking.reputationPrize || ranking.reputationPrize === 0) {
         row.append("<div class='cell' style='text-align: right;'>" + getRankingImg(ranking.rank, true) + commaSeparateNumber(ranking.reputationPrize) + "</div>")
     }

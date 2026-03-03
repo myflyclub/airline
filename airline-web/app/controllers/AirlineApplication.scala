@@ -82,7 +82,8 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
         "gradeCeiling" -> airline.airlineGrade.reputationCeiling,
         "airlineCode" -> airline.getAirlineCode(),
         "skipTutorial" -> airline.isSkipTutorial,
-        "initialized" -> airline.isInitialized
+        "initialized" -> airline.isInitialized,
+        "prestigePoints" -> airline.getPrestigePoints()
       ) ++ tracks
 
       airline.getCountryCode().map { countryCode =>
@@ -1248,7 +1249,11 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
         case None => NotFound("Base $airlineId / $airportId not found")
       }
 
-      Ok(Json.obj())
+      val updatedAirport = AirportCache.getAirport(airportId, true).get
+      val featuresJson = JsArray(updatedAirport.getFeatures().sortBy(_.featureType.id).map { f =>
+        Json.obj("type" -> f.featureType.toString, "strength" -> f.strength, "title" -> f.getDescription)
+      })
+      Ok(Json.obj("features" -> featuresJson))
     }
   }
 

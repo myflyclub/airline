@@ -115,6 +115,8 @@ const Rivals = (() => {
         } else {
             $("#rivalDetailsModal .foundedRow").hide();
         }
+        $("#rivalDetailsModal .prestigePoints").text(rival.prestigePoints);
+        
         const color = airlineColors[airlineId];
         if (!color) {
             $("#rivalDetailsModal .airlineColorDot").hide();
@@ -490,10 +492,10 @@ const Rivals = (() => {
         // 1. Sort by current metric descending
         // Clone array to avoid mutating original order if that matters elsewhere
         const sortedAirlines = [...airlines].sort((a, b) => getMetricValue(b) - getMetricValue(a));
-        
+
         // 2. Select Top 20 IDs
         const top20Ids = new Set(sortedAirlines.slice(0, 20).map(a => a.id));
-        
+
         // 3. Ensure Active Airline is included (if it exists)
         if (typeof activeAirline !== 'undefined' && activeAirline) {
             top20Ids.add(activeAirline.id);
@@ -763,7 +765,8 @@ const Rivals = (() => {
                 alliance: airline.alliance || '',
                 currentPrice: airline.currentPrice,
                 totalValue: latestEntry ? latestEntry.totalValue : 0,
-                reputation: latestEntry ? latestEntry.reputation : 0
+                reputation: latestEntry ? latestEntry.reputation : 0,
+                prestigePoints: airline.prestigePoints
             });
         });
 
@@ -793,6 +796,7 @@ const Rivals = (() => {
                 `<div class="cell" style="width:13%;" align="right">$${entry.currentPrice.toFixed(2)}</div>` +
                 `<div class="cell" style="width:16%;" align="right">$${commaSeparateNumber(entry.totalValue)}</div>` +
                 `<div class="cell js-toggle-airline" style="width:13%;" align="right">${entry.reputation}</div>` +
+                `<div class="cell" style="width:13%;" align="right">${entry.prestigePoints}</div>` +
                 `</div>`
             );
         });

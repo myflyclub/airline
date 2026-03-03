@@ -521,6 +521,48 @@ case object HangarSpecialization2 extends HangarSpecialization {
   override val scaleRequirement: Int = 8
 }
 
+// Hub Feature Boost Specializations
+sealed abstract class HubFeatureSpecialization extends AirlineBaseSpecialization with AirportBoostContributor {
+  val boostType: AirportBoostType.Value
+  val boost: Int = 10
+  override val getType = BaseSpecializationType.AIRPORT_POWER
+  override val scaleRequirement: Int = 16
+
+  override def getAirportBoostContributions(airport: Airport, airline: Airline): Map[AirportBoostType.Value, (String, Double)] =
+    Map(boostType -> (s"${airline.name} ${label}", boost.toDouble))
+
+  override def apply(airline: Airline, airport: Airport): Unit = AirportCache.refreshAirport(airport.id)
+  override def unapply(airline: Airline, airport: Airport): Unit = AirportCache.refreshAirport(airport.id)
+}
+
+case object InternationalHubBoostSpecialization extends HubFeatureSpecialization {
+  override val id = "HUB_INTERNATIONAL"
+  override val label = "Global Hub Initiative"
+  override val boostType = AirportBoostType.INTERNATIONAL_HUB
+  override def descriptions(airport: Airport) = List(s"Adds +$boost to International Hub strength")
+}
+
+case object VacationHubBoostSpecialization extends HubFeatureSpecialization {
+  override val id = "HUB_VACATION"
+  override val label = "Tourism Promotion Bureau"
+  override val boostType = AirportBoostType.VACATION_HUB
+  override def descriptions(airport: Airport) = List(s"Adds +$boost to Vacation Hub strength")
+}
+
+case object FinancialHubBoostSpecialization extends HubFeatureSpecialization {
+  override val id = "HUB_FINANCIAL"
+  override val label = "Finance District Liaison"
+  override val boostType = AirportBoostType.FINANCIAL_HUB
+  override def descriptions(airport: Airport) = List(s"Adds +$boost to Financial Hub strength")
+}
+
+case object EliteCharmBoostSpecialization extends HubFeatureSpecialization {
+  override val id = "HUB_ELITE"
+  override val label = "Elite Concierge Program"
+  override val boostType = AirportBoostType.ELITE_CHARM
+  override def descriptions(airport: Airport) = List(s"Adds +$boost to Elite Charm strength")
+}
+
 // Negotiation Specializations
 case object NegoHopper extends NegotiationSpecialization {
   override val id = "NEGOTIATION_HOPPER"
@@ -596,6 +638,10 @@ object AirlineBaseSpecialization {
   val TRANSFER_BUSINESS = BusinessTransferSpecialization
   val TRANSFER_TOURIST = TouristTransferSpecialization
   val TRANSFER_TRAVELER = TravelerTransferSpecialization
+  val HUB_INTERNATIONAL = InternationalHubBoostSpecialization
+  val HUB_VACATION = VacationHubBoostSpecialization
+  val HUB_FINANCIAL = FinancialHubBoostSpecialization
+  val HUB_ELITE = EliteCharmBoostSpecialization
 
   // All specializations registry for iteration, lookup, etc.
   val allSpecializations: List[AirlineBaseSpecialization] = List(
@@ -607,7 +653,8 @@ object AirlineBaseSpecialization {
     POWERHOUSE, DORMITORIES, TAX_HAVEN,
     HANGAR_0, HANGAR_1, HANGAR_2,
     NEGOTIATION_HOPPER, NEGOTIATION_SMALL, NEGOTIATION_LONG, NEGOTIATION_SLOTS,
-    TRANSFER_ELITE, TRANSFER_TOURIST, TRANSFER_TRAVELER, TRANSFER_BUSINESS
+    TRANSFER_ELITE, TRANSFER_TOURIST, TRANSFER_TRAVELER, TRANSFER_BUSINESS,
+    HUB_INTERNATIONAL, HUB_VACATION, HUB_FINANCIAL, HUB_ELITE
   )
 
   // Lookup by ID (for database serialization)

@@ -159,7 +159,25 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
         a.airport.id.toString -> Json.toJson(a)(AirportBoostOnlyWrites)
       }.toMap
     )
-    Json.obj("champions" -> championsObject, "boosts" -> boostsObject)
+    val dynamicFeaturesObject = JsObject(
+      airportData.flatMap { a =>
+        val dynFeatures = a.airport.getFeatures().filter {
+          case hub: InternationalHubFeature => hub.boosts.nonEmpty
+          case hub: VacationHubFeature      => hub.boosts.nonEmpty
+          case hub: FinancialHubFeature     => hub.boosts.nonEmpty
+          case hub: EliteFeature            => hub.boosts.nonEmpty
+          case _: OlympicsPreparationsFeature => true
+          case _: OlympicsInProgressFeature   => true
+          case _                              => false
+        }
+        if (dynFeatures.nonEmpty) {
+          Some(a.airport.id.toString -> JsArray(dynFeatures.sortBy(_.featureType.id).map { f =>
+            Json.obj("type" -> f.featureType.toString, "strength" -> f.strength, "title" -> f.getDescription)
+          }))
+        } else None
+      }.toMap
+    )
+    Json.obj("champions" -> championsObject, "boosts" -> boostsObject, "dynamicFeatures" -> dynamicFeaturesObject)
   }
 
   def getAirports() = Action { request =>

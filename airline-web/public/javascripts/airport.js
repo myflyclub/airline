@@ -7,6 +7,10 @@ var targetBase
 var airportBaseScale
 var _toggleState_AllianceBaseMapView = false
 const _etagStore = {}
+const DYNAMIC_FEATURE_TYPES = new Set([
+    'INTERNATIONAL_HUB', 'VACATION_HUB', 'FINANCIAL_HUB', 'ELITE_CHARM',
+    'OLYMPICS_PREPARATIONS', 'OLYMPICS_IN_PROGRESS'
+])
 /**
  * Find an airport by id (O(1) lookup)
  */
@@ -45,6 +49,16 @@ async function loadAirportsDynamic() {
         const response = await fetch('/airports');
         const data = await response.json();
         airportsLatestData = data;
+
+        // Patch dynamic features into the global airport store
+        const dynamicFeatures = data.dynamicFeatures || {};
+        for (const [airportId, features] of Object.entries(dynamicFeatures)) {
+            const airport = window.airportsById?.[airportId];
+            if (!airport) continue;
+            // Remove stale dynamic features, keep static ones
+            const staticFeatures = (airport.features || []).filter(f => !DYNAMIC_FEATURE_TYPES.has(f.type));
+            airport.features = [...staticFeatures, ...features];
+        }
     } catch (error) {
         console.error('Error fetching data:', error);
     }
@@ -1089,6 +1103,12 @@ function confirmSpecializations() {
             contentType: 'application/json; charset=utf-8',
             dataType: 'json',
             success: function (response) {
+                if (response.features && window.airportsById?.[activeAirportId]) {
+                    const airport = window.airportsById[activeAirportId];
+                    const staticFeatures = (airport.features || []).filter(f => !DYNAMIC_FEATURE_TYPES.has(f.type));
+                    const newDynamic = response.features.filter(f => DYNAMIC_FEATURE_TYPES.has(f.type));
+                    airport.features = [...staticFeatures, ...newDynamic];
+                }
                 closeModal($('#baseSpecializationModal'))
                 showAirportDetails(activeAirportId)
             },
