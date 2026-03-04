@@ -48,7 +48,11 @@ function getCampaignMapDarkStyle() {
         sources: {
             protomaps: {
                 type: 'vector',
-                url: `https://api.protomaps.com/tiles/v4.json?key=${window.protomapsKey}`,
+                tiles: [
+                    'https://maps.myfly.club/mfc/{z}/{x}/{y}.mvt'
+                ],
+                maxzoom: 11,
+                attribution: '<a href="https://protomaps.com">Protomaps</a> © <a href="https://openstreetmap.org">OpenStreetMap</a>'
             }
         },
         glyphs: 'https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf',
@@ -85,7 +89,11 @@ function getCampaignMapLightStyle() {
         sources: {
             protomaps: {
                 type: 'vector',
-                url: `https://api.protomaps.com/tiles/v4.json?key=${window.protomapsKey}`,
+                tiles: [
+                    'https://maps.myfly.club/mfc/{z}/{x}/{y}.mvt'
+                ],
+                maxzoom: 11,
+                attribution: '<a href="https://protomaps.com">Protomaps</a> © <a href="https://openstreetmap.org">OpenStreetMap</a>'
             }
         },
         glyphs: 'https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf',

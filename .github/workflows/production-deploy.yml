@@ -15,15 +15,26 @@ jobs:
 
       - name: Generate New Secret and Update application.conf
         shell: bash
+        env:
+          DB_USER: ${{ secrets.production_user }}
+          DB_PASSWORD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
         run: |
           # Generate a new secret
           CRYPTO_SECRET=$(uuidgen)
           HTTP_SECRET=$(uuidgen)
           echo "Generated secret for deployment: $CRYPTO_SECRET and $HTTP_SECRET"
 
-          # Update application.conf in place.
+          # Update play secrets in airline-web/conf/application.conf
           sed -i.bak "s/\(play\.crypto\.secret *= *\"\)changeme\(\".*\)/\1${CRYPTO_SECRET}\2/" airline-web/conf/application.conf
           sed -i.bak "s/\(play\.http\.secret\.key *= *\"\)changeme\(\".*\)/\1${HTTP_SECRET}\2/" airline-web/conf/application.conf
+
+          # Update mysqldb credentials in airline-web/conf/application.conf
+          sed -i.bak "s/\(user *= *\"\)root\(\"\)/\1${DB_USER}\2/" airline-web/conf/application.conf
+          sed -i.bak "s/\(password *= *\"\)\(\"\)/\1${DB_PASSWORD}\2/" airline-web/conf/application.conf
+
+          # Update mysqldb credentials in airline-data/src/main/resources/application.conf
+          sed -i.bak "s/\(user *= *\"\)root\(\"\)/\1${DB_USER}\2/" airline-data/src/main/resources/application.conf
+          sed -i.bak "s/\(password *= *\"\)\(\"\)/\1${DB_PASSWORD}\2/" airline-data/src/main/resources/application.conf
 
           grep 'play.crypto.secret' airline-web/conf/application.conf
 
