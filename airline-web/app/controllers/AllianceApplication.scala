@@ -100,10 +100,9 @@ class AllianceApplication @Inject()(cc: ControllerComponents) extends AbstractCo
       case Some(etag) if etag == s""""$currentCycle"""" =>
         NotModified
       case _ =>
-        val cycle = currentCycle
-        Ok(alliancesDataCache.get(cycle)).withHeaders(
+        Ok(alliancesDataCache.get(currentCycle)).withHeaders(
           CACHE_CONTROL -> "no-cache",
-          ETAG -> s""""$cycle""""
+          ETAG -> s""""$currentCycle""""
         )
     }
   }

@@ -48,7 +48,11 @@ function getCampaignMapDarkStyle() {
         sources: {
             protomaps: {
                 type: 'vector',
-                url: `https://api.protomaps.com/tiles/v4.json?key=${window.protomapsKey}`,
+                tiles: [
+                    'https://maps.myfly.club/mfc/{z}/{x}/{y}.mvt'
+                ],
+                maxzoom: 11,
+                attribution: '<a href="https://protomaps.com">Protomaps</a> © <a href="https://openstreetmap.org">OpenStreetMap</a>'
             }
         },
         glyphs: 'https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf',
@@ -85,7 +89,11 @@ function getCampaignMapLightStyle() {
         sources: {
             protomaps: {
                 type: 'vector',
-                url: `https://api.protomaps.com/tiles/v4.json?key=${window.protomapsKey}`,
+                tiles: [
+                    'https://maps.myfly.club/mfc/{z}/{x}/{y}.mvt'
+                ],
+                maxzoom: 11,
+                attribution: '<a href="https://protomaps.com">Protomaps</a> © <a href="https://openstreetmap.org">OpenStreetMap</a>'
             }
         },
         glyphs: 'https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf',
@@ -252,7 +260,6 @@ function createCampaign() {
         success: function(result) {
             closeCampaignDetails(true)
             updateCampaignTable()
-            updateTopBarDelegates(activeAirline.id)
         },
         error: function(jqXHR, textStatus, errorThrown) {
             console.log(JSON.stringify(jqXHR));
@@ -277,7 +284,6 @@ function updateCampaign() {
         success: function(result) {
             closeCampaignDetails(true)
             updateCampaignTable()
-            updateTopBarDelegates(activeAirline.id)
         },
         error: function(jqXHR, textStatus, errorThrown) {
             console.log(JSON.stringify(jqXHR));
@@ -299,7 +305,6 @@ function deleteCampaign() {
             success: function(result) {
                 closeCampaignDetails(true)
                 updateCampaignTable()
-                updateTopBarDelegates(activeAirline.id)
             },
             error: function(jqXHR, textStatus, errorThrown) {
                 console.log(JSON.stringify(jqXHR));
@@ -535,7 +540,7 @@ function updateCampaignDetails(campaign) {
     //update delegate section
     var $delegateSection = $('#campaignModal div.delegateSection')
     $('#campaignModal .campaignDetails .cost').text('$' + commaSeparateNumber($delegateSection.data('assignedDelegateCount') * campaign.costPerDelegate))
-    refreshAssignedDelegates($delegateSection)
+    refreshAssignedDelegates($delegateSection.data('assignedDelegateCount'), '#4a9eed', $delegateSection.find('.assignedDelegatesIcons'))
 
 
 }

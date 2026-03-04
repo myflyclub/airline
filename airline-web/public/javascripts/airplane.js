@@ -162,9 +162,15 @@ async function showAirplaneCanvas(selectedAircraftTab = 'hangar', airplaneModel 
     });
     updateColumnFilterOptions(aircraftAvailableOptions, 'aircraft');
 
-    if (selectedAircraftTab === 'market') {
+    if (selectedAircraftTab === 'discounts') {
+        document.querySelector('.details.market').style.display = 'none';
+        document.querySelector('.details.hangar').style.display = 'none';
+        document.querySelector('.details.discounts').style.display = 'block';
+
+    } else if (selectedAircraftTab === 'market') {
         document.querySelector('.details.market').style.display = 'block';
         document.querySelector('.details.hangar').style.display = 'none';
+        document.querySelector('.details.discounts').style.display = 'none';
 
         const $hideForbidden = $('#toggleHideForbiddenPlanes');
         if (!$hideForbidden.data('listener-attached')) {
@@ -179,6 +185,7 @@ async function showAirplaneCanvas(selectedAircraftTab = 'hangar', airplaneModel 
     } else {
         document.querySelector('.details.hangar').style.display = 'block';
         document.querySelector('.details.market').style.display = 'none';
+        document.querySelector('.details.discounts').style.display = 'none';
         populateMaintenanceFactor()
         populatePreferredSuppliers()
         populateHangerModels()
@@ -242,9 +249,7 @@ function updateAirplaneModelTable(sortProperty, sortOrder) {
             selectedModel = modelOwnerInfo;
         }
 
-        const nameCell = modelOwnerInfo.isFavorite
-            ? `<div class='cell'>${modelOwnerInfo.name}<img src='/assets/images/icons/heart.png' height='10px'></div>`
-            : `<div class='cell'>${modelOwnerInfo.name}</div>`;
+        const nameCell = `<div class='cell'>${modelOwnerInfo.name}</div>`;
 
         rowsHtml.push(
             `<div class='table-row clickable${selectedClass}' data-model-id='${modelOwnerInfo.id}'>` +
@@ -366,9 +371,10 @@ function updateUsedAirplaneTable(sortProperty, sortOrder) {
 		row.append("<div class='cell'>" +  getAirlineSpan(usedAirplane.ownerId, usedAirplane.ownerName) + "</div>")
 
 		var priceColor
-		if (usedAirplane.dealerRatio >= 1.1) { //expensive
+		var dealerRatio = usedAirplane.purchasePrice > 0 ? usedAirplane.dealerValue / usedAirplane.purchasePrice : 1
+		if (dealerRatio >= 1.1) { //expensive
 		    priceColor = "#D46A6A"
-		} else if (usedAirplane.dealerRatio <= 0.9) { //cheap
+		} else if (dealerRatio <= 0.9) { //cheap
 		    priceColor = "#68A357"
 		}
 		var priceDiv = $("<div class='cell' align='right'>$" + commaSeparateNumber(usedAirplane.dealerValue) + "</div>")
@@ -878,9 +884,10 @@ function selectAirplaneModel(model) {
 		$('#airplaneCanvas .canPurchase').text('✓')
 	}
 	loadAirplaneModelStats(model)
+    loadAircraftModelManagers(model)
 
 	$('#airplaneCanvas #airplaneModelDetail').fadeIn(200)
-    
+
     airplaneModelCalculator()
 }
 
@@ -899,7 +906,6 @@ function getDiscountsTooltip(discounts) {
 }
 
 function loadAirplaneModelStats(modelInfo) {
-    var favoriteIcon = $("#airplaneModelDetail .favorite")
     var model = loadedModelsById[modelInfo.id]
 
 	$.ajax({
@@ -910,30 +916,102 @@ function loadAirplaneModelStats(modelInfo) {
 	    success: function(stats) {
 	    	updateTopOperatorsTable(stats)
 	    	$('#airplaneCanvas .total').text(stats.total)
-	    	if (stats.favorite !== undefined) {
-	    	    favoriteIcon.off() //remove all listeners
-
-                if (stats.favorite.rejection) {
-                    $("#setFavoriteModal").data("rejection", stats.favorite.rejection)
-                } else {
-                    $("#setFavoriteModal").removeData("rejection")
-                }
-
-                if (modelInfo.isFavorite) {
-                    favoriteIcon.attr("src", "/assets/images/icons/heart.png")
-                    $("#setFavoriteModal").data("rejection", "This is already the Favorite")
-                } else {
-                    favoriteIcon.attr("src", "/assets/images/icons/heart-empty.png")
-                }
-
-                $("#setFavoriteModal").data("model", model)
-	    	}
 	    },
 	    error: function(jqXHR, textStatus, errorThrown) {
 	            console.log(JSON.stringify(jqXHR));
 	            console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
 	    }
 	});
+}
+
+var loadedAircraftModelManagers = []
+
+function loadAircraftModelManagers(model) {
+    $.ajax({
+        type: 'GET',
+        url: "/delegates/airline/" + activeAirline.id + "/aircraft-model/" + model.id,
+        contentType: 'application/json; charset=utf-8',
+        dataType: 'json',
+        success: function(result) {
+            loadedAircraftModelManagers = result.delegates
+            renderAircraftModelManagers(model.id, result.delegates, result.availableCount, result.maxManagers)
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            console.log("AJAX error loading aircraft managers: " + textStatus + ' : ' + errorThrown)
+        }
+    })
+}
+
+function renderAircraftModelManagers(modelId, managers, availableCount, maxManagers) {
+    var $display = $('#aircraftManagersDisplay')
+    $display.empty()
+
+    var $row = $('<div style="display:flex; align-items:center; gap:4px; flex-wrap:wrap;"></div>')
+    var $icons = $('<div style="display:flex; align-items:center; flex-wrap:wrap; gap:2px;"></div>')
+
+    var $addBtn = $('<img class="img-button svg svg-hover-red svg-monochrome" src="/assets/images/icons/plus.svg" style="width:14px; height:14px;" title="Assign manager">')
+    if (managers.length >= maxManagers) {
+        $addBtn.css('opacity', '0.35').attr('title', 'Maximum managers reached')
+    } else if (availableCount <= 0) {
+        $addBtn.css('opacity', '0.35').attr('title', 'No delegates available')
+    } else {
+        $addBtn.css('cursor', 'pointer').on('click', function() { addAircraftModelManager(modelId) })
+    }
+
+    var $removeBtn = $('<img class="img-button svg svg-hover-green svg-monochrome" src="/assets/images/icons/minus.svg" style="width:14px; height:14px;" title="Remove manager">')
+    if (managers.length <= 0) {
+        $removeBtn.css('opacity', '0.35')
+    } else {
+        $removeBtn.css('cursor', 'pointer').on('click', function() { removeAircraftModelManager(modelId) })
+    }
+
+    $row.append($icons).append($addBtn).append($removeBtn)
+    $display.append($row)
+    refreshAssignedDelegates(managers.length, '#4a9eed', $icons)
+
+    // Discount projection info
+    var model = loadedModelsById[modelId]
+    var maxPct = (model && model.maxManagerPriceDiscountPct) || 0
+    if (maxPct > 0) {
+        var perLevelPct = model.discountPerManagerLevelPct || 0
+        var totalLevel = managers.reduce(function(sum, m) { return sum + m.level }, 0)
+        var currentPct = Math.round(maxPct * Math.min(1.0, totalLevel * 0.125))
+        var $info = $('<div class="text-xxs opacity-70 pt-1"></div>')
+        $info.text('Discount: ' + currentPct + '% (max ' + maxPct + '%, +' + perLevelPct.toFixed(1) + '%/level)')
+        $display.append($info)
+    }
+}
+
+function addAircraftModelManager(modelId) {
+    $.ajax({
+        type: 'POST',
+        url: "/delegates/airline/" + activeAirline.id + "/aircraft-model/" + modelId,
+        contentType: 'application/json; charset=utf-8',
+        dataType: 'json',
+        data: JSON.stringify({ delegateCount: loadedAircraftModelManagers.length + 1 }),
+        success: function() {
+            loadAircraftModelManagers(loadedModelsById[modelId])
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            console.log("AJAX error adding aircraft manager: " + textStatus + ' : ' + errorThrown)
+        }
+    })
+}
+
+function removeAircraftModelManager(modelId) {
+    $.ajax({
+        type: 'POST',
+        url: "/delegates/airline/" + activeAirline.id + "/aircraft-model/" + modelId,
+        contentType: 'application/json; charset=utf-8',
+        dataType: 'json',
+        data: JSON.stringify({ delegateCount: loadedAircraftModelManagers.length - 1 }),
+        success: function() {
+            loadAircraftModelManagers(loadedModelsById[modelId])
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            console.log("AJAX error removing aircraft manager: " + textStatus + ' : ' + errorThrown)
+        }
+    })
 }
 
 function updateTopOperatorsTable(stats) {
@@ -1864,80 +1942,6 @@ function confirmAirplaneHome() {
 function cancelAirplaneHome() {
     $("#ownedAirplaneDetail .homeView").show()
     $("#ownedAirplaneDetail .homeEdit").hide()
-}
-
-function promptSetFavorite() {
-    var model = $('#setFavoriteModal').data("model")
-    if (model.imageUrl) {
-        const imageLocation = '/assets/images/airplanes/' + model.name.replace(/\s+/g, '-').toLowerCase() + '.webp'
-        const fallbackLocation = '/assets/images/airplanes/' + model.name.replace(/\s+/g, '-').toLowerCase() + '.png'
-        $('#setFavoriteModal .modelIllustration source').attr('srcset', imageLocation)
-        $('#setFavoriteModal .modelIllustration img').attr('src', fallbackLocation)
-        $('#setFavoriteModal .modelIllustration a').attr('href', model.imageUrl)
-        $('#setFavoriteModal .modelIllustration').show()
-
-    } else {
-        $('#setFavoriteModal .modelIllustration').hide()
-    }
-
-    $('#setFavoriteModal .modelName').text(model.name)
-    $('#setFavoriteModal .existingFavorite').hide();
-    $('#setFavoriteModal .rejection').hide();
-
-    $.ajax({
-        type: 'GET',
-        url: "/airlines/" + activeAirline.id + "/favorite-model/" + model.id,
-        contentType: 'application/json; charset=utf-8',
-        dataType: 'json',
-        success: function(result) {
-            if (result.priceDiscount) {
-                $('#setFavoriteModal .priceDiscount').text(result.priceDiscount * 100 + "%")
-            } else {
-                $('#setFavoriteModal .priceDiscount').text("-")
-            }
-            if (result.constructionTimeDiscount) {
-                $('#setFavoriteModal .constructionTimeDiscount').text(result.constructionTimeDiscount * 100 + "%")
-            } else {
-                $('#setFavoriteModal .constructionTimeDiscount').text("-")
-            }
-
-            var rejection = $('#setFavoriteModal').data("rejection")
-            if (rejection) {
-                $('#setFavoriteModal .rejection .reason').text(rejection)
-                $('#setFavoriteModal .rejection').show();
-                disableButton($("#setFavoriteModal .confirm"), rejection)
-            } else {
-                if (result.existingFavorite) {
-                    $('#setFavoriteModal .existingFavoriteModelName').text(result.existingFavorite.name)
-                    $('#setFavoriteModal .existingFavorite').show();
-                }
-                enableButton($("#setFavoriteModal .confirm"))
-            }
-            $('#setFavoriteModal').fadeIn(200)
-        },
-         error: function(jqXHR, textStatus, errorThrown) {
-                        console.log(JSON.stringify(jqXHR));
-                        console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
-        }
-    });
-}
-
-function confirmSetFavorite() {
-    var model = $('#setFavoriteModal').data("model")
-    $.ajax({
-            type: 'PUT',
-            url: "/airlines/" + activeAirline.id + "/favorite-model/" + model.id,
-            contentType: 'application/json; charset=utf-8',
-            dataType: 'json',
-            success: function(result) {
-                closeModal($('#setFavoriteModal'))
-                showAirplaneCanvas()
-            },
-            error: function(jqXHR, textStatus, errorThrown) {
-                    console.log(JSON.stringify(jqXHR));
-                    console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
-            }
-    });
 }
 
 function getAssignedAirplanesCount(compareKey, compareValue, modelId) {

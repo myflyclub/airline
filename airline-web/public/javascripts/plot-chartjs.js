@@ -1,34 +1,11 @@
-const chartColors = {
-    discounteconomy: "#78cd6b",
-    economy: "#57A34B",
-    business: "#4E79A7",
-    first: "#D6B018",
-    economyEmpty: "#346935",
-    businessEmpty: "#36466D",
-    firstEmpty: "#7A6925",
-    cancelled: "#D66061",
-    empty: "#DDDFDF",
-    tourist: "#fbfe66ff",
-    elite: "#7A4A9D",
-    traveler: "#4ebc36",
-    travelersmalltown: "#4ebc36",
-    olympics: "#D8A62F",
-    codeshares: "#4eafa4",
-    dealseeker: "#57A34B",
-    frequentflyer: "#2163aa",
-    brandsensitive: "#5f3a9f",
-    satisfaction: "#e3b80d",
-    rask: "#1e9b2b",
-    cask: "#e90e0e",
-};
 // helper to lookup chart color case-insensitively with fallback
 function getChartColor(key, fallback) {
     if (key === null || key === undefined || key === '') {
         return fallback || colorFromString('default');
     }
-    const lower = String(key).toLowerCase();
-    if (Object.prototype.hasOwnProperty.call(chartColors, lower)) {
-        return chartColors[lower];
+    const lower = String(key).toLowerCase().replace(/\s+/g, '');
+    if (Object.prototype.hasOwnProperty.call(GAME_COLORS, lower)) {
+        return GAME_COLORS[lower];
     }
     return fallback || colorFromString(key);
 }
@@ -208,8 +185,8 @@ function preparePieData(dataSource, keyName = null, valueName = null, thresholdF
         let bgColor;
         if (dataEntry.color) {
             bgColor = dataEntry.color;
-        } else if (Object.prototype.hasOwnProperty.call(chartColors, keyLabel.replace(/\s+/g, '').toLowerCase())) {
-            bgColor = chartColors[keyLabel.replace(/\s+/g, '').toLowerCase()];
+        } else if (Object.prototype.hasOwnProperty.call(GAME_COLORS, keyLabel.replace(/\s+/g, '').toLowerCase())) {
+            bgColor = GAME_COLORS[keyLabel.replace(/\s+/g, '').toLowerCase()];
         } else {
             bgColor = colorFromString(keyLabel);
         }
@@ -230,8 +207,8 @@ function preparePieData(dataSource, keyName = null, valueName = null, thresholdF
     if (otherTotal > 0) {
         labels.push(prettyLabel('Others') + ', less than ' + (thresholdFraction * 100).toFixed(0) + '%');
         data.push(otherTotal);
-        if (Object.prototype.hasOwnProperty.call(chartColors, 'other')) {
-            backgroundColors.push(chartColors['other']);
+        if (Object.prototype.hasOwnProperty.call(GAME_COLORS, 'other')) {
+            backgroundColors.push(GAME_COLORS['other']);
         } else {
             backgroundColors.push(colorFromString('Other'));
         }
@@ -590,7 +567,7 @@ function plotLinkConsumption(linkConsumptions, ridershipId, revenueId, priceId, 
             ridershipDatasets.push({
                 label: `Sold ${cls}`,
                 data: soldSeatsData[cls],
-                backgroundColor: chartColors[cls] || "#888",
+                backgroundColor: GAME_COLORS[cls] || "#888",
                 fill: true,
                 pointStyle: false,
             });
@@ -599,7 +576,7 @@ function plotLinkConsumption(linkConsumptions, ridershipId, revenueId, priceId, 
             ridershipDatasets.push({
                 label: `Empty ${cls}`,
                 data: emptySeatsData[cls],
-                backgroundColor: (chartColors[cls] ? chartColors[cls + "Empty"] : getChartColor('empty', "#bbbbbb33")),
+                backgroundColor: (GAME_COLORS[cls] ? GAME_COLORS[cls + "Empty"] : getChartColor('empty', "#bbbbbb33")),
                 fill: true,
                 pointStyle: false,
             });
@@ -667,8 +644,8 @@ function plotLinkConsumption(linkConsumptions, ridershipId, revenueId, priceId, 
                 datasets: availableClasses.map((cls) => ({
                     label: `${cls}`,
                     data: revenueByClass[cls],
-                    borderColor: chartColors[cls] || "#888",
-                    backgroundColor: (chartColors[cls] ? (chartColors[cls]) : "#8888"),
+                    borderColor: GAME_COLORS[cls] || "#888",
+                    backgroundColor: (GAME_COLORS[cls] ? (GAME_COLORS[cls]) : "#8888"),
                     fill: true,
                     pointStyle: false
                 })),
@@ -735,8 +712,8 @@ function plotLinkConsumption(linkConsumptions, ridershipId, revenueId, priceId, 
                 datasets: availableClasses.map((cls) => ({
                     label: `Price (${cls})`,
                     data: priceByClass[cls],
-                    borderColor: chartColors[cls] || "#888",
-                    backgroundColor: chartColors[cls] || "#888",
+                    borderColor: GAME_COLORS[cls] || "#888",
+                    backgroundColor: GAME_COLORS[cls] || "#888",
                     pointStyle: false,
                 })),
             },
@@ -988,7 +965,6 @@ function plotIncomeChart(airlineIncomes, period, container) {
     const labels = [];
     const totalData = [];
     const linksData = [];
-    const transactionsData = [];
     const othersData = [];
     const stockPriceData = [];
 
@@ -996,7 +972,6 @@ function plotIncomeChart(airlineIncomes, period, container) {
         labels.push(getGameDate(airlineIncome.cycle));
         totalData.push(airlineIncome.totalProfit);
         linksData.push(airlineIncome.linksProfit);
-        transactionsData.push(airlineIncome.transactionsProfit);
         othersData.push(airlineIncome.othersProfit);
         stockPriceData.push(airlineIncome.stockPrice.toFixed(2));
     });
@@ -1008,7 +983,6 @@ function plotIncomeChart(airlineIncomes, period, container) {
             datasets: [
                 { label: 'Total Income', data: totalData, borderColor: getChartColor('total'), backgroundColor: getChartColor('total'), hidden: true },
                 { label: 'Flight Income', data: linksData, borderColor: getChartColor('flight'), backgroundColor: getChartColor('flight') },
-                { label: 'Transaction Income', data: transactionsData, borderColor: getChartColor('transaction'), backgroundColor: getChartColor('transaction'), hidden: true },
                 { label: 'Other Income', data: othersData, borderColor: getChartColor('other'), backgroundColor: getChartColor('other'), hidden: true },
                 { label: 'Stock Price', data: stockPriceData, borderColor: getChartColor('stock'), backgroundColor: getChartColor('stock'), yAxisID: 'y1' }
             ]
@@ -1032,39 +1006,6 @@ function plotIncomeChart(airlineIncomes, period, container) {
                     ticks: { callback: function (value) { return '$' + value; } }
                 }
             },
-        }
-    };
-
-    ChartUtils.applyFinancialChartStyle(config);
-
-    return ChartUtils.createChart(container, config);
-}
-
-function plotCashFlowChart(airlineCashFlows, period, container) {
-    const labels = [];
-    const cashFlowData = [];
-
-    Object.entries(airlineCashFlows).forEach(([key, airlineCashFlow]) => {
-        labels.push(getGameDate(airlineCashFlow.cycle));
-        cashFlowData.push(airlineCashFlow.totalCashFlow);
-    });
-
-    const config = {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [
-                { label: 'Total CashFlow', data: cashFlowData, borderColor: getChartColor('cashflow', '#36A2EB') }
-            ]
-        },
-        options: {
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    title: { display: true, text: 'Cash Flow' },
-                    ticks: { callback: function (value) { return '$' + commaSeparateNumber(value, 'auto'); } }
-                }
-            }
         }
     };
 

@@ -5,7 +5,7 @@ import org.apache.pekko.remote.{AssociatedEvent, DisassociatedEvent, RemotingLif
 import com.patson.model.Airline
 import com.patson.model.notice.{AirlineNotice, NoticeCategory, TrackingNotice}
 import com.patson.stream.{CycleCompleted, CycleInfo, KeepAlivePing, KeepAlivePong, ReconnectPing, SimulationEvent}
-import com.patson.util.{AirlineCache, AirplaneModelDiscountCache, AirplaneOwnershipCache, AirportCache, AirportStatisticsCache}
+import com.patson.util.{AirlineCache, AirplaneOwnershipCache, AirportCache, AirportStatisticsCache}
 import com.typesafe.config.ConfigFactory
 import controllers.{AirlineTutorial, AirportUtil, GooglePhotoUtil, ResponseCache}
 import models.PendingAction
@@ -119,7 +119,6 @@ sealed class LocalMainActor(remoteActor : ActorSelection) extends Actor {
           AirportCache.invalidateAll()
           AirportStatisticsCache.invalidateAll()
           AirplaneOwnershipCache.invalidateAll()
-          AirplaneModelDiscountCache.invalidateAll()
           ResponseCache.invalidateAll()
           AirportUtil.refreshAirports()
           if (bannerEnabled) {

@@ -23,6 +23,7 @@ function loadOilPrices() {
 	    success: function(oilPricesData) {
             oilPrices = oilPricesData;
             plotOilPriceChart(oilPrices, "oilPriceChart");
+            refreshTopBarOilPrice();
 	    },
         error: function(jqXHR, textStatus, errorThrown) {
 	            console.log(JSON.stringify(jqXHR));

@@ -18,90 +18,125 @@ function changeTaskDelegateCount($delegateSection, delta, callback) {
     if (newLength != -1) {
         $delegateSection.data('availableDelegates', availableDelegates - delta)
         $delegateSection.data('assignedDelegateCount', newLength)
-        refreshAssignedDelegates($delegateSection)
+        refreshAssignedDelegates(newLength, '#4a9eed', $delegateSection.find('.assignedDelegatesIcons'))
         if (callback) {
             callback(newLength)
         }
     }
 }
 
-function refreshAssignedDelegates($delegateSection) {
-    $delegateIcons = $delegateSection.find('div.assignedDelegatesIcons')
-    $delegateIcons.empty()
-    var originalDelegates = $delegateSection.data('originalDelegates')
-    var assignedDelegateCount = $delegateSection.data('assignedDelegateCount')
-
-    if (assignedDelegateCount == 0) {
-       $delegateIcons.append("<span>None</span>")
+function refreshAssignedDelegates(number, color, containerSelector) {
+    const $container = $(containerSelector)
+    $container.empty()
+    for (let i = 0; i < number; i++) {
+        $container.append(createManagerIcon(color, null))
     }
-
-    $.each(originalDelegates.slice(0, assignedDelegateCount), function(index, assignedDelegate) {
-            var delegateIcon = $('<img src="/assets/images/icons/delegate-level-' + assignedDelegate.level + '.png" title="' + assignedDelegate.levelDescription + "&nbsp;(level " + assignedDelegate.level + (assignedDelegate.nextLevelCycleCount ? " - promotion in " + assignedDelegate.nextLevelCycleCount + " week(s)" : "") + ')"/>')
-            $delegateIcons.append(delegateIcon)
-    })
-
-    if (assignedDelegateCount > originalDelegates.length) {
-        for (i = 0; i < assignedDelegateCount - originalDelegates.length; i ++) {
-            var delegateIcon = $('<img src="/assets/images/icons/delegate-level-0.png" title="New"/>')
-            $delegateIcons.append(delegateIcon)
-        }
+    if (number === 0) {
+        $container.append('<span style="opacity:0.5;font-size:0.8em;">None</span>')
     }
 }
 
 
-function refreshAirlineDelegateStatus($delegateStatusDiv, delegateInfo) {
-    $delegateStatusDiv.empty()
-    var availableDelegates = delegateInfo.availableCount
+function createManagerIcon(color, tooltip) {
+    const $wrapper = $('<span class="tooltip-attr"></span>').css({
+        display: 'inline-flex',
+        margin: '2px',
+        cursor: 'help',
+        'flex-shrink': 0,
+    })
+    if (tooltip) $wrapper.attr('data-tooltip', tooltip)
+    $wrapper.append($('<span></span>').css({
+        display: 'block',
+        width: '18px',
+        height: '18px',
+        'background-color': color,
+        '-webkit-mask': 'url(/assets/images/icons/manager.svg) center/contain no-repeat',
+        mask: 'url(/assets/images/icons/manager.svg) center/contain no-repeat',
+    }))
+    return $wrapper
+}
 
-    var delegateIcons = []
-    //delegate info
-    for (i = 0 ; i < availableDelegates; i ++) {
-        var $delegateIconDiv = $('<div style="position: relative; display: inline-block;"><img src="/assets/images/icons/user-silhouette-available.png" title="Available Delegate"/></div>')
-        $delegateIconDiv.expirable = true;
-        delegateIcons.push($delegateIconDiv)
-    }
+function refreshAirlineDelegateStatus($container, delegateInfo) {
+    $container.empty()
 
-    $.each(delegateInfo.busyDelegates, function(index, busyDelegate) {
-        var $delegateIconDiv = $('<div style="position: relative; display: inline-block;"></div>')
-        var $delegateIcon
-        if (busyDelegate.completed) {
-            $delegateIcon = $('<img src="/assets/images/icons/user-silhouette-unavailable.png" title="' + busyDelegate.coolDown + ' week(s) cool down remaining. Previous task : ' + busyDelegate.taskDescription + '"/>')
-            $delegateIconDiv.expirable = true;
+    const FLOORS = [
+        { type: 'COUNTRY',                label: 'Public Affairs' },
+        { type: 'CAMPAIGN',               label: 'Advertising Campaigns' },
+        { type: 'MANAGER_BASE',           label: 'Base Operations' },
+        { type: 'MANAGER_AIRCRAFT_MODEL', label: 'Manufacturer Relations' },
+        { type: '_AVAILABLE',             label: 'Actioning' },
+    ]
+
+    const grouped = {}
+    delegateInfo.busyDelegates.forEach(d => {
+        const key = d.taskType || 'OTHER'
+        if (!grouped[key]) grouped[key] = []
+        grouped[key].push(d)
+    })
+
+    const $building = $('<div></div>').css({
+        border: '1px solid rgba(255,255,255,0.12)',
+        'border-radius': '3px',
+        overflow: 'hidden',
+        width: '100%',
+        'box-sizing': 'border-box',
+    })
+
+    FLOORS.forEach((floor, idx) => {
+        const $row = $('<div></div>').css({
+            display: 'flex',
+            'align-items': 'center',
+            'min-height': '30px',
+            'border-top': idx > 0 ? '1px solid rgba(255,255,255,0.08)' : 'none',
+        })
+
+        const $label = $(`<span class="very-small">${floor.label}</span>`).css({
+            width: '72px',
+            'flex-shrink': 0,
+            padding: '2px 6px',
+            opacity: 0.6,
+            'border-right': '1px solid rgba(255,255,255,0.08)',
+            'align-self': 'stretch',
+            display: 'flex',
+            'align-items': 'center',
+            'justify-content': 'flex-end',
+        })
+
+        const $icons = $('<span></span>').css({
+            display: 'flex',
+            'flex-wrap': 'wrap',
+            'align-items': 'center',
+            gap: '2px',
+            padding: '3px 6px',
+            flex: 1,
+        })
+
+        if (floor.type === '_AVAILABLE') {
+            for (let i = 0; i < delegateInfo.availableCount; i++) {
+                $icons.append(createManagerIcon('#5cb85c', 'Available delegate'))
+            }
+            if (delegateInfo.availableCount === 0) {
+                $icons.append('<span style="opacity:0.3;font-size:0.7em;">—</span>')
+            }
         } else {
-            $delegateIcon = $('<img src="/assets/images/icons/user-silhouette-busy.png" title="Busy with task - ' + busyDelegate.taskDescription + '"/>')
+            const delegates = grouped[floor.type] || []
+            delegates.forEach(d => {
+                if (d.completed) {
+                    $icons.append(createManagerIcon('#e88d2b', d.coolDown + 'w cooldown — ' + d.taskDescription))
+                } else {
+                    $icons.append(createManagerIcon('#4a9eed', d.taskDescription))
+                }
+            })
+            if (delegates.length === 0) {
+                $icons.append('<span style="opacity:0.3;font-size:0.7em;">—</span>')
+            }
         }
 
-        $delegateIconDiv.append($delegateIcon)
-
-        if (busyDelegate.coolDown) {
-            var $coolDownDiv = $("<div style='position: absolute; left: 1px; bottom: 0; background-color: #a4f5b0; color: #454544; font-size: 8px; font-weight: bold;'></div>")
-            $coolDownDiv.text(busyDelegate.coolDown)
-            $delegateIconDiv.append($coolDownDiv)
-        }
-        delegateIcons.push($delegateIconDiv)
+        $row.append($label).append($icons)
+        $building.append($row)
     })
 
-    const createBoostDiv = (boost) => {
-        const div = document.createElement('div');
-        div.style.cssText = 'position: absolute; left: 1px; top: 0; background-color: #a4f5b0; color: #454544; font-size: 8px; font-weight: bold;';
-        div.title = `Boost expiring in ${boost.remainingCycles} week(s)`;
-        div.textContent = boost.remainingCycles;
-        return div;
-    };
-    let iconIndex = delegateIcons.length; //mark the available ones first
-    delegateInfo.boosts.forEach(boost => {
-        for (i = 0; i < boost.amount; i++) {
-            do { //find the first icon (traverse from the back) that can be marked as expirable
-                iconIndex--;
-            } while (iconIndex > 0 && !delegateIcons[iconIndex].expirable);
-            const boostRemainingDiv1 = createBoostDiv(boost);
-            delegateIcons[iconIndex].append(boostRemainingDiv1);
-        }
-    })
-
-    $.each(delegateIcons, function(index, $icon) {
-        $delegateStatusDiv.append($icon)
-    })
+    $container.append($building)
 }
 
 
@@ -125,22 +160,6 @@ function updateAirlineDelegateStatus($delegateStatusDiv, successFunction) {
 	            console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
 	    }
 	});
-}
-
-function updateTopBarDelegates(airlineId) {
-    $.ajax({
-    		type: 'GET',
-    		url: "/airlines/" + airlineId + "?extendedInfo=true",
-    	    contentType: 'application/json; charset=utf-8',
-    	    dataType: 'json',
-    	    success: function(airline) {
-    	    	refreshTopBarDelegates(airline)
-    	    },
-    	    error: function(jqXHR, textStatus, errorThrown) {
-    	            console.log(JSON.stringify(jqXHR));
-    	            console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
-    	    }
-    	});
 }
 
 function refreshTopBarDelegates(airline) {

@@ -4,7 +4,7 @@
 						<div class="section min-w-52 max-w-260px">
 							<h2 class="text-center text-underline">
 								<span class="airlineName">Airline Name</span>
-								<span class="clickable editButton"><img src='@routes.Assets.versioned("/images/icons/gear.png")'style="vertical-align: middle;" onclick="editAirlineName()"/></span>
+                                <img class="img-button svg hover-rotate" src='@routes.Assets.versioned("images/icons/gear.svg")' onclick="editAirlineName()"/>
 							</h2>
 							<span class="airlineNameInputSpan" style="display: none;">
 								<input id="airlineNameInput" class="airlineNameInput" type="text" />
@@ -48,7 +48,7 @@
 							<p>Target Employee Quality:
 								<span id="serviceFundingDisplaySpan">
 									<span id="targetServiceQuality"></span>
-									<img src='@routes.Assets.versioned("/images/icons/gear.png")' class='img-button' style="vertical-align: sub;" onclick="editTargetServiceQuality()"/>
+									<img class="img-button svg hover-rotate" src='@routes.Assets.versioned("images/icons/gear.svg")' onclick="editTargetServiceQuality()"/>
 								</span>
 								<span id="serviceFundingInputSpan">
 									<input id="targetServiceQualityInput" type="number" size="3" maxlength="3" onkeyup="checkTargetServiceQualityInput($(this).val())"/>
@@ -74,7 +74,7 @@
 							<p>Auto Renewal:
 								<span id="airplaneRenewalDisplaySpan">
 									<span id="airplaneRenewal"></span>
-									<img src='@routes.Assets.versioned("/images/icons/gear.png")' class='img-button' style="vertical-align: sub;" onclick="editAirplaneRenewal()"/>
+									<img class="img-button svg hover-rotate" src='@routes.Assets.versioned("images/icons/gear.svg")' onclick="editAirplaneRenewal()"/>
 								</span>
 								<span id="airplaneRenewalInputSpan" style="display:none;">
 									Condition Below&nbsp;<input id="airplaneRenwalInput" type="number" maxlength="2" size="2"/>% Age
@@ -84,7 +84,7 @@
 							</p>
 							<p class="pb-4">Minimum Balance: Above <span id="minimumRenewalBalanceDisplaySpan">
 								<span id="minimumRenewalBalance"></span>
-									<img src='@routes.Assets.versioned("/images/icons/gear.png")' class='img-button' style="vertical-align: sub;" onclick="editMinimumRenewalBalance()"/>
+									<img class="img-button svg hover-rotate" src='@routes.Assets.versioned("images/icons/gear.svg")' onclick="editMinimumRenewalBalance()"/>
 								</span>
 								<span id="minimumRenewalBalanceInputSpan" style="display:none;">
 									Minimum balance&nbsp;<input id="minimumRenewalBalanceInput" type="number" maxlength="12" size="2" onkeyup="checkEditMinimumRenewalBalanceInput($(this).val())"/>
@@ -165,8 +165,8 @@
                         <div style="display:flex;flex-direction:column;width:100%;">
                         <div class="sheet-tab-row">
                             <div class="sheetOptions">
-                                <div class="cell clickable selected" data-type="income">Income</div>
-                                <div class="cell clickable" data-type="cashFlow">Cash Flow</div>
+                                <div class="cell clickable selected" data-type="income">Operating Finances</div>
+                                <div class="cell clickable" data-type="ledger">Ledger</div>
                                 <div class="cell clickable" data-type="airlineStat">Passenger Stats</div>
                                 <div class="cell clickable" data-type="airlineOp">Operating Metrics</div>
                                 <div class="cell clickable" data-type="airlineReputation">Reputation</div>
@@ -183,7 +183,15 @@
 								<div style="display: flex; flex-wrap: wrap;" class="">
 
 									<div class="table data rounded-none" style="min-width: 200px">
-										<h4>Total Income</h4>
+										<h4>
+                                            Consolidated Operating Summary
+                                            <span class="tooltip">
+                                                <img class="info svg" src="/assets//images/icons/6225ecd56079ca6e3a8d412411b89359-information.svg">
+                                                <span class="tooltiptext alignLeft below text-sm" style="width: 280px;">
+                                                    Notably this does not include capital costs, fees, investment expenses / income, or prize income.
+                                                </span>
+                                            </span>
+                                        </h4>
 										<div class="table-row">
 											<div class="cell">Total Revenue:</div>
 											<div id="totalRevenue" class="cell" style="text-align: right;"></div>
@@ -199,7 +207,15 @@
 									</div>
 
 									<div class="table data rounded-none" style="min-width: 200px">
-										<h4>Flights Income</h4>
+										<h4>
+                                            Flights Summary
+                                            <span class="tooltip">
+                                                <img class="info svg" src="/assets//images/icons/6225ecd56079ca6e3a8d412411b89359-information.svg">
+                                                <span class="tooltiptext alignLeft below text-sm" style="width: 280px;">
+                                                    This is a snapshot of your flight operations. To make comparisons, it uses normalized (estimated) fuel and aircraft costs. 
+                                                </span>
+                                            </span>
+                                        </h4>
 										<div class="table-row">
 											<div class="cell">Ticket Revenue:</div>
 											<div id="linksTicketRevenue" class="cell" style="text-align: right;"></div>
@@ -209,7 +225,15 @@
 											<div id="linksAirportFee" class="cell" style="text-align: right;"></div>
 										</div>
 										<div class="table-row">
-											<div class="cell">Fuel:</div>
+											<div class="cell">
+                                                Fuel:
+                                                <span class="tooltip">
+                                                    <img class="info svg" src="/assets//images/icons/6225ecd56079ca6e3a8d412411b89359-information.svg">
+                                                    <span class="tooltiptext alignLeft below text-sm" style="width: 280px;">
+                                                        This is a normalized $70 / barrel fuel metric used strictly for route comparability. The exact amount depends on your fuel strategy; it is listed in Other Business Expenses.
+                                                    </span>
+                                                </span>
+                                            </div>
 											<div id="linksFuelCost" class="cell" style="text-align: right;"></div>
 										</div>
 										<div class="table-row">
@@ -229,7 +253,15 @@
 											<div id="linksMaintenanceCost" class="cell" style="text-align: right;"></div>
 										</div>
 										<div class="table-row">
-											<div class="cell">Aircraft Depreciation, In-flight:</div>
+											<div class="cell">
+                                                Aircraft Depreciation:
+                                                <span class="tooltip">
+                                                    <img class="info svg" src="/assets//images/icons/6225ecd56079ca6e3a8d412411b89359-information.svg">
+                                                    <span class="tooltiptext alignLeft below text-sm" style="width: 280px;">
+                                                        This is a standardized operational estimate based on your aircraft's list price and utilization, excluding your specific purchase discounts and the 20% fee when selling. The actual cost is the purchase price less what you sell each aircraft for, per operational week.
+                                                    </span>
+                                                </span>
+                                            </div>
 											<div id="linksDepreciation" class="cell" style="text-align: right;"></div>
 										</div>
 										<div class="table-row">
@@ -258,43 +290,14 @@
 										</div>
 									</div>
 
-									<div class="table data rounded-none" style="min-width: 200px;">
-										<h4>Transaction Income</h4>
-										<p class="small italic">Losses and gains from selling aircraft</p>
-										<div class="table-row">
-											<div class="cell">Capital Gains:</div>
-											<div id="transactionsCapitalGain" class="cell" style="text-align: right;"></div>
-										</div>
-	<!-- 				 	  				<div class="table-row"> -->
-	<!-- 				 	  					<div class="cell">Setup New Flight Route:</div> -->
-	<!-- 				 	  					<div id="transactionsCreateLink" class="cell" style="text-align: right;"></div> -->
-	<!-- 				 	  				</div> -->
-										<div class="table-row">
-											<div class="cell">Transactions Revenue:</div>
-											<div id="transactionsRevenue" class="cell" style="text-align: right;"></div>
-										</div>
-										<div class="table-row">
-											<div class="cell">Transactions Expense:</div>
-											<div id="transactionsExpense" class="cell" style="text-align: right;"></div>
-										</div>
-										<div class="table-row">
-											<div class="cell">Transactions Profit:</div>
-											<div id="transactionsProfit" class="cell" style="text-align: right;"></div>
-										</div>
-									</div>
-
 									<div class="table data rounded-none" style="min-width: 200px">
-										<h4>Other Income</h4>
+										<h4>Other Business Expenses</h4>
 										<div class="table-row">
 											<div class="cell">Loan / Negative Cash Interest:</div>
 											<div id="othersLoanInterest" class="cell" style="text-align: right;"></div>
 										</div>
 										<div class="table-row">
-											<div class="cell">Dividends:</div>
-											<div id="othersDividends" class="cell" style="text-align: right;"></div>
-										</div>
-										<div class="table-row">
-											<div class="cell">Airport Bases:</div>
+											<div class="cell">Bases Upkeep:</div>
 											<div id="othersBaseUpkeep" class="cell" style="text-align: right;"></div>
 										</div>
 										<div class="table-row">
@@ -302,36 +305,28 @@
 											<div id="othersOvertimeCompensation" class="cell" style="text-align: right;"></div>
 										</div>
 										<div class="table-row">
-											<div class="cell">Lounge Upkeep:</div>
+											<div class="cell">Lounge Costs:</div>
 											<div id="othersLoungeUpkeep" class="cell" style="text-align: right;"></div>
-										</div>
-										<div class="table-row">
-											<div class="cell">Lounge Labor & Supplies:</div>
-											<div id="othersLoungeCost" class="cell" style="text-align: right;"></div>
 										</div>
 										<div class="table-row">
 											<div class="cell">Lounge Income:</div>
 											<div id="othersLoungeIncome" class="cell" style="text-align: right;"></div>
 										</div>
-										<div class="table-row">
+										<!-- <div class="table-row">
 											<div class="cell">Asset Expense:</div>
 											<div id="othersAssetExpense" class="cell" style="text-align: right;"></div>
 										</div>
 										<div class="table-row">
 											<div class="cell">Asset Revenue:</div>
 											<div id="othersAssetRevenue" class="cell" style="text-align: right;"></div>
-										</div>
+										</div> -->
 										<div class="table-row">
-											<div class="cell">Campaign/Advertisement:</div>
+											<div class="cell">Advertising Campaigns:</div>
 											<div id="othersAdvertisement" class="cell" style="text-align: right;"></div>
 										</div>
 										<div class="table-row">
-											<div class="cell">Fuel Profit:</div>
+											<div class="cell">Actual Fuel Cost:</div>
 											<div id="othersFuelProfit" class="cell" style="text-align: right;"></div>
-										</div>
-										<div class="table-row">
-											<div class="cell">Aircraft Depreciation, Grounded:</div>
-											<div id="othersDepreciation" class="cell" style="text-align: right;"></div>
 										</div>
 										<div class="table-row">
 											<div class="divider cell"></div>
@@ -354,64 +349,19 @@
 								</div>
 							</div>
 <!-- end income statement -->
-							<div style="display: none;" id="cashFlowSheet" class="sheet">
-								<div id="totalCashFlowChart" style="height: 280px; margin: 0 auto;"></div>
-								<div style="display: flex; flex-wrap: wrap;">
-									<div class="table data rounded-none" style="min-width: 200px">
-										<h4 class="table-row">Total Cash Flow</h4>
-										<div class="table-row">
-											<div class="cell">Total Cash Flow:</div>
-											<div class="totalCashFlow cell" style="text-align: right;"></div>
-										</div>
+							<div style="display: none;" id="ledgerSheet" class="sheet">
+								<div class="table data mt-4 p-0 rounded-none">
+									<div class="table-header">
+										<div class="cell" style="flex: 0 0 68px;">Tx #</div>
+										<div class="cell" style="flex: 2;">Type</div>
+										<div class="cell" style="flex: 4;">Description</div>
+										<div class="cell" style="flex: 0 0 120px; text-align: right;">Amount</div>
 									</div>
-									<div class="table data rounded-none" style="min-width: 200px">
-										<h4>Cash Flow Details</h4>
-										<div class="table-row">
-											<div class="cell">Operation Cash Flow:</div>
-											<div class="operation cell" style="text-align: right;"></div>
-										</div>
-										<div class="table-row">
-											<div class="cell">Loan Interest:</div>
-											<div class="loanInterest cell" style="text-align: right;"></div>
-										</div>
-										<div class="table-row">
-											<div class="cell">Loan Principal Repayment:</div>
-											<div class="loanPrincipal cell" style="text-align: right;"></div>
-										</div>
-										<div class="table-row">
-											<div class="cell">Base Construction:</div>
-											<div class="baseConstruction cell" style="text-align: right;"></div>
-										</div>
-										<div class="table-row">
-											<div class="cell">Airplane Purchase:</div>
-											<div class="buyAirplane cell" style="text-align: right;"></div>
-										</div>
-										<div class="table-row">
-											<div class="cell">Airplane Sold:</div>
-											<div class="sellAirplane cell" style="text-align: right;"></div>
-										</div>
-										<div class="table-row">
-											<div class="cell">Route Setup:</div>
-											<div class="createLink cell" style="text-align: right;"></div>
-										</div>
-										<div class="table-row">
-											<div class="cell">Facility Construction:</div>
-											<div class="facilityConstruction cell" style="text-align: right;"></div>
-										</div>
-										<div class="table-row">
-											<div class="cell">Oil Contract Cost/Penalty:</div>
-											<div class="oilContract cell" style="text-align: right;"></div>
-										</div>
-										<div class="table-row">
-											<div class="cell">Airport Asset Transactions:</div>
-											<div class="assetTransactions cell" style="text-align: right;"></div>
-										</div>
-									</div>
+									<div id="ledgerEntries" class="contents"></div>
 								</div>
-								<h4 class="pt-2 px-5">Total Company Assets</h4>
-								<div id="totalValueChart" style="height: 280px; margin: 0 auto;"></div>
+                                <p class="text-sm opacity-80 pt-8">The ledger shows all credits and debits to your airline balance. It is the most accurate and fundamental record of your financial activity.</p>
 							</div>
-<!-- end cashflow sheet, end sheet wrapper -->
+<!-- end ledger sheet, end sheet wrapper -->
 							<div style="width : 100%; display: none;" id="airlineStatsSheet" class="sheet">
 								<div id="airlineStatsChart" class="py-2" style="width: 100%; height: 700px;"></div>
 								<div style="display: flex; flex-wrap: wrap;">
@@ -552,12 +502,12 @@
 								<div class="table data rounded-none" style="min-width: 200px; max-width: 300px;">
 									<h4>Airline Reputation</h4>
 									<div class="table-row">
-										<div class="cell">Total:</div>
+										<div class="cell h5 strong">Total:</div>
 										<div class="rep_total cell" style="text-align: right;"></div>
 									</div>
 									<div class="table-row">
 										<div class="cell">Leaderboard:</div>
-										<div class="rep_leaderboards cell" style="text-align: right;"></div>
+										<div class="rep_leaderboards cell h5 strong" style="text-align: right;"></div>
 									</div>
 								</div>
 							</div>
@@ -576,11 +526,11 @@
                                     <div class="cell value">
                                         <span id="airlineCodeDisplaySpan">
                                             <span id="airlineCode"></span>
-                                            <img src='@routes.Assets.versioned("/images/icons/gear.png")' class='img-button' style="vertical-align: middle;" onclick="editAirlineCode()" />
+                                            <img class="img-button svg hover-rotate" src='@routes.Assets.versioned("images/icons/gear.svg")' onclick="editAirlineCode()" />
                                         </span>
                                         <span id="airlineCodeInputSpan" style="display: none;">
                                             <input id="airlineCodeInput" type="text" onkeyup="validateAirlineCode($(this).val())" />
-                                            <img src='@routes.Assets.versioned("/images/icons/tick.svg")' class='img-button' style="vertical-align: middle;" onclick="setAirlineCode($('#airlineCodeInput').val())" />
+                                            <img class="img-button svg hover-rotate" src='@routes.Assets.versioned("/images/icons/tick.svg")' onclick="setAirlineCode($('#airlineCodeInput').val())" />
                                             <span class="warning" style="display:none;">Code should be exactly 2 letters</span>
                                         </span>
                                     </div>
@@ -596,7 +546,7 @@
                                     <div class="cell value">
                                         <img class="airlineLogo" src='#'>
                                         <div class="flex-row pt-1 pb-4">
-                                            <img src='@routes.Assets.versioned("/images/icons/gear.png")' class='img-button' style="vertical-align: middle;" onclick="editAirlineLogo()" />
+                                            <img class="img-button svg hover-rotate" src='@routes.Assets.versioned("images/icons/gear.svg")'  data-tooltip="Edit Logo" onclick="editAirlineLogo()" />
                                             <img src='@routes.Assets.versioned("/images/icons/picture--plus.png")' data-tooltip='Upload custom logo' class='img-button' style="vertical-align: middle;" onclick="showUploadLogo()" />
                                         </div>
                                     </div>
@@ -608,6 +558,10 @@
 
 					<div class="vertical-group" style="width: 30%; min-width: 300px;">
                         <textarea id="airlineNotes" class="section" placeholder="Add your private notes here..."></textarea>
+                        <div class="section" id="managerStatus">
+                            <h4>Managers</h4>
+                            <div class="managerGroups"></div>
+                        </div>
 						<div class="section">
                             <h4>Headquarters</h4>
 							<div style="position: relative; height: 125px; width: 150px; margin: auto;box-sizing: border-box;" class="headquartersMap"></div>
@@ -648,8 +602,8 @@
 
                         <div class="section" >
 							<div style="display: flex; align-items: base-line;">
-								<span><h4>Campaigns</h4></span>
-								<span><img src='@routes.Assets.versioned("/images/icons/gear.png")' class='img-button' onclick="showCampaignModal()" title="View/Edit Campaigns"/></span>
+								<span><h4>Advertising Campaigns</h4></span>
+								<img class="img-button svg hover-rotate" src='@routes.Assets.versioned("images/icons/gear.svg")' onclick="showCampaignModal()" data-tooltip="View/Edit Campaigns"/></span>
 							</div>
 							<div class="campaignSummary table data" style="width: 100%; height: 20px;">
 								<div class="table-header">

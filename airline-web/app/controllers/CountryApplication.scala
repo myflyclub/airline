@@ -173,11 +173,12 @@ class CountryApplication @Inject()(cc: ControllerComponents) extends AbstractCon
           case countryAirlineTitle =>
             val CountryAirlineTitle(country, airline, title) = countryAirlineTitle
             val share: Long = marketShares.airlineShares.getOrElse(airline.id, 0L)
+            val relationship = AirlineCountryRelationship.getAirlineCountryRelationship(countryCode, airline).relationship
             title match {
               case Title.NATIONAL_AIRLINE =>
-                nationalAirlinesJson = nationalAirlinesJson.append(Json.obj("airlineId" -> airline.id, "airlineName" -> airline.name, "passengerCount" -> share, "loyaltyBonus" -> countryAirlineTitle.loyaltyBonus))
+                nationalAirlinesJson = nationalAirlinesJson.append(Json.obj("airlineId" -> airline.id, "airlineName" -> airline.name, "passengerCount" -> share, "loyaltyBonus" -> countryAirlineTitle.loyaltyBonus, "relationship" -> relationship))
               case Title.PARTNERED_AIRLINE =>
-                partneredAirlinesJson = partneredAirlinesJson.append(Json.obj("airlineId" -> airline.id, "airlineName" -> airline.name, "passengerCount" -> share, "loyaltyBonus" -> countryAirlineTitle.loyaltyBonus))
+                partneredAirlinesJson = partneredAirlinesJson.append(Json.obj("airlineId" -> airline.id, "airlineName" -> airline.name, "passengerCount" -> share, "loyaltyBonus" -> countryAirlineTitle.loyaltyBonus, "relationship" -> relationship))
             }
         }
 

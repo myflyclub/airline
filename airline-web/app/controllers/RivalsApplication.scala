@@ -25,6 +25,8 @@ class RivalsApplication @Inject()(cc: ControllerComponents)(implicit ec: Executi
 
         val airlineIds = allAirlines.map(_.id)
 
+        val foundedCycles = AirlineSource.loadFoundedCycles(airlineIds)
+
         // Lightweight single-table query on income for stock_price + total_value
         val priceHistory = IncomeSource.loadStockPriceHistory(airlineIds)
 
@@ -41,12 +43,13 @@ class RivalsApplication @Inject()(cc: ControllerComponents)(implicit ec: Executi
           Json.obj(
             "id" -> airline.id,
             "name" -> airline.name,
-            "airlineCode" -> airline.getAirlineCode(),
             "countryCode" -> JsString(airline.getHeadQuarter().map(_.airport.countryCode).getOrElse("")),
             "airlineType" -> JsString(airline.airlineType.label),
             "reputation" -> BigDecimal(airline.getReputation()).setScale(1, BigDecimal.RoundingMode.HALF_UP),
             "currentPrice" -> BigDecimal(airline.getStockPrice()).setScale(2, BigDecimal.RoundingMode.HALF_UP),
-            "alliance" -> JsString(airlineAllianceMap.getOrElse(airline.id, ""))
+            "alliance" -> JsString(airlineAllianceMap.getOrElse(airline.id, "")),
+            "foundedCycle" -> foundedCycles.get(airline.id).fold(JsNull: JsValue)(c => JsNumber(c)),
+            "prestigePoints" -> airline.getPrestigePoints()
           )
         })
 

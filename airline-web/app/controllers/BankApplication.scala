@@ -52,7 +52,7 @@ class BankApplication @Inject()(cc: ControllerComponents) extends AbstractContro
         Bank.getLoanOptions(requestedAmount).find( loanOption => loanOption.term == requestedTerm) match {
           case Some(loan) =>
             BankSource.saveLoan(loan.copy(airlineId = request.user.id, creationCycle = currentCycle))
-            AirlineSource.adjustAirlineBalance(request.user.id, loan.principal)
+            AirlineSource.saveLedgerEntry(AirlineLedgerEntry(request.user.id, currentCycle, LedgerType.LOAN_DISBURSEMENT, loan.principal))
             Ok(Json.toJson(loan)(new LoanWrites(currentCycle)))
           case None => BadRequest("Bad loan term [" + requestedTerm + "]")
         }
@@ -91,7 +91,7 @@ class BankApplication @Inject()(cc: ControllerComponents) extends AbstractContro
           if (balance < loan.earlyRepayment(currentCycle)) {
             BadRequest("Not enough cash to repay this loan")
           } else {
-            AirlineSource.adjustAirlineBalance(request.user.id, -1 * loan.earlyRepayment(currentCycle))
+            AirlineSource.saveLedgerEntry(AirlineLedgerEntry(request.user.id, currentCycle, LedgerType.LOAN_PAYMENT, -1 * loan.earlyRepayment(currentCycle)))
             BankSource.deleteLoan(loanId)
             Ok
           }

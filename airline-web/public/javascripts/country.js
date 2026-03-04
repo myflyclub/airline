@@ -166,13 +166,13 @@ async function loadCountryDetails(countryCode) {
 	    	$("#countryDetailsMediumAirportCount").text(loadedCountriesByCode[countryCode].mediumAirportCount)
 	    	$("#countryDetailsSmallAirportCount").text(loadedCountriesByCode[countryCode].smallAirportCount)
 
-            var relationship = loadedCountriesByCode[countryCode].countryRelationship.total
+            var countryRelationship = loadedCountriesByCode[countryCode].countryRelationship
             $("#countryDetails div.relationship span.total").empty()
-            $("#countryDetails div.relationship span.total").append(relationship)
+            $("#countryDetails div.relationship span.total").append(countryRelationship.total)
 
             var title = loadedCountriesByCode[countryCode].CountryTitle
             var $relationshipDetailsIcon = $("#countryDetails div.relationship .detailsIcon")
-            $relationshipDetailsIcon.data("relationship", relationship)
+            $relationshipDetailsIcon.data("relationship", countryRelationship)
             $relationshipDetailsIcon.data("title", title)
             $relationshipDetailsIcon.data("countryCode", countryCode)
             $relationshipDetailsIcon.show()
@@ -186,8 +186,9 @@ async function loadCountryDetails(countryCode) {
 
     		$("#countryCanvas .nationalAirlines").empty()
             if (country.nationalAirlines && country.nationalAirlines.length > 0) {
+                $(".national-title-bonus").text(`receive a ${country.nationalAirlines[0].loyaltyBonus} loyalty bonus`)
                 $.each(country.nationalAirlines, function(index, nationalAirline) {
-                    var championRow = $("<div class='table-row clickable' data-link='rival'><div class='cell'><img src='/assets/images/icons/star-full.svg' class='svg'>" + getAirlineLogoImg(nationalAirline.airlineId) + "<span style='font-weight: bold;'>" + getAirlineLabelSpan(nationalAirline.airlineId, nationalAirline.airlineName) + "</span> (" + nationalAirline.passengerCount + " passengers, " + nationalAirline.loyaltyBonus + " loyalty bonus)</div></div>")
+                    var championRow = $("<div class='table-row clickable' data-link='rival'><div class='cell'><img class='px-1 svg' src='/assets/images/icons/star-full.svg'>" + getAirlineLogoImg(nationalAirline.airlineId) + "<span style='font-weight: bold;'>" + getAirlineLabelSpan(nationalAirline.airlineId, nationalAirline.airlineName) + "</span> " + nationalAirline.relationship + " relationship</div></div>")
                     championRow.click(function() {
                         Rivals.show(nationalAirline.airlineId)
                     })
@@ -199,8 +200,9 @@ async function loadCountryDetails(countryCode) {
 
             $("#countryCanvas .partneredAirlines").empty()
             if (country.partneredAirlines && country.partneredAirlines.length > 0) {
+                $(".partnered-title-bonus").text(`receive a ${country.partneredAirlines[0].loyaltyBonus} loyalty bonus`)
                 $.each(country.partneredAirlines, function(index, partneredAirline) {
-                    var championRow = $("<div class='table-row clickable' data-link='rival'><div class='cell'><img src='/assets/images/icons/hand-shake.png' style='vertical-align:middle;'>" + getAirlineLogoImg(partneredAirline.airlineId) + "<span style='font-weight: bold;'>" + getAirlineLabelSpan(partneredAirline.airlineId, partneredAirline.airlineName) + "</span> (" + partneredAirline.passengerCount + " passengers, " + partneredAirline.loyaltyBonus + " loyalty bonus)</div></div>")
+                    var championRow = $("<div class='table-row clickable' data-link='rival'><div class='cell'><img class='px-1' src='/assets/images/icons/hand-shake.png' style='vertical-align:middle;'>" + getAirlineLogoImg(partneredAirline.airlineId) + "<span style='font-weight: bold;'>" + getAirlineLabelSpan(partneredAirline.airlineId, partneredAirline.airlineName) + "</span> " + partneredAirline.relationship + " relationship</div></div>")
                     championRow.click(function() {
                         Rivals.show(partneredAirline.airlineId)
                     })
@@ -213,7 +215,7 @@ async function loadCountryDetails(countryCode) {
             $("#countryCanvas .countryDetailsChampion").empty()
 	    	if (country.champions) {
 	    		$.each(country.champions, function(index, champion) {
-	    		    var championRow = $("<div class='table-row clickable' data-link='rival'><div class='cell'>" + getRankingImg(champion.ranking) + getAirlineLogoImg(champion.airlineId) + "<span style='font-weight: bold;'>" + getAirlineLabelSpan(champion.airlineId, champion.airlineName) + "</span> (" + champion.passengerCount + " passengers)</div></div>")
+	    		    var championRow = $("<div class='table-row clickable' data-link='rival'><div class='cell'>" + getRankingImg(champion.ranking) + getAirlineLogoImg(champion.airlineId) + "<span style='font-weight: bold;'>" + getAirlineLabelSpan(champion.airlineId, champion.airlineName) + "</span> " + champion.passengerCount + " passengers</div></div>")
 	    		    championRow.click(function() {
                         Rivals.show(champion.airlineId)
                     })
@@ -396,7 +398,6 @@ function updateCountryDelegates() {
         data:  JSON.stringify({ 'delegateCount' : assignedDelegateCount }) ,
         dataType: 'json',
         success: function(result) {
-            updateTopBarDelegates(activeAirline.id)
             closeModal($('#airlineCountryRelationshipModal'))
         },
         error: function(jqXHR, textStatus, errorThrown) {
@@ -407,16 +408,58 @@ function updateCountryDelegates() {
 }
 
 
+function renderCountryDelegates(assignedCount) {
+    var $delegateSection = $('#airlineCountryRelationshipModal .delegateSection')
+    var availableCount = $delegateSection.data('availableDelegates') || 0
+    var $display = $('#countryDelegatesDisplay')
+    $display.empty()
+
+    var $row = $('<div style="display:flex; align-items:center; gap:4px; flex-wrap:wrap;"></div>')
+    var $icons = $('<div style="display:flex; align-items:center; flex-wrap:wrap; gap:2px;"></div>')
+
+    var $addBtn = $('<img class="img-button svg" src="/assets/images/icons/plus.svg" style="width:14px; height:14px;" title="Add delegate">')
+    if (availableCount <= 0) {
+        $addBtn.css('opacity', '0.35').attr('title', 'No delegates available')
+    } else {
+        $addBtn.css('cursor', 'pointer').on('click', function() {
+            var current = $delegateSection.data('assignedDelegateCount')
+            var avail = $delegateSection.data('availableDelegates')
+            $delegateSection.data('assignedDelegateCount', current + 1)
+            $delegateSection.data('availableDelegates', avail - 1)
+            renderCountryDelegates(current + 1)
+        })
+    }
+
+    var $removeBtn = $('<img class="img-button svg" src="/assets/images/icons/minus.svg" style="width:14px; height:14px;" title="Remove delegate">')
+    if (assignedCount <= 0) {
+        $removeBtn.css('opacity', '0.35')
+    } else {
+        $removeBtn.css('cursor', 'pointer').on('click', function() {
+            var current = $delegateSection.data('assignedDelegateCount')
+            var avail = $delegateSection.data('availableDelegates')
+            $delegateSection.data('assignedDelegateCount', current - 1)
+            $delegateSection.data('availableDelegates', avail + 1)
+            renderCountryDelegates(current - 1)
+        })
+    }
+
+    $row.append($icons).append($addBtn).append($removeBtn)
+    $display.append($row)
+    refreshAssignedDelegates(assignedCount, '#4a9eed', $icons)
+}
+
 function getCountryDelegatesSummary(countryCode) {
     $('#airlineCountryRelationshipModal div.delegateStatus').empty()
     var $delegateSection = $('#airlineCountryRelationshipModal .delegateSection')
-    var airlineId = activeAirline.id
     $delegateSection.removeData('assignedDelegateCount')
     $delegateSection.removeData('originalDelegates')
     $delegateSection.data("countryCode", countryCode)
 
     updateAirlineDelegateStatus($('#airlineCountryRelationshipModal div.delegateStatus'), function(delegateInfo) {
         $delegateSection.data("availableDelegates", delegateInfo.permanentAvailableCount)
+        if ($delegateSection.data('assignedDelegateCount') !== undefined) {
+            renderCountryDelegates($delegateSection.data('assignedDelegateCount'))
+        }
     })
 
 	$.ajax({
@@ -429,14 +472,11 @@ function getCountryDelegatesSummary(countryCode) {
             $('#airlineCountryRelationshipModal span.delegatesRequired').text(result.delegatesRequired)
 
             var countryDelegates = result.delegates
-            countryDelegates.sort(function(a, b) { //sort, the most senior comes first
-                return a.startCycle - b.startCycle
-            })
-            $delegateSection.data('originalDelegates', countryDelegates) //create a clone
+            countryDelegates.sort(function(a, b) { return a.startCycle - b.startCycle })
+            $delegateSection.data('originalDelegates', countryDelegates)
             $delegateSection.data('assignedDelegateCount', countryDelegates.length)
-            $delegateSection.data('delegatesRequired', result.delegatesRequired)
 
-            refreshAssignedDelegates($('#airlineCountryRelationshipModal .delegateSection'))
+            renderCountryDelegates(countryDelegates.length)
         },
         error: function(jqXHR, textStatus, errorThrown) {
                 console.log(JSON.stringify(jqXHR));

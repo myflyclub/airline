@@ -1,6 +1,6 @@
 package com.patson.model.event
 
-import com.patson.data.{AirlineSource, AirportSource, CountrySource, CycleSource, EventSource}
+import com.patson.data.{AirlineSource, AirportSource, CycleSource, EventSource}
 import com.patson.model._
 
 import scala.collection.mutable
@@ -92,8 +92,8 @@ object Olympics {
   }
 
   def getVoteWeight(airline : Airline) : Int = {
-    val nationalAirlineTitles = CountrySource.loadCountryAirlineTitlesByCriteria(List(("airline", airline.id), ("title", Title.NATIONAL_AIRLINE)))
-    computeVoteWeight(airline, !nationalAirlineTitles.isEmpty)
+    val isNational = CountryAirlineTitle.getTopTitlesByAirline(airline.id).exists(_.title == Title.NATIONAL_AIRLINE)
+    computeVoteWeight(airline, isNational)
   }
   private def computeVoteWeight(airline : Airline, isNationalAirline : Boolean): Int = {
     var voteWeight =
@@ -109,9 +109,9 @@ object Olympics {
   }
 
   def getVoteWeights() : Map[Airline, Int] = {
-    val nationalAirlineIds = CountrySource.loadCountryAirlineTitlesByCriteria(List(("title", Title.NATIONAL_AIRLINE))).map(_.airline.id)
     AirlineSource.loadAllAirlines().map { airline =>
-      (airline, computeVoteWeight(airline, nationalAirlineIds.contains(airline.id)))
+      val isNational = CountryAirlineTitle.getTopTitlesByAirline(airline.id).exists(_.title == Title.NATIONAL_AIRLINE)
+      (airline, computeVoteWeight(airline, isNational))
     }.toMap
   }
 
@@ -205,8 +205,7 @@ object EventReward {
 case class OlympicsVoteCashReward() extends EventReward(EventType.OLYMPICS, RewardCategory.OLYMPICS_VOTE, RewardOption.CASH) {
   val CASH_BONUS = 10000000 //10 millions
   override def applyReward(event: Event, airline : Airline) = {
-    AirlineSource.adjustAirlineBalance(airline.id, CASH_BONUS)
-    AirlineSource.saveCashFlowItem(AirlineCashFlowItem(airline.id, CashFlowType.PRIZE, CASH_BONUS))
+    AirlineSource.saveLedgerEntry(AirlineLedgerEntry(airline.id, CycleSource.loadCycle(), LedgerType.PRIZE, CASH_BONUS, Some("Olympics Vote Cash Reward")))
   }
 
   override val description: String = "$10,000,000 subsidy in cash"
@@ -235,8 +234,7 @@ case class OlympicsPassengerCashReward() extends EventReward(EventType.OLYMPICS,
 
   override def applyReward(event: Event, airline : Airline) = {
     val reward = computeReward(event.id, airline.id)
-    AirlineSource.adjustAirlineBalance(airline.id, reward)
-    AirlineSource.saveCashFlowItem(AirlineCashFlowItem(airline.id, CashFlowType.PRIZE, reward))
+    AirlineSource.saveLedgerEntry(AirlineLedgerEntry(airline.id, CycleSource.loadCycle(), LedgerType.PRIZE, reward, Some("Olympics Winner Reward")))
   }
 
   override val description: String = "$20,000,000 or $1500 * score (whichever is higher) cash reward"

@@ -24,8 +24,9 @@ case class OilInventoryPolicy(airline : Airline, factor : Double, startCycle : I
 
 
 object OilInventoryPolicy {
-  val MIN_CHANGE_DURATION = 50 //how many weeks before one can change the policy again
-  def byOption(option : OilInventoryPolicyOption.Value, airline : Airline, startCycle : Int) = {
+  val MIN_CHANGE_DURATION = 48 //how many weeks before one can change the policy again
+  val RISK_PREMIUM = 0.05
+  def byOption(option : OilInventoryPolicyOption.Value, airline : Airline, startCycle : Int): OilInventoryPolicy = {
     val factor : Double = 
       option match {
         case CONSERVATIVE => 0.9
@@ -37,15 +38,15 @@ object OilInventoryPolicy {
     OilInventoryPolicy(airline, factor, startCycle)
   }
   
-  def getDefaultPolicy(airline : Airline) = {
+  def getDefaultPolicy(airline : Airline): OilInventoryPolicy = {
     byOption(CONSERVATIVE, airline, 0) 
   }
   
   val description = (value : Value) => {
     value match {
-        case CONSERVATIVE => "Conservative - shields from 90% of price fluctuation"
-        case BALANCED => "Balanced - shields from 50% of price fluctuation"
-        case AGGRESSIVE => "Aggressive - shields from 20% of price fluctuation"
+        case CONSERVATIVE => s"Conservative - shields from 90% of price fluctuation but 4.5% risk premium."
+        case BALANCED => s"Balanced - shields from 50% of price fluctuation but 2.5% risk premium."
+        case AGGRESSIVE => s"Aggressive - shields from 20% of price fluctuation but 1.0% risk premium."
         case NONE => "No Inventory - buys all required fuel at market price"
       }
   }

@@ -32,7 +32,7 @@ object GeoDataGenerator extends App {
       "AU"
 //    } else if (List("NU", "CK").contains(countryCode)) {
 //      "NZ"
-    } else if (List("PM", "WF", "GF", "GP", "MF", "MQ", "PM", "BL", "RE", "NC", "PF", "MC", "YT").contains(countryCode)) {
+    } else if (List("PM", "WF", "GF", "GP", "MF", "MQ", "PM", "BL", "RE", "NC", "PF", "YT").contains(countryCode)) {
       "FR"
     } else if (List("BQ").contains(countryCode)) {
       "NL"
@@ -63,9 +63,9 @@ object GeoDataGenerator extends App {
 
     buildCountryData(airports)
 
-    GenericTransitGenerator.generateGenericTransit()
+    AirportStatsInit.initAirportStats()
 
-//    AssetBlueprintGenerator.generateAssets(airports)
+    GenericTransitGenerator.generateGenericTransit()
 
     Await.result(actorSystem.terminate(), Duration.Inf)
   }
@@ -439,14 +439,10 @@ object GeoDataGenerator extends App {
         val airportCopy = airport.copy(baseIncome = normalizedIncome , basePopulation = population.toInt, basePopMiddleIncome = middleIncomePop, basePopElite = elitePopAdjusted)
         airportCopy
       }
-//    }.filter(_.population != 0).sortBy { airport =>
-    }.sortBy { airport =>
-      airport.baseIncome * airport.basePopulation
-    }
+    }.filter(_.basePopulation != 0)
+    .sortBy(_.basePopMiddleIncome)
 
     println(s"Calculated all airport pops & income")
-
-    AirportStatsInit.initAirportStats()
 
     (airports, cityAirportRelationshipsByIata)
   }

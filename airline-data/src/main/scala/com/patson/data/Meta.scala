@@ -186,17 +186,16 @@ object Meta {
     statement = connection.prepareStatement("CREATE TABLE " + AIRLINE_INFO_TABLE + "(" +
       "airline INTEGER PRIMARY KEY, " +
       "balance LONG," +
+      "action_point DOUBLE DEFAULT 0," +
       "service_quality DECIMAL(5,2)," +
       "target_service_quality INTEGER," +
       "shares_outstanding INTEGER DEFAULT 0," +
       "stock_price DOUBLE DEFAULT 0," +
       "reputation DECIMAL(6,2)," +
       "country_code CHAR(2)," +
-      "airline_code CHAR(2)," +
-      "color CHAR(7)," +
-      "skip_tutorial TINYINT," +
       "initialized TINYINT," +
       "minimum_renewal_balance INTEGER DEFAULT 0," +
+      "prestige_points INTEGER UNSIGNED," +
       "FOREIGN KEY(airline) REFERENCES " + AIRLINE_TABLE + "(id) ON DELETE CASCADE ON UPDATE CASCADE" +
       ")")
 
@@ -230,15 +229,13 @@ object Meta {
 
     createLinkStats(connection)
     createPassengerHistoryTables(connection)
-    createAirlineTransaction(connection)  
+    createAirlineLedger(connection)
     createIncome(connection)
-    createAirlineCashFlowItem(connection)
-    createCashFlow(connection)
     createLoan(connection)
     createCountryMarketShare(connection)
     createAirlineStats(connection)
     createCountryAirlineTitle(connection)
-    createAirlineSlogan(connection)
+    createAirlineMeta(connection)
     createAirlineNameHistory(connection)
     createAirplaneRenewal(connection)
     createAirplaneConfiguration(connection)
@@ -254,8 +251,6 @@ object Meta {
     createEvent(connection)
     createSantaClaus(connection)
     createAirportAirlineBonus(connection)
-    createAirplaneModelFavorite(connection)
-    createAirplaneModelDiscount(connection)
     createLinkChangeHistory(connection)
     createGoogleResource(connection)
     createDelegate(connection)
@@ -284,6 +279,7 @@ object Meta {
     createAirportStatistics(connection)
     createWorldStatistics(connection)
     createRankingLeaderboard(connection)
+    createPrestige(connection)
 
     statement = connection.prepareStatement("CREATE TABLE " + AIRPORT_CITY_SHARE_TABLE + "(" +
       "airport INTEGER," +
@@ -466,12 +462,9 @@ object Meta {
       "constructed_cycle INTEGER, " +
       "purchased_cycle INTEGER, " +
       "airplane_condition DECIMAL(7,4), " +
-      "depreciation_rate INTEGER, " +
-      "value INTEGER," +
+      "purchase_price INTEGER NOT NULL DEFAULT 0," +
       "is_sold TINYINT(1)," +
-      "dealer_ratio DECIMAL(7,6)," +
       "home INTEGER," +
-      "purchase_rate DECIMAL(4,3) DEFAULT 1," +
       "version INTEGER DEFAULT 0," +
       "FOREIGN KEY(model) REFERENCES " + AIRPLANE_MODEL_TABLE + "(id) ON DELETE CASCADE ON UPDATE CASCADE," +
       "FOREIGN KEY(owner) REFERENCES " + AIRLINE_TABLE + "(id) ON DELETE CASCADE ON UPDATE CASCADE" +
@@ -603,54 +596,44 @@ object Meta {
     statement.close()
   }
 
-  def createAirlineTransaction(connection : Connection) {
-    var statement = connection.prepareStatement("DROP TABLE IF EXISTS " + AIRLINE_TRANSACTION_TABLE)
+  def createAirlineLedger(connection : Connection) {
+    var statement = connection.prepareStatement("DROP TABLE IF EXISTS " + AIRLINE_LEDGER_TABLE)
     statement.execute()
     statement.close()
 
-    statement = connection.prepareStatement("CREATE TABLE " + AIRLINE_TRANSACTION_TABLE + "(" +
+    statement = connection.prepareStatement("CREATE TABLE " + AIRLINE_LEDGER_TABLE + "(" +
+      "id INTEGER PRIMARY KEY AUTO_INCREMENT, " +
       "airline INTEGER, " +
-      "transaction_type INTEGER, " +
-      "amount LONG," +
-      "cycle INTEGER," +
-      "FOREIGN KEY(airline) REFERENCES " + AIRLINE_TABLE + "(id) ON DELETE CASCADE ON UPDATE CASCADE" +
-      ")")
-    statement.execute()
-    statement.close()
-
-    statement = connection.prepareStatement("CREATE INDEX " + AIRLINE_TRANSACTION_INDEX_1 + " ON " + AIRLINE_TRANSACTION_TABLE + "(airline)")
-    statement.execute()
-    statement.close()
-
-    statement = connection.prepareStatement("CREATE INDEX " + AIRLINE_TRANSACTION_INDEX_2 + " ON " + AIRLINE_TRANSACTION_TABLE + "(cycle)")
-    statement.execute()
-    statement.close()
-  }
-
-  def createAirlineCashFlowItem(connection : Connection) {
-    var statement = connection.prepareStatement("DROP TABLE IF EXISTS " + AIRLINE_CASH_FLOW_ITEM_TABLE)
-    statement.execute()
-    statement.close()
-
-    statement = connection.prepareStatement("CREATE TABLE " + AIRLINE_CASH_FLOW_ITEM_TABLE + "(" +
-      "airline INTEGER, " +
-      "cash_flow_type INTEGER, " +
+      "cycle INTEGER, " +
+      "entry_type INTEGER, " +
       "amount BIGINT(20)," +
-      "cycle INTEGER," +
-      "FOREIGN KEY(airline) REFERENCES " + AIRLINE_TABLE + "(id) ON DELETE CASCADE ON UPDATE CASCADE" +
+      "description VARCHAR(200) NULL," +
+      "FOREIGN KEY(airline) REFERENCES " + AIRLINE_TABLE + "(id) ON DELETE CASCADE" +
       ")")
+    statement.execute()
+    statement.close()
+
+    statement = connection.prepareStatement("CREATE INDEX " + AIRLINE_LEDGER_INDEX_1 + " ON " + AIRLINE_LEDGER_TABLE + "(airline)")
+    statement.execute()
+    statement.close()
+
+    statement = connection.prepareStatement("CREATE INDEX " + AIRLINE_LEDGER_INDEX_2 + " ON " + AIRLINE_LEDGER_TABLE + "(cycle)")
     statement.execute()
     statement.close()
   }
 
-  def createAirlineSlogan(connection : Connection) {
-    var statement = connection.prepareStatement("DROP TABLE IF EXISTS " + AIRLINE_SLOGAN_TABLE)
+  def createAirlineMeta(connection : Connection) {
+    var statement = connection.prepareStatement("DROP TABLE IF EXISTS " + AIRLINE_META_TABLE)
     statement.execute()
     statement.close()
 
-    statement = connection.prepareStatement("CREATE TABLE " + AIRLINE_SLOGAN_TABLE + "(" +
+    statement = connection.prepareStatement("CREATE TABLE " + AIRLINE_META_TABLE + "(" +
       "airline INTEGER, " +
       "slogan VARCHAR(256), " +
+      "founded_cycle INTEGER, " +
+      "airline_code CHAR(2) DEFAULT NULL, " +
+      "color CHAR(7) DEFAULT NULL, " +
+      "skip_tutorial TINYINT NOT NULL DEFAULT 0, " +
       "PRIMARY KEY (airline)," +
       "FOREIGN KEY(airline) REFERENCES " + AIRLINE_TABLE + "(id) ON DELETE CASCADE ON UPDATE CASCADE" +
       ")")
@@ -719,27 +702,6 @@ object Meta {
     statement.execute()
     statement.close()
 
-    statement = connection.prepareStatement("DROP TABLE IF EXISTS " + TRANSACTIONS_INCOME_TABLE)
-    statement.execute()
-    statement.close()
-
-    statement = connection.prepareStatement("CREATE TABLE " + TRANSACTIONS_INCOME_TABLE + "(" +
-      "airline INTEGER, " +
-      "profit LONG, " +
-      "revenue LONG, " +
-      "expense LONG, " +
-      "capital_gain LONG," +
-      "create_link LONG," +
-      "prize LONG," +
-      "buy_back LONG," +
-      "period INTEGER," +
-      "cycle INTEGER," +
-      "PRIMARY KEY (airline, period, cycle)" +
-      ")")
-
-    statement.execute()
-    statement.close()
-
     statement = connection.prepareStatement("DROP TABLE IF EXISTS " + OTHERS_INCOME_TABLE)
     statement.execute()
     statement.close()
@@ -760,32 +722,6 @@ object Meta {
       "fuel_profit LONG, " +
       "depreciation LONG," +
       "overtime_compensation LONG," +
-      "period INTEGER," +
-      "cycle INTEGER," +
-      "PRIMARY KEY (airline, period, cycle)" +
-      ")")
-    statement.execute()
-    statement.close()
-  }
-
-  def createCashFlow(connection : Connection) {
-    var statement = connection.prepareStatement("DROP TABLE IF EXISTS " + CASH_FLOW_TABLE)
-    statement.execute()
-    statement.close()
-
-    statement = connection.prepareStatement("CREATE TABLE " + CASH_FLOW_TABLE + "(" +
-      "airline INTEGER, " +
-      "cash_flow BIGINT(20), " +
-      "operation BIGINT(20), " +
-      "loan_interest BIGINT(20), " +
-      "loan_principle BIGINT(20)," +
-      "base_construction BIGINT(20), " +
-      "buy_airplane BIGINT(20), " +
-      "sell_airplane BIGINT(20)," +
-      "create_link BIGINT(20), " +
-      "facility_construction BIGINT(20), " +
-      "oil_contract BIGINT(20), " +
-      "asset_transactions BIGINT(20), " +
       "period INTEGER," +
       "cycle INTEGER," +
       "PRIMARY KEY (airline, period, cycle)" +
@@ -1212,58 +1148,6 @@ object Meta {
     statement.close()
   }
 
-  def createAirplaneModelFavorite(connection : Connection): Unit = {
-    var statement = connection.prepareStatement("DROP TABLE IF EXISTS " + AIRPLANE_MODEL_FAVORITE_TABLE)
-    statement.execute()
-    statement.close()
-
-    statement = connection.prepareStatement("CREATE TABLE " + AIRPLANE_MODEL_FAVORITE_TABLE + "(" +
-      "airline INTEGER PRIMARY KEY," +
-      "model INTEGER," +
-      "start_cycle INTEGER," +
-      "FOREIGN KEY(airline) REFERENCES " + AIRLINE_TABLE + "(id) ON DELETE CASCADE ON UPDATE CASCADE" +
-      ")")
-    statement.execute()
-    statement.close()
-  }
-
-  def createAirplaneModelDiscount(connection : Connection): Unit = {
-    var statement = connection.prepareStatement("DROP TABLE IF EXISTS " + AIRPLANE_MODEL_AIRLINE_DISCOUNT_TABLE)
-    statement.execute()
-    statement.close()
-
-    statement = connection.prepareStatement("CREATE TABLE " + AIRPLANE_MODEL_AIRLINE_DISCOUNT_TABLE + "(" +
-      "airline INTEGER," +
-      "model INTEGER," +
-      "discount DECIMAL(5,2)," +
-      "discount_type INTEGER," +
-      "discount_reason INTEGER," +
-      "expiration_cycle INTEGER," +
-      "PRIMARY KEY (airline, model, discount_type, discount_reason), " +
-      "FOREIGN KEY(model) REFERENCES " + AIRPLANE_MODEL_TABLE + "(id) ON DELETE CASCADE ON UPDATE CASCADE," +
-      "FOREIGN KEY(airline) REFERENCES " + AIRLINE_TABLE + "(id) ON DELETE CASCADE ON UPDATE CASCADE" +
-      ")")
-    statement.execute()
-    statement.close()
-
-    statement = connection.prepareStatement("DROP TABLE IF EXISTS " + AIRPLANE_MODEL_DISCOUNT_TABLE)
-    statement.execute()
-    statement.close()
-
-    statement = connection.prepareStatement("CREATE TABLE " + AIRPLANE_MODEL_DISCOUNT_TABLE + "(" +
-      "model INTEGER," +
-      "discount DECIMAL(5,2)," +
-      "discount_type INTEGER," +
-      "discount_reason INTEGER," +
-      "expiration_cycle INTEGER," +
-      "PRIMARY KEY (model, discount_type, discount_reason), " +
-      "FOREIGN KEY(model) REFERENCES " + AIRPLANE_MODEL_TABLE + "(id) ON DELETE CASCADE ON UPDATE CASCADE" +
-      ")")
-    statement.execute()
-    statement.close()
-  }
-
-
   def createSantaClaus(connection : Connection) {
     var statement = connection.prepareStatement("DROP TABLE IF EXISTS " + SANTA_CLAUS_INFO_TABLE)
     statement.execute()
@@ -1457,7 +1341,10 @@ object Meta {
 
 
   def createDelegate(connection : Connection) {
-    var statement = connection.prepareStatement("DROP TABLE IF EXISTS " + COUNTRY_DELEGATE_TASK_TABLE)
+    var statement = connection.prepareStatement("DROP TABLE IF EXISTS " + AIRCRAFT_MODEL_DELEGATE_TASK_TABLE)
+    statement.execute()
+    statement.close()
+    statement = connection.prepareStatement("DROP TABLE IF EXISTS " + COUNTRY_DELEGATE_TASK_TABLE)
     statement.execute()
     statement.close()
     statement = connection.prepareStatement("DROP TABLE IF EXISTS " + LINK_NEGOTIATION_TASK_TABLE)
@@ -1623,6 +1510,15 @@ object Meta {
     statement = connection.prepareStatement("CREATE TABLE " + CAMPAIGN_DELEGATE_TASK_TABLE + "(" +
       "delegate INTEGER PRIMARY KEY, " +
       "campaign INTEGER REFERENCES " + CAMPAIGN_TABLE + "(id) ON DELETE RESTRICT ON UPDATE CASCADE, " +
+      "start_cycle INTEGER, " +
+      "FOREIGN KEY(delegate) REFERENCES " + BUSY_DELEGATE_TABLE + "(id) ON DELETE CASCADE ON UPDATE CASCADE" +
+      ")")
+    statement.execute()
+    statement.close()
+
+    statement = connection.prepareStatement("CREATE TABLE " + AIRCRAFT_MODEL_DELEGATE_TASK_TABLE + "(" +
+      "delegate INTEGER PRIMARY KEY, " +
+      "aircraft_model_id INTEGER, " +
       "start_cycle INTEGER, " +
       "FOREIGN KEY(delegate) REFERENCES " + BUSY_DELEGATE_TABLE + "(id) ON DELETE CASCADE ON UPDATE CASCADE" +
       ")")
@@ -2081,6 +1977,19 @@ object Meta {
     )
     statement.execute()
     statement.close()
+
+    statement = connection.prepareStatement("DROP TABLE IF EXISTS " + ALLIANCE_META_TABLE)
+    statement.execute()
+    statement.close()
+
+    statement = connection.prepareStatement("CREATE TABLE " + ALLIANCE_META_TABLE + "(" +
+      "alliance INTEGER, " +
+      "alliance_slogan VARCHAR(256), " +
+      "FOREIGN KEY(alliance) REFERENCES " + ALLIANCE_TABLE + "(id) ON DELETE CASCADE ON UPDATE CASCADE" +
+      ")"
+    )
+    statement.execute()
+    statement.close()
   }
 
   def createAllianceStats(connection : Connection): Unit = {
@@ -2203,9 +2112,29 @@ object Meta {
       "movement INTEGER DEFAULT 0, " +
       "reputation_prize INTEGER DEFAULT 0, " +
       "PRIMARY KEY (cycle, ranking_type, key_hash), " +
-      "INDEX ranking_leaderboard_cycle_idx (cycle)" +
+      "INDEX ranking_leaderboard_cycle_idx (cycle, ranking_type, ranking)" +
       ")"
     )
+    statement.execute()
+    statement.close()
+  }
+
+  def createPrestige(connection: Connection): Unit = {
+    var statement = connection.prepareStatement("DROP TABLE IF EXISTS " + PRESTIGE_TABLE)
+    statement.execute()
+    statement.close()
+
+    statement = connection.prepareStatement("CREATE TABLE " + PRESTIGE_TABLE + "(" +
+      "id INTEGER PRIMARY KEY AUTO_INCREMENT," +
+      "airline INTEGER, " +
+      "airport INTEGER, " +
+      "airline_name VARCHAR(256), " +
+      "prestige_points INTEGER UNSIGNED, " +
+      "cycle INTEGER, " +
+      "FOREIGN KEY(airport) REFERENCES " + AIRPORT_TABLE + "(id) ON DELETE CASCADE ON UPDATE CASCADE" +
+      ")"
+    )
+
     statement.execute()
     statement.close()
   }

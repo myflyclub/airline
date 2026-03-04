@@ -15,13 +15,13 @@ function generateSimpleImageBar(imageSrc, count) {
     return containerDiv
 }
 
-function generateImageBar(imageEmpty, imageFill, count, containerDiv, valueInput, indexToValueFunction, valueToIndexFunction, callback) {
-    generateImageBarWithRowSize(imageEmpty, imageFill, count, containerDiv, valueInput, indexToValueFunction, valueToIndexFunction, 10, callback)
+function generateImageBar(imageEmpty, imageFill, count, containerDiv, valueInput, indexToValueFunction, valueToIndexFunction, callback, size = 16) {
+    generateImageBarWithRowSize(imageEmpty, imageFill, count, containerDiv, valueInput, indexToValueFunction, valueToIndexFunction, 10, callback, size)
 }
 /**
  * used by in setting route service stars & flight frequency
  **/
-function generateImageBarWithRowSize(imageEmpty, imageFill, count, containerDiv, valueInput, indexToValueFunction, valueToIndexFunction, rowSize, callback) {
+function generateImageBarWithRowSize(imageEmpty, imageFill, count, containerDiv, valueInput, indexToValueFunction, valueToIndexFunction, rowSize, callback, size = 16) {
 	containerDiv.empty()
 	var images = []
 
@@ -39,7 +39,7 @@ function generateImageBarWithRowSize(imageEmpty, imageFill, count, containerDiv,
 	}
 
 	for (i = 0 ; i < count ; i ++) {
-		var image = $("<img width='16px' height='auto' class='img-button'>")
+		var image = $("<img width='" + size + "px' height='auto' class='img-button'>")
 		image.attr("src", imageEmpty)
 
 		image.data('index', i)
@@ -249,8 +249,9 @@ function getAirlineLogoImg(airlineId) {
 	return `<img class='logo' loading='lazy' width='36px' height='auto' alt='Airline Logo' src='/airlines/${airlineId}/logo'/>`
 }
 
-function getAllianceLogoImg(allianceId) {
-	return `<img class='logo-alliance' loading='lazy' width='36px' height='18px' src='/alliances/${allianceId}/logo'/>`
+function getAllianceLogoImg(allianceId, slogan = '') {
+	const tooltipAttr = slogan ? ` data-tooltip="${slogan.replace(/"/g, '&quot;')}"` : '';
+	return `<img class='logo-alliance' loading='lazy' width='36px' height='18px' src='/alliances/${allianceId}/logo'${tooltipAttr}/>`
 }
 
 function getAllianceOrAirlineLogoImg(allianceId, airlineId) {
@@ -287,7 +288,7 @@ function getAirlineLabelSpan(airlineId, airlineName, elementType = 'span') {
 }
 
 function getAirlineSpan(airlineId, airlineName, tooltip = null) {
-    var $airlineSpan = $('<span class="flex-row gap-0"></span>')
+    var $airlineSpan = $('<span class="flex-align-center"></span>')
 	$airlineSpan.append(getAirlineLogoImg(airlineId))
 	$airlineSpan.append(getAirlineLabelSpan(airlineId, airlineName))
 	if (tooltip) {
@@ -334,7 +335,7 @@ function getAdminImg(adminStatus) {
 		return ""
 	}
 
-	var	levelIcon = "/assets/images/icons/star.png"
+	var	levelIcon = "/assets/images/icons/star-full.svg"
     var levelTitle = "Game Admin"
 
 	if (levelIcon) {

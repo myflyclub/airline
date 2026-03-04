@@ -26,7 +26,7 @@ object Patchers extends App {
           if (existingModel.price != model.price) { //adjust existing value
             val updatingAirplanes = AirplaneSource.loadAirplanesCriteria(List(("a.model", existingModel.id))).map { airplane =>
               val newValue = (model.price * airplane.condition / Airplane.MAX_CONDITION).toInt
-              airplane.copy(value = newValue);
+              airplane.copy(purchasePrice = newValue);
             }
             AirplaneSource.updateAirplanesDetails(updatingAirplanes)
           }

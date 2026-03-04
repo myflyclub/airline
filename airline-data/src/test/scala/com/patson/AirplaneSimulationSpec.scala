@@ -6,12 +6,12 @@ import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.matchers.should.Matchers
 
 class AirplaneSimulationSpec extends AnyWordSpecLike with Matchers {
-  private[this] val model = Model.modelByName("Cessna Caravan")
+  private[this] val model = Model.modelByName("Airbus A320")
   val airline1 = Airline("test-1")
   val airline2 = Airline("test-2")
 
-  val airplane1 = Airplane(model, airline1, 0, 0, 100, 0, model.price, id = 1)
-  val airplane2 = Airplane(model, airline1, 0, 0, 100, 0, model.price, id = 2)
+  val airplane1 = Airplane(model, airline1, 0, 0, 100, model.price, id = 1)
+  val airplane2 = Airplane(model, airline1, 0, 0, 100, model.price, id = 2)
   val airport1 = Airport.fromId(1)
   val airport2 = Airport.fromId(2)
   val link1 = Link(airport1, airport2, airline1, LinkClassValues.getInstance(), 0, LinkClassValues.getInstance(), 0, 0, 1)
@@ -67,12 +67,49 @@ class AirplaneSimulationSpec extends AnyWordSpecLike with Matchers {
       airplane.condition should be >= 0.0
       airplane.condition should be < 1.0
     }
-  }
 
-  "computeDepreciationRate" should {
-    "compute the rate based on decay" in {
-      val depreciationRate = AirplaneSimulation.computeDepreciationRate(model, 0.1)
-      depreciationRate shouldBe (model.price * (0.1/100)) // condition on scale of 100
+    "higher utilization is more profitable than low (lower depreciation per utilized capacity)" in {
+      val purchasePrice = model.price
+
+      val highUtil = Airplane(model, airline1, constructedCycle = 0, purchasedCycle = 0, condition = Airplane.MAX_CONDITION, purchasePrice = purchasePrice, id = 101)
+      val lowUtil = Airplane(model, airline1, constructedCycle = 0, purchasedCycle = 0, condition = Airplane.MAX_CONDITION, purchasePrice = purchasePrice, id = 102)
+
+      highUtil.setTestUtilizationRate(1.0)
+      lowUtil.setTestUtilizationRate(0.2)
+
+      val sellBeforeHigh = Computation.calculateAirplaneSellValue(highUtil)
+      val sellBeforeLow = Computation.calculateAirplaneSellValue(lowUtil)
+
+      val decayed = AirplaneSimulation.decayAirplanesByAirline(Map(
+        highUtil -> LinkAssignments(Map()),
+        lowUtil -> LinkAssignments(Map()),
+      ), airline1)
+
+      val decayedHigh = decayed.find(_.id == highUtil.id).get
+      val decayedLow = decayed.find(_.id == lowUtil.id).get
+
+      val sellAfterHigh = Computation.calculateAirplaneSellValue(decayedHigh)
+      val sellAfterLow = Computation.calculateAirplaneSellValue(decayedLow)
+
+      val depreciationHigh = sellBeforeHigh - sellAfterHigh
+      val depreciationLow = sellBeforeLow - sellAfterLow
+
+      val depreciationPerUtilHigh = depreciationHigh.toDouble / highUtil.utilizationRate
+      val depreciationPerUtilLow = depreciationLow.toDouble / lowUtil.utilizationRate
+
+      // "profit" proxy: inverse of depreciation per utilized unit
+      // higher is better; % more profitable = (high/low - 1) * 100
+      val profitIndexHigh = 1.0 / depreciationPerUtilHigh
+      val profitIndexLow = 1.0 / depreciationPerUtilLow
+      val percentMoreProfitable = (profitIndexHigh / profitIndexLow - 1.0) * 100.0
+
+      println(f"[utilization profitability] highUtil=${highUtil.utilizationRate}%.2f lowUtil=${lowUtil.utilizationRate}%.2f")
+      println(f"[utilization profitability] depreciationPerUtil high=$depreciationPerUtilHigh%.4f low=$depreciationPerUtilLow%.4f")
+      println(f"[utilization profitability] high is $percentMoreProfitable%.2f%% more profitable (by sell-value depreciation per utilized unit)")
+
+      depreciationPerUtilHigh should be < depreciationPerUtilLow
+      percentMoreProfitable should be > 0.0
     }
+
   }
 }

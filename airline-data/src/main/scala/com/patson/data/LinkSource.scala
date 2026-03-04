@@ -11,6 +11,7 @@ import com.patson.util.{AirlineCache, AirplaneModelCache, AirportCache}
 
 import scala.collection.mutable
 import scala.collection.mutable.{HashMap, HashSet, ListBuffer, Set}
+import scala.util.Using
  
 
 
@@ -244,22 +245,22 @@ object LinkSource {
       for (i <- 0 until linkIds.size - 1) {
             queryString.append("?,")
       }
-      
+
       queryString.append("?)")
-      val linkAssignmentStatement = connection.prepareStatement(queryString.toString)
-      for (i <- 0 until linkIds.size) {
-        linkAssignmentStatement.setInt(i + 1, linkIds(i))
-      }
-      
-      val assignmentResultSet = linkAssignmentStatement.executeQuery
-      
+
       case class AssignmentRow(link: Int, airplane: Int, frequency: Int, flightMinutes: Int)
-      val rows = new ListBuffer[AssignmentRow]()
-      while (assignmentResultSet.next()) {
-          rows += AssignmentRow(assignmentResultSet.getInt("link"), assignmentResultSet.getInt("airplane"), assignmentResultSet.getInt("frequency"), assignmentResultSet.getInt("flight_minutes"))
+      val rows = Using.resource(connection.prepareStatement(queryString.toString)) { linkAssignmentStatement =>
+        for (i <- 0 until linkIds.size) {
+          linkAssignmentStatement.setInt(i + 1, linkIds(i))
+        }
+        Using.resource(linkAssignmentStatement.executeQuery()) { assignmentResultSet =>
+          val rows = new ListBuffer[AssignmentRow]()
+          while (assignmentResultSet.next()) {
+            rows += AssignmentRow(assignmentResultSet.getInt("link"), assignmentResultSet.getInt("airplane"), assignmentResultSet.getInt("frequency"), assignmentResultSet.getInt("flight_minutes"))
+          }
+          rows.toList
+        }
       }
-      assignmentResultSet.close()
-      linkAssignmentStatement.close()
 
       val airplaneCache = AirplaneSource.loadAirplanesByIds(rows.map(_.airplane).distinct.toList).map { airplane => (airplane.id, airplane) }.toMap
 
@@ -276,12 +277,10 @@ object LinkSource {
           assignments.put(linkId, HashMap.empty)
         }
       }
-      
-      val assignedPlanesByLinkId = assignments.toList.map {
+
+      assignments.toList.map {
         case (linkId, mutableMap) => (linkId, mutableMap.toMap)
       }.toMap
-      
-      assignedPlanesByLinkId
     }
   }
   
@@ -477,62 +476,9 @@ object LinkSource {
   }
 
   def updateLink(link : Transport) = {
-    //open the hsqldb
-    val connection = Meta.getConnection()
     val existingLink = loadFlightLinkById(link.id, ID_LOAD) //use ID load to get the simple freq/capacity of previous state (even tho some airplanes might have just arrived)
-
-    val preparedStatement = connection.prepareStatement("UPDATE " + LINK_TABLE + " SET price_economy = ?, price_business = ?, price_first = ?, capacity_economy = ?, capacity_business = ?, capacity_first = ?, quality = ?, duration = ?, frequency = ?, flight_number = ?, airplane_model = ?, last_update = ? WHERE id = ?")
-
-    try {
-      preparedStatement.setInt(1, link.price(ECONOMY))
-      preparedStatement.setInt(2, link.price(BUSINESS))
-      preparedStatement.setInt(3, link.price(FIRST))
-      preparedStatement.setInt(4, link.capacity(ECONOMY))
-      preparedStatement.setInt(5, link.capacity(BUSINESS))
-      preparedStatement.setInt(6, link.capacity(FIRST))
-      if (link.isInstanceOf[Link]) {
-        preparedStatement.setInt(7, link.asInstanceOf[Link].rawQuality)
-      } else {
-        preparedStatement.setNull(7, Types.INTEGER)
-      }
-      preparedStatement.setInt(8, link.duration)
-      preparedStatement.setInt(9, link.frequency)
-      if (link.isInstanceOf[Link]) {
-        preparedStatement.setInt(10, link.asInstanceOf[Link].flightNumber)
-        preparedStatement.setInt(11, link.asInstanceOf[Link].getAssignedModel().map(_.id).getOrElse(0))
-      } else {
-        preparedStatement.setNull(10, Types.INTEGER)
-        preparedStatement.setNull(11, Types.INTEGER)
-      }
-      preparedStatement.setTimestamp(12, new java.sql.Timestamp(new Date().getTime()))
-      preparedStatement.setInt(13, link.id)
-      
-      val updateCount = preparedStatement.executeUpdate()
-      println("Updated " + updateCount + " link!")
-
-      if (link.isInstanceOf[Link]) {
-        if (hasChange(existingLink.get, link)) {
-          ChangeHistorySource.saveLinkChange(buildChangeHistory(existingLink.map(_.asInstanceOf[Link]), Some(link.asInstanceOf[Link])))
-        }
-      }
-
-      updateCount
-    } finally {
-      preparedStatement.close()
-      connection.close()
-    }
-  }
-
-  def updateLinks[T <: Transport](links : List[T]) = {
-    //open the hsqldb
-    val connection = Meta.getConnection()
-    val preparedStatement = connection.prepareStatement("UPDATE " + LINK_TABLE + " SET price_economy = ?, price_business = ?, price_first = ?, capacity_economy = ?, capacity_business = ?, capacity_first = ?, quality = ?, duration = ?, frequency = ?, flight_number = ?, airplane_model = ?, last_update = ? WHERE id = ?")
-    val existingLinks = loadLinksByIds(links.map(_.id)).map(link => (link.id, link)).toMap
-    val changeEntries = ListBuffer[LinkChange]()
-
-    connection.setAutoCommit(false)
-    try {
-      links.foreach { link =>
+    Using.resource(Meta.getConnection()) { connection =>
+      Using.resource(connection.prepareStatement("UPDATE " + LINK_TABLE + " SET price_economy = ?, price_business = ?, price_first = ?, capacity_economy = ?, capacity_business = ?, capacity_first = ?, quality = ?, duration = ?, frequency = ?, flight_number = ?, airplane_model = ?, last_update = ? WHERE id = ?")) { preparedStatement =>
         preparedStatement.setInt(1, link.price(ECONOMY))
         preparedStatement.setInt(2, link.price(BUSINESS))
         preparedStatement.setInt(3, link.price(FIRST))
@@ -555,25 +501,66 @@ object LinkSource {
         }
         preparedStatement.setTimestamp(12, new java.sql.Timestamp(new Date().getTime()))
         preparedStatement.setInt(13, link.id)
-        preparedStatement.addBatch()
 
-        if (link.transportType == TransportType.FLIGHT) {
-          val flightLink = link.asInstanceOf[Link]
-          if (hasChange(existingLinks.get(link.id).get.asInstanceOf[Link], flightLink)) {
-            changeEntries.append(buildChangeHistory(existingLinks.get(flightLink.id).map(_.asInstanceOf[Link]), Some(flightLink)))
+        val updateCount = preparedStatement.executeUpdate()
+        println("Updated " + updateCount + " link!")
+
+        if (link.isInstanceOf[Link]) {
+          if (hasChange(existingLink.get, link)) {
+            ChangeHistorySource.saveLinkChange(buildChangeHistory(existingLink.map(_.asInstanceOf[Link]), Some(link.asInstanceOf[Link])))
           }
         }
-      }
-      
-      preparedStatement.executeBatch()
 
-      ChangeHistorySource.saveLinkChanges(changeEntries.toList)
-      connection.commit()
-    } finally {
-      preparedStatement.close()
-      connection.close()
+        updateCount
+      }
     }
-    
+  }
+
+  def updateLinks[T <: Transport](links : List[T]) = {
+    val existingLinks = loadLinksByIds(links.map(_.id)).map(link => (link.id, link)).toMap
+    val changeEntries = ListBuffer[LinkChange]()
+
+    Using.resource(Meta.getConnection()) { connection =>
+      connection.setAutoCommit(false)
+      Using.resource(connection.prepareStatement("UPDATE " + LINK_TABLE + " SET price_economy = ?, price_business = ?, price_first = ?, capacity_economy = ?, capacity_business = ?, capacity_first = ?, quality = ?, duration = ?, frequency = ?, flight_number = ?, airplane_model = ?, last_update = ? WHERE id = ?")) { preparedStatement =>
+        links.foreach { link =>
+          preparedStatement.setInt(1, link.price(ECONOMY))
+          preparedStatement.setInt(2, link.price(BUSINESS))
+          preparedStatement.setInt(3, link.price(FIRST))
+          preparedStatement.setInt(4, link.capacity(ECONOMY))
+          preparedStatement.setInt(5, link.capacity(BUSINESS))
+          preparedStatement.setInt(6, link.capacity(FIRST))
+          if (link.isInstanceOf[Link]) {
+            preparedStatement.setInt(7, link.asInstanceOf[Link].rawQuality)
+          } else {
+            preparedStatement.setNull(7, Types.INTEGER)
+          }
+          preparedStatement.setInt(8, link.duration)
+          preparedStatement.setInt(9, link.frequency)
+          if (link.isInstanceOf[Link]) {
+            preparedStatement.setInt(10, link.asInstanceOf[Link].flightNumber)
+            preparedStatement.setInt(11, link.asInstanceOf[Link].getAssignedModel().map(_.id).getOrElse(0))
+          } else {
+            preparedStatement.setNull(10, Types.INTEGER)
+            preparedStatement.setNull(11, Types.INTEGER)
+          }
+          preparedStatement.setTimestamp(12, new java.sql.Timestamp(new Date().getTime()))
+          preparedStatement.setInt(13, link.id)
+          preparedStatement.addBatch()
+
+          if (link.transportType == TransportType.FLIGHT) {
+            val flightLink = link.asInstanceOf[Link]
+            if (hasChange(existingLinks.get(link.id).get.asInstanceOf[Link], flightLink)) {
+              changeEntries.append(buildChangeHistory(existingLinks.get(flightLink.id).map(_.asInstanceOf[Link]), Some(flightLink)))
+            }
+          }
+        }
+
+        preparedStatement.executeBatch()
+        ChangeHistorySource.saveLinkChanges(changeEntries.toList)
+      }
+      connection.commit()
+    }
   }
 
   def hasChange(existingLink : Transport, newLink : Transport) : Boolean = {
@@ -587,69 +574,53 @@ object LinkSource {
   
   
   def updateAssignedPlanes(linkId : Int, assignedAirplanes : Map[Airplane, LinkAssignment]) = {
-    val connection = Meta.getConnection()
-    try {
+    Using.resource(Meta.getConnection()) { connection =>
       connection.setAutoCommit(false)
-      
       //remove all the existing ones assigned to this link
-      val removeStatement = connection.prepareStatement("DELETE FROM " + LINK_ASSIGNMENT_TABLE + " WHERE link = ?")
-      removeStatement.setInt(1, linkId)
-      removeStatement.executeUpdate()
-      removeStatement.close()
-
-
+      Using.resource(connection.prepareStatement("DELETE FROM " + LINK_ASSIGNMENT_TABLE + " WHERE link = ?")) { removeStatement =>
+        removeStatement.setInt(1, linkId)
+        removeStatement.executeUpdate()
+      }
       assignedAirplanes.foreach { case(airplane, assignment) =>
         if (assignment.frequency > 0) {
-          val insertStatement = connection.prepareStatement("INSERT INTO " + LINK_ASSIGNMENT_TABLE + "(link, airplane, frequency, flight_minutes) VALUES(?,?,?,?)")
-          insertStatement.setInt(1, linkId)
-          insertStatement.setInt(2, airplane.id)
-          insertStatement.setInt(3, assignment.frequency)
-          insertStatement.setInt(4, assignment.flightMinutes)
-          insertStatement.executeUpdate()
-          insertStatement.close
+          Using.resource(connection.prepareStatement("INSERT INTO " + LINK_ASSIGNMENT_TABLE + "(link, airplane, frequency, flight_minutes) VALUES(?,?,?,?)")) { insertStatement =>
+            insertStatement.setInt(1, linkId)
+            insertStatement.setInt(2, airplane.id)
+            insertStatement.setInt(3, assignment.frequency)
+            insertStatement.setInt(4, assignment.flightMinutes)
+            insertStatement.executeUpdate()
+          }
         }
-      }    
-      
+      }
       connection.commit()
-    } finally {
-      connection.close()
     }
   }
 
   def updateAssignedPlanes(assignedAirplanesByLinkId : Map[Int, Map[Airplane, LinkAssignment]]) = {
-    val connection = Meta.getConnection()
-    try {
+    Using.resource(Meta.getConnection()) { connection =>
       connection.setAutoCommit(false)
-
-      val removeStatement = connection.prepareStatement("DELETE FROM " + LINK_ASSIGNMENT_TABLE + " WHERE link = ?")
-      val insertStatement = connection.prepareStatement("INSERT INTO " + LINK_ASSIGNMENT_TABLE + "(link, airplane, frequency, flight_minutes) VALUES(?,?,?,?)")
-      assignedAirplanesByLinkId.foreach  {
-        case (linkId, assignedAirplanes) =>
-          //remove all the existing ones assigned to this link
-          removeStatement.setInt(1, linkId)
-          removeStatement.addBatch()
-          assignedAirplanes.foreach { case(airplane, assignment) =>
-            if (assignment.frequency > 0) {
-
-              insertStatement.setInt(1, linkId)
-              insertStatement.setInt(2, airplane.id)
-              insertStatement.setInt(3, assignment.frequency)
-              insertStatement.setInt(4, assignment.flightMinutes)
-              insertStatement.addBatch()
-
-            }
+      Using.resource(connection.prepareStatement("DELETE FROM " + LINK_ASSIGNMENT_TABLE + " WHERE link = ?")) { removeStatement =>
+        Using.resource(connection.prepareStatement("INSERT INTO " + LINK_ASSIGNMENT_TABLE + "(link, airplane, frequency, flight_minutes) VALUES(?,?,?,?)")) { insertStatement =>
+          assignedAirplanesByLinkId.foreach {
+            case (linkId, assignedAirplanes) =>
+              //remove all the existing ones assigned to this link
+              removeStatement.setInt(1, linkId)
+              removeStatement.addBatch()
+              assignedAirplanes.foreach { case(airplane, assignment) =>
+                if (assignment.frequency > 0) {
+                  insertStatement.setInt(1, linkId)
+                  insertStatement.setInt(2, airplane.id)
+                  insertStatement.setInt(3, assignment.frequency)
+                  insertStatement.setInt(4, assignment.flightMinutes)
+                  insertStatement.addBatch()
+                }
+              }
           }
-
+          removeStatement.executeBatch()
+          insertStatement.executeBatch()
+        }
       }
-      removeStatement.executeBatch()
-      insertStatement.executeBatch()
-
-      removeStatement.close
-      insertStatement.close
-
       connection.commit()
-    } finally {
-      connection.close()
     }
   }
 
@@ -766,13 +737,10 @@ object LinkSource {
   }
   
   def saveLinkConsumptions(linkConsumptions: List[LinkConsumptionDetails]) = {
-     //open the hsqldb
-    val connection = Meta.getConnection()
-    val preparedStatement = connection.prepareStatement("REPLACE INTO " + LINK_CONSUMPTION_TABLE + "(link, price_economy, price_business, price_first, capacity_economy, capacity_business, capacity_first, sold_seats_economy, sold_seats_business, sold_seats_first, quality, fuel_cost, fuel_tax, crew_cost, airport_fees, inflight_cost, delay_compensation, maintenance_cost, lounge_cost, depreciation, revenue, profit, minor_delay_count, major_delay_count, cancellation_count, from_airport, to_airport, airline, distance, frequency, duration, transport_type, flight_number, airplane_model, satisfaction, cycle) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
-
-    try {
-      connection.setAutoCommit(false)
-      linkConsumptions.foreach { linkConsumption =>
+    Using.resource(Meta.getConnection()) { connection =>
+      Using.resource(connection.prepareStatement("REPLACE INTO " + LINK_CONSUMPTION_TABLE + "(link, price_economy, price_business, price_first, capacity_economy, capacity_business, capacity_first, sold_seats_economy, sold_seats_business, sold_seats_first, quality, fuel_cost, fuel_tax, crew_cost, airport_fees, inflight_cost, delay_compensation, maintenance_cost, lounge_cost, depreciation, revenue, profit, minor_delay_count, major_delay_count, cancellation_count, from_airport, to_airport, airline, distance, frequency, duration, transport_type, flight_number, airplane_model, satisfaction, cycle) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")) { preparedStatement =>
+        connection.setAutoCommit(false)
+        linkConsumptions.foreach { linkConsumption =>
           preparedStatement.setInt(1, linkConsumption.link.id)
           preparedStatement.setInt(2, linkConsumption.link.price(ECONOMY))
           preparedStatement.setInt(3, linkConsumption.link.price(BUSINESS))
@@ -816,28 +784,26 @@ object LinkSource {
           preparedStatement.setInt(36, linkConsumption.cycle)
           preparedStatement.executeUpdate()
         }
-      preparedStatement.close()
-      connection.commit
-    } finally {
-      connection.close()
+      }
+      connection.commit()
     }
   }
   def deleteLinkConsumptionsByCycle(cyclesFromLatest : Int) = {
      //open the hsqldb
     val connection = Meta.getConnection()
     try {
-      val latestCycleStatement = connection.prepareStatement("SELECT MAX(cycle) FROM " + LINK_CONSUMPTION_TABLE)
-      val resultSet = latestCycleStatement.executeQuery()
-      val latestCycle = if (resultSet.next()) { resultSet.getInt(1) } else 0
-      latestCycleStatement.close()  
-      
-      val deleteFrom = if (latestCycle - cyclesFromLatest < 0) 0 else latestCycle - cyclesFromLatest 
-      
-      val deleteStatement = connection.prepareStatement("DELETE FROM " + LINK_CONSUMPTION_TABLE + " WHERE cycle <= ?")
-      deleteStatement.setInt(1, deleteFrom)
-      val deletedConsumption = deleteStatement.executeUpdate()
-      deleteStatement.close()
-      deletedConsumption
+      val latestCycle = Using.resource(connection.prepareStatement("SELECT MAX(cycle) FROM " + LINK_CONSUMPTION_TABLE)) { latestCycleStatement =>
+        Using.resource(latestCycleStatement.executeQuery()) { resultSet =>
+          if (resultSet.next()) resultSet.getInt(1) else 0
+        }
+      }
+
+      val deleteFrom = if (latestCycle - cyclesFromLatest < 0) 0 else latestCycle - cyclesFromLatest
+
+      Using.resource(connection.prepareStatement("DELETE FROM " + LINK_CONSUMPTION_TABLE + " WHERE cycle <= ?")) { deleteStatement =>
+        deleteStatement.setInt(1, deleteFrom)
+        deleteStatement.executeUpdate()
+      }
     } finally {
       connection.close()
     }
@@ -886,26 +852,21 @@ object LinkSource {
   }
   
   def loadLinkConsumptionsByQuery(queryString: String, parameters : List[Any], cycleCount : Int) = {
-    val connection = Meta.getConnection()
-      
-    try {
-      val latestCycleStatement = connection.prepareStatement("SELECT MAX(cycle) FROM " + LINK_CONSUMPTION_TABLE)
-      val latestCycleResultSet = latestCycleStatement.executeQuery()
-      val latestCycle = if (latestCycleResultSet.next()) { latestCycleResultSet.getInt(1) } else 0
-      latestCycleStatement.close()
-      
-      val preparedStatement = connection.prepareStatement(queryString)
-      
-      preparedStatement.setInt(1, latestCycle - cycleCount)
-      for (i <- 0 until parameters.size) {
-        preparedStatement.setObject(i + 2, parameters(i))
+    Using.resource(Meta.getConnection()) { connection =>
+      val latestCycle = Using.resource(connection.prepareStatement("SELECT MAX(cycle) FROM " + LINK_CONSUMPTION_TABLE)) { latestCycleStatement =>
+        Using.resource(latestCycleStatement.executeQuery()) { latestCycleResultSet =>
+          if (latestCycleResultSet.next()) latestCycleResultSet.getInt(1) else 0
+        }
       }
-      
-      val resultSet = preparedStatement.executeQuery()
-      
-      val linkConsumptions = new ListBuffer[LinkConsumptionDetails]()
-      
-      while (resultSet.next()) {
+
+      Using.resource(connection.prepareStatement(queryString)) { preparedStatement =>
+        preparedStatement.setInt(1, latestCycle - cycleCount)
+        for (i <- 0 until parameters.size) {
+          preparedStatement.setObject(i + 2, parameters(i))
+        }
+        Using.resource(preparedStatement.executeQuery()) { resultSet =>
+          val linkConsumptions = new ListBuffer[LinkConsumptionDetails]()
+          while (resultSet.next()) {
         val linkId = resultSet.getInt("link")
         //need to update current link with history link data
         val frequency = resultSet.getInt("frequency")
@@ -949,83 +910,63 @@ object LinkSource {
 
 
 
-        linkConsumptions.append(LinkConsumptionDetails(
-          link = link,
-          fuelCost = resultSet.getInt("fuel_cost"),
-          fuelTax = resultSet.getInt("fuel_tax"),
-          crewCost = resultSet.getInt("crew_cost"),
-          airportFees = resultSet.getInt("airport_fees"),
-          inflightCost = resultSet.getInt("inflight_cost"),
-          delayCompensation = resultSet.getInt("delay_compensation"),
-          maintenanceCost = resultSet.getInt("maintenance_cost"),
-          loungeCost = resultSet.getInt("lounge_cost"),
-          depreciation = resultSet.getInt("depreciation"),
-          revenue = resultSet.getInt("revenue"),
-          profit = resultSet.getInt("profit"),
-          satisfaction = resultSet.getDouble("satisfaction"),
-          cycle = resultSet.getInt("cycle")))
+            linkConsumptions.append(LinkConsumptionDetails(
+              link = link,
+              fuelCost = resultSet.getInt("fuel_cost"),
+              fuelTax = resultSet.getInt("fuel_tax"),
+              crewCost = resultSet.getInt("crew_cost"),
+              airportFees = resultSet.getInt("airport_fees"),
+              inflightCost = resultSet.getInt("inflight_cost"),
+              delayCompensation = resultSet.getInt("delay_compensation"),
+              maintenanceCost = resultSet.getInt("maintenance_cost"),
+              loungeCost = resultSet.getInt("lounge_cost"),
+              depreciation = resultSet.getInt("depreciation"),
+              revenue = resultSet.getInt("revenue"),
+              profit = resultSet.getInt("profit"),
+              satisfaction = resultSet.getDouble("satisfaction"),
+              cycle = resultSet.getInt("cycle")))
+          }
+          linkConsumptions.toList
+        }
       }
-
-      resultSet.close()
-      preparedStatement.close()
-      linkConsumptions.toList
-    } finally {
-      connection.close()
     }
   }
 
   def saveNegotiationCoolDown(airline : Airline, fromAirport : Airport, toAirport : Airport, expirationCycle : Int) = {
-    val connection = Meta.getConnection()
-    try {
-      val preparedStatement = connection.prepareStatement(s"REPLACE INTO $LINK_NEGOTIATION_COOL_DOWN_TABLE (airline, from_airport, to_airport, expiration_cycle) VALUES(?,?,?,?)")
-      preparedStatement.setInt(1, airline.id)
-      preparedStatement.setInt(2, fromAirport.id)
-      preparedStatement.setInt(3, toAirport.id)
-      preparedStatement.setInt(4, expirationCycle)
-
-      preparedStatement.executeUpdate()
-      preparedStatement.close()
-    } finally {
-      connection.close()
+    Using.resource(Meta.getConnection()) { connection =>
+      Using.resource(connection.prepareStatement(s"REPLACE INTO $LINK_NEGOTIATION_COOL_DOWN_TABLE (airline, from_airport, to_airport, expiration_cycle) VALUES(?,?,?,?)")) { preparedStatement =>
+        preparedStatement.setInt(1, airline.id)
+        preparedStatement.setInt(2, fromAirport.id)
+        preparedStatement.setInt(3, toAirport.id)
+        preparedStatement.setInt(4, expirationCycle)
+        preparedStatement.executeUpdate()
+      }
     }
   }
 
   def loadNegotiationCoolDownExpirationCycle(airline : Airline, fromAirport : Airport, toAirport : Airport): Option[Int] = {
-    val connection = Meta.getConnection()
-    try {
-      val preparedStatement = connection.prepareStatement(s"SELECT * FROM  $LINK_NEGOTIATION_COOL_DOWN_TABLE WHERE airline = ? AND from_airport = ? AND to_airport = ?")
-      preparedStatement.setInt(1, airline.id)
-      preparedStatement.setInt(2, fromAirport.id)
-      preparedStatement.setInt(3, toAirport.id)
-
-      val resultSet = preparedStatement.executeQuery()
-
-      val result = if (resultSet.next()) {
-        Some(resultSet.getInt("expiration_cycle"))
-      } else {
-        None
+    Using.resource(Meta.getConnection()) { connection =>
+      Using.resource(connection.prepareStatement(s"SELECT * FROM  $LINK_NEGOTIATION_COOL_DOWN_TABLE WHERE airline = ? AND from_airport = ? AND to_airport = ?")) { preparedStatement =>
+        preparedStatement.setInt(1, airline.id)
+        preparedStatement.setInt(2, fromAirport.id)
+        preparedStatement.setInt(3, toAirport.id)
+        Using.resource(preparedStatement.executeQuery()) { resultSet =>
+          if (resultSet.next()) {
+            Some(resultSet.getInt("expiration_cycle"))
+          } else {
+            None
+          }
+        }
       }
-      resultSet.close()
-      preparedStatement.close()
-
-      result
-    } finally {
-      connection.close()
     }
   }
 
   def purgeNegotiationCoolDowns(atOrBeforeCycle : Int) = {
-    val connection = Meta.getConnection()
-    try {
-      val preparedStatement = connection.prepareStatement("DELETE FROM " + LINK_NEGOTIATION_COOL_DOWN_TABLE + " where expiration_cycle <= ?")
-
-      preparedStatement.setInt(1, atOrBeforeCycle)
-
-      preparedStatement.executeUpdate()
-      preparedStatement.close()
-
-    } finally {
-      connection.close()
+    Using.resource(Meta.getConnection()) { connection =>
+      Using.resource(connection.prepareStatement("DELETE FROM " + LINK_NEGOTIATION_COOL_DOWN_TABLE + " where expiration_cycle <= ?")) { preparedStatement =>
+        preparedStatement.setInt(1, atOrBeforeCycle)
+        preparedStatement.executeUpdate()
+      }
     }
   }
 

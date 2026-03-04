@@ -40,7 +40,7 @@ html {
     --scrollbar-color: hsl(0, 0%, 60%) hsl(0, 0%, 80%);
     --scrollbar-shadow-color: rgba(0, 0, 0, 0.5);
     --tooltip-background-color: rgba(240, 240, 240, 1.0);
-    --modal-background-color: var(--background-1);
+    --modal-background-color: var(--background-2);
     --modal-content-background-image: var(--section-background-image);
     --chat-current-background: #ffffff;
     --chat-shadow: inset 0 0 2px white, 0 0 3px rgba(0, 0, 0, 0.5);
@@ -54,7 +54,7 @@ html {
     --fallback-background: var(--background-3);
     --highlight-text-color: #dddddd;
     --shadow-1: 0px 0px 2px 0px rgba(0, 0, 0, 0.3);
-    --shadow-2: 0px 0px 2px 0px rgba(0, 0, 0, 0.5);
+    --shadow-2: 0px 0px 8px 1px rgba(0, 0, 0, 0.4);
     --placeholderBlurColorLight: #c0c5d0;
     --placeholderBlurColorDark: #111518;
     --mobile-header-height: 28px;
@@ -204,8 +204,9 @@ p {
     font-size: 12px;
 }
 
-p.info {
+.info {
     font-style: italic;
+    font-weight: normal;
     color: var(--text-color);
     opacity: 0.8;
 }
@@ -770,7 +771,6 @@ li.row, div.table-row {
 }
 .table .table-header .cell.selected, .progressionItem.selected {
     background: var(--table-header-selected-background);
-    box-shadow: var(--table-header-selected-shadow);
     color: var(--table-selected-color);
     text-shadow: var(--table-header-selected-text-shadow);
 }
@@ -988,14 +988,14 @@ a:focus, button:focus {
     vertical-align: middle;
 }
 .img-button {
-  opacity: 0.85;
+  opacity: 0.8;
   cursor: pointer;
   transform: scale(1) translateZ(0); 
   transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.2, 0, 0, 1);
 }
 .img-button:hover {
   opacity: 1;
-  transform: scale(1.02) translateZ(0);
+  transform: scale(1.08) translateZ(0);
 }
 .img-button:active {
   transform: scale(0.98) translateZ(0);
@@ -1098,6 +1098,49 @@ button:disabled {
     font-size: 1.2em;
     font-weight: bold;
 }
+/* ========================================
+   Sections & Modals
+   ======================================== */
+
+.select-css {
+	display: block;
+	font-family: sans-serif;
+	line-height: 1.3;
+	padding: .2em 1.4em .2em .8em;
+	max-width: 100%;
+	box-sizing: border-box;
+	margin: 0;
+	border: 1px solid #aaa;
+	color: var(--text-color);
+	box-shadow: 0 1px 0 1px rgba(0,0,0,.04);
+	border-radius: .5em;
+	-moz-appearance: none;
+	-webkit-appearance: none;
+	appearance: none;
+	background-color: var(--select-background-color);
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007CB2%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E'),
+	var(--select-linear-gradient);
+	background-repeat: no-repeat, repeat;
+	background-position: right .7em top 50%, 0 0;
+	background-size: .65em auto, 100%;
+}
+.select-css:hover {
+	border-color: #888;
+}
+.select-css:focus {
+	border-color: var(--select-background-color);
+	box-shadow: 0 0 1px 3px rgba(59, 153, 252, .7);
+	box-shadow: 0 0 0 3px -moz-mac-focusring;
+	color: var(--text-color);
+	outline: none;
+}
+.select-css:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+.select-css option {
+	font-weight:normal;
+}
 
 /* ========================================
    Sections & Modals
@@ -1105,7 +1148,7 @@ button:disabled {
 
 .section, .modal-content {
     border-radius: 0.5em;
-    box-shadow: var(--shadow-1);
+    box-shadow: var(--shadow-2);
     padding: 20px 20px 32px 20px;
     box-sizing:border-box;
 }
@@ -1214,6 +1257,7 @@ html[data-theme='dark'] .section {
 
 .modal-content h4 {
     margin-top: 1rem;
+    opacity: 0.85;
 }
 
 .modal-content .button:first-of-type {
@@ -1243,7 +1287,7 @@ html[data-theme='dark'] .section {
     grid-gap: 1.25rem;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     width: 100%;
-    margin: 10px 0 20px;
+    margin: 10px 0 40px;
 }
 .modal-grid-options-320 {
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -1262,6 +1306,9 @@ html[data-theme='dark'] .section {
     background: var(--table-header-selected-background);
     color: var(--table-selected-color);
     text-shadow: var(--table-header-selected-text-shadow);
+}
+.modal-grid-options .option.active h4, .modal-grid-options .option.active .font-display {
+    color: var(--table-selected-color);
 }
 .modal-grid-options .option.available:hover {
     box-shadow: 0px 0px 7px 10px rgb(48 205 255 / 20%);
@@ -1660,6 +1707,9 @@ html[data-theme="dark"] .svg-monochrome {
 .svg-hover-green:hover {
     filter: invert(52%) sepia(43%) saturate(1039%) hue-rotate(86deg) brightness(99%) contrast(91%);
 }
+.svg-hover-blue:hover {
+    filter: invert(58%) sepia(35%) saturate(3620%) hue-rotate(174deg) brightness(102%) contrast(97%);
+}
 .info.svg {
     width: 18px;
     margin-top: -2px;
@@ -2048,6 +2098,18 @@ span.glow, img.glow {
     border-radius: 2px;
 }
 
+.hover-rotate {
+  transform: scale(1) rotate(0deg) translateZ(0) !important; 
+  transition: opacity 0.2s ease, transform 1s cubic-bezier(0.2, 0, 0, 1);
+}
+.hover-rotate:hover {
+  box-shadow: var(--table-header-selected-shadow);
+  transform: scale(1.02) rotate(60deg) translateZ(0) !important;
+}
+.hover-rotate:active {
+  transform: scale(0.98) rotate(60deg) translateZ(0) !important;
+}
+
 @keyframes glow {
     from {
         box-shadow: 0 0 5px -5px #C0D4F8;
@@ -2127,14 +2189,6 @@ li.dot {
     display: flex;
     align-items: center;
     margin: 4px 0;
-}
-
-.remarks {
-    font-style: italic;
-    font-size: 12px;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
 }
 
 iframe.clip {
@@ -2381,6 +2435,7 @@ i, .italic {
    Utility Classes - Visual
    ======================================== */
 
+.opacity-60 { opacity: 0.6; }
 .opacity-70 { opacity: 0.7; }
 .opacity-80 { opacity: 0.8; }
 .opacity-90 { opacity: 0.9; }
@@ -2435,6 +2490,9 @@ i, .italic {
 .block {
     display: block;
 }
+.contents {
+    display: contents;
+}
 .flex-grow { 
     flex-grow: 1 !important; 
 }
@@ -2480,6 +2538,7 @@ i, .italic {
     margin: 12px auto;
     width: max-content;
 }
+.pull-left { float: left; }
 
 /* ========================================
    Utility Classes - Flex Containers

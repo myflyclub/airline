@@ -68,7 +68,7 @@ class ProfileApplication @Inject()(cc: ControllerComponents) extends AbstractCon
         val amount = Math.min(value / model.price, 7)
         val age = (Airplane.MAX_CONDITION - condition) / (Airplane.MAX_CONDITION.toDouble / model.lifespan)  //not really that useful, just to fake a more reasonable number
         val constructedCycle = Math.max(0, currentCycle - age.toInt)
-        (0 until amount).map(_ => Airplane(model, airline, constructedCycle, constructedCycle, condition, depreciationRate = 0, value = (model.price * condition / Airplane.MAX_CONDITION).toInt, home = homeAirport)).toList
+        (0 until amount).map(_ => Airplane(model, airline, constructedCycle, constructedCycle, condition, purchasePrice = (model.price * condition / Airplane.MAX_CONDITION).toInt, home = homeAirport)).toList
       case None =>
         List.empty
     }
@@ -115,7 +115,7 @@ class ProfileApplication @Inject()(cc: ControllerComponents) extends AbstractCon
         name = "Revival of past glory",
         airlineType = LegacyAirline,
         description = "A once great airline now saddled with debt and aging airplanes. Can you turn this airline around?",
-        cash = (capital * 4.8).toInt - largeAirplanes.map(_.value).sum,
+        cash = (capital * 4.8).toInt - largeAirplanes.map(_.purchasePrice).sum,
         airport = airport,
         reputation = 30,
         quality = 35,
@@ -145,7 +145,7 @@ class ProfileApplication @Inject()(cc: ControllerComponents) extends AbstractCon
         difficulty = "Hard",
         description = "Time to pack in the masses!",
         rule = DiscountAirline.description,
-        cash = (capital * 3.5).toInt - DiscountAirplanes.map(_.value).sum,
+        cash = (capital * 3.5).toInt - DiscountAirplanes.map(_.purchasePrice).sum,
         airport = airport,
         reputation = 20,
         quality = 0,
@@ -162,7 +162,7 @@ class ProfileApplication @Inject()(cc: ControllerComponents) extends AbstractCon
         difficulty = "Hard",
         description = "Work with your alliance partners!",
         rule = RegionalAirline.description,
-        cash = (capital * 3.5).toInt - regionalAirplanes.map(_.value).sum,
+        cash = (capital * 3.5).toInt - regionalAirplanes.map(_.purchasePrice).sum,
         airport = airport,
         reputation = 20,
         quality = 30,
@@ -180,7 +180,7 @@ class ProfileApplication @Inject()(cc: ControllerComponents) extends AbstractCon
         difficulty = "Very Hard",
         description = "Profit from business passengers while gaining reputation by carrying the world's elite!",
         rule = LuxuryAirline.description,
-        cash = (capital * 3.75).toInt - fancyAirplanes.map(_.value).sum,
+        cash = (capital * 3.75).toInt - fancyAirplanes.map(_.purchasePrice).sum,
         airport = airport,
         reputation = 25,
         quality = 70,
@@ -201,7 +201,7 @@ class ProfileApplication @Inject()(cc: ControllerComponents) extends AbstractCon
         case LegacyAirline =>
           ("The world is your oyster!", 35)
         case MegaHqAirline =>
-          ("Your home town has charged you with connecting it to the world!", 0)
+          ("Your home town has charged you with connecting it to the world!", 30)
         case DiscountAirline =>
           ("Time to pack in the masses!", 0)
         case RegionalAirline =>
@@ -261,17 +261,21 @@ class ProfileApplication @Inject()(cc: ControllerComponents) extends AbstractCon
           airline.airlineType = profile.airlineType
           AirlineSource.updateAirlineType(airlineId, airline.airlineType.id)
           AirlineSource.saveAirlineBase(base)
+          Prestige.updatePrestigeCharmForAirport(airportId)
           airline.setCountryCode(airport.countryCode)
           airline.setReputation(profile.reputation)
           airline.setCurrentServiceQuality(profile.quality)
           airline.setTargetServiceQuality(targetQuality)
           airline.setBalance(profile.cash)
           airline.setSharesOutstanding(500_000_000)
+          airline.setActionPoints(25)
 
           profile.airplanes.foreach(_.assignDefaultConfiguration())
           AirplaneSource.saveAirplanes(profile.airplanes)
 
           profile.loan.foreach(BankSource.saveLoan)
+
+          AirlineSource.saveFoundedCycle(airlineId, cycle)
 
           airline.setInitialized(true)
           AirlineSource.saveAirlineInfo(airline, true)

@@ -13,7 +13,7 @@ object GameConstants {
     "UVE", "LIF", "TGJ", "MEE", "ILP", "NOU", //FR Pacific
     "PNL", "LMP", "EBA", //IT
     "HGL", "BMK", "GWT", "BMR", //DE
-    "EGH", "EOI", "FIE", "FOA", "LWK", "LSI", "ACI", "TRE", "BRR", "BEB", "SYY", "KOI", "ILY", "CAL", "ISC", "GCI", "JER", "GIB", "IOM", "EOI", "NRL", "PPW", "WRY", //GB
+    "EGH", "EOI", "FIE", "FOA", "LWK", "LSI", "ACI", "TRE", "BRR", "BEB", "SYY", "KOI", "ILY", "CAL", "ISC", "GCI", "JER", "GIB", "IOM", "EOI", "NRL", "PPW", "WRY", "COL", //GB
     "BYR", "RNN", "FAE", //DK
     "CPH", //highly connected but want more demand to Jutland
     "MHQ", "KDL", "URE", "ENF", "KTT", //FI
@@ -21,16 +21,16 @@ object GameConstants {
     "IOR","INQ","IIA", //IE
     "PJA", "HMV", //SE
     "EN9","EN1","EN2", "SKN", "SSJ", "BNN", "MOL", "OSY", "RVK", "SDN", "SOG", "HAU", "LKN", "VRY", "SVJ", "ANX", "HAA", "HFT", "MEH", "RET", //NO
-    "HZK", "GRY", //IS
+    "HZK", "GRY", "HFN", //IS
     "AOK", "JMK", "JNX", "JSI", "KIT", "LKS", "MLO", "SMI", "JIK", "KGS", "RHO", "LXS", "MJT", "JKH", "ZTH", "EFL", "SMI", "JKL", "KZS", "KSJ", "JTY", "SKU", //GR
     "KGD", "ITU", "CSH", "VKT", "BVJ", "DEE", //RU
     //americas
-    "MVY", "BID", "ACK", "AVX", //US
+    "MVY", "BID", "ACK", "AVX", "PGA", //US
     "FRD", "ESD", "RCE", "LPS", //US San Juans
     "JNU", "SIT", "HNH", "WRG", "KTN", "PSG", "SOV", "HOM", "PDB", "TEK", "SCC", "OTZ", //US northwest passage & AK
     "MKK", "LNY", "HNL",  //US HI
     "ZMT", "YZP", "YBL", "YPW", "YAZ", //CA northwest passage
-    "YGR", "YPN", "YYB", "YBE", "YAY", "YYG", //CA
+    "YGR", "YPN", "YYB", "YBE", "YAY", "YYG", "YWS", //CA
     "MQC", //FR
     "FSP",
     "LQM",
@@ -49,7 +49,7 @@ object GameConstants {
     "LRV", "PMV", "LSP", "ICC", //VE
     "BOC", "OTD", //PA
     "GJA", "RTB", //HU
-    "CYC", "CUK", "PND", "PLJ",  //BZ
+    "CYC", "CUK", "PND", "PLJ", "DGA", "INB", //BZ
     //oceania
     "NMF", "HRF", "KDM", "NAN", "MEE", "PTF", "ELC", "XCH",   //oceania & AU
     "PMK", "OKR", "SBR", "CNC", "SYU", "KUG", "HID", "ABM", "ONG", //QZ AU
@@ -62,13 +62,14 @@ object GameConstants {
     "BSO", "CGM", "JOL", "CYU", "TWT", "IAO", "MBT", "USU", "ENI", //PH
     "USM", //TH
     "CNI", "DDR", "LGZ", "NGQ", //CN
-    "NAH", "BTH", "WNI", "KSR", "BIK", "RJM", "ARD", "TJQ", "PGK", "RKI", "GNS", "LKI", "NAM", "MKQ",  //ID
+    "NAH", "BTH", "WNI", "KSR", "BIK", "RJM", "ARD", "TJQ", "PGK", "RKI", "GNS", "LKI", "NAM", "MKQ", "NTX", //ID
+    "OEC", "BCH", //TL
     "TOD", "LGK", //MY
     "KHK", "KIH", "GSM", "TNJ", //IR
     "ZDY", //AE
     //africa
     "ZNZ", "MFA", //TZ
-    "DZA", "RUN", //FR
+    "DZA", "RUN", "ZSE", //FR
     "MMO", "SSG", "VIL",
     //"CAB", //AO enclave
     "MLN", "JCU", //es enclaves

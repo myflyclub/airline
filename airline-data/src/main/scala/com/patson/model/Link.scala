@@ -100,7 +100,7 @@ case class Link(from : Airport, to : Airport, airline: Airline, price : LinkClas
     }
   }
 
-  lazy val getFutureOfficeStaffRequired : Double = {
+  lazy val getFutureOfficeStaffRequired : Int = {
     getOfficeStaffRequired(from, to, futureFrequency(), futureCapacity(), airline, rawQuality, getAssignedModel())
   }
 
@@ -108,7 +108,7 @@ case class Link(from : Airport, to : Airport, airline: Airline, price : LinkClas
     getOfficeStaffBreakdown(from, to, futureFrequency(), futureCapacity(), airline, rawQuality, getAssignedModel())
   }
 
-  lazy val getCurrentOfficeStaffRequired : Double = {
+  lazy val getCurrentOfficeStaffRequired : Int = {
     getOfficeStaffRequired(from, to, frequency, capacity, airline, rawQuality, getAssignedModel())
   }
 
@@ -199,13 +199,13 @@ object Link {
 
   def getStaffRequired(distance: Int, flightCategory: FlightCategory.Value, airlineType: AirlineType) : StaffSchemeBreakdown = {
     val multiplier = if (flightCategory == FlightCategory.INTERNATIONAL) {
-      Math.pow(distance + 900, 0.17) - 1.75
+      Math.pow(distance + 900, 0.16) - 1.75
     } else {
       Math.pow(distance + 600, 0.16) - 2.25
     }
-    val base = if (flightCategory == FlightCategory.INTERNATIONAL) 4.75 * multiplier - 5.5 else 3.5 * multiplier - 2
+    val base = if (flightCategory == FlightCategory.INTERNATIONAL) 4.75 * multiplier - 5.5 else 2 * multiplier
     val staffPerFrequency = {
-      val BASE_FREQ_COST = 0.5
+      val BASE_FREQ_COST = 1
       if (airlineType == RegionalAirline) {
         if (distance > RegionalAirline.staffReductionRangeFadeTo) {
           BASE_FREQ_COST * multiplier
@@ -223,14 +223,13 @@ object Link {
         BASE_FREQ_COST * multiplier
       }
     }
-    val staffPer500Pax = 1.3 * multiplier
+    val staffPer500Pax = 2.4 * multiplier
     StaffSchemeBreakdown(base.toInt, staffPerFrequency, staffPer500Pax)
   }
 }
 
 case class StaffBreakdown(basicStaff: Int, frequencyStaff: Double, capacityStaff: Double, modifier: Double) {
-  private val costWithMin = Math.max(3, (basicStaff + frequencyStaff + capacityStaff) * modifier)
-  val total: Double = BigDecimal(costWithMin).setScale(1, RoundingMode.HALF_UP).toDouble
+  val total: Int = Math.max(5, (basicStaff + frequencyStaff + capacityStaff) * modifier).toInt
 }
 case class StaffSchemeBreakdown(basicStaff: Int, perFrequency: Double, per500Pax: Double)
 

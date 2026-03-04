@@ -34,6 +34,7 @@ object AirportRating {
         case FINANCIAL_HUB => feature.strength.toDouble / 3
         case ELITE_CHARM => feature.strength.toDouble / 4
         case INTERNATIONAL_HUB => feature.strength.toDouble / 6
+        case PRESTIGE_CHARM => feature.strength.toDouble / 5
         case ISOLATED_TOWN => -3 * feature.strength
         case DOMESTIC_AIRPORT => -12
         case GATEWAY_AIRPORT => ratioToModelCountryPower.toDouble / 3

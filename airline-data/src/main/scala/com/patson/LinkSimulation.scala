@@ -348,11 +348,12 @@ object LinkSimulation {
       case None => 0
     }
 
-    var depreciation = 0
-    inServiceAssignedAirplanes.foreach {
-      case(airplane, _) =>
-        depreciation += (airplane.depreciationRate * assignmentWeights(airplane)).toInt
-    }
+    val depreciation = inServiceAssignedAirplanes.map {
+      case (airplane, _) =>
+        val depreciableBase = airplane.model.price - airplane.model.price * Airplane.SALVAGE_VALUE_PERCENT
+        val standardRate = depreciableBase / airplane.model.lifespan.toDouble
+        (standardRate * assignmentWeights(airplane)).toInt
+    }.sum
 
     val targetQualityCost = Math.pow(link.airline.getTargetServiceQuality().toDouble / 22, CREW_EQ_EXPONENT)
     var crewCost = CREW_BASE_COST

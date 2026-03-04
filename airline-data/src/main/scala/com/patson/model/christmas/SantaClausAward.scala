@@ -2,7 +2,7 @@ package com.patson.model.christmas
 
 import com.patson.data.{AirlineSource, AirportSource, ChristmasSource, CycleSource}
 import com.patson.model.christmas.SantaClausAward.{Difficulty, getDifficultyLevel}
-import com.patson.model.{Airline, AirlineAppeal, AirlineBonus, AirlineCashFlowItem, AirlineTransaction, BonusType, CashFlowType, DelegateBoostAirlineModifier, TransactionType}
+import com.patson.model.{Airline, AirlineAppeal, AirlineBonus, AirlineLedgerEntry, BonusType, DelegateBoostAirlineModifier, LedgerType}
 import com.patson.util.AirlineCache
 
 abstract class SantaClausAward(santaClausInfo: SantaClausInfo) {
@@ -28,8 +28,7 @@ class CashAward(santaClausInfo: SantaClausInfo) extends SantaClausAward(santaCla
   override val getType: SantaClausAwardType.Value = SantaClausAwardType.CASH
   val CASH_AMOUNT = 20000000 * difficultyMultiplier //rich santa claus wow, 20M!
   override def applyAward(): Unit = {
-    AirlineSource.adjustAirlineBalance(santaClausInfo.airline.id, CASH_AMOUNT)
-    AirlineSource.saveCashFlowItem(AirlineCashFlowItem(santaClausInfo.airline.id, CashFlowType.PRIZE, CASH_AMOUNT))
+    AirlineSource.saveLedgerEntry(AirlineLedgerEntry(santaClausInfo.airline.id, CycleSource.loadCycle(), LedgerType.PRIZE, CASH_AMOUNT))
   }
 
   override val description: String = s"Santa Claus is feeling generous! He is giving you $$${integerFormatter.format(CASH_AMOUNT)} cash!"

@@ -68,7 +68,7 @@ function selectProfile(profileId, profileDiv) {
 
 function showAirplaneQuickSummary($trigger, airplane) {
     var yPos = $trigger.offset().top - $(window).scrollTop() + $trigger.height()
-    var xPos = $trigger.offset().left - $(window).scrollLeft() + $trigger.width() - $('#airplaneSummaryTooltip').width() / 2
+    var xPos = $trigger.offset().left - $(window).scrollLeft() + $trigger.width() - $('#airplaneSummaryTooltip').width()
 
     $('#airplaneSummaryTooltip .capacity').text(airplane.capacity)
     $('#airplaneSummaryTooltip .range').text(airplane.range)
@@ -87,7 +87,7 @@ function showAirplaneQuickSummary($trigger, airplane) {
 
 function showAirlineTypeTooltip($trigger, typeLabel, rules) {
     var yPos = $trigger.offset().top - $(window).scrollTop() + $trigger.height()
-    var xPos = $trigger.offset().left - $(window).scrollLeft() + $trigger.width() - $('#airlineTypeTooltip').width() / 2
+    var xPos = $trigger.offset().left - $(window).scrollLeft() + $trigger.width() - $('#airlineTypeTooltip').width()
 
     $('#airlineTypeTooltip .typeLabel').text(typeLabel)
     var $ruleList = $('#airlineTypeTooltip .ruleList')

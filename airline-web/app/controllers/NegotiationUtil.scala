@@ -2,7 +2,7 @@ package controllers
 
 import com.patson.data.{AirlineSource, AirportSource, CountrySource, CycleSource, DelegateSource, LinkSource, NegotiationSource}
 import com.patson.model.Title.APPROVED_AIRLINE
-import com.patson.model.{LinkNegotiationDelegateTask, NegoHopper, _}
+import com.patson.model.{NegoHopper, _}
 import com.patson.model.airplane._
 import com.patson.model.negotiation.LinkNegotiationDiscount
 import com.patson.util.{AirportStatisticsCache, AllianceCache, ChampionUtil, CountryCache}
@@ -29,8 +29,8 @@ object NegotiationUtil {
   def getMaxFrequencyByGroup(baseScale: Int, flightCategory: FlightCategory.Value, hasHigherFrequencyBase: Boolean) : Int = {
     val freqBonus = if (hasHigherFrequencyBase) 7 else 0
     val maxFrequency = flightCategory match {
-      case FlightCategory.DOMESTIC => 6 + (baseScale * 2.9).toInt
-      case FlightCategory.INTERNATIONAL => 6 + (baseScale * 1.9).toInt
+      case FlightCategory.DOMESTIC => 2 + (baseScale * 5.5).toInt
+      case FlightCategory.INTERNATIONAL => 1 + (baseScale * 5.4).toInt
     }
 
     maxFrequency + freqBonus
@@ -72,11 +72,11 @@ object NegotiationUtil {
     val airlineLinksFromThisAirport = airlineLinks.filter(link => link.from.id == airport.id && (isNewLink || link.id != existingLinkOption.get.id))
     val currentOfficeStaffUsed = airlineLinksFromThisAirport.map(_.getFutureOfficeStaffRequired).sum
     val newOfficeStaffRequired = newLink.getFutureOfficeStaffRequired
-    val newTotal = ((currentOfficeStaffUsed + newOfficeStaffRequired) * 10).toInt.toDouble / 10
+    val newTotal = currentOfficeStaffUsed + newOfficeStaffRequired
     if (newTotal < officeStaffCount) {
       requirements.append(NegotiationRequirement(STAFF_CAP, 0, s"Requires ${newOfficeStaffRequired} staff, within your base capacity : ${newTotal} / ${officeStaffCount}"))
     } else {
-      val requirement = (newTotal - officeStaffCount).toDouble / 10
+      val requirement = newTotal - officeStaffCount
       requirements.append(NegotiationRequirement(STAFF_CAP, requirement, s"Requires ${newOfficeStaffRequired} staff, over your base capacity : ${newTotal} / ${officeStaffCount}"))
     }
 
@@ -493,7 +493,6 @@ case class NegotiationSession(passingScore : Double, sessionScores : List[Double
 object NegotiationBonus {
   val pool = List(
     NegotiationCashBonusTemplate(1), NegotiationCashBonusTemplate(2), NegotiationCashBonusTemplate(5), NegotiationCashBonusTemplate(10),
-    NegotiationCooldownBonusTemplate(LinkNegotiationDelegateTask.COOL_DOWN / 2), NegotiationCooldownBonusTemplate(LinkNegotiationDelegateTask.COOL_DOWN / 2), NegotiationCooldownBonusTemplate(LinkNegotiationDelegateTask.COOL_DOWN),
     NegotiationLoyaltyBonusTemplate(1), NegotiationLoyaltyBonusTemplate(2), NegotiationLoyaltyBonusTemplate(5)
   )
   val random = new Random()
@@ -510,30 +509,7 @@ abstract class NegotiationBonus {
 
 case class NegotiationCashBonus(cash : Long, description : String, val intensity: Int) extends NegotiationBonus {
   def apply(airline : Airline) = {
-    AirlineSource.adjustAirlineBalance(airline.id, cash)
-  }
-}
-
-case class NegotiationCooldownBonus(delegates : List[BusyDelegate], cooldownDiscount : Int, description : String, val intensity: Int) extends NegotiationBonus {
-  def apply(airline : Airline) = {
-    val currentCycle = CycleSource.loadCycle()
-
-    val updatingDelegates = ListBuffer[BusyDelegate]()
-    val freeDelegates = ListBuffer[BusyDelegate]()
-
-    delegates.foreach { delegate =>
-      delegate.availableCycle.foreach { cycle =>
-        val newCycle = cycle - cooldownDiscount
-        if (newCycle > currentCycle) {
-          updatingDelegates.append(delegate.copy(availableCycle = Some(newCycle)))
-        } else {
-          freeDelegates.append(delegate)
-        }
-      }
-    }
-
-    DelegateSource.updateBusyDelegateAvailableCycle(updatingDelegates.toList)
-    DelegateSource.deleteBusyDelegates(freeDelegates.toList)
+    AirlineSource.saveLedgerEntry(AirlineLedgerEntry(airline.id, currentCycle, LedgerType.PRIZE, cash, Some(description)))
   }
 }
 
@@ -570,19 +546,6 @@ case class NegotiationCashBonusTemplate(factor : Int) extends NegotiationBonusTe
         s"The airport authority decided to provide a generous subsidy of $$${integerInstance.format(cash)}!"
       }
     NegotiationCashBonus(cash, description, intensity)
-  }
-}
-
-case class NegotiationCooldownBonusTemplate(discountCycle : Int) extends NegotiationBonusTemplate {
-  val intensityCompute = if (discountCycle <= 3) 1 else 2
-  override def computeBonus(monetaryBaseValue : Long, delegates : List[BusyDelegate], airport : Airport) : NegotiationBonus = {
-    val description =
-      if (discountCycle < LinkNegotiationDelegateTask.COOL_DOWN) {
-        s"The delegates are encouraged by the success, cooldown reduced by $discountCycle weeks!"
-      } else {
-        s"The delegates are energized by the great success, they are ready for next assignment!"
-      }
-    NegotiationCooldownBonus(delegates, discountCycle, description, intensity)
   }
 }
 

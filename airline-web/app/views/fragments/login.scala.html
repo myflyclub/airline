@@ -13,11 +13,26 @@
                     <a href="https://myfly.club/" class="button" tabindex="5">Learn more</a>
 				</div>
 				<div class="login-form" id="signupForm" style="display: none;">
-					<input type="text" id="signupPageUserName" placeholder="Username" tabindex="1" />
-					<input type="email" id="signupPageEmail" placeholder="Email address" tabindex="2" />
-					<input type="password" id="signupPagePassword" placeholder="Password" tabindex="3" />
-					<input type="password" id="signupPagePasswordConfirm" placeholder="Repeat password" tabindex="4" />
-					<input type="text" id="signupPageAirlineName" placeholder="Airline name" tabindex="5" onkeydown="passwordSignupPage(event)" />
+					<div class="flex-col" style="gap: 4px; height: auto;">
+						<input type="text" id="signupPageUserName" placeholder="Username" tabindex="1" oninput="clearSignupFieldError('signupPageUserName')" />
+						<span class="warning text-xs" id="signupPageUserNameError" style="display: none;"></span>
+					</div>
+					<div class="flex-col" style="gap: 4px; height: auto;">
+						<input type="email" id="signupPageEmail" placeholder="Email address" tabindex="2" oninput="clearSignupFieldError('signupPageEmail')" />
+						<span class="warning text-xs" id="signupPageEmailError" style="display: none;"></span>
+					</div>
+					<div class="flex-col" style="gap: 4px; height: auto;">
+						<input type="password" id="signupPagePassword" placeholder="Password" tabindex="3" oninput="clearSignupFieldError('signupPagePassword')" />
+						<span class="warning text-xs" id="signupPagePasswordError" style="display: none;"></span>
+					</div>
+					<div class="flex-col" style="gap: 4px; height: auto;">
+						<input type="password" id="signupPagePasswordConfirm" placeholder="Repeat password" tabindex="4" oninput="clearSignupFieldError('signupPagePasswordConfirm')" />
+						<span class="warning text-xs" id="signupPagePasswordConfirmError" style="display: none;"></span>
+					</div>
+					<div class="flex-col" style="gap: 4px; height: auto;">
+						<input type="text" id="signupPageAirlineName" placeholder="Airline name" tabindex="5" onkeydown="passwordSignupPage(event)" oninput="clearSignupFieldError('signupPageAirlineName')" />
+						<span class="warning text-xs" id="signupPageAirlineNameError" style="display: none;"></span>
+					</div>
 					<button class="button signup-page-btn" onclick="signupFromPage()" tabindex="6">Create Account</button>
 					<button class="button" onclick="showLoginForm()" tabindex="7">Back to Login</button>
 				</div>

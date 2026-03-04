@@ -1,7 +1,7 @@
 var logoModalConfirm = function() {}
 var _financesEtag = null
 var loadedIncomes = {}
-var loadedCashFlows = {}
+var loadedLedger = []
 var loadedAirlineOps = {}
 var loadedAirlineStats = {}
 var loadedAirlineReputation = {}
@@ -20,13 +20,13 @@ const SHEET_CONFIG = {
 		sheetId: 'incomeSheet',
 		chartIds: ['totalProfitChart'],
 	},
-	cashFlow: {
-		pageGroup: 'financial',
-		getData: () => loadedCashFlows[officePeriod] ?? [],
-		updateSheet: data => updateCashFlowSheet(data),
-		updateChart: () => updateCashFlowChart(),
-		sheetId: 'cashFlowSheet',
-		chartIds: ['totalCashFlowChart', 'totalValueChart'],
+	ledger: {
+		pageGroup: 'ledger',
+		getData: () => loadedLedger,
+		updateSheet: data => updateLedgerSheet(data),
+		updateChart: () => {},
+		sheetId: 'ledgerSheet',
+		chartIds: [],
 	},
 	airlineStat: {
 		pageGroup: 'stats',
@@ -55,7 +55,7 @@ const SHEET_CONFIG = {
 }
 
 const allSheetChartIds = new Set(Object.values(SHEET_CONFIG).flatMap(c => c.chartIds))
-const sheetPages = { financial: 0, stats: 0 }
+const sheetPages = { financial: 0, ledger: 0, stats: 0 }
 
 function getActiveSheetType() {
 	return document.querySelector('#officeCanvas .sheetOptions .cell.selected')?.dataset.type
@@ -80,6 +80,8 @@ function renderSheetNav(type) {
 	const sheet = document.getElementById(config.sheetId)
 	if (!sheet) return
 
+	const label = type === 'ledger' ? 'Week' : getPeriodLabel()
+
 	let nav = sheet.querySelector('.sheet-nav')
 	if (!nav) {
 		nav = document.createElement('div')
@@ -87,7 +89,7 @@ function renderSheetNav(type) {
 
 		const prev = document.createElement('a')
 		prev.className = 'button-text prev'
-		prev.textContent = `\u2190 Prev ${getPeriodLabel()}`
+		prev.textContent = `\u2190 Prev ${label}`
 		prev.addEventListener('click', () => officeHistoryStep(-1))
 
 		const cycleEl = document.createElement('span')
@@ -95,7 +97,7 @@ function renderSheetNav(type) {
 
 		const next = document.createElement('a')
 		next.className = 'button-text next'
-		next.textContent = `Next ${getPeriodLabel()} \u2192`
+		next.textContent = `Next ${label} \u2192`
 		next.addEventListener('click', () => officeHistoryStep(1))
 
 		nav.append(prev, cycleEl, next)
@@ -109,7 +111,6 @@ function renderSheetNav(type) {
 	}
 
 	// Update state
-	const label = getPeriodLabel()
 	nav.querySelector('.button-text.prev').textContent = `\u2190 Prev ${label}`
 	nav.querySelector('.button-text.next').textContent = `Next ${label} \u2192`
 	nav.querySelector('.button-text.prev').classList.toggle('disabled', page <= 0)
@@ -161,6 +162,7 @@ function showOfficeCanvas() {
 	updateAirlineColorPicker()
 	updateHeadquartersMap($('#officeCanvas .headquartersMap'), activeAirline.id)
 	updateLiveryInfo()
+	updateManagerStatus()
 	loadSlogan(function(slogan) { $('#officeCanvas .slogan').val(slogan)})
 }
 
@@ -250,7 +252,7 @@ function updateAirlineBases() {
     	    dataType: 'json',
     	    success: function(officeCapacity) {
     	    	 $(activeAirline.baseAirports).each(function(index, base) {
-                    var row = $("<div class='table-row clickable' data-link='airport' onclick='showAirportDetails(" + base.airportId+ ")'></div>")
+                    var row = $(`<div class='table-row clickable' data-link='airport' onclick='page("/airport/${base.airportCode}")'></div>`)
                     if (base.headquarter) {
                         row.append($("<div class='cell'><img src='/assets/images/icons/building-hedge.png' class='pr-1'><span style='font-size: 130%;vertical-align: top;'>" + base.scale + "</span></div><div class='cell'>" + getCountryFlagImg(base.countryCode) + base.city + " " + base.airportCode + "</div>"))
 
@@ -258,7 +260,7 @@ function updateAirlineBases() {
                         row.append($("<div class='cell'><img src='/assets/images/icons/building-low.png' class='pr-1'><span style='font-size: 130%;vertical-align: top;'>" + base.scale + "</span></div><div class='cell'>" + getCountryFlagImg(base.countryCode) + base.city + " " + base.airportCode + "</div>"))
                     }
                     var capacityInfo = officeCapacity[base.airportId]
-                    var required = (capacityInfo.staffCapacity < capacityInfo.currentStaffRequired) ? "<span class='fatal'>" + capacityInfo.currentStaffRequired.toFixed(1) + "</span>" : capacityInfo.currentStaffRequired.toFixed(1)
+                    var required = (capacityInfo.staffCapacity < capacityInfo.currentStaffRequired) ? "<span class='fatal'>" + capacityInfo.currentStaffRequired + "</span>" : capacityInfo.currentStaffRequired
 
                     if (capacityInfo.currentStaffRequired != capacityInfo.futureStaffRequired) {
                         row.append($("<div class='cell'>" + required + " | " + capacityInfo.staffCapacity + "<span>(future: " + capacityInfo.futureStaffRequired + ")</span></div>"))
@@ -555,10 +557,12 @@ async function loadSheets() {
 			if (totalIncomePages > 0) {
 				sheetPages.financial = totalIncomePages - 1
 				updateIncomeSheet(loadedIncomes[officePeriod][sheetPages.financial])
-				updateCashFlowSheet(loadedCashFlows[officePeriod][sheetPages.financial])
+			}
+			if (loadedLedger.length > 0) {
+				sheetPages.ledger = loadedLedger.length - 1
+				updateLedgerSheet(loadedLedger[sheetPages.ledger])
 			}
 			updateIncomeChart(loadedIncomes[officePeriod])
-			updateCashFlowChart(loadedCashFlows[officePeriod], loadedIncomes[officePeriod])
 
 			sheetPages.stats = loadedAirlineStats[officePeriod].length > 0 ? loadedAirlineStats[officePeriod].length - 1 : 0
 			const statData304 = loadedAirlineStats[officePeriod][sheetPages.stats] ?? null
@@ -577,7 +581,7 @@ async function loadSheets() {
 
 		// Reset loaded data for fresh response
 		loadedIncomes = Object.fromEntries(periodKeys.map(key => [key, []]))
-		loadedCashFlows = Object.fromEntries(periodKeys.map(key => [key, []]))
+		loadedLedger = []
 		loadedAirlineOps = Object.fromEntries(periodKeys.map(key => [key, []]))
 		loadedAirlineStats = Object.fromEntries(periodKeys.map(key => [key, []]))
 		loadedAirlineReputation = Object.fromEntries(periodKeys.map(key => [key, []]))
@@ -601,15 +605,16 @@ async function loadSheets() {
 		}
 		updateIncomeChart(loadedIncomes[officePeriod])
 
-		var airlineCashFlows = data.cashFlows
-		$.each(airlineCashFlows, function(index, airlineCashFlow) {
-			loadedCashFlows[airlineCashFlow.period].push(airlineCashFlow)
+		const byCycle = {}
+		;(data.ledger || []).forEach(e => {
+			if (!byCycle[e.cycle]) byCycle[e.cycle] = { cycle: e.cycle, period: 'WEEKLY', entries: [] }
+			byCycle[e.cycle].entries.push(e)
 		})
-		totalPages = loadedCashFlows[officePeriod].length
-		if (totalPages > 0) {
-			updateCashFlowSheet(loadedCashFlows[officePeriod][sheetPages.financial])
+		loadedLedger = Object.keys(byCycle).sort((a, b) => parseInt(a) - parseInt(b)).map(c => byCycle[c])
+		if (loadedLedger.length > 0) {
+			sheetPages.ledger = loadedLedger.length - 1
+			updateLedgerSheet(loadedLedger[sheetPages.ledger])
 		}
-		updateCashFlowChart(loadedCashFlows[officePeriod], loadedIncomes[officePeriod])
 
 		data.airlineStats.forEach(stat => {
 			loadedAirlineStats[stat.period].push(stat)
@@ -639,16 +644,8 @@ function updateIncomeChart(airlineIncomes) {
 	})
 }
 
-function updateCashFlowChart(cashFlows, incomes) {
-	var flows = cashFlows || loadedCashFlows[officePeriod];
-	var inc = incomes || loadedIncomes[officePeriod];
-
-	ensureChart('totalCashFlowChart', function() {
-		plotCashFlowChart(flows, officePeriod, 'totalCashFlowChart')
-	})
-	ensureChart('totalValueChart', function() {
-		plotTotalValueChart(inc, officePeriod, 'totalValueChart')
-	})
+function updateLedgerChart() {
+	// Ledger view has no charts
 }
 
 function updateAirlineStatChart(stats) {
@@ -698,7 +695,7 @@ function officeHistoryStep(step) {
 function changeOfficePeriod(period) {
 	officePeriod = period
 	const type = getActiveSheetType()
-	if (!type) return
+	if (!type || type === 'ledger') return  // ledger tab doesn't use periods
 	const config = SHEET_CONFIG[type]
 	const data = config.getData()
 	setSheetPage(type, Math.max(data.length - 1, 0))
@@ -729,11 +726,6 @@ function updateIncomeSheet(airlineIncome) {
         $("#linksLoungeCost").text('$' + commaSeparateNumber(airlineIncome.linksLoungeCost))
         $("#linksDepreciation").text('$' + commaSeparateNumber(airlineIncome.linksDepreciation))
         $("#linksDelayCompensation").text('$' + commaSeparateNumber(airlineIncome.linksDelayCompensation))
-        $("#transactionsProfit").text('$' + commaSeparateNumber(airlineIncome.transactionsProfit))
-        $("#transactionsRevenue").text('$' + commaSeparateNumber(airlineIncome.transactionsRevenue))
-        $("#transactionsExpense").text('$' + commaSeparateNumber(airlineIncome.transactionsExpense))
-        $("#transactionsCapitalGain").text('$' + commaSeparateNumber(airlineIncome.transactionsCapitalGain))
-        //$("#transactionsCreateLink").text('$' + commaSeparateNumber(airlineIncome.transactionsCreateLink))
         $("#othersProfit").text('$' + commaSeparateNumber(airlineIncome.othersProfit))
         $("#othersRevenue").text('$' + commaSeparateNumber(airlineIncome.othersRevenue))
         $("#othersExpense").text('$' + commaSeparateNumber(airlineIncome.othersExpense))
@@ -753,21 +745,30 @@ function updateIncomeSheet(airlineIncome) {
 }
 
 
-function updateCashFlowSheet(airlineCashFlow) {
-	if (airlineCashFlow) {
-        // updateAllTextNodes(".officeCycleText", getGameDate(airlineCashFlow.cycle, airlineCashFlow.period, true));
-		$("#cashFlowSheet .totalCashFlow").text('$' + commaSeparateNumber(airlineCashFlow.totalCashFlow))
-        $("#cashFlowSheet .operation").text('$' + commaSeparateNumber(airlineCashFlow.operation))
-        $("#cashFlowSheet .loanInterest").text('$' + commaSeparateNumber(airlineCashFlow.loanInterest))
-        $("#cashFlowSheet .loanPrincipal").text('$' + commaSeparateNumber(airlineCashFlow.loanPrincipal))
-        $("#cashFlowSheet .baseConstruction").text('$' + commaSeparateNumber(airlineCashFlow.baseConstruction))
-        $("#cashFlowSheet .buyAirplane").text('$' + commaSeparateNumber(airlineCashFlow.buyAirplane))
-        $("#cashFlowSheet .sellAirplane").text('$' + commaSeparateNumber(airlineCashFlow.sellAirplane))
-        $("#cashFlowSheet .createLink").text('$' + commaSeparateNumber(airlineCashFlow.createLink))
-        $("#cashFlowSheet .facilityConstruction").text('$' + commaSeparateNumber(airlineCashFlow.facilityConstruction))
-        $("#cashFlowSheet .oilContract").text('$' + commaSeparateNumber(airlineCashFlow.oilContract))
-        $("#cashFlowSheet .assetTransactions").text('$' + commaSeparateNumber(airlineCashFlow.assetTransactions))
-	}
+function formatLedgerType(type) {
+	return type.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ')
+}
+
+function updateLedgerSheet(weekData) {
+	const $entries = $('#ledgerEntries')
+	$entries.empty()
+	if (!weekData) return
+	weekData.entries.forEach(entry => {
+		const $row = $('<div class="table-row"></div>')
+		$row.append('<div class="cell" style="flex: 0 0 68px; opacity: 0.5; font-size: 0.8em;">#' + entry.id + '</div>')
+		$row.append('<div class="cell" style="flex: 2;">' + formatLedgerType(entry.entryType) + '</div>')
+		$row.append('<div class="cell" style="flex: 3; opacity: 0.75;">' + (entry.description || '') + '</div>')
+		$row.append('<div class="cell" style="flex: 0 0 120px; text-align: right;">' + '$' + commaSeparateNumber(entry.amount) + '</div>')
+		$entries.append($row)
+	})
+	const total = weekData.entries.reduce((sum, e) => sum + e.amount, 0)
+	const sign = total < 0 ? '-' : ''
+	const $row = $('<div class="table-row"></div>')
+	$row.append('<div class="cell" style="flex: 0 0 68px;"></div>')
+	$row.append('<div class="cell h4" style="flex: 2;">Total:</div>')
+	$row.append('<div class="cell" style="flex: 3;"></div>')
+	$row.append('<div class="cell totalLedger" style="flex: 0 0 120px; text-align: right;">' + sign + '$' + commaSeparateNumber(Math.abs(total)) + '</div>')
+	$entries.append($row)
 }
 
 function updateAirlineStatSheet(airlineStats) {
@@ -909,7 +910,15 @@ function setAirplaneRenewal(threshold) {
 	    contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
 	    success: function(result) {
-	    	updateAirplaneRenewalDetails()
+	    	if (result.threshold) {
+	    		$('#airplaneRenewal').text('Below ' + result.threshold + "%")
+	    		$('#airplaneRenewalInput').val(result.threshold)
+	    	} else {
+	    		$('#airplaneRenewal').text('-')
+	    		$('#airplaneRenewalInput').val(40)
+	    	}
+	    	$('#airplaneRenewalDisplaySpan').show()
+	    	$('#airplaneRenewalInputSpan').hide()
 	    },
         error: function(jqXHR, textStatus, errorThrown) {
 	            console.log(JSON.stringify(jqXHR));
@@ -972,9 +981,10 @@ function setAirlineCode(airlineCode) {
 	    data: JSON.stringify(data),
 	    contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
-	    success: function(airline) {
-	    	activeAirline = airline
-	    	$('#airlineCode').text(airline.airlineCode)
+	    success: function(result) {
+	    	activeAirline.airlineCode = result.airlineCode
+	    	$('#airlineCode').text(result.airlineCode)
+	    	$('#airlineCodeInput').val(result.airlineCode)
 	    	$('#airlineCodeInputSpan').hide()
 	    	$('#airlineCodeDisplaySpan').show()
 	    },
@@ -1409,6 +1419,10 @@ function selectSheet(tabEl) {
 	tabEl.closest('.sheetOptions').querySelectorAll('.cell').forEach(el => el.classList.remove('selected'))
 	tabEl.classList.add('selected')
 
+	// Disable period dropdown for the ledger tab
+	const periodSelect = document.querySelector('#officeCanvas select.period')
+	if (periodSelect) periodSelect.disabled = (type === 'ledger')
+
 	const targetSheet = document.getElementById(config.sheetId)
 	targetSheet.parentElement.querySelectorAll('.sheet').forEach(sheet => {
 		if (sheet === targetSheet) {
@@ -1490,4 +1504,19 @@ function resetAirline(keepAssets) {
 	    }
 	});
 
+}
+
+function updateManagerStatus() {
+    $.ajax({
+        type: 'GET',
+        url: '/delegates/airline/' + activeAirline.id,
+        contentType: 'application/json; charset=utf-8',
+        dataType: 'json',
+        success: function(delegateInfo) {
+            refreshAirlineDelegateStatus($('#managerStatus .managerGroups'), delegateInfo)
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            console.log('AJAX error: ' + textStatus + ' : ' + errorThrown)
+        }
+    })
 }

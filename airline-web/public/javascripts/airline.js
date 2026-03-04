@@ -64,6 +64,7 @@ function updateAirlineLogo() {
 
 function refreshTopBar(airline) {
     changeColoredElementValue($(".balance"), airline.balance)
+    $(".actionPoints").text(airline.actionPoints != null ? airline.actionPoints.toFixed(1) : '0.0')
 	$(".reputationValue").text(airline.reputation)
 	$(".reputationStars").empty()
 
@@ -77,8 +78,7 @@ function refreshTopBar(airline) {
 	$(".reputationStars").append($starBar)
 	addTooltip($("#topReputationStars"), reputationText, {'top' : 0, 'width' : '350px', 'white-space' : 'nowrap'})
 
-	refreshTopBarDelegates(airline)
-    refreshTopBarOilPrice()
+    loadOilPrices();
 }
 
 async function selectAirline(airlineId) {
@@ -1475,7 +1475,7 @@ function createLink() {
 			"price" : { "economy" : parseInt($("#planLinkEconomyPrice").val()), "business" : parseInt($("#planLinkBusinessPrice").val()), "first" : parseInt($("#planLinkFirstPrice").val())},
 			"model" : parseInt($("#planLinkModelSelect").val()),
 			"rawQuality" : parseInt($("#planLinkServiceLevel").val()) * 20,
-			"assignedDelegates" : assignedDelegates }
+			"assignedDelegates" : assignedActionPoints }
 		$.ajax({
 			type: 'PUT',
 			url: url,
@@ -1545,7 +1545,7 @@ function getLinkStaffingInfo() {
         "price" : { "economy" : parseInt($("#planLinkEconomyPrice").val()), "business" : parseInt($("#planLinkBusinessPrice").val()), "first" : parseInt($("#planLinkFirstPrice").val())},
         "model" : parseInt($("#planLinkModelSelect").val()),
         "rawQuality" : parseInt($("#planLinkServiceLevel").val()) * 20,
-        "assignedDelegates" : assignedDelegates }
+        "assignedDelegates" : assignedActionPoints }
     $.ajax({
         type: 'POST',
         url: url,
@@ -2540,8 +2540,8 @@ function updateAirlineBaseList(airlineId, table) {
 	});
 }
 
-var assignedDelegates = 0
-var availableDelegates = 0
+var assignedActionPoints = 0
+var availableActionPoints = 0
 var negotiationOddsLookup
 var difficultyLookup
 
@@ -2585,7 +2585,7 @@ function linkConfirmation() {
 
 		$('#linkConfirmationModal div.existing.price').text(toLinkClassValueString(existingLink.price, '$'))
 	} else {
-	    $('#linkConfirmationModal .modalHeader').text('New Route')
+	    $('#linkConfirmationModal .modalHeader').text('Create New Route')
 		$('#linkConfirmationModal div.existing').text('-')
 	}
 
@@ -2631,54 +2631,49 @@ function linkConfirmation() {
     getLinkNegotiation()
 }
 
-function changeAssignedDelegateCount(delta) {
-    if (!isNaN(negotiationOddsLookup[assignedDelegates + delta])) {
-       updateAssignedDelegateCount(assignedDelegates + delta)
+function changeAssignedActionPoints(delta) {
+    if (!isNaN(negotiationOddsLookup[assignedActionPoints + delta])) {
+       updateAssignedActionPoints(assignedActionPoints + delta)
     }
 }
 
-function addMinimumRequiredDelegates() {
-	var minimumRequiredDelegates = Object.keys(negotiationOddsLookup).length - 1
-	for (let i = minimumRequiredDelegates; i > 0; i--) {
+function addMinimumRequiredActionPoints() {
+	var minimumRequiredActionPoints = Object.keys(negotiationOddsLookup).length - 1
+	for (let i = minimumRequiredActionPoints; i > 0; i--) {
 		if (negotiationOddsLookup[i] > 0) {
-			minimumRequiredDelegates = i
+			minimumRequiredActionPoints = i
 		}
 	}
-	if (negotiationOddsLookup[minimumRequiredDelegates] > 0) {
-		updateAssignedDelegateCount(minimumRequiredDelegates)
+	if (negotiationOddsLookup[minimumRequiredActionPoints] > 0) {
+		updateAssignedActionPoints(minimumRequiredActionPoints)
 	} else {
-		updateAssignedDelegateCount(0)
+		updateAssignedActionPoints(0)
 	}
 }
 
-function addMaximumRequiredDelegates() {
-	var maximumRequiredDelegates = 0
+function addMaximumRequiredActionPoints() {
+	var maximumRequiredActionPoints = 0
 	for (let i = 0; i <= Object.keys(negotiationOddsLookup).length; i++) {
 		if (negotiationOddsLookup[i] <= 1) {
-			maximumRequiredDelegates = i
+			maximumRequiredActionPoints = i
 		}
 	}
-	if (negotiationOddsLookup[maximumRequiredDelegates] > 0) {
-		updateAssignedDelegateCount(maximumRequiredDelegates)
+	if (negotiationOddsLookup[maximumRequiredActionPoints] > 0) {
+		updateAssignedActionPoints(maximumRequiredActionPoints)
 	}
 }
 
-function updateAssignedDelegateCount(delegateCount) {
-    assignedDelegates = delegateCount
-    $('#linkConfirmationModal div.assignedDelegatesIcons').empty()
-    if (assignedDelegates == 0) {
-        $('#linkConfirmationModal div.assignedDelegatesIcons').append("<span>None</span>")
-    }
-    for (i = 0 ; i < assignedDelegates; i ++) {
-        var delegateIcon = $('<img src="/assets/images/icons/user-silhouette-available.png" title="Assigned Delegate"/>')
-        $('#linkConfirmationModal .assignedDelegatesIcons').append(delegateIcon)
-    }
+function updateAssignedActionPoints(delegateCount) {
+    assignedActionPoints = delegateCount
+    $('#linkConfirmationModal .assignedDelegatesIcons').html(
+        assignedActionPoints > 0 ? '⚡'.repeat(assignedActionPoints) : '<span>None</span>'
+    )
     //look up the odds
-    var odds = negotiationOddsLookup[assignedDelegates]
+    var odds = negotiationOddsLookup[assignedActionPoints]
     $('#linkConfirmationModal .successRate').text(Math.floor(odds * 100) + '%')
 
-    if (odds <= 0 && difficultyLookup > 0) { //then need to add delegates
-        disableButton($('#linkConfirmationModal .negotiateButton'), "Odds at 0%. Assign more delegates")
+    if (odds <= 0 && difficultyLookup > 0) { //then need to add action points
+        disableButton($('#linkConfirmationModal .negotiateButton'), "Odds at 0%. Assign more action points")
     } else {
         enableButton($('#linkConfirmationModal .negotiateButton'))
     }
@@ -2688,8 +2683,8 @@ function updateAssignedDelegateCount(delegateCount) {
 
 
 function getLinkNegotiation(callback) {
-    assignedDelegates = 0
-    availableDelegates = 0
+    assignedActionPoints = 0
+    availableActionPoints = 0
     negotiationOddsLookup = {}
     var airlineId = activeAirline.id
     var url = "/airlines/" + activeAirline.id + "/get-link-negotiation"
@@ -2805,11 +2800,10 @@ function getLinkNegotiation(callback) {
                     var difficultyTotalText = fromAirportRequirementValue.toFixed(2) + " * " + Math.round((1 - fromDiscount) * 100) + "% + " + toAirportRequirementValue.toFixed(2) + " * " + Math.round((1 - toDiscount) * 100) + "% = " + negotiationInfo.finalRequirementValue.toFixed(2)
                     $('#linkConfirmationModal .negotiationInfo .negotiationDifficultyTotal').text(negotiationInfo.finalRequirementValue.toFixed(2))
 
-                    var delegateInfo = result.delegateInfo
-                    availableDelegates = delegateInfo.availableCount
-                    if (negotiationInfo.finalRequirementValue > availableDelegates) {
+                    availableActionPoints = result.actionPoints
+                    if (negotiationInfo.finalRequirementValue > availableActionPoints) {
                         $('#linkConfirmationModal .negotiationInfo img.info').hide();
-                        difficultyTotalText += ' (Not enough available delegates)'
+                        difficultyTotalText += ' (Not enough action points)'
                         $('#linkConfirmationModal .negotiationInfo .error').show();
                     } else if (negotiationInfo.finalRequirementValue > 11) {
                         $('#linkConfirmationModal .negotiationInfo img.info').hide();
@@ -2824,12 +2818,14 @@ function getLinkNegotiation(callback) {
 
                     //finish updating the negotiationDifficultyModal
 
-                    refreshAirlineDelegateStatus($('#linkConfirmationModal div.delegateStatus'), delegateInfo)
+                    $('#linkConfirmationModal div.delegateStatus').html(
+                        '<span>Action Points available: <b>' + availableActionPoints.toFixed(1) + '</b></span>'
+                    )
 
-                    if (availableDelegates > 0) {
-                        addMinimumRequiredDelegates()
+                    if (availableActionPoints > 0) {
+                        addMinimumRequiredActionPoints()
                     } else {
-                        updateAssignedDelegateCount(0)
+                        updateAssignedActionPoints(0)
                     }
 
                     if (result.rejection) {
@@ -2884,7 +2880,6 @@ function refreshSavedLink(savedLink) {
 	setActiveDiv($('#linkDetails'))
     hideActiveDiv($('#extendedPanel #airplaneModelDetails'))
 	refreshPanels(activeAirline.id) //refresh panels would update link details
-	updateTopBarDelegates(activeAirline.id)
 
 	if ($('#linksCanvas').is(':visible')) { //reload the links table then
 		loadLinksTable(null, true)
@@ -3170,7 +3165,7 @@ function updateLinksActionBar() {
         $("#toggleAllLinks").prop('checked', false)
     }
     var $qualityBar = $("#bulkUpdateQualityBar")
-    generateImageBar($qualityBar.data("emptyIcon"), $qualityBar.data("fillIcon"), 5, $qualityBar, $("#bulkUpdateQualityLevel"))
+    generateImageBar($qualityBar.data("emptyIcon"), $qualityBar.data("fillIcon"), 5, $qualityBar, $("#bulkUpdateQualityLevel"), null, null, null, 20)
 }
 
 function submitBulkUpdateQuality() {

@@ -82,8 +82,8 @@ case object RegionalAirline extends AirlineType {
   val extraSharedBaseLimit = 1
   val modelMaxSize = 0.1 //used in web app to set allowed planes
   val staffFreqRatio = 0.2
-  val staffReductionRange = 2000
-  val staffReductionRangeFadeTo = 4000
+  val staffReductionRange = 1500
+  val staffReductionRangeFadeTo = 2000
   val description = List[String](
     "Can only buy small, regional aircraft!",
     "Earn reputation by creating high frequency links and capturing airports!",

@@ -43,11 +43,11 @@
 							</div>
 							<div class="table-row">
 								<div class="label">Relationship with your airline:</div>
-								<div class="value relationship" style="display: flex; align-items: center;"><span class="total"></span><img src='@routes.Assets.versioned("/images/icons/gear.png")' title='Manage Relationship' class="clickable detailsIcon" onclick="const countryCode = $(this).data('countryCode'); showRelationshipDetailsModal($(this).data('relationship'), $(this).data('title'), countryCode, page.show('/country/' + countryCode))"></div>
+								<div class="value relationship" style="display: flex; align-items: center;"><span class="total"></span><img class="img-button svg hover-rotate detailsIcon openCountryRelationship" src='@routes.Assets.versioned("images/icons/gear.svg")'  title='Manage Relationship' onclick="const countryCode = $(this).data('countryCode'); showRelationshipDetailsModal($(this).data('relationship'), $(this).data('title'), countryCode, page.show('/country/' + countryCode))"></div>
 							</div>
 							<div class="table-row">
 								<div class="label">Your airline title with this country:</div>
-								<div class="value"><img class="airlineTitleIcon svg" style='display: none;'>&nbsp;<span class="airlineTitle"></span></div>
+								<div class="value"><img class="airlineTitleIcon svg pull-left" style='display: none;'>&nbsp;<span class="airlineTitle"></span></div>
 							</div>
 							<div class="table-row">
 								<div class="label">Large Airports:</div>
@@ -69,28 +69,17 @@
 								<div class="label">Airline Bases:</div>
 								<div class="value" id="countryDetailsAirlineBases"></div>
 							</div>
-							<div class="table-row">
-								<div class="label">National Airline:</div>
-								<div class="value" style="padding-bottom : 10px;">
-									<div class="table data nationalAirlines" style="width : 100%">
-									</div>
-								</div>
-							</div>
-							<div class="table-row">
-								<div class="label">Partnered Airline:</div>
-								<div class="value" style="padding-bottom : 10px;">
-									<div class="table data partneredAirlines" style="width : 100%">
-									</div>
-								</div>
-							</div>
-							<div class="table-row">
-								<div class="label">Top Airline:</div>
-								<div class="value" style="padding-bottom : 10px;">
-									<div class="table data countryDetailsChampion" style="width : 100%">
-									</div>
-								</div>
-							</div>
 						</div>
+
+						<h5 class="pt-8">National Airlines <i class="text-xs info national-title-bonus">receives loyalty bonus</i></h5>
+						<div class="table data nationalAirlines" style="width : 100%"></div>
+
+						<h5 class="pt-8">Partnered Airlines <i class="text-xs info partnered-title-bonus">receives loyalty bonus</i></h5>
+						<div class="table data partneredAirlines" style="width : 100%"></div>
+
+<!--						<h5>Most Favored Airlines</h5>-->
+						<h5 class="pt-8">Most Passengers</h5>
+						<div class="table data countryDetailsChampion" style="width : 100%"></div>
 						<div id="countryDetailsSharesChart" style="height: 250px;"></div>
 					</div>
 				</div>

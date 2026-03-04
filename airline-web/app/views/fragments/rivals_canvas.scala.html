@@ -34,6 +34,7 @@
 							<div class="cell clickable selected" style="width: 13%;" align="right" data-sort-property="currentPrice" data-sort-order="descending" onclick="Rivals.toggleTickerSortOrder($(this))">Price</div>
 							<div class="cell clickable" style="width: 16%;" align="right" data-sort-property="totalValue" data-sort-order="descending" onclick="Rivals.toggleTickerSortOrder($(this))">Total Value</div>
 							<div class="cell clickable" style="width: 13%;" align="right" data-sort-property="reputation" data-sort-order="descending" onclick="Rivals.toggleTickerSortOrder($(this))">Reputation</div>
+							<div class="cell clickable" style="width: 13%;" align="right" data-sort-property="prestigePoints" data-sort-order="descending" onclick="Rivals.toggleTickerSortOrder($(this))">Prestige</div>
 						</div>
 					</div>
 				</div>
@@ -55,6 +56,10 @@
 									<div class="value alliance"></div>
 								</div>
 								<div class="table-row">
+									<div class="label">Prestige:</div>
+									<div class="value prestigePoints"></div>
+								</div>
+								<div class="table-row">
 									<div class="label">Airline Code:</div>
 									<div class="value airlineCode"></div>
 								</div>
@@ -62,7 +67,11 @@
 									<div class="label">Airline Color:</div>
 									<div class="value"><span class="airlineColorDot"></span></div>
 								</div>
-								<div class="table-row formerNameRow">
+								<div class="table-row foundedRow">
+								<div class="label">Founded:</div>
+								<div class="value foundedDate"></div>
+							</div>
+							<div class="table-row formerNameRow">
 									<div class="label">Former Names:</div>
 									<div class="value">
 										<div class="table data formerNames" style="width: 100%; max-height: 50px; overflow: auto;">

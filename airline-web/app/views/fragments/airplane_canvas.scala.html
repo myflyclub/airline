@@ -3,7 +3,8 @@
 						<div class="table" style="width: 30%;  margin-left: 12px;">
 							<div class="table-header">
 								<div class="cell detailsSelection" style="border-radius: 5px 0 0 0"><a class="block" href="/hangar/">Hangar</a></div>
-                                <div class="cell detailsSelection" style="border-radius: 0 5px 0 0"><a class="block" href="/aircraft/">Market</a></div>
+                                <div class="cell detailsSelection" style="border-radius: 0"><a class="block" href="/aircraft/">Market</a></div>
+                                <div class="cell detailsSelection" style="border-radius: 0 5px 0 0"><a class="block" href="/aircraft-discounts/">Discounts</a></div>
 							</div>
 						</div>
 						<div class="section tight">
@@ -74,6 +75,49 @@
 										</div>
 									</div>
 								</div>
+                                <div class="discounts details" style="width: 100%; height: calc(100% - 30px); overflow:auto; display: none;">
+                                    <div class="px-4 py-4">
+                                        <h2 class="py-3">Aircraft Discounts</h2>
+                                        <div class="preferredSuppliers gap-4" style="width: 100%; display: flex; flex-wrap: wrap;">
+                                            <div style='min-width: 240px; flex: 1; position: relative;' class='SMALL pb-4'>
+                                                <h4 class="m-0">Small</h4>
+                                                <p class="pb-2"><i class="capacityRange"></i></p>
+                                                <div class="supplierList"></div>
+                                                <div style="margin-top: 8px; font-weight:bold;"><span class="discount"></span></div>
+                                            </div>
+                                            <div style='min-width: 240px; flex: 1; position: relative;' class='REGIONAL pb-4'>
+                                                <h4 class="m-0">Regional</h4>
+                                                <p class="pb-2"><i class="capacityRange"></i></p>
+                                                <div class="supplierList"></div>
+                                                <div style="margin-top: 8px; font-weight:bold;"><span class="discount"></span></div>
+                                            </div>
+                                            <div style='min-width: 240px; flex: 1; position: relative;' class='MEDIUM pb-4'>
+                                                <h4 class="m-0">Narrow-body</h4>
+                                                <p class="pb-2"><i class="capacityRange"></i></p>
+                                                <div class="supplierList"></div>
+                                                <div style="margin-top: 8px; font-weight:bold;"><span class="discount"></span></div>
+                                            </div>
+                                            <div style='min-width: 240px; flex: 1; position: relative;' class='LARGE pb-4'>
+                                                <h4 class="m-0">Wide-Body</h4>
+                                                <p class="pb-2"><i class="capacityRange"></i></p>
+                                                <div class="supplierList"></div>
+                                                <div style="margin-top: 8px; font-weight:bold;"><span class="discount"></span></div>
+                                            </div>
+                                            <div style='min-width: 240px; flex: 1; position: relative;' class='EXTRAORDINARY pb-4'>
+                                                <h4 class="m-0">Jumbos & Supersonics</h4>
+                                                <p class="pb-2"><i class="capacityRange"></i></p>
+                                                <div class="supplierList"></div>
+                                                <p class="py-2"><b class="discount"></b></p>
+                                            </div>
+                                            <div style='min-width: 240px; flex: 1; position: relative;' class='SPECIAL pb-4'>
+                                                <h4 class="m-0">Helicopters & Airships</h4>
+                                                <p class="pb-2"><i class="capacityRange"></i></p>
+                                                <div class="supplierList"></div>
+                                                <div style="margin-top: 8px; font-weight:bold;"><span class="discount"></span></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
 								<div class="hangar details" style="width: 100%; height: calc(100% - 30px); overflow:auto; display: none;">
 									<div class="px-4 py-4">
 										<h2>Maintenance Factor</h2>
@@ -99,51 +143,12 @@
 												</span>
 											</span>
 										</div>
-										<h2 class="py-3">Aircraft Suppliers</h2>
-										<div class="preferredSuppliers gap-4" style="width: 100%; display: flex; flex-wrap: wrap;">
-											<div style='min-width: 240px; flex: 1; position: relative;' class='SMALL pb-4'>
-												<h4 class="m-0">Small</h4>
-												<p class="pb-2"><i class="remarks"><span class="capacityRange"></span></i></p>
-												<div class="supplierList"></div>
-												<div style="margin-top: 8px; font-weight:bold;"><span class="discount"></span></div>
-											</div>
-											<div style='min-width: 240px; flex: 1; position: relative;' class='REGIONAL pb-4'>
-												<h4 class="m-0">Regional</h4>
-												<p class="pb-2"><i class="remarks"><span class="capacityRange"></span></i></p>
-												<div class="supplierList"></div>
-												<div style="margin-top: 8px; font-weight:bold;"><span class="discount"></span></div>
-											</div>
-											<div style='min-width: 240px; flex: 1; position: relative;' class='MEDIUM pb-4'>
-												<h4 class="m-0">Narrow-body</h4>
-												<p class="pb-2"><i class="remarks"><span class="capacityRange"></span></i></p>
-												<div class="supplierList"></div>
-												<div style="margin-top: 8px; font-weight:bold;"><span class="discount"></span></div>
-											</div>
-											<div style='min-width: 240px; flex: 1; position: relative;' class='LARGE pb-4'>
-												<h4 class="m-0">Wide-Body</h4>
-												<p class="pb-2"><i class="remarks"><span class="capacityRange"></span></i></p>
-												<div class="supplierList"></div>
-												<div style="margin-top: 8px; font-weight:bold;"><span class="discount"></span></div>
-											</div>
-											<div style='min-width: 240px; flex: 1; position: relative;' class='EXTRAORDINARY pb-4'>
-												<h4 class="m-0">Jumbos & Supersonics</h4>
-												<p class="pb-2"><i class="remarks"><span class="capacityRange"></span></i></p>
-												<div class="supplierList"></div>
-												<p class="py-2"><b class="discount"></b></p>
-											</div>
-											<div style='min-width: 240px; flex: 1; position: relative;' class='SPECIAL pb-4'>
-												<h4 class="m-0">Helicopters & Airships</h4>
-												<p class="pb-2"><i class="remarks"><span class="capacityRange"></span></i></p>
-												<div class="supplierList"></div>
-												<div style="margin-top: 8px; font-weight:bold;"><span class="discount"></span></div>
-											</div>
-										</div>
 									</div>
 									<div class="sectionContainer" style="display: flex; flex-wrap: wrap;">
 									</div>
                                     <div class="flex-row px-2 pb-1">
-                                        <div><input type="checkbox" onclick="toggleUtilizationRate($('#airplaneCanvas .hangar .sectionContainer'), $(this))" class="toggleUtilizationRateBox"><img src='@routes.Assets.versioned("/images/icons/clock-select-remain.png")' title="Toggle Utilization Rate"/></div>
-                                        <div><input type="checkbox" onclick="toggleCondition($('#airplaneCanvas .hangar .sectionContainer'), $(this))" class="toggleConditionBox"><img src='@routes.Assets.versioned("/images/icons/gear.png")' title="Toggle Airplane Condition"/></div>
+                                        <div><input type="checkbox" onclick="toggleUtilizationRate($('#airplaneCanvas .hangar .sectionContainer'), $(this))" class="toggleUtilizationRateBox"><img src='@routes.Assets.versioned("/images/icons/clock-select-remain.png")' data-tooltip="Toggle Utilization Rate"/></div>
+                                        <div><input type="checkbox" onclick="toggleCondition($('#airplaneCanvas .hangar .sectionContainer'), $(this))" class="toggleConditionBox"><img class="img-button svg hover-rotate" src='@routes.Assets.versioned("images/icons/gear.svg")' data-tooltip="Toggle Airplane Condition"/></div>
                                         <div class="ml-auto flex-align-center">
                                             <div class="tooltip-attr flex-align-center" data-tooltip="Check this to select multiple aircraft">
                                                 <input type="checkbox" onclick="togglePlaneSelect()">
@@ -220,7 +225,11 @@
 								<div class="table" style="width: 100%;">
 									<div class="table-row">
 										<div class="label" style="width: 50%;"><h5>Model:</h5></div>
-										<div class="value"><span class="modelName"></span><img class="favorite clickable-no-highlight" onclick="promptSetFavorite()"></div>
+										<div class="value"><span class="modelName"></span></div>
+									</div>
+									<div class="table-row">
+										<div class="label">Managers:</div>
+										<div class="value" id="aircraftManagersDisplay"></div>
 									</div>
 									<div class="table-row">
 										<div class="label">Family:</div>

@@ -6,7 +6,7 @@ import com.patson.model.Scheduling.{TimeSlot, TimeSlotStatus}
 import com.patson.model.airplane.{Airplane, AirplaneConfiguration, Model}
 import com.patson.model.{Link, _}
 import com.patson.model.event.Olympics
-import com.patson.util.{AirlineCache, AirplaneModelDiscountCache, AirplaneOwnershipCache, AirportCache, AirportStatisticsCache, ChampionUtil}
+import com.patson.util.{AirlineCache, AirplaneOwnershipCache, AirportCache, AirportStatisticsCache, ChampionUtil}
 import controllers.AuthenticationObject.AuthenticatedAirline
 import play.api.libs.json.{Json, _}
 import play.api.mvc._
@@ -115,7 +115,6 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
     AirportCache.getAllAirports()
     AirportStatisticsCache.invalidateAll()
     AirplaneOwnershipCache.invalidateAll()
-    AirplaneModelDiscountCache.invalidateAll()
     ResponseCache.invalidateAll()
     Ok(Json.toJson("Cache cleared"))
   }
@@ -160,7 +159,25 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
         a.airport.id.toString -> Json.toJson(a)(AirportBoostOnlyWrites)
       }.toMap
     )
-    Json.obj("champions" -> championsObject, "boosts" -> boostsObject)
+    val dynamicFeaturesObject = JsObject(
+      airportData.flatMap { a =>
+        val dynFeatures = a.airport.getFeatures().filter {
+          case hub: InternationalHubFeature => hub.boosts.nonEmpty
+          case hub: VacationHubFeature      => hub.boosts.nonEmpty
+          case hub: FinancialHubFeature     => hub.boosts.nonEmpty
+          case hub: EliteFeature            => hub.boosts.nonEmpty
+          case _: OlympicsPreparationsFeature => true
+          case _: OlympicsInProgressFeature   => true
+          case _                              => false
+        }
+        if (dynFeatures.nonEmpty) {
+          Some(a.airport.id.toString -> JsArray(dynFeatures.sortBy(_.featureType.id).map { f =>
+            Json.obj("type" -> f.featureType.toString, "strength" -> f.strength, "title" -> f.getDescription)
+          }))
+        } else None
+      }.toMap
+    )
+    Json.obj("champions" -> championsObject, "boosts" -> boostsObject, "dynamicFeatures" -> dynamicFeaturesObject)
   }
 
   def getAirports() = Action { request =>
@@ -529,7 +546,7 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
    */
   def getGameRules() = Action {
     var scaleProgressionResult = Json.arr()
-    (1 to 24).map { scale =>
+    (1 to 15).foreach { scale =>
       var perScaleResult = Json.obj("scale" -> scale)
       var maxFrequencyJson = Json.obj()
       var maxFrequencyDomesticJson = Json.obj()

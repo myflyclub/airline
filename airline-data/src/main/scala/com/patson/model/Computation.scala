@@ -70,9 +70,18 @@ object Computation {
   
 
   val SELL_RATE = 0.8
-  
+
   def calculateAirplaneSellValue(airplane : Airplane) : Int = {
-    val value = airplane.value * airplane.purchaseRate * SELL_RATE //airplane.purchase < 1 means it was bought with a discount, selling should be lower price
+    val salvageValue = airplane.purchasePrice * Airplane.SALVAGE_VALUE_PERCENT
+    val maxDepreciableValue = (airplane.purchasePrice * SELL_RATE) - salvageValue
+    val conditionRatio = airplane.condition / Airplane.MAX_CONDITION
+
+    val value = salvageValue + (maxDepreciableValue * conditionRatio)
+    value.toInt
+  }
+
+  def calculateDealerValue(airplane : Airplane) : Int = {
+    val value = (airplane.condition / Airplane.MAX_CONDITION) * airplane.purchasePrice
     if (value < 0) 0 else value.toInt
   }
   

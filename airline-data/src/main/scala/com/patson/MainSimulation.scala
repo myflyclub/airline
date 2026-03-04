@@ -8,6 +8,7 @@ import org.apache.pekko.actor.Actor
 import com.patson.data._
 import com.patson.model.{Link, TransportType}
 import com.patson.stream.{CycleCompleted, CycleStart, SimulationEventStream}
+import com.patson.model.CountryAirlineTitle
 import com.patson.util.{AirlineCache, AirplaneOwnershipCache, AirportCache, AirportStatisticsCache}
 
 import scala.concurrent.Await
@@ -40,6 +41,7 @@ object MainSimulation extends App {
     AirportCache.invalidateAll()
     AirportStatisticsCache.invalidateAll()
     AirplaneOwnershipCache.invalidateAll()
+    CountryAirlineTitle.invalidateAll()
   }
 
   def startCycle(cycle : Int) = {
@@ -82,10 +84,6 @@ object MainSimulation extends App {
     println("Airline simulation")
     AirlineSimulation.airlineSimulation(cycle, flightLinkResult, loungeResult, airplanes, paxStatsByAirlineId)
     println("Airline simulation done")
-
-    println("Country simulation")
-    CountrySimulation.simulate(cycle)
-    println("Country simulation done")
 
     println("Airplane model simulation")
     AirplaneModelSimulation.simulate(cycle)

@@ -3,31 +3,41 @@ package com.patson.data
 import com.patson.data.Constants._
 import com.patson.model._
 
+import scala.util.Using
 import scala.collection.mutable.ListBuffer
 
 object RankingLeaderboardSource {
 
   def loadRankingsByCycle(cycle: Int): Map[RankingType.Value, List[Ranking]] = {
-    val connection = Meta.getConnection()
     val rankingsByType = scala.collection.mutable.Map[RankingType.Value, ListBuffer[Ranking]]()
-    
-    try {
-      val preparedStatement = connection.prepareStatement("SELECT * FROM " + RANKING_LEADERBOARD_TABLE + " WHERE cycle = ? ORDER BY ranking_type, ranking")
+
+    Using.Manager { use =>
+      // 'use' registers each AutoCloseable resource for guaranteed cleanup
+      val connection = use(Meta.getConnection())
+      val preparedStatement = use(connection.prepareStatement(
+        s"SELECT * FROM $RANKING_LEADERBOARD_TABLE WHERE cycle = ? ORDER BY ranking_type, ranking"
+      ))
+
       preparedStatement.setInt(1, cycle)
-      val resultSet = preparedStatement.executeQuery()
-      
+      val resultSet = use(preparedStatement.executeQuery())
+
       while (resultSet.next()) {
-        val rankingType = RankingType.withName(resultSet.getString("ranking_type"))
+        // Fast hash map lookup instead of expensive reflection
+        val typeString = resultSet.getString("ranking_type")
+        val rankingType = RankingType.fastLookup.getOrElse(typeString,
+          throw new IllegalArgumentException(s"Unknown ranking type: $typeString")
+        )
+
         val keyString = resultSet.getString("ranking_key")
         val entryString = resultSet.getString("entry")
         val ranking = resultSet.getInt("ranking")
         val rankedValue = resultSet.getDouble("ranked_value")
         val movement = resultSet.getInt("movement")
         val reputationPrize = Option(resultSet.getInt("reputation_prize")).filter(_ != 0)
-        
+
         // Parse key and entry based on ranking type
         val (key, entry) = parseKeyAndEntry(rankingType, keyString, entryString)
-        
+
         val rankingEntry = Ranking(
           rankingType = rankingType,
           key = key,
@@ -37,14 +47,16 @@ object RankingLeaderboardSource {
           movement = movement,
           reputationPrize = reputationPrize
         )
-        
+
         rankingsByType.getOrElseUpdate(rankingType, ListBuffer[Ranking]()) += rankingEntry
       }
-      
-      rankingsByType.view.mapValues(_.toList).toMap
-    } finally {
-      connection.close()
+    }.recover {
+      case e: Exception =>
+        println(s"Failed to load rankings for cycle $cycle: ${e.getMessage}")
+        throw e
     }
+
+    rankingsByType.view.mapValues(_.toList).toMap
   }
 
   def saveRankingsByCycle(cycle: Int, rankings: Map[RankingType.Value, List[Ranking]]): Unit = {
@@ -95,23 +107,6 @@ object RankingLeaderboardSource {
       preparedStatement.setInt(1, cycle)
       preparedStatement.executeUpdate()
       preparedStatement.close()
-    } finally {
-      connection.close()
-    }
-  }
-
-  def loadLatestCycle(): Option[Int] = {
-    val connection = Meta.getConnection()
-    try {
-      val preparedStatement = connection.prepareStatement("SELECT MAX(cycle) as max_cycle FROM " + RANKING_LEADERBOARD_TABLE)
-      val resultSet = preparedStatement.executeQuery()
-      
-      if (resultSet.next()) {
-        val maxCycle = resultSet.getInt("max_cycle")
-        if (resultSet.wasNull()) None else Some(maxCycle)
-      } else {
-        None
-      }
     } finally {
       connection.close()
     }

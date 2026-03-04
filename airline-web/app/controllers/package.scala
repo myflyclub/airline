@@ -3,7 +3,7 @@ import org.apache.pekko.stream.ActorMaterializer
 import com.patson.Util
 import com.patson.data._
 import com.patson.data.airplane._
-import com.patson.model.{AirlineBaseSpecialization, AirlineCashFlow, AirlineIncome, Computation, _}
+import com.patson.model.{AirlineBaseSpecialization, AirlineIncome, Computation, _}
 import com.patson.model.airplane._
 import com.patson.model.event.EventReward
 import com.patson.util.{AirlineCache, AllianceCache, AirportCache, AirportChampionInfo, ChampionUtil, CountryChampionInfo}
@@ -37,9 +37,9 @@ package object controllers {
         "reputation" -> airline.getReputation(),
         "gradeValue" -> airline.airlineGrade.level,
         "gradeDescription" -> airline.airlineGrade.description,
-        "airlineCode" -> airline.getAirlineCode(),
         "baseCount" -> airline.getBases().size,
-        "type" -> airline.airlineType.label
+        "type" -> airline.airlineType.label,
+        "prestigePoints" -> airline.getPrestigePoints()
       )
 
       if (airline.getCountryCode().isDefined) {
@@ -103,10 +103,9 @@ package object controllers {
         "purchasedCycle" -> JsNumber(airplane.purchasedCycle),
         "isReady" -> JsBoolean(airplane.isReady),
         "constructionTime" -> JsNumber(airplane.model.constructionTime),
-        "value" -> JsNumber(airplane.value),
+        "purchasePrice" -> JsNumber(airplane.purchasePrice),
         "sellValue" -> JsNumber(Computation.calculateAirplaneSellValue(airplane)),
         "dealerValue" -> JsNumber(airplane.dealerValue),
-        "dealerRatio" -> JsNumber(airplane.dealerRatio),
         "configurationId" -> JsNumber(airplane.configuration.id),
         "configuration" -> Json.obj("economy" -> airplane.configuration.economyVal, "business" -> airplane.configuration.businessVal, "first" -> airplane.configuration.firstVal),
         "homeAirportId" -> JsNumber(airplane.home.id),
@@ -183,7 +182,7 @@ package object controllers {
       link.setAssignedAirplanes(airplaneAssignments.toList.map {
         case (airplane, frequency) => (airplane, LinkAssignment(frequency, frequency * flightMinutesRequiredPerFlight))
       }.toMap)
-      //(json \ "id").asOpt[Int].foreach { link.id = _ } 
+      //(json \ "id").asOpt[Int].foreach { link.id = _ }
       JsSuccess(link)
     }
 
@@ -318,7 +317,6 @@ package object controllers {
         "airlineName" -> JsString(base.airline.name),
         "scale" -> JsNumber(base.scale),
         "value" -> JsNumber(base.getValue),
-        "delegatesRequired" -> JsNumber(base.delegatesRequired),
         "headquarter" -> JsBoolean(base.headquarter),
         "foundedCycle" -> JsNumber(base.foundedCycle),
         "upkeepCurrentLevel" -> JsNumber(base.calculateUpkeep(base.scale - 1)),
@@ -411,11 +409,6 @@ package object controllers {
         "linksMaintenanceCost" -> JsNumber(airlineIncome.links.maintenanceCost),
         "linksLoungeCost" -> JsNumber(airlineIncome.links.loungeCost),
         "linksDepreciation" -> JsNumber(airlineIncome.links.depreciation),
-        "transactionsProfit" -> JsNumber(airlineIncome.transactions.profit),
-        "transactionsRevenue" -> JsNumber(airlineIncome.transactions.revenue),
-        "transactionsExpense" -> JsNumber(airlineIncome.transactions.expense),
-        "transactionsCapitalGain" -> JsNumber(airlineIncome.transactions.capitalGain),
-        "transactionsCreateLink" -> JsNumber(airlineIncome.transactions.createLink),
         "othersProfit" -> JsNumber(airlineIncome.others.profit),
         "othersRevenue" -> JsNumber(airlineIncome.others.revenue),
         "othersExpense" -> JsNumber(airlineIncome.others.expense),
@@ -432,26 +425,6 @@ package object controllers {
         "othersDepreciation" -> JsNumber(airlineIncome.others.depreciation),
         "period" -> JsString(airlineIncome.period.toString()),
         "cycle" -> JsNumber(airlineIncome.cycle)))
-    }
-  }
-
-  implicit object AirlineCashFlowWrite extends Writes[AirlineCashFlow] {
-    def writes(airlineCashFlow: AirlineCashFlow): JsValue = {
-      JsObject(List(
-        "airlineId" -> JsNumber(airlineCashFlow.airlineId),
-        "totalCashFlow" -> JsNumber(airlineCashFlow.cashFlow),
-        "operation" -> JsNumber(airlineCashFlow.operation),
-        "loanInterest" -> JsNumber(airlineCashFlow.loanInterest),
-        "loanPrincipal" -> JsNumber(airlineCashFlow.loanPrincipal),
-        "baseConstruction" -> JsNumber(airlineCashFlow.baseConstruction),
-        "buyAirplane" -> JsNumber(airlineCashFlow.buyAirplane),
-        "sellAirplane" -> JsNumber(airlineCashFlow.sellAirplane),
-        "createLink" -> JsNumber(airlineCashFlow.createLink),
-        "facilityConstruction" -> JsNumber(airlineCashFlow.facilityConstruction),
-        "oilContract" -> JsNumber(airlineCashFlow.oilContract),
-        "assetTransactions" -> JsNumber(airlineCashFlow.assetTransactions),
-        "period" -> JsString(airlineCashFlow.period.toString()),
-        "cycle" -> JsNumber(airlineCashFlow.cycle)))
     }
   }
 
@@ -514,7 +487,8 @@ package object controllers {
   implicit object ChampionedCountriesWrites extends Writes[CountryChampionInfo] {
     def writes(info: CountryChampionInfo): JsValue = {
       Json.obj(
-        "country" -> Json.toJson(info.country),
+//        "country" -> Json.toJson(info.country),
+        "countryName" -> JsString(info.country.name),
         "airlineId" -> JsNumber(info.airline.id),
         "airlineName" -> JsString(info.airline.name),
         "ranking" -> JsNumber(info.ranking),
@@ -643,6 +617,7 @@ package object controllers {
               case f: InternationalHubFeature => featureJson = featureJson
               case f: FinancialHubFeature => featureJson = featureJson
               case f: VacationHubFeature => featureJson = featureJson
+              case f: PrestigeFeature => featureJson = featureJson
               case _ =>
             }
             featureJson
@@ -815,6 +790,7 @@ package object controllers {
             case f: InternationalHubFeature => featureJson = featureJson + ("boosts" -> Json.toJson(airport.boostFactorsByType.get(AirportBoostType.INTERNATIONAL_HUB)))
             case f: FinancialHubFeature => featureJson = featureJson + ("boosts" -> Json.toJson(airport.boostFactorsByType.get(AirportBoostType.FINANCIAL_HUB)))
             case f: VacationHubFeature => featureJson = featureJson + ("boosts" -> Json.toJson(airport.boostFactorsByType.get(AirportBoostType.VACATION_HUB)))
+            case f: PrestigeFeature => featureJson = featureJson + ("boosts" -> Json.toJson(airport.boostFactorsByType.get(AirportBoostType.PRESTIGE_CHARM)))
             case _ =>
           }
           featureJson
@@ -852,10 +828,10 @@ package object controllers {
       val parts = enumName.split("_")
       parts.head.toLowerCase + parts.tail.map(_.toLowerCase.capitalize).mkString
     }
-    
+
     override def writes(o : AirportWithChampionAndStats) : JsValue = {
       var result = Json.toJson(o.airport)(AirportIdWrites).asInstanceOf[JsObject]
-      
+
       // Add boost factors by type
       val boostFactorsJson = AirportBoostType.values.toList.flatMap { boostType =>
         val boostFactors = o.airport.boostFactorsByType.get(boostType)
@@ -871,11 +847,11 @@ package object controllers {
           None
         }
       }.toMap
-      
+
       if (boostFactorsJson.nonEmpty) {
         result = result + ("boostFactorsByType" -> JsObject(boostFactorsJson))
       }
-      
+
       result
     }
   }
@@ -934,7 +910,7 @@ package object controllers {
 
   class BusyDelegateWrites(currentCycle : Int) extends Writes[BusyDelegate] {
     override def writes(busyDelegate: BusyDelegate): JsValue = {
-      var busyDelegateJson = Json.obj("id" -> busyDelegate.id, "taskDescription" -> busyDelegate.assignedTask.description, "completed" -> busyDelegate.taskCompleted)
+      var busyDelegateJson = Json.obj("id" -> busyDelegate.id, "taskType" -> busyDelegate.assignedTask.getTaskType.toString, "taskDescription" -> busyDelegate.assignedTask.description, "completed" -> busyDelegate.taskCompleted)
       busyDelegate.availableCycle.map(_ - currentCycle).foreach {
         coolDown : Int => busyDelegateJson = busyDelegateJson + ("coolDown" -> JsNumber(coolDown))
       }

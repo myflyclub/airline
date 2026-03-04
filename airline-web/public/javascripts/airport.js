@@ -7,6 +7,10 @@ var targetBase
 var airportBaseScale
 var _toggleState_AllianceBaseMapView = false
 const _etagStore = {}
+const DYNAMIC_FEATURE_TYPES = new Set([
+    'INTERNATIONAL_HUB', 'VACATION_HUB', 'FINANCIAL_HUB', 'ELITE_CHARM',
+    'OLYMPICS_PREPARATIONS', 'OLYMPICS_IN_PROGRESS'
+])
 /**
  * Find an airport by id (O(1) lookup)
  */
@@ -45,6 +49,16 @@ async function loadAirportsDynamic() {
         const response = await fetch('/airports');
         const data = await response.json();
         airportsLatestData = data;
+
+        // Patch dynamic features into the global airport store
+        const dynamicFeatures = data.dynamicFeatures || {};
+        for (const [airportId, features] of Object.entries(dynamicFeatures)) {
+            const airport = window.airportsById?.[airportId];
+            if (!airport) continue;
+            // Remove stale dynamic features, keep static ones
+            const staticFeatures = (airport.features || []).filter(f => !DYNAMIC_FEATURE_TYPES.has(f.type));
+            airport.features = [...staticFeatures, ...features];
+        }
     } catch (error) {
         console.error('Error fetching data:', error);
     }
@@ -221,7 +235,15 @@ if (activeAirline) {
             if (!baseDetails.baseScale) { //new base
                 document.getElementById('airportBaseDetailsHeading').innerHTML = `Build base`
                 $('#airportDetailsBaseUpkeep').text('0')
-                $('#airportDetailsBaseDelegatesRequired').text('Add 1 to Build Base')
+                // First HQ is free; any other new base costs 1 available delegate
+                if (!activeAirline.headquarterAirport) {
+                    $('#airportDetailsBaseDelegatesRequired').text('None')
+                } else {
+                    $('#airportDetailsBaseDelegatesRequired').empty()
+                    var $delegatesSpan = $('<span style="display: flex;"></span>')
+                    $delegatesSpan.append($('<img src="/assets/images/icons/user-silhouette-available.png"/>'))
+                    $('#airportDetailsBaseDelegatesRequired').append($delegatesSpan)
+                }
                 $('#airportDetailsStaff').text('-')
                 $('#airportBaseDetails .baseSpecializations').text('')
                 $('#airportDetailsFacilities').empty()
@@ -260,14 +282,15 @@ if (activeAirline) {
                 //                        airportBaseDetailsHeadingELM.appendChild(specializationList);
                 //                    }
 
-                if (targetBase.delegatesRequired == 0) {
+                // MANAGER_BASE delegates: 1 per level, except first HQ level is free
+                const managedDelegates = targetBase.headquarter ? Math.max(0, airportBaseScale - 1) : airportBaseScale
+                if (managedDelegates === 0) {
                     $('#airportDetailsBaseDelegatesRequired').text('None')
                 } else {
                     $('#airportDetailsBaseDelegatesRequired').empty()
                     var $delegatesSpan = $('<span style="display: flex;"></span>')
-                    for (i = 0; i < targetBase.delegatesRequired; i++) {
-                        var $delegateIcon = $('<img src="/assets/images/icons/user-silhouette-available.png"/>')
-                        $delegatesSpan.append($delegateIcon)
+                    for (let i = 0; i < managedDelegates; i++) {
+                        $delegatesSpan.append($('<img src="/assets/images/icons/user-silhouette-available.png"/>'))
                     }
                     $('#airportDetailsBaseDelegatesRequired').append($delegatesSpan)
                 }
@@ -1080,6 +1103,12 @@ function confirmSpecializations() {
             contentType: 'application/json; charset=utf-8',
             dataType: 'json',
             success: function (response) {
+                if (response.features && window.airportsById?.[activeAirportId]) {
+                    const airport = window.airportsById[activeAirportId];
+                    const staticFeatures = (airport.features || []).filter(f => !DYNAMIC_FEATURE_TYPES.has(f.type));
+                    const newDynamic = response.features.filter(f => DYNAMIC_FEATURE_TYPES.has(f.type));
+                    airport.features = [...staticFeatures, ...newDynamic];
+                }
                 closeModal($('#baseSpecializationModal'))
                 showAirportDetails(activeAirportId)
             },
@@ -1280,15 +1309,6 @@ async function loadAirportDemand(airportId) {
     }
 }
 
-const PAX_TYPE_COLORS = {
-    'Business': '#4a90d9',
-    'Elite': '#c9a227',
-    'Tourist': '#3a9e5f',
-    'Traveler': '#888888',
-    'Traveler Small Town': '#888888',
-    'Olympic': '#d94a4a'
-}
-
 function renderDemandCards(demands) {
     const container = document.getElementById('airportDemandCards')
     if (!container) return
@@ -1311,7 +1331,7 @@ function renderDemandCards(demands) {
         const card = document.createElement('div')
         card.className = 'card'
 
-        const typeColor = PAX_TYPE_COLORS[d.passengerType] || '#888888'
+        const typeColor = getChartColor(d.passengerType, '#888888')
         const typeBadge = '<span class="ml-auto" style="background:' + typeColor + ';color:#fff;border-radius:2px;padding:1px 4px;font-size:0.8em;margin-right:4px;">' + d.passengerType + '</span>'
         const classBadge = '<span style="border:1px solid rgba(255,255,255,0.3);border-radius:3px;padding:1px 4px;font-size:0.8em;">' + d.preferredLinkClass + '</span>'
 

@@ -1,12 +1,31 @@
-function showLoginPage() {
+function showLoginPage(options = {}) {
     $('#loginPageOverlay').show();
     showLoginForm();
     $("#logoutDiv").hide();
+    // Store callback for login success
+    window.onLoginSuccessCallback = options.onLoginSuccess || null;
 }
 
 function hideLoginPage() {
     $('#loginPageOverlay').hide();
     $("#logoutDiv").show();
+}
+
+/**
+ * Clear client-side session state and show the login screen.
+ * Use when any API call returns 401/403 mid-session.
+ * Does NOT call /user-logout — the server already considers the session invalid.
+ */
+function handleUnauthorized() {
+    activeUser = null;
+    activeAirline = null;
+    airlineLabelColors = {};
+    localStorage.removeItem('sessionActive');
+    document.cookie = "sessionActive=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    $('.topBarDetails').hide();
+    $('#navPrimary').hide();
+    $('#navPrimaryToggle').hide();
+    navigateTo('/login/');
 }
 
 function showLoginForm() {
@@ -72,7 +91,14 @@ async function loginFromPage() {
 
             await doPostLoginSetup(user);
 
-            navigateTo('/map/');
+            // Use callback if provided, otherwise redirect to original page or /map/
+            if (typeof window.onLoginSuccessCallback === 'function') {
+                window.onLoginSuccessCallback();
+            } else {
+                const redirect = localStorage.getItem('postLoginRedirect');
+                localStorage.removeItem('postLoginRedirect');
+                navigateTo(redirect || '/map/');
+            }
         }
 
         $('.login-page-btn').removeClass('loading');
@@ -100,11 +126,7 @@ async function loadUser() {
         })
 
         if (!response.ok) {
-            if (response.status === 400 || response.status === 401) {
-                // Session expired or invalid
-                console.log('Session restore failed: ' + response.status)
-            }
-            window.location.replace('/logout/')
+            // Session expired or invalid — let the caller clean up and re-route
             throw new Error('Session restore failed: ' + response.status)
         }
 
@@ -150,6 +172,9 @@ async function doPostLoginSetup(user) {
     // Airline-specific setup
     if (user.airlineIds && user.airlineIds.length > 0) {
         await selectAirline(user.airlineIds[0]);
+        if (window.AirlineMap && activeAirline) {
+            AirlineMap.centerOnHQ(activeAirline, 6);
+        }
         initPrompts();
         updateAirlineLabelColors();
         try {

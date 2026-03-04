@@ -111,21 +111,14 @@
 									  </span>
 								  </div>
 							  </div>
-							  <div class="item">
-								  <div class="i-label">Regulatory status</div>
-								  <div class="i-value" style="display: flex; align-items: center;">
-									  <img class="airlineTitleIcon svg" style='display: none;'>
-									  <p class="airlineTitle titleCue"></p>
-								  </div>
-							  </div>
 								<div class="item">
-									<div class="i-label">Delegates Required</div>
-									<div class="i-value inline-icons">
-										<span id="airportDetailsBaseDelegatesRequired"></span>
-										<img src='@routes.Assets.versioned("/images/icons/gear.png")' title='Manage Relationship'
-										   class="clickable detailsIcon openCountryRelationship"
-										   onclick="showRelationshipDetailsModal($(this).data('relationship'), $(this).data('title'), $(this).data('countryCode'), function(){ showAirportDetails(activeAirportId) })"
-										   >
+									<div class="i-label">Regulatory status</div>
+                                    <div class="i-value" style="display: flex; align-items: center;">
+										<img class="airlineTitleIcon svg" style='display: none;'>
+										<p class="airlineTitle titleCue"></p>
+                                        <img class="img-button svg hover-rotate detailsIcon openCountryRelationship" src='@routes.Assets.versioned("images/icons/gear.svg")' data-tooltip='Manage Relationship'"
+										   onclick="showRelationshipDetailsModal($(this).data('relationship'), $(this).data('title'), $(this).data('countryCode'), function(){ page('/airport/' + activeAirport.iata) })"
+                                           >
 									</div>
 								</div>
 								<div class="item">
@@ -134,7 +127,7 @@
 								</div>
 								<div class="item">
 									<div class="i-label">Airport Loyalty
-										<img src='@routes.Assets.versioned("/images/icons/gear.png")' class="clickable campaignGear"
+										<img class="img-button svg hover-rotate" src='@routes.Assets.versioned("images/icons/gear.svg")' 
 											width="16"
 											height="16"
 											onclick="showCampaignModal()"

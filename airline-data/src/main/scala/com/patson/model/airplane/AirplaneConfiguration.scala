@@ -53,5 +53,5 @@ object AirplaneConfiguration {
   val business : ((Airline, Model) => AirplaneConfiguration) = (airline, model) => AirplaneConfiguration(0, (model.capacity.toDouble / BUSINESS.spaceMultiplier).toInt, 0, airline, model, false)
   val first : ((Airline, Model) => AirplaneConfiguration) = (airline, model) => AirplaneConfiguration(0, 0, (model.capacity.toDouble / FIRST.spaceMultiplier).toInt, airline, model, false)
   val MAX_CONFIGURATION_TEMPLATE_COUNT = 5 //per model and airline
-  val MIN_SEATS_PER_CLASS = 6
+  val MIN_SEATS_PER_CLASS = 4
 }

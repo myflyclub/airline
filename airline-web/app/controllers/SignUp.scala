@@ -33,6 +33,12 @@ class SignUp @Inject()(cc: ControllerComponents)(ws: WSClient) extends AbstractC
   private[this] val recaptchaScoreThreshold = 0.5
   val MIN_AIRLINE_NAME_LENGTH = 1
   val MAX_AIRLINE_NAME_LENGTH = 50
+
+  private[this] def isValidAirlineNameChar(c: Char): Boolean =
+    (c.isLetter && c <= 'z') || c == ' ' || SignUp.AIRLINE_NAME_SAFE_SYMBOLS.contains(c)
+
+  private[this] val airlineNameCharError =
+    s"Airline name can only contain letters, spaces, and these symbols: ${SignUp.AIRLINE_NAME_SAFE_SYMBOLS.toSeq.sorted.mkString(" ")}"
   /**
    * Sign Up Form definition.
    *
@@ -60,8 +66,8 @@ class SignUp @Inject()(cc: ControllerComponents)(ws: WSClient) extends AbstractC
       ),
       "recaptchaToken" -> text,
       "airlineName" -> text(minLength = MIN_AIRLINE_NAME_LENGTH, maxLength = MAX_AIRLINE_NAME_LENGTH).verifying(
-        "Airline name can only contain space and characters",
-        airlineName => airlineName.forall(char => (char.isLetter && char <= 'z')  || char == ' ') && !"".equals(airlineName.trim())).verifying(
+        airlineNameCharError,
+        airlineName => airlineName.forall(isValidAirlineNameChar) && !"".equals(airlineName.trim())).verifying(
         "This airline name is not available",
         airlineName => !AirlineSource.loadAllAirlines(false).map { _.name.toLowerCase().replaceAll("\\s", "") }.contains(airlineName.replaceAll("\\s", "").toLowerCase())
       )
@@ -89,8 +95,8 @@ class SignUp @Inject()(cc: ControllerComponents)(ws: WSClient) extends AbstractC
     val length = airlineName.length
     if (length < MIN_AIRLINE_NAME_LENGTH || length > MAX_AIRLINE_NAME_LENGTH) {
       Ok(Json.obj("rejection" -> s"Length should be $MIN_AIRLINE_NAME_LENGTH - $MAX_AIRLINE_NAME_LENGTH"))
-    } else if (!airlineName.forall(char => (char.isLetter && char <= 'z') || char == ' ')) {
-      Ok(Json.obj("rejection" -> s"Contains invalid character(s)"))
+    } else if (!airlineName.forall(isValidAirlineNameChar)) {
+      Ok(Json.obj("rejection" -> airlineNameCharError))
     } else if (AirlineSource.loadAirlinesByCriteria(List(("name", airlineName.trim))).length > 0) {
       Ok(Json.obj("rejection" -> s"Airline name is already taken"))
     } else {
@@ -110,8 +116,8 @@ class SignUp @Inject()(cc: ControllerComponents)(ws: WSClient) extends AbstractC
 
           val newAirline = Airline(userInput.airlineName)
           newAirline.setMinimumRenewalBalance(300000)
-          newAirline.setAirlineCode(newAirline.getDefaultAirlineCode())
           AirlineSource.saveAirlines(List(newAirline))
+          AirlineSource.saveAirlineCode(newAirline.id, newAirline.getDefaultAirlineCode())
           UserSource.setUserAirline(user, newAirline)
 
           AirlineSource.saveAirplaneRenewal(newAirline.id, 40)
@@ -157,8 +163,8 @@ class SignUp @Inject()(cc: ControllerComponents)(ws: WSClient) extends AbstractC
 
         if (airlineName.length < MIN_AIRLINE_NAME_LENGTH || airlineName.length > MAX_AIRLINE_NAME_LENGTH) {
           errors += s"Airline name must be $MIN_AIRLINE_NAME_LENGTH-$MAX_AIRLINE_NAME_LENGTH characters"
-        } else if (!airlineName.forall(char => (char.isLetter && char <= 'z') || char == ' ') || airlineName.trim.isEmpty) {
-          errors += "Airline name can only contain letters and spaces"
+        } else if (!airlineName.forall(isValidAirlineNameChar) || airlineName.trim.isEmpty) {
+          errors += airlineNameCharError
         } else if (AirlineSource.loadAirlinesByCriteria(List(("name", airlineName))).nonEmpty) {
           errors += "This airline name is not available"
         }
@@ -172,8 +178,8 @@ class SignUp @Inject()(cc: ControllerComponents)(ws: WSClient) extends AbstractC
 
           val newAirline = Airline(airlineName)
           newAirline.setMinimumRenewalBalance(300000)
-          newAirline.setAirlineCode(newAirline.getDefaultAirlineCode())
           AirlineSource.saveAirlines(List(newAirline))
+          AirlineSource.saveAirlineCode(newAirline.id, newAirline.getDefaultAirlineCode())
           UserSource.setUserAirline(user, newAirline)
 
           AirlineSource.saveAirplaneRenewal(newAirline.id, 40)
@@ -208,4 +214,8 @@ class SignUp @Inject()(cc: ControllerComponents)(ws: WSClient) extends AbstractC
     
     return action == recaptchaAction && score >= recaptchaScoreThreshold
   }
+}
+
+object SignUp {
+  val AIRLINE_NAME_SAFE_SYMBOLS: Set[Char] = Set('-', '&', '.', '\'')
 }
