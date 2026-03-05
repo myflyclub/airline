@@ -43,10 +43,18 @@ async function loadMarkerIcons() {
             const blob = new Blob([svgText], { type: 'image/svg+xml' });
             const imgUrl = URL.createObjectURL(blob);
 
+            // Parse intended size from SVG height attribute to compute pixelRatio.
+            // Safari reports incorrect naturalWidth for SVGs without an explicit width
+            // (falls back to 300px), so we derive the ratio from what the browser
+            // actually loaded vs. what we intended.
+            const heightMatch = svgText.match(/\bheight="(\d+(?:\.\d+)?)(?:px)?"/);
+            const intendedSize = heightMatch ? Math.round(parseFloat(heightMatch[1])) : 32;
+
             await new Promise((resolve, reject) => {
                 img.onload = () => {
                     if (!state.map.hasImage(name)) {
-                        state.map.addImage(name, img, { sdf: false });
+                        const pixelRatio = img.naturalWidth / intendedSize;
+                        state.map.addImage(name, img, { sdf: false, pixelRatio });
                     }
                     URL.revokeObjectURL(imgUrl);
                     resolve();
@@ -78,9 +86,18 @@ export function initMarkers() {
         state.map.on('load', loadMarkerIcons);
     }
 
-    window.addEventListener('mapStyleChanged', () => {
+    window.addEventListener('mapStyleChanged', async () => {
         iconsLoaded = false;
-        loadMarkerIcons();
+        await loadMarkerIcons();
+        if (airportsData) {
+            const champions = window.airportsLatestData?.champions || {};
+            const bases = getCurrentBases();
+            await useBaseLogos(bases);
+            if (state.championMapMode) {
+                await useChampionLogos(champions);
+            }
+            addMarkers(airportsData, { bases, champions });
+        }
     });
 }
 
