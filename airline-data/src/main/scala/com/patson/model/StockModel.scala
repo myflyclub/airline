@@ -19,16 +19,17 @@ object StockModel {
   )
 
   val allMetrics: Map[String, StockMetric] = Map(
-    "eps" ->                  StockMetric(24, 0.0, 25.0),
-    "pask" ->                 StockMetric(12, 0.03, 0.07),
-    "satisfaction" ->         StockMetric(4, 0.5, 0.95),
-    "link_count" ->           StockMetric(4, 50, 400),
-    "on_time" ->              StockMetric(4, 0.7, 0.98),
-    "airport" ->              StockMetric(4, 5, 500),
-    "codeshares" ->           StockMetric(4, 100, 100000),
-    "rep_leaderboards" ->     StockMetric(4, 0, 200),
-    "months_cash_on_hand" ->  StockMetric(4, 48, 12),
-    "interest" ->             StockMetric(8, 0.19, 0)
+    "eps" ->                  StockMetric(35, 0.0, 25.0),
+    "pask" ->                 StockMetric(25, 0.03, 0.08),
+    "interest" ->             StockMetric(10, 0.19, 0), //there's an extra 10 here
+    "satisfaction" ->         StockMetric(5, 0.5, 0.9),
+    "link_count" ->           StockMetric(5, 50, 400),
+    "on_time" ->              StockMetric(6, 0.7, 0.98),
+    "airport" ->              StockMetric(6, 5, 500),
+    "codeshares" ->           StockMetric(6, 100, 100000),
+    "rep_leaderboards" ->     StockMetric(6, 0, 200),
+    "months_cash_on_hand" ->  StockMetric(6, 48, 12),
+    //add one more 5 value and lower PASK by
   )
 
   /**
@@ -38,13 +39,16 @@ object StockModel {
    * @param airlineValue
    * @return Double
    */
-  private def getMetricValue(metricKey: String, airlineValue: Double): Double = {
+  def getMetricValue(metricKey: String, airlineValue: Double): Double = {
     val metric: StockMetric = allMetrics.getOrElse(metricKey, StockMetric(0, 0, 0))
     val targetPercent = 1 - (metric.target - airlineValue) / (metric.target - metric.floor)
     metric.value * Math.max(0, Math.min(1, targetPercent))
   }
 
-  private def getStockScore(stats: AirlineStat, currentInterestRate: Double): Double = {
+  /**
+   * Returns 0 - 100 after adding all the metrics
+   **/
+  def getStockScore(stats: AirlineStat, currentInterestRate: Double): Double = {
     val sizeAdjust = (stats.eps / 0.6).max(0.001).min(1.0)
 
     Seq(
@@ -57,6 +61,7 @@ object StockModel {
       StockModel.getMetricValue("rep_leaderboards", stats.repLeaderboards),
       StockModel.getMetricValue("months_cash_on_hand", stats.cashOnHand / 4),
       StockModel.getMetricValue("interest", currentInterestRate) * sizeAdjust
+      //let's add one more
     ).sum
   }
 
@@ -65,14 +70,21 @@ object StockModel {
     val quarterScore = quarterStats.map(getStockScore(_, currentInterestRate)).getOrElse(weeklyScore)
 
     val quarterlyBlendWeight = 0.4
-    val blendedScore = weeklyScore * (1 - quarterlyBlendWeight) + quarterScore * quarterlyBlendWeight
+    val blendedScore = weeklyScore * (1 - quarterlyBlendWeight) + quarterScore * quarterlyBlendWeight // 0.0 .. 100.0
 
-    val result = if (blendedScore > stockPrice) {
-      stockPrice * 0.15 + Math.pow(Math.max(0.01, blendedScore), StockModel.STOCK_EXPONENT) / 10 * 0.85
-    } else {
-      //price falls slower, making buybacks more impactful
-      stockPrice * 0.6 + Math.pow(Math.max(0.01, blendedScore), StockModel.STOCK_EXPONENT) / 10 * 0.4
-    }
+    // Exponential mapping from score range [0, 100] to price range [0.01, 2000.0]
+    val gamma = 0.65
+    val t = (blendedScore / 100.0).max(0.0).min(1.0)
+    val targetPrice = 0.01 * Math.pow(2000 / 0.01, Math.pow(t, gamma))
+
+    val result =
+      if (targetPrice > stockPrice) {
+        stockPrice * 0.15 + targetPrice * 0.85
+      } else {
+        // price falls slower, making buybacks more impactful
+        stockPrice * 0.8 + targetPrice * 0.2
+      }
+
     BigDecimal(result).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble
   }
 

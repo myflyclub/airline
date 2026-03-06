@@ -11,7 +11,7 @@ object OilConsumptionType extends Enumeration {
   val description = (consumptionType : Value) =>
     consumptionType match {
       case CONTRACT => "Oil Contract"
-      case MARKET => "Oil Market"
+      case MARKET => "Oil Market" // oil market = if airline has "no inventory" selected
       case INVENTORY => "Oil Inventory"
       case EXCESS => "Excessive from Contract (sold)"
     }

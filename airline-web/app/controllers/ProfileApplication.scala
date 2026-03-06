@@ -268,6 +268,7 @@ class ProfileApplication @Inject()(cc: ControllerComponents) extends AbstractCon
           airline.setTargetServiceQuality(targetQuality)
           airline.setBalance(profile.cash)
           airline.setSharesOutstanding(500_000_000)
+          val startingActionPoints = Math.min(100, 25 + (cycle.toDouble / 48).toInt)
           airline.setActionPoints(25)
 
           profile.airplanes.foreach(_.assignDefaultConfiguration())
@@ -280,10 +281,6 @@ class ProfileApplication @Inject()(cc: ControllerComponents) extends AbstractCon
           airline.setInitialized(true)
           AirlineSource.saveAirlineInfo(airline, true)
           val updatedAirline = AirlineSource.loadAirlineById(airlineId, true)
-
-          val bonus = 16
-          val gameWeeks = 12 * 4 + 6
-          AirlineSource.saveAirlineModifier(airline.id, DelegateBoostAirlineModifier(bonus, gameWeeks, cycle))
 
           Ok(Json.toJson(updatedAirline))
       }

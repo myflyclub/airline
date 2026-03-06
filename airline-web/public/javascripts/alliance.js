@@ -717,11 +717,10 @@ const Alliance = (() => {
                     return;
                 }
                 countries.forEach(cd => {
-                    const country = cd.country;
                     list.insertAdjacentHTML('beforeend',
-                        `<div class="table-row clickable" data-country-code="${country.countryCode}">
+                        `<div class="table-row clickable" data-country-code="${cd.countryCode}">
                             <div class="cell">${getRankingImg(cd.ranking)}</div>
-                            <div class="cell">${getCountryFlagImg(country.countryCode)}${country.name}</div>
+                            <div class="cell">${getCountryFlagImg(cd.countryCode)}${cd.name}</div>
                             <div class="cell">${getAirlineLogoImg(cd.airlineId)}${cd.airlineName}</div>
                         </div>`);
                 });
@@ -899,6 +898,46 @@ const Alliance = (() => {
             .catch(err => console.error('Failed to apply for alliance:', err));
     }
 
+    function showAllianceMap() {
+        const alliance = selectedAllianceId ? loadedAlliancesById[selectedAllianceId] : null;
+        if (!alliance || !alliance.id) return;
+
+        AirlineMap.clearAllPaths();
+        AirlineMap.deselectLink();
+
+        $('body .loadingSpinner').show();
+
+        fetch(`/alliances/${alliance.id}/details`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json; charset=utf-8' },
+        })
+            .then(r => r.json())
+            .then(result => {
+                (result.links || []).forEach(link => AirlineMap.drawAllianceLink(link));
+
+                const allianceBases = [];
+                (result.members || []).forEach(airline => {
+                    if (airline.role !== 'APPLICANT' && Array.isArray(airline.bases)) {
+                        allianceBases.push(...airline.bases);
+                    }
+                });
+
+                AirlineMap.updateAirportBaseMarkers(allianceBases);
+
+                setActiveDiv($('#worldMapCanvas'));
+
+                window.setTimeout(() => {
+                    AirlineMap.addExitButton('Exit Alliance Flight Map', () => AirlineMap.hideAllianceMap());
+                }, 500);
+            })
+            .catch(err => {
+                console.error('Failed to load alliance map details:', err);
+            })
+            .finally(() => {
+                $('body .loadingSpinner').hide();
+            });
+    }
+
 
     // =========================================================================
     // SECTION: Logo helpers
@@ -1025,6 +1064,7 @@ const Alliance = (() => {
         // Actions
         toggleFormAlliance,
         formAlliance,
+        showAllianceMap,
         updateAllianceLogo,
         checkResetAllianceLabelColor,
         checkAllianceLabelColorAction,

@@ -61,7 +61,7 @@
 									<input type="hidden" id="linkFromAirportId">
 									<input type="hidden" id="linkToAirportId">
 									<button type="button" class="button ml-0" id="editLinkButton" onclick="">Edit</button>
-									<button type="button" class="button" onclick="deselectLink()">Cancel</button>
+									<button type="button" class="button" onclick="cancelEditLink()">Cancel</button>
 
 									<div class="divider"></div>
                                     <fieldset class="pt-2" style="float: right;">
@@ -531,7 +531,7 @@
 									<button type="button" class="button modifyLink ml-0" id="addLinkButton" onclick="linkConfirmation()">Create</button>
 									<button type="button" class="button modifyLink ml-0" id="updateLinkButton" onclick="linkConfirmation()">Update</button>
 									<button type="button" class="button mr-0" id="deleteLinkButton" onclick="promptConfirm('Delete this route?', deleteLink)">Delete</button>
-									<button type="button" class="button" id="cancelLinkButton" onclick="cancelPlanLink()">Cancel</button>
+									<button type="button" class="button" id="cancelLinkButton" onclick="cancelEditLink()">Cancel</button>
 								</div>
 							</div>
 						</div>
