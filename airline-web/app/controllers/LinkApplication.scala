@@ -380,9 +380,9 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
             return BadRequest(s"No negotiation : $reason")
         }
         Some(NegotiationUtil.negotiate(negotiationInfo, delegateCount))
-      } else if (negotiationInfo.finalRequirementValue < 0 && negotiationInfo.delegateRefund.getOrElse(0) > 1) {
+      } else if (negotiationInfo.finalRequirementValue < 0 && negotiationInfo.actionPointRefund.getOrElse(0) > 1) {
         val cycle = CycleSource.loadCycle()
-        AirlineSource.saveAirlineModifier(airlineId, DelegateBoostAirlineModifier(negotiationInfo.delegateRefund.getOrElse(0), 5, cycle))
+        AirlineSource.saveAirlineModifier(airlineId, DelegateBoostAirlineModifier(negotiationInfo.actionPointRefund.getOrElse(0), 5, cycle))
         None
       } else {
         None
@@ -569,9 +569,8 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
       link.getAssignedAirplanes()
     }
     val emptyLink = Link(link.from, link.to, link.airline, LinkClassValues(0,0,0), link.distance, LinkClassValues(0,0,0), link.rawQuality, link.duration, 0, link.flightNumber, link.id)
-    val delegateCount = NegotiationUtil.getLinkNegotiationInfo(link.airline, emptyLink, Some(link)).deleteLinkDelegateRefund.getOrElse(0)
-    val cycle = CycleSource.loadCycle()
-    AirlineSource.saveAirlineModifier(airlineId, DelegateBoostAirlineModifier(delegateCount, 5, cycle))
+    val delegateCount = NegotiationUtil.getLinkNegotiationInfo(link.airline, emptyLink, Some(link)).deleteLinkRefund.getOrElse(0)
+    AirlineSource.adjustAirlineActionPoints(airlineId, delegateCount.toDouble)
     delegateCount
   }
 
@@ -583,7 +582,7 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
           Forbidden
         } else {
           val delegateCount = deleteLinkLogic(link, airlineId)
-          Ok(Json.obj("count" -> 1, "delegateRefund" -> JsNumber(delegateCount)))
+          Ok(Json.obj("count" -> 1, "actionPointRefund" -> JsNumber(delegateCount)))
         }
       case None =>
         NotFound
@@ -603,7 +602,7 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
         }
       }
     }
-    Ok(Json.obj("count" -> totalCount, "delegateRefund" -> JsNumber(totalRefund)))
+    Ok(Json.obj("count" -> totalCount, "actionPointRefund" -> JsNumber(totalRefund)))
   }
 
   def bulkDeleteDetails(airlineId: Int) = AuthenticatedAirline(airlineId) { request =>
@@ -615,13 +614,13 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
       LinkSource.loadFlightLinkById(linkId).foreach { link =>
         if (link.airline.id == airlineId) {
           val emptyLink = Link(link.from, link.to, link.airline, LinkClassValues(0,0,0), link.distance, LinkClassValues(0,0,0), link.rawQuality, link.duration, 0, link.flightNumber, link.id)
-          val delegateCount = NegotiationUtil.getLinkNegotiationInfo(link.airline, emptyLink, Some(link)).deleteLinkDelegateRefund.getOrElse(0)
+          val delegateCount = NegotiationUtil.getLinkNegotiationInfo(link.airline, emptyLink, Some(link)).deleteLinkRefund.getOrElse(0)
           totalRefund += delegateCount
           totalCapacityToRemove += link.capacity.total
         }
       }
     }
-    Ok(Json.obj("delegateRefund" -> JsNumber(totalRefund), "capacityToRemove" -> JsNumber(totalCapacityToRemove)))
+    Ok(Json.obj("actionPointRefund" -> JsNumber(totalRefund), "capacityToRemove" -> JsNumber(totalCapacityToRemove)))
   }
 
   def bulkUpdateQuality(airlineId: Int) = AuthenticatedAirline(airlineId) { request =>
@@ -639,13 +638,6 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
       }
     }
     Ok(Json.obj("count" -> count))
-  }
-
-  def setDelegateRefund(existingLinkCancellationValue: Double, airlineId: Int): Int = {
-    val number = 0
-    val cycle = CycleSource.loadCycle()
-    AirlineSource.saveAirlineModifier(airlineId, DelegateBoostAirlineModifier(number, 5, cycle))
-    number
   }
 
   def getLinkConsumption(airlineId : Int, linkId : Int, cycleCount : Int) = AuthenticatedAirline(airlineId) { request =>
@@ -783,9 +775,9 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
             None
           }
 
-        val deleteLinkDelegateRefund : Option[Int] =
+        val deleteLinkRefund : Option[Int] =
           if (existingLink.nonEmpty) {
-            Some(NegotiationUtil.getLinkNegotiationInfo(airline, existingLink.get, existingLink).deleteLinkDelegateRefund.getOrElse(0))
+            Some(NegotiationUtil.getLinkNegotiationInfo(airline, existingLink.get, existingLink).deleteLinkRefund.getOrElse(0))
           } else {
             None
           }
@@ -840,7 +832,7 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
           "cost" -> cost) ++
           Json.obj("modelPlanLinkInfo" -> Json.toJson(planLinkInfoByModel)) ++
           estimatedDifficulty.fold(Json.obj())(difficulty => Json.obj("estimatedDifficulty" -> difficulty)) ++
-          deleteLinkDelegateRefund.fold(Json.obj())(refund => Json.obj("deleteLinkDelegateRefund" -> refund))
+          deleteLinkRefund.fold(Json.obj())(refund => Json.obj("deleteLinkRefund" -> refund))
 
 
 

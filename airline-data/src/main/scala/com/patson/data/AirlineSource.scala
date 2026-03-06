@@ -234,7 +234,7 @@ object AirlineSource {
     }
   }
 
-  def saveAirlineInfo(airline : Airline, updateBalance : Boolean = true) = {
+  def saveAirlineInfo(airline : Airline, updateBalance : Boolean = false) = {
     this.synchronized {
       var query = "UPDATE " + AIRLINE_INFO_TABLE + " SET "
       if (updateBalance) {

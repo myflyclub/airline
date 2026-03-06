@@ -252,7 +252,7 @@ object AirlineGenerator extends App {
     AirlineSource.saveAirlineCode(airline.id, airline.getDefaultAirlineCode())
     AirlineSource.saveSkipTutorial(airline.id, true)
     UserSource.setUserAirline(user, airline)
-    AirlineSource.saveAirlineInfo(airline, false)
+    AirlineSource.saveAirlineInfo(airline, true)
     AirlineSource.saveAirplaneRenewal(airline.id, 60)
 
     // Generate bases & links
