@@ -487,8 +487,8 @@ package object controllers {
   implicit object ChampionedCountriesWrites extends Writes[CountryChampionInfo] {
     def writes(info: CountryChampionInfo): JsValue = {
       Json.obj(
-//        "country" -> Json.toJson(info.country),
-        "countryName" -> JsString(info.country.name),
+       "countryCode" -> JsString(info.country.countryCode),
+        "name" -> JsString(info.country.name),
         "airlineId" -> JsNumber(info.airline.id),
         "airlineName" -> JsString(info.airline.name),
         "ranking" -> JsNumber(info.ranking),
@@ -884,8 +884,8 @@ package object controllers {
         "finalToDiscountValue" -> info.finalToDiscountValue,
         "finalRequirementValue" -> info.finalRequirementValue
       ) ++
-      info.deleteLinkDelegateRefund.fold(Json.obj())(refund => Json.obj("deleteLinkDelegateRefund" -> refund)) ++
-      info.delegateRefund.fold(Json.obj())(refund => Json.obj("delegateRefund" -> refund))
+      info.deleteLinkRefund.fold(Json.obj())(refund => Json.obj("deleteLinkRefund" -> refund)) ++
+      info.actionPointRefund.fold(Json.obj())(refund => Json.obj("actionPointRefund" -> refund))
     }
   }
 
