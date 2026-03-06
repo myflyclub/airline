@@ -150,7 +150,7 @@ object AirlineSimulation {
       othersSummary.put(OtherIncomeItemType.ASSET_REVENUE, assetRevenue)
 
       //calculate extra cash flow due to difference in fuel cost
-      val barrelsUsed = (linksIncome.fuelCost / OilPrice.DEFAULT_PRICE).toInt
+      val barrelsUsed = (linksIncome.fuelCost / OilPrice.DEFAULT_PRICE).abs.toInt
       val actualFuelCost = fuelContractsByAirlineId.get(airline.id) match {
         case Some(contracts) =>
           val totalPaymentFromContract = contracts.map { contract =>
@@ -187,7 +187,7 @@ object AirlineSimulation {
       }
       val fuelCostDescription = {
         val perCost = (actualFuelCost / barrelsUsed * 100).toInt.toDouble / 100
-        s"Average cost is ~ $perCost per barrel"
+        s"$barrelsUsed barrels at ~ $perCost average"
       }
       val carbonTaxDescription = {
         val taxRate = airline.fuelTaxRate
@@ -297,7 +297,7 @@ object AirlineSimulation {
           // Calculate RASK & CASK using linksIncome values & base costs and calculated ASK
           if (totalASK > 0) {
             calculatedRASK = (linksIncome.revenue).toDouble / totalASK
-            calculatedCASK = (linksIncome.expense + -1 * (othersIncome.baseUpkeep + othersIncome.overtimeCompensation) + linksIncome.fuelTax).toDouble / totalASK //fuelTax is already negative
+            calculatedCASK = (linksIncome.expense + -1 * (othersIncome.baseUpkeep + othersIncome.overtimeCompensation) + linksIncome.fuelTax).toDouble / totalASK //others are negative but should be positive, so they add; fuelTax is already negative so it will subtract
           }
 
           // Calculate Satisfaction & Load Factor averages
@@ -492,6 +492,7 @@ object AirlineSimulation {
     IncomeSource.deleteIncomesBefore(currentCycle - BOOKKEEPING_ENTRIES_COUNT * Period.numberWeeks(Period.YEAR), Period.YEAR)
     
     //update Oil consumption history
+    println(s"Saving ${oilConsumptionEntries.size} oil consumption entries")
     OilSource.saveOilConsumptionHistory(oilConsumptionEntries.toList)
     OilSource.deleteOilConsumptionHistoryBeforeCycle(currentCycle - 10)
   }
