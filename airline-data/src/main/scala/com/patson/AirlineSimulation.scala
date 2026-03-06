@@ -194,7 +194,7 @@ object AirlineSimulation {
         s"Paying ${taxRate} rate%"
       }
 
-      othersSummary.put(OtherIncomeItemType.FUEL_COST, actualFuelCost.toLong)
+      othersSummary.put(OtherIncomeItemType.FUEL_COST, -1 * actualFuelCost.toLong)
 
       val advertisementCost = DelegateSource.loadCampaignTasksByAirlineId(airline.id).map(_.cost).sum
       othersSummary.put(OtherIncomeItemType.ADVERTISEMENT, advertisementCost * -1)
@@ -224,10 +224,8 @@ object AirlineSimulation {
       )
 
       val airlineRevenue = linksIncome.revenue + othersIncome.revenue
-      val airlineExpense = linksIncome.expense + othersIncome.expense
+      val airlineExpense = linksIncome.expense - (linksIncome.fuelCost) + othersIncome.expense
       val airlineProfit = airlineRevenue - airlineExpense
-
-      val loanPrincipal = loanPayment - interestPayment
 
       // Record weekly ledger entries
       if (!isBankrupt) {

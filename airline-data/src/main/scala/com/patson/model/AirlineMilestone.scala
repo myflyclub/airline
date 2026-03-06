@@ -30,8 +30,8 @@ object AirlineMilestones {
         "MILESTONE_DESTINATIONS",
         "Destinations",
         List(
-          MilestoneCondition(120, 60),
-          MilestoneCondition(30, 30)
+          MilestoneCondition(150, 60),
+          MilestoneCondition(50, 30)
         )
       ),
       Milestone(
@@ -156,8 +156,8 @@ object AirlineMilestones {
         "MILESTONE_ON_TIME",
         "On-Time Departures",
         List(
-          MilestoneCondition(24000, 90),
-          MilestoneCondition(200, 30)
+          MilestoneCondition(25000, 90),
+          MilestoneCondition(750, 30)
         )
       ),
       Milestone(

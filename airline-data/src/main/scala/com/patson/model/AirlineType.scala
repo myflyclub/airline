@@ -47,7 +47,7 @@ case object NonPlayerAirline extends AirlineType {
 case object DiscountAirline extends AirlineType {
   val id = 3
   val label = "Discount"
-  override val touristTravelerRepPerLevel = 70
+  override val touristTravelerRepPerLevel = 50
   override val stockRepPerLevel = 50
   val crewRatio = 0.4
   val description = List[String](
@@ -63,7 +63,7 @@ case object LuxuryAirline extends AirlineType {
   val label = "Luxury"
   val extraLoyalty = 12
   val staffFreqRatio = 0.4
-  override val elitesRepPerLevel = 70
+  override val elitesRepPerLevel = 50
   override val stockRepPerLevel = 50
   val description = List[String](
     "You can never add economy class!",
