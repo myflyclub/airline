@@ -202,55 +202,57 @@ object LinkSimulation {
   def simulateLinkError(links: List[Link], allAirportStats: immutable.Map[Int, AirportStatistics], airportWeather: immutable.Map[Int, Double]): Unit = {
     links.foreach {
       link => {
-        val flightSchedule: List[Airplane] = link.getAssignedAirplanes().filter(_._1.isReady).flatMap {
+        val flights: List[Airplane] = link.getAssignedAirplanes().filter(_._1.isReady).flatMap {
           case (airplane, assignment) => List.fill(assignment.frequency)(airplane)
         }.toList
 
-        if (flightSchedule.nonEmpty) {
+        if (flights.nonEmpty) {
           val congestionFromAirport = allAirportStats.get(link.from.id).map(_.congestion).getOrElse(0.2) * 70 + airportWeather.getOrElse(link.from.id, 0.2) * 3
           val congestionToAirport = allAirportStats.get(link.to.id).map(_.congestion).getOrElse(0.2) * 70 + airportWeather.getOrElse(link.to.id, 0.2) * 3
 
           val hangarCountFrom = link.from.getAirlineBase(link.airline.id).map(_.specializations.count(_.getType == BaseSpecializationType.HANGAR)).getOrElse(0)
           val hangarCountTo = link.to.getAirlineBase(link.airline.id).map(_.specializations.count(_.getType == BaseSpecializationType.HANGAR)).getOrElse(0)
 
-          flightSchedule.foreach { airplane =>
-            val airplaneDecay = 100 - Math.min(110, (hangarCountTo + hangarCountFrom) * 5 + airplane.condition)
+          flights.foreach { airplane =>
+            val airplaneDecay = 100 - Math.min(110, (hangarCountTo + hangarCountFrom) * 5 + airplane.condition) //hangars improve over 100 to 110
 
-            val riskScore = airplaneDecay + (congestionFromAirport + congestionToAirport) / 2.0 // 0-200
+            val riskScore = airplaneDecay + congestionFromAirport + congestionToAirport // riskScore is 0-300; higher is bad
 
-            val (minorDelayBase, majorDelayBase, cancellationBase) =
-              if (airplaneDecay < 100 - Airplane.BAD_CONDITION &&
-                congestionFromAirport < Airport.CONGESTION_MODERATE &&
-                congestionToAirport < Airport.CONGESTION_MODERATE) {
-                (0.05, 0.0, 0.0)  // Low risk tier
-              } else if (airplaneDecay < 100 - Airplane.CRITICAL_CONDITION &&
-                congestionFromAirport < Airport.CONGESTION_HIGH &&
-                congestionToAirport < Airport.CONGESTION_HIGH) {
-                (0.3, 0.08, 0.01)  // Moderate risk tier
-              } else {
-                (0.8, 0.18, 0.04)  // High risk tier
-              }
+            // 1. Calculate standard base rates using the total risk score
+            val baseScaledRisk = riskScore / 100.0
+            var minorDelayChance = 0.19 * baseScaledRisk
+            var majorDelayChance = 0.01 * baseScaledRisk
+            var cancellationChance = 0.0
 
-            // Linear scaling based on risk score 0-1 range)
-            val scaledRisk = riskScore / 100.0
+            // 2. Isolate ONLY the values that are over the moderate thresholds
+            val moderateExcess =
+              Math.max(0.0, airplaneDecay - (100 - Airplane.BAD_CONDITION)) +
+              Math.max(0.0, congestionFromAirport - Airport.CONGESTION_MODERATE) +
+              Math.max(0.0, congestionToAirport - Airport.CONGESTION_MODERATE)
 
-//            println(s"$minorDelayBase, $majorDelayBase, $cancellationBase, $riskMultiplier")
+            // 3. Isolate ONLY the values that are over the critical thresholds
+            val criticalExcess =
+              Math.max(0.0, airplaneDecay - (100 - Airplane.CRITICAL_CONDITION)) +
+              Math.max(0.0, congestionFromAirport - Airport.CONGESTION_HIGH) +
+              Math.max(0.0, congestionToAirport - Airport.CONGESTION_HIGH)
 
-            // Calculate final probabilities
-            val minorDelayChance = Math.min(0.9, minorDelayBase * scaledRisk)
-            val majorDelayChance = Math.min(0.4, majorDelayBase * scaledRisk)
-            val cancellationChance = Math.min(0.2, cancellationBase * scaledRisk)
+            // 4. Apply penalty multipliers strictly to the excess amounts
+            minorDelayChance += (0.1 * ((moderateExcess + criticalExcess) / 100.0))
+            majorDelayChance += (0.1 * (moderateExcess / 100.0)) + (0.15 * (criticalExcess / 100.0))
+            cancellationChance += (0.01 * (moderateExcess / 100.0)) + (0.06 * (criticalExcess / 100.0))
 
-            // Roll for each outcome
+            // 5. Cap maximums to prevent guaranteed failures
+            minorDelayChance = Math.min(0.8, minorDelayChance)
+            majorDelayChance = Math.min(0.4, majorDelayChance)
+            cancellationChance = Math.min(0.2, cancellationChance)
+
             val rand = scala.util.Random.nextDouble()
-
-//            println(s"rand: $rand, minor: $minorDelayChance, major: $majorDelayChance, cancel: $cancellationChance")
 
             if (rand < cancellationChance) {
               link.cancellationCount += 1
-            } else if (rand < majorDelayChance) {
+            } else if (rand < cancellationChance + majorDelayChance) {
               link.majorDelayCount += 1
-            } else if (rand < minorDelayChance) {
+            } else if (rand < cancellationChance + majorDelayChance + minorDelayChance) {
               link.minorDelayCount += 1
             }
           }
