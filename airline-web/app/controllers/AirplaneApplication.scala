@@ -262,9 +262,9 @@ class AirplaneApplication @Inject()(cc: ControllerComponents) extends AbstractCo
       return Some("Can only own up to " + airline.airlineGrade.getModelFamilyLimit + " different airplane " + familyToken + " at current airline grade")
     }
 
-    val cost: Long = model.price.toLong * quantity
+    val cost: Long = quantity * model.applyDiscount(ModelDiscount.getCombinedDiscountsByModelId(airlineId, originalModel.id))
     if (cost > airline.getBalance()) {
-      return Some("Not enough cash to purchase this airplane model")
+      return Some(s"Not enough cash to purchase $quantity ${model.name} for $cost")
     }
     if (airline.airlineType == RegionalAirline && model.airplaneTypeSize > RegionalAirline.modelMaxSize) {
       return Some(s"Regional airline cannot buy this large of aircraft")
