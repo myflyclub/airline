@@ -78,7 +78,7 @@ function refreshTopBar(airline) {
 	$(".reputationStars").append($starBar)
 	addTooltip($("#topReputationStars"), reputationText, {'top' : 0, 'width' : '350px', 'white-space' : 'nowrap'})
 
-    loadOilPrices();
+    oilPrices === null && loadOilPrices();
 }
 
 async function selectAirline(airlineId) {
@@ -283,6 +283,9 @@ function refreshLinkDetails(linkId) {
 	$("#linkCompetitons .data-row").remove()
 	$("#actionLinkId").val(linkId)
 
+	currentLinkConsumptions = null // Clear stale chart data immediately so old graphs don't persist
+	plotLinkCharts([], $("#linkDetails #switchMonth").is(':checked') ? plotUnitEnum.MONTH : plotUnitEnum.QUARTER)
+
 	const notesLink = document.getElementById('linkNotes');
     const linkNote = notes.linkNotes.find(note => note.id === linkId);
     notesLink.value = linkNote?.note || '';
@@ -294,6 +297,7 @@ function refreshLinkDetails(linkId) {
 	    contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
 	    success: function(link) {
+	    	if (linkId !== selectedLink) return //stale response - user has selected a different link
 	    	$("#linkFromAirport").attr("href", "/airport/" + link.fromAirportCode).html(getCountryFlagImg(link.fromCountryCode, "15px") + link.fromAirportCity + "<i class='pl-1 iata'>" + link.fromAirportCode + "</i>")
 	    	$("#linkToAirport").attr("href", "/airport/" + link.toAirportCode).html(getCountryFlagImg(link.toCountryCode, "15px") + link.toAirportCity + "<i class='pl-1 iata'>" + link.toAirportCode + "</i>")
 	    	$("#linkFlightCode").text(link.flightCode)
@@ -383,6 +387,7 @@ function refreshLinkDetails(linkId) {
 	    contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
 	    success: function(linkConsumptions) {
+	    	if (linkId !== selectedLink) return //stale response - user has selected a different link
 	    	if (jQuery.isEmptyObject(linkConsumptions)) {
 	    	    currentLinkConsumptions = null
 	    		$("#linkHistoryPrice").text("-")
@@ -835,38 +840,76 @@ function updatePlanLinkInfo(linkInfo, isRefresh) {
 		} else {
 			$('#deleteLinkButton').show()
 			// console.log(linkInfo)
-			if (linkInfo.deleteLinkDelegateRefund && linkInfo.deleteLinkDelegateRefund > 0) {
-			    $('#deleteLinkButton').attr('onclick',`promptConfirm("Delete this route? You will receive ${linkInfo.deleteLinkDelegateRefund} temporary delegates.", deleteLink)`)
+			if (linkInfo.deleteLinkRefund && linkInfo.deleteLinkRefund > 0) {
+			    $('#deleteLinkButton').attr('onclick',`promptConfirm("Delete this route? You will receive ${linkInfo.deleteLinkRefund} temporary delegates.", deleteLink)`)
 			} else {
-			    $('#deleteLinkButton').attr('onclick',`promptConfirm("Delete this route? You will receive ${linkInfo.deleteLinkDelegateRefund} temporary delegates.", deleteLink)`)
+			    $('#deleteLinkButton').attr('onclick',`promptConfirm("Delete this route? You will receive ${linkInfo.deleteLinkRefund} temporary delegates.", deleteLink)`)
 			}
 		}
 		$('#updateLinkButton').show()
 	}
-	$('#planLinkEconomyPrice').val(initialPrice.economy)
-	$('#planLinkBusinessPrice').val(initialPrice.business)
-	$('#planLinkFirstPrice').val(initialPrice.first)
+    const PRICE_INPUT_SELECTOR = '#planLinkEconomyPrice, #planLinkBusinessPrice, #planLinkFirstPrice';
+    const INPUT_IDLE_MS = 400;
 
-	$('.planLinkPrice').off(".priceChange").on("focusout.priceChange", function() {
-	    const currentClass = $(this).data('class')
-        const defaultPrice = initialPrice[currentClass]
-        const hasCompetitor = linkInfo.otherLinks.length > 1
-        const priceFloor = computePriceFloor(currentClass, initialPrice[currentClass], linkInfo.otherLinks)
-        if (isNaN($(this).val())) {
-            $(this).val(defaultPrice)
-        } else {
-            var inputPrice = Number($(this).val());
-            if (inputPrice < 1) {
-                $(this).val(defaultPrice)
-            } else if (hasCompetitor && inputPrice < priceFloor) {
-                $(this).val(priceFloor)
+    const classToSelector = {
+        economy: '#planLinkEconomyPrice',
+        business: '#planLinkBusinessPrice',
+        first: '#planLinkFirstPrice'
+    };
+
+    // Initialize values
+    Object.entries(classToSelector).forEach(([paxClass, selector]) => {
+        $(selector).val(initialPrice[paxClass]);
+    });
+
+    const hasCompetitor = linkInfo.otherLinks.length > 1;
+    let inputIdleTimer = null;
+
+    function normalizePriceInput($input) {
+        const paxClass = $input.data('class');
+        const defaultPrice = initialPrice[paxClass];
+        const floorPrice = computePriceFloor(paxClass, defaultPrice, linkInfo.otherLinks);
+
+        const raw = Number($input.val());
+        let normalized = defaultPrice;
+
+        if (!Number.isNaN(raw)) {
+            if (raw < 1) {
+                normalized = defaultPrice;
+            } else if (hasCompetitor && raw < floorPrice) {
+                normalized = floorPrice;
             } else {
-                $(this).val(Math.floor(inputPrice))
+                normalized = Math.floor(raw);
             }
         }
-        updateMarkup();
+
+        $input.val(normalized);
+    }
+
+    function refreshPricingAndDemand() {
+        updatePricePercentage();
         calculateDemand();
-	})
+    }
+
+    const $priceInputs = $(PRICE_INPUT_SELECTOR);
+
+    // Remove old handlers and bind namespaced ones
+    $priceInputs
+        .off('.priceChange')
+        .on('input.priceChange', function () {
+            const $input = $(this);
+            clearTimeout(inputIdleTimer);
+
+            inputIdleTimer = setTimeout(() => {
+                normalizePriceInput($input);
+                refreshPricingAndDemand();
+            }, INPUT_IDLE_MS);
+        })
+        .on('focusout.priceChange', function () {
+            clearTimeout(inputIdleTimer);
+            normalizePriceInput($(this));
+            refreshPricingAndDemand();
+        });
 
     //reset/display warnings
     $("#planLinkDetails .warningList").empty()
@@ -889,7 +932,7 @@ function updatePlanLinkInfo(linkInfo, isRefresh) {
         $('#planLinkExtendedDetails').hide()
         $('#planLinkModelRow').hide()
         $('#extendedPanel').hide()
-        updateMarkup();
+        updatePricePercentage();
         calculateDemand();
         return
     } else {
@@ -990,7 +1033,7 @@ function updatePlanLinkInfo(linkInfo, isRefresh) {
 	}
 
 	updatePlanLinkInfoWithModelSelected(selectedModelId, assignedModelId, isRefresh)
-	updateMarkup();
+	updatePricePercentage();
 	calculateDemand();
 	$("#planLinkDetails div.value").show()
 }
@@ -1046,7 +1089,7 @@ function updatePrice(percentage, classType = "all") {
         firstInput.val(Math.round(planLinkInfo.suggestedPrice.TouristFrom.first * percentage.first));
     }
 
-    updateMarkup();
+    updatePricePercentage();
     calculateDemand();
 }
 
@@ -1087,7 +1130,7 @@ function changeClassPrice(paxClass, percent) {
     }
 }
 
-function updateMarkup(){
+function updatePricePercentage(){
     $('#planMarkupEconomy').text(($('#planLinkEconomyPrice').val()/planLinkInfo.suggestedPrice.TouristFrom.economy*100).toFixed(0)+"%")
     $('#planMarkupBusiness').text(($('#planLinkBusinessPrice').val()/planLinkInfo.suggestedPrice.TouristFrom.business*100).toFixed(0)+"%")
     $('#planMarkupFirst').text(($('#planLinkFirstPrice').val()/planLinkInfo.suggestedPrice.TouristFrom.first*100).toFixed(0)+"%")
@@ -1414,9 +1457,9 @@ function updateTotalValues() {
                 $('#planLinkEstimatedDifficulty').text('-')
             }
         }
-        if (result.negotiationInfo.delegateRefund && result.negotiationInfo.delegateRefund !== 0) {
+        if (result.negotiationInfo.actionPointRefund && result.negotiationInfo.actionPointRefund !== 0) {
             $('.planLinkDelegateRefundRow').show()
-            $('.planLinkDelegateRefund').text(result.negotiationInfo.delegateRefund)
+            $('.planLinkDelegateRefund').text(result.negotiationInfo.actionPointRefund)
         } else {
             $('.planLinkDelegateRefundRow').hide()
             $('.planLinkDelegateRefund').text('')
@@ -1585,11 +1628,10 @@ function getLinkStaffingInfo() {
     });
 }
 
-function cancelPlanLink() {
+function cancelEditLink() {
 	if (tempPath) { //create new link
-		removeTempPath()
-		//hideActiveDiv($('#planLinkDetails'))
-		$('#sidePanel').fadeOut(200) //hide the whole side panel
+		removeTempPath();
+		$('#sidePanel').fadeOut(200);
 	} else { //simply go back to linkDetails of the current link (exit edit mode)
 		setActiveDiv($('#linkDetails'))
 	}
@@ -2622,18 +2664,16 @@ function linkConfirmation() {
         $("#linkConfirmationModal div.updating.capacity").append(futureCapacitySpan)
     }
 
-
-
 	$('#linkConfirmationModal div.updating.price').text('$' + $('#planLinkEconomyPrice').val() + " / $" + $('#planLinkBusinessPrice').val() + " / $" + $('#planLinkFirstPrice').val())
-
 	$('#linkConfirmationModal').fadeIn(200)
 
     getLinkNegotiation()
 }
 
 function changeAssignedActionPoints(delta) {
-    if (!isNaN(negotiationOddsLookup[assignedActionPoints + delta])) {
-       updateAssignedActionPoints(assignedActionPoints + delta)
+    const newValue = assignedActionPoints + delta
+    if (!isNaN(negotiationOddsLookup[newValue]) && newValue >= 0 && newValue <= availableActionPoints) {
+       updateAssignedActionPoints(newValue)
     }
 }
 
@@ -2651,7 +2691,7 @@ function addMinimumRequiredActionPoints() {
 	}
 }
 
-function addMaximumRequiredActionPoints() {
+function addMaximumActionPoints() {
 	var maximumRequiredActionPoints = 0
 	for (let i = 0; i <= Object.keys(negotiationOddsLookup).length; i++) {
 		if (negotiationOddsLookup[i] <= 1) {
@@ -2984,11 +3024,6 @@ function negotiationAnimation(savedLink, callback, callbackParam) {
         $('#negotiationAnimation .close, #negotiationAnimation .result').off("click.custom")
     }
 
-    // $('#negotiationAnimation .close, #negotiationAnimation .result').on("click.reset", function() {
-    //     // sets the source to nothing, stopping the video
-    //     $('#negotiationAnimation .clip').attr('src','');
-    // })
-
 	$('#negotiationAnimation').show()
 }
 
@@ -3224,12 +3259,12 @@ function promptBulkDelete() {
         contentType: 'application/json; charset=utf-8',
         dataType: 'json',
         success: function (result) {
-            var delegateRefund = result.delegateRefund;
+            var actionPointRefund = result.actionPointRefund;
             var capacityToRemove = result.capacityToRemove;
 
             var message = "Are you sure you want to delete " + count + " selected links?<br><br>";
             message += "&bull; <b>Capacity to remove:</b> " + commaSeparateNumber(capacityToRemove) + " seats<br>";
-            message += "&bull; <b>Delegates to refund:</b> " + delegateRefund;
+            message += "&bull; <b>Delegates to refund:</b> " + actionPointRefund;
 
             promptConfirm(message, function () {
                 executeBulkDelete();

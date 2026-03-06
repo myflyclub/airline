@@ -149,12 +149,14 @@ function createTheme(name) {
     return {
         version: 8,
         name: `Protomaps ${name.charAt(0).toUpperCase() + name.slice(1)}`,
-        sources: {
+        sources: { 
             protomaps: {
                 type: 'vector',
-                tiles: [`https://api.protomaps.com/tiles/v4/{z}/{x}/{y}.mvt?key=${window.protomapsKey}`],
-                maxzoom: 12,
-                attribution: '<a href="https://protomaps.com">Protomaps</a> | <a href="https://openstreetmap.org">OSM</a>'
+                tiles: [
+                    'https://maps.myfly.club/mfc/{z}/{x}/{y}.mvt'
+                ],
+                maxzoom: 11,
+                attribution: '<a href="https://protomaps.com">Protomaps</a> © <a href="https://openstreetmap.org">OpenStreetMap</a>'
             }
         },
         glyphs: 'https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf',

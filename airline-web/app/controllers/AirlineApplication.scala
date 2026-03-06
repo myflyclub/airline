@@ -585,7 +585,7 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
                     AirlineSource.saveAirlineBase(newBase)
 
                     airline.setCountryCode(newBase.countryCode)
-                    AirlineSource.saveAirlineInfo(airline, updateBalance = false)
+                    AirlineSource.saveAirlineInfo(airline)
                     AirlineSource.saveLedgerEntry(AirlineLedgerEntry(airlineId, currentCycle, LedgerType.BASE_CONSTRUCTION, -1 * cost, Some(s"${airport.iata} Lv${newBase.scale}")))
 
                     //assign airlinese that are not yet assigned
@@ -935,7 +935,7 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
           } else {
             val airline = request.user
             airline.setTargetServiceQuality(targetServiceQuality)
-            AirlineSource.saveAirlineInfo(airline, updateBalance = false)
+            AirlineSource.saveAirlineInfo(airline)
             Ok(Json.obj("targetServiceQuality" -> JsNumber(targetServiceQuality)))
           }
         case Failure(_) =>
@@ -988,7 +988,7 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
           } else {
             val airline = request.user
             airline.setMinimumRenewalBalance(minimumRenewalBalance)
-            AirlineSource.saveAirlineInfo(airline, updateBalance = false)
+            AirlineSource.saveAirlineInfo(airline)
             Ok(Json.obj("minimumRenewalBalance" -> JsNumber(minimumRenewalBalance)))
           }
         case Failure(_) =>

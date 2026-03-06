@@ -41,7 +41,7 @@ class ServiceQualityAward(santaClausInfo: SantaClausInfo) extends SantaClausAwar
     val newQuality = Math.min(santaClausInfo.airline.getCurrentServiceQuality() + BONUS, Airline.EQ_MAX)
 
     santaClausInfo.airline.setCurrentServiceQuality(newQuality)
-    AirlineSource.saveAirlineInfo(santaClausInfo.airline, updateBalance = false)
+    AirlineSource.saveAirlineInfo(santaClausInfo.airline)
   }
   override val description: String = "Santa Claus offers you his pro tips on making your flights magical! Overall Airline Service Quality bonus +" + BONUS + " ! (not permanent, level will eventually return to normal level)"
 }
@@ -87,7 +87,7 @@ class ReputationAward(santaClausInfo: SantaClausInfo) extends SantaClausAward(sa
     val newReputation = santaClausInfo.airline.getReputation() + BONUS
 
     santaClausInfo.airline.setReputation(newReputation)
-    AirlineSource.saveAirlineInfo(santaClausInfo.airline, updateBalance = false)
+    AirlineSource.saveAirlineInfo(santaClausInfo.airline)
   }
 
   override val description: String = "Santa Claus will make an appearance on your TV commercial! Boosting your airline reputation by +" + BONUS + " ! (not permanent, reputation will eventually return to normal level)"
