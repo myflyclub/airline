@@ -307,6 +307,11 @@ function setupRouteInteractions() {
 
     on('click', flightRoutes.clickLayerId, (e) => {
         if (!routeSelectable) return;
+        // Don't select a route if the click is on an airport marker
+        const airportFeatures = state.map.queryRenderedFeatures(e.point, {
+            layers: ['airports-layer', 'airports-layer-bases']
+        });
+        if (airportFeatures.length > 0) return;
         if (e.features.length > 0) {
             const linkId = e.features[0].properties.id;
             if (typeof selectLinkFromMap === 'function') selectLinkFromMap(linkId, false);
