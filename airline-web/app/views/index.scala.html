@@ -1,12 +1,12 @@
-@(message: String)(implicit configuration:play.api.Configuration)
+@()(implicit configuration:play.api.Configuration)
 @import views.html.fragments
 
 <!DOCTYPE html>
 <html>
-@fragments.head(message)
+@fragments.head()
 <body>
 @fragments.map_controls()
-@fragments.navbar(message)
+@fragments.navbar()
 
 <div style="position: relative;" id="mainContainer"> <!-- Main container for the contents + the landing masks-->
     <div id="landing"></div>

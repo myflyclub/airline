@@ -119,28 +119,6 @@ function isMobileDevice() {
     return window.innerWidth< 1024
 }
 
-function showFloatMessage(message, timeout) {
-	timeout = timeout || 3000
-	$("#floatMessageBox").text(message)
-	$("#floatMessageBox").css({top:"-=20px",left:0,opacity:100})
-	$("#floatMessageBox").show()
-	$("#floatMessageBox").animate({ top:"34px" }, "fast", function() {
-		if (timeout > 0) {
-			setTimeout(function() {
-				console.log("closing")
-				$('#floatMessageBox').animate({ top:"-=20px",opacity:0 }, "slow", function() {
-					$('#floatMessageBox').hide()
-				})
-			}, timeout)
-		}
-	})
-
-	//scroll the message box to the top offset of browser's scroll bar
-	$(window).scroll(function()
-	{
-  		$('#floatMessageBox').animate({top:$(window).scrollTop()+"px" },{queue: false, duration: 350});
-	});
-}
 
 function refreshPanels(airlineId) {
 	$.ajax({

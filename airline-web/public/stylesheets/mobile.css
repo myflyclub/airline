@@ -143,10 +143,6 @@
         background-image: var(--background-gradient-image);
     }
 
-    #floatMessageBox{
-        width: 100vw;
-    }
-
     .table.data {
         overflow-x: scroll;
     }

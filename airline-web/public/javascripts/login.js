@@ -46,8 +46,25 @@ function passwordLoginPage(e) {
     }
 }
 
+function clearLoginErrors() {
+    const errorEl = document.getElementById('loginPageError');
+    if (errorEl) {
+        errorEl.textContent = '';
+        errorEl.style.display = 'none';
+    }
+}
+
+function displayLoginError(message) {
+    const errorEl = document.getElementById('loginPageError');
+    if (errorEl) {
+        errorEl.textContent = message;
+        errorEl.style.display = 'block';
+    }
+}
+
 async function loginFromPage() {
     $('.login-page-btn').addClass('loading');
+    clearLoginErrors();
 
     const userName = $('#loginPageUserName').val();
     const password = $('#loginPagePassword').val();
@@ -66,13 +83,13 @@ async function loginFromPage() {
 
         if (!response.ok) {
             if (response.status === 401) {
-                showFloatMessage('Incorrect username or password');
+                displayLoginError('Incorrect username or password');
             } else if (response.status === 400) {
-                showFloatMessage('Session expired. Please log in again');
+                displayLoginError('Session expired. Please log in again');
             } else if (response.status === 403) {
-                showFloatMessage('You have been banned for violating the game rules. Please contact admins on Discord for assistance.');
+                displayLoginError('You have been banned for violating the game rules. Please contact admins on Discord for assistance.');
             } else {
-                showFloatMessage('Error logging in, error code ' + response.status + ". Please try again.");
+                displayLoginError('Error logging in, error code ' + response.status + '. Please try again.');
             }
             $('.login-page-btn').removeClass('loading');
             return;
@@ -85,7 +102,6 @@ async function loginFromPage() {
             $('#loginPageUserName').val('');
             $('#loginPagePassword').val('');
 
-            showFloatMessage('Successfully logged in');
             await loadPostLoginScripts();
             await ensureFullBoot();
 
@@ -103,7 +119,7 @@ async function loginFromPage() {
 
         $('.login-page-btn').removeClass('loading');
     } catch (err) {
-        showFloatMessage('Error logging in, please try again.');
+        displayLoginError('Error logging in, please try again.');
         console.error(err);
         $('.login-page-btn').removeClass('loading');
     }
@@ -147,9 +163,6 @@ async function doPostLoginSetup(user) {
     // Core UI
     $('#tutorialHtml').load('/assets/html/tutorial.html')
     $('#noticeHtml').load('/assets/html/notice.html', initNotices)
-    if ($("#floatMessage").val()) {
-        showFloatMessage($("#floatMessage").val())
-    }
     window.addEventListener('orientationchange', mobileCheck);
     window.addEventListener('resize', mobileCheck);
     $(window).scroll(function () {
@@ -211,7 +224,6 @@ function logout() {
 	        $('#navPrimaryToggle').hide()
 	    	localStorage.removeItem('sessionActive')
             document.cookie = "sessionActive=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
-	    	showFloatMessage("Successfully logged out")
 	    	window.location.replace('/login/');
 	    },
 	    error: function(jqXHR, textStatus, errorThrown) {
