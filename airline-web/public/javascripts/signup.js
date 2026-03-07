@@ -53,7 +53,11 @@ function displaySignupErrors(errors) {
     });
 
     if (unmatched.length) {
-        showFloatMessage(unmatched.join(' | '));
+        const errorEl = document.getElementById('signupPageError');
+        if (errorEl) {
+            errorEl.textContent = unmatched.join(' | ');
+            errorEl.style.display = 'block';
+        }
     }
 }
 
@@ -104,7 +108,6 @@ async function signupFromPage() {
             $('#signupPagePasswordConfirm').val('');
             $('#signupPageAirlineName').val('');
 
-            showFloatMessage('Account created successfully!');
             await loadPostLoginScripts();
             await ensureFullBoot();
 
@@ -115,7 +118,11 @@ async function signupFromPage() {
 
         $('.signup-page-btn').removeClass('loading');
     } catch (err) {
-        showFloatMessage('Error signing up, please try again.');
+        const errorEl = document.getElementById('signupPageError');
+        if (errorEl) {
+            errorEl.textContent = 'Error signing up, please try again.';
+            errorEl.style.display = 'block';
+        }
         console.error(err);
         $('.signup-page-btn').removeClass('loading');
     }

@@ -87,7 +87,7 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
   // path parameter is captured but ignored - page.js handles routing
   def index(path: String = "") = Action { implicit request =>
     implicit lazy val config = configuration
-    Ok(views.html.index(""))
+    Ok(views.html.index())
   }
   
   def getCurrentCycle() = Action { request =>

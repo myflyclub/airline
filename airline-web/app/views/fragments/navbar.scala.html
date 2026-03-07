@@ -1,4 +1,3 @@
-@(message: String)
 
 	<div style="display: none;" class="extendedTopBarDetails flex-row items-center">
         <p><span class="currentTime label"></span><span class="tooltip-attr" style="margin: 0px 10px" data-tooltip="An estimation of how long until next cycle/week"><img src='@routes.Assets.versioned("/images/icons/clock-moon-phase.png")' style="vertical-align: middle;"><span class="nextTickEstimation label" style="font-weight: bold;">-</span></span></p>
@@ -53,8 +52,7 @@
 					<img class="mobileOnly" src='@routes.Assets.versioned("/images/buttons/patreon_mark_coral.jpg")' loading="lazy" style="max-height: 30px; vertical-align: middle;" title="Become a Patreon to support this project!">
 				</a>
 			</div>
-            <input type="hidden" id="floatMessage" value="@message"/>
-            <div id="floatMessageBox" style="height: 30px; width: 300px; display: none;"></div>
+
 		</div>
 	</div>
 	<div id="moreTopBarTab" class="mobileOnly" onclick="showExtendedTopBarDetails()">

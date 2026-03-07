@@ -345,7 +345,7 @@ li.row, div.table-row {
 #navPrimary .label {
     font-size: 16px;
     font-weight: bold;
-    background-color: var(--background-1);
+    background-color: var(--background-2);
     padding: 4px 8px;
     border-radius: 0 8px 8px 0;
     display: none;
@@ -361,7 +361,7 @@ li.row, div.table-row {
     height: 36px;
     border-radius: 50%;
     position: relative;
-    background: var(--background-1);
+    background: color-mix(in srgb, var(--background-1) 75%, transparent);
     box-shadow: var(--shadow-1);
     border: 1px solid transparent;
     transition: border 0.2s, transform 0.5s;
@@ -612,14 +612,16 @@ li.row, div.table-row {
     position: fixed !important;
     z-index: 2;
 }
+#topBar div {
+    background-color: color-mix(in srgb, var(--background-2) 75%, transparent);
+}
 #topBar * {
     pointer-events: auto;
 }
 #topBar > div {
     box-shadow: var(--shadow-1);
 }
-#topBar > :first-child {
-    background-color: var(--background-1);
+#topBar > :first-child { 
     position: absolute;
     top: -1px;
     left: -1px;
@@ -627,7 +629,6 @@ li.row, div.table-row {
     padding: 10px 14px;
 }
 #topBar > :last-child {
-    background-color: var(--background-1);
     position: absolute;
     top: -1px;
     right: -1px;
@@ -1606,19 +1607,6 @@ dd.error {
     font-size: 10px;
 }
 
-#floatMessageBox {
-    position: absolute;
-    top: 36px;
-    border-radius: 0px 0px 15px 15px;
-    z-index: 1000;
-    background: var(--button-background);
-    padding: 5px;
-    text-align: center;
-    box-shadow: var(--table-header-shadow);
-    color: var(--table-header-color);
-    text-shadow: var(--table-header-text-shadow);
-}
-
 /* ========================================
    Tabs
    ======================================== */
@@ -1955,6 +1943,10 @@ div {
     z-index: 1;
     border-left: 2px solid gold;
     transition: border-color .4s;
+}
+.threshold-bar .reputationValueCurrent {
+    color: var(--background-1);
+    font-weight: 900;
 }
 .dot:hover {
     border-left-color: whitesmoke;

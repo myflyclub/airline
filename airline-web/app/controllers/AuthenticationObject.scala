@@ -51,7 +51,7 @@ object AuthenticationObject {
     if (!request.headers.get("Authorization").isEmpty) {
       val result = request.headers.get("Authorization").flatMap { authorization =>
         authorization.split(" ").drop(1).headOption.flatMap { encoded =>
-          new String(org.apache.commons.codec.binary.Base64.decodeBase64(encoded.getBytes)).split(":").toList match {
+          new String(org.apache.commons.codec.binary.Base64.decodeBase64(encoded.getBytes)).split(":", 2).toList match {
             case userName :: password :: Nil  =>
 //                println("from header " + userName + " : " + password)
               if (Authentication.authenticate(userName, password)) {
