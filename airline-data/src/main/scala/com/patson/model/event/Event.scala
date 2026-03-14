@@ -46,10 +46,10 @@ object OlympicsStatus extends Enumeration {
 
 object Olympics {
   val TOOLTIP = List(
-    "Olympics are scored for the last 52 weeks of each 4 year Olympic cycle, with more passengers traveling the very last 4 weeks.",
-    "When it starts, you will be given a \"goal\" score based on how many passengers you transported the week before.",
-    "You get one point for every passenger you transport from origin to Olympics (regardless of type), and a partial point if you fulfilled part of the journey.",
-    "If you make your goal over the 52 weeks, you get a prize, and you get a bigger prize the more you over-deliver."
+    "Olympics are scored the final year of each 4 year Olympic cycle, with more passengers traveling the very last 4 weeks.",
+    "When it starts, you will be given a \"goal\" score based on how many passengers you recently transported.",
+    "You get one point for every passenger you transport from origin to Olympics (regardless of type), and a partial proportional point if you fulfilled part of the journey.",
+    "If you make your goal, you get a prize, and you get a bigger prize the more you over-deliver."
   )
   val WEEKS_PER_YEAR = 48
   val GAMES_DURATION = 4
@@ -129,7 +129,7 @@ object Olympics {
   }
 
   val voteRewardOptions : List[EventReward] = List(OlympicsVoteCashReward(), OlympicsVoteLoyaltyReward())
-  val passengerRewardOptions : List[EventReward] = List(OlympicsPassengerCashReward(), OlympicsPassengerLoyaltyReward(), OlympicsPassengerReputationReward(), OlympicsPassengerDelegateReward())
+  val passengerRewardOptions : List[EventReward] = List(OlympicsPassengerCashReward(), OlympicsPassengerLoyaltyReward(), OlympicsPassengerReputationReward(), OlympicsPassengerActionPointReward())
 
   val getDemandMultiplier = (weekOfYear: Int) => {
       if (weekOfYear < Olympics.WEEKS_PER_YEAR - Olympics.GAMES_DURATION * 12) {
@@ -179,7 +179,7 @@ object RewardCategory extends Enumeration {
 
 object RewardOption extends Enumeration {
   type RewardOption = Value
-  val CASH, LOYALTY, REPUTATION, DELEGATE = Value
+  val CASH, LOYALTY, REPUTATION, ACTION_POINTS = Value
 }
 
 abstract class EventReward(val eventType : EventType.Value, val rewardCategory : RewardCategory.Value, val rewardOption : RewardOption.Value) {
@@ -263,14 +263,14 @@ case class OlympicsPassengerReputationReward() extends EventReward(EventType.OLY
   override val description: String = s"+$REPUTATION_BONUS reputation boost (one time only, reputation will eventually drop back to normal level)"
 }
 
-case class OlympicsPassengerDelegateReward() extends EventReward(EventType.OLYMPICS, RewardCategory.OLYMPICS_PASSENGER, RewardOption.DELEGATE) {
-  val BASE_BONUS = 2
-  val MAX_BONUS = 6
-  val DURATION = 52 * 4
+case class OlympicsPassengerActionPointReward() extends EventReward(EventType.OLYMPICS, RewardCategory.OLYMPICS_PASSENGER, RewardOption.ACTION_POINTS) {
+  val BASE_BONUS = 36
+  val MAX_BONUS = 120
+
   override def applyReward(event: Event, airline : Airline) = {
     val cycle = CycleSource.loadCycle()
     val bonus = computeReward(event.id, airline.id)
-    AirlineSource.saveAirlineModifier(airline.id, DelegateBoostAirlineModifier(bonus, DURATION, cycle))
+    AirlineSource.adjustAirlineActionPoints(airline, bonus.toDouble)
   }
 
   def computeReward(eventId: Int, airlineId : Int) = {
@@ -286,7 +286,7 @@ case class OlympicsPassengerDelegateReward() extends EventReward(EventType.OLYMP
 
   }
 
-  override val description: String = s"+$BASE_BONUS to $MAX_BONUS delegates for $DURATION weeks"
-  override def redeemDescription(eventId: Int, airlineId : Int) = s"${computeReward(eventId, airlineId)} extra delegates for $DURATION weeks"
+  override val description: String = s"+$BASE_BONUS to $MAX_BONUS action points (based on your score and how much you overachieved your goal)"
+  override def redeemDescription(eventId: Int, airlineId : Int) = s"${computeReward(eventId, airlineId)} free action points"
 }
 

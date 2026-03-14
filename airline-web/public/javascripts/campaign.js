@@ -1,545 +1,169 @@
-function showCampaignModal() {
-    updateCampaignTable()
-    var $locationSearchInput = $('#campaignModal .searchInput input')
+const MIN_CAMPAIGN_RADIUS = 50
+const MAX_CAMPAIGN_RADIUS = 500 //todo: replace with game rule config
 
-    $locationSearchInput.on('confirmSelection', function(e) {
-        draftCampaign($('#campaignModal .searchInput input').data("selectedId"))
+
+
+
+
+
+// ── Campaign Overlay (main-map panel) ────────────────────────────────────────
+
+const campaignOverlay = {
+    airportId: null,
+    existingCampaign: null,
+    assignedCount: 0,
+    availableManagers: 0,
+    costPerDelegate: 0,
+}
+
+async function showCampaignOverlay(airportId, popupPosition) {
+    const airport = getAirportById(airportId)
+    if (!airport) return
+
+    Object.assign(campaignOverlay, {
+        airportId,
+        existingCampaign: null,
+        assignedCount: 0,
+        availableManagers: 0,
+        costPerDelegate: 0,
     })
 
-    if (!campaignMap) {
-        initCampaignMap()
+    const $panel = $('#campaignOverlayPanel')
+    $panel.removeData('campaignId').data('radius', MIN_CAMPAIGN_RADIUS)
+    $('.campaignOverlayAirportName').text(getAirportText(airport.city, airport.iata))
+    if (popupPosition) {
+        $panel.css({
+            position: 'fixed',
+            left: `${popupPosition.left - 240}px`,
+            top: `${popupPosition.top}px`,
+            zIndex: 1000
+        });
     }
+    $panel.show()
 
-    updateAirlineDelegateStatus($('#campaignModal div.delegateStatus'), function(delegateInfo) {
-            $('#campaignModal div.delegateSection').data("availableDelegates", delegateInfo.permanentAvailableCount)
-        })
-    $('#campaignModal div.delegateSection').data("delegatesRequired", 0)
-    $('#campaignModal .campaignDetails').hide()
-    $('#campaignModal .draftCampaign').hide()
-    $('#campaignModal').data('closeCallback', updateCampaignSummary)
-    $('#campaignModal').fadeIn(500)
-}
-
-function initCampaignMap() {
-    const container = $('#campaignModal .campaignMap')[0]
-    if (!container) return
-
-    // Get the current style from the main map module
-    const currentStyle = typeof getCurrentStyle === 'function' ? getCurrentStyle() : 'dark'
-    const style = currentStyle === 'light' ? getCampaignMapLightStyle() : getCampaignMapDarkStyle()
-
-    campaignMap = new maplibregl.Map({
-        container: container,
-        style: style,
-        center: [0, 0],
-        zoom: 2,
-        interactive: true,
-        scrollZoom: false,
-        attributionControl: false
-    })
-
-    // Add navigation control
-    campaignMap.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
-}
-
-function getCampaignMapDarkStyle() {
-    return {
-        version: 8,
-        sources: {
-            protomaps: {
-                type: 'vector',
-                url: `https://api.protomaps.com/tiles/v4.json?key=${window.protomapsKey}`,
-            }
-        },
-        glyphs: 'https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf',
-        layers: [
-            { id: 'background', type: 'background', paint: { 'background-color': '#10141b' } },
-            { id: 'earth', type: 'fill', source: 'protomaps', 'source-layer': 'earth', paint: { 'fill-color': '#1c232c' } },
-            { id: 'water', type: 'fill', source: 'protomaps', 'source-layer': 'water', paint: { 'fill-color': '#10141b' } },
-            { id: 'boundaries', type: 'line', source: 'protomaps', 'source-layer': 'boundaries', filter: ['==', ['get', 'pmap:kind'], 'country'], paint: { 'line-color': '#343c4a', 'line-width': 1 } },
-            {
-                id: 'labels',
-                type: 'symbol',
-                source: 'protomaps',
-                'source-layer': 'places',
-                filter: ['==', ['get', 'pmap:kind'], 'country'],
-                layout: {
-                    'text-field': ['coalesce', ['get', 'name:en'], ['get', 'name']],
-                    'text-font': ['Noto Sans Regular'],
-                    'text-size': 12,
-                    'text-allow-overlap': true
-                },
-                paint: {
-                    'text-color': '#8e96a0',
-                    'text-halo-color': '#10141b',
-                    'text-halo-width': 1
-                }
-            }
-        ]
-    }
-}
-
-function getCampaignMapLightStyle() {
-    return {
-        version: 8,
-        sources: {
-            protomaps: {
-                type: 'vector',
-                url: `https://api.protomaps.com/tiles/v4.json?key=${window.protomapsKey}`,
-            }
-        },
-        glyphs: 'https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf',
-        layers: [
-            { id: 'background', type: 'background', paint: { 'background-color': '#ccd3d3' } },
-            { id: 'earth', type: 'fill', source: 'protomaps', 'source-layer': 'earth', paint: { 'fill-color': '#f0f0f0' } },
-            { id: 'water', type: 'fill', source: 'protomaps', 'source-layer': 'water', paint: { 'fill-color': '#ccd3d3' } },
-            { id: 'boundaries', type: 'line', source: 'protomaps', 'source-layer': 'boundaries', filter: ['==', ['get', 'pmap:kind'], 'country'], paint: { 'line-color': '#ffffff', 'line-width': 1 } },
-            {
-                id: 'labels',
-                type: 'symbol',
-                source: 'protomaps',
-                'source-layer': 'places',
-                filter: ['==', ['get', 'pmap:kind'], 'country'],
-                layout: {
-                    'text-field': ['coalesce', ['get', 'name:en'], ['get', 'name']],
-                    'text-font': ['Noto Sans Regular'],
-                    'text-size': 12,
-                    'text-allow-overlap': true
-                },
-                paint: {
-                    'text-color': '#5c5c5c',
-                    'text-halo-color': '#ffffff',
-                    'text-halo-width': 1
-                }
-            }
-        ]
-    }
-}
-
-function toggleDraftCampaign() {
-    $('#campaignModal .campaignDetails').hide()
-    $('#campaignModal .searchInput .airport').val('')
-
-    $('#campaignModal .draftCampaign').fadeIn(500)
-
-}
-
-function changeCampaignDelegateCount(delta) {
-    changeTaskDelegateCount($('#campaignModal .delegateSection'), delta, function(delegateCount) {
-        if (delegateCount <= 0) {
-            disableButton($('#campaignModal .campaignDetails .save'), "must assign at least one delegate")
-        } else {
-            enableButton($('#campaignModal .campaignDetails .save'))
+    try {
+        const [delegateInfo, campaigns] = await Promise.all([
+            $.ajax({ type: 'GET', url: `/managers/airline/${activeAirline.id}`, dataType: 'json' }),
+            $.ajax({ type: 'GET', url: `/airlines/${activeAirline.id}/campaigns?fullLoad=true`, dataType: 'json' }),
+        ])
+        campaignOverlay.availableManagers = delegateInfo.availableCount || 0
+        const existing = campaigns.find(c => c.principalAirport?.id === airportId)
+        if (existing) {
+            campaignOverlay.existingCampaign = existing
+            campaignOverlay.assignedCount = existing.delegates?.length || 0
+            campaignOverlay.availableManagers += campaignOverlay.assignedCount
+            $panel.data('radius', existing.radius).data('campaignId', existing.id)
         }
-        $('#campaignModal .campaignDetails .cost').text('$' + commaSeparateNumber(delegateCount * $('#campaignModal .campaignDetails').data('costPerDelegate')))
-    })
+    } catch (_) { /* use defaults */ }
+
+    refreshCampaignOverlay()
 }
 
+function closeCampaignOverlay() {
+    removeCampaignOverlayCircle()
+    $('#campaignOverlayPanel').hide()
+    campaignOverlay.airportId = null
+    campaignOverlay.existingCampaign = null
+}
 
-var loadedCampaigns = []
+function refreshCampaignOverlay() {
+    const { airportId } = campaignOverlay
+    const radius = $('#campaignOverlayPanel').data('radius') || MIN_CAMPAIGN_RADIUS
+    $('#campaignOverlayPanel .campaignOverlayIncrease').css('opacity', radius >= MAX_CAMPAIGN_RADIUS ? '0.35' : '')
+    $('#campaignOverlayPanel .campaignOverlayDecrease').css('opacity', radius <= MIN_CAMPAIGN_RADIUS ? '0.35' : '')
 
-
-
-function updateCampaignTable() {
     $.ajax({
         type: 'GET',
-        url: "/airlines/" + activeAirline.id + "/campaigns?fullLoad=true",
-        contentType: 'application/json; charset=utf-8',
+        url: `/airlines/${activeAirline.id}/campaign-airports/${airportId}?radius=${radius}`,
         dataType: 'json',
-        success: function(result) {
-            loadedCampaigns = result
-            refreshCampaignTable()
-            var selectedSortHeader = $('#campaignModal .campaignTableHeader .cell.selected')
-		    refreshCampaignTable(selectedSortHeader.data('sort-property'), selectedSortHeader.data('sort-order'))
+        success(result) {
+            const airport = getAirportById(airportId) || result.principalAirport
+            $('.campaignOverlayAirportName').text(getAirportText(airport.city, airport.iata))
+            $('.campaignOverlayRadius').text(radius)
+            $('.campaignOverlayPopulation').text(commaSeparateNumber(result.population))
+            $('.campaignOverlayLoyalty').text(result.bonus?.loyalty ?? '-')
+            campaignOverlay.costPerDelegate = result.costPerDelegate || 0
+
+            const hasExisting = !!campaignOverlay.existingCampaign
+            $('#campaignOverlayPanel .create').toggle(!hasExisting)
+            $('#campaignOverlayPanel .update').toggle(hasExisting)
+            $('#campaignOverlayPanel .delete').toggle(hasExisting)
+
+            updateCampaignOverlayManagerUI()
+            drawCampaignOverlayCircle(airport, radius)
         },
-        error: function(jqXHR, textStatus, errorThrown) {
-	            console.log(JSON.stringify(jqXHR));
-	            console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
-	    }
-    });
-
-}
-
-function refreshCampaignTable(sortProperty, sortOrder) {
-	var $campaignTable = $("#campaignModal .campaignTable")
-	$campaignTable.children("div.table-row").remove()
-
-	//sort the list
-	//loadedLinks.sort(sortByProperty(sortProperty, sortOrder == "ascending"))
-	loadedCampaigns = sortPreserveOrder(loadedCampaigns, sortProperty, sortOrder == "ascending")
-
-    var selectedCampaign = $('#campaignModal').data('selectedCampaign')
-	$.each(loadedCampaigns, function(index, campaign) {
-		var row = $("<div class='table-row clickable' onclick='selectCampaign($(this))'></div>")
-		row.data("campaign", campaign)
-
-		row.append("<div class='cell'>" + getCountryFlagImg(campaign.principalAirport.countryCode) + getAirportText(campaign.principalAirport.city, campaign.principalAirport.iata) + "</div>")
-		row.append("<div class='cell'>" + campaign.radius + "</div>")
-		row.append("<div class='cell'>" + campaign.level + "</div>")
-		row.append("<div class='cell'>" + campaign.population + "</div>")
-		row.append("<div class='cell'>" + campaign.area.length + "</div>")
-
-		if (selectedCampaign && selectedCampaign.id == campaign.id) {
-			row.addClass("selected")
-		}
-
-		$campaignTable.append(row)
-	});
-
-	if (loadedCampaigns.length == 0) {
-	    $campaignTable.append("<div class='table-row'><div class='cell'>-</div><div class='cell'>-</div><div class='cell'>-</div><div class='cell'>-</div><div class='cell'>-</div></div>")
-
-	    $('#campaignModal .addCampaign').addClass('glow')
-	} else {
-	    $('#campaignModal .addCampaign').removeClass('glow')
-	}
-}
-function selectCampaign(row) {
-    //update table
-	row.siblings().removeClass("selected")
-	row.addClass("selected")
-	var campaign = row.data('campaign')
-	$('#campaignModal').data('selectedCampaign', campaign)
-	$('#campaignModal .campaignMap').data('radius', campaign.radius)
-    $('#campaignModal .campaignMap').data('selectedAirportId', campaign.principalAirport.id)
-
-    var $delegateSection = $('#campaignModal div.delegateSection')
-    var delegates = campaign.delegates
-    delegates.sort(function(a, b) { //sort, the most senior comes first
-        return a.startCycle - b.startCycle
+        error(jqXHR, textStatus) {
+            console.log(`Campaign overlay error: ${textStatus}`)
+        }
     })
-    $delegateSection.data('originalDelegates', delegates)
-    $delegateSection.data('assignedDelegateCount', delegates.length)
-
-    $('#campaignModal .campaignDetails .create').hide()
-    $('#campaignModal .campaignDetails .update').show()
-    $('#campaignModal .campaignDetails .delete').show()
-
-	refreshCampaign()
 }
 
-function draftCampaign(selectedAirportId) {
-    $('#campaignModal #campaignTable .table-row.selected').removeClass('selected')
-    $('#campaignModal .campaignMap').data('radius', MIN_CAMPAIGN_RADIUS)
-    $('#campaignModal .campaignMap').data('selectedAirportId', selectedAirportId)
-    $('#campaignModal').removeData('selectedCampaign')
-
-    var $delegateSection = $('#campaignModal div.delegateSection')
-    $delegateSection.data('originalDelegates', [])
-    $delegateSection.data('assignedDelegateCount', 0)
-    disableButton($('#campaignModal .campaignDetails .save'), "must assign at least one delegate")
-
-    $('#campaignModal .campaignDetails .create').show()
-    $('#campaignModal .campaignDetails .update').hide()
-    $('#campaignModal .campaignDetails .delete').hide()
-
-    refreshCampaign()
+function changeCampaignOverlayRadius(delta) {
+    const current = $('#campaignOverlayPanel').data('radius') || MIN_CAMPAIGN_RADIUS
+    const newRadius = Math.max(MIN_CAMPAIGN_RADIUS, Math.min(MAX_CAMPAIGN_RADIUS, current + delta))
+    if (newRadius !== current) {
+        $('#campaignOverlayPanel').data('radius', newRadius)
+        refreshCampaignOverlay()
+    }
 }
 
-function createCampaign() {
-    var $delegateSection = $('#campaignModal .delegateSection')
-    var assignedDelegateCount = $delegateSection.data('assignedDelegateCount')
+function updateCampaignOverlayManagerUI() {
+    const { assignedCount: assigned, availableManagers: available } = campaignOverlay
+
+    renderManagerAssignment({
+        container: '#campaignOverlayManagerDisplay',
+        count: assigned,
+        color: '#e879a0',
+        availableCount: available,
+        headerText: 'Managers (' + available + ' available)',
+        defaultTooltip: 'Advertising campaign · Trainee · next level in 20m',
+        onAdd: () => { campaignOverlay.assignedCount++; campaignOverlay.availableManagers--; updateCampaignOverlayManagerUI() },
+        onRemove: () => { campaignOverlay.assignedCount--; campaignOverlay.availableManagers++; updateCampaignOverlayManagerUI() }
+    })
+
+    $('.campaignOverlayCost').text(assigned > 0 ? '$' + commaSeparateNumber(assigned * campaignOverlay.costPerDelegate) : '-')
+    $('#campaignOverlayPanel .campaignOverlaySave').prop('disabled', assigned <= 0).css('opacity', assigned <= 0 ? '0.5' : '')
+}
+
+function saveCampaignOverlay() {
+    const radius = $('#campaignOverlayPanel').data('radius') || MIN_CAMPAIGN_RADIUS
+    const campaignId = $('#campaignOverlayPanel').data('campaignId')
+    const payload = { delegateCount: campaignOverlay.assignedCount, radius }
+    if (campaignId) payload.campaignId = campaignId
+    else payload.airportId = campaignOverlay.airportId
+
     $.ajax({
         type: 'POST',
-        url: "/airlines/" + activeAirline.id + "/campaigns",
+        url: `/airlines/${activeAirline.id}/campaigns`,
         contentType: 'application/json; charset=utf-8',
-        data:  JSON.stringify({
-         'delegateCount' : assignedDelegateCount,
-         'airportId' : $("#campaignModal .campaignMap").data('selectedAirportId'),
-         'radius' : $('#campaignModal .campaignMap').data('radius')
-         }) ,
+        data: JSON.stringify(payload),
         dataType: 'json',
-        success: function(result) {
-            closeCampaignDetails(true)
-            updateCampaignTable()
-        },
-        error: function(jqXHR, textStatus, errorThrown) {
-            console.log(JSON.stringify(jqXHR));
-            console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
-        }
-    });
+        success() { closeCampaignOverlay(); updateAirlineDelegateStatus($('#officeCanvas .delegateStatus')) },
+        error(jqXHR) { console.log(JSON.stringify(jqXHR)) }
+    })
 }
 
-function updateCampaign() {
-    var $delegateSection = $('#campaignModal .delegateSection')
-    var assignedDelegateCount = $delegateSection.data('assignedDelegateCount')
-    $.ajax({
-        type: 'POST',
-        url: "/airlines/" + activeAirline.id + "/campaigns",
-        contentType: 'application/json; charset=utf-8',
-        data:  JSON.stringify({
-         'delegateCount' : assignedDelegateCount,
-         'radius' : $('#campaignModal .campaignMap').data('radius'),
-         'campaignId' : $('#campaignModal').data('selectedCampaign').id
-         }) ,
-        dataType: 'json',
-        success: function(result) {
-            closeCampaignDetails(true)
-            updateCampaignTable()
-        },
-        error: function(jqXHR, textStatus, errorThrown) {
-            console.log(JSON.stringify(jqXHR));
-            console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
-        }
-    });
-}
-
-
-
-function deleteCampaign() {
-    var airport = $('#campaignModal').data('selectedCampaign').principalAirport
-    promptConfirm("Do you want to delete this campaign at " + getAirportText(airport.city, airport.iata), function() {
+function deleteCampaignOverlay() {
+    const campaignId = $('#campaignOverlayPanel').data('campaignId')
+    if (!campaignId) return
+    promptConfirm('Do you want to delete this campaign?', function() {
         $.ajax({
             type: 'DELETE',
-            url: "/airlines/" + activeAirline.id + "/campaigns/" + $('#campaignModal').data('selectedCampaign').id,
+            url: `/airlines/${activeAirline.id}/campaigns/${campaignId}`,
             contentType: 'application/json; charset=utf-8',
             dataType: 'json',
-            success: function(result) {
-                closeCampaignDetails(true)
-                updateCampaignTable()
-            },
-            error: function(jqXHR, textStatus, errorThrown) {
-                console.log(JSON.stringify(jqXHR));
-                console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
-            }
-        });
-        }
-    )
-}
-
-
-
-var campaignMap
-var campaignMapMarkers = []
-var campaignMapCircle = null
-var campaignPopup = null
-
-function populateCampaignMap(principalAirport, campaignArea, candidateArea, radius) {
-    // Clear existing markers and circle
-    campaignMapMarkers.forEach(marker => marker.remove())
-    campaignMapMarkers = []
-
-    if (campaignMapCircle && campaignMap.getSource('campaign-circle')) {
-        campaignMap.removeLayer('campaign-circle-fill')
-        campaignMap.removeLayer('campaign-circle-outline')
-        campaignMap.removeSource('campaign-circle')
-    }
-
-    // Calculate zoom level to fit the radius
-    // MapLibre uses different zoom calculation than Google Maps
-    const radiusKm = (radius + 200) * 1.2
-    const zoom = getMapLibreZoomForRadius(radiusKm, principalAirport.latitude)
-
-    campaignMap.flyTo({
-        center: [principalAirport.longitude, principalAirport.latitude],
-        zoom: zoom,
-        duration: 500
-    })
-
-    // Add circle as GeoJSON source
-    const circleGeoJSON = createCircleGeoJSON(
-        principalAirport.longitude,
-        principalAirport.latitude,
-        radius * 1000 // convert to meters
-    )
-
-    campaignMap.addSource('campaign-circle', {
-        type: 'geojson',
-        data: circleGeoJSON
-    })
-
-    campaignMap.addLayer({
-        id: 'campaign-circle-fill',
-        type: 'fill',
-        source: 'campaign-circle',
-        paint: {
-            'fill-color': '#32CF47',
-            'fill-opacity': 0.3
-        }
-    })
-
-    campaignMap.addLayer({
-        id: 'campaign-circle-outline',
-        type: 'line',
-        source: 'campaign-circle',
-        paint: {
-            'line-color': '#32CF47',
-            'line-width': 2,
-            'line-opacity': 0.5
-        }
-    })
-
-    campaignMapCircle = true
-
-    // Add airport markers
-    populateCampaignAirportMarkers(campaignArea, true)
-    populateCampaignAirportMarkers(candidateArea, false)
-}
-
-function createCircleGeoJSON(lng, lat, radiusMeters) {
-    const points = 64
-    const coords = []
-    const earthRadius = 6371000 // meters
-
-    for (let i = 0; i <= points; i++) {
-        const angle = (i / points) * 2 * Math.PI
-        const dx = radiusMeters * Math.cos(angle)
-        const dy = radiusMeters * Math.sin(angle)
-
-        const newLat = lat + (dy / earthRadius) * (180 / Math.PI)
-        const newLng = lng + (dx / earthRadius) * (180 / Math.PI) / Math.cos(lat * Math.PI / 180)
-
-        coords.push([newLng, newLat])
-    }
-
-    return {
-        type: 'Feature',
-        geometry: {
-            type: 'Polygon',
-            coordinates: [coords]
-        }
-    }
-}
-
-function getMapLibreZoomForRadius(radiusKm, latitude) {
-    // Calculate zoom level to fit a given radius in the map view
-    const mapWidth = $('#campaignModal .campaignMap').width() || 300
-    const metersPerPixel = radiusKm * 1000 * 2 / mapWidth
-    const zoom = Math.log2(40075016.686 * Math.cos(latitude * Math.PI / 180) / metersPerPixel / 256)
-    return Math.min(Math.max(zoom - 0.5, 1), 15)
-}
-
-function populateCampaignAirportMarkers(airports, hasCoverage) {
-    $.each(airports, function(index, airport) {
-        // Create marker element
-        const el = document.createElement('div')
-        el.className = 'campaign-airport-marker'
-        el.style.width = '20px'
-        el.style.height = '20px'
-        el.style.backgroundSize = 'contain'
-        el.style.backgroundRepeat = 'no-repeat'
-        el.style.cursor = 'pointer'
-
-        if (hasCoverage) {
-            el.style.backgroundImage = `url(${getAirportIcon(airport)})`
-        } else {
-            el.style.backgroundImage = `url(${$("#map").data("disabledAirportMarker")})`
-            el.style.opacity = '0.5'
-        }
-
-        const marker = new maplibregl.Marker({ element: el })
-            .setLngLat([airport.longitude, airport.latitude])
-            .addTo(campaignMap)
-
-        // Add hover popup
-        el.addEventListener('mouseenter', function() {
-            $("#campaignAirportPopup .airportName").text(getAirportText(airport.city, airport.iata))
-            $("#campaignAirportPopup .airportPopulation").text(airport.population)
-
-            const popupContent = $("#campaignAirportPopup").clone()
-            popupContent.show()
-
-            if (campaignPopup) {
-                campaignPopup.remove()
-            }
-
-            campaignPopup = new maplibregl.Popup({
-                closeButton: false,
-                closeOnClick: false,
-                offset: 10
-            })
-                .setLngLat([airport.longitude, airport.latitude])
-                .setDOMContent(popupContent[0])
-                .addTo(campaignMap)
+            success() { closeCampaignOverlay(); updateAirlineDelegateStatus($('#officeCanvas .delegateStatus')) },
+            error(jqXHR, textStatus) { console.log(`Delete campaign error: ${textStatus}`) }
         })
-
-        el.addEventListener('mouseleave', function() {
-            if (campaignPopup) {
-                campaignPopup.remove()
-                campaignPopup = null
-            }
-        })
-
-        campaignMapMarkers.push(marker)
     })
 }
 
-var MIN_CAMPAIGN_RADIUS = 100
-var MAX_CAMPAIGN_RADIUS = 1000
-function changeCampaignRadius(delta) {
-    currentRadius = $('#campaignModal .campaignMap').data('radius')
-    var newRadius = currentRadius + delta
-    if (newRadius >= MIN_CAMPAIGN_RADIUS && newRadius <= MAX_CAMPAIGN_RADIUS) {
-        $('#campaignModal .campaignMap').data('radius', newRadius)
-        refreshCampaign()
-    }
+function drawCampaignOverlayCircle(airport, radius) {
+    if (typeof AirlineMap === 'undefined') return
+    AirlineMap.drawCircle('campaign-overlay-circle', airport.longitude, airport.latitude, radius * 1000)
 }
 
-function updateCampaignRadiusControl(radius) {
-    if (radius > MIN_CAMPAIGN_RADIUS) {
-        enableButton($("#campaignModal .radiusControl .decrease"))
-    }
-    if (radius < MAX_CAMPAIGN_RADIUS) {
-        enableButton($("#campaignModal .radiusControl .increase"))
-    }
-
-    if (radius <= MIN_CAMPAIGN_RADIUS) {
-        disableButton($("#campaignModal .radiusControl .decrease"), "Min campaign radius at " + MIN_CAMPAIGN_RADIUS + " km" )
-    } else if (radius >= MAX_CAMPAIGN_RADIUS) {
-        disableButton($("#campaignModal .radiusControl .increase"), "Max campaign radius at " + MAX_CAMPAIGN_RADIUS + " km" )
-    }
-}
-
-
-
-function refreshCampaign() {
-    var radius = $('#campaignModal .campaignMap').data('radius')
-    var selectedAirportId = $('#campaignModal .campaignMap').data('selectedAirportId')
-    updateCampaignRadiusControl(radius)
-    $('#campaignModal span.radius').text(radius)
-    $.ajax({
-        type: 'GET',
-        url: "/airlines/" + activeAirline.id + "/campaign-airports/" + selectedAirportId + "?radius=" + radius,
-        contentType: 'application/json; charset=utf-8',
-        dataType: 'json',
-        success: function(result) {
-            populateCampaignMap(result.principalAirport, result.area, result.candidateArea, radius)
-            updateCampaignDetails(result)
-            $('#campaignModal .draftCampaign').hide()
-            $('#campaignModal .campaignDetails').fadeIn(500)
-        },
-        error: function(jqXHR, textStatus, errorThrown) {
-                console.log(JSON.stringify(jqXHR));
-                console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
-        }
-    });
-}
-
-function updateCampaignDetails(campaign) {
-    var $delegateSection = $('#campaignModal div.delegateSection')
-    $('#campaignModal .campaignDetails .principalAirport').text(getAirportText(campaign.principalAirport.city, campaign.principalAirport.iata))
-    $('#campaignModal .campaignDetails .population').text(commaSeparateNumber(campaign.population))
-    $('#campaignModal .campaignDetails .airports').text(campaign.area.length)
-    var delegateLevel = 0
-    $.each($delegateSection.data('originalDelegates'), function(index, delegate) {
-        delegateLevel += delegate.level
-    })
-
-    $('#campaignModal .campaignDetails .delegateLevel').text(delegateLevel)
-    $('#campaignModal .campaignDetails').data('costPerDelegate', campaign.costPerDelegate)
-    $('#campaignModal .campaignDetails .loyaltyBonus').text(campaign.bonus.loyalty)
-
-    //update delegate section
-    var $delegateSection = $('#campaignModal div.delegateSection')
-    $('#campaignModal .campaignDetails .cost').text('$' + commaSeparateNumber($delegateSection.data('assignedDelegateCount') * campaign.costPerDelegate))
-    refreshAssignedDelegates($delegateSection.data('assignedDelegateCount'), '#4a9eed', $delegateSection.find('.assignedDelegatesIcons'))
-
-
-}
-
-function closeCampaignDetails(updated) {
-    if (updated) {
-        updateAirlineDelegateStatus($('#officeCanvas .delegateStatus'))
-    }
-    $('#campaignModal .campaignDetails').fadeOut(500)
+function removeCampaignOverlayCircle() {
+    if (typeof AirlineMap === 'undefined') return
+    AirlineMap.removeCircle('campaign-overlay-circle')
 }

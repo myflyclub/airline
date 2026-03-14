@@ -228,14 +228,16 @@ if (activeAirline) {
             }
 
             var $relationshipDetailsIcon = $("#airportCanvas .openCountryRelationship")
-            $relationshipDetailsIcon.data("relationship", countryData.countryRelationship)
-            $relationshipDetailsIcon.data("title", countryTitle ? countryTitle : {})
             $relationshipDetailsIcon.data("countryCode", airport.countryCode)
+
+            if (!loadedCountriesByCode[airport.countryCode]) loadedCountriesByCode[airport.countryCode] = {}
+            loadedCountriesByCode[airport.countryCode].countryRelationship = countryData.countryRelationship
+            loadedCountriesByCode[airport.countryCode].CountryTitle = countryTitle || {}
 
             if (!baseDetails.baseScale) { //new base
                 document.getElementById('airportBaseDetailsHeading').innerHTML = `Build base`
                 $('#airportDetailsBaseUpkeep').text('0')
-                // First HQ is free; any other new base costs 1 available delegate
+                // First HQ is free; any other new base costs 1
                 if (!activeAirline.headquarterAirport) {
                     $('#airportDetailsBaseDelegatesRequired').text('None')
                 } else {
@@ -995,24 +997,17 @@ function toggleAirportLinks(airport) {
 }
 
 function hideAppealBreakdown() {
-    $('#appealBonusDetailsTooltip').hide()
+    hideMarkupTooltip(document.getElementById('appealBonusDetailsTooltip'))
 }
 
 function showAppealBreakdown($icon, bonusDetails) {
-    var yPos = $icon.offset().top - $(window).scrollTop() + $icon.height()
-    var xPos = $icon.offset().left - $(window).scrollLeft() + $icon.width() - $('#appealBonusDetailsTooltip').width() / 2
-
-    $('#appealBonusDetailsTooltip').css('top', yPos + 'px')
-    $('#appealBonusDetailsTooltip').css('left', xPos + 'px')
-    $('#appealBonusDetailsTooltip').show()
-
-
     $('#appealBonusDetailsTooltip .table .table-row').remove()
     $.each(bonusDetails, function (index, entry) {
         var $row = $('<div class="table-row"><div class="cell" style="width: 70%;">' + entry.description + '</div><div class="cell" style="width: 30%; text-align: right;">+' + entry.value + '</div></div>')
         $row.css('color', 'white')
         $('#appealBonusDetailsTooltip .table').append($row)
     })
+    showMarkupTooltip($icon[0], document.getElementById('appealBonusDetailsTooltip'))
 }
 
 function showSpecializationModal() {

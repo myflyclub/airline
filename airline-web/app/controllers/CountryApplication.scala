@@ -63,7 +63,7 @@ class CountryApplication @Inject()(cc: ControllerComponents) extends AbstractCon
           case Some(airline) =>
             var result = Json.arr()
             val baseCountByCountryCode = airline.getBases().groupBy(_.countryCode).view.mapValues(_.length)
-            val delegatesByCountryCode = airline.getDelegateInfo().busyDelegates.filter(_.assignedTask.getTaskType == DelegateTaskType.COUNTRY).map(_.assignedTask.asInstanceOf[CountryDelegateTask]).groupBy(_.country.countryCode)
+            val delegatesByCountryCode = airline.getManagerInfo().busyManagers.filter(_.assignedTask.getTaskType == ManagerTaskType.COUNTRY).map(_.assignedTask.asInstanceOf[CountryManagerTask]).groupBy(_.country.countryCode)
             val mutualRelationships: Map[String, Int] =
               airline.getCountryCode() match {
                 case Some(homeCountryCode) => CountrySource.getCountryMutualRelationships(homeCountryCode)

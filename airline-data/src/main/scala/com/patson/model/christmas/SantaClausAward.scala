@@ -2,7 +2,7 @@ package com.patson.model.christmas
 
 import com.patson.data.{AirlineSource, AirportSource, ChristmasSource, CycleSource}
 import com.patson.model.christmas.SantaClausAward.{Difficulty, getDifficultyLevel}
-import com.patson.model.{Airline, AirlineAppeal, AirlineBonus, AirlineLedgerEntry, BonusType, DelegateBoostAirlineModifier, LedgerType}
+import com.patson.model.{Airline, AirlineAppeal, AirlineBonus, AirlineLedgerEntry, BonusType, LedgerType}
 import com.patson.util.AirlineCache
 
 abstract class SantaClausAward(santaClausInfo: SantaClausInfo) {
@@ -93,22 +93,8 @@ class ReputationAward(santaClausInfo: SantaClausInfo) extends SantaClausAward(sa
   override val description: String = "Santa Claus will make an appearance on your TV commercial! Boosting your airline reputation by +" + BONUS + " ! (not permanent, reputation will eventually return to normal level)"
 }
 
-
-class DelegateAward(santaClausInfo: SantaClausInfo) extends SantaClausAward(santaClausInfo) {
-  override val getType: SantaClausAwardType.Value = SantaClausAwardType.DELEGATE
-  override def applyAward(): Unit = {
-    AirlineSource.saveAirlineModifier(santaClausInfo.airline.id, DelegateBoostAirlineModifier(amount, duration, CycleSource.loadCycle()))
-  }
-  val amount = 3 * difficultyMultiplier
-  val duration = 52
-
-  override val description: String = s"Santa Claus dispatches his elves to help you! $amount extra delegates for $duration weeks"
-}
-
-
-
 object SantaClausAwardType extends Enumeration {
-  val CASH, SERVICE_QUALITY, HQ_LOYALTY, AIRPORT_LOYALTY, REPUTATION, DELEGATE = Value
+  val CASH, SERVICE_QUALITY, HQ_LOYALTY, AIRPORT_LOYALTY, REPUTATION = Value
 }
 
 object SantaClausAward {
@@ -125,7 +111,6 @@ object SantaClausAward {
       case SantaClausAwardType.HQ_LOYALTY => new HqLoyaltyAward(info)
       case SantaClausAwardType.AIRPORT_LOYALTY => new AirportLoyaltyAward(info)
       case SantaClausAwardType.REPUTATION => new ReputationAward(info)
-      case SantaClausAwardType.DELEGATE => new DelegateAward(info)
     }
   }
 

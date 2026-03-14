@@ -1,6 +1,6 @@
 package com.patson
 
-import com.patson.data.{AirlineSource, AirportAssetSource, DelegateSource}
+import com.patson.data.{AirlineSource, AirportAssetSource, ManagerSource}
 import com.patson.model.Country.CountryCode
 import com.patson.model._
 

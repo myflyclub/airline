@@ -341,3 +341,88 @@ export function flyTo(lng, lat, zoom = 8, options = {}) {
         });
     }
 }
+
+function _createCircleGeoJSON(lng, lat, radiusMeters) {
+    const points = 64;
+    const coords = [];
+    const earthRadius = 6371000;
+    const latRad = lat * Math.PI / 180;
+    const lngRad = lng * Math.PI / 180;
+    const angularDistance = radiusMeters / earthRadius;
+
+    for (let i = 0; i <= points; i++) {
+        const bearing = (i / points) * 2 * Math.PI;
+
+        const newLatRad = Math.asin(
+            Math.sin(latRad) * Math.cos(angularDistance) +
+            Math.cos(latRad) * Math.sin(angularDistance) * Math.cos(bearing)
+        );
+
+        const newLngRad = lngRad + Math.atan2(
+            Math.sin(bearing) * Math.sin(angularDistance) * Math.cos(latRad),
+            Math.cos(angularDistance) - Math.sin(latRad) * Math.sin(newLatRad)
+        );
+
+        coords.push([
+            newLngRad * 180 / Math.PI,
+            newLatRad * 180 / Math.PI
+        ]);
+    }
+
+    return {
+        type: 'Feature',
+        properties: {},
+        geometry: {
+            type: 'Polygon',
+            coordinates: [coords]
+        }
+    };
+}
+
+/**
+ * Draw a filled circle on the map identified by a string id.
+ * Safe to call multiple times — removes any existing circle with the same id first.
+ * @param {string} id - Unique identifier (used as source id and layer id prefix)
+ * @param {number} lng - Center longitude
+ * @param {number} lat - Center latitude
+ * @param {number} radiusMeters - Radius in metres
+ * @param {Object} options - Optional: color, fillOpacity, lineWidth, lineOpacity
+ */
+export function drawCircle(id, lng, lat, radiusMeters, options = {}) {
+    if (!state.map) return;
+    if (!state.map.isStyleLoaded()) {
+        state.map.once('style.load', () => drawCircle(id, lng, lat, radiusMeters, options));
+        return;
+    }
+    removeCircle(id);
+    try {
+        const geo = _createCircleGeoJSON(lng, lat, radiusMeters);
+        const color = options.color || '#32CF47';
+        state.map.addSource(id, { type: 'geojson', data: geo });
+        state.map.addLayer({
+            id: id + '-fill', type: 'fill', source: id,
+            paint: { 'fill-color': color, 'fill-opacity': options.fillOpacity ?? 0.2 }
+        });
+        state.map.addLayer({
+            id: id + '-outline', type: 'line', source: id,
+            paint: { 'line-color': color, 'line-width': options.lineWidth ?? 2, 'line-opacity': options.lineOpacity ?? 0.6 }
+        });
+    } catch (e) {
+        console.error('drawCircle failed:', e);
+    }
+}
+
+/**
+ * Remove a circle previously added with drawCircle().
+ * @param {string} id - The same id used in drawCircle()
+ */
+export function removeCircle(id) {
+    if (!state.map) return;
+    try {
+        if (state.map.getLayer(id + '-fill')) state.map.removeLayer(id + '-fill');
+        if (state.map.getLayer(id + '-outline')) state.map.removeLayer(id + '-outline');
+        if (state.map.getSource(id)) state.map.removeSource(id);
+    } catch (e) {
+        console.warn('removeCircle failed:', e);
+    }
+}

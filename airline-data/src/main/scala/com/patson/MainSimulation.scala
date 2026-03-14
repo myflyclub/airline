@@ -117,8 +117,8 @@ object MainSimulation extends App {
     println("Loan simulation")
     LoanInterestRateSimulation.simulate(currentCycle) //simulate at the beginning of a new cycle
     //refresh delegates
-    println("Delegate simulation")
-    DelegateSimulation.simulate(currentCycle)
+    println("Manager simulation")
+    ManagerSimulation.simulate(currentCycle)
 
     println("Post cycle link simulation")
     LinkSimulation.simulatePostCycle(currentCycle)
@@ -163,7 +163,7 @@ object MainSimulation extends App {
 
   var status : SimulationStatus.Value = SimulationStatus.WAITING_CYCLE_START
   object SimulationStatus extends Enumeration {
-    type DelegateTaskType = Value
+    type ManagerTaskType = Value
     val IN_PROGRESS, WAITING_CYCLE_START = Value
   }
 

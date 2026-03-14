@@ -245,7 +245,7 @@
 										<span id="planLinkToCountryTitle"><img class="airlineTitleIcon svg" style='display: none;'>&nbsp;<span class="airlineTitle titleCue"></span></span>,
 										<span id="planLinkToCountryRelationship">
 												<span class="total"></span>
-												<img class="pb-1 img-button svg hover-rotate detailsIcon titleCue" src='@routes.Assets.versioned("images/icons/gear.svg")' title='Manage Relationship' class="clickable detailsIcon titleCue" onclick="showRelationshipDetailsModal($(this).data('relationship'), $(this).data('title'), $(this).data('countryCode'))" style="vertical-align: middle;">
+												<img class="pb-1 img-button svg hover-rotate detailsIcon titleCue" src='@routes.Assets.versioned("images/icons/gear.svg")' title='Manage Relationship' style="vertical-align: middle;">
 											</span>
 									</p></div>
 								</div>
@@ -614,6 +614,54 @@
 	<!-- 				end extended panel -->
 				   </div>
 
+                    <div id="campaignOverlayPanel" class="maplibregl-popup-content" style="display:none; position:absolute; top:70px; left:60px;">
+                    
+                        <button class="close-button absolute top-0 right-0" type="button" onclick="closeCampaignOverlay()" aria-label="Close campaign popup">×</button>
+                        <h4 class="campaignOverlayAirportName pb-2"></h4>
+                    
+                        <!-- Radius control -->
+                        <div class="table">
+                            <div class="table-row">
+                                <div class="label">Radius</div>
+                                <div class="value">
+                                    <div class="flex-row items-center">
+                                        <span><span class="campaignOverlayRadius"></span> km</span>
+                                        <div class="campaignOverlayIncrease" onclick="changeCampaignOverlayRadius(50)">
+                                            <img src='@routes.Assets.versioned("images/icons/plus.svg")' class='img-button svg svg-monochrome' width="16">
+                                        </div>
+                                        <div class="campaignOverlayDecrease" onclick="changeCampaignOverlayRadius(-50)">
+                                            <img src='@routes.Assets.versioned("images/icons/minus.svg")' class='img-button svg svg-monochrome' width="16">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="table-row">
+                                <div class="label">Population</div>
+                                <div class="value campaignOverlayPopulation"></div>
+                            </div>
+                            <div class="table-row">
+                                <div class="label">Weekly Cost</div>
+                                <div class="value campaignOverlayCost"></div>
+                            </div>
+                            <div class="table-row">
+                                <div class="label">Loyalty Bonus</div>
+                                <div class="value campaignOverlayLoyalty"></div>
+                            </div>
+                        </div>
+                    
+                        <!-- Manager assignment -->
+                        <div class="pt-2">
+                            <div id="campaignOverlayManagerDisplay"></div>
+                        </div>
+                    
+                        <!-- Action buttons -->
+                        <div class="flex-row pt-4">
+                            <button class="button create save campaignOverlaySave" onclick="saveCampaignOverlay()">Create</button>
+                            <button class="button update save campaignOverlaySave" onclick="saveCampaignOverlay()">Update</button>
+                            <button class="button delete campaignOverlayDelete" onclick="deleteCampaignOverlay()">Delete</button>
+                        </div>
+                    </div>
+
                     <div id="searchCanvas" class="vertical-group sidePanel mapOverlayPanel" style="display: none;">
                         <div class="section mainSection">
                             <div class="titlesContainer">
@@ -650,8 +698,7 @@
                                 </div>
                     
                                 <div class="flex-row gap-4 mt-4 px-8">
-                                    <button type="button" class="button search" tabindex="103" onkeypress="searchButtonKeyPress(event, $(this))"
-                                        onclick="searchAction(document.querySelector('div.searchFieldContainer input.fromAirport').dataset.selectedid, document.querySelector('div.searchFieldContainer input.toAirport').dataset.selectedid)">Search</button>
+                                    <button type="button" class="button search" tabindex="103" onkeypress="searchButtonKeyPress(event, $(this))" onclick="searchAction(document.querySelector('div.searchFieldContainer input.fromAirport').dataset.selectedid, document.querySelector('div.searchFieldContainer input.toAirport').dataset.selectedid)">Search</button>
                                     <img width="20px" class="img-button svg mr-auto" onclick="resetSearchInput($(this))" src='@routes.Assets.versioned("images/icons/reset.svg")' title="reset">
                                 </div>
                             </div>

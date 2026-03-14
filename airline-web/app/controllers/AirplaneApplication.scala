@@ -11,7 +11,7 @@ import play.api.mvc._
 import scala.collection.mutable.ListBuffer
 import controllers.AuthenticationObject.AuthenticatedAirline
 import com.patson.model.airplane.Model.Category
-import com.patson.util.{AirplaneOwnershipCache, AirplaneModelCache, CountryCache}
+import com.patson.util.{AirplaneOwnershipCache, AirplaneModelCache}
 
 import javax.inject.Inject
 import scala.collection.{MapView, mutable}
@@ -213,6 +213,12 @@ class AirplaneApplication @Inject()(cc: ControllerComponents) extends AbstractCo
           ("maxManagerPriceDiscountPct" -> JsNumber(BigDecimal(maxManagerPct).setScale(1, BigDecimal.RoundingMode.HALF_UP))) +
           ("discountPerManagerLevelPct" -> JsNumber(BigDecimal(maxManagerPct * 0.125).setScale(1, BigDecimal.RoundingMode.HALF_UP)))
       }
+      val maxManagerTimePct = ModelDiscount.computeMaxLowDemandConstructionTimeDiscountPct(model, total)
+      if (maxManagerTimePct > 0) {
+        baseJson = baseJson +
+          ("maxManagerConstructionTimeDiscountPct" -> JsNumber(BigDecimal(maxManagerTimePct).setScale(1, BigDecimal.RoundingMode.HALF_UP))) +
+          ("discountPerManagerConstructionTimeLevelPct" -> JsNumber(BigDecimal(maxManagerTimePct * 0.125).setScale(1, BigDecimal.RoundingMode.HALF_UP)))
+      }
 
       baseJson
     }
@@ -231,7 +237,7 @@ class AirplaneApplication @Inject()(cc: ControllerComponents) extends AbstractCo
 
 
     models.map { model =>
-      (model, getRejection(model, 1, countryRelations(model.countryCode), ownedModels, airline))
+      (model, getRejection(model, 1, countryRelations(model.countryCode), ownedModels, airline, checkBalance = false))
     }.toMap
 
   }
@@ -243,17 +249,16 @@ class AirplaneApplication @Inject()(cc: ControllerComponents) extends AbstractCo
     getRejection(model, quantity, relationship, ownedModels, airline)
   }
 
-  def getRejection(model: Model, quantity: Int, relationship: AirlineCountryRelationship, ownedModels: Set[Model], airline: Airline): Option[String] = {
+  def getRejection(model: Model, quantity: Int, relationship: AirlineCountryRelationship, ownedModels: Set[Model], airline: Airline, checkBalance: Boolean = true): Option[String] = {
     if (quantity > 10) {
       return Some("Cannot order more than 10 planes in one order")
     }
     if (airline.getHeadQuarter().isEmpty) { //no HQ
       return Some("Must build HQs before purchasing any airplanes")
     }
-    if (!model.purchasableWithRelationship(relationship.relationship)) {
-      return Some(s"The manufacturer refuses to sell " + model.name + s" to your airline until your relationship with ${CountryCache.getCountry(model.countryCode).get.name} is improved to at least ${Model.BUY_RELATIONSHIP_THRESHOLD}")
-    }
 
+    val airlineValidations = model.validateForAirline(airline, relationship.relationship)
+    if (airlineValidations.nonEmpty) return Some(airlineValidations.head)
 
     val ownedModelFamilies = ownedModels.map(_.family)
 
@@ -262,15 +267,12 @@ class AirplaneApplication @Inject()(cc: ControllerComponents) extends AbstractCo
       return Some("Can only own up to " + airline.airlineGrade.getModelFamilyLimit + " different airplane " + familyToken + " at current airline grade")
     }
 
-    val discountedModel = model.applyDiscount(ModelDiscount.getCombinedDiscountsByModelId(airline.id, model.id))
-    val cost: Long = discountedModel.price * quantity
-    if (cost > airline.getBalance()) {
-      return Some(s"Not enough cash to purchase $quantity ${model.name} for $cost")
-    }
-    if (airline.airlineType == RegionalAirline && model.airplaneTypeSize > RegionalAirline.modelMaxSize) {
-      return Some(s"Regional airline cannot buy this large of aircraft")
-    } else if (airline.airlineType == DiscountAirline && model.quality == 10) {
-      return Some(s"Discount airline cannot buy 5 star aircraft")
+    if (checkBalance) {
+      val discountedModel = model.applyDiscount(ModelDiscount.getCombinedDiscountsByModelId(airline.id, model.id))
+      val cost: Long = discountedModel.price * quantity
+      if (cost > airline.getBalance()) {
+        return Some(s"Not enough cash to purchase $quantity ${model.name} for $cost")
+      }
     }
 
     None
@@ -281,16 +283,9 @@ class AirplaneApplication @Inject()(cc: ControllerComponents) extends AbstractCo
       return usedAirplanes.map((_, "Must build HQs before purchasing any airplanes")).toMap
     }
 
-    if (airline.airlineType == RegionalAirline && model.airplaneTypeSize > RegionalAirline.modelMaxSize) {
-      return usedAirplanes.map((_, s"Regional airline cannot buy this large of aircraft")).toMap
-    } else if (airline.airlineType == DiscountAirline && model.quality == 10) {
-      return usedAirplanes.map((_, s"Discount airline cannot buy 5 star aircraft")).toMap
-    }
-
-    val relationship = AirlineCountryRelationship.getAirlineCountryRelationship(model.countryCode, airline)
-    if (!model.purchasableWithRelationship(relationship.relationship)) {
-      val rejection = s"Cannot buy used airplane of " + model.name + s" until your relationship with ${CountryCache.getCountry(model.countryCode).get.name} is improved to at least ${Model.BUY_RELATIONSHIP_THRESHOLD}"
-      return usedAirplanes.map((_, rejection)).toMap
+    val airlineValidations = model.validateForAirline(airline)
+    if (airlineValidations.nonEmpty) {
+      return usedAirplanes.map((_, airlineValidations.head)).toMap
     }
 
     val ownedModels = AirplaneOwnershipCache.getOwnership(airline.id).map(_.model).toSet
@@ -961,23 +956,4 @@ class AirplaneApplication @Inject()(cc: ControllerComponents) extends AbstractCo
 }
 
 object AirplaneApplication {
-
-  def validateModelForAirline(model: Model, airline: Airline): List[String] = {
-    val reasons = ListBuffer[String]()
-
-    val relationship = AirlineCountryRelationship.getAirlineCountryRelationship(model.countryCode, airline).relationship
-    if (!model.purchasableWithRelationship(relationship)) {
-      reasons += s"Airline relationship with ${model.manufacturer.name} (${model.countryCode}) is insufficient to operate ${model.name}."
-    }
-
-    if (model.quality == 10 && airline.airlineType != LuxuryAirline) {
-      reasons += s"Only luxury airlines can purchase 5 star aircraft."
-    }
-
-    if (airline.airlineType == RegionalAirline && model.airplaneTypeSize > RegionalAirline.modelMaxSize) {
-      reasons += s"Regional airline cannot purchase this plane type."
-    }
-
-    reasons.toList
-  }
 }

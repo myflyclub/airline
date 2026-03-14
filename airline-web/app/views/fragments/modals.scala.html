@@ -27,41 +27,6 @@
 			  </div>
 		  </div>
 	  </div>
-  <div id="airplaneSummaryTooltip" class="customTooltip" style="display: none; position: fixed; z-index: 12;">
-	  <div class="tooltiptext below">
-		  <div class="table" style="min-width: 150px;">
-			  <div class="table">
-				  <div class="table-row">
-					  <div class="cell"><p>Capacity:</p></div>
-					  <div class="cell capacity"></div>
-				  </div>
-				  <div class="table-row">
-					  <div class="cell"><p>Range:</p></div>
-					  <div class="cell"><span class="range"></span>&nbsp;km</div>
-				  </div>
-				  <div class="table-row">
-					  <div class="cell"><p>Lifespan:</p></div>
-					  <div class="cell"><span class="lifespan"></span>&nbsp;years</div>
-				  </div>
-				  <div class="table-row">
-					  <div class="cell"><p>Condition:</p></div>
-					  <div class="cell"><span class="condition"></span>%</div>
-				  </div>
-				  <div class="table-row">
-					  <div class="cell"><p>Value:</p></div>
-					  <div class="cell">$<span class="airplaneValue"></span></div>
-				  </div>
-			  </div>
-		  </div>
-	  </div>
-  </div>
-
-  <div id="airlineTypeTooltip" class="customTooltip" style="display: none; position: fixed; z-index: 100;">
-	  <div class="tooltiptext below">
-		  <h4 class="typeLabel"></h4>
-		  <ul class="ruleList" style="list-style: disc; padding-left: 16px;"></ul>
-	  </div>
-  </div>
 
   <div id="satisfactionDetailsTooltip" class="customTooltip" style="display: none; position: fixed; z-index: 100;">
 	  <div class="tooltiptext below">
@@ -874,11 +839,9 @@
             <div class="flex-row pt-4">
                 <p class="text-lg strong">Negotiation Difficulty:&nbsp;
                     <span class="negotiationDifficultyTotal"></span>
-                    <img class="clickable info svg" src='@routes.Assets.versioned("/images/icons/information.svg")'
-                        onmouseover="$('#negotiationDifficultyModal').fadeIn(500)">
+                    <img class="img-button info svg" src='@routes.Assets.versioned("/images/icons/information.svg")' onmouseover="$('#negotiationDifficultyModal').fadeIn(500)">
                     <span class="error">
-                        <img class="clickable" src='@routes.Assets.versioned("/images/icons/24px/cross-circle.png")'
-                            onmouseover="$('#negotiationDifficultyModal').fadeIn(500)" style="display: hidden;">
+                        <img class="img-button info svg svg-monochrome svg-hover-red" src='@routes.Assets.versioned("/images/icons/cross.svg")' onmouseover="$('#negotiationDifficultyModal').fadeIn(500)" style="display: hidden;">
                     </span>
                 </p>
             </div>
@@ -1552,7 +1515,7 @@
 	  <div id="airlineCountryRelationshipModal" class="modal">
 		  <div class="modal-content" style="width : 800px;">
 			  <span class="close" onclick="closeModal($('#airlineCountryRelationshipModal'))">&times;</span>
-			  <h2 style="margin-bottom: 20px">Relationship Management with&nbsp;<span class="country"></span></h2>
+			  <h2 style="margin-bottom: 20px">Relationship Management with <span class="country"></span></h2>
 			  <h4 style="margin-bottom: 10px; margin-top: 30px;">Airline Title</h4>
 			  <div class="section">
 				<div class="currentTitle" style="margin-bottom: 20px; display: flex;"><span>Current: </span><img class="titleIcon svg">&nbsp;<span class="titleDescription"></span></div>
@@ -1571,11 +1534,7 @@
 
 			  <h4 style="margin-bottom: 10px; margin-top: 30px;">Managers<span class="delegatesTooltip"><img class="info svg" src='@routes.Assets.versioned("/images/icons/information.svg")'></span></h4>
 			  <div class="delegateSection section">
-				  <div class="delegateStatus">
-
-				  </div>
-
-				  <div style="width: 100%; margin-top: 8px; margin-bottom: 10px" class="delegatesAssignment table data">
+				  <div style="width: 100%; margin-bottom: 10px" class="delegatesAssignment table data">
 					  <div class="table-header">
 						  <div class="cell">Assigned managers to develop relationship</div>
 					  </div>
@@ -1600,7 +1559,7 @@
 		  <h2 style="margin-bottom: 20px">Campaign Management</h2>
 			<div class="flex-row pb-4">
 				<h4>Active Campaigns</h4>
-				<img class="clickable addCampaign" title="Draft New Campaign" src='@routes.Assets.versioned("/images/icons/24px/plus-circle.png")' onclick="toggleDraftCampaign()" style="margin-left: 5px;" width="24" height="24">
+				<img class="addCampaign img-button svg svg-monochrome svg-hover-green" title="Draft New Campaign" src='@routes.Assets.versioned("/images/icons/plus.svg")' onclick="toggleDraftCampaign()" width="24" height="24">
 				<div class="draftCampaign" style="display:none; text-align: center;">
 					<div class="searchInput" data-search-type="airport">
 						<input type="text" tabindex="101" class="airport" placeholder="Airport/City name" autocomplete="no" oninput="searchChange($(this))" onfocus="$(this).select();" onfocusout="searchFocusOut($(this))" onkeyup="searchKeyUp(event, $(this))" onkeydown="searchKeyDown(event, $(this))">
@@ -1681,20 +1640,8 @@
 										<div class="value cost"></div>
 									</div>
 								</div>
-								<div style="width: 100%; margin-top: 8px;" class="delegateSection delegatesAssignment table data">
-									<div class="table-header">
-										<div class="cell"style="width: 80%">Assigned Managers for Campaign</div>
-										<div class="cell"style="width: 20%">&nbsp;</div>
-									</div>
-									<div class="table-row">
-										<div class="cell">
-											<div style="float: left" class="assignedDelegatesIcons"></div>
-										</div>
-										<div class="cell">
-											<div style="float: right" class="clickable" onclick="changeCampaignDelegateCount(-1)"><img src='@routes.Assets.versioned("/images/icons/minus-button.png")' title="Minus"/></div>
-											<div style="float: right" class="clickable" onclick="changeCampaignDelegateCount(1)"><img src='@routes.Assets.versioned("/images/icons/plus-button.png")' title="Add"/></div>
-										</div>
-									</div>
+								<div style="width: 100%; margin-top: 8px;" class="delegateSection">
+									<div id="campaignDelegatesDisplay"></div>
 								</div>
 								<p>Each manager level provides <span class="loyaltyBonus"></span> loyalty. Manager starts at level 0 and progresses over time. Hover over each manager above to see details.</p>
 							</div>
@@ -1702,8 +1649,8 @@
 					</div>
 					<div style="clear: both;"></div>
 					<div style="display: flex; align-items: center;">
-						<button type="button" class="button create save" onclick="createCampaign()">Create</button>
-						<button type="button" class="button update save" onclick="updateCampaign()">Update</button>
+						<button type="button" class="button create save" onclick="saveCampaign()">Create</button>
+						<button type="button" class="button update save" onclick="saveCampaign()">Update</button>
 						<button type="button" class="button delete" onclick="deleteCampaign()">Delete</button>
 						<button type="button" class="button cancel" onclick="closeCampaignDetails()">Cancel</button>
 					</div>
@@ -1948,7 +1895,7 @@
   <div id="settingsModal" class="modal">
 	  <div class="modal-content"  style="width : 400px; max-width: 80%">
 		  <span class="close" onclick="closeModal($('#settingsModal'))">&times;</span>
-		  <h4 class="pb-4">Settings</h4>
+		  <h3 class="pb-4">Style Settings</h3>
 		  <div class="table" style="width: 90%;">
 			  <div class="table-row pb-4">
 				  <div class="cell">
@@ -1970,8 +1917,8 @@
 				  <div class="cell">
 					  <h5>Default Wallpaper</h5>
 				  </div>
-				  <div class="cell" style="vertical-align:middle; text-align:center;">
-					  <img style="margin: 4px" class="clickable" src='@routes.Assets.versioned("/images/icons/24px/arrow-circle-double.png")' onclick="changeWallpaper()">
+				  <div class="cell" style="text-align:left;">
+					  <img class="svg img-button" src='@routes.Assets.versioned("/images/icons/reset.svg")' onclick="changeWallpaper()" width="20">
 				  </div>
 			  </div>
 		  </div>
@@ -2058,5 +2005,23 @@
           </ul>
 	  </div>
   </div>
+
+<div id="managerModal" class="modal">
+  <div class="modal-content" style="width: 900px;">
+    <span class="close" onclick="closeModal($('#managerModal'))">&times;</span>
+    <h2>Managers</h2>
+    <div class="table data" id="managerModalTable">
+      <div class="table-header">
+        <div class="cell" style="width: 25%">Task</div>
+        <div class="cell" style="width: 10%">Level</div>
+        <div class="cell" style="width: 10%">Promotion</div>
+        <div class="cell" style="width: 40%">Details</div>
+        <div class="cell" style="width: 10%">Weekly Cost</div>
+        <div class="cell" style="width: 5%"></div>
+      </div>
+    </div>
+    <div id="managerModalEmpty" class="notice" style="display:none">No managers currently assigned to tasks.</div>
+  </div>
+</div>
 
 <!--  end profiles-->

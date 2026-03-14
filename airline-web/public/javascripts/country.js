@@ -73,7 +73,7 @@ function updateCountryTable(sortProperty, sortOrder, selectedCountry) {
 	$.each(countries, function(index, country) {
 		var row = $("<div class='table-row clickable' data-country-code='" + country.countryCode + "' onclick=\"selectCountry('" + country.countryCode + "', false)\"></div>")
         row.append($("<div class='cell'>").append(
-                getCountryFlagImg(country.countryCode, "14px"), " " + country.name
+            getCountryFlagImg(country.countryCode, "16px"), " " + country.name
         ));
         row.append("<div class='cell' align='right'>" + country.airportPopulation.toLocaleString() + "</div>")
 		row.append("<div class='cell' align='right'>$" + country.income.toLocaleString() + "</div>")
@@ -172,8 +172,6 @@ async function loadCountryDetails(countryCode) {
 
             var title = loadedCountriesByCode[countryCode].CountryTitle
             var $relationshipDetailsIcon = $("#countryDetails div.relationship .detailsIcon")
-            $relationshipDetailsIcon.data("relationship", countryRelationship)
-            $relationshipDetailsIcon.data("title", title)
             $relationshipDetailsIcon.data("countryCode", countryCode)
             $relationshipDetailsIcon.show()
 
@@ -359,9 +357,13 @@ async function updateTitleProgressionInfo(currentAirlineTitle, countryCode) {
     }
 }
 
-function showRelationshipDetailsModal(relationship, title, countryCode, closeCallback) {
+function showRelationshipDetailsModal(countryCode, closeCallback) {
+    var country = loadedCountriesByCode[countryCode]
+    var relationship = country.countryRelationship
+    var title = country.CountryTitle || {}
+
     $('#airlineCountryRelationshipModal .country').empty()
-    $('#airlineCountryRelationshipModal .country').append(getCountryFlagImg(countryCode) + loadedCountriesByCode[countryCode].name)
+    $('#airlineCountryRelationshipModal .country').append(getCountryFlagImg(countryCode, "16px") + country.name)
 
     updateAirlineTitle(title, $('#airlineCountryRelationshipModal .currentTitle .titleIcon'), $('#airlineCountryRelationshipModal .currentTitle .titleDescription'))
     updateTitleProgressionInfo(title, countryCode)
@@ -393,7 +395,7 @@ function updateCountryDelegates() {
     var assignedDelegateCount = $delegateSection.data('assignedDelegateCount')
     $.ajax({
         type: 'POST',
-        url: "/delegates/airline/" + activeAirline.id + "/country/" + countryCode,
+        url: "/managers/airline/" + activeAirline.id + "/country/" + countryCode,
         contentType: 'application/json; charset=utf-8',
         data:  JSON.stringify({ 'delegateCount' : assignedDelegateCount }) ,
         dataType: 'json',
@@ -411,70 +413,55 @@ function updateCountryDelegates() {
 function renderCountryDelegates(assignedCount) {
     var $delegateSection = $('#airlineCountryRelationshipModal .delegateSection')
     var availableCount = $delegateSection.data('availableDelegates') || 0
-    var $display = $('#countryDelegatesDisplay')
-    $display.empty()
+    var original = $delegateSection.data('originalDelegates') || []
 
-    var $row = $('<div style="display:flex; align-items:center; gap:4px; flex-wrap:wrap;"></div>')
-    var $icons = $('<div style="display:flex; align-items:center; flex-wrap:wrap; gap:2px;"></div>')
+    // Use rich objects for already-fetched delegates; synthesise a level-0 entry for each new addition
+    var managers = original.slice(0, assignedCount)
+    while (managers.length < assignedCount) {
+        managers.push({ taskType: 'COUNTRY', levelDescription: 'Trainee', taskDescription: 'New assignment · pending confirmation', completed: false, nextLevelCycleCount: 4 })
+    }
 
-    var $addBtn = $('<img class="img-button svg" src="/assets/images/icons/plus.svg" style="width:14px; height:14px;" title="Add delegate">')
-    if (availableCount <= 0) {
-        $addBtn.css('opacity', '0.35').attr('title', 'No delegates available')
-    } else {
-        $addBtn.css('cursor', 'pointer').on('click', function() {
+    renderManagerAssignment({
+        container: '#countryDelegatesDisplay',
+        managers: managers,
+        availableCount: availableCount,
+        headerText: 'Managers (' + availableCount + ' available)',
+        onAdd: function() {
             var current = $delegateSection.data('assignedDelegateCount')
             var avail = $delegateSection.data('availableDelegates')
             $delegateSection.data('assignedDelegateCount', current + 1)
             $delegateSection.data('availableDelegates', avail - 1)
             renderCountryDelegates(current + 1)
-        })
-    }
-
-    var $removeBtn = $('<img class="img-button svg" src="/assets/images/icons/minus.svg" style="width:14px; height:14px;" title="Remove delegate">')
-    if (assignedCount <= 0) {
-        $removeBtn.css('opacity', '0.35')
-    } else {
-        $removeBtn.css('cursor', 'pointer').on('click', function() {
+        },
+        onRemove: function() {
             var current = $delegateSection.data('assignedDelegateCount')
             var avail = $delegateSection.data('availableDelegates')
             $delegateSection.data('assignedDelegateCount', current - 1)
             $delegateSection.data('availableDelegates', avail + 1)
             renderCountryDelegates(current - 1)
-        })
-    }
-
-    $row.append($icons).append($addBtn).append($removeBtn)
-    $display.append($row)
-    refreshAssignedDelegates(assignedCount, '#4a9eed', $icons)
+        }
+    })
 }
 
 function getCountryDelegatesSummary(countryCode) {
-    $('#airlineCountryRelationshipModal div.delegateStatus').empty()
     var $delegateSection = $('#airlineCountryRelationshipModal .delegateSection')
     $delegateSection.removeData('assignedDelegateCount')
     $delegateSection.removeData('originalDelegates')
     $delegateSection.data("countryCode", countryCode)
 
-    updateAirlineDelegateStatus($('#airlineCountryRelationshipModal div.delegateStatus'), function(delegateInfo) {
-        $delegateSection.data("availableDelegates", delegateInfo.permanentAvailableCount)
-        if ($delegateSection.data('assignedDelegateCount') !== undefined) {
-            renderCountryDelegates($delegateSection.data('assignedDelegateCount'))
-        }
-    })
-
 	$.ajax({
         type: 'GET',
-        url: "/delegates/airline/" + activeAirline.id + "/country/" + countryCode,
+        url: "/managers/airline/" + activeAirline.id + "/country/" + countryCode,
         contentType: 'application/json; charset=utf-8',
         dataType: 'json',
         success: function(result) {
             $('#airlineCountryRelationshipModal span.delegateMultiplier').text(result.multiplier)
-            $('#airlineCountryRelationshipModal span.delegatesRequired').text(result.delegatesRequired)
 
             var countryDelegates = result.delegates
             countryDelegates.sort(function(a, b) { return a.startCycle - b.startCycle })
             $delegateSection.data('originalDelegates', countryDelegates)
             $delegateSection.data('assignedDelegateCount', countryDelegates.length)
+            $delegateSection.data('availableDelegates', result.availableCount)
 
             renderCountryDelegates(countryDelegates.length)
         },
@@ -484,3 +471,19 @@ function getCountryDelegatesSummary(countryCode) {
         }
     });
 }
+
+// Delegated click handlers for showRelationshipDetailsModal
+$(document).on('click', '#countryDetails div.relationship .detailsIcon', function() {
+    var countryCode = $(this).data('countryCode')
+    showRelationshipDetailsModal(countryCode, function() { page.show('/country/' + countryCode) })
+})
+
+$(document).on('click', '#airportCanvas .openCountryRelationship', function() {
+    var countryCode = $(this).data('countryCode')
+    showRelationshipDetailsModal(countryCode, function() { page('/airport/' + activeAirport.iata) })
+})
+
+$(document).on('click', '#planLinkToCountryRelationship .detailsIcon', function() {
+    var countryCode = $(this).data('countryCode')
+    showRelationshipDetailsModal(countryCode)
+})

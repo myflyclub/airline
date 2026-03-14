@@ -3,7 +3,7 @@ package controllers
 import com.patson.{AirportSimulation, DemandGenerator, LinkSimulation}
 import com.patson.data._
 import com.patson.model.Scheduling.{TimeSlot, TimeSlotStatus}
-import com.patson.model.airplane.{Airplane, AirplaneConfiguration, Model}
+import com.patson.model.airplane.{Airplane, AirplaneConfiguration, Model, ModelDiscount}
 import com.patson.model.{Link, _}
 import com.patson.model.event.Olympics
 import com.patson.util.{AirlineCache, AirplaneOwnershipCache, AirportCache, AirportStatisticsCache, ChampionUtil}
@@ -239,7 +239,7 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
         val tooltip_lounge = List(
           s"To get lounge approval, your alliance must be in the top ${dummyLounge.getActiveRankingThreshold} by premium passenger count and you must have the most premium passengers in your alliance.",
           "Premium passengers will pay higher ticket prices if you have a lounge",
-          "Lounges can be upgraded to level 4; base levels 3, 6, 9, 12 required"
+          "Lounges can be upgraded to level 5; base levels 2, 4, 6, 8, and 10 required"
         )
 
         Ok(
@@ -530,6 +530,8 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
       "congestion" -> JsArray(Airport.TOOLTIP_CONGESTION.map(JsString(_))),
       "stock_eps" -> JsArray(StockModel.TOOLTIP_STOCK_EPS.map(JsString(_))),
       "stock_pask" -> JsArray(StockModel.TOOLTIP_STOCK_PASK.map(JsString(_))),
+      "manager" -> JsArray(Manager.TOOLTIP.map(JsString(_))),
+      "model_discount" -> JsArray(ModelDiscount.TOOLTIP.map(JsString(_))),
     )
 
     Ok(tooltips)

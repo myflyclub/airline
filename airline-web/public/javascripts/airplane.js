@@ -929,7 +929,7 @@ var loadedAircraftModelManagers = []
 function loadAircraftModelManagers(model) {
     $.ajax({
         type: 'GET',
-        url: "/delegates/airline/" + activeAirline.id + "/aircraft-model/" + model.id,
+        url: "/managers/airline/" + activeAirline.id + "/aircraft-model/" + model.id,
         contentType: 'application/json; charset=utf-8',
         dataType: 'json',
         success: function(result) {
@@ -943,49 +943,48 @@ function loadAircraftModelManagers(model) {
 }
 
 function renderAircraftModelManagers(modelId, managers, availableCount, maxManagers) {
-    var $display = $('#aircraftManagersDisplay')
-    $display.empty()
-
-    var $row = $('<div style="display:flex; align-items:center; gap:4px; flex-wrap:wrap;"></div>')
-    var $icons = $('<div style="display:flex; align-items:center; flex-wrap:wrap; gap:2px;"></div>')
-
-    var $addBtn = $('<img class="img-button svg svg-hover-red svg-monochrome" src="/assets/images/icons/plus.svg" style="width:14px; height:14px;" title="Assign manager">')
-    if (managers.length >= maxManagers) {
-        $addBtn.css('opacity', '0.35').attr('title', 'Maximum managers reached')
-    } else if (availableCount <= 0) {
-        $addBtn.css('opacity', '0.35').attr('title', 'No delegates available')
-    } else {
-        $addBtn.css('cursor', 'pointer').on('click', function() { addAircraftModelManager(modelId) })
-    }
-
-    var $removeBtn = $('<img class="img-button svg svg-hover-green svg-monochrome" src="/assets/images/icons/minus.svg" style="width:14px; height:14px;" title="Remove manager">')
-    if (managers.length <= 0) {
-        $removeBtn.css('opacity', '0.35')
-    } else {
-        $removeBtn.css('cursor', 'pointer').on('click', function() { removeAircraftModelManager(modelId) })
-    }
-
-    $row.append($icons).append($addBtn).append($removeBtn)
-    $display.append($row)
-    refreshAssignedDelegates(managers.length, '#4a9eed', $icons)
-
-    // Discount projection info
     var model = loadedModelsById[modelId]
-    var maxPct = (model && model.maxManagerPriceDiscountPct) || 0
-    if (maxPct > 0) {
-        var perLevelPct = model.discountPerManagerLevelPct || 0
-        var totalLevel = managers.reduce(function(sum, m) { return sum + m.level }, 0)
-        var currentPct = Math.round(maxPct * Math.min(1.0, totalLevel * 0.125))
-        var $info = $('<div class="text-xxs opacity-70 pt-1"></div>')
-        $info.text('Discount: ' + currentPct + '% (max ' + maxPct + '%, +' + perLevelPct.toFixed(1) + '%/level)')
-        $display.append($info)
+    var totalLevel = managers.reduce(function(sum, m) { return sum + m.level }, 0)
+    var multiplier = Math.min(1.0, totalLevel * 0.125)
+
+    var $extraInfo = null
+    var lines = []
+
+    var maxPricePct = (model && model.maxManagerPriceDiscountPct) || 0
+    if (maxPricePct > 0) {
+        var perPriceLevelPct = model.discountPerManagerLevelPct || 0
+        var currentPricePct = Math.round(maxPricePct * multiplier)
+        lines.push('Price: ' + currentPricePct + '% (max ' + maxPricePct + '%, +' + perPriceLevelPct.toFixed(1) + '%/level)')
     }
+
+    var maxTimePct = (model && model.maxManagerConstructionTimeDiscountPct) || 0
+    if (maxTimePct > 0) {
+        var perTimeLevelPct = model.discountPerManagerConstructionTimeLevelPct || 0
+        var currentTimePct = Math.round(maxTimePct * multiplier)
+        lines.push('Delivery: ' + currentTimePct + '% (max ' + maxTimePct + '%, +' + perTimeLevelPct.toFixed(1) + '%/level)')
+    }
+
+    if (lines.length > 0) {
+        $extraInfo = $('<div class="text-xxs opacity-70 pt-1"></div>')
+        lines.forEach(function(line) { $extraInfo.append($('<div>').text(line)) })
+    }
+
+    renderManagerAssignment({
+        container: '#aircraftManagersDisplay',
+        managers: managers,
+        availableCount: availableCount,
+        maxManagers: maxManagers,
+        onAdd: () => addAircraftModelManager(modelId),
+        onRemove: () => removeAircraftModelManager(modelId),
+        extraInfo: $extraInfo,
+        headerText: 'Managers (' + availableCount + ' available)'
+    })
 }
 
 function addAircraftModelManager(modelId) {
     $.ajax({
         type: 'POST',
-        url: "/delegates/airline/" + activeAirline.id + "/aircraft-model/" + modelId,
+        url: "/managers/airline/" + activeAirline.id + "/aircraft-model/" + modelId,
         contentType: 'application/json; charset=utf-8',
         dataType: 'json',
         data: JSON.stringify({ delegateCount: loadedAircraftModelManagers.length + 1 }),
@@ -1001,7 +1000,7 @@ function addAircraftModelManager(modelId) {
 function removeAircraftModelManager(modelId) {
     $.ajax({
         type: 'POST',
-        url: "/delegates/airline/" + activeAirline.id + "/aircraft-model/" + modelId,
+        url: "/managers/airline/" + activeAirline.id + "/aircraft-model/" + modelId,
         contentType: 'application/json; charset=utf-8',
         dataType: 'json',
         data: JSON.stringify({ delegateCount: loadedAircraftModelManagers.length - 1 }),
