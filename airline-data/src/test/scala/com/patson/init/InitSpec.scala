@@ -28,7 +28,7 @@ class InitSpec extends AnyWordSpecLike with Matchers {
 
   "Airport feature patcher IATAs" should {
     "all exist in the airport database" in {
-      val iatas = AirportFeaturePatcher.featureList.values.flatMap(_.keys).toList
+      val iatas = AirportFeaturePatcher.featureList.values.flatMap(_.iterator.map(_._1)).toList
 
       val missingIatas = iatas.filter { iata =>
         AirportSource.loadAirportByIata(iata, fullLoad = false).isEmpty

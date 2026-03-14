@@ -91,10 +91,10 @@ object DemandGenerator {
     if (SKIP_AIRPORTS.contains(fromAirport.iata)) {
       List.empty
     } else {
-      val minDistance = if (GameConstants.isIsland(fromAirport.iata)) 25 else DemandConstants.localityMinDistanceMap.getOrElse(fromAirport.countryCode, DemandConstants.localityMinDistanceMap("default"))
-      val maxDistance = minDistance * 4 + 275 * isIsolatedMultiplier
+      val minDistance = if (GameConstants.isIsland(fromAirport)) 25 else DemandConstants.localityMinDistanceMap.getOrElse(fromAirport.countryCode, DemandConstants.localityMinDistanceMap("default"))
+      val maxDistance = Math.max(1400, IsolatedTownFeature.HUB_RANGE_BRACKETS(isIsolatedMultiplier))
       //mostly trying to generate a base of domestic demand (also is more performant), but in smaller markets do int'l
-      val intlCountries = List("AE","AL","AM","AT","AZ","BD","BY","BE","BJ","BT","BA","BI","BW","CH","CW","CZ","DE","DJ","DM","EE","GB","GE","GM","GH","GD","GN","GY","HK","HR","HU","IE","IL","JM","JO","KI","KW","KG","LV","LS","LR","LI","LT","LU","MO","MT","MD","MK","NA","NL","PR","QA","RW","RS","SG","SK","SI","SR","SY","SX","SZ","TJ","UY","UZ","VU")
+      val intlCountries = List("AE","AL","AM","AT","AZ","BD","BY","BE","BJ","BT","BA","BI","BW","CH","CW","CZ","DE","DJ","DM","EE","GB","GE","GM","GH","GD","GN","GY","HK","HR","HU","IE","IL","JM","JO","KI","KW","KG","LV","LS","LR","LI","LT","LU","MO","MT","MD","MK","NA","NL","PR","QA","RW","RS","SG","SK","SI","SR","SY","SX","SZ","TC","TJ","UY","UZ","VC","VG","VI","VU")
       val intlAirports = List("TPE","KHH")
       val isDomestic = if (intlCountries.contains(fromAirport.countryCode) || intlAirports.contains(fromAirport.iata)) false else true
       val airports = Computation.getAirportWithinRange(fromAirport, maxDistance, minDistance, isDomestic)
@@ -344,7 +344,7 @@ object DemandGenerator {
     val demands = Map(PassengerType.TRAVELER -> demand * percentTraveler * toIncomeAdjust, PassengerType.BUSINESS -> (demand * (1 - percentTraveler - 0.1) * toIncomeAdjust), PassengerType.TOURIST -> demand * 0.1)
 
     val localityAdjust = DemandConstants.localityAdjustMap.getOrElse(fromAirport.countryCode, 1.2) * DemandConstants.localityAdjustMap.getOrElse(toAirport.countryCode, 1.2)
-    val hasCompetingRail = if (DemandConstants.doesPairExist(fromAirport.iata, toAirport.iata, DemandConstants.railLookupSet)) 0.2 else 1
+    val hasCompetingRail = if (DemandConstants.doesPairExist(fromAirport.iata, toAirport.iata, DemandConstants.railLookupSet)) 0.4 else 1
 
     //add charm demand and adjust for locality / competing rail 
     val featureAdjustedDemands = demands.map { case (passengerType, demand) =>
@@ -354,7 +354,7 @@ object DemandGenerator {
     }
 
     //for each trade affinity, add base "trade demand" to biz demand, modded by distance
-    val minDistance = if (GameConstants.isIsland(fromAirport.iata)) 50 else (MIN_DISTANCE * 1.5).toInt
+    val minDistance = if (GameConstants.connectsIsland(fromAirport, toAirport)) 50 else (MIN_DISTANCE * 1.5).toInt
     val affinityTradeAdjust = if (distance > minDistance && (fromAirport.population >= 16000 || toAirport.population >= 16000) && affinity > 1) {
       val baseTradeDemand = 8 + (12 - fromAirport.size.toDouble) * 1.5
       val distanceMod = Math.min(1.0, 3500.0 / distance)
@@ -393,7 +393,7 @@ object DemandGenerator {
   private def computeRawDemandBetweenAirports(fromAirport: Airport, toAirport: Airport, affinity: Int, distance: Int): Int = {
     val drivingDistance = 1.2 * DemandConstants.localityMinDistanceMap.getOrElse(fromAirport.countryCode, DemandConstants.localityMinDistanceMap("default"))
     val distanceReducerExponent: Double =
-      if (distance < drivingDistance && affinity < 6 && ! GameConstants.ISOLATED_COUNTRIES.contains(fromAirport.countryCode) && ! GameConstants.isIsland(fromAirport.iata) && ! GameConstants.isIsland(toAirport.iata)) {
+      if (distance < drivingDistance && affinity < 6 && ! GameConstants.connectsIsland(fromAirport, toAirport)) {
         distance.toDouble / drivingDistance //don't apply to islands or business shuttle routes
       } else if (distance > 4000) {
         0.85 - distance.toDouble / 40000 * (1 - affinity.toDouble / 10.0) * Math.max(5.5 - toAirport.size.toDouble * 0.5, 0) //affinity & scale affects perceived distance

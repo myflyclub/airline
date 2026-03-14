@@ -72,153 +72,28 @@ class DemandGeneratorSpec extends AnyWordSpecLike with Matchers {
       }
       assert(hubAirports.size == 13)
     }
-//    "Size 1 Isolated Town strength 4 should only generate demand to airports in DK".in {
-//      val fromAirport = AirportSource.loadAirportByIata("KUS", true).get
-//      val airports = AirportSource.loadAllAirports(fullLoad = true, loadFeatures = true)
-//      val featureOpt = fromAirport.features.find(_.featureType == AirportFeatureType.ISOLATED_TOWN)
-//      assert(featureOpt.isDefined, "KUS should have IsolatedTownFeature")
-//      airports.foreach { toAirport =>
-//        val distance = Computation.calculateDistance(fromAirport, toAirport)
-//        val relationship = CountrySource.getCountryMutualRelationships().getOrElse((fromAirport.countryCode, toAirport.countryCode), 0)
-//        val affinity = Computation.calculateAffinityValue(fromAirport.zone, toAirport.zone, relationship)
-//        val demands = DemandGenerator.computeBaseDemandBetweenAirports(fromAirport, toAirport, affinity, distance)
-//        if (toAirport.countryCode == "DK" || toAirport.countryCode == "IS") {
-//          assert(demands.travelerDemand.total >= 0, s"Expected possible demand from KUS to ${toAirport.iata} in DK, got ${demands.travelerDemand.total}")
-//          assert(demands.businessDemand.total >= 0, s"Expected possible demand from KUS to ${toAirport.iata} in DK, got ${demands.businessDemand.total}")
-//          assert(demands.touristDemand.total >= 0, s"Expected possible demand from KUS to ${toAirport.iata} in DK, got ${demands.touristDemand.total}")
-//        } else {
-//          assert(demands.travelerDemand.total == 0, s"Expected no demand from KUS to ${toAirport.iata} in DK, got ${demands.travelerDemand.total}")
-//          assert(demands.businessDemand.total == 0, s"Expected no demand from KUS to ${toAirport.iata} in DK, got ${demands.businessDemand.total}")
-//          assert(demands.touristDemand.total == 0, s"Expected no demand from KUS to ${toAirport.iata} in DK, got ${demands.touristDemand.total}")
-//        }
-//      }
-//    }
-//    "find top 10 destinations for each airport".in {
-//      val airports = AirportSource.loadAllAirports(fullLoad = true).filter(_.popMiddleIncome > 0)
-//      val countryRelationships = CountrySource.getCountryMutualRelationships()
-//
-//      val topDestinationsByFromAirport = airports.map { fromAirport =>
-//        val fromHubAirportsDemands: Map[String, LinkClassValues] = generateHubAirportDemand(fromAirport)
-//        val demandList = ListBuffer[(Airport, Int)]()
-//        airports.foreach { toAirport =>
-//          val distance = Computation.calculateDistance(fromAirport, toAirport)
-//          if (canHaveDemand(fromAirport, toAirport, distance)) {
-//            val relationship = countryRelationships.getOrElse((fromAirport.countryCode, toAirport.countryCode), 0)
-//            val affinity = Computation.calculateAffinityValue(fromAirport.zone, toAirport.zone, relationship)
-//            val demand = computeBaseDemandBetweenAirports(fromAirport, toAirport, affinity, distance)
-//
-//            val total = demand.businessDemand.total + demand.touristDemand.total + demand.travelerDemand.total + fromHubAirportsDemands.getOrElse(toAirport.iata, LinkClassValues.empty).total
-//            if (total > 0){
-//              demandList.append((toAirport, total))
-//            }
-//          }
-//        }
-//
-//        val topDestinations = demandList.sortBy(_._2).reverse.take(20)
-//        (fromAirport, topDestinations)
-//      }
-//
-//      topDestinationsByFromAirport.foreach {
-//        case (fromAirport, topDestinations) =>
-//          val csvLine = new StringBuilder(s"${fromAirport.iata},${fromAirport.countryCode}")
-//          topDestinations.foreach {
-//            case (toAirport, totalDemand) =>
-//              csvLine.append(s",${toAirport.iata}  ${toAirport.countryCode},$totalDemand")
-//          }
-//          println(csvLine.toString)
-//      }
-//    }
-
-    "find top 20 demands to each airport".in {
-      val demands = DemandGenerator.computeDemand(0, Map().empty)
-
-      // Group demands by toAirport
-      val groupedDemands = demands.groupBy(_._2)
-
-      // Calculate top 20 origins for each airport
-      val topOriginsByToAirport = groupedDemands.map { case (toAirport, demandList) =>
-        val demandByFromAirport = demandList.groupBy(_._1.fromAirport).map { case (fromAirport, groupedDemands) =>
-          val totalDemand = groupedDemands.map(_._3).sum // Sum up the demand for each fromAirport
-          (fromAirport, totalDemand)
-        }
-
-        // Sort by total demand and take the top 20 origins
-        val topOrigins = demandByFromAirport.toList.sortBy(-_._2).take(20)
-        (toAirport, topOrigins)
-      }
-
-      // Print the top 20 origins for each airport
-      topOriginsByToAirport.foreach { case (toAirport, topOrigins) =>
-        val csvLine = new StringBuilder(toAirport.iata)
-        csvLine.append(s",${toAirport.countryCode}")
-        topOrigins.foreach { case (fromAirport, totalDemand) =>
-          csvLine.append(s",${fromAirport.iata},$totalDemand")
-        }
-        println(csvLine.toString)
-      }
-    }
-
-     "find top 20 routes from each airport".in {
-       val demands = DemandGenerator.computeDemand(0, Map().empty)
-
-       // Group demands by fromAirport
-       val groupedDemands = demands.groupBy(_._1.fromAirport)
-
-       // Calculate top 10 routes for each airport
-       val topRoutesByFromAirport = groupedDemands.map { case (fromAirport, demandList) =>
-         val demandByToAirport = demandList.groupBy(_._2).map { case (toAirport, groupedDemands) =>
-           val totalDemand = groupedDemands.map(_._3).sum // Sum up the demand for each toAirport
-           (toAirport, totalDemand)
-         }
-
-         // Sort by total demand and take the top 10 routes
-         val topRoutes = demandByToAirport.toList.sortBy(-_._2).take(20)
-         (fromAirport, topRoutes)
-       }
-       topRoutesByFromAirport.foreach { case (fromAirport, topRoutes) =>
-         val csvLine = new StringBuilder(fromAirport.iata)
-         csvLine.append(s",${fromAirport.countryCode}")
-         topRoutes.foreach { case (toAirport, totalDemand) =>
-           csvLine.append(s",${toAirport.iata},$totalDemand")
-         }
-         println(csvLine.toString)
+   "Size 1 Isolated Town strength 4 should only generate demand to airports in DK".in {
+     val fromAirport = AirportSource.loadAirportByIata("KUS", true).get
+     val airports = AirportSource.loadAllAirports(fullLoad = true, loadFeatures = true)
+     val featureOpt = fromAirport.features.find(_.featureType == AirportFeatureType.ISOLATED_TOWN)
+     assert(featureOpt.isDefined, "KUS should have IsolatedTownFeature")
+     airports.foreach { toAirport =>
+       val distance = Computation.calculateDistance(fromAirport, toAirport)
+       val relationship = CountrySource.getCountryMutualRelationships().getOrElse((fromAirport.countryCode, toAirport.countryCode), 0)
+       val affinity = Computation.calculateAffinityValue(fromAirport.zone, toAirport.zone, relationship)
+       val demands = DemandGenerator.computeBaseDemandBetweenAirports(fromAirport, toAirport, affinity, distance)
+       if (toAirport.countryCode == "DK" || toAirport.countryCode == "IS") {
+         assert(demands.travelerDemand.total >= 0, s"Expected possible demand from KUS to ${toAirport.iata} in DK, got ${demands.travelerDemand.total}")
+         assert(demands.businessDemand.total >= 0, s"Expected possible demand from KUS to ${toAirport.iata} in DK, got ${demands.businessDemand.total}")
+         assert(demands.touristDemand.total >= 0, s"Expected possible demand from KUS to ${toAirport.iata} in DK, got ${demands.touristDemand.total}")
+       } else {
+         assert(demands.travelerDemand.total == 0, s"Expected no demand from KUS to ${toAirport.iata} in DK, got ${demands.travelerDemand.total}")
+         assert(demands.businessDemand.total == 0, s"Expected no demand from KUS to ${toAirport.iata} in DK, got ${demands.businessDemand.total}")
+         assert(demands.touristDemand.total == 0, s"Expected no demand from KUS to ${toAirport.iata} in DK, got ${demands.touristDemand.total}")
        }
      }
+   }
 
-    //     // Sort by total demand and take the top 10 routes
-    //     val topRoutes = demandByToAirport.toList.sortBy(-_._2).take(20)
-    //     (fromAirport, topRoutes)
-    //   }
-
-    //   // Print the top 10 routes for each airport
-//       topRoutesByFromAirport.foreach { case (fromAirport, topRoutes) =>
-//         val csvLine = new StringBuilder(fromAirport.iata)
-//         csvLine.append(s",${fromAirport.countryCode}")
-//         topRoutes.foreach { case (toAirport, totalDemand) =>
-//           csvLine.append(s",${toAirport.iata},$totalDemand")
-//         }
-//         println(csvLine.toString)
-//       }
-    // }
-     "find airport demand totals".in {
-       val demands = DemandGenerator.computeDemand(0, Map().empty)
-
-       // Group by the fromAirport in PassengerGroup and calculate total demand
-       val totalFromDemandByAirport = demands.foldLeft(Map[Airport, Int]().withDefaultValue(0)) {
-         case (acc, (passengerGroup, toAirport, demand)) =>
-           // Add the demand to the total for the 'from' airport
-           acc.updated(passengerGroup.fromAirport, acc(passengerGroup.fromAirport) + demand)
-       }.toList.sortBy(_._2).reverse
-       val totalToDemandByAirport = demands.foldLeft(Map[Airport, Int]().withDefaultValue(0)) {
-         case (acc, (passengerGroup, toAirport, demand)) =>
-           acc.updated(toAirport, acc(toAirport) + demand)
-       }
-       // Print the total demand for each airport
-       totalFromDemandByAirport.foreach { case (airport, fromDemand) =>
-         val toDemand = totalToDemandByAirport(airport)
-         println(s"${airport.iata}, ${airport.countryCode}, ${fromDemand}, $toDemand")
-       }
-     }
     "demandRandomizer output 200 cycles".in {
       val baseDemand = 25
       val frequency = 45
