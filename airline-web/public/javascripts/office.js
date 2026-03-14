@@ -477,6 +477,7 @@ function updateAirlineDetails() {
     document.querySelector('.airlineMarketCap').textContent = "$" + commaSeparateNumber(airline.stock.stockPrice * airline.stock.sharesOutstanding, "m");
     document.querySelector('.stockBuyBackCost').textContent = "$" + commaSeparateNumber(1000000 * airline.tempStockPrice + brokerFee, "m");
     document.querySelector('.stockSellRevenue').textContent = "$" + commaSeparateNumber(1000000 * airline.tempStockPrice - brokerFee, "m");
+    document.querySelector('.stockBuybackInfo').textContent = "";
   }
 
   cancelAirlineRename()
@@ -697,7 +698,7 @@ function updateIncomeSheet(b) {
 	$('#balFuelTax').text(fmt(b.fuelTax))
 	$('#balDenormalizedFuel').text(fmt(b.fuel - b.fuelNormalized))
 	$('#balLoanInterest').text(fmt(b.loanInterest))
-	const totalNonOperating = b.fuelTax + (b.fuel + b.fuelNormalized) + b.loanInterest
+	const totalNonOperating = b.fuelTax + (b.fuel - b.fuelNormalized) + b.loanInterest
 	$('#balNonOperatingTot').text(fmt(totalNonOperating))
 
 	$('#balNetIncome').text(fmt(b.income))
@@ -911,6 +912,7 @@ function doStockOp(operation = 'buyback') {
 				activeAirline.stock.sharesOutstanding = result.sharesOutstanding
 				activeAirline.tempStockPrice = result.stockPrice
 				activeAirline.balance = result.balance
+				activeAirline.actionPoints = result.actionPoints
         updateAirlineDetails()
         refreshTopBar(activeAirline)
         buttons.forEach(button => {
@@ -920,6 +922,8 @@ function doStockOp(operation = 'buyback') {
         error: function(jqXHR, textStatus, errorThrown) {
 	            console.log(JSON.stringify(jqXHR));
 	            console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
+	            document.querySelector('.stockBuybackInfo').textContent = jqXHR.responseText || errorThrown;
+	            buttons.forEach(button => { button.disabled = false; });
 	    }
 	})
 }
