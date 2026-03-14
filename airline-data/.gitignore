@@ -1,6 +1,7 @@
 /bin/
 /.settings/
 /target/
+/src/test/scala/com/patson/tools/
 /.cache-main
 /.cache-tests
 /.classpath
