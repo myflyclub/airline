@@ -57,6 +57,10 @@ function createAirportPopupElement() {
                 <img width="20" src="/assets/images/icons/airplane-takeoff.svg" style="margin-right: 5px;">
                 <span id="airportPopupSize"></span>&ensp;|&ensp;<span id="airportPopupMaxRunwayLength"></span>
             </div>
+            <div class="airportPopupItem clickable tooltip-attr tooltip-attr-bottom" id="airportCampaignItem" data-tooltip="Manage campaign for this area" style="cursor:pointer;">
+                <img width="16" src="/assets/images/icons/gear.svg" style="margin-right:5px;">
+                <span>Campaign</span>
+            </div>
         </div>
         <div class="flex-container-width-half gap-2 pb-2">
             <a class="ml-0 button" id="planToAirportButton">Plan Flight</a>
@@ -79,6 +83,13 @@ function createAirportPopupElement() {
     div.querySelector('#researchToAirportButton').addEventListener('click', () => {
         const id = div.querySelector('#airportPopupId').value;
         showResearchPreloaded(null, id);
+    });
+
+    div.querySelector('#airportCampaignItem').addEventListener('click', () => {
+        const id = div.querySelector('#airportPopupId').value;
+        const position = div.getBoundingClientRect();
+        closeAirportPopup();
+        showCampaignOverlay(parseInt(id), position);
     });
 
     return div;

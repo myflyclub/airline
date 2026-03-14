@@ -1,3 +1,7 @@
+/* ─── System 1: CSS-only hover tooltips (.tooltip .tooltiptext) ─────────────
+   Visual styles preserved; positioning now via Popper.js (JS-driven).
+   See gadgets.js for the mouseover/mouseout delegation that calls Popper.     */
+
 .tooltip {
     position: relative;
     display: inline-block;
@@ -19,56 +23,31 @@
 }
 
 .tooltip .tooltiptext {
-    visibility: hidden;
+    /* Visual */
     background-color: var(--tooltip-background-color);
     color: var(--text-color);
     border-radius: 6px;
     padding: 16px;
-    margin-bottom: 0.5rem;
-    position: absolute;
-    z-index: 2;
-    left: 50%;
-    transform:translateX(-50%);
-    opacity: 0;
-    transition: opacity 0.3s;
     text-shadow: none;
     font-weight: normal;
     max-width: 45vw;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18), 0 1px 4px rgba(0, 0, 0, 0.12);
-}
 
-.customTooltip .tooltiptext {
-    background-color: var(--modal-background-color);
-    color: var(--text-color);
-    border-radius: 6px;
-    padding: 10px 10px;
-    z-index: 10;
+    /* Hidden by default — JS sets visibility: visible / opacity: 1 via Popper */
+    visibility: hidden;
+    opacity: 0;
     transition: opacity 0.3s;
-    text-shadow: none;
-    font-weight: normal;
-}
-.tooltiptext h4 {
-    color: var(--text-color);
-}
 
-.tooltip .tooltiptext.alignLeft {
-    left: 0%;
-    transform:none;
-}
-
-
-.tooltip .tooltiptext:not(.below) {
-	bottom: 125%;	
-}
-
-.tooltip .tooltiptext.below {
-	top: 125%;
+    /* Popper requires position:absolute (strategy:'absolute') */
+    position: absolute;
+    z-index: 999;
 }
 
 .tooltip .tooltiptext .info {
-	border-radius: 0.5em 0.5em 0.5em 0.5em;
+    border-radius: 0.5em;
 }
 
+/* Arrow — direction driven by Popper's [data-popper-placement] attribute */
 .tooltip .tooltiptext::after {
     content: "";
     position: absolute;
@@ -78,64 +57,103 @@
     border-style: solid;
 }
 
-.tooltip .tooltiptext.alignLeft::after {
-    left: 5%;
+/* Default (before Popper runs) and 'top' placement: arrow at bottom, pointing down */
+.tooltip .tooltiptext:not([data-popper-placement])::after,
+.tooltip .tooltiptext[data-popper-placement^='top']::after {
+    top: 100%;
+    border-color: #555 transparent transparent transparent;
 }
 
-.tooltip .tooltiptext:not(.below)::after {
-	top: 100%;
-	border-color: #555 transparent transparent transparent;
-}
-
-.tooltip .tooltiptext.below::after {
-	bottom: 100%;
-	border-color: transparent transparent #555 transparent;
+/* 'bottom' placement: arrow at top, pointing up */
+.tooltip .tooltiptext[data-popper-placement^='bottom']::after {
+    bottom: 100%;
+    top: auto;
+    border-color: transparent transparent #555 transparent;
 }
 
 .tooltip .list-disc li {
     display: list-item;
     font-size: 13px;
     font-family: sans-serif;
-
 }
 
-.tooltip:hover .tooltiptext {
-    visibility: visible;
-    opacity: 1;
+/* ─── Shared .tooltiptext typography ───────────────────────────────────────── */
+.tooltiptext h4 {
+    color: var(--text-color);
 }
 
-/* Simpler tooltip that's a a pure text data attr (replace title with data-tooltip) */
+/* ─── System 2a: .customTooltip (rich markup, JS-positioned via Popper) ────── */
+.customTooltip {
+    z-index: 100;
+}
+
+.customTooltip .tooltiptext {
+    background-color: var(--modal-background-color);
+    color: var(--text-color);
+    border-radius: 6px;
+    padding: 20px 15px;
+    max-width: 360px;
+    text-shadow: none;
+    font-weight: normal;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+/* ─── Retained for layout compat; hover logic removed (handled by JS) ──────── */
 .tooltip-attr {
-  position: relative; /* Required for positioning the tooltip */
+    position: relative;
 }
 
-.tooltip-attr::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  
-  bottom: 0%;
-  left: 100%;
-  transform: translateY(80%);
-  z-index: 99;
-  
-  background-color: var(--tooltip-background-color);
-  color: var(--text-color);
-  padding: 5px 10px;
-  border-radius: 4px;
-  font-size: 10px;
-  white-space: nowrap;
-  
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.2s;
+/* ─── System 1 & 2: Unified Popper.js singleton (#popperTooltip) ────────────
+   Used by data-tooltip delegation (simple text) and showTooltip() (rich markup).
+   Arrow is a square div rotated 45° via [data-popper-arrow].                   */
+
+#popperTooltip {
+    position: fixed;
+    z-index: 9999;
+    background-color: var(--tooltip-background-color);
+    color: var(--text-color);
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-size: 11px;
+    max-width: 300px;
+    pointer-events: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
 
-.tooltip-attr:hover::after {
-  opacity: 1;
-  visibility: visible;
+#popperTooltip.popper-rich {
+    background-color: var(--modal-background-color);
+    border-radius: 6px;
+    padding: 12px 16px;
+    font-size: inherit;
+    max-width: 360px;
+    pointer-events: auto;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
 }
 
-.tooltip-attr-bottom::after {
-    left: 0;
-    bottom: -8px;
+#popperTooltip .popper-arrow,
+#popperTooltip .popper-arrow::before {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: var(--tooltip-background-color);
 }
+
+#popperTooltip.popper-rich .popper-arrow,
+#popperTooltip.popper-rich .popper-arrow::before {
+    background: var(--modal-background-color);
+}
+
+#popperTooltip .popper-arrow { visibility: hidden; }
+
+#popperTooltip .popper-arrow::before {
+    visibility: visible;
+    content: '';
+    transform: rotate(45deg);
+}
+
+#popperTooltip[data-popper-placement^='top']    .popper-arrow { bottom: -4px; }
+#popperTooltip[data-popper-placement^='bottom'] .popper-arrow { top: -4px; }
+#popperTooltip[data-popper-placement^='left']   .popper-arrow { right: -4px; }
+#popperTooltip[data-popper-placement^='right']  .popper-arrow { left: -4px; }

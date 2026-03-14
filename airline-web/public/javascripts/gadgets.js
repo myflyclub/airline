@@ -230,7 +230,7 @@ function getGradeStarsImgs(value, width = 16) {
 function getCountryFlagImg(countryCode, height = "11px") {
 	if (countryCode) {
 		var countryFlagUrl = getCountryFlagUrl(countryCode);
-		var countryName = loadedCountriesByCode[countryCode]?.name
+		var countryName = loadedCountriesByCode[countryCode.toUpperCase]?.name
 		if (countryFlagUrl) {
             return `<img width='auto' height='${height}' class='flag' loading='lazy' src='${countryFlagUrl}' title='${countryName}' alt='${countryName} flag' style='border-radius:0;'/>`;
 		} else {
@@ -511,15 +511,11 @@ function getBoostSpan(finalValue, boosts, $tooltip, prepend = "") {
             $table.append($row)
         })
 
-        $valueSpan.hover( function() {
-             var yPos = $(this).offset().top - $(window).scrollTop() + $(this).height()
-             var xPos = $(this).offset().left - $(window).scrollLeft() + $(this).width() - $tooltip.width() / 2
-
-             $tooltip.css('top', yPos + 'px')
-             $tooltip.css('left', xPos + 'px')
-             $tooltip.show()
-        }, function() { $tooltip.hide() }
-        )
+        $valueSpan.on('mouseenter', function() {
+            showMarkupTooltip(this, $tooltip[0])
+        }).on('mouseleave', function() {
+            hideMarkupTooltip($tooltip[0])
+        })
     }
     return $valueSpan
 }
@@ -777,10 +773,13 @@ function addTooltip($target, text, css) {
         $target.css('overflow', 'unset')
     }
     $target.children('span.tooltiptext').remove()
-    var $descriptionSpan = $('<span class="tooltiptext below alignLeft" style="text-transform: none;">')
+    var $descriptionSpan = $('<span class="tooltiptext below" style="text-transform: none;">')
     $descriptionSpan.text(text)
     if (css) {
-        $descriptionSpan.css(css)
+        // Strip position props — Popper manages placement
+        var safeCss = Object.assign({}, css)
+        delete safeCss.top; delete safeCss.left; delete safeCss.bottom; delete safeCss.right
+        $descriptionSpan.css(safeCss)
     }
     $target.append($descriptionSpan)
 }
@@ -791,13 +790,154 @@ function addTooltipHtml($target, html, css) {
         $target.css('overflow', 'unset')
     }
     $target.children('span.tooltiptext').remove()
-    var $descriptionSpan = $('<span class="tooltiptext below alignLeft" style="text-transform: none;">')
+    var $descriptionSpan = $('<span class="tooltiptext below" style="text-transform: none;">')
     $descriptionSpan.html(html)
     if (css) {
-        $descriptionSpan.css(css)
+        var safeCss = Object.assign({}, css)
+        delete safeCss.top; delete safeCss.left; delete safeCss.bottom; delete safeCss.right
+        $descriptionSpan.css(safeCss)
     }
     $target.append($descriptionSpan)
 }
+
+;(function () {
+    function toElement(val) {
+        if (val instanceof Element) return val
+        if (val && val.jquery) return val[0]
+        return null
+    }
+
+    var _popper = null
+    var _el = null
+
+    function _getEl() {
+        if (!_el) {
+            _el = document.createElement('div')
+            _el.id = 'popperTooltip'
+            _el.setAttribute('role', 'tooltip')
+            _el.style.display = 'none'
+            _el.innerHTML = '<div class="popper-inner"></div><div class="popper-arrow" data-popper-arrow></div>'
+            document.body.appendChild(_el)
+        }
+        return _el
+    }
+
+    window.showTooltip = function (trigger, content, opts) {
+        var el = _getEl()
+        opts = opts || {}
+        el.className = opts.rich ? 'popper-rich' : ''
+        var inner = el.querySelector('.popper-inner')
+        inner.innerHTML = ''
+        if (typeof content === 'string') {
+            inner.textContent = content
+        } else if (content && content.jquery) {
+            inner.appendChild(content[0])
+        } else if (content instanceof Element) {
+            inner.appendChild(content)
+        }
+        el.style.display = 'block'
+        if (_popper) _popper.destroy()
+        _popper = Popper.createPopper(toElement(trigger), el, {
+            placement: opts.placement || 'top',
+            strategy: 'fixed',
+            modifiers: [
+                { name: 'offset', options: { offset: [0, 8] } },
+                { name: 'arrow',  options: { padding: 5 } }
+            ]
+        })
+    }
+
+    window.hideTooltip = function () {
+        if (_el) _el.style.display = 'none'
+        if (_popper) { _popper.destroy(); _popper = null }
+    }
+
+    // ── System 2: Markup tooltip (.tooltip .tooltiptext and .customTooltip) ──
+
+    var _markupPopper = null
+    var _markupEl = null
+
+    function _initMarkupPopper(trigger, el, opts) {
+        // Dismiss any active simple tooltip (mutual exclusion)
+        hideTooltip()
+        if (_markupPopper) { _markupPopper.destroy(); _markupPopper = null }
+        _markupEl = el
+        _markupPopper = Popper.createPopper(trigger, el, {
+            placement: opts.placement || 'bottom',
+            strategy: opts.strategy || 'fixed',
+            modifiers: [
+                { name: 'offset', options: { offset: [0, 8] } },
+                { name: 'flip' }
+            ]
+        })
+    }
+
+    // Show an existing DOM element as a Popper-positioned tooltip.
+    // trigger — reference Element or jQuery object
+    // tooltipEl — the tooltip Element (or jQuery) to show; must already be in the DOM
+    // opts.placement, opts.strategy (default 'fixed')
+    window.showMarkupTooltip = function (trigger, tooltipEl, opts) {
+        opts = opts || {}
+        var el = toElement(tooltipEl)
+        if (!el) return
+        el.style.display = 'block'
+        el.style.visibility = 'visible'
+        el.style.opacity = '1'
+        _initMarkupPopper(toElement(trigger), el, opts)
+    }
+
+    window.hideMarkupTooltip = function (tooltipEl) {
+        var el = toElement(tooltipEl)
+        if (!el) return
+        el.style.display = 'none'
+        el.style.visibility = 'hidden'
+        el.style.opacity = '0'
+        if (_markupPopper && _markupEl === el) {
+            _markupPopper.destroy(); _markupPopper = null; _markupEl = null
+        }
+    }
+
+    // Unified mouseover: [data-tooltip] takes priority, then .tooltip .tooltiptext
+    document.addEventListener('mouseover', function (e) {
+        var t = e.target.closest('[data-tooltip]')
+        if (t) { showTooltip(t, t.getAttribute('data-tooltip')); return }
+        var trigger = e.target.closest('.tooltip')
+        if (!trigger) return
+        var tooltipEl = trigger.querySelector(':scope > .tooltiptext')
+        if (!tooltipEl) return
+        if (_markupEl === tooltipEl && tooltipEl.style.visibility === 'visible') return
+        var placement = tooltipEl.classList.contains('below') ? 'bottom' : 'top'
+        tooltipEl.style.visibility = 'visible'
+        tooltipEl.style.opacity = '1'
+        _initMarkupPopper(trigger, tooltipEl, { placement: placement, strategy: 'absolute' })
+    })
+
+    // Unified mouseout: [data-tooltip] then .tooltip .tooltiptext
+    document.addEventListener('mouseout', function (e) {
+        var from = e.target.closest('[data-tooltip]')
+        if (from) {
+            var to = e.relatedTarget ? e.relatedTarget.closest('[data-tooltip]') : null
+            if (from !== to) hideTooltip()
+            return
+        }
+        var trigger = e.target.closest('.tooltip')
+        if (!trigger) return
+        var to = e.relatedTarget ? e.relatedTarget.closest('.tooltip') : null
+        if (to === trigger) return
+        if (!_markupEl || !trigger.contains(_markupEl)) return
+        _markupEl.style.visibility = 'hidden'
+        _markupEl.style.opacity = '0'
+        if (_markupPopper) { _markupPopper.destroy(); _markupPopper = null; _markupEl = null }
+    })
+
+    document.addEventListener('touchend', function (e) {
+        if (!e.target.closest('#popperTooltip, [data-tooltip]')) hideTooltip()
+    })
+
+    document.addEventListener('click', function (e) {
+        if (!e.target.closest('#popperTooltip, [data-tooltip]')) hideTooltip()
+    })
+}())
 
 function isTouchDevice() {
   try {

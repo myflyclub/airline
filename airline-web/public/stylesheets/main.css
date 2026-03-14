@@ -35,12 +35,14 @@ html {
     --table-selected-color: #ffffff;
     --table-selected-row-background: var(--table-header-selected-background);
     --table-selected-row-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+
     --menubar-background-image: linear-gradient(180deg, #ffffff 0%, #f0f2f5 100%);
     --menubar-shadow: inset 0 -7px 9px -7px rgba(0,0,0,0.2);
+    --border-color: rgbg(255,255,255,0.08);
     --scrollbar-color: hsl(0, 0%, 60%) hsl(0, 0%, 80%);
     --scrollbar-shadow-color: rgba(0, 0, 0, 0.5);
-    --tooltip-background-color: rgba(240, 240, 240, 1.0);
-    --modal-background-color: var(--background-2);
+    --tooltip-background-color: rgba(240, 240, 240);
+    --modal-background-color: rgba(240, 240, 240, 0.8);
     --modal-content-background-image: var(--section-background-image);
     --chat-current-background: #ffffff;
     --chat-shadow: inset 0 0 2px white, 0 0 3px rgba(0, 0, 0, 0.5);
@@ -98,10 +100,11 @@ html[data-theme='dark'] {
 
     --menubar-background-image: linear-gradient(to bottom, #161635, #0e0e23);
     --menubar-shadow: 0 1px 0 rgba(255, 255, 255, 0.05);
+    --border-color: rgbg(255,255,255,0.08);
     --scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
     --scrollbar-shadow-color: transparent;
     --tooltip-background-color: rgba(22, 22, 53, 0.95);
-    --modal-background-color: rgba(0, 0, 0, 0.7);
+    --modal-background-color: rgba(0, 0, 0, 0.75);
     --modal-content-background-image: linear-gradient(180deg, #161635 0%, #0e0e23 100%);
     --chat-current-background: rgba(37, 37, 69, 0.8);
     --chat-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
@@ -285,7 +288,7 @@ li.row, div.table-row {
     padding-left: 8px;
     padding-right: 8px;
 }
-@media screen and (min-width: 640px) {
+@media screen and (min-width: 800px) {
     .canvas {
         padding-left: 52px;
     }
@@ -310,7 +313,7 @@ li.row, div.table-row {
 #navPrimaryToggle {
     display: none;
 }
-@media screen and (max-width: 1024px) {
+@media screen and (max-width: 800px) {
     #navPrimary {
         transform: translateX(-100%);
     }
@@ -612,7 +615,7 @@ li.row, div.table-row {
     position: fixed !important;
     z-index: 2;
 }
-#topBar div {
+#topBar > div {
     background-color: color-mix(in srgb, var(--background-2) 75%, transparent);
 }
 #topBar * {
@@ -697,6 +700,7 @@ li.row, div.table-row {
 .table .label {
     display: table-cell;
     width: 40%;
+    padding-right: 4px;
     vertical-align: top;
 }
 
@@ -1205,10 +1209,6 @@ html[data-theme='dark'] .section {
     border-top: 0.5px solid lightgray;
 }
 
-.modalHeader {
-    margin: 0.5rem 0 1.5rem;
-}
-
 /* Modal Styles */
 .modal {
     display: none;
@@ -1221,6 +1221,9 @@ html[data-theme='dark'] .section {
     overflow: auto;
     background-color: rgb(0,0,0);
     background-color: var(--modal-background-color);
+}
+.modalHeader {
+    margin: 0.5rem 0 1.5rem;
 }
 
 #airplaneBaseModal .modal {
@@ -1394,14 +1397,7 @@ html[data-theme='dark'] .section {
 .maplibregl-popup * {
     color: var(--text-color-heading) !important;
 }
-.maplibregl-popup .maplibregl-popup-close-button {
-    line-height: 30px;
-    font-size: 30px;
-    font-family: system-ui;
-    font-weight: 100;
-    border: 0 !important;
-}
-.airportPopupName {
+.airportPopupName, .airportPopupName {
     font-size: 16px;
     padding: 0 20px 6px 0;
 }
@@ -1703,6 +1699,15 @@ html[data-theme="dark"] .svg-monochrome {
     margin-top: -2px;
 }
 
+.close-button, .maplibregl-popup-close-button {
+    line-height: 30px;
+    font-size: 30px;
+    font-family: system-ui;
+    font-weight: 100;
+    border: 0 !important;
+    background: transparent;
+}
+
 .airlineColorDot {
     width: 15px;
     height: 15px;
@@ -1947,6 +1952,8 @@ div {
 .threshold-bar .reputationValueCurrent {
     color: var(--background-1);
     font-weight: 900;
+    -webkit-text-stroke: 0.2px var(--button-color);
+    text-shadow: 1px -0.2px 1px var(--button-color);
 }
 .dot:hover {
     border-left-color: whitesmoke;
@@ -2199,9 +2206,6 @@ iframe.clip {
 small, .small {
     font-size: 85%;
 }
-.very-small {
-    font-size: 75%;
-}
 .small-10px {
     font-size: 10px;
 }
@@ -2427,6 +2431,7 @@ i, .italic {
    Utility Classes - Visual
    ======================================== */
 
+.opacity-30 { opacity: 0.3; }
 .opacity-60 { opacity: 0.6; }
 .opacity-70 { opacity: 0.7; }
 .opacity-80 { opacity: 0.8; }
@@ -2435,9 +2440,12 @@ i, .italic {
 .rotate-90 { rotate: 90deg}
 .-rotate-90 { rotate: -90deg}
 .list-disc { list-style: outside circle; padding-left: 16px; }
+.list-disc li { padding-bottom: 4px; }
 .text-left { text-align: left; }
 .text-right { text-align: right; }
 .text-center { text-align: center; }
+.border { border: 1px solid var(var(--border-color));}
+.border-top { border-top: 1px solid var(var(--border-color));}
 .rounded { border-radius: 8px !important; }
 .rounded-none { border-radius: 0px !important; }
 .overflow-x-auto { overflow-x: auto !important; }
@@ -2476,9 +2484,11 @@ i, .italic {
 /* ========================================
    Utility Classes - Flexbox / display
    ======================================== */
-.relative { 
-    position: relative !important; 
-}
+.relative { position: relative !important; }
+.absolute { position: absolute !important; }
+.top-0 { top: 0px; }
+.left-0 { left: 0px; }
+.right-0 { right: 0px; }
 .block {
     display: block;
 }
@@ -2511,6 +2521,15 @@ i, .italic {
 .flex-wrap {
     flex-wrap: wrap;
 }
+.flex-scroll-x-hidden {
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+.flex-scroll-x-hidden::-webkit-scrollbar {
+    display: none;
+}
 .justify-center {
     justify-content: center;
 }
@@ -2539,9 +2558,14 @@ i, .italic {
 .sidebar-grid {
     display: grid;
     gap: 20px;
-    grid-template-columns: 7fr minmax(300px, 3fr);
+    grid-template-columns: minmax(400px, 7fr) minmax(280px, 3fr);
 }
-@media (max-width: 640px) {
+@media (max-width: 1000px) {
+    .sidebar-grid {
+        gap: 10px;
+    }
+}
+@media (max-width: 800px) {
     .sidebar-grid {
         grid-template-columns: 1fr;
     }
@@ -2553,7 +2577,7 @@ i, .italic {
     gap: 8px;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 800px) {
     .section-grid {
         grid-template-columns: 1fr;
     }
