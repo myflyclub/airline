@@ -3,21 +3,18 @@ package com.patson.init
 import com.patson.model._
 import com.patson.data._
 import com.patson.Util
-import scala.collection.mutable.Set
-import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.Map
-import scala.collection.mutable.ListBuffer
 
 object IsolatedAirportPatcher {
-   
 
-  import IsolatedTownFeature._
-  
-  def patchIsolatedAirports() = {
+  /**
+   * Computes isolation levels for all airports based on surrounding population.
+   * Returns a map of airport ID -> isolation level, only for airports with level > 0.
+   * Does not write to the database.
+   */
+  def computeIsolation(allAirports: List[Airport]): Map[Int, Int] = {
     val LOOK_RANGE = Array(300, 600, 1200, 2400)
-    val allAirports = AirportSource.loadAllAirports(true)
-    val isolationByAirport = Map[Airport, Int]()
-
+    val isolationByAirportId = Map[Int, Int]()
 
     allAirports.foreach { airport =>
       var isolationLevel : Int = 0
@@ -25,15 +22,15 @@ object IsolatedAirportPatcher {
       val boundaryLongitude = GeoDataGenerator.calculateLongitudeBoundary(airport.latitude, airport.longitude, LOOK_RANGE.last)
       for (i <- 0 until LOOK_RANGE.size) {
         val threshold = LOOK_RANGE(i)
-        val populationWithinRange = allAirports.filter { targetAirport =>
+        val populationWithinRange: Long = allAirports.filter { targetAirport =>
           val distance = Util.calculateDistance(airport.latitude, airport.longitude, targetAirport.latitude, targetAirport.longitude)
           distance < threshold && targetAirport.longitude >= boundaryLongitude._1 && targetAirport.longitude <= boundaryLongitude._2
-        }.map(_.population).sum
-        if (populationWithinRange < 100000) { //very isolated
+        }.map(_.basePopulation.toLong).sum + airport.basePopulation.toLong
+        if (populationWithinRange < 100_000L) { //very isolated
           isolationLevel += 3
-        } else if (populationWithinRange < 500000) {
+        } else if (populationWithinRange < 500_000L) {
           isolationLevel += 2
-        } else if (populationWithinRange < 3000000) { //kinda isolated
+        } else if (populationWithinRange < 3_000_000L) { //kinda isolated
           isolationLevel += 1
         }
       }
@@ -42,24 +39,13 @@ object IsolatedAirportPatcher {
         isolationLevel += 1
       }
       if (airport.iata == "IPC") {
-        isolationLevel = 15 //this is to give it range to reach SCL
+        isolationLevel = 9 //this is to give it range to reach SCL
       }
       if (isolationLevel > 0) {
-        isolationByAirport.put(airport, isolationLevel)
+        isolationByAirportId.put(airport.id, isolationLevel)
       }
     }
 
-    isolationByAirport.foreach {
-      case (airport,isolationLevel) =>
-        val existingFeatures = airport.getFeatures().filter(_.featureType != AirportFeatureType.ISOLATED_TOWN)
-        val newFeatures = existingFeatures :+ AirportFeature(AirportFeatureType.ISOLATED_TOWN, isolationLevel)
-        //airport.initFeatures(newFeatures) //CANNOT init features here, features can only be init once.
-        AirportSource.updateAirportFeatures(airport.id, newFeatures)
-        println(s"$airport isolation level $isolationLevel features ${airport.getFeatures()}")
-    }
-
-
-
+    isolationByAirportId
   }
-}  
-  
+}
