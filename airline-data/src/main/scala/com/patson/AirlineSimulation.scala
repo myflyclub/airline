@@ -45,6 +45,7 @@ object AirlineSimulation {
 
     val currentCycle = MainSimulation.currentWeek
     val airportChampionsByAirlineId : immutable.Map[Int, List[AirportChampionInfo]] = ChampionUtil.loadAirportChampionInfo().groupBy(_.loyalist.airline.id)
+    val advertisementCostByAirlineId = ManagerSource.loadCampaignCostsByAirlineId()
 
     val allAirlineStatsByAirlineId: immutable.Map[Int, List[AirlineStat]] = AirlineStatisticsSource.loadAirlineStatsForAirlineIds(allAirlines.map(_.id)).groupBy(_.airlineId) //used for stock price
     val latestQuarterStatsByAirlineId: immutable.Map[Int, AirlineStat] = allAirlineStatsByAirlineId.flatMap {
@@ -196,8 +197,7 @@ object AirlineSimulation {
 
       othersSummary.put(OtherIncomeItemType.FUEL_COST, -1 * actualFuelCost.toLong)
 
-      val advertisementCost = DelegateSource.loadCampaignTasksByAirlineId(airline.id).map(_.cost).sum
-      othersSummary.put(OtherIncomeItemType.ADVERTISEMENT, advertisementCost * -1)
+      othersSummary.put(OtherIncomeItemType.ADVERTISEMENT, advertisementCostByAirlineId.getOrElse(airline.id, 0) * -1)
 
       var othersRevenue = 0L
       var othersExpense = 0L

@@ -136,7 +136,7 @@ object AirlineSource {
             Using.resource(connection.prepareStatement("INSERT INTO " + AIRLINE_INFO_TABLE + "(airline, balance, action_point, service_quality, target_service_quality, stock_price, shares_outstanding, reputation, country_code, minimum_renewal_balance) VALUES(?,?,?,?,?,?,?,?,?,?)")) { infoStatement =>
               infoStatement.setInt(1, airline.id)
               infoStatement.setLong(2, airline.getBalance())
-              infoStatement.setDouble(3, airline.getActionPoints())
+              infoStatement.setDouble(3, math.min(airline.getActionPoints(), 9999.9))
               infoStatement.setDouble(4, airline.getCurrentServiceQuality())
               infoStatement.setInt(5, airline.getTargetServiceQuality())
               infoStatement.setDouble(6, airline.getStockPrice())
@@ -198,7 +198,7 @@ object AirlineSource {
   def adjustAirlineActionPoints(airlineId : Int, delta : Double) = {
     this.synchronized {
       Using.resource(Meta.getConnection()) { connection =>
-        Using.resource(connection.prepareStatement("UPDATE " + AIRLINE_INFO_TABLE + " SET action_point = action_point + ? WHERE airline = ?")) { updateStatement =>
+        Using.resource(connection.prepareStatement("UPDATE " + AIRLINE_INFO_TABLE + " SET action_point = LEAST(action_point + ?, 999.9) WHERE airline = ?")) { updateStatement =>
           updateStatement.setDouble(1, delta)
           updateStatement.setInt(2, airlineId)
           updateStatement.executeUpdate()
@@ -218,7 +218,7 @@ object AirlineSource {
       this.synchronized {
         Using.resource(Meta.getConnection()) { connection =>
           connection.setAutoCommit(false)
-          Using.resource(connection.prepareStatement("UPDATE " + AIRLINE_INFO_TABLE + " SET action_point = action_point + ? WHERE airline = ?")) { updateStatement =>
+          Using.resource(connection.prepareStatement("UPDATE " + AIRLINE_INFO_TABLE + " SET action_point = LEAST(action_point + ?, 9999.9) WHERE airline = ?")) { updateStatement =>
             deltas.foreach { case (airline, delta) =>
               airline.setActionPoints(airline.getActionPoints() + delta)
               updateStatement.setDouble(1, delta)
@@ -251,7 +251,7 @@ object AirlineSource {
             updateStatement.setLong(index, airline.getBalance())
           }
           index += 1
-          updateStatement.setDouble(index, airline.getActionPoints())
+          updateStatement.setDouble(index, math.min(airline.getActionPoints(), 9999.9))
           index += 1
           updateStatement.setDouble(index, airline.getCurrentServiceQuality())
           index += 1

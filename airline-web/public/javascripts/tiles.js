@@ -22,13 +22,6 @@ function drawTiles($container, tiles) {
             $container.append($tileImg)
         }
     })
-//
-//
-//
-//    	<img src='@routes.Assets.versioned("images/buildings/office-3.png")' style="position: absolute; bottom: 42px; left: 36px;  z-index: 1;  width: 72px;"/>
-//    								<img src='@routes.Assets.versioned("images/buildings/office-1.png")' style="position: absolute; bottom: 21px; left: 0px; z-index: 2; width: 72px"/>
-//    								<img src='@routes.Assets.versioned("images/buildings/office-2.png")' style="position: absolute; bottom: 21px; left: 72px;  z-index: 2; width: 72px;"/>
-//    								<img src='@routes.Assets.versioned("images/buildings/office-1.png")' style="position: absolute; bottom: 0px; left: 36px; z-index: 3; width: 72px"/>
 }
 
 function updateHeadquartersMap($container, airlineId) {

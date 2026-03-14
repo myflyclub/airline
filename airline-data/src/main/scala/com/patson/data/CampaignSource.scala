@@ -213,8 +213,8 @@ object CampaignSource {
       statement.executeUpdate()
 
       val campaign = Campaign.fromId(campaignId)
-      DelegateSource.loadBusyDelegatesByCampaigns(List(campaign)).get(campaign).foreach { delegates =>
-        DelegateSource.deleteBusyDelegates(delegates)
+      ManagerSource.loadBusyDelegatesByCampaigns(List(campaign)).get(campaign).foreach { delegates =>
+        ManagerSource.deleteBusyDelegates(delegates)
       }
     } finally {
       statement.close()

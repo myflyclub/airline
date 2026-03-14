@@ -3,7 +3,7 @@ package com.patson.model
 import java.util.concurrent.TimeUnit
 
 import com.github.benmanes.caffeine.cache.{CacheLoader, Caffeine, LoadingCache}
-import com.patson.data.{CountrySource, CycleSource, DelegateSource}
+import com.patson.data.{CountrySource, CycleSource, ManagerSource}
 import com.patson.util.{AirlineCache, CountryCache}
 
 case class CountryAirlineTitle(country : Country, airline : Airline, title : Title.Value) {
@@ -94,7 +94,7 @@ object CountryAirlineTitle {
     if (totalPax == 0) return List.empty
 
     val currentCycle = CycleSource.loadCycle()
-    val delegateLevels = DelegateSource.loadCountryDelegateLevelsByCountry(countryCode, currentCycle)
+    val delegateLevels = ManagerSource.loadCountryDelegateLevelsByCountry(countryCode, currentCycle)
     val delegateMultiplier = AirlineCountryRelationship.getDelegateBonusMultiplier(country)
     val countryMutualRelationships = AirlineCountryRelationship.countryRelationships
 

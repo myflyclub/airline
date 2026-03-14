@@ -184,35 +184,19 @@ case class Airline(name: String, var airlineType: AirlineType = LegacyAirline, v
   lazy val slogan = AirlineSource.loadSlogan(id)
   lazy val previousNames = AirlineSource.loadPreviousNameHistory(id).sortBy(_.updateTimestamp.getTime)(Ordering.Long.reverse).map(_.name)
 
-  def getDelegateInfo() : DelegateInfo = {
-    val busyDelegates = DelegateSource.loadBusyDelegatesByAirline(id)
-    val availableCount = delegateCount - busyDelegates.size
+  def getManagerInfo() : ManagerInfo = {
+    val busyManagers = ManagerSource.loadBusyDelegatesByAirline(id)
+    val availableCount = managerCount - busyManagers.size
 
-    DelegateInfo(availableCount, delegateBoosts, busyDelegates)
+    ManagerInfo(availableCount, busyManagers)
   }
 
-  val BASE_DELEGATE_COUNT = 5
-  val DELEGATE_PER_LEVEL = 3
-  lazy val delegateCount = BASE_DELEGATE_COUNT +
-    airlineGrade.level * DELEGATE_PER_LEVEL +
-//disabled currently    AirlineSource.loadAirlineBasesByAirline(id).flatMap(_.specializations).count(_.getType == BaseSpecializationType.DELEGATE) +
-    delegateBoosts.map(_.amount).sum
-  lazy val delegateBoosts = AirlineSource.loadAirlineModifierByAirlineId(id).filter(_.modifierType == AirlineModifierType.DELEGATE_BOOST).map(_.asInstanceOf[DelegateBoostAirlineModifier])
+  val BASE_MANAGER_COUNT = 5
+  val MANAGER_PER_LEVEL = 3
+  lazy val managerCount = BASE_MANAGER_COUNT + airlineGrade.level * MANAGER_PER_LEVEL
 }
 
-case class DelegateInfo(availableCount : Int, boosts : List[DelegateBoostAirlineModifier], busyDelegates: List[BusyDelegate]) {
-  //take away all the boosted ones that are unoccupied, those are not eligible for permanent tasks (country relation/campaign etc)
-  val permanentAvailableCount = {
-    val cooldownDelegateCount = busyDelegates.filter(_.availableCycle.isDefined).length
-    val unoccupiedBonusDelegateCount = boosts.map(_.amount).sum - cooldownDelegateCount
-    if (unoccupiedBonusDelegateCount > 0) {
-      availableCount - unoccupiedBonusDelegateCount
-    } else {
-      availableCount
-    }
-  }
-
-}
+case class ManagerInfo(availableCount : Int, busyManagers: List[Manager])
 
 case class AirlineInfo(var balance : Long, var currentServiceQuality : Double, var stockPrice : Double, var sharesOutstanding : Int, var targetServiceQuality : Int, var reputation : Double, var minimumRenewalBalance: Long, var actionPoints: Double = 0.0, var countryCode : Option[String] = None, var initialized : Boolean = false, var prestigePoints: Int = 0)
 
@@ -378,7 +362,7 @@ object Airline {
         //remove all oil contract
         OilSource.deleteOilContractByCriteria(List(("airline", airlineId)))
         //remove any temp delegates
-        AirlineSource.deleteAirlineModifier(airline.id, AirlineModifierType.DELEGATE_BOOST)
+        AirlineSource.deleteAirlineModifier(airline.id, AirlineModifierType.DELEGATE_BOOST) //todo: Remove this
 
         airline.getAllianceId().foreach { allianceId =>
           AllianceSource.loadAllianceById(allianceId).foreach { alliance =>
@@ -409,9 +393,9 @@ object Airline {
         LoyalistSource.deleteLoyalistsByAirline(airlineId)
 
         //reset all busy delegates
-        DelegateSource.deleteBusyDelegateByCriteria(List(("airline", "=", airlineId)))
+        ManagerSource.deleteBusyDelegateByCriteria(List(("airline", "=", airlineId)))
 
-        //reset all campaigns, has to be after delegate
+        //reset all campaigns, has to be after delegate/manager
         CampaignSource.deleteCampaignsByAirline(airline.id)
 
         //reset all notice
@@ -640,10 +624,6 @@ object AirlineModifier {
     import AirlineModifierType._
     val modifier = modifierType match {
       case NERFED => NerfedAirlineModifier(creationCycle)
-      case DELEGATE_BOOST => DelegateBoostAirlineModifier(
-        properties(AirlineModifierPropertyType.STRENGTH).toInt,
-        properties(AirlineModifierPropertyType.DURATION).toInt,
-        creationCycle)
       case BANNER_LOYALTY_BOOST => BannerLoyaltyAirlineModifier(
         properties(AirlineModifierPropertyType.STRENGTH).toInt,
         creationCycle)
@@ -678,12 +658,6 @@ case class NerfedAirlineModifier(override val creationCycle : Int) extends Airli
   override def isHidden = true
 }
 
-case class DelegateBoostAirlineModifier(amount : Int, duration : Int, override val creationCycle : Int) extends AirlineModifier(AirlineModifierType.DELEGATE_BOOST, creationCycle, Some(creationCycle + duration)) {
-  lazy val internalProperties = Map[AirlineModifierPropertyType.Value, Long](AirlineModifierPropertyType.STRENGTH -> amount , AirlineModifierPropertyType.DURATION -> duration)
-  override def properties : Map[AirlineModifierPropertyType.Value, Long] = internalProperties
-  override def isHidden = true
-}
-
 case class BannerLoyaltyAirlineModifier(amount : Int, override val creationCycle : Int) extends AirlineModifier(AirlineModifierType.BANNER_LOYALTY_BOOST, creationCycle, Some(creationCycle +  10 * 52)) {
   lazy val internalProperties = Map[AirlineModifierPropertyType.Value, Long](AirlineModifierPropertyType.STRENGTH -> amount)
   override def properties : Map[AirlineModifierPropertyType.Value, Long] = internalProperties
@@ -693,7 +667,7 @@ case class BannerLoyaltyAirlineModifier(amount : Int, override val creationCycle
 
 object AirlineModifierType extends Enumeration {
   type AirlineModifierType = Value
-  val NERFED, DELEGATE_BOOST, BANNER_LOYALTY_BOOST = Value
+  val NERFED, DELEGATE_BOOST, BANNER_LOYALTY_BOOST = Value //todo: remove DELEGATE_BOOST
 }
 
 object AirlineModifierPropertyType extends Enumeration {

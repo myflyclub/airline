@@ -1,9 +1,9 @@
 package controllers
 
-import com.patson.data.{AirportSource, CampaignSource, CycleSource, DelegateSource}
-import com.patson.model.{Airport, BusyDelegate, CampaignDelegateTask, Computation, DelegateTask}
+import com.patson.data.{AirportSource, CampaignSource, CycleSource, ManagerSource}
+import com.patson.model.{Airport, Manager, ManagerTask, CampaignManagerTask, Computation}
 import com.patson.model.campaign._
-import com.patson.util.{AirportCache, CountryCache}
+import com.patson.util.AirportCache
 import controllers.AuthenticationObject.AuthenticatedAirline
 import javax.inject.Inject
 import play.api.libs.json._
@@ -15,7 +15,6 @@ import scala.math.BigDecimal.RoundingMode
 class CampaignApplication @Inject()(cc: ControllerComponents) extends AbstractController(cc) {
   implicit object CampaignWrites extends Writes[Campaign] {
     def writes(entry : Campaign): JsValue = {
-      //val countryCode : String = ranking.airline.getCountryCode().getOrElse("")
       Json.obj(
         "principalAirport" -> entry.principalAirport,
         "radius" -> entry.radius,
@@ -39,12 +38,13 @@ class CampaignApplication @Inject()(cc: ControllerComponents) extends AbstractCo
     }
   }
 
-  class CampaignDelegateTaskWrites(currentCycle : Int) extends Writes[CampaignDelegateTask] {
-    def writes(entry : CampaignDelegateTask): JsValue = {
+  class CampaignDelegateTaskWrites(currentCycle : Int) extends Writes[CampaignManagerTask] {
+    def writes(entry : CampaignManagerTask): JsValue = {
       var result = Json.obj(
         "level" -> entry.level(currentCycle),
         "description" -> entry.description,
         "levelDescription" -> entry.levelDescription(currentCycle),
+        "startCycle" -> entry.startCycle,
       )
 
       entry.nextLevelCycleCount(currentCycle).foreach {
@@ -57,40 +57,31 @@ class CampaignApplication @Inject()(cc: ControllerComponents) extends AbstractCo
 
   def getCampaigns(airlineId : Int, fullLoad : Boolean) = AuthenticatedAirline(airlineId) { request =>
     val campaigns = CampaignSource.loadCampaignsByCriteria(List(("airline", airlineId)), loadArea = fullLoad)
-    val result = DelegateSource.loadBusyDelegatesByCampaigns(campaigns).map {
-      case (campaign, delegates) => CampaignDetails(campaign, delegates.map(_.assignedTask.asInstanceOf[CampaignDelegateTask]))
+    val result = ManagerSource.loadBusyDelegatesByCampaigns(campaigns).map {
+      case (campaign, delegates) => CampaignDetails(campaign, delegates.map(_.assignedTask.asInstanceOf[CampaignManagerTask]))
     }
 
     Ok(Json.toJson(result))
   }
 
-  val MAX_CAMPAIGN_RADIUS = 1000
-  val MIN_CAMPAIGN_RADIUS = 100
-  def getCampaignAirports(airlineId : Int, airportId : Int, radius : Int) = AuthenticatedAirline(airlineId) { request =>
+  val MAX_CAMPAIGN_RADIUS = 500
+  val MIN_CAMPAIGN_RADIUS = 50
+  def getCampaignAirports(airlineId: Int, airportId: Int, radius: Int) = AuthenticatedAirline(airlineId) { request =>
     AirportCache.getAirport(airportId) match {
       case Some(principalAirport) =>
-        val areaAirports = ListBuffer[Airport]()
-        val candidateAirports = ListBuffer[Airport]()
-        val candidateRadius = Math.min(MAX_CAMPAIGN_RADIUS, radius + 200)
-        AirportSource.loadAirportsByCountry(principalAirport.countryCode).foreach { airport =>
-          if (Computation.calculateDistance(principalAirport, airport) <= radius) {
-            areaAirports.append(airport)
-          } else if (Computation.calculateDistance(principalAirport, airport) <= candidateRadius){
-            candidateAirports.append(airport)
-          }
-        }
+        val areaAirports = Computation.getAirportWithinRange(principalAirport, radius, 0, isDomestic = true)
         val population = areaAirports.map(_.population).sum
         val bonus = Campaign.getAirlineBonus(population, 1)
         val loyaltyBonus = BigDecimal(bonus.loyalty).setScale(2, RoundingMode.HALF_UP)
+        val costPerDelegate = Campaign.getCost(areaAirports.map(_.popMiddleIncome).sum + areaAirports.map(_.popElite).sum * 100)
 
         Ok(Json.obj(
           "principalAirport" -> principalAirport,
           "radius" -> radius,
-          "area" -> areaAirports.toList,
           "population" ->  population,
-          "candidateArea" -> candidateAirports.toList,
           "bonus" -> Json.obj("loyalty" -> loyaltyBonus),
-          "costPerDelegate" -> CampaignDelegateTask.cost(principalAirport.income)))
+          "costPerDelegate" -> costPerDelegate
+        ))
       case None => NotFound(s"airport with id $airportId not found")
     }
   }
@@ -109,7 +100,7 @@ class CampaignApplication @Inject()(cc: ControllerComponents) extends AbstractCo
               if (campaign.airline.id != airlineId) {
                 Left(BadRequest(s"Trying to modify campaign with $campaignId that is NOT from this airline $airline"))
               } else {
-                val newArea = getAreaAirportsInRadius(campaign.principalAirport, radius)
+                val newArea = Computation.getAirportWithinRange(campaign.principalAirport, radius, 0, isDomestic = true)
                 val newPopulationCoverage = newArea.map(_.population).sum
                 CampaignSource.updateCampaign(campaign.copy(radius = radius, populationCoverage = newPopulationCoverage, area = newArea))
                 Right(campaign)
@@ -121,7 +112,7 @@ class CampaignApplication @Inject()(cc: ControllerComponents) extends AbstractCo
           val principalAirportId = request.body.asInstanceOf[AnyContentAsJson].json.\("airportId").as[Int]
           AirportCache.getAirport(principalAirportId) match {
             case Some(principalAirport) =>
-              val newArea = getAreaAirportsInRadius(principalAirport, radius)
+              val newArea = Computation.getAirportWithinRange(principalAirport, radius, 0, isDomestic = true)
               val newPopulationCoverage = newArea.map(_.population).sum
               val newCampaign = Campaign(airline, principalAirport, radius, newPopulationCoverage, newArea)
               CampaignSource.saveCampaign(newCampaign)
@@ -136,22 +127,22 @@ class CampaignApplication @Inject()(cc: ControllerComponents) extends AbstractCo
         case Left(badResult) => badResult
         case Right(campaign) =>
           //save delegates
-          val existingDelegates : List[BusyDelegate] = DelegateSource.loadBusyDelegatesByCampaigns(List(campaign)).getOrElse(campaign, List.empty).sortBy(_.assignedTask.getStartCycle)
+          val existingDelegates : List[Manager] = ManagerSource.loadBusyDelegatesByCampaigns(List(campaign)).getOrElse(campaign, List.empty).sortBy(_.assignedTask.getStartCycle)
           val delta = delegateCount - existingDelegates.length
-          if (delegateCount >= 0 && delta <= airline.getDelegateInfo().permanentAvailableCount) {
+          if (delegateCount >= 0 && delta <= airline.getManagerInfo().availableCount) {
             if (delta < 0) { //unassign the most junior ones first
               existingDelegates.takeRight(delta * -1).foreach { unassigningDelegate =>
-                DelegateSource.deleteBusyDelegateByCriteria(List(("id", "=", unassigningDelegate.id)))
+                ManagerSource.deleteBusyDelegateByCriteria(List(("id", "=", unassigningDelegate.id)))
               }
             } else if (delta > 0) {
-              val delegateTask = DelegateTask.campaign(CycleSource.loadCycle(), campaign)
-              val newDelegates = (0 until delta).map(_ => BusyDelegate(airline, delegateTask, None))
+              val managerTask = ManagerTask.campaign(CycleSource.loadCycle(), campaign)
+              val newDelegates = (0 until delta).map(_ => Manager(airline, managerTask, None))
 
-              DelegateSource.saveBusyDelegates(newDelegates.toList)
+              ManagerSource.saveBusyDelegates(newDelegates.toList)
             }
             Ok(Json.obj())
           } else {
-            BadRequest(s"Invalid delegate value $delegateCount")
+            BadRequest(s"Invalid manager value $delegateCount")
           }
       }
     }
@@ -172,19 +163,6 @@ class CampaignApplication @Inject()(cc: ControllerComponents) extends AbstractCo
     }
   }
 
-  def getAreaAirportsInRadius(principalAirport : Airport, radius : Int) = {
-    val areaAirports = ListBuffer[Airport]()
-
-    AirportSource.loadAirportsByCountry(principalAirport.countryCode).foreach { airport =>
-      if (Computation.calculateDistance(principalAirport, airport) <= radius) {
-        areaAirports.append(airport)
-      }
-    }
-    areaAirports.toList
-  }
-
-
-
-  case class CampaignDetails(campaign: Campaign, delegateTasks : List[CampaignDelegateTask])
+  case class CampaignDetails(campaign: Campaign, delegateTasks : List[CampaignManagerTask])
 
 }

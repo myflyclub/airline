@@ -64,7 +64,32 @@ function updateAirlineLogo() {
 
 function refreshTopBar(airline) {
     changeColoredElementValue($(".balance"), airline.balance)
-    $(".actionPoints").text(airline.actionPoints != null ? airline.actionPoints.toFixed(1) : '0.0')
+    var currentAP = airline.actionPoints != null ? airline.actionPoints : 0.0
+    $(".actionPoints").text("⚡ " + currentAP.toFixed(1))
+
+    var apTooltip
+    var delegatesInfo = airline.delegatesInfo
+    if (delegatesInfo) {
+        var available = Math.max(0, delegatesInfo.availableCount)
+        var rate = 0.0
+        if (available > 0) {
+            if (currentAP > 24.0 * 2 * available) rate = 0.0
+            else if (currentAP > 8.0 * 2 * available) rate = 0.08
+            else rate = 0.1
+        }
+        var gainedPer24h = rate * available * 288  // 5-min cycles, 288/day
+        var projected = currentAP + gainedPer24h
+        if (gainedPer24h > 0) {
+            apTooltip = "Action Points — +" + gainedPer24h.toFixed(1) + " AP/day; projected: " + projected.toFixed(1) + " in 24h"
+        } else if (available === 0) {
+            apTooltip = "Action Points — no generation (no available managers)"
+        } else {
+            apTooltip = "Action Points — no generation (AP cap reached)"
+        }
+    } else {
+        apTooltip = "Action Points"
+    }
+    $(".actionPoints").attr('data-tooltip', apTooltip)
 	$(".reputationValue").text(airline.reputation)
 	$(".reputationStars").empty()
 
@@ -674,10 +699,13 @@ function updatePlanLinkInfo(linkInfo, isRefresh) {
     $("#planLinkToCountryRelationship .total").html(relationshipSpan)
 
     var $relationshipDetailsIcon = $("#planLinkToCountryRelationship .detailsIcon")
-    $relationshipDetailsIcon.data("relationship", relationship)
-    $relationshipDetailsIcon.data("title", linkInfo.toCountryTitle)
     $relationshipDetailsIcon.data("countryCode", linkInfo.toCountryCode)
     $relationshipDetailsIcon.show()
+
+    var cc = linkInfo.toCountryCode
+    if (!loadedCountriesByCode[cc]) loadedCountriesByCode[cc] = {}
+    loadedCountriesByCode[cc].countryRelationship = relationship
+    loadedCountriesByCode[cc].CountryTitle = linkInfo.toCountryTitle
 
     var title = linkInfo.toCountryTitle
     updateAirlineTitle(title, $("#planLinkToCountryTitle img.airlineTitleIcon"), $("#planLinkToCountryTitle .airlineTitle"))
@@ -841,9 +869,9 @@ function updatePlanLinkInfo(linkInfo, isRefresh) {
 			$('#deleteLinkButton').show()
 			// console.log(linkInfo)
 			if (linkInfo.deleteLinkRefund && linkInfo.deleteLinkRefund > 0) {
-			    $('#deleteLinkButton').attr('onclick',`promptConfirm("Delete this route? You will receive ${linkInfo.deleteLinkRefund} temporary delegates.", deleteLink)`)
+			    $('#deleteLinkButton').attr('onclick',`promptConfirm("Delete this route? You will receive ${linkInfo.deleteLinkRefund} action points.", deleteLink)`)
 			} else {
-			    $('#deleteLinkButton').attr('onclick',`promptConfirm("Delete this route? You will receive ${linkInfo.deleteLinkRefund} temporary delegates.", deleteLink)`)
+			    $('#deleteLinkButton').attr('onclick',`promptConfirm("Delete this route?", deleteLink)`)
 			}
 		}
 		$('#updateLinkButton').show()
@@ -1635,7 +1663,8 @@ function cancelEditLink() {
 	} else { //simply go back to linkDetails of the current link (exit edit mode)
 		setActiveDiv($('#linkDetails'))
 	}
-	hideActiveDiv($("#extendedPanel #airplaneModelDetails"))
+	hideActiveDiv($("#airplaneModelDetails"))
+    hideActiveDiv($("#linkDetails"))
 }
 
 function removeTempPath() {
@@ -2341,7 +2370,7 @@ function updateSatisfaction(result) {
         $row.append("<div class='cell' style='width: 15%;'>" + entry.passengerCount)
 
         $icon.on('mouseout.breakdown', function() {
-            $('#satisfactionDetailsTooltip').hide()
+            hideMarkupTooltip(document.getElementById('satisfactionDetailsTooltip'))
         })
         $iconCell = $("<div class='cell' style='width: 35%;'>").append($icon)
         $row.append($iconCell)
@@ -2358,7 +2387,7 @@ function updateSatisfaction(result) {
         $row.append("<div class='cell' style='width: 15%;'>" + entry.passengerCount)
 
         $icon.on('mouseout.breakdown', function() {
-            $('#satisfactionDetailsTooltip').hide()
+            hideMarkupTooltip(document.getElementById('satisfactionDetailsTooltip'))
         })
         $iconCell = $("<div class='cell' style='width: 35%;'>").append($icon)
         $row.append($iconCell)
@@ -2376,7 +2405,7 @@ function updateSatisfaction(result) {
 
 
         $icon.on('mouseout.breakdown', function() {
-            $('#satisfactionDetailsTooltip').hide()
+            hideMarkupTooltip(document.getElementById('satisfactionDetailsTooltip'))
         })
 
         $iconCell = $("<div class='cell' style='width: 35%;'>").append($icon)
@@ -2436,10 +2465,7 @@ function getSatisfactionIcon(satisfaction) {
 }
 
 function showSatisfactionBreakdown($icon, positiveComments, negativeComments, satisfactionValue) {
-    var yPos = $icon.offset().top - $(window).scrollTop() + $icon.height() + 5
-    var xPos = $icon.offset().left - $(window).scrollLeft() + $icon.width() - $('#appealBonusDetailsTooltip').width() / 2
     $('#satisfactionDetailsTooltip .satisfactionValue').text(Math.round(satisfactionValue * 100) + '%')
-
     $('#satisfactionDetailsTooltip .table .table-row').remove()
     $.each(positiveComments, function(index, entry) {
         var percentage = Math.round(entry[1] * 100)
@@ -2459,18 +2485,7 @@ function showSatisfactionBreakdown($icon, positiveComments, negativeComments, sa
         $row.css('color', '#F08080')
         $('#satisfactionDetailsTooltip .table').append($row)
     })
-
-     //adjust xPos if it's outside of the screen
-    var windowWidth = $(window).width()
-    var tooltipWidth = $('#satisfactionDetailsTooltip').width()
-    if (xPos + tooltipWidth > windowWidth) {
-        xPos = windowWidth - tooltipWidth
-    }
-
-    $('#satisfactionDetailsTooltip').css('top', yPos + 'px')
-    $('#satisfactionDetailsTooltip').css('left', xPos + 'px')
-
-    $('#satisfactionDetailsTooltip').show()
+    showMarkupTooltip($icon[0], document.getElementById('satisfactionDetailsTooltip'))
 }
 
 

@@ -157,7 +157,7 @@
 							</div>
 
 							<div class="pt-8">
-								<h4>Milestones <i class="opacity-70 very-small">@@ last week</i></h4>
+								<h4>Milestones <i class="opacity-70 text-xs">@@ last week</i></h4>
 								<div id="milestones" class="container-cols-180px py-2"></div>
 							</div>
 						</div>
@@ -559,8 +559,17 @@
 					<div class="vertical-group" style="width: 30%; min-width: 300px;">
                         <textarea id="airlineNotes" class="section" placeholder="Add your private notes here..."></textarea>
                         <div class="section" id="managerStatus">
-                            <h4>Managers</h4>
-                            <div class="managerGroups"></div>
+                            <h4>
+                                Managers
+                                <span class="tooltip">
+									<img class="info svg" src="/assets//images/icons/6225ecd56079ca6e3a8d412411b89359-information.svg">
+									<span id="tooltip_manager" class="tooltiptext alignLeft below text-sm" style="width: 280px; visibility: hidden; opacity: 0;"></span>
+								</span>
+                            </h4>
+                            <div class="managerGroups py-2"></div>
+                            <button type="button" class="button" onclick="showManagerModal()">
+                                View details
+                            </button>
                         </div>
 						<div class="section">
                             <h4>Headquarters</h4>

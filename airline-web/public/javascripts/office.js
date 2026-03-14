@@ -150,7 +150,6 @@ function showOfficeCanvas() {
 	writeMilestones(activeAirline.reputationBreakdowns.breakdowns)
 	loadSheets();
 	updateResetAirlineInfo()
-	//updateAirlineDelegateStatus($('#officeCanvas .delegateStatus'))
 	updateAirlineAssets()
 	updateCampaignSummary()
 	updateChampionedCountriesDetails()
@@ -1352,10 +1351,9 @@ function updateChampionedCountriesDetails() {
     	    contentType: 'application/json; charset=utf-8',
     	    dataType: 'json',
     	    success: function(championedCountries) {
-    	    	$(championedCountries).each(function(index, championDetails) {
-    	    		var country = championDetails.country
+    	    	$(championedCountries).each(function(index, country) {
     	    		var row = $("<div class='table-row clickable' data-link='country' onclick=\"navigateTo('/country/" + country.countryCode + "');\"></div>")
-    	    		row.append("<div class='cell'>" + getRankingImg(championDetails.ranking) + "</div>")
+    	    		row.append("<div class='cell'>" + getRankingImg(country.ranking) + "</div>")
     	    		row.append("<div class='cell'>" + getCountryFlagImg(country.countryCode) + country.name + "</div>")
     	    		$('#championedCountriesList').append(row)
     	    	})
@@ -1509,7 +1507,7 @@ function resetAirline(keepAssets) {
 function updateManagerStatus() {
     $.ajax({
         type: 'GET',
-        url: '/delegates/airline/' + activeAirline.id,
+        url: '/managers/airline/' + activeAirline.id,
         contentType: 'application/json; charset=utf-8',
         dataType: 'json',
         success: function(delegateInfo) {

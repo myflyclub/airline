@@ -1,6 +1,6 @@
 package controllers
 
-import com.patson.data.{AirlineSource, AirportSource, CountrySource, CycleSource, DelegateSource, LinkSource, NegotiationSource}
+import com.patson.data.{AirlineSource, AirportSource, CountrySource, CycleSource, ManagerSource, LinkSource, NegotiationSource}
 import com.patson.model.Title.APPROVED_AIRLINE
 import com.patson.model.{NegoHopper, _}
 import com.patson.model.airplane._
@@ -374,7 +374,7 @@ object NegotiationUtil {
       totalFromDiscount,
       finalToDiscountValue = totalToDiscount,
       finalRequirementValue,
-      computeOdds(finalRequirementValue, Math.min(MAX_ASSIGNED_DELEGATE, airline.getDelegateInfo().availableCount)),
+      computeOdds(finalRequirementValue, Math.min(MAX_ASSIGNED_DELEGATE, airline.getManagerInfo().availableCount)),
       existingLinkCancellationValue,
       hasActionPointRefund
     )
@@ -415,16 +415,16 @@ object NegotiationUtil {
   }
 
   // backward-compatible signature
-  def getLinkBonus(link : Link, monetaryBaseValue : Long, delegates : List[BusyDelegate]) : NegotiationBonus = {
+  def getLinkBonus(link : Link, monetaryBaseValue : Long, delegates : List[Manager]) : NegotiationBonus = {
     getLinkBonus(link, monetaryBaseValue, delegates, odds = 0.5)
   }
 
-  def getLinkBonus(link : Link, monetaryBaseValue : Long, delegates : List[BusyDelegate], odds: Double) : NegotiationBonus = {
+  def getLinkBonus(link : Link, monetaryBaseValue : Long, delegates : List[Manager], odds: Double) : NegotiationBonus = {
     val useBigPool = Math.random() < bigSwingChance(odds)
     NegotiationBonus.drawBonus(monetaryBaseValue, delegates, link.to, useHighImpactPool = useBigPool)
   }
 
-  def getLinkNegativeBonus(link: Link, monetaryBaseValue: Long, delegates: List[BusyDelegate], odds: Double): NegotiationBonus = {
+  def getLinkNegativeBonus(link: Link, monetaryBaseValue: Long, delegates: List[Manager], odds: Double): NegotiationBonus = {
     val useBigPool = Math.random() < bigSwingChance(odds)
     NegotiationBonus.drawNegativeBonus(monetaryBaseValue, delegates, link.to, useHighImpactPool = useBigPool)
   }
@@ -544,12 +544,12 @@ object NegotiationBonus {
 
   val random = new Random()
 
-  def drawBonus(monetaryBaseValue : Long, delegates: List[BusyDelegate], airport : Airport, useHighImpactPool: Boolean = false): NegotiationBonus = {
+  def drawBonus(monetaryBaseValue : Long, delegates: List[Manager], airport : Airport, useHighImpactPool: Boolean = false): NegotiationBonus = {
     val sourcePool = if (useHighImpactPool) highImpactPool else pool
     sourcePool(random.nextInt(sourcePool.size)).computeBonus(monetaryBaseValue, delegates, airport)
   }
 
-  def drawNegativeBonus(monetaryBaseValue : Long, delegates: List[BusyDelegate], airport : Airport, useHighImpactPool: Boolean = false): NegotiationBonus = {
+  def drawNegativeBonus(monetaryBaseValue : Long, delegates: List[Manager], airport : Airport, useHighImpactPool: Boolean = false): NegotiationBonus = {
     val sourcePool = if (useHighImpactPool) highImpactNegativePool else negativePool
     sourcePool(random.nextInt(sourcePool.size)).computeBonus(monetaryBaseValue, delegates, airport)
   }
@@ -589,14 +589,14 @@ abstract class NegotiationBonusTemplate {
   val INTENSITY_MAX = 5
   val intensity : Int = Math.min(INTENSITY_MAX, intensityCompute)
   val intensityCompute : Int
-  def computeBonus(monetaryBaseValue : Long, delegates : List[BusyDelegate], airport : Airport) : NegotiationBonus
+  def computeBonus(monetaryBaseValue : Long, delegates : List[Manager], airport : Airport) : NegotiationBonus
 }
 
 case class NegotiationCashBonusTemplate(factor : Int) extends NegotiationBonusTemplate {
   val intensityCompute = factor / 2 + 1
   val integerInstance = java.text.NumberFormat.getIntegerInstance
 
-  override def computeBonus(monetaryBaseValue : Long, delegates : List[BusyDelegate], airport : Airport) : NegotiationBonus = {
+  override def computeBonus(monetaryBaseValue : Long, delegates : List[Manager], airport : Airport) : NegotiationBonus = {
     val cash = monetaryBaseValue * factor
     val description =
       if (factor <= 1) {
@@ -616,7 +616,7 @@ case class NegotiationLoyaltyBonusTemplate(bonusFactor : Int) extends Negotiatio
   val duration = 52
   val intensityCompute = bonusFactor + 1
 
-  override def computeBonus(monetaryBaseValue : Long, delegates : List[BusyDelegate], airport : Airport) : NegotiationBonus = {
+  override def computeBonus(monetaryBaseValue : Long, delegates : List[Manager], airport : Airport) : NegotiationBonus = {
     val denominator = airport.popMiddleIncome.toDouble * airport.income.toDouble
     val loyaltyBonus = BigDecimal(
       Math.max(0, Math.min(20, monetaryBaseValue.toDouble / denominator * 1000000))
@@ -638,18 +638,18 @@ case class NegotiationLoyaltyBonusTemplate(bonusFactor : Int) extends Negotiatio
 case class NegotiationActionPointBonusTemplate(bonusFactor: Int) extends NegotiationBonusTemplate {
   val intensityCompute = bonusFactor + 1
 
-  override def computeBonus(monetaryBaseValue: Long, delegates: List[BusyDelegate], airport: Airport): NegotiationBonus = {
+  override def computeBonus(monetaryBaseValue: Long, delegates: List[Manager], airport: Airport): NegotiationBonus = {
     val basePoints = Math.max(1, bonusFactor)
     val delegateSynergy = Math.min(2, delegates.size / 3)
     val points = basePoints + delegateSynergy
 
     val description =
       if (points <= 2) {
-        s"Team momentum grants $points temporary action point(s)."
+        s"Team momentum grants $points action point(s)."
       } else if (points <= 4) {
-        s"Negotiation confidence surge! Gain $points temporary action point(s)."
+        s"Negotiation confidence surge! Gain $points action point(s)."
       } else {
-        s"Full strategic breakthrough: gain $points temporary action point(s)!"
+        s"Full strategic breakthrough: gain $points action point(s)!"
       }
 
     NegotiationActionPointBonus(points, description, intensity)
@@ -660,7 +660,7 @@ case class NegotiationNegativeLoyaltyBonusTemplate(penaltyFactor: Int) extends N
   val duration = 26
   val intensityCompute = penaltyFactor + 1
 
-  override def computeBonus(monetaryBaseValue: Long, delegates: List[BusyDelegate], airport: Airport): NegotiationBonus = {
+  override def computeBonus(monetaryBaseValue: Long, delegates: List[Manager], airport: Airport): NegotiationBonus = {
     val denominator = airport.popMiddleIncome.toDouble * airport.income.toDouble
     val basePenalty = if (denominator <= 0) 1.0 else monetaryBaseValue.toDouble / denominator * 1000000
 

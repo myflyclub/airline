@@ -20,7 +20,7 @@ package object controllers {
   implicit val ec: ExecutionContext = ExecutionContext.global
   implicit val actorSystem: ActorSystem = ActorSystem("patson-web-app-system")
   implicit val order: Double.IeeeOrdering.type = Ordering.Double.IeeeOrdering
-  val currentApiVersion = "v5.0.0" // Update this when schema changes
+  val currentApiVersion = "v5.0.1" // Update this when schema changes
   @volatile var cachedCurrentCycle: Int = CycleSource.loadCycle()
   def currentCycle: Int = cachedCurrentCycle
 
@@ -565,7 +565,7 @@ package object controllers {
     def writes(airport: Airport): JsValue = {
       Json.obj(
         "id" -> airport.id,
-        "iata" -> airport.iata,
+//        "iata" -> airport.iata,
       )
     }
   }
@@ -612,7 +612,7 @@ package object controllers {
       if (airport.getFeatures().nonEmpty) {
         airportObject = airportObject + (
           "features" -> JsArray(airport.getFeatures().sortBy(_.featureType.id).map { airportFeature =>
-            var featureJson = Json.obj("type" -> airportFeature.featureType.toString(), "strength" -> airportFeature.strength, "title" -> airportFeature.getDescription)
+            var featureJson = Json.obj("type" -> airportFeature.featureType.toString(), "strength" -> airportFeature.strength)
             airportFeature match {
               case f: InternationalHubFeature => featureJson = featureJson
               case f: FinancialHubFeature => featureJson = featureJson
@@ -658,7 +658,7 @@ package object controllers {
         if (airport.getFeatures().nonEmpty) {
           properties = properties + (
             "features" -> JsArray(airport.getFeatures().sortBy(_.featureType.id).map { airportFeature =>
-              Json.obj("type" -> airportFeature.featureType.toString(), "strength" -> airportFeature.strength, "title" -> airportFeature.getDescription)
+              Json.obj("type" -> airportFeature.featureType.toString(), "strength" -> airportFeature.strength)
             })
           )
         }
@@ -785,7 +785,7 @@ package object controllers {
           }
         }
         airportObject = airportObject + ("features" -> JsArray(airport.getFeatures().sortBy(_.featureType.id).map { airportFeature =>
-          var featureJson = Json.obj("type" -> airportFeature.featureType.toString(), "strength" -> airportFeature.strength, "title" -> airportFeature.getDescription)
+          var featureJson = Json.obj("type" -> airportFeature.featureType.toString(), "strength" -> airportFeature.strength)
           airportFeature match {
             case f: InternationalHubFeature => featureJson = featureJson + ("boosts" -> Json.toJson(airport.boostFactorsByType.get(AirportBoostType.INTERNATIONAL_HUB)))
             case f: FinancialHubFeature => featureJson = featureJson + ("boosts" -> Json.toJson(airport.boostFactorsByType.get(AirportBoostType.FINANCIAL_HUB)))
@@ -889,32 +889,36 @@ package object controllers {
     }
   }
 
-  implicit object DelegateInfoWrites extends Writes[DelegateInfo] {
-    def writes(delegateInfo : DelegateInfo): JsValue = {
-      val currentCycle = CycleSource.loadCycle()
-      var boosts = Json.arr()
-      delegateInfo.boosts.foreach { boost =>
-        boosts = boosts.append(Json.obj("amount" -> boost.amount, "remainingCycles" -> (boost.expiryCycle.get - currentCycle)))
-      }
+  implicit object DelegateInfoWrites extends Writes[ManagerInfo] {
+    def writes(managerInfo: ManagerInfo): JsValue = {
 
-      var result = Json.obj("availableCount" -> delegateInfo.availableCount, "permanentAvailableCount" -> delegateInfo.permanentAvailableCount, "boosts" -> boosts)
-      var busyDelegatesJson = Json.arr()
+      var result = Json.obj("availableCount" -> managerInfo.availableCount)
+      var busyManagersJson = Json.arr()
       val delegateWrites = new BusyDelegateWrites(currentCycle)
-      delegateInfo.busyDelegates.foreach { busyDelegate =>
-        busyDelegatesJson = busyDelegatesJson.append(Json.toJson(busyDelegate)(delegateWrites))
+      managerInfo.busyManagers.foreach { manager =>
+        busyManagersJson = busyManagersJson.append(Json.toJson(manager)(delegateWrites))
       }
-      result = result + ("busyDelegates", busyDelegatesJson)
+      result = result + ("busyManagers", busyManagersJson)
       result
     }
   }
 
-  class BusyDelegateWrites(currentCycle : Int) extends Writes[BusyDelegate] {
-    override def writes(busyDelegate: BusyDelegate): JsValue = {
+  class BusyDelegateWrites(currentCycle : Int) extends Writes[Manager] {
+    override def writes(busyDelegate: Manager): JsValue = {
       var busyDelegateJson = Json.obj("id" -> busyDelegate.id, "taskType" -> busyDelegate.assignedTask.getTaskType.toString, "taskDescription" -> busyDelegate.assignedTask.description, "completed" -> busyDelegate.taskCompleted)
       busyDelegate.availableCycle.map(_ - currentCycle).foreach {
         coolDown : Int => busyDelegateJson = busyDelegateJson + ("coolDown" -> JsNumber(coolDown))
       }
-
+      busyDelegate.assignedTask match {
+        case levelingTask : LevelingManagerTask =>
+          busyDelegateJson = busyDelegateJson +
+            ("level" -> JsNumber(levelingTask.level(currentCycle))) +
+            ("levelDescription" -> JsString(levelingTask.levelDescription(currentCycle)))
+          levelingTask.nextLevelCycleCount(currentCycle).foreach { cycles =>
+            busyDelegateJson = busyDelegateJson + ("nextLevelCycleCount" -> JsNumber(cycles))
+          }
+        case _ =>
+      }
       busyDelegateJson
     }
   }

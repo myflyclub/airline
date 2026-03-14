@@ -247,7 +247,7 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
       }
       val reputationBreakdowns = AirlineSource.loadReputationBreakdowns(airlineId)
       airlineJson = airlineJson + ("baseAirports" -> Json.toJson(bases)) + ("reputationBreakdowns" -> Json.toJson(reputationBreakdowns)) +
-        ("delegatesInfo" -> Json.toJson(airline.getDelegateInfo()))
+        ("delegatesInfo" -> Json.toJson(airline.getManagerInfo()))
       AllianceSource.loadAllianceMemberByAirline(airline).foreach { allianceMembership =>
         airlineJson = airlineJson +
           ("allianceId" -> JsNumber(allianceMembership.allianceId)) +
@@ -381,20 +381,20 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
       }
     }
 
-    // Each base level except the first HQ requires 1 available delegate (auto-assigned as MANAGER_BASE)
+    // Each base level except the first HQ requires 1 available manager (auto-assigned as MANAGER_BASE)
     if (!(targetBase.headquarter && targetBase.scale == 1)) {
-      val delegateInfo = airline.getDelegateInfo()
+      val delegateInfo = airline.getManagerInfo()
       if (delegateInfo.availableCount < 1) {
-        return Some(s"Cannot build/upgrade this base. Requires at least 1 available delegate but only ${delegateInfo.availableCount} available")
+        return Some(s"Cannot build/upgrade this base. Requires at least 1 available manager but only ${delegateInfo.availableCount} available")
       }
 
-      // Sanity check: existing MANAGER_BASE delegate count should match total base levels already managed
+      // Sanity check: existing MANAGER_BASE manager count should match total base levels already managed
       val expectedManagerBaseCount = airline.getBases().map { base =>
         if (base.headquarter) Math.max(0, base.scale - 1) else base.scale
       }.sum
-      val actualManagerBaseCount = DelegateSource.countManagerBaseDelegatesByAirline(airline.id)
+      val actualManagerBaseCount = ManagerSource.countManagerBaseDelegatesByAirline(airline.id)
       if (actualManagerBaseCount != expectedManagerBaseCount) {
-        return Some(s"Delegate state inconsistency detected (expected $expectedManagerBaseCount base manager delegates, found $actualManagerBaseCount). Please try again or contact support.")
+        return Some(s"Manager inconsistency detected (expected $expectedManagerBaseCount base managers, found $actualManagerBaseCount). Please try again or contact support.")
       }
     }
 
@@ -441,6 +441,11 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
     //check whether there is a base
     if (airline.getBases().find(_.airport.id == airport.id).isEmpty) {
       return Consideration(cost, newLounge, Some("Cannot build lounge without a base"))
+    }
+
+    //alliance
+    if (airline.getAllianceId().isDefined) {
+      return Consideration(cost, newLounge, Some("Must be in an alliance to build/upgrade lounge"))
     }
 
     //check whether it fulfills ranking requirement
@@ -542,7 +547,7 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
             }
 
             base.delete()
-            DelegateSource.deleteManagerBaseDelegates(airlineId, base.scale)
+            ManagerSource.deleteManagerBaseDelegates(airlineId, base.scale)
             Ok(Json.toJson(base))
         }
       case None => //
@@ -573,7 +578,7 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
                   val updateBase = headquarter.copy(scale = inputBase.scale)
                   AirlineSource.saveAirlineBase(updateBase)
                   AirlineSource.saveLedgerEntry(AirlineLedgerEntry(airlineId, currentCycle, LedgerType.BASE_CONSTRUCTION, -1 * cost, Some(s"${headquarter.airport.iata} Lv${inputBase.scale}")))
-                  DelegateSource.saveBusyDelegates(List(BusyDelegate(airline, ManagerBaseDelegateTask(), None)))
+                  ManagerSource.saveBusyDelegates(List(Manager(airline, ManagerBaseTask(), None)))
                   Created(Json.toJson(updateBase))
                 }
               case None => //ok to add then
@@ -608,7 +613,7 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
                     val updateBase = base.copy(scale = inputBase.scale)
                     AirlineSource.saveAirlineBase(updateBase)
                     AirlineSource.saveLedgerEntry(AirlineLedgerEntry(airlineId, currentCycle, LedgerType.BASE_CONSTRUCTION, -1 * cost, Some(s"${base.airport.iata} Lv${inputBase.scale}")))
-                    DelegateSource.saveBusyDelegates(List(BusyDelegate(airline, ManagerBaseDelegateTask(), None)))
+                    ManagerSource.saveBusyDelegates(List(Manager(airline, ManagerBaseTask(), None)))
                     Created(Json.toJson(updateBase))
                   } else {
                     BadRequest(s"Cannot upgrade existing base $base to $inputBase")
@@ -628,7 +633,7 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
                       case Right(_) =>
                         AirlineSource.saveAirlineBase(newBase)
                         AirlineSource.saveLedgerEntry(AirlineLedgerEntry(airlineId, currentCycle, LedgerType.BASE_CONSTRUCTION, -1 * cost, Some(s"${airport.iata} Lv${newBase.scale}")))
-                        DelegateSource.saveBusyDelegates(List(BusyDelegate(airline, ManagerBaseDelegateTask(), None)))
+                        ManagerSource.saveBusyDelegates(List(Manager(airline, ManagerBaseTask(), None)))
                         Created(Json.toJson(newBase))
                     }
                   }
@@ -656,7 +661,7 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
             val (updatingSpecs, purgingSpecs) = base.specializations.filter(!_.free).partition(_.scaleRequirement <= updateBase.scale) //remove spec that no longer able to support
             AirportSource.updateAirportBaseSpecializations(airportId, airlineId, updatingSpecs)
             purgingSpecs.foreach(_.unapply(request.user, base.airport))
-            DelegateSource.deleteManagerBaseDelegates(airlineId, 1)
+            ManagerSource.deleteManagerBaseDelegates(airlineId, 1)
 
             Ok("Base downgraded")
         }

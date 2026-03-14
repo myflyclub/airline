@@ -1,79 +1,114 @@
 package com.patson.model.airplane
 
-import com.patson.data.{AirplaneSource, CycleSource, DelegateSource}
-import com.patson.model.{AircraftModelDelegateTask, BusyDelegate, DelegateTaskType}
+import com.patson.data.{AirplaneSource, CycleSource, ManagerSource}
+import com.patson.model.{AircraftModelManagerTask, Manager, ManagerTaskType}
 import com.patson.model.airplane.Model.Category
-import com.patson.model.airplane.Model.Type.{JUMBO, LARGE, MEDIUM, MEDIUM_XL, PROPELLER_MEDIUM, PROPELLER_SMALL, REGIONAL, REGIONAL_XL, SMALL}
 import com.patson.util.{AirplaneModelCache, AirplaneOwnershipCache}
 
 import scala.collection.MapView
 import scala.collection.mutable.ListBuffer
 
-case class ModelDiscount(modelId : Int, discount : Double, discountType : DiscountType.Value, discountReason : DiscountReason.Value, expirationCycle : Option[Int]) {
+case class ModelDiscount(modelId : Int, discount : Double, discountType : DiscountType.Value, discountReason : DiscountReason.Value) {
   val description = discountReason match {
-    case DiscountReason.PREFERRED_SUPPLIER => s"${(discount * 100).toInt}% off ${DiscountType.description(discountType)} for being preferred supplier"
-    case DiscountReason.LOW_DEMAND => s"${(discount * 100).toInt}% off ${DiscountType.description(discountType)} due to low demand"
+    case DiscountReason.PREFERRED_SUPPLIER => s"${(discount * 100).toInt}% off ${DiscountType.description(discountType)} for having one preferred supplier."
+    case DiscountReason.LOW_DEMAND => s"${(discount * 100).toInt}% off ${DiscountType.description(discountType)} from manufacturer relationship."
   }
 }
 
 object ModelDiscount {
-  val MIN_PRICE_DISCOUNT_PERCENTAGE = 5
+  val MIN_PRICE_DISCOUNT_PERCENTAGE = 10
   val MAX_PRICE_DISCOUNT_PERCENTAGE = 50
-  val CONSTRUCTION_TIME_DISCOUNT = 99
+  val MIN_CONSTRUCTION_TIME_DISCOUNT_PERCENTAGE = 30
+  val MAX_CONSTRUCTION_TIME_DISCOUNT_PERCENTAGE = 100
+  val TOOLTIP = List(
+    s"There are two types of discounts: Preferred Supplier and Manufacturer Relationship.",
+    s"Preferred Suppler discounts are gained by having only one supplier for a plane category, as listed below.",
+    s"Manufacturer Relationship is improved by attaching a manager to a model. Managers will level up over time, increasing the discount and lowering delivery time, of at least ${MIN_PRICE_DISCOUNT_PERCENTAGE}% price discount when the manager is fully leveled up and up to ${MAX_PRICE_DISCOUNT_PERCENTAGE}% when fewer of that model are in service.",
+  )
 
-  val getModelLowDemandDiscountThreshold = (model: Model) => {
-    model.airplaneType match {
-      case SMALL => 160
-      case PROPELLER_SMALL => 160
-      case PROPELLER_MEDIUM => 320
-      case REGIONAL => 600
-      case REGIONAL_XL => 600
-      case MEDIUM => 600
-      case LARGE => 180
+  val getModelLowDemandDiscountThreshold = (category: Model.Category.Value) => {
+    category match {
+      case Model.Category.SMALL => 450
+      case Model.Category.REGIONAL => 700
+      case Model.Category.MEDIUM => 600
+      case Model.Category.LARGE => 180
       case _ => 140
     }
   }
 
-  private def computeManagerMultiplier(managers: List[BusyDelegate], currentCycle: Int): Double = {
-    if (managers.isEmpty) return 0.0
-    val totalLevel = managers.map { delegate =>
-      delegate.assignedTask.asInstanceOf[AircraftModelDelegateTask].level(currentCycle)
+  private def computeManagerMultiplier(managers: List[Manager], currentCycle: Int): Double = {
+    val totalLevel = managers.flatMap { delegate =>
+      delegate.assignedTask match {
+        case task: AircraftModelManagerTask => Some(task.level(currentCycle))
+        case _ => None
+      }
     }.sum
     Math.min(1.0, totalLevel * 0.125)
   }
 
   private def computeLowDemandDiscounts(model: Model, totalOwnedCount: Int, multiplier: Double): List[ModelDiscount] = {
-    val threshold = getModelLowDemandDiscountThreshold(model)
-    val delta = threshold - totalOwnedCount
-    val discounts = ListBuffer[ModelDiscount]()
-    if (delta > 0 && multiplier > 0) {
-      val priceFactor = delta * MAX_PRICE_DISCOUNT_PERCENTAGE * 0.01 / threshold
-      if (priceFactor > 0) {
-        discounts.append(ModelDiscount(model.id, priceFactor * multiplier, DiscountType.PRICE, DiscountReason.LOW_DEMAND, None))
-      }
-      val constructionFactor = delta * CONSTRUCTION_TIME_DISCOUNT * 0.01 / threshold
-      if (constructionFactor > 0) {
-        discounts.append(ModelDiscount(model.id, constructionFactor * multiplier, DiscountType.CONSTRUCTION_TIME, DiscountReason.LOW_DEMAND, None))
-      }
-    }
-    discounts.toList
+    if (multiplier <= 0.0) return Nil
+
+    val threshold = getModelLowDemandDiscountThreshold(model.category).toDouble
+
+    if (totalOwnedCount >= threshold) return List(
+      ModelDiscount(model.id, MIN_PRICE_DISCOUNT_PERCENTAGE * multiplier / 100, DiscountType.PRICE, DiscountReason.LOW_DEMAND),
+      ModelDiscount(model.id, MIN_CONSTRUCTION_TIME_DISCOUNT_PERCENTAGE * multiplier / 100, DiscountType.CONSTRUCTION_TIME, DiscountReason.LOW_DEMAND)
+    )
+
+    // Clamped to 1.0 to prevent >MAX discounts if totalOwnedCount is somehow negative.
+    val unmetFraction = Math.min(1.0, (threshold - totalOwnedCount) / threshold)
+
+    val priceBaseDiscount = MIN_PRICE_DISCOUNT_PERCENTAGE + ((MAX_PRICE_DISCOUNT_PERCENTAGE - MIN_PRICE_DISCOUNT_PERCENTAGE) * unmetFraction)
+    val finalPriceDiscount = priceBaseDiscount * multiplier / 100
+
+    val timeBaseDiscount = MIN_CONSTRUCTION_TIME_DISCOUNT_PERCENTAGE + ((MAX_CONSTRUCTION_TIME_DISCOUNT_PERCENTAGE - MIN_CONSTRUCTION_TIME_DISCOUNT_PERCENTAGE) * unmetFraction)
+    val finalTimeDiscount = timeBaseDiscount * multiplier / 100
+
+    List(
+      ModelDiscount(model.id, finalPriceDiscount, DiscountType.PRICE, DiscountReason.LOW_DEMAND),
+      ModelDiscount(model.id, finalTimeDiscount, DiscountType.CONSTRUCTION_TIME, DiscountReason.LOW_DEMAND)
+    )
   }
 
+  /**
+   * Used on frontend
+   * @param model
+   * @param totalOwnedCount
+   * @return
+   */
   def computeMaxLowDemandPriceDiscountPct(model: Model, totalOwnedCount: Int): Double = {
-    val threshold = getModelLowDemandDiscountThreshold(model)
+    val threshold = getModelLowDemandDiscountThreshold(model.category)
     val delta = threshold - totalOwnedCount
     if (delta <= 0) 0.0
-    else Math.min(MAX_PRICE_DISCOUNT_PERCENTAGE.toDouble, delta.toDouble / threshold * MAX_PRICE_DISCOUNT_PERCENTAGE)
+    else Math.max(
+      MIN_PRICE_DISCOUNT_PERCENTAGE.toDouble,
+      Math.min(MAX_PRICE_DISCOUNT_PERCENTAGE.toDouble, delta.toDouble / threshold * MAX_PRICE_DISCOUNT_PERCENTAGE)
+    )
   }
 
+  def computeMaxLowDemandConstructionTimeDiscountPct(model: Model, totalOwnedCount: Int): Double = {
+    val threshold = getModelLowDemandDiscountThreshold(model.category)
+    val delta = threshold - totalOwnedCount
+    if (delta <= 0) 0.0
+    else Math.max(
+      MIN_CONSTRUCTION_TIME_DISCOUNT_PERCENTAGE.toDouble,
+      Math.min(MAX_CONSTRUCTION_TIME_DISCOUNT_PERCENTAGE.toDouble, delta.toDouble / threshold * MAX_CONSTRUCTION_TIME_DISCOUNT_PERCENTAGE)
+    )
+  }
+  /**
+   * Used on frontend
+   * @param airlineId
+   * @return
+   */
   def getAllCombinedDiscountsByAirlineId(airlineId : Int) : Map[Int, List[ModelDiscount]] = {
     val supplierDiscountInfoByCategory : Map[Model.Category.Value, PreferredSupplierDiscountInfo] = getPreferredSupplierDiscounts(airlineId)
     val countsByModelId = AirplaneSource.loadAirplaneModelCounts()
     val currentCycle = CycleSource.loadCycle()
 
-    val managersByModelId: Map[Int, List[BusyDelegate]] = DelegateSource.loadBusyDelegatesByAirline(airlineId)
-      .filter(_.assignedTask.getTaskType == DelegateTaskType.MANAGER_AIRCRAFT_MODEL)
-      .groupBy(_.assignedTask.asInstanceOf[AircraftModelDelegateTask].modelId)
+    val managersByModelId: Map[Int, List[Manager]] = ManagerSource.loadBusyDelegatesByAirline(airlineId)
+      .filter(_.assignedTask.getTaskType == ManagerTaskType.MANAGER_AIRCRAFT_MODEL)
+      .groupBy(_.assignedTask.asInstanceOf[AircraftModelManagerTask].modelId)
 
     AirplaneModelCache.allModels.values.map { model =>
       val discounts = ListBuffer[ModelDiscount]()
@@ -82,7 +117,7 @@ object ModelDiscount {
       val multiplier = computeManagerMultiplier(managers, currentCycle)
       discounts.appendAll(computeLowDemandDiscounts(model, countsByModelId.getOrElse(model.id, 0), multiplier))
 
-      getPreferredSupplierDiscountByModelId(supplierDiscountInfoByCategory, model.id).foreach(discounts.append(_))
+      getPreferredSupplierDiscountByModelId(supplierDiscountInfoByCategory, model.id).foreach(discounts.append)
 
       (model.id, discounts.toList)
     }.toMap
@@ -98,7 +133,7 @@ object ModelDiscount {
     val model = AirplaneModelCache.getModel(modelId).get
     val discounts = ListBuffer[ModelDiscount]()
 
-    val managers = DelegateSource.loadAircraftModelDelegatesByAirlineAndModel(airlineId, modelId)
+    val managers = ManagerSource.loadAircraftModelDelegatesByAirlineAndModel(airlineId, modelId)
     val currentCycle = CycleSource.loadCycle()
     val multiplier = computeManagerMultiplier(managers, currentCycle)
     val totalOwnedCount = AirplaneSource.loadAirplaneModelCounts().getOrElse(modelId, 0)
@@ -153,7 +188,7 @@ object ModelDiscount {
       case Some(soleSupplier) =>
         if (soleSupplier == model.manufacturer) {
           supplierDiscountInfo.discount match {
-            case Some(discount) => Some(ModelDiscount(modelId, discount, DiscountType.PRICE, DiscountReason.PREFERRED_SUPPLIER, None))
+            case Some(discount) => Some(ModelDiscount(modelId, discount, DiscountType.PRICE, DiscountReason.PREFERRED_SUPPLIER))
             case None => None
           }
         } else {
