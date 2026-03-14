@@ -2,7 +2,7 @@ package com.patson.model.christmas
 
 import com.patson.data.{AirlineSource, AirportSource, ChristmasSource, CycleSource}
 import com.patson.model.christmas.SantaClausAward.{Difficulty, getDifficultyLevel}
-import com.patson.model.{Airline, AirlineAppeal, AirlineBonus, AirlineLedgerEntry, BonusType, LedgerType}
+import com.patson.model.{Airline, AirlineAppeal, AirlineBonus, AirlineLedgerEntry, BonusType, LedgerType, Period}
 import com.patson.util.AirlineCache
 
 abstract class SantaClausAward(santaClausInfo: SantaClausInfo) {
@@ -49,12 +49,11 @@ class ServiceQualityAward(santaClausInfo: SantaClausInfo) extends SantaClausAwar
 class HqLoyaltyAward(santaClausInfo: SantaClausInfo) extends SantaClausAward(santaClausInfo) {
   override val getType: SantaClausAwardType.Value = SantaClausAwardType.HQ_LOYALTY
   val BONUS = 5 * difficultyMultiplier
-  val DURATION = 52
   override def applyAward(): Unit = {
     AirlineCache.getAirline(santaClausInfo.airline.id, fullLoad = true).foreach { airline =>
       airline.getHeadQuarter().foreach { hq =>
 
-        val bonus = AirlineBonus(BonusType.SANTA_CLAUS, AirlineAppeal(loyalty = BONUS), Some(CycleSource.loadCycle() + DURATION))
+        val bonus = AirlineBonus(BonusType.SANTA_CLAUS, AirlineAppeal(loyalty = BONUS), Some(CycleSource.loadCycle() + Period.yearLength))
         AirportSource.saveAirlineAppealBonus(hq.airport.id, airline.id, bonus)
       }
     }
@@ -63,21 +62,20 @@ class HqLoyaltyAward(santaClausInfo: SantaClausInfo) extends SantaClausAward(san
   override val description: String = {
     val hq = AirlineCache.getAirline(santaClausInfo.airline.id, fullLoad = true).get.getHeadQuarter().get.airport
 
-    s"Santa Claus agrees to travel to your HQ and ho-ho-ho for $DURATION weeks in ${hq.displayText} Loyalty bonus $BONUS in your HQ airport!"
+    s"Santa Claus agrees to travel to your HQ and ho-ho-ho for ${Period.yearLength} weeks in ${hq.displayText} Loyalty bonus ${BONUS} in your HQ airport!"
   }
 }
 
 class AirportLoyaltyAward(santaClausInfo: SantaClausInfo) extends SantaClausAward(santaClausInfo) {
   override val getType: SantaClausAwardType.Value = SantaClausAwardType.AIRPORT_LOYALTY
   val BONUS = 20 * difficultyMultiplier
-  val DURATION = 52
   override def applyAward(): Unit = {
     val airline = santaClausInfo.airline
-    val bonus = AirlineBonus(BonusType.SANTA_CLAUS, AirlineAppeal(loyalty = BONUS), Some(CycleSource.loadCycle() + DURATION))
+    val bonus = AirlineBonus(BonusType.SANTA_CLAUS, AirlineAppeal(loyalty = BONUS), Some(CycleSource.loadCycle() + Period.yearLength))
 
     AirportSource.saveAirlineAppealBonus(santaClausInfo.airport.id, airline.id, bonus)
   }
-  override val description: String = s"Santa Claus is going to print your airline logo on all the gifts shipping for ${santaClausInfo.airport.displayText}! Loyalty bonus $BONUS in ${santaClausInfo.airport.displayText} for $DURATION weeks!"
+  override val description: String = s"Santa Claus is going to print your airline logo on all the gifts shipping for ${santaClausInfo.airport.displayText}! Loyalty bonus ${BONUS} in ${santaClausInfo.airport.displayText} for ${Period.yearLength} weeks!"
 }
 
 class ReputationAward(santaClausInfo: SantaClausInfo) extends SantaClausAward(santaClausInfo) {

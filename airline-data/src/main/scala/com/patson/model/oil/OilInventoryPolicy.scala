@@ -1,5 +1,6 @@
 package com.patson.model.oil
 import com.patson.model.Airline
+import com.patson.model.Period
 
 object OilInventoryPolicyOption extends Enumeration {
   type OilInventoryPolicyOption = Value
@@ -24,7 +25,7 @@ case class OilInventoryPolicy(airline : Airline, factor : Double, startCycle : I
 
 
 object OilInventoryPolicy {
-  val MIN_CHANGE_DURATION = 48 //how many weeks before one can change the policy again
+  val MIN_CHANGE_DURATION = Period.yearLength //how many weeks before one can change the policy again
   val RISK_PREMIUM = 0.05
   def byOption(option : OilInventoryPolicyOption.Value, airline : Airline, startCycle : Int): OilInventoryPolicy = {
     val factor : Double = 

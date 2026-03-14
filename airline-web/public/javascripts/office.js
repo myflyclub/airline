@@ -24,9 +24,9 @@ const SHEET_CONFIG = {
 		pageGroup: 'ledger',
 		getData: () => loadedLedger,
 		updateSheet: data => updateLedgerSheet(data),
-		updateChart: () => {},
+		updateChart: () => updateAssetChart(),
 		sheetId: 'ledgerSheet',
-		chartIds: [],
+		chartIds: ['assetChart'],
 	},
 	airlineStat: {
 		pageGroup: 'stats',
@@ -151,7 +151,6 @@ function showOfficeCanvas() {
 	loadSheets();
 	updateResetAirlineInfo()
 	updateAirlineAssets()
-	updateCampaignSummary()
 	updateChampionedCountriesDetails()
 	updateChampionedAirportsDetails()
 	updateServiceFundingDetails()
@@ -163,34 +162,6 @@ function showOfficeCanvas() {
 	updateLiveryInfo()
 	updateManagerStatus()
 	loadSlogan(function(slogan) { $('#officeCanvas .slogan').val(slogan)})
-}
-
-function updateCampaignSummary() {
-    $.ajax({
-        type: 'GET',
-        url: "/airlines/" + activeAirline.id + "/campaigns?fullLoad=false",
-        contentType: 'application/json; charset=utf-8',
-        dataType: 'json',
-        success: function(result) {
-            var $campaignSummary = $("#officeCanvas .campaignSummary")
-            $campaignSummary.children("div.table-row").remove()
-
-            $.each(result, function(index, campaign) {
-                var row = $("<div class='table-row'></div>")
-                row.append("<div class='cell'>" + getCountryFlagImg(campaign.principalAirport.countryCode) + getAirportText(campaign.principalAirport.city, campaign.principalAirport.iata) + "</div>")
-                row.append("<div class='cell'>" + campaign.population + "</div>")
-
-                $campaignSummary.append(row)
-            });
-            if (result.length == 0) {
-                $campaignSummary.append("<div class='table-row'><div class='cell'>-</div><div class='cell'>-</div></div>")
-            }
-        },
-        error: function(jqXHR, textStatus, errorThrown) {
-	            console.log(JSON.stringify(jqXHR));
-	            console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
-	    }
-    });
 }
 
 function updateAirlineAssets() {
@@ -593,7 +564,7 @@ async function loadSheets() {
 		if (etag) _financesEtag = etag
 		const data = await res.json()
 
-		var airlineIncomes = data.incomes
+		var airlineIncomes = data.balances
 		$.each(airlineIncomes, function(index, airlineIncome) {
 			loadedIncomes[airlineIncome.period].push(airlineIncome)
 		})
@@ -641,10 +612,6 @@ function updateIncomeChart(airlineIncomes) {
 	ensureChart('totalProfitChart', function() {
 		plotIncomeChart(incomes, officePeriod, 'totalProfitChart')
 	})
-}
-
-function updateLedgerChart() {
-	// Ledger view has no charts
 }
 
 function updateAirlineStatChart(stats) {
@@ -705,42 +672,42 @@ function changeOfficePeriod(period) {
 	renderSheetNav(type)
 }
 
-function updateIncomeSheet(airlineIncome) {
-	if (airlineIncome) {
-        // updateAllTextNodes(".officeCycleText", getGameDate(airlineIncome.cycle, airlineIncome.period, true));
-		$().text(getGameDate(airlineIncome.cycle, airlineIncome.period, hasUnits = true))
-		$("#totalProfit").text('$' + commaSeparateNumber(airlineIncome.totalProfit))
-        $("#totalRevenue").text('$' + commaSeparateNumber(airlineIncome.totalRevenue))
-        $("#totalExpense").text('$' + commaSeparateNumber(airlineIncome.totalExpense))
-        $("#linksProfit").text('$' + commaSeparateNumber(airlineIncome.linksProfit))
-        $("#linksRevenue").text('$' + commaSeparateNumber(airlineIncome.linksRevenue))
-        $("#linksExpense").text('$' + commaSeparateNumber(airlineIncome.linksExpense))
-        $("#linksTicketRevenue").text('$' + commaSeparateNumber(airlineIncome.linksTicketRevenue))
-        $("#linksAirportFee").text('$' + commaSeparateNumber(airlineIncome.linksAirportFee))
-        $("#linksFuelCost").text('$' + commaSeparateNumber(airlineIncome.linksFuelCost))
-        $("#linksFuelTax").text('$' + commaSeparateNumber(airlineIncome.linksFuelTax))
-        $("#linksCrewCost").text('$' + commaSeparateNumber(airlineIncome.linksCrewCost))
-        $("#linksInflightCost").text('$' + commaSeparateNumber(airlineIncome.linksInflightCost))
-        $("#linksMaintenanceCost").text('$' + commaSeparateNumber(airlineIncome.linksMaintenanceCost))
-        $("#linksLoungeCost").text('$' + commaSeparateNumber(airlineIncome.linksLoungeCost))
-        $("#linksDepreciation").text('$' + commaSeparateNumber(airlineIncome.linksDepreciation))
-        $("#linksDelayCompensation").text('$' + commaSeparateNumber(airlineIncome.linksDelayCompensation))
-        $("#othersProfit").text('$' + commaSeparateNumber(airlineIncome.othersProfit))
-        $("#othersRevenue").text('$' + commaSeparateNumber(airlineIncome.othersRevenue))
-        $("#othersExpense").text('$' + commaSeparateNumber(airlineIncome.othersExpense))
-        $("#othersLoanInterest").text('$' + commaSeparateNumber(airlineIncome.othersLoanInterest))
-        $("#othersBaseUpkeep").text('$' + commaSeparateNumber(airlineIncome.othersBaseUpkeep))
-        $("#othersOvertimeCompensation").text('$' + commaSeparateNumber(airlineIncome.othersOvertimeCompensation))
-        $("#othersLoungeUpkeep").text('$' + commaSeparateNumber(airlineIncome.othersLoungeUpkeep))
-        $("#othersLoungeCost").text('$' + commaSeparateNumber(airlineIncome.othersLoungeCost))
-        $("#othersLoungeIncome").text('$' + commaSeparateNumber(airlineIncome.othersLoungeIncome))
-        $("#othersAssetExpense").text('$' + commaSeparateNumber(airlineIncome.othersAssetExpense))
-        $("#othersAssetRevenue").text('$' + commaSeparateNumber(airlineIncome.othersAssetRevenue))
-        $("#othersServiceInvestment").text('$' + commaSeparateNumber(airlineIncome.othersServiceInvestment))
-        $("#othersAdvertisement").text('$' + commaSeparateNumber(airlineIncome.othersAdvertisement))
-        $("#othersFuelProfit").text('$' + commaSeparateNumber(airlineIncome.othersFuelProfit))
-        $("#othersDepreciation").text('$' + commaSeparateNumber(airlineIncome.othersDepreciation))
-	}
+function updateIncomeSheet(b) {
+	if (!b) return
+	const fmt = v => '$' + commaSeparateNumber(v)
+	$('#balTicketRevenue').text(fmt(b.ticketRevenue))
+	$('#balLoungeRevenue').text(fmt(b.loungeRevenue))
+	const totalRevenue = b.ticketRevenue + b.loungeRevenue
+	$('#balRevenueTot').text(fmt(totalRevenue))
+
+	$('#balStaff').text(fmt(b.staff))
+	$('#balStaffOvertime').text(fmt(b.staffOvertime))
+	$('#balFlightCrew').text(fmt(b.flightCrew))
+	$('#balFuelNormalized').text(fmt(b.fuelNormalized))
+	$('#balDeprication').text(fmt(b.deprecation))
+	$('#balAirportRentals').text(fmt(b.airportRentals))
+	$('#balInflightService').text(fmt(b.inflightService))
+	$('#balDelay').text(fmt(b.delay))
+	$('#balMaintenance').text(fmt(b.maintenance))
+	$('#balLounge').text(fmt(b.lounge))
+	$('#balAdvertising').text(fmt(b.advertising))
+	const totalExpense = b.staff + b.staffOvertime + b.flightCrew + b.fuelNormalized + b.deprecation + b.airportRentals + b.inflightService + b.delay + b.maintenance + b.lounge + b.advertising
+	$('#balExpenseTot').text(fmt(totalExpense))
+	$('#balOperatingIncome').text(fmt(b.normalizedOperatingIncome))
+	$('#balFuelTax').text(fmt(b.fuelTax))
+	$('#balDenormalizedFuel').text(fmt(b.fuel - b.fuelNormalized))
+	$('#balLoanInterest').text(fmt(b.loanInterest))
+	const totalNonOperating = b.fuelTax + (b.fuel + b.fuelNormalized) + b.loanInterest
+	$('#balNonOperatingTot').text(fmt(totalNonOperating))
+
+	$('#balNetIncome').text(fmt(b.income))
+}
+
+function updateAssetChart() {
+	var data = loadedIncomes['WEEKLY'] ?? []
+	ensureChart('assetChart', function() {
+		plotAssetChart(data, 'assetChart')
+	})
 }
 
 
@@ -754,19 +721,19 @@ function updateLedgerSheet(weekData) {
 	if (!weekData) return
 	weekData.entries.forEach(entry => {
 		const $row = $('<div class="table-row"></div>')
-		$row.append('<div class="cell" style="flex: 0 0 68px; opacity: 0.5; font-size: 0.8em;">#' + entry.id + '</div>')
-		$row.append('<div class="cell" style="flex: 2;">' + formatLedgerType(entry.entryType) + '</div>')
-		$row.append('<div class="cell" style="flex: 3; opacity: 0.75;">' + (entry.description || '') + '</div>')
-		$row.append('<div class="cell" style="flex: 0 0 120px; text-align: right;">' + '$' + commaSeparateNumber(entry.amount) + '</div>')
+		$row.append('<div class="cell info text-xs opacity-60" style="width: 15%;">#' + entry.id + '</div>')
+		$row.append('<div class="cell" style="width: 25%;">' + formatLedgerType(entry.entryType) + '</div>')
+		$row.append('<div class="cell" style="width: 40%;">' + (entry.description || '') + '</div>')
+		$row.append('<div class="cell text-right" style="width: 20%;">' + '$' + commaSeparateNumber(entry.amount) + '</div>')
 		$entries.append($row)
 	})
 	const total = weekData.entries.reduce((sum, e) => sum + e.amount, 0)
 	const sign = total < 0 ? '-' : ''
 	const $row = $('<div class="table-row"></div>')
-	$row.append('<div class="cell" style="flex: 0 0 68px;"></div>')
-	$row.append('<div class="cell h4" style="flex: 2;">Total:</div>')
-	$row.append('<div class="cell" style="flex: 3;"></div>')
-	$row.append('<div class="cell totalLedger" style="flex: 0 0 120px; text-align: right;">' + sign + '$' + commaSeparateNumber(Math.abs(total)) + '</div>')
+	$row.append('<div class="cell" style="width: 15%;"></div>')
+	$row.append('<div class="cell h4" style="width: 25%;">Total:</div>')
+	$row.append('<div class="cell" style="width: 40%;"></div>')
+	$row.append('<div class="cell totalLedger" style="width: 20%; text-align: right;">' + sign + '$' + commaSeparateNumber(Math.abs(total)) + '</div>')
 	$entries.append($row)
 }
 

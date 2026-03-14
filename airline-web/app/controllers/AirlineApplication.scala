@@ -269,7 +269,7 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
       val fleetUtilization = if (fleetSize > 0) airplanes.map(_.utilizationRate).sum / fleetSize else 0
       val fleetAge: String = if (fleetSize > 0) {
         val average: Int = airplanes.map(currentCycle - _.constructedCycle).sum / fleetSize
-        s"${average / 52} years ${average % 12} months"
+        s"${average / Period.yearLength} years ${average % 12} months"
       } else ""
 
       val minimumRenewalBalance = airline.getMinimumRenewalBalance()
@@ -811,12 +811,12 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
       case Some(etag) if etag == s""""$currentCycle"""" =>
         NotModified
       case _ =>
-        val incomes = IncomeSource.loadIncomesByAirline(airlineId).filter { statement => (statement.cycle + 1) % Period.numberWeeks(statement.period) == 0 }
+        val balances = IncomeSource.loadBalancesByAirline(airlineId).filter { case (bal, _) => (bal.cycle + 1) % Period.numberWeeks(bal.period) == 0 }
         val ledgerEntries = AirlineSource.loadLedgerEntriesByAirline(airlineId)
         val ledgerJson = JsArray(ledgerEntries.map(e => Json.obj("id" -> e.id, "cycle" -> e.cycle, "entryType" -> e.entryType.toString, "amount" -> e.amount, "description" -> e.description)))
         val stats = AirlineStatisticsSource.loadAirlineStats(airlineId).filter { statement => (statement.cycle + 1) % Period.numberWeeks(statement.period) == 0 }
 
-        Ok(Json.obj("incomes" -> Json.toJson(incomes), "ledger" -> ledgerJson, "airlineStats" -> Json.toJson(stats)))
+        Ok(Json.obj("balances" -> Json.toJson(balances), "ledger" -> ledgerJson, "airlineStats" -> Json.toJson(stats)))
           .withHeaders(
             CACHE_CONTROL -> "no-cache",
             ETAG -> s""""$currentCycle""""

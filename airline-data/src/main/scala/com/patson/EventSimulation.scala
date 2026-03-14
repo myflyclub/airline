@@ -2,7 +2,7 @@ package com.patson
 
 import com.patson.data.{AirportSource, CycleSource, EventSource, LinkStatisticsSource}
 import com.patson.model.event.{EventType, Olympics, OlympicsAirlineVote, OlympicsAirlineVoteWithWeight, OlympicsVoteRound}
-import com.patson.model.{Airline, Airport, AirportFeatureType, Computation, OlympicsInProgressFeature, OlympicsPreparationsFeature}
+import com.patson.model.{Airline, Airport, AirportFeatureType, Computation, OlympicsInProgressFeature, OlympicsPreparationsFeature, Period}
 import com.patson.util.AirportCache
 
 import scala.collection.{MapView, mutable}
@@ -11,7 +11,7 @@ import scala.util.Random
 
 
 object EventSimulation {
-  val MAX_HISTORY_DURATION = 40 * Olympics.WEEKS_PER_YEAR //40 years
+  val MAX_HISTORY_DURATION = 40 * Period.yearLength //40 years
   def simulate(cycle: Int): Unit = {
     //purge
     EventSource.deleteEventsBeforeCycle(CycleSource.loadCycle() - MAX_HISTORY_DURATION)
@@ -206,7 +206,7 @@ object EventSimulation {
     val totalPassengers = passengersByAirline.values.sum
 
     var olympicsTotalPassengers = 0
-    for (i <- 0 until Olympics.WEEKS_PER_YEAR) {
+    for (i <- 0 until Period.yearLength) {
       olympicsTotalPassengers += Olympics.getDemandMultiplier(i) * DemandGenerator.OLYMPICS_DEMAND_BASE
     }
 

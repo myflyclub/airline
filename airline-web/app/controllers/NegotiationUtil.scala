@@ -613,7 +613,7 @@ case class NegotiationCashBonusTemplate(factor : Int) extends NegotiationBonusTe
 }
 
 case class NegotiationLoyaltyBonusTemplate(bonusFactor : Int) extends NegotiationBonusTemplate {
-  val duration = 52
+  val duration = Period.yearLength
   val intensityCompute = bonusFactor + 1
 
   override def computeBonus(monetaryBaseValue : Long, delegates : List[Manager], airport : Airport) : NegotiationBonus = {

@@ -180,182 +180,128 @@
                         <div class="sheet-frame section tight">
 							<div style="width: 100%; overflow:hidden;" id="incomeSheet" class="sheet">
 								<div id="totalProfitChart" style="width: 100%; max-width: 100%; overflow-x:scroll; height: 300px; margin: 2rem auto;"></div>
-								<div style="display: flex; flex-wrap: wrap;" class="">
-
-									<div class="table data rounded-none" style="min-width: 200px">
-										<h4>
-                                            Consolidated Operating Summary
-                                            <span class="tooltip">
-                                                <img class="info svg" src="/assets//images/icons/6225ecd56079ca6e3a8d412411b89359-information.svg">
-                                                <span class="tooltiptext alignLeft below text-sm" style="width: 280px;">
-                                                    Notably this does not include capital costs, fees, investment expenses / income, or prize income.
-                                                </span>
-                                            </span>
-                                        </h4>
-										<div class="table-row">
-											<div class="cell">Total Revenue:</div>
-											<div id="totalRevenue" class="cell" style="text-align: right;"></div>
-										</div>
-										<div class="table-row">
-											<div class="cell">Total Expense:</div>
-											<div id="totalExpense" class="cell" style="text-align: right;"></div>
-										</div>
-										<div class="table-row">
-											<div class="cell">Total Profit:</div>
-											<div id="totalProfit" class="cell" style="text-align: right;"></div>
-										</div>
+								<div class="table data rounded-none">
+									<h4>Consolidated Balance Statement</h4>
+                                    <h5 class="subheading">Operating Revenue</h5>
+									<div class="table-row">
+										<div class="cell">Ticket Revenue:</div>
+										<div id="balTicketRevenue" class="cell" style="text-align:right;"></div>
 									</div>
-
-									<div class="table data rounded-none" style="min-width: 200px">
-										<h4>
-                                            Flights Summary
-                                            <span class="tooltip">
-                                                <img class="info svg" src="/assets//images/icons/6225ecd56079ca6e3a8d412411b89359-information.svg">
-                                                <span class="tooltiptext alignLeft below text-sm" style="width: 280px;">
-                                                    This is a snapshot of your flight operations. To make comparisons, it uses normalized (estimated) fuel and aircraft costs. 
-                                                </span>
-                                            </span>
-                                        </h4>
-										<div class="table-row">
-											<div class="cell">Ticket Revenue:</div>
-											<div id="linksTicketRevenue" class="cell" style="text-align: right;"></div>
-										</div>
-										<div class="table-row">
-											<div class="cell">Airport Rentals & Fees:</div>
-											<div id="linksAirportFee" class="cell" style="text-align: right;"></div>
-										</div>
-										<div class="table-row">
-											<div class="cell">
-                                                Fuel:
-                                                <span class="tooltip">
-                                                    <img class="info svg" src="/assets//images/icons/6225ecd56079ca6e3a8d412411b89359-information.svg">
-                                                    <span class="tooltiptext alignLeft below text-sm" style="width: 280px;">
-                                                        This is a normalized $70 / barrel fuel metric used strictly for route comparability. The exact amount depends on your fuel strategy; it is listed in Other Business Expenses.
+									<div class="table-row">
+										<div class="cell">Lounge Revenue:</div>
+										<div id="balLoungeRevenue" class="cell" style="text-align:right;"></div>
+									</div>
+                                    <div class="table-row">
+										<div class="cell h5">Total Revenue:</div>
+										<div id="balRevenueTot" class="cell h5" style="text-align:right;"></div> 
+									</div>
+                                    <h5 class="subheading">Operating Expense, Normalized</h5>
+									<div class="table-row">
+										<div class="cell">Staff &amp; Staff:</div>
+										<div id="balStaff" class="cell" style="text-align:right;"></div>
+									</div>
+									<div class="table-row">
+										<div class="cell">Staff Overtime:</div>
+										<div id="balStaffOvertime" class="cell" style="text-align:right;"></div>
+									</div>
+									<div class="table-row">
+										<div class="cell">Flight Crew:</div>
+										<div id="balFlightCrew" class="cell" style="text-align:right;"></div>
+									</div>
+									<div class="table-row">
+										<div class="cell">Fuel (Normalized):<span class="tooltip">
+                                                    <img class="info svg" src='@routes.Assets.versioned("/images/icons/information.svg")'>
+                                                    <span class="tooltiptext alignLeft below text-sm" style="width:240px;">
+                                                        This is a normalized $70 / barrel fuel metric used strictly for route comparability. Your actual fuel cost depends on your fuel strategy.
                                                     </span>
-                                                </span>
-                                            </div>
-											<div id="linksFuelCost" class="cell" style="text-align: right;"></div>
-										</div>
-										<div class="table-row">
-											<div class="cell"><span class="fuelTaxRate"></span>Fuel Tax:</div>
-											<div id="linksFuelTax" class="cell" style="text-align: right;"></div>
-										</div>
-										<div class="table-row">
-											<div class="cell">Crew & Labor:</div>
-											<div id="linksCrewCost" class="cell" style="text-align: right;"></div>
-										</div>
-										<div class="table-row">
-											<div class="cell">In-flight Costs / Revenue:</div>
-											<div id="linksInflightCost" class="cell" style="text-align: right;"></div>
-										</div>
-										<div class="table-row">
-											<div class="cell">Aircraft Maintenance:</div>
-											<div id="linksMaintenanceCost" class="cell" style="text-align: right;"></div>
-										</div>
-										<div class="table-row">
-											<div class="cell">
-                                                Aircraft Depreciation:
-                                                <span class="tooltip">
-                                                    <img class="info svg" src="/assets//images/icons/6225ecd56079ca6e3a8d412411b89359-information.svg">
-                                                    <span class="tooltiptext alignLeft below text-sm" style="width: 280px;">
+                                                </span></div>
+										<div id="balFuelNormalized" class="cell" style="text-align:right;"></div>
+									</div>
+									<div class="table-row">
+										<div class="cell">Depreciation (Standard):<span class="tooltip">
+                                                    <img class="info svg" src='@routes.Assets.versioned("/images/icons/information.svg")'>
+                                                    <span class="tooltiptext alignLeft below text-sm" style="width:240px;">
                                                         This is a standardized operational estimate based on your aircraft's list price and utilization, excluding your specific purchase discounts and the 20% fee when selling. The actual cost is the purchase price less what you sell each aircraft for, per operational week.
                                                     </span>
-                                                </span>
-                                            </div>
-											<div id="linksDepreciation" class="cell" style="text-align: right;"></div>
-										</div>
-										<div class="table-row">
-											<div class="cell">Delay Compensation:</div>
-											<div id="linksDelayCompensation" class="cell" style="text-align: right;"></div>
-										</div>
-										<div class="table-row">
-											<div class="cell">Lounge Use:</div>
-											<div id="linksLoungeCost" class="cell" style="text-align: right;"></div>
-										</div>
-										<div class="table-row">
-											<div class="divider cell"></div>
-											<div class="divider cell"></div>
-										</div>
-										<div class="table-row">
-											<div class="cell">Flight Revenue:</div>
-											<div id="linksRevenue" class="cell" style="text-align: right;"></div>
-										</div>
-										<div class="table-row">
-											<div class="cell">Flight Expense:</div>
-											<div id="linksExpense" class="cell" style="text-align: right;"></div>
-										</div>
-										<div class="table-row">
-											<div class="cell">Flight Profit:</div>
-											<div id="linksProfit" class="cell" style="text-align: right;"></div>
-										</div>
+                                                </span></div>
+										<div id="balDeprication" class="cell" style="text-align:right;"></div>
 									</div>
-
-									<div class="table data rounded-none" style="min-width: 200px">
-										<h4>Other Business Expenses</h4>
-										<div class="table-row">
-											<div class="cell">Loan / Negative Cash Interest:</div>
-											<div id="othersLoanInterest" class="cell" style="text-align: right;"></div>
-										</div>
-										<div class="table-row">
-											<div class="cell">Bases Upkeep:</div>
-											<div id="othersBaseUpkeep" class="cell" style="text-align: right;"></div>
-										</div>
-										<div class="table-row">
-											<div class="cell">Bases Overtime:</div>
-											<div id="othersOvertimeCompensation" class="cell" style="text-align: right;"></div>
-										</div>
-										<div class="table-row">
-											<div class="cell">Lounge Costs:</div>
-											<div id="othersLoungeUpkeep" class="cell" style="text-align: right;"></div>
-										</div>
-										<div class="table-row">
-											<div class="cell">Lounge Income:</div>
-											<div id="othersLoungeIncome" class="cell" style="text-align: right;"></div>
-										</div>
-										<!-- <div class="table-row">
-											<div class="cell">Asset Expense:</div>
-											<div id="othersAssetExpense" class="cell" style="text-align: right;"></div>
-										</div>
-										<div class="table-row">
-											<div class="cell">Asset Revenue:</div>
-											<div id="othersAssetRevenue" class="cell" style="text-align: right;"></div>
-										</div> -->
-										<div class="table-row">
-											<div class="cell">Advertising Campaigns:</div>
-											<div id="othersAdvertisement" class="cell" style="text-align: right;"></div>
-										</div>
-										<div class="table-row">
-											<div class="cell">Actual Fuel Cost:</div>
-											<div id="othersFuelProfit" class="cell" style="text-align: right;"></div>
-										</div>
-										<div class="table-row">
-											<div class="divider cell"></div>
-											<div class="divider cell"></div>
-										</div>
-										<div class="table-row">
-											<div class="cell">Others Revenue:</div>
-											<div id="othersRevenue" class="cell" style="text-align: right;"></div>
-										</div>
-										<div class="table-row">
-											<div class="cell">Others Expense:</div>
-											<div id="othersExpense" class="cell" style="text-align: right;"></div>
-										</div>
-										<div class="table-row">
-											<div class="cell">Others Profit:</div>
-											<div id="othersProfit" class="cell" style="text-align: right;"></div>
-										</div>
+									<div class="table-row">
+										<div class="cell">Airport Rentals:</div>
+										<div id="balAirportRentals" class="cell" style="text-align:right;"></div>
 									</div>
-
+									<div class="table-row">
+										<div class="cell">In-flight Service:</div>
+										<div id="balInflightService" class="cell" style="text-align:right;"></div>
+									</div>
+									<div class="table-row">
+										<div class="cell">Delay Compensation:</div>
+										<div id="balDelay" class="cell" style="text-align:right;"></div>
+									</div>
+									<div class="table-row">
+										<div class="cell">Maintenance:</div>
+										<div id="balMaintenance" class="cell" style="text-align:right;"></div>
+									</div>
+									<div class="table-row">
+										<div class="cell">Lounge:</div>
+										<div id="balLounge" class="cell" style="text-align:right;"></div>
+									</div>
+                                    <div class="table-row">
+										<div class="cell">Advertising:</div>
+										<div id="balAdvertising" class="cell" style="text-align:right;"></div>
+									</div>
+                                    <div class="table-row">
+                                        <div class="cell h5">Total Expense:</div>
+                                        <div id="balExpenseTot" class="cell h5" style="text-align:right;"></div>
+                                    </div>
+                                    <h5 class="subheading">Operating Income, Normalized</h5>
+									<div class="table-row">
+										<div class="cell h5"><h5>Total:<span class="tooltip">
+                                                    <img class="info svg" src='@routes.Assets.versioned("/images/icons/information.svg")'>
+                                                    <span class="tooltiptext alignLeft below text-sm" style="width:240px;">
+                                                        This normalized figure is used to calculate your cost and revenue per available seat unit.  
+                                                    </span>
+                                                </span></h5></div>
+										<div id="balOperatingIncome" class="cell h5" style="text-align:right;"></div>
+									</div>
+                                    <h5 class="subheading">Non-Operating Income/(Expense)</h5>
+									<div class="table-row">
+										<div class="cell">Fuel Tax:</div>
+										<div id="balFuelTax" class="cell" style="text-align:right;"></div>
+									</div>
+									<div class="table-row">
+										<div class="cell">Fuel (Adjustment to Actual):</div>
+										<div id="balDenormalizedFuel" class="cell" style="text-align:right;"></div>
+									</div>
+									<div class="table-row">
+										<div class="cell">Loan Interest:</div>
+										<div id="balLoanInterest" class="cell" style="text-align:right;"></div>
+									</div>
+                                    <div class="table-row">
+										<div class="cell h5">Total Non-Operating Income/(Expense):</div>
+                                        <div id="balNonOperatingTot" class="cell h5" style="text-align:right;"></div>
+									</div>
+                                    <h4 class="subheading">Net Operating Income</h4>
+									<div class="table-row">
+										<div class="cell h5">Total:<span class="tooltip">
+                                                    <img class="info svg" src='@routes.Assets.versioned("/images/icons/information.svg")'>
+                                                    <span class="tooltiptext alignLeft below text-sm" style="width:240px;">
+                                                        Total income is useful for understanding your cash flow and is used for determining your EPS. It does not include capital costs or bonus income.
+                                                    </span>
+                                                </span></div>
+										<div id="balNetIncome" class="cell h5" style="text-align:right;"></div>
+									</div>
 								</div>
 							</div>
 <!-- end income statement -->
 							<div style="display: none;" id="ledgerSheet" class="sheet">
+								<div id="assetChart" style="width:100%; height:300px; margin: 1rem auto;"></div>
 								<div class="table data mt-4 p-0 rounded-none">
 									<div class="table-header">
-										<div class="cell" style="flex: 0 0 68px;">Tx #</div>
-										<div class="cell" style="flex: 2;">Type</div>
-										<div class="cell" style="flex: 4;">Description</div>
-										<div class="cell" style="flex: 0 0 120px; text-align: right;">Amount</div>
+										<div class="cell" style="width: 15%;">Tx #</div>
+										<div class="cell" style="width: 25%;">Type</div>
+										<div class="cell" style="width: 40%;">Description</div>
+										<div class="cell text-right" style="width: 20%;">Amount</div>
 									</div>
 									<div id="ledgerEntries" class="contents"></div>
 								</div>
@@ -609,18 +555,6 @@
 							<textarea rows="3" cols="40" maxlength="200" class="slogan" style="width:99%; height: 50px;" placeholder="Your airline slogan..."></textarea>
 						</div>
 
-                        <div class="section" >
-							<div style="display: flex; align-items: base-line;">
-								<span><h4>Advertising Campaigns</h4></span>
-								<img class="img-button svg hover-rotate" src='@routes.Assets.versioned("images/icons/gear.svg")' onclick="showCampaignModal()" data-tooltip="View/Edit Campaigns"/></span>
-							</div>
-							<div class="campaignSummary table data" style="width: 100%; height: 20px;">
-								<div class="table-header">
-									<div class="cell" style="width: 60%">Area</div>
-									<div class="cell" style="width: 40%">Coverage Pop.</div>
-								</div>
-							</div>
-						</div>
 						<div class="section" >
 							<h4>Championed Countries</h4>
 							<div class="table data" style="width: 100%;">

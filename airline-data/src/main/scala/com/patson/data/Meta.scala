@@ -71,10 +71,6 @@ object Meta {
     statement = connection.prepareStatement("DROP TABLE IF EXISTS " + COUNTRY_AIRLINE_RELATIONSHIP_TABLE)
     statement.execute()
     statement.close()
-    
-    statement = connection.prepareStatement("DROP TABLE IF EXISTS " + COUNTRY_MUTUAL_RELATIONSHIP_TABLE)
-    statement.execute()
-    statement.close()
 
     statement = connection.prepareStatement("DROP TABLE IF EXISTS " + AIRLINE_TABLE)
     statement.execute()
@@ -160,13 +156,6 @@ object Meta {
     statement = connection.prepareStatement("CREATE TABLE " + AIRLINE_TABLE + "( id INTEGER PRIMARY KEY AUTO_INCREMENT, name VARCHAR(256), airline_type TINYINT(1))")
     statement.execute()
     statement.close()
-    
-    statement = connection.prepareStatement("CREATE TABLE " + COUNTRY_AIRLINE_RELATIONSHIP_TABLE + "(country CHAR(2), airline INTEGER, relationship INTEGER," +
-                                            "PRIMARY KEY (country, airline)," +
-	                                          "FOREIGN KEY(airline) REFERENCES " + AIRLINE_TABLE + "(id) ON DELETE CASCADE ON UPDATE CASCADE," +
-	                                          "FOREIGN KEY(country) REFERENCES " + COUNTRY_TABLE + "(code) ON DELETE CASCADE ON UPDATE CASCADE)")
-    statement.execute()
-    statement.close()
 
     statement = connection.prepareStatement("CREATE INDEX " + COUNTRY_AIRLINE_RELATIONSHIP_INDEX_1 + " ON " + AIRLINE_TABLE + "(id)")
     statement.execute()
@@ -175,18 +164,11 @@ object Meta {
     statement = connection.prepareStatement("CREATE INDEX " + COUNTRY_AIRLINE_RELATIONSHIP_INDEX_2 + " ON " + COUNTRY_TABLE + "(code)")
     statement.execute()
     statement.close()
-    
-    statement = connection.prepareStatement("CREATE TABLE " + COUNTRY_MUTUAL_RELATIONSHIP_TABLE + "(country_1 CHAR(2), country_2 CHAR(2), relationship INTEGER," +
-                                            "PRIMARY KEY (country_1, country_2)," +
-                                            "FOREIGN KEY(country_1) REFERENCES " + COUNTRY_TABLE + "(code) ON DELETE CASCADE ON UPDATE CASCADE," +
-                                            "FOREIGN KEY(country_2) REFERENCES " + COUNTRY_TABLE + "(code) ON DELETE CASCADE ON UPDATE CASCADE)")
-    statement.execute()
-    statement.close()
 
     statement = connection.prepareStatement("CREATE TABLE " + AIRLINE_INFO_TABLE + "(" +
       "airline INTEGER PRIMARY KEY, " +
       "balance LONG," +
-      "action_point DOUBLE DEFAULT 0," +
+      "action_point DECIMAL(5,1) DEFAULT 0," +
       "service_quality DECIMAL(5,2)," +
       "target_service_quality INTEGER," +
       "shares_outstanding INTEGER DEFAULT 0," +
@@ -658,7 +640,54 @@ object Meta {
   }
 
   def createIncome(connection : Connection) {
-    var statement = connection.prepareStatement("DROP TABLE IF EXISTS " + INCOME_TABLE)
+    var statement = connection.prepareStatement("DROP TABLE IF EXISTS " + BALANCE_TABLE)
+    statement.execute()
+    statement.close()
+
+    statement = connection.prepareStatement("CREATE TABLE " + BALANCE_TABLE + "(" +
+      "airline INTEGER, " +
+      "income LONG, " +
+      "normalized_operating_income LONG, " +
+      "cash_on_hand LONG," +
+      "total_value LONG," +
+      "stock_price DOUBLE," +
+      "period INTEGER," +
+      "cycle INTEGER," +
+      "PRIMARY KEY (airline, period, cycle)" +
+      ")")
+    statement.execute()
+    statement.close()
+
+    statement = connection.prepareStatement("DROP TABLE IF EXISTS " + BALANCE_DETAILS_TABLE)
+    statement.execute()
+    statement.close()
+
+    statement = connection.prepareStatement("CREATE TABLE " + BALANCE_DETAILS_TABLE + "(" +
+      "airline INTEGER, " +
+      "ticket_revenue LONG, " +
+      "lounge_revenue LONG, " +
+      "staff LONG," +
+      "staff_overtime LONG," +
+      "flight_crew LONG," +
+      "fuel LONG," +
+      "fuel_tax LONG," +
+      "fuel_normalized LONG," +
+      "deprecation LONG," +
+      "airport_rentals LONG," +
+      "inflight_service LONG," +
+      "delay LONG," +
+      "maintenance LONG," +
+      "lounge LONG, " +
+      "advertising LONG," +
+      "loan_interest LONG," +
+      "period INTEGER," +
+      "cycle INTEGER," +
+      "PRIMARY KEY (airline, period, cycle)" +
+      ")")
+    statement.execute()
+    statement.close()
+
+    statement = connection.prepareStatement("DROP TABLE IF EXISTS " + INCOME_TABLE)
     statement.execute()
     statement.close()
 
