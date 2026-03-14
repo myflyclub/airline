@@ -2,7 +2,7 @@ package com.patson.model
 
 import com.patson.DemandGenerator
 import com.patson.DemandGenerator.MIN_DISTANCE
-import com.patson.data.{AirportSource, AirportStatisticsSource, GameConstants}
+import com.patson.data.{AirportSource, AirportStatisticsSource, CountrySource, GameConstants}
 
 import scala.collection.immutable.Map
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
@@ -107,10 +107,49 @@ class AirportSpec(_system: ActorSystem) extends TestKit(_system) with ImplicitSe
 
     "test nearby island Airports" in {
       val islandAirport = AirportSource.loadAirportByIata("FRD", true).get
-      val minDistance = if (GameConstants.isIsland(islandAirport.iata)) 50 else MIN_DISTANCE
+      val minDistance = if (GameConstants.isIsland(islandAirport)) 50 else MIN_DISTANCE
       val airports = Computation.getAirportWithinRange(islandAirport, DemandGenerator.HUB_AIRPORTS_MAX_RADIUS, minDistance)
       println(airports.map(_.iata).mkString(", "))
       airports.exists(_.iata == "SEA") shouldBe true
+    }
+  }
+
+  "CountryRelationships" should {
+    "count and rank relationships per country from most to least" in {
+      val allRelationships = CountrySource.getCountryMutualRelationships()
+      val countPerCountry = scala.collection.mutable.Map[String, Int]().withDefaultValue(0)
+      allRelationships.foreach { case ((c1, c2), _) =>
+        countPerCountry(c1) += 1
+        countPerCountry(c2) += 1
+      }
+      val sorted = countPerCountry.toSeq.sortBy(-_._2)
+      println("Relationship counts per country (most to least):")
+      sorted.foreach { case (cc, count) => println(s"  $cc: $count") }
+      succeed
+    }
+
+    "GB-US should return 4" in {
+      CountrySource.getCountryMutualRelationship("GB", "US") shouldBe 4
+    }
+
+    "HK-CN should return 5" in {
+      CountrySource.getCountryMutualRelationship("HK", "CN") shouldBe 5
+    }
+
+    "MC-FR should return 5" in {
+      CountrySource.getCountryMutualRelationship("MC", "FR") shouldBe 5
+    }
+
+    "NO-DK should not return 5" in {
+      CountrySource.getCountryMutualRelationship("NO", "DK") should be < 5
+    }
+
+    "CN should have more relationships than BD" in {
+      val allRelationships = CountrySource.getCountryMutualRelationships()
+      val cnCount = allRelationships.count { case ((c1, c2), _) => c1 == "CN" || c2 == "CN" }
+      val bdCount = allRelationships.count { case ((c1, c2), _) => c1 == "BD" || c2 == "BD" }
+      println(s"CN relationships: $cnCount, BD relationships: $bdCount")
+      cnCount should be > bdCount
     }
   }
 
@@ -137,21 +176,5 @@ class AirportSpec(_system: ActorSystem) extends TestKit(_system) with ImplicitSe
       succeed
     }
 
-    "output all travel rates" in {
-      val allAirports: List[Airport] = AirportSource.loadAllAirports().sortBy(_.popMiddleIncome)
-      val airportStats = AirportStatisticsSource.loadAllAirportStats().groupBy(_.airportId)
-
-      println(s"iata, size, travel rate, rep, from pax, from demand")
-      allAirports.foreach { airport =>
-        airportStats.get(airport.id) match {
-          case Some(stat) =>
-            val travelRate = Airport.travelRateAdjusted(stat.head.fromPax, stat.head.baselineDemand, airport.size)
-            println(s"${airport.iata}, ${airport.size}, $travelRate, ${stat.head.reputation}, ${stat.head.fromPax}, ${stat.head.baselineDemand}")
-          case None =>
-            println(s"${airport.iata}, ${airport.size}, 0, 0, 0, 0")
-        }
-      }
-      succeed
-    }
   }
 }

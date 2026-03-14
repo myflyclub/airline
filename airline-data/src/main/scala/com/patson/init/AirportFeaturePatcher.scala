@@ -11,8 +11,7 @@ object AirportFeaturePatcher extends App {
   import AirportFeatureType._
 
   lazy val featureList = Map(
-
-    INTERNATIONAL_HUB -> Map[String, Int](
+INTERNATIONAL_HUB -> Map[String, Int](
       /**
        * international vacation destinations
        */
@@ -85,7 +84,7 @@ object AirportFeaturePatcher extends App {
 "ADB" -> 35, //Izmir
 "GIG" -> 35, //Rio De Janeiro
 "LED" -> 35, //St. Petersburg
-"PNH" -> 35, //Phnom Penh
+"KTI" -> 35, //Phnom Penh
 "CAI" -> 35, //Cairo Egypt
 "VIE" -> 35, //Vienna
 "DOH" -> 35,
@@ -479,7 +478,6 @@ object AirportFeaturePatcher extends App {
 "SBZ" -> 2, //Sibiu
 "RTB" -> 2, //Roatan
 "LRH" -> 2,
-"HZK" -> 2, //IS
  ),
 VACATION_HUB -> Map[String, Int](
 "CJU" -> 265, //Jeju City
@@ -1177,7 +1175,7 @@ FINANCIAL_HUB -> Map[String, Int](
 "GLA" -> 6, //Glasgow
 "ABV" -> 6, //
 "UIO" -> 6, //
-"FRU" -> 6, //
+"BSZ" -> 9, //
 "AAL" -> 5, //Aalborg
 "GOT" -> 5, //Gothenburg
 "ATH" -> 5, //Athens
@@ -1261,33 +1259,40 @@ FINANCIAL_HUB -> Map[String, Int](
 ),
 DOMESTIC_AIRPORT -> getDomesticAirports(),
 BUSH_HUB -> getBushHubs(),
-GATEWAY_AIRPORT -> getGatewayAirports().map(iata => (iata, 0)).toMap) + (ELITE_CHARM -> getEliteDestinations()
+GATEWAY_AIRPORT -> getGatewayAirports().map(iata => (iata, 0)),
+ELITE_CHARM -> getEliteDestinations()
 )
 
   patchFeatures()
 
   def patchFeatures() = {
-    val airportFeatures = scala.collection.mutable.Map[String, ListBuffer[AirportFeature]]()
+    val allAirports = AirportSource.loadAllAirports()
+    val airportByIata = allAirports.map(a => a.iata -> a).toMap
+
+    // Build featureList features keyed by airport ID
+    val featuresByAirportId = scala.collection.mutable.Map[Int, ListBuffer[AirportFeature]]()
     featureList.foreach {
       case (featureType, airportMap) =>
         airportMap.foreach {
-          case (airportIata, featureStrength) =>
-            val featuresForThisAirport = airportFeatures.getOrElseUpdate(airportIata, ListBuffer[AirportFeature]())
-            featuresForThisAirport += AirportFeature(featureType, featureStrength)
+          case (iata, featureStrength) =>
+            airportByIata.get(iata) match {
+              case Some(airport) =>
+                featuresByAirportId.getOrElseUpdate(airport.id, ListBuffer[AirportFeature]()) += AirportFeature(featureType, featureStrength)
+              case None =>
+                println(s">>> Cannot find airport with iata $iata to patch $featureType")
+            }
         }
     }
 
+    // Merge isolation into the same map
+    val airportById = allAirports.map(a => a.id -> a).toMap
+    IsolatedAirportPatcher.computeIsolation(allAirports).foreach { case (airportId, isolationLevel) =>
+      featuresByAirportId.getOrElseUpdate(airportId, ListBuffer[AirportFeature]()) += AirportFeature(ISOLATED_TOWN, isolationLevel)
+      println(s"${airportById(airportId)} isolation level $isolationLevel")
+    }
 
-    airportFeatures.toList.foreach {
-        case (iata, features) =>
-          AirportSource.loadAirportByIata(iata) match {
-            case Some(airport) =>
-              AirportSource.updateAirportFeatures(airport.id, features.toList)
-            case None =>
-              println(s">>> Cannot find airport with iata $iata to patch $features")
-          }
-      }
-      IsolatedAirportPatcher.patchIsolatedAirports()
+    // Clear all features and rebuild in a single bulk operation
+    AirportSource.updateAllAirportFeatures(featuresByAirportId.map { case (id, buf) => id -> buf.toList }.toMap)
   }
 
   def getEliteDestinations() : Map[String, Int] = {
@@ -1331,6 +1336,7 @@ GATEWAY_AIRPORT -> getGatewayAirports().map(iata => (iata, 0)).toMap) + (ELITE_C
       "JNU",
       "FRD",
       "BFI",
+      "HNL",
       //AU
       "DRW",
       "BME",
@@ -1375,6 +1381,9 @@ GATEWAY_AIRPORT -> getGatewayAirports().map(iata => (iata, 0)).toMap) + (ELITE_C
       //KZ
       "NQZ",
       "UBN",
+      //
+      "MLE",
+      "GAN",
       //RU
       "GDX",
       "KJA",
@@ -1385,7 +1394,17 @@ GATEWAY_AIRPORT -> getGatewayAirports().map(iata => (iata, 0)).toMap) + (ELITE_C
       "UUS",
       //EU
       "KOI",
+      "TOS",
+      "BOO",
+      "HFT",
+      "VDS",
       "ABV",
+      "GLA",
+      "TFS",
+      "TFN",
+      "LPA",
+      "PDL",
+      "TER",
       //Greenland
       "GOH",
       "UAK",
@@ -1549,7 +1568,6 @@ GATEWAY_AIRPORT -> getGatewayAirports().map(iata => (iata, 0)).toMap) + (ELITE_C
     ).map(_ -> 0).toMap
   }
 
-
   def getGatewayAirports() : List[String] = {
     //The most powerful airport of every country
     val airportsByCountry = AirportSource.loadAllAirports().groupBy(_.countryCode).filter(_._2.length > 0)
@@ -1564,9 +1582,10 @@ GATEWAY_AIRPORT -> getGatewayAirports().map(iata => (iata, 0)).toMap) + (ELITE_C
     list += "SKD"
     list -= "LHE" //Pakistan
     list -= "OKZ"
+    list -= "MUX"
+    list += "ISB"
     list += "VTE" //Laos
     list -= "PKZ"
-    list += "ISB"
     list -= "GYE" //Ecuador
     list += "UIO"
     list -= "THR" //Iran

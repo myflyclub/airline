@@ -259,7 +259,7 @@ sealed case class GatewayAirportFeature() extends AirportFeature {
 }
 
 object IsolatedTownFeature {
-  val HUB_RANGE_BRACKETS = Array(1600, 1800, 2000, 2200, 2400, 2600, 2800, 3000, 3200, 3400, 3600, 3800, 4000)
+  val HUB_RANGE_BRACKETS = Array(1000, 1100, 1200, 1300, 1400, 1600, 2000, 3000, 4000, 5000)
 }
 
 sealed case class IsolatedTownFeature(strength : Int) extends AirportFeature {
@@ -276,16 +276,18 @@ sealed case class IsolatedTownFeature(strength : Int) extends AirportFeature {
     if ((passengerType == PassengerType.TRAVELER || passengerType == PassengerType.TRAVELER_SMALL_TOWN) && fromAirport.hasFeature(AirportFeatureType.ISOLATED_TOWN) && affinity >= 2) {
       val affinityMod = affinity / 5.0
       val distanceMod = 1.0 - distance / boostRange.toDouble
-      val rng: Int = 5 + ThreadLocalRandom.current().nextInt(10)
+      val rng: Int = 4
+//      val rng: Int = 4 + ThreadLocalRandom.current().nextInt(10)
 
-      if (toAirport.isGateway() && fromAirport.zone.contains("CC") && distance <= boostRange * 0.7) {
-        (rng * affinityMod * distanceMod).toInt //Increase Caribbean demand
-      } else if (toAirport.isGateway() && fromAirport.countryCode == toAirport.countryCode && List("GB", "NL", "DK", "GR", "JP", "ID", "PH", "MH", "PG", "RU").contains(fromAirport.countryCode)) {
+      // Most isolated demand is created in the base getHubAirports() function
+      if (toAirport.isGateway() && fromAirport.zone.contains("CC") && distance <= boostRange) {
+        (rawDemand * affinityMod * distanceMod).toInt //Increase Caribbean demand
+      } else if (toAirport.isGateway() && fromAirport.countryCode == toAirport.countryCode && List("GB", "NL", "FR", "DK", "GR", "JP", "ID", "PH", "MH", "PG", "RU").contains(fromAirport.countryCode)) {
         rng //add demand from territories or islands back to Metropol
-      } else if ((toAirport.hasFeature(AirportFeatureType.BUSH_HUB) || fromAirport.hasFeature(AirportFeatureType.BUSH_HUB)) && distance <= boostRange * 0.6 && affinity >= 4) {
-        (rng * distanceMod * affinityMod * 1.3).toInt //Create bush hub demand
-      } else if (affinity >= 3 && rawDemand >= 1 && toAirport.size >= 4 && distance <= boostRange * 0.4) {
-        (rng * affinityMod * distanceMod).toInt
+      } else if ((toAirport.hasFeature(AirportFeatureType.BUSH_HUB) || fromAirport.hasFeature(AirportFeatureType.BUSH_HUB)) && distance <= boostRange * 2 && affinity >= 4) {
+        (rawDemand * distanceMod * affinityMod * 1.5).toInt //Create bush hub demand
+      } else if (affinity >= 3 && rawDemand >= 1 && toAirport.size >= 4 && distance <= boostRange) {
+        (rawDemand * rng * affinityMod * distanceMod).toInt
       } else {
         0
       }

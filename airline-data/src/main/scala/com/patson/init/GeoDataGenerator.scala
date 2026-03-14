@@ -42,6 +42,8 @@ object GeoDataGenerator extends App {
       "DK"
     } else if (List("UM").contains(countryCode)) {
       "US"
+    } else if (List("EH").contains(countryCode)) {
+      "MA"
     } else {
       countryCode
     }
@@ -239,7 +241,6 @@ object GeoDataGenerator extends App {
     //patch features
     DestinationsPatcher.loadDestinations()
     AirportFeaturePatcher.patchFeatures()
-    IsolatedAirportPatcher.patchIsolatedAirports()
 
     airports
   }
@@ -600,8 +601,6 @@ object GeoDataGenerator extends App {
       CountrySource.saveCountries(countries.toList)
       println(s"Saved ${countries.length} countries")
     }
-
-    CountryMutualRelationshipGenerator.mainFlow()
   }
 
 

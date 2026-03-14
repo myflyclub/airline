@@ -95,7 +95,7 @@ object Computation {
   // is used independent of individual links, so must be globally accessible
   def getFlightCategory(fromAirport : Airport, toAirport : Airport): FlightCategory.Value = {
     //hard-coding home markets into the computation function to allow for independent "relation" values
-    val ECAA = List("AL", "AM", "AT", "BA", "BE", "BG", "CH", "CY", "CZ", "DK", "EE", "FI", "FR", "DE", "GE", "GR", "HR", "HU", "IE", "IS", "IT", "LT", "LU", "LV", "MD", "ME", "MK", "MT", "NL", "NO", "PL", "PT", "RO", "RS", "SI", "SK", "ES", "SE", "UA", "XK") //https://en.wikipedia.org/wiki/European_Common_Aviation_Area
+    val ECAA = List("AL", "AM", "AT", "BA", "BE", "BG", "CH", "CY", "CZ", "DK", "EE", "FI", "FR", "DE", "GE", "GR", "HR", "HU", "IE", "IS", "IT", "LT", "LU", "LV", "MC", "MD", "ME", "MK", "MT", "NL", "NO", "PL", "PT", "RO", "RS", "SI", "SK", "ES", "SE", "UA", "XK") //https://en.wikipedia.org/wiki/European_Common_Aviation_Area
     val USA = List("US", "PR", "VI", "GU", "AS", "MP", "MH", "PW", "FM") //US & COFA Pacific
     val GB = List("GB", "TC", "KY", "VG", "BM")
     val ANZAC = List("AU", "NZ", "CK", "NU")

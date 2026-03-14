@@ -96,9 +96,9 @@ object AirportSource {
     val campaigns = CampaignSource.loadCampaignsByAreaAirport(airport.id, true)
     val bonusByAirlineId = mutable.Map[Int, ListBuffer[AirlineBonus]]()
 
-    DelegateSource.loadBusyDelegatesByCampaigns(campaigns).foreach {
+    ManagerSource.loadBusyDelegatesByCampaigns(campaigns).foreach {
       case(campaign, delegates) =>
-        val bonus = campaign.getAirlineBonus(airport, delegates.map(_.assignedTask.asInstanceOf[CampaignDelegateTask]), currentCycle)
+        val bonus = campaign.getAirlineBonus(campaign.airline, airport, delegates.map(_.assignedTask.asInstanceOf[CampaignManagerTask]), currentCycle)
         bonusByAirlineId.getOrElseUpdate(campaign.airline.id, ListBuffer[AirlineBonus]()).append(bonus)
     }
 
@@ -657,6 +657,36 @@ object AirportSource {
       AirportCache.refreshAirport(airportId)
 
       connection.commit()
+    } finally {
+      connection.close()
+    }
+  }
+
+
+  /**
+   * Clears ALL airport features and rebuilds from the provided map in a single transaction.
+   */
+  def updateAllAirportFeatures(featuresByAirportId: Map[Int, List[AirportFeature]]) = {
+    val connection = Meta.getConnection()
+    try {
+      connection.setAutoCommit(false)
+
+      connection.prepareStatement("DELETE FROM " + AIRPORT_FEATURE_TABLE).executeUpdate()
+
+      val featureStatement = connection.prepareStatement("REPLACE INTO " + AIRPORT_FEATURE_TABLE + "(airport, feature_type, strength) VALUES(?,?,?)")
+      featuresByAirportId.foreach { case (airportId, features) =>
+        features.foreach { feature =>
+          featureStatement.setInt(1, airportId)
+          featureStatement.setString(2, feature.featureType.toString())
+          featureStatement.setInt(3, feature.strength)
+          featureStatement.addBatch()
+        }
+      }
+      featureStatement.executeBatch()
+      featureStatement.close()
+
+      connection.commit()
+      AirportCache.invalidateAll()
     } finally {
       connection.close()
     }
