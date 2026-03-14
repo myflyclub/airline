@@ -60,10 +60,10 @@ object LoanInterestRateSimulation {
     }
   }
 
-  val MAX_DELTA : BigDecimal = 0.01
-  val RATE_STEP : BigDecimal = 0.002 // 0.2 % is a step
-  val MIN_RATE : BigDecimal = -0.01 //min rate is -1%
-  val MAX_RATE = 0.36
+  val MAX_DELTA : BigDecimal = 0.012
+  val RATE_STEP : BigDecimal = 0.005 // 0.5 % is a step
+  val MIN_RATE : BigDecimal = 0.01 //min rate is -1%
+  val MAX_RATE = 0.34
   val BOUNDARY_ZONE_DELTA_ADJUSTMENT = 0.005 // 0.5% adjustment if it's considered in abnormal range (ie > HIGH or < LOW threshold)
   val HIGH_RATE_THRESHOLD = MAX_RATE - (MAX_RATE - MIN_RATE)
   val LOW_RATE_THRESHOLD = MIN_RATE + (MAX_RATE - MIN_RATE)

@@ -1,9 +1,8 @@
 package com.patson.model
 
 case class Loan(airlineId : Int, principal : Long, annualRate : BigDecimal, creationCycle : Int, lastPaymentCycle : Int, term : Int, var id : Int = 0) extends IdObject {
-  val WEEKS_PER_YEAR = 52
   //Payment = P x (r / n) x (1 + r / n)^n(t)] / ((1 + r / n)^n(t) - 1)
-  val weeklyRate = annualRate.toDouble / WEEKS_PER_YEAR
+  val weeklyRate = annualRate.toDouble / Period.yearLength
   val weeklyPayment : Long = Math.ceil(principal * weeklyRate * Math.pow(1 + weeklyRate, term) / (Math.pow(1 + weeklyRate, term) - 1)).toLong
   val interest = weeklyPayment * term - principal
   val total = principal + interest
