@@ -255,8 +255,7 @@ object GenericTransitGenerator {
               ! GameConstants.connectsIsland(airport, targetAirport) &&
               targetAirport.popMiddleIncome > 2500 &&
               airport.longitude >= boundaryLongitude._1 &&
-              airport.longitude <= boundaryLongitude._2 &&
-              airport.countryCode == targetAirport.countryCode
+              airport.longitude <= boundaryLongitude._2
           )) {
             val distance = Util.calculateDistance(airport.latitude, airport.longitude, 
                                                targetAirport.latitude, targetAirport.longitude).toInt
