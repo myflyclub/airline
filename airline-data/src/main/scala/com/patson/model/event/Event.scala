@@ -9,12 +9,12 @@ abstract class Event(val eventType : EventType.Value, val startCycle : Int, val 
   val isActive = (currentCycle : Int) => startCycle + duration > currentCycle
 }
 
-case class Olympics(override val startCycle : Int, override val duration : Int = Olympics.WEEKS_PER_YEAR * 4, var olympicsId : Int = 0) extends Event(EventType.OLYMPICS, startCycle, duration, olympicsId) {
+case class Olympics(override val startCycle : Int, override val duration : Int = Period.yearLength * 4, var olympicsId : Int = 0) extends Event(EventType.OLYMPICS, startCycle, duration, olympicsId) {
   val currentYear: Int => Int = (currentCycle : Int) => {
-    (currentCycle - startCycle) /  Olympics.WEEKS_PER_YEAR + 1
+    (currentCycle - startCycle) /  Period.yearLength + 1
   } //start from 1 to 4
   val isNewYear: Int => Boolean = (currentCycle : Int) => currentWeek(currentCycle) == 0
-  val currentWeek: Int => Int = (currentCycle : Int) => (currentCycle - startCycle) % Olympics.WEEKS_PER_YEAR //start from 0 to WEEKS_PER_YEAR
+  val currentWeek: Int => Int = (currentCycle : Int) => (currentCycle - startCycle) % Period.yearLength //start from 0 to Period.yearLength
 
   import OlympicsStatus._
   val status: Int => Value = (currentCycle : Int) =>
@@ -24,7 +24,7 @@ case class Olympics(override val startCycle : Int, override val duration : Int =
         case 2 => HOST_CITY_SELECTED
         case 3 => PREPARATION
         case 4 =>
-          val weeksBeforeGames = Olympics.WEEKS_PER_YEAR - Olympics.GAMES_DURATION - currentWeek(currentCycle)
+          val weeksBeforeGames = Period.yearLength - Olympics.GAMES_DURATION - currentWeek(currentCycle)
           if (weeksBeforeGames > 0) {
             OLYMPICS_YEAR
           } else {
@@ -51,7 +51,6 @@ object Olympics {
     "You get one point for every passenger you transport from origin to Olympics (regardless of type), and a partial proportional point if you fulfilled part of the journey.",
     "If you make your goal, you get a prize, and you get a bigger prize the more you over-deliver."
   )
-  val WEEKS_PER_YEAR = 48
   val GAMES_DURATION = 4
   def getCandidates(eventId : Int) : List[Airport] = {
     EventSource.loadOlympicsCandidates(eventId)
@@ -132,19 +131,19 @@ object Olympics {
   val passengerRewardOptions : List[EventReward] = List(OlympicsPassengerCashReward(), OlympicsPassengerLoyaltyReward(), OlympicsPassengerReputationReward(), OlympicsPassengerActionPointReward())
 
   val getDemandMultiplier = (weekOfYear: Int) => {
-      if (weekOfYear < Olympics.WEEKS_PER_YEAR - Olympics.GAMES_DURATION * 12) {
+      if (weekOfYear < Period.yearLength - Olympics.GAMES_DURATION * 12) {
         1
-      } else if (weekOfYear < Olympics.WEEKS_PER_YEAR - Olympics.GAMES_DURATION * 3) { //3 months before the game
+      } else if (weekOfYear < Period.yearLength - Olympics.GAMES_DURATION * 3) { //3 months before the game
         2
-      } else if (weekOfYear < Olympics.WEEKS_PER_YEAR - Olympics.GAMES_DURATION) { //1 momnth beofre the game
+      } else if (weekOfYear < Period.yearLength - Olympics.GAMES_DURATION) { //1 momnth beofre the game
         4
-      } else if (weekOfYear < Olympics.WEEKS_PER_YEAR) { //game is on
+      } else if (weekOfYear < Period.yearLength) { //game is on
         10
       } else {
         0
       }
   }
-  val demandMultiplierSum = (0 until WEEKS_PER_YEAR).map(getDemandMultiplier(_)).sum
+  val demandMultiplierSum = (0 until Period.yearLength).map(getDemandMultiplier(_)).sum
 }
 
 /**

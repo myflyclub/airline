@@ -2,6 +2,7 @@ package controllers
 
 import com.patson.model.event.Olympics
 import com.patson.model.event.OlympicsStatus._
+import com.patson.model.Period
 
 object OlympicsUtil {
 
@@ -12,7 +13,7 @@ object OlympicsUtil {
       case HOST_CITY_SELECTED => "Host City Voted"
       case PREPARATION => "Preparation for the Games"
       case OLYMPICS_YEAR =>
-        val weeksBeforeGames = Olympics.WEEKS_PER_YEAR - Olympics.GAMES_DURATION - olympics.currentWeek(cycle)
+        val weeksBeforeGames = Period.yearLength - Olympics.GAMES_DURATION - olympics.currentWeek(cycle)
         s"$weeksBeforeGames week(s) before the Games"
       case IN_PROGRESS =>
         "Olympic Games in Progress"

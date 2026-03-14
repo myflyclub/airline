@@ -3,7 +3,7 @@ import org.apache.pekko.stream.ActorMaterializer
 import com.patson.Util
 import com.patson.data._
 import com.patson.data.airplane._
-import com.patson.model.{AirlineBaseSpecialization, AirlineIncome, Computation, _}
+import com.patson.model.{AirlineBalance, AirlineBalanceDetails, AirlineBaseSpecialization, Computation, _}
 import com.patson.model.airplane._
 import com.patson.model.event.EventReward
 import com.patson.util.{AirlineCache, AllianceCache, AirportCache, AirportChampionInfo, ChampionUtil, CountryChampionInfo}
@@ -387,44 +387,34 @@ package object controllers {
     }
   }
 
-  implicit object AirlineIncomeWrite extends Writes[AirlineIncome] {
-    def writes(airlineIncome: AirlineIncome): JsValue = {
+  implicit object AirlineBalanceWrite extends Writes[(AirlineBalance, AirlineBalanceDetails)] {
+    def writes(entry: (AirlineBalance, AirlineBalanceDetails)): JsValue = {
+      val (balance, details) = entry
       JsObject(List(
-        "airlineId" -> JsNumber(airlineIncome.airlineId),
-        "stockPrice" -> JsNumber(airlineIncome.stockPrice),
-        "totalProfit" -> JsNumber(airlineIncome.profit),
-        "totalRevenue" -> JsNumber(airlineIncome.revenue),
-        "totalExpense" -> JsNumber(airlineIncome.expense),
-        "totalValue" -> JsNumber(airlineIncome.totalValue),
-        "linksProfit" -> JsNumber(airlineIncome.links.profit),
-        "linksRevenue" -> JsNumber(airlineIncome.links.revenue),
-        "linksExpense" -> JsNumber(airlineIncome.links.expense),
-        "linksTicketRevenue" -> JsNumber(airlineIncome.links.ticketRevenue),
-        "linksAirportFee" -> JsNumber(airlineIncome.links.airportFee),
-        "linksFuelCost" -> JsNumber(airlineIncome.links.fuelCost),
-        "linksFuelTax" -> JsNumber(airlineIncome.links.fuelTax),
-        "linksCrewCost" -> JsNumber(airlineIncome.links.crewCost),
-        "linksInflightCost" -> JsNumber(airlineIncome.links.inflightCost),
-        "linksDelayCompensation" -> JsNumber(airlineIncome.links.delayCompensation),
-        "linksMaintenanceCost" -> JsNumber(airlineIncome.links.maintenanceCost),
-        "linksLoungeCost" -> JsNumber(airlineIncome.links.loungeCost),
-        "linksDepreciation" -> JsNumber(airlineIncome.links.depreciation),
-        "othersProfit" -> JsNumber(airlineIncome.others.profit),
-        "othersRevenue" -> JsNumber(airlineIncome.others.revenue),
-        "othersExpense" -> JsNumber(airlineIncome.others.expense),
-        "othersLoanInterest" -> JsNumber(airlineIncome.others.loanInterest),
-        "othersBaseUpkeep" -> JsNumber(airlineIncome.others.baseUpkeep),
-        "othersOvertimeCompensation" -> JsNumber(airlineIncome.others.overtimeCompensation),
-        "othersLoungeUpkeep" -> JsNumber(airlineIncome.others.loungeUpkeep),
-        "othersLoungeCost" -> JsNumber(airlineIncome.others.loungeCost),
-        "othersLoungeIncome" -> JsNumber(airlineIncome.others.loungeIncome),
-        "othersAssetExpense" -> JsNumber(airlineIncome.others.assetExpense),
-        "othersAssetRevenue" -> JsNumber(airlineIncome.others.assetRevenue),
-        "othersAdvertisement" -> JsNumber(airlineIncome.others.advertisement),
-        "othersFuelProfit" -> JsNumber(airlineIncome.others.fuelProfit),
-        "othersDepreciation" -> JsNumber(airlineIncome.others.depreciation),
-        "period" -> JsString(airlineIncome.period.toString()),
-        "cycle" -> JsNumber(airlineIncome.cycle)))
+        "cycle" -> JsNumber(balance.cycle),
+        "period" -> JsString(balance.period.toString()),
+        "income" -> JsNumber(balance.income),
+        "normalizedOperatingIncome" -> JsNumber(balance.normalizedOperatingIncome),
+        "cashOnHand" -> JsNumber(balance.cashOnHand),
+        "totalValue" -> JsNumber(balance.totalValue),
+        "stockPrice" -> JsNumber(balance.stockPrice),
+        "ticketRevenue" -> JsNumber(details.ticketRevenue),
+        "loungeRevenue" -> JsNumber(details.loungeRevenue),
+        "staff" -> JsNumber(details.staff),
+        "staffOvertime" -> JsNumber(details.staffOvertime),
+        "flightCrew" -> JsNumber(details.flightCrew),
+        "fuel" -> JsNumber(details.fuel),
+        "fuelTax" -> JsNumber(details.fuelTax),
+        "fuelNormalized" -> JsNumber(details.fuelNormalized),
+        "deprecation" -> JsNumber(details.deprecation),
+        "airportRentals" -> JsNumber(details.airportRentals),
+        "inflightService" -> JsNumber(details.inflightService),
+        "delay" -> JsNumber(details.delay),
+        "maintenance" -> JsNumber(details.maintenance),
+        "lounge" -> JsNumber(details.lounge),
+        "advertising" -> JsNumber(details.advertising),
+        "loanInterest" -> JsNumber(details.loanInterest)
+      ))
     }
   }
 

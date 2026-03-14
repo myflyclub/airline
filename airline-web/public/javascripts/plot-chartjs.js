@@ -88,25 +88,14 @@ const ChartUtils = {
 
         if (!target) return;
 
-        // If passed a Chart instance, apply directly to its datasets and options
-        if (target.data && Array.isArray(target.data.datasets)) {
-            target.data.datasets.forEach(ds => Object.assign(ds, commonPointOptions));
-            // replace tooltip config if present
-            try {
-                if (target.options && target.options.plugins) {
-                    target.options.plugins.tooltip = financialTooltip;
-                }
-                target.update && target.update();
-            } catch (e) { /* ignore update errors */ }
-            return;
-        }
-
-        // If passed a config object, apply to config.data.datasets and replace tooltip
         if (target.data && Array.isArray(target.data.datasets)) {
             target.data.datasets.forEach(ds => Object.assign(ds, commonPointOptions));
             if (!target.options) target.options = {};
             if (!target.options.plugins) target.options.plugins = {};
             target.options.plugins.tooltip = financialTooltip;
+            if (typeof target.update === 'function') {
+                try { target.update(); } catch (e) { /* ignore update errors */ }
+            }
             return;
         }
     }
@@ -963,17 +952,15 @@ function plotPie(dataSource, currentKey = null, container, keyName = null, value
 
 function plotIncomeChart(airlineIncomes, period, container) {
     const labels = [];
-    const totalData = [];
-    const linksData = [];
-    const othersData = [];
+    const operatingData = [];
+    const netIncomeData = [];
     const stockPriceData = [];
 
-    Object.entries(airlineIncomes).forEach(([key, airlineIncome]) => {
-        labels.push(getGameDate(airlineIncome.cycle));
-        totalData.push(airlineIncome.totalProfit);
-        linksData.push(airlineIncome.linksProfit);
-        othersData.push(airlineIncome.othersProfit);
-        stockPriceData.push(airlineIncome.stockPrice.toFixed(2));
+    airlineIncomes.forEach(b => {
+        labels.push(getGameDate(b.cycle));
+        operatingData.push(b.normalizedOperatingIncome);
+        netIncomeData.push(b.income);
+        stockPriceData.push(b.stockPrice);
     });
 
     const config = {
@@ -981,9 +968,8 @@ function plotIncomeChart(airlineIncomes, period, container) {
         data: {
             labels: labels,
             datasets: [
-                { label: 'Total Income', data: totalData, borderColor: getChartColor('total'), backgroundColor: getChartColor('total'), hidden: true },
-                { label: 'Flight Income', data: linksData, borderColor: getChartColor('flight'), backgroundColor: getChartColor('flight') },
-                { label: 'Other Income', data: othersData, borderColor: getChartColor('other'), backgroundColor: getChartColor('other'), hidden: true },
+                { label: 'Operating Income', data: operatingData, borderColor: getChartColor('flight'), backgroundColor: getChartColor('flight') },
+                { label: 'Net Income', data: netIncomeData, borderColor: getChartColor('total'), backgroundColor: getChartColor('total') },
                 { label: 'Stock Price', data: stockPriceData, borderColor: getChartColor('stock'), backgroundColor: getChartColor('stock'), yAxisID: 'y1' }
             ]
         },
@@ -1003,25 +989,36 @@ function plotIncomeChart(airlineIncomes, period, container) {
                     position: 'right',
                     title: { display: true, text: 'Stock Price' },
                     grid: { drawOnChartArea: false },
-                    ticks: { callback: function (value) { return '$' + value; } }
+                    ticks: { callback: function (value) { return '$' + Number(value).toFixed(2); } }
                 }
             },
         }
     };
 
     ChartUtils.applyFinancialChartStyle(config);
+    // Override tooltip label: stock price (y1) shows 2 decimal places; income uses commaSeparateNumber
+    config.options.plugins.tooltip.callbacks.label = function (tooltipItem) {
+        const label = tooltipItem.dataset.label || '';
+        const value = tooltipItem.raw !== undefined ? tooltipItem.raw : tooltipItem.parsed && tooltipItem.parsed.y;
+        if (tooltipItem.dataset.yAxisID === 'y1') {
+            return label + ': $' + Number(value).toFixed(2);
+        }
+        return prettyLabel(label, value, { currency: true });
+    };
 
     return ChartUtils.createChart(container, config);
 }
 
 //assets airline value chart
-function plotTotalValueChart(airlineValue, period, container) {
+function plotAssetChart(balances, container) {
     const labels = [];
+    const cashData = [];
     const totalValueData = [];
 
-    Object.entries(airlineValue).forEach(([key, airlineValue]) => {
-        labels.push(getGameDate(airlineValue.cycle));
-        totalValueData.push(airlineValue.totalValue);
+    balances.forEach(b => {
+        labels.push(getGameDate(b.cycle));
+        cashData.push(b.cashOnHand);
+        totalValueData.push(b.totalValue);
     });
 
     const config = {
@@ -1029,14 +1026,15 @@ function plotTotalValueChart(airlineValue, period, container) {
         data: {
             labels: labels,
             datasets: [
-                { label: 'Total Value', data: totalValueData, borderColor: getChartColor('totalvalue', '#36A2EB') }
+                { label: 'Cash on Hand', data: cashData, borderColor: getChartColor('total'), backgroundColor: getChartColor('total') },
+                { label: 'Total Assets', data: totalValueData, borderColor: getChartColor('totalvalue', '#36A2EB'), backgroundColor: getChartColor('totalvalue', '#36A2EB') }
             ]
         },
         options: {
             maintainAspectRatio: false,
             scales: {
                 y: {
-                    title: { display: true, text: 'Total Value' },
+                    title: { display: true, text: 'Amount' },
                     ticks: { callback: function (value) { return '$' + commaSeparateNumber(value, 'auto'); } }
                 }
             }

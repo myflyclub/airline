@@ -80,7 +80,7 @@ object RankingSimulation {
     }
     val flightConsumptionsByAirline = flightConsumptions.groupBy(_.link.airline.id)
     val airlineStats = paxStats.view.filterKeys(id => !invalidAirlinesIds.contains(id))
-    val airlineIncomes = IncomeSource.loadAllByCycle(currentCycle)
+    val airlineIncomes = IncomeSource.loadAllBalancesByCycle(currentCycle)
     val linksByAirline = LinkSource.loadAllFlightLinks().filterNot(link => invalidAirlinesIds.contains(link.airline.id)).groupBy(_.airline.id)
 
     val updatedRankings = scala.collection.mutable.Map.empty[RankingType.Value, List[Ranking]]
@@ -627,7 +627,7 @@ object RankingSimulation {
       }.toList.take(200)
   }
 
-  private[this] def getValueRanking(incomes: List[AirlineIncome], airlinesById: Map[Int, Airline]): List[Ranking] = {
+  private[this] def getValueRanking(incomes: List[AirlineBalance], airlinesById: Map[Int, Airline]): List[Ranking] = {
     incomes.filter { income =>
       airlinesById.contains(income.airlineId)
     }.map { income =>

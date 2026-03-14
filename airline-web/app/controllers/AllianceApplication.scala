@@ -113,9 +113,9 @@ class AllianceApplication @Inject()(cc: ControllerComponents) extends AbstractCo
     val currentStats: Map[Int, AllianceStats] = AllianceSource.loadAllianceStatsByCycle(cycle)
       .groupBy(_.alliance.id).view.mapValues(_.head).toMap
 
-    val weeklyHistory  = AllianceSource.loadAllianceStatsByCycleRange(cycle - 52, cycle, Period.WEEKLY)
-    val quarterHistory = AllianceSource.loadAllianceStatsByCycleRange(cycle - 52 * 4, cycle, Period.QUARTER)
-    val yearHistory    = AllianceSource.loadAllianceStatsByCycleRange(cycle - 52 * 10, cycle, Period.YEAR)
+    val weeklyHistory  = AllianceSource.loadAllianceStatsByCycleRange(cycle - Period.yearLength, cycle, Period.WEEKLY)
+    val quarterHistory = AllianceSource.loadAllianceStatsByCycleRange(cycle - Period.yearLength * 4, cycle, Period.QUARTER)
+    val yearHistory    = AllianceSource.loadAllianceStatsByCycleRange(cycle - Period.yearLength * 10, cycle, Period.YEAR)
     val allHistory     = weeklyHistory ++ quarterHistory ++ yearHistory
 
     val alliancesJson = JsArray(alliances.map { alliance =>

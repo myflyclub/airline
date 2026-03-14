@@ -205,25 +205,24 @@ case class AirlineMeta(airlineCode: Option[String] = None, color: Option[String]
 object LedgerType extends Enumeration {
   type LedgerType = Value
   // Link operations — recorded as weekly aggregates per airline
-  val LINK_REVENUE,
-      LINK_CREW_COST,
-      LINK_AIRPORT_FEE,
-      LINK_INFLIGHT_COST,
-      LINK_MAINTENANCE_COST,
-      LINK_LOUNGE_COST,
-      LINK_DELAY_COMPENSATION = Value
+  val FLIGHT_REVENUE,
+      FLIGHT_CREW,
+      AIRPORT_RENTALS,
+      INFLIGHT_SERVICE,
+      MAINTENANCE,
+      PASSENGER_LOUNGE_COSTS,
+      DELAY_COMPENSATION = Value
   // Operating overhead — weekly aggregates
   val BASE_UPKEEP,
       OVERTIME_COMPENSATION,
-      LOUNGE_UPKEEP,
+      LOUNGE_COST,
       LOUNGE_INCOME,
-      ASSET_EXPENSE,
-      ASSET_INCOME,
-      ADVERTISEMENT,
+      ADVERTISING,
       FUEL_COST,
       CARBON_TAX = Value
   // Financing — weekly aggregates
   val LOAN_PAYMENT,
+      NEGATIVE_BALANCE_LOAN_INTEREST,
       LOAN_DISBURSEMENT = Value
   // Capital events — one entry per event
   val BUY_AIRPLANE,
@@ -237,85 +236,15 @@ object LedgerType extends Enumeration {
       CREATE_LINK = Value
 }
 
-object OtherIncomeItemType extends Enumeration {
-  type OtherBalanceItemType = Value
-  val LOAN_INTEREST, BASE_UPKEEP, OVERTIME_COMPENSATION, LOUNGE_UPKEEP, LOUNGE_INCOME, ASSET_EXPENSE, ASSET_REVENUE, ADVERTISEMENT, FUEL_COST = Value
-}
-
-object Period extends Enumeration {
-  type Period = Value
-  val WEEKLY, QUARTER, YEAR = Value
-
-  def numberWeeks(period : Period.Value) = {
-    period match {
-      case WEEKLY => 1
-      case QUARTER => 12
-      case YEAR => 48
-    }
-  }
-}
-
-
 case class AirlineLedgerEntry(airlineId : Int, cycle : Int, entryType : LedgerType.Value, amount : Long, description : Option[String] = None, id : Int = 0)
-case class AirlineIncome(airlineId : Int, profit : Long = 0, revenue: Long = 0, expense: Long = 0, stockPrice: Double = 0, totalValue: Long = 0, links : LinksIncome, others : OthersIncome, period : Period.Value = Period.WEEKLY, var cycle : Int = 0) {
-  /**
-   * Current income is expected to be QUARTER/YEAR. Adds parameter (WEEKLY income) to this current income object and return a new Airline income with period same as this object but cycle as the parameter
-   */
-  def update(income2 : AirlineIncome) : AirlineIncome = {
-    AirlineIncome(airlineId,
-        profit = profit + income2.profit,
-        revenue = revenue + income2.revenue,
-        expense = expense + income2.expense,
-        stockPrice = (stockPrice + income2.stockPrice) / 2,
-        totalValue = ((totalValue + income2.totalValue).toDouble / 2).toLong,
-        links = links.update(income2.links),
-        others = others.update(income2.others),
-        period = period,
-        cycle = income2.cycle)
-  }
-}
-case class LinksIncome(airlineId : Int, profit : Long = 0, revenue : Long = 0, expense : Long = 0, ticketRevenue: Long = 0, airportFee : Long = 0, fuelCost : Long = 0, fuelTax : Long = 0, crewCost : Long = 0, inflightCost : Long = 0, delayCompensation : Long = 0, maintenanceCost: Long = 0, loungeCost : Long = 0, depreciation : Long = 0, period : Period.Value = Period.WEEKLY, var cycle : Int = 0) {
-  def update(income2 : LinksIncome) : LinksIncome = {
-    LinksIncome(airlineId,
-        profit = profit + income2.profit,
-        revenue = revenue + income2.revenue,
-        expense = expense + income2.expense,
-        ticketRevenue = ticketRevenue + income2.ticketRevenue,
-        airportFee = airportFee + income2.airportFee,
-        fuelCost = fuelCost + income2.fuelCost,
-        fuelTax = fuelTax + income2.fuelTax,
-        crewCost = crewCost + income2.crewCost,
-        inflightCost = inflightCost + income2.inflightCost,
-        delayCompensation = delayCompensation + income2.delayCompensation,
-        maintenanceCost = maintenanceCost + income2.maintenanceCost,
-        loungeCost = loungeCost + income2.loungeCost,
-        depreciation = depreciation + income2.depreciation,
-        period = period,
-        cycle = income2.cycle)
-  }
-}
-case class OthersIncome(airlineId : Int, profit : Long = 0, revenue: Long = 0, expense: Long = 0, loanInterest : Long = 0, baseUpkeep : Long = 0, overtimeCompensation : Long = 0, advertisement : Long = 0, loungeUpkeep : Long = 0, loungeCost : Long = 0, loungeIncome : Long = 0, assetExpense : Long = 0, assetRevenue : Long = 0, fuelProfit : Long = 0, depreciation : Long = 0, period : Period.Value = Period.WEEKLY, var cycle : Int = 0) {
-  def update(income2 : OthersIncome) : OthersIncome = {
-    OthersIncome(airlineId,
-        profit = profit + income2.profit,
-        revenue = revenue + income2.revenue,
-        expense = expense + income2.expense,
-        loanInterest = loanInterest + income2.loanInterest,
-        baseUpkeep = baseUpkeep + income2.baseUpkeep,
-        overtimeCompensation = overtimeCompensation + income2.overtimeCompensation,
-        advertisement = advertisement + income2.advertisement,
-        loungeUpkeep = loungeUpkeep + income2.loungeUpkeep,
-        loungeCost = loungeCost + income2.loungeCost,
-        loungeIncome = loungeIncome + income2.loungeIncome,
-        assetExpense = assetExpense + income2.assetExpense,
-        assetRevenue = assetRevenue + income2.assetRevenue,
-        fuelProfit = fuelProfit + income2.fuelProfit,
-        depreciation = depreciation + income2.depreciation,
-        period = period,
-        cycle = income2.cycle)
-  }
-}
-
+case class AirlineBalance(airlineId: Int, income: Long, normalizedOperatingIncome: Long,
+  cashOnHand: Long, totalValue: Long, stockPrice: Double,
+  period: Period.Value = Period.WEEKLY, var cycle: Int = 0)
+case class AirlineBalanceDetails(airlineId: Int, ticketRevenue: Long, loungeRevenue: Long,
+  staff: Long, staffOvertime: Long, flightCrew: Long, fuel: Long, fuelTax: Long,
+  fuelNormalized: Long, deprecation: Long, airportRentals: Long, inflightService: Long,
+  delay: Long, maintenance: Long, lounge: Long, advertising: Long, loanInterest: Long,
+  period: Period.Value = Period.WEEKLY, var cycle: Int = 0)
 
 
 
@@ -658,7 +587,7 @@ case class NerfedAirlineModifier(override val creationCycle : Int) extends Airli
   override def isHidden = true
 }
 
-case class BannerLoyaltyAirlineModifier(amount : Int, override val creationCycle : Int) extends AirlineModifier(AirlineModifierType.BANNER_LOYALTY_BOOST, creationCycle, Some(creationCycle +  10 * 52)) {
+case class BannerLoyaltyAirlineModifier(amount : Int, override val creationCycle : Int) extends AirlineModifier(AirlineModifierType.BANNER_LOYALTY_BOOST, creationCycle, Some(creationCycle +  10 * Period.yearLength)) {
   lazy val internalProperties = Map[AirlineModifierPropertyType.Value, Long](AirlineModifierPropertyType.STRENGTH -> amount)
   override def properties : Map[AirlineModifierPropertyType.Value, Long] = internalProperties
   override def isHidden = false
