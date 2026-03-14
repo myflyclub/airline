@@ -116,7 +116,7 @@ function registerMobileGestures() {
 }
 
 function isMobileDevice() {
-    return window.innerWidth< 1024
+    return window.innerWidth < 800
 }
 
 
@@ -286,21 +286,12 @@ async function populateTooltips() {
         }
     })
 
-    populateDelegatesTooltips()
     populateDataPropertyTooltips()
-}
-
-function populateDelegatesTooltips() {
-    var $html = $("<div></div>")
-    $html.append("<p>Gained by leveling up your airline. Airline grade is determined by reputation points.</p>")
-    $html.append("<p>Delegates conduct various tasks, such as Flight negotiations, Country relationship improvements, Advertisement campaigns etc.</p>")
-
-    addTooltipHtml($('.delegatesTooltip'), $html, {'width' : '350px'})
 }
 
 function populateDataPropertyTooltips() {
     $('[data-tooltip-text]').each(function(index) {
-        var width = Math.min(400, $(this).data('tooltipText').length * 5) //approximate width
+        var width = Math.min(360, $(this).data('tooltipText').length * 5) //approximate width
         var css = { width : width + 'px'}
         addTooltip($(this), $(this).data('tooltipText'), css)
     })

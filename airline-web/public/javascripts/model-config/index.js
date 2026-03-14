@@ -355,7 +355,7 @@ const AircraftConfig = (() => {
             var $emptyDiv = $("<div style='width:98%;min-height:130px;position:relative;' class='config'></div>");
             var $promptDiv = $(`<div style='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);'>
                 <button class='button' onclick='AircraftConfig.addNew(${isDefault})'>
-                    <img src='/assets/images/icons/24px/plus.png' title='Add new configuration'>
+                    <img class='svg svg-monochrome svg-hover-green' src='/assets/images/icons/plus.svg' title='Add new configuration'>
                     <div style='float:right'><h3 class='pl-2'>Add New Configuration</h3></div>
                 </button>
             </div>`);

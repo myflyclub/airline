@@ -5,7 +5,7 @@
 
 // Import all modules
 import { state, pathOpacityByStyle } from './state.js';
-import { initMap, getMap, centerOnHQ, addControl, removeControl, hasSource, hasLayer, addSource, addLayer, removeLayer, removeSource, setSourceData, on, off, setCursor, flyTo } from './core.js';
+import { initMap, getMap, centerOnHQ, addControl, removeControl, hasSource, hasLayer, addSource, addLayer, removeLayer, removeSource, setSourceData, on, off, setCursor, flyTo, drawCircle, removeCircle } from './core.js';
 import { initStyles, getMapStyle, getCurrentStyle, toggleMapLight, updateMapStyle, getPathOpacity } from './styles.js';
 import { createGreatCircleGeometry } from './geodesic.js';
 import { initMarkers, addMarkers, removeMarkers, updateAirportBaseMarkers, updateAirportMarkers, toggleChampionMap } from './markers.js';
@@ -148,6 +148,10 @@ const AirlineMap = {
     createMapButton,
     addMapControls,
     clearTopCenterControls,
+
+    // Circle overlays
+    drawCircle,
+    removeCircle,
 
     // Utility - link deselection
     deselectLink() {
