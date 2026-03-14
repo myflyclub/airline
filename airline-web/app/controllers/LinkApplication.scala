@@ -382,7 +382,7 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
         Some(NegotiationUtil.negotiate(negotiationInfo, delegateCount))
       } else if (negotiationInfo.finalRequirementValue < 0 && negotiationInfo.actionPointRefund.getOrElse(0) > 1) {
         val cycle = CycleSource.loadCycle()
-        AirlineSource.saveAirlineModifier(airlineId, DelegateBoostAirlineModifier(negotiationInfo.actionPointRefund.getOrElse(0), 5, cycle))
+        AirlineSource.adjustAirlineActionPoints(airline, negotiationInfo.actionPointRefund.getOrElse(0).toDouble)
         None
       } else {
         None
@@ -1616,7 +1616,7 @@ object LinkApplication {
       reasons += s"Model ${model.name} requires ${model.runwayRequirement}m runway, but ${toAirport.iata} only has ${toAirport.runwayLength}m."
     }
 
-    reasons ++ AirplaneApplication.validateModelForAirline(model, airline)
+    reasons ++= model.validateForAirline(airline)
 
     val flightCategory = Computation.getFlightCategory(fromAirport, toAirport)
     if (flightCategory == FlightCategory.INTERNATIONAL && (fromAirport.isDomesticAirport() || toAirport.isDomesticAirport())) {
