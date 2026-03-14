@@ -42,7 +42,7 @@ public class GoogleImageUtil {
 
 	private final static Logger logger = LoggerFactory.getLogger(GoogleImageUtil.class);
 	private final static int MAX_PHOTO_WIDTH = 480;
-	private final static int SEARCH_RADIUS = 50000; //50km
+	private final static int SEARCH_RADIUS = 25000; //25km
 
 	private static LoadingCache<CityKey, Optional<ImageResult>> cityCache = Caffeine.newBuilder().maximumSize(100000).expireAfterWrite(1, TimeUnit.DAYS).build(new ResourceCacheLoader<>(key -> loadCityImageUrl(key.latitude, key.longitude), ResourceType.CITY_IMAGE().id()));
 	private static LoadingCache<AirportKey, Optional<ImageResult>> airportCache = Caffeine.newBuilder().maximumSize(100000).expireAfterWrite(1, TimeUnit.DAYS).build(new ResourceCacheLoader<>(key -> 	loadAirportImageUrl(key.latitude, key.longitude), ResourceType.AIRPORT_IMAGE().id()));

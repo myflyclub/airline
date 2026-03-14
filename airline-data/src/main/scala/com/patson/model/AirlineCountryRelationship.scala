@@ -1,6 +1,6 @@
 package com.patson.model
 
-import com.patson.data.{AllianceSource, CountrySource, CycleSource, DelegateSource}
+import com.patson.data.{AllianceSource, CountrySource, CycleSource, ManagerSource}
 
 import scala.collection.mutable
 
@@ -18,7 +18,7 @@ object AirlineCountryRelationship {
   val HOME_COUNTRY = (homeCountry : Country, targetCountry : Country, relationship : Int) => new RelationshipFactor {
     override val getDescription: String = {
       val relationshipString = relationship match {
-        case x if x >= 5 => "Home / Open Skies"
+        case x if x >= 5 => "Home Market"
         case 4 => "Alliance"
         case 3 => "Close"
         case 2 => "Friendly"
@@ -56,9 +56,9 @@ object AirlineCountryRelationship {
     }
   }
 
-  val DELEGATE = (delegateLevel : Int) => new RelationshipFactor {
+  val MANAGER = (managerLevel : Int) => new RelationshipFactor {
     override val getDescription: String = {
-      s"Total manager level ${delegateLevel}"
+      s"Total manager level ${managerLevel}"
     }
   }
 
@@ -107,10 +107,10 @@ object AirlineCountryRelationship {
           }
         }
         val currentCycle = CycleSource.loadCycle()
-        val totalLevel : Int = DelegateSource.loadCountryDelegateByAirlineAndCountry(airline.id, countryCode).map(_.assignedTask.asInstanceOf[CountryDelegateTask].level(currentCycle)).sum
+        val totalLevel : Int = ManagerSource.loadCountryDelegateByAirlineAndCountry(airline.id, countryCode).map(_.assignedTask.asInstanceOf[CountryManagerTask].level(currentCycle)).sum
 
         val levelMultiplier = getDelegateBonusMultiplier(targetCountry)
-        factors.put(DELEGATE(totalLevel), Math.round(totalLevel * levelMultiplier).toInt)
+        factors.put(MANAGER(totalLevel), Math.round(totalLevel * levelMultiplier).toInt)
 
       case None =>
     }

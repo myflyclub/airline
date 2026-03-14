@@ -567,6 +567,10 @@ li.row, div.table-row {
 }
 .sheet .table.data {
     padding: 20px;
+    box-sizing: border-box;
+}
+.sheet .table-row {
+    height: 25px !important;
 }
 
 #eventCanvas .firstColumn {
@@ -824,6 +828,10 @@ li.row, div.table-row {
     color: var(--table-selected-color);
     background: var(--table-selected-row-background);
     box-shadow: var(--table-selected-row-shadow);
+}
+
+.table .subheading {
+    padding: 16px 4px 0;
 }
 
 .table-container-y {
@@ -1952,7 +1960,7 @@ div {
 .threshold-bar .reputationValueCurrent {
     color: var(--background-1);
     font-weight: 900;
-    -webkit-text-stroke: 0.2px var(--button-color);
+    -webkit-text-stroke: 0.4px var(--button-color);
     text-shadow: 1px -0.2px 1px var(--button-color);
 }
 .dot:hover {

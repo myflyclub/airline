@@ -6,7 +6,7 @@ object FlightCategory extends Enumeration {
 
 
     val label = (category : FlightCategory.Value) => category match {
-        case DOMESTIC => "Domestic"
+        case DOMESTIC => "Home market"
         case INTERNATIONAL => "International"
     }
 }

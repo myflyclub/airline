@@ -59,7 +59,9 @@ function connectWebSocket(airlineId) {
 
 function initWebSocket(airlineId) {
     selectedAirlineId = airlineId
-    connectWebSocket(airlineId)
+    if (!websocket || websocket.readyState === WebSocket.CLOSED) {
+        connectWebSocket(airlineId)
+    }
 }
 
 function wsSend(message) {
