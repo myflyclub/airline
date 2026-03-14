@@ -1,6 +1,6 @@
 package com.patson.model.airplane
 
-import com.patson.model.IdObject
+import com.patson.model.{AirlineCountryRelationship, IdObject, LuxuryAirline, RegionalAirline}
 import com.patson.model.Airline
 import com.patson.model.airplane.Model.Category
 import com.patson.util.AirplaneModelCache
@@ -84,7 +84,26 @@ case class Model(name : String, family : String = "", capacity : Int, quality : 
     (capacity * 155).toInt //1240, 37820
   }
 
-  def applyDiscount(discounts : List[ModelDiscount]) = {
+  def validateForAirline(airline: Airline, relationship: Int): List[String] = {
+    val reasons = scala.collection.mutable.ListBuffer[String]()
+    if (!purchasableWithRelationship(relationship)) {
+      reasons += s"Airline relationship with ${manufacturer.name} ($countryCode) is insufficient to operate $name."
+    }
+    if (quality == 10 && airline.airlineType != LuxuryAirline) {
+      reasons += "Only luxury airlines can purchase 5 star aircraft."
+    }
+    if (airline.airlineType == RegionalAirline && airplaneTypeSize > RegionalAirline.modelMaxSize) {
+      reasons += "Regional airline cannot purchase this plane type."
+    }
+    reasons.toList
+  }
+
+  def validateForAirline(airline: Airline): List[String] = {
+    val relationship = AirlineCountryRelationship.getAirlineCountryRelationship(countryCode, airline).relationship
+    validateForAirline(airline, relationship)
+  }
+
+  def applyDiscount(discounts : List[ModelDiscount]): Model = {
     var discountedModel = this
     discounts.groupBy(_.discountType).foreach {
       case (discountType, discounts) => discountType match {
