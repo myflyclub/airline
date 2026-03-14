@@ -7,13 +7,12 @@ import com.patson.data.AirlineSource
 import com.patson.data.AirplaneSource
 
 object Bank {
-  val WEEKS_PER_YEAR = 52
-  val LOAN_TERMS = List[Int](26, WEEKS_PER_YEAR, 2 * WEEKS_PER_YEAR, 4 * WEEKS_PER_YEAR, 8 * WEEKS_PER_YEAR, 10 * WEEKS_PER_YEAR, 15 * WEEKS_PER_YEAR, 20 * WEEKS_PER_YEAR)
+  val LOAN_TERMS = List[Int](26, Period.yearLength, 2 * Period.yearLength, 4 * Period.yearLength, 8 * Period.yearLength, 10 * Period.yearLength, 15 * Period.yearLength, 20 * Period.yearLength)
   val MAX_LOANS = 10
   val MIN_LOAN_AMOUNT = 10000
   val MAX_LOAN_AMOUNT : Long = 10000000000L //10b max
   val LOAN_REAPPLY_MIN_INTERVAL = 2
-  val DEFAULT_ANNUAL_RATE = 0.12
+  val DEFAULT_ANNUAL_RATE = 0.11
   def getMaxLoan(airlineId : Int) : LoanReply = {
     val existingLoans = BankSource.loadLoansByAirline(airlineId)
     
@@ -32,7 +31,7 @@ object Bank {
     
     val previousMonthCycle = currentCycle - currentCycle % Period.numberWeeks(Period.QUARTER) - 1
     
-    val creditFromProfit : Option[Long] = IncomeSource.loadIncomeByAirline(airlineId, previousMonthCycle, Period.QUARTER).map(_.links.profit * 6 * 2)  //1.5 * yearly link profit * 2
+    val creditFromProfit : Option[Long] = IncomeSource.loadBalanceByAirline(airlineId, previousMonthCycle, Period.QUARTER).map(_.normalizedOperatingIncome * 6 * 2)  //1.5 * yearly link profit * 2
     
     val totalAssets = Computation.getResetAmount(airlineId).overall
     val creditFromAssets = (totalAssets * 0.2).toLong //offer 20% of the assets as credit
@@ -61,13 +60,13 @@ object Bank {
 
   def getLoanOptions(principal : Long, baseAnnualRate : Double, currentCycle : Int) = {
       LOAN_TERMS.map { term =>
-        val annualRateByTerm = ( ( ( DEFAULT_ANNUAL_RATE - baseAnnualRate ) / (WEEKS_PER_YEAR * 20) ) * term + baseAnnualRate )
+        val annualRateByTerm = ( ( ( DEFAULT_ANNUAL_RATE - baseAnnualRate ) / (Period.yearLength * 20) ) * term + baseAnnualRate )
         Loan(airlineId = 0, principal = principal, annualRate = annualRateByTerm, creationCycle = currentCycle, lastPaymentCycle = currentCycle, term = term)
       }
   }
 
   def getLoan(airlineId : Int, principal : Long, rate : Double, currentCycle : Int, years : Int): Loan = {
-    val term = years * 52
+    val term = years * Period.yearLength
     Loan(airlineId = airlineId, principal = principal, annualRate = rate, creationCycle = currentCycle, lastPaymentCycle = currentCycle, term = term)
   }
 
