@@ -10,6 +10,7 @@ let gameConstants = null;
 let postLoginScriptsLoaded = false;
 const SCRIPT_BASE_PATH = `${location.origin}/assets/javascripts/`;
 
+const POPPER_JS = 'https://unpkg.com/@popperjs/core@2/dist/umd/popper.min.js';
 const PAGE_JS = 'https://cdnjs.cloudflare.com/ajax/libs/page.js/1.11.6/page.js';
 const MAPLIBRE_JS = 'https://unpkg.com/maplibre-gl@5.17.0/dist/maplibre-gl.js';
 const MAPLIBRE_CSS = 'https://unpkg.com/maplibre-gl@5.17.0/dist/maplibre-gl.css';
@@ -27,7 +28,7 @@ const SESSION_SCRIPTS = [
 // Scripts loaded after successful login (game features)
 const POST_LOGIN_SCRIPTS = [
     'plot-chartjs.js', 'airport.js', 'airplane.js', 'model-config/index.js',
-    'delegate.js', 'country.js', 'office.js', 'ranking.js', 'christmas.js',
+    'manager.js', 'country.js', 'office.js', 'ranking.js', 'christmas.js',
     'bank.js', 'admin.js', 'oil.js', 'rivals.js', 'alliance.js', 'event.js',
     'search.js', 'profile.js', 'pending-action.js', 'table-utils.js',
 ].map(s => SCRIPT_BASE_PATH + s);
@@ -249,6 +250,7 @@ async function initializeApp() {
         _bgAirports = loadAirportsData();
         _bgConstants = loadGameConstants();
         _bgMaplibre = loadScript(MAPLIBRE_JS);
+        loadScript(POPPER_JS);
 
         // Phase 2: Await only what login page needs
         await loginReady;
