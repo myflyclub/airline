@@ -5,7 +5,7 @@ case class StockMetric(value: Int, floor: Double, target: Double)
 object StockModel {
   val STOCK_EXPONENT = 2.3
   val STOCK_BROKER_FEE = 0.08
-  val STOCK_BROKER_FEE_BASE = 750_000
+  val STOCK_BROKER_FEE_BASE = 250_000
   val STOCK_BUYBACK_MIN_CHANGE = 0.03
   val STOCK_BUYBACK_MAX_CHANGE = 0.12
   val TOOLTIP_STOCK_EPS = List(
@@ -20,13 +20,13 @@ object StockModel {
 
   val allMetrics: Map[String, StockMetric] = Map(
     "eps" ->                  StockMetric(35, 0.0, 25.0),
-    "pask" ->                 StockMetric(25, 0.03, 0.08),
-    "interest" ->             StockMetric(10, 0.19, 0), //there's an extra 10 here
+    "pask" ->                 StockMetric(25, 0.05, 0.1),
+    "interest" ->             StockMetric(10, 0.22, 0), //there's an extra 10 here
     "satisfaction" ->         StockMetric(5, 0.5, 0.9),
     "link_count" ->           StockMetric(5, 50, 400),
     "on_time" ->              StockMetric(6, 0.7, 0.98),
-    "airport" ->              StockMetric(6, 5, 500),
-    "codeshares" ->           StockMetric(6, 100, 100000),
+    "airport" ->              StockMetric(6, 20, 500),
+    "codeshares" ->           StockMetric(6, 200, 100000),
     "rep_leaderboards" ->     StockMetric(6, 0, 200),
     "months_cash_on_hand" ->  StockMetric(6, 48, 12),
     //add one more 5 value and lower PASK by
@@ -69,7 +69,7 @@ object StockModel {
     val weeklyScore = getStockScore(weeklyStats, currentInterestRate)
     val quarterScore = quarterStats.map(getStockScore(_, currentInterestRate)).getOrElse(weeklyScore)
 
-    val quarterlyBlendWeight = 0.4
+    val quarterlyBlendWeight = 0.6
     val blendedScore = weeklyScore * (1 - quarterlyBlendWeight) + quarterScore * quarterlyBlendWeight // 0.0 .. 100.0
 
     // Exponential mapping from score range [0, 100] to price range [0.01, 2000.0]

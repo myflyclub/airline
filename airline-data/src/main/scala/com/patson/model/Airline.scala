@@ -15,6 +15,9 @@ case class Airline(name: String, var airlineType: AirlineType = LegacyAirline, v
   var bases : List[AirlineBase] = List.empty
   var stats = AirlineStat(0, 0, Period.WEEKLY, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 
+  /**
+   * private method to set balance, only used for resetAirline & AirlineSource. For normal balance change, use AirlineSource.saveLedgerEntry 
+   **/
   def setBalance(balance : Long) = {
     airlineInfo.balance = balance
   }
@@ -47,16 +50,12 @@ case class Airline(name: String, var airlineType: AirlineType = LegacyAirline, v
     airlineInfo.sharesOutstanding = sharesOutstanding
   }
 
-  def doStockOp(isSellShares: Int = 1): (Double, Int, Long) = {
+  def doStockOp(isSellShares: Int): (Long, Long) = {
+    val shareCost: Long = (1_000_000 * airlineInfo.stockPrice).toLong
+    val fee: Long = StockModel.STOCK_BROKER_FEE_BASE + (shareCost * StockModel.STOCK_BROKER_FEE).toLong
     airlineInfo.sharesOutstanding += 1_000_000 * isSellShares
-    val balanceChange: Long = 1_000_000 * airlineInfo.stockPrice.toLong * isSellShares
-    val fee = StockModel.STOCK_BROKER_FEE_BASE + 1_000_000 * airlineInfo.stockPrice.toLong * StockModel.STOCK_BROKER_FEE.toLong
     airlineInfo.stockPrice *= (1 - isSellShares * ThreadLocalRandom.current().nextDouble(StockModel.STOCK_BUYBACK_MIN_CHANGE, StockModel.STOCK_BUYBACK_MAX_CHANGE))
-    airlineInfo.balance += balanceChange - fee
-    AirlineSource.saveAirlineInfo(this)
-    val currentCycle = com.patson.data.CycleSource.loadCycle()
-    AirlineSource.saveLedgerEntry(AirlineLedgerEntry(id, currentCycle, LedgerType.BUY_BACK, balanceChange - fee, Some(s"Stock ${if (isSellShares > 0) "sale" else "buyback"} of 1,000,000 shares at price ${airlineInfo.stockPrice} with fee $fee")))
-    (airlineInfo.stockPrice, airlineInfo.sharesOutstanding, airlineInfo.balance)
+    (shareCost * isSellShares, fee)
   }
 
   def setStats(stats: AirlineStat) = {

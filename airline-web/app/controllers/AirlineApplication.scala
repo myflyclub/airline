@@ -963,24 +963,43 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
               BadRequest(s"Cannot have more than 2b shares")
             } else {
               val airline = request.user
-              val serverSharesOut = airline.getSharesOutstanding()
-              if (serverSharesOut != sharesOutstanding) {
+              if (airline.getSharesOutstanding() != sharesOutstanding) {
                 BadRequest(s"Frontend / backend mismatch")
+              } else {
+                val isBuyback = operation != "sell"
+                val isSellShares = if (!isBuyback) 1 else -1
+                val previewShareCost: Long = (1_000_000 * airline.getStockPrice()).toLong
+                val previewFee: Long = StockModel.STOCK_BROKER_FEE_BASE + (previewShareCost * StockModel.STOCK_BROKER_FEE).toLong
+                val totalBuybackCost = previewShareCost + previewFee
+                if (isBuyback && airline.getBalance() < 10 * totalBuybackCost) {
+                  BadRequest(s"Insufficient balance: need at least 10x buyback cost ($totalBuybackCost)")
+                } else {
+                  val apCost = if (isBuyback) 1 else 5
+                  if (airline.getActionPoints() < apCost) {
+                    BadRequest(s"Insufficient action points: need $apCost")
+                  } else {
+                    val (balanceChange, fee) = airline.doStockOp(isSellShares)
+                    airline.setBalance(airline.getBalance() + balanceChange - fee)
+                    airline.setActionPoints(airline.getActionPoints() - apCost)
+                    AirlineSource.saveAirlineInfo(airline)
+                    val currentCycle = CycleSource.loadCycle()
+                    AirlineSource.saveLedgerEntry(AirlineLedgerEntry(airlineId, currentCycle, LedgerType.BUY_BACK, balanceChange - fee, Some(s"Stock ${if (!isBuyback) "sale" else "buyback"} of 1,000,000 shares")))
+                    Ok(Json.obj(
+                      "stockPrice" -> JsNumber(airline.getStockPrice()),
+                      "sharesOutstanding" -> JsNumber(airline.getSharesOutstanding()),
+                      "balance" -> JsNumber(airline.getBalance()),
+                      "actionPoints" -> JsNumber(airline.getActionPoints())
+                    ))
+                  }
+                }
               }
-              val isSellShares = if (operation == "sell") 1 else -1
-              val (stockPrice, sharesOut, balance) = airline.doStockOp(isSellShares)
-              Ok(Json.obj(
-                "stockPrice" -> JsNumber(stockPrice),
-                "sharesOutstanding" -> JsNumber(sharesOut),
-                "balance" -> JsNumber(balance)
-              ))
             }
           case Failure(_) =>
-            BadRequest("Cannot Update service funding")
+            BadRequest("Cannot parse sharesOutstanding")
         }
 
       case _ =>
-        BadRequest("Cannot Update service funding")
+        BadRequest("Cannot parse request body")
     }
   }
 
