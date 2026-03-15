@@ -84,7 +84,7 @@ INTERNATIONAL_HUB -> Map[String, Int](
 "ADB" -> 35, //Izmir
 "GIG" -> 35, //Rio De Janeiro
 "LED" -> 35, //St. Petersburg
-"KTI" -> 35, //Phnom Penh
+"PNH" -> 35, //Phnom Penh
 "CAI" -> 35, //Cairo Egypt
 "VIE" -> 35, //Vienna
 "DOH" -> 35,
@@ -446,6 +446,7 @@ INTERNATIONAL_HUB -> Map[String, Int](
 "AEY" -> 5, //Thingvellir National Park Iceland
 "BHR" -> 5,
 "DSS" -> 5,
+"MSH" -> 5, //Oman
 "TGZ" -> 4, //Tuxtla Gutiérrez
 "MRE" -> 4, //Maasai Mara National Reserve Kenya
 "MFA" -> 4, //Mafia Island TZ
@@ -478,6 +479,7 @@ INTERNATIONAL_HUB -> Map[String, Int](
 "SBZ" -> 2, //Sibiu
 "RTB" -> 2, //Roatan
 "LRH" -> 2,
+"HZK" -> 2, //IS
  ),
 VACATION_HUB -> Map[String, Int](
 "CJU" -> 265, //Jeju City
@@ -495,7 +497,6 @@ VACATION_HUB -> Map[String, Int](
 "DXB" -> 69, //Dubai
 "BOG" -> 68, //Bogota
 "SCL" -> 65, //Santiago
-"OKA" -> 65, //Naha
 "BAH" -> 61, //Manama
 "AGP" -> 60, //Málaga
 "POA" -> 60, //Porto Alegre
@@ -503,6 +504,7 @@ VACATION_HUB -> Map[String, Int](
 "LPA" -> 57, //Gran Canaria Island
 "CTA" -> 57, //Catania
 "BKI" -> 55, //Kota Kinabalu
+"OKA" -> 55, //Naha
 "MLA" -> 55, //Valletta
 "ITM" -> 54, //Osaka Japan
 "REC" -> 52, //Recife
@@ -544,9 +546,9 @@ VACATION_HUB -> Map[String, Int](
 "RSW" -> 38, //Fort Myers
 "MID" -> 38, //Mérida
 "MSY" -> 37, //New Orleans
-"AGA" -> 36, //Agadir
 "PMO" -> 36, //Palermo
 "SMR" -> 36, //Santa Marta
+"AGA" -> 36, //Agadir
 "YIA" -> 36, //Yogyakarta
 "LLA" -> 36, //LuleÃ¥
 "MED" -> 35, //Medina
@@ -578,15 +580,15 @@ VACATION_HUB -> Map[String, Int](
 "CNF" -> 31, //Belo Horizonte
 "CWB" -> 31, //Curitiba
 "PUJ" -> 30, //Punta Cana
-"RAK" -> 30, //Marrakech
 "ADB" -> 30, //Izmir
 "BER" -> 30, //Berlin
+"RAK" -> 30, //Marrakech
 "MPH" -> 30, //Malay
 "DUB" -> 30, //Dublin Ireland
 "PSA" -> 30, //Pisa
 "RUN" -> 30, //St Denis
-"DMK" -> 30, //Bangkok
 "CNS" -> 30, //Cairns
+"DMK" -> 30, //Bangkok
 "BRI" -> 30, //Bari
 "FDF" -> 30, //Fort-de-France
 "ADZ" -> 30, //San Andrés
@@ -707,7 +709,7 @@ VACATION_HUB -> Map[String, Int](
 "OOL" -> 17, //Gold Coast
 "YYT" -> 17, //St John
 "SVQ" -> 17, //Seville ES
-"ORN" -> 17, //Oran
+"ORN" -> 17, //Oran 
 "RVN" -> 17, //Rovaniemi FI
 "CGB" -> 17, //Cuiabá
 "BDS" -> 17, //Brindisi
@@ -745,7 +747,7 @@ VACATION_HUB -> Map[String, Int](
 "MDQ" -> 14,
 "BME" -> 14, //Broome
 "VBY" -> 14, //Visby, SE
-"PGD" -> 14, //FL
+"PGD" -> 14, //FL 
 "MAA" -> 14, //Chennai
 "EFL" -> 13, //Kefallinia Island
 "SCQ" -> 13, //Santiago de Compostela ES
@@ -766,11 +768,12 @@ VACATION_HUB -> Map[String, Int](
 "SDJ" -> 12, //Sendai JP
 "JHG" -> 12, //Xishuangbanna CN
 "ACA" -> 12, //Acapulco
-"PIE" -> 12, //FL
+"PIE" -> 12, //FL 
 "DAB" -> 12, //Daytona Beach
 "TLU" -> 12,
 "SKG" -> 12,
 "NLK" -> 12,
+"IXL" -> 12, //Leh, IN
 "EYW" -> 11, //Key West
 "ASP" -> 11, //Alice Springs
 "KNO" -> 11, //North Sumatra
@@ -911,9 +914,9 @@ VACATION_HUB -> Map[String, Int](
 "LSI" -> 5, //Shetland
 "DLU" -> 5, //Dali CN
 "PQQ" -> 5,
-"MLB" -> 5, //FL
+"MLB" -> 5, //FL 
 "CHS" -> 5,
-"VRB" -> 5, //FL
+"VRB" -> 5, //FL 
 "RAP" -> 5, //South Dakota NPs
 "JTR" -> 4, //Santorini Island
 "TLN" -> 4, //Toulon
@@ -963,7 +966,7 @@ VACATION_HUB -> Map[String, Int](
 "GUZ" -> 3, //BR
 "MMH" -> 3, //Yellowstone
 "HYA" -> 2, //Cape Cod
-"MFR" -> 2, //Crater lake
+"MFR" -> 2, //Crater lake 
 "OTH" -> 2, //North Bend
 "GRB" -> 2, //Door County WI
 ),

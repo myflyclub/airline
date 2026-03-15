@@ -65,7 +65,7 @@ object GameConstants {
     "NAH", "BTH", "WNI", "KSR", "BIK", "RJM", "ARD", "TJQ", "PGK", "RKI", "GNS", "LKI", "NAM", "MKQ", "NTX", //ID
     "OEC", "BCH", //TL
     "TOD", "LGK", //MY
-    "KHK", "KIH", "GSM", "TNJ", //IR
+    "KHK", "KIH", "GSM", "TNJ", "AEU", //IR
     "ZDY", //AE
     //africa
     "ZNZ", "MFA", //TZ
@@ -114,7 +114,7 @@ object GameConstants {
     }
   }
 
-  def isIsland (iata: String) : Boolean = {
-    ISLAND_AIRPORTS.contains(iata)
+  def isIsland (fromAirport: Airport) : Boolean = {
+    ISLAND_AIRPORTS.contains(fromAirport.iata) || ISOLATED_COUNTRIES.contains(fromAirport.countryCode)
   }
 }

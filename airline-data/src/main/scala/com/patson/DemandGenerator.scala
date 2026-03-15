@@ -50,7 +50,7 @@ object DemandGenerator {
   }
 
   def demandRandomizer(demand: Int, cycle: Int, frequency: Int, amplitudeRatio: Int = 1, offset: Int = 0): Int = {
-    val baseSeasonalPct = 0.15  // The wave naturally swings +/- 15%
+    val baseSeasonalPct = 0.07  // The wave naturally swings +/- 8%
     val noisePct = 0.03
     val rng = ThreadLocalRandom.current()
 

@@ -279,7 +279,7 @@ object AirportSizeAdjust {
         "AVA" -> 3,
         "GOQ" -> 3,
         "NZH" -> 3,
-        "TCZ" -> 3,
+        "TCZ" -> 4,
         "BSD" -> 3,
         "JBK" -> 3,
         "LGZ" -> 2,
@@ -688,6 +688,10 @@ object AirportSizeAdjust {
         "YEI" -> 3,
         //https://en.wikipedia.org/wiki/List_of_airports_in_Turkmenistan
         "CRZ" -> 4,
+        //UAE
+        "SHJ" -> 5,
+        "AAN" -> 4,
+        "RKT" -> 5,
         //https://en.wikipedia.org/wiki/List_of_airports_in_Uganda
         //https://en.wikipedia.org/wiki/List_of_airports_in_Uruguay
         "PDP" -> 4,
