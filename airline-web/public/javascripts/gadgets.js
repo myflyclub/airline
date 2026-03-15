@@ -1196,3 +1196,20 @@ const debounce = (callback, wait) => {
         }, wait);
     };
 }
+
+/**
+ * Pretty format time estimates based on actual cycle time estimates
+ * @param {*} cycleCount 
+ * @returns 
+ */
+function formatCycleCountTime(cycleCount) {
+    if (cycleDurationMs > 0) {
+        var totalMs = cycleCount * cycleDurationMs
+        var totalMinutes = Math.round(totalMs / 60000)
+        var hours = Math.floor(totalMinutes / 60)
+        var minutes = totalMinutes % 60
+        var timeStr = hours > 0 ? hours + "h " + minutes + "m" : minutes + "m"
+        return "in ~" + timeStr + ""
+    }
+    return cycleCount + " weeks"
+}

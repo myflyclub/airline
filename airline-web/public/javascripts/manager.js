@@ -1,8 +1,19 @@
-function formatCycleCountTime(cycleCount) {
-    var totalMinutes = cycleCount * 5
-    var hours = Math.floor(totalMinutes / 60)
-    var mins = totalMinutes % 60
-    return hours > 0 ? hours + 'h ' + mins + 'm' : mins + 'm'
+function computeApTooltip(currentAP, delegatesInfo) {
+    if (!delegatesInfo) return "Action Points"
+    const available = Math.max(0, delegatesInfo.availableCount)
+    var rate = 0.0
+    if (available > 0) {
+        if (currentAP > 24.0 * 2 * available) rate = 0.0
+        else if (currentAP > 8.0 * 2 * available) rate = 0.08
+        else rate = 0.1
+    }
+    if (rate === 0) {
+        if (available === 0) return "Action Points — no ⚡ generation (no available managers)"
+        return "Action Points — no ⚡ generation (max cap reached)"
+    }
+    const perCycle = rate * available
+    const per48 = perCycle * 48
+    return "Action Points! Generating " + perCycle.toFixed(1) + " ⚡ per week · " + per48.toFixed(0) + " ⚡ in " + formatCycleCountTime(48)
 }
 
 function changeTaskDelegateCount($delegateSection, delta, callback) {

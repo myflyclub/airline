@@ -159,13 +159,14 @@ var currentTickTimer
 var tickTimerCreator
 
 function updateTime(cycle, fraction, cycleDurationEstimation) {
-	$(".currentTime").attr("data-tooltip", "Year " + Math.floor(cycle / 48) + " & " + cycle % 48 + " weeks | One week lasts ~ 30min and one year is 48 weeks or 24 hours in realtime.")
+	$(".currentTime").attr("data-tooltip", "Week " + cycle % 48 + " & Year " + Math.floor(cycle / 48) + " | One week lasts ~ 30min and one year is 48 weeks or 24 hours in realtime.")
 	gameTimeStart = (cycle + fraction) * totalmillisecPerWeek
 
     var initialDurationTillNextTick
 	if (cycleDurationEstimation > 0) { //update incrementPerInterval
 	    initialDurationTillNextTick = cycleDurationEstimation * (1 - fraction)
 	    hasTickEstimation = true
+	    cycleDurationMs = cycleDurationEstimation
 	}
 
 	var wallClockStart = new Date()
@@ -180,7 +181,7 @@ function updateTime(cycle, fraction, cycleDurationEstimation) {
 
         var durationTillNextTick = initialDurationTillNextTick - wallClockDurationSinceStart
 
-        $(".currentTime").text(padBefore(Math.floor(cycle / 48) + "." + cycle % 48, 2))
+        $(".currentTime").text(padBefore(cycle % 48 + "." + Math.floor(cycle / 48), 2))
 
         if (hasTickEstimation) {
           var minutesLeft = Math.round(durationTillNextTick / 1000 / 60)

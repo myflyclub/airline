@@ -7,6 +7,7 @@ var wsUri = (function() {
 var websocket
 var selectedAirlineId
 var reconnectAttempts = 0
+var cycleDurationMs = 0
 var maxReconnectDelay = 30000
 
 function checkWebSocket(airlineId) {

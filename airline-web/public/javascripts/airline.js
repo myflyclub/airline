@@ -67,29 +67,7 @@ function refreshTopBar(airline) {
     var currentAP = airline.actionPoints != null ? airline.actionPoints : 0.0
     $(".actionPoints").text("⚡ " + currentAP.toFixed(1))
 
-    var apTooltip
-    var delegatesInfo = airline.delegatesInfo
-    if (delegatesInfo) {
-        var available = Math.max(0, delegatesInfo.availableCount)
-        var rate = 0.0
-        if (available > 0) {
-            if (currentAP > 24.0 * 2 * available) rate = 0.0
-            else if (currentAP > 8.0 * 2 * available) rate = 0.08
-            else rate = 0.1
-        }
-        var gainedPer24h = rate * available * 288  //toDo: hook up to cycle timer & project, use gameConstants for breakpoints
-        var projected = currentAP + gainedPer24h
-        if (gainedPer24h > 0) {
-            apTooltip = "Action Points — +" + rate.toFixed(1) + " ⚡ per week"
-        } else if (available === 0) {
-            apTooltip = "Action Points — no ⚡ generation (no available managers)"
-        } else {
-            apTooltip = "Action Points — no ⚡ generation (max cap reached)"
-        }
-    } else {
-        apTooltip = "Action Points"
-    }
-    $(".actionPoints").attr('data-tooltip', apTooltip)
+    $(".actionPoints").attr('data-tooltip', computeApTooltip(currentAP, airline.delegatesInfo))
 	$(".reputationValue").text(airline.reputation)
 	$(".reputationStars").empty()
 
