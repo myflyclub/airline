@@ -22,13 +22,7 @@ object OilSimulation {
   def getPriceVelocity(price1 : Double, price2 : Double) = {
     price2 - price1      
   }
-  
-  def getPriceAccelaration(price1 : Double, price2 : Double, price3 : Double) = {
-    getPriceVelocity(price2, price3) - getPriceVelocity(price1, price2)
-  }
-  
-  
-  
+
   def getNextPrice(prices : List[Double]) = {
     if (prices.length == 0) {
       OilPrice.DEFAULT_PRICE

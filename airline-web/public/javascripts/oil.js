@@ -164,7 +164,7 @@ function editOilInventoryPolicy() {
 	    		row.append("<div class='cell'>" + option.description + "</div>")
 	    		row.append("<div class='cell' align='right'>" + '$' + commaSeparateNumber(option.price) + "</div>")
 	    		if (!result.rejection) {
-	    			row.append("<div class='cell' align='right'><img src='/assets/images/icons/tick.svg' title='Pick this policy' class='button' onclick='setOilInventoryPolicy(" + option.id + ")'/></div>")
+	    			row.append("<div class='cell' align='right'><img src='/assets/images/icons/tick.svg' title='Pick this policy' class='img-button svg' onclick='setOilInventoryPolicy(" + option.id + ")'/></div>")
 	    		} else {
 	    			row.append("<div class='cell' align='right'><img src='/assets/images/icons/prohibition.png' class='button' title='" + result.rejection + "' onclick='exitOilInventoryPolicy()'/></div>")
 	    		}

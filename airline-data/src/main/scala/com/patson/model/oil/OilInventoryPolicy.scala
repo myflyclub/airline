@@ -12,7 +12,9 @@ import OilInventoryPolicyOption._
 case class OilInventoryPolicy(airline : Airline, factor : Double, startCycle : Int) {
   val inventoryPrice = (marketPrice : Double) => {
     val deltaFromDefault = marketPrice - OilPrice.DEFAULT_PRICE
-    BigDecimal(OilPrice.DEFAULT_PRICE + deltaFromDefault * (1 - factor)).setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble
+    val shieldedPrice = OilPrice.DEFAULT_PRICE + deltaFromDefault * (1 - factor)
+    val riskPremium = 1 + Math.pow(factor, 2) * OilInventoryPolicy.RISK_PREMIUM
+    BigDecimal(shieldedPrice * riskPremium).setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble
   }
   
   val option = factor match {
@@ -26,7 +28,7 @@ case class OilInventoryPolicy(airline : Airline, factor : Double, startCycle : I
 
 object OilInventoryPolicy {
   val MIN_CHANGE_DURATION = Period.yearLength //how many weeks before one can change the policy again
-  val RISK_PREMIUM = 0.05
+  val RISK_PREMIUM = 0.07
   def byOption(option : OilInventoryPolicyOption.Value, airline : Airline, startCycle : Int): OilInventoryPolicy = {
     val factor : Double = 
       option match {
@@ -44,10 +46,11 @@ object OilInventoryPolicy {
   }
   
   val description = (value : Value) => {
+    def premiumPct(factor: Double) = BigDecimal(Math.pow(factor, 1.6) * RISK_PREMIUM * 100).setScale(1, BigDecimal.RoundingMode.HALF_UP)
     value match {
-        case CONSERVATIVE => s"Conservative - shields from 90% of price fluctuation but 4.5% risk premium."
-        case BALANCED => s"Balanced - shields from 50% of price fluctuation but 2.5% risk premium."
-        case AGGRESSIVE => s"Aggressive - shields from 20% of price fluctuation but 1.0% risk premium."
+        case CONSERVATIVE => s"Conservative - shields from 90% of price fluctuation but ${premiumPct(0.9)}% risk premium."
+        case BALANCED => s"Balanced - shields from 50% of price fluctuation but ${premiumPct(0.5)}% risk premium."
+        case AGGRESSIVE => s"Aggressive - shields from 20% of price fluctuation but ${premiumPct(0.2)}% risk premium."
         case NONE => "No Inventory - buys all required fuel at market price"
       }
   }
