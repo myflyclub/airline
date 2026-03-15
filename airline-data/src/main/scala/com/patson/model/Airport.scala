@@ -51,7 +51,7 @@ case class Airport(iata: String, icao: String, name: String, latitude: Double, l
   lazy val eliteBoost: Int = boostFactorsByType.get(AirportBoostType.ELITE).map(_._2).sum.toInt
 
   lazy val features: List[AirportFeature] = computeFeatures()
-  lazy val rating: AirportRating =  AirportRating.rateAirport(this)
+  def rating: AirportRating =  AirportRating.rateAirport(this)
 
   def getAirlineAdjustedAppeals() : Map[Int, AirlineAppeal] = {
     if (!airlineAppealsLoaded) {

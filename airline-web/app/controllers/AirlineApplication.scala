@@ -890,15 +890,15 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
       )
   }
 
-  def resetAirline(airlineId: Int, rebuild: Boolean) = AuthenticatedAirline(airlineId) { request =>
+  def resetAirline(airlineId: Int, keepAssets: Boolean) = AuthenticatedAirline(airlineId) { request =>
     if (airlineId != request.user.id) {
       Forbidden
     } else {
-      getResetRejection(request.user, rebuild) match {
+      getResetRejection(request.user, keepAssets) match {
         case Some(rejection) => Ok(Json.obj("rejection" -> rejection))
         case None =>
-          val resetBalance = if (rebuild) Computation.getResetAmount(airlineId).overall else 0 //do it here before deleting everything
-          Airline.resetAirline(airlineId, newBalance = resetBalance, !rebuild) match {
+          val resetBalance = if (keepAssets) Computation.getResetAmount(airlineId).overall else 0 //do it here before deleting everything
+          Airline.resetAirline(airlineId, newBalance = resetBalance, !keepAssets) match {
             case Some(airline) =>
               Ok(Json.toJson(airline))
             case None => NotFound

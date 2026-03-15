@@ -21,21 +21,8 @@ case object LegacyAirline extends AirlineType {
   )
 }
 
-case object BeginnerAirline extends AirlineType {
-  val id = 1
-  val label = "Beginner"
-  override val airportRepRatio = 2
-  override val stockRepPerLevel = 75
-  val description = List[String](
-    "Cannot grow to more than 250 reputation",
-    s"Base crew costs are ${DiscountAirline.crewRatio * 100}% the cost of other airlines.",
-    s"30% lower service costs.",
-    "Win double reputation from airports!"
-  )
-}
-
 case object NonPlayerAirline extends AirlineType {
-  val id = 2
+  val id = 1
   val label = "Non-Player"
   override val airportRepRatio = 1
   override val stockRepPerLevel = 75
@@ -45,7 +32,7 @@ case object NonPlayerAirline extends AirlineType {
 }
 
 case object DiscountAirline extends AirlineType {
-  val id = 3
+  val id = 2
   val label = "Discount"
   override val touristTravelerRepPerLevel = 50
   override val stockRepPerLevel = 50
@@ -59,28 +46,27 @@ case object DiscountAirline extends AirlineType {
 }
 
 case object LuxuryAirline extends AirlineType {
-  val id = 4
+  val id = 3
   val label = "Luxury"
-  val extraLoyalty = 12
-  val staffFreqRatio = 0.4
+  val staffFreqRatio = 0.8
   override val elitesRepPerLevel = 50
   override val stockRepPerLevel = 50
   val description = List[String](
     "You can never add economy class!",
-    "Earn reputation by moving lots of elite passengers.",
-    "Earn additional rep by managing your finances and increasing your stock price.",
+    "Earn reputation by moving lots of elite passengers and by increasing your stock price",
     s"Need ${(1.0 - staffFreqRatio) * 100}% less staff to support frequency.",
-    s"Receive $extraLoyalty loyalty at airports where you have a base.",
+    "Advertising campaigns are twice as effective.",
+    "Have exclusive access to premium luxury aircraft types.",
   )
 }
 
 case object RegionalAirline extends AirlineType {
-  val id = 5
+  val id = 4
   val label = "Regional Partner"
   override val airportRepRatio = 1
   override val stockRepPerLevel = 50
   val extraSharedBaseLimit = 1
-  val modelMaxSize = 0.1 //used in web app to set allowed planes
+  val modelMaxSize = 0.13 //used in web app to set allowed planes
   val staffFreqRatio = 0.2
   val staffReductionRange = 1500
   val staffReductionRangeFadeTo = 2000
@@ -94,7 +80,7 @@ case object RegionalAirline extends AirlineType {
 }
 
 case object MegaHqAirline extends AirlineType {
-  val id = 6
+  val id = 5
   val label = "Mega-Base State-Owned"
   override val airportRepRatio = 2
   override val elitesRepPerLevel = 50
@@ -110,12 +96,11 @@ case object MegaHqAirline extends AirlineType {
 object AirlineType {
   def fromId(id: Int): AirlineType = id match {
     case 0 => LegacyAirline
-    case 1 => BeginnerAirline
-    case 2 => NonPlayerAirline
-    case 3 => DiscountAirline
-    case 4 => LuxuryAirline
-    case 5 => RegionalAirline
-    case 6 => MegaHqAirline
+    case 1 => NonPlayerAirline
+    case 2 => DiscountAirline
+    case 3 => LuxuryAirline
+    case 4 => RegionalAirline
+    case 5 => MegaHqAirline
     case _ => throw new IllegalArgumentException("Invalid AirlineType ID: " + id)
   }
-} 
+}

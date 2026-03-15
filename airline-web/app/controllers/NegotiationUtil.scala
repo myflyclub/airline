@@ -78,9 +78,13 @@ object NegotiationUtil {
     val baseOption = airline.getBases().find(_.airport.id == airport.id)
     val baseSpecializations = baseOption.toList.flatMap(_.specializations)
 
+    val newModel = newLink.getAssignedModel().getOrElse(Model.fromId(0))
+    val existingModel = existingLinkOption.flatMap(_.getAssignedModel()).getOrElse(Model.fromId(0))
+    val existingFrequency = existingLinkOption.map(_.futureFrequency()).getOrElse(0)
     val newFrequency = newLink.futureFrequency()
-    val frequencyDelta = newFrequency - existingLinkOption.map(_.futureFrequency()).getOrElse(0)
-    if (frequencyDelta < 0) {
+    val frequencyDelta = newFrequency - existingFrequency
+    val aircraftSizeDelta = newModel.airplaneTypeSize * newFrequency - existingModel.airplaneTypeSize * existingFrequency
+    if (frequencyDelta < 0 || (frequencyDelta == 0 && aircraftSizeDelta < 0)) {
       return requirements.toList
     } else if (frequencyDelta > 0) {
       val negotiationHopper = if(baseSpecializations.contains(AirlineBaseSpecialization.NEGOTIATION_HOPPER) && newLink.distance < NegoHopper.maxDistance) NegoHopper.maxDistance / NegoHopper.distanceIncrement - newLink.distance / NegoHopper.distanceIncrement else 0
@@ -167,8 +171,8 @@ object NegotiationUtil {
       requirements.append(NegotiationRequirement(INCREASE_FREQUENCY, frequencyChangeCost, s"$frequencyDelta Landing $slotText"))
     }
 
-    if (existingLinkOption.nonEmpty && aircraftSizeDelta < 0 && frequencyDelta < 0) {
-      return requirements.toList //return early if it's a reduction
+    if (existingLinkOption.nonEmpty && aircraftSizeDelta < 0 && frequencyDelta <= 0) {
+      return requirements.toList //return early if it's a reduction (smaller plane, same or fewer flights)
     }
 
     if (existingLinkOption.isEmpty) {

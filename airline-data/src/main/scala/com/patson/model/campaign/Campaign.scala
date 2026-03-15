@@ -18,8 +18,9 @@ case class Campaign(airline: Airline, principalAirport : Airport, radius : Int, 
   }
 
   private def getAirlineBonus(campaignManagerTask: CampaignManagerTask, currentCycle : Int) : AirlineAppeal = {
-    val luxuryAirlineBonus: Long = if (airline.airlineType == LuxuryAirline) 2 else 1
-    Campaign.getAirlineBonus(populationCoverage / luxuryAirlineBonus, campaignManagerTask.level(currentCycle))
+    val base = Campaign.getAirlineBonus(populationCoverage, campaignManagerTask.level(currentCycle))
+    val luxuryMultiplier: Double = if (airline.airlineType == LuxuryAirline) 2.0 else 1.0
+    AirlineAppeal(loyalty = base.loyalty * luxuryMultiplier)
   }
 }
 

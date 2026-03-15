@@ -558,21 +558,21 @@ object AirlineGenerator extends App {
         AirlineSource.saveAirlineBase(updateBase)
       }
 
-      val currentManagerBaseDelegates = DelegateSource.countManagerBaseDelegatesByAirline(airline.id)
+      val currentManagerBaseDelegates = ManagerSource.countManagerBaseDelegatesByAirline(airline.id)
       val delta = desiredManagerBaseDelegates - currentManagerBaseDelegates
 
       if (delta > 0) {
         val newDelegates = List.fill(delta) {
-          BusyDelegate(
+          Manager(
             airline = airline,
-            assignedTask = ManagerBaseDelegateTask(),
+            assignedTask = ManagerBaseTask(),
             availableCycle = None,
             id = 0 // will be assigned by saveBusyDelegates()
           )
         }
-        DelegateSource.saveBusyDelegates(newDelegates)
+        ManagerSource.saveBusyDelegates(newDelegates)
       } else if (delta < 0) {
-        DelegateSource.deleteManagerBaseDelegates(airline.id, -delta)
+        ManagerSource.deleteManagerBaseDelegates(airline.id, -delta)
       }
     })
   }

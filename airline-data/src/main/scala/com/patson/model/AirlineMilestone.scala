@@ -113,8 +113,8 @@ object AirlineMilestones {
         "MILESTONE_DESTINATIONS",
         "Destinations",
         List(
-          MilestoneCondition(180, 40),
-          MilestoneCondition(30, 15)
+          MilestoneCondition(180, 60),
+          MilestoneCondition(80, 20)
         )
       ),
       Milestone(
@@ -129,8 +129,16 @@ object AirlineMilestones {
         "MILESTONE_AIRCRAFT_TYPES",
         "Aircraft Types",
         List(
-          MilestoneCondition(7, 40),
-          MilestoneCondition(3, 15)
+          MilestoneCondition(7, 60),
+          MilestoneCondition(3, 20)
+        )
+      ),
+      Milestone(
+        "MILESTONE_BUSINESS",
+        "Business Passengers",
+        List(
+          MilestoneCondition(125000, 40),
+          MilestoneCondition(50000, 20)
         )
       )
     ),

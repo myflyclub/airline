@@ -800,15 +800,19 @@ class AirplaneApplication @Inject()(cc: ControllerComponents) extends AbstractCo
 
                     // Create new airplanes with the new model
                     val newAirplanesToCreate = scala.collection.mutable.ListBuffer[Airplane]()
-                    val constructedCycle = currentCycle + newModelWithDiscounts.constructionTime
-                    val homeAirport = airplanesToSwap.head.home
 
+                    val hqAirport = request.user.getHeadQuarter().map(_.airport)
                     for (i <- 0 until airplanesToSwap.length) {
+                      val homeAirport = if (airplanesToSwap(i).home.id != 0) {
+                        airplanesToSwap(i).home
+                      } else {
+                        hqAirport.getOrElse(Airport.fromId(0))
+                      }
                       val newAirplane: Airplane = Airplane(
                         newModelWithDiscounts,
                         airplanesToSwap(i).owner,
-                        constructedCycle = constructedCycle,
-                        purchasedCycle = constructedCycle,
+                        constructedCycle = currentCycle,
+                        purchasedCycle = currentCycle,
                         Airplane.MAX_CONDITION,
                         purchasePrice = newModelWithDiscounts.price,
                         home = homeAirport
@@ -865,10 +869,13 @@ class AirplaneApplication @Inject()(cc: ControllerComponents) extends AbstractCo
                             }
                           }
                           
-                          // Update the link with new assignments and model
-                          link.setAssignedModel(newModelWithDiscounts)
-                          link.setAssignedAirplanes(newAssignments.toMap)
-                          LinkSource.updateLink(link)
+                          // Update the link with new assignments and model.
+                          // duration is a val on Link so we must copy to get the new model's flight time.
+                          val updatedLink = link.copy(duration = Computation.calculateDuration(newModelWithDiscounts, link.distance))
+                          updatedLink.setAssignedModel(newModelWithDiscounts)
+                          updatedLink.setAssignedAirplanes(newAssignments.toMap) // also recomputes capacity + frequency
+                          LinkSource.updateLink(updatedLink)
+                          LinkSource.updateAssignedPlanes(updatedLink.id, newAssignments.toMap)
                         }
                       }
 

@@ -105,16 +105,6 @@ object AirportSource {
     bonusByAirlineId.view.mapValues(_.toList).toMap
   }
 
-  def getLuxuryAirlineBonuses(airport: Airport): Map[Int, List[AirlineBonus]] = {
-    val bonusByAirlineId = mutable.Map[Int, ListBuffer[AirlineBonus]]()
-    val bases = airport.getAirlineBases()
-    bases.foreach(base =>
-      if (base._2.airline.airlineType == LuxuryAirline) {
-        bonusByAirlineId.getOrElseUpdate(base._2.airline.id, ListBuffer[AirlineBonus]()).append(AirlineBonus(BonusType.LUXURY, AirlineAppeal(LuxuryAirline.extraLoyalty), None))
-      }
-    )
-    bonusByAirlineId.view.mapValues(_.toList).toMap
-  }
 
   def saveAirlineAppealBonus(airportId : Int, airlineId : Int, bonus : AirlineBonus) = {
     val connection = Meta.getConnection()
@@ -322,9 +312,8 @@ object AirportSource {
 
           val titleBonuses = getAirlineTitleBonuses(airport)
           val campaignBonuses = getCampaignBonuses(airport, currentCycle)
-          val luxuryAirlineBonunses = getLuxuryAirlineBonuses(airport)
           val airlineBonusesMutable = mutable.Map[Int, ListBuffer[AirlineBonus]]()
-          (titleBonuses.toList ++ campaignBonuses.toList ++ luxuryAirlineBonunses.toList ++ airlineGlobalBonuses.toList).foreach {
+          (titleBonuses.toList ++ campaignBonuses.toList ++ airlineGlobalBonuses.toList).foreach {
             case((airlineId, bonuses)) =>
               val existingBonusesOfThisAirline = airlineBonusesMutable.getOrElseUpdate(airlineId, ListBuffer[AirlineBonus]())
               existingBonusesOfThisAirline.appendAll(bonuses)

@@ -261,7 +261,7 @@ object Airline {
     AirlineSource.loadAirlineById(airlineId, true) match {
       case Some(airline) =>
         // Will need this for prestige charm update after prestige info is processed
-        val airlineHQ = airline.getHeadQuarter().get.airport
+        val airlineHQOption = airline.getHeadQuarter().map(_.airport)
         // Update prestige info first before reputation is reset
         if (resetExtendedInfo) {
           airline.setInitialized(false)
@@ -286,7 +286,7 @@ object Airline {
           BankSource.deleteLoan(loan.id)
         }
         // update prestige charm for the old airport HQ now prestige has been process and the airlines HQ cleared
-        Prestige.updatePrestigeCharmForAirport(airlineHQ.id)
+        airlineHQOption.foreach(hq => Prestige.updatePrestigeCharmForAirport(hq.id))
         //remove all oil contract
         OilSource.deleteOilContractByCriteria(List(("airline", airlineId)))
         //remove any temp delegates

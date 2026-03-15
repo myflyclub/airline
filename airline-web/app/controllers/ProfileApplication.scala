@@ -37,8 +37,8 @@ class ProfileApplication @Inject()(cc: ControllerComponents) extends AbstractCon
     }
   }
 
-  val BASE_CAPITAL = 55_000_000
-  val BONUS_PER_DIFFICULTY_POINT = 1350000
+  val BASE_CAPITAL = 50_000_000
+  val BONUS_PER_DIFFICULTY_POINT = 1250000
   val BASE_INTEREST_RATE = 0.05
   val LOAN_YEARS = 12
 
@@ -76,36 +76,20 @@ class ProfileApplication @Inject()(cc: ControllerComponents) extends AbstractCon
 
 
   def generateInitialProfiles(airline: Airline, airport: Airport): List[Profile] = {
-    val difficulty = airport.rating.overallDifficulty
+    val difficulty = 100 - airport.rating.overallDifficulty
     val capital = BASE_CAPITAL + difficulty * BONUS_PER_DIFFICULTY_POINT
     val profiles = ListBuffer[Profile]()
     val random = new Random(airport.id)
-
-    val regionalAirplanes = generateAirplanes((capital * 2.9).toInt, 60 to 112, 4, airport, 82, airline, random)
-    if (regionalAirplanes.nonEmpty) {
-      val beginnerProfile = Profile(
-        name = "Beginner's start",
-        airlineType = BeginnerAirline,
-        difficulty = "Easy",
-        description = "Recommended for new players. This is for learning the game!",
-        rule = BeginnerAirline.description,
-        airplanes = regionalAirplanes,
-        reputation = 0,
-        cash = capital * 3,
-        airport = airport,
-        loan = Some(Bank.getLoan(airline.id, (capital / 2).toInt, BASE_INTEREST_RATE, CycleSource.loadCycle(), LOAN_YEARS))
-      )
-      profiles.append(beginnerProfile)
-    }
 
     val loanProfile = Profile(
       name = "Entrepreneurial spirit",
       airlineType = LegacyAirline,
       description = "You and the bank are betting big that there's money in commercial aviation! Plan carefully but make bold moves to thrive in this brave new world!",
-      cash = (capital * 2.5).toInt,
+      cash = (capital * 3).toInt,
       airport = airport,
+      quality = 35,
       rule = MegaHqAirline.description,
-      loan = Some(Bank.getLoan(airline.id, (capital * 2).toInt, BASE_INTEREST_RATE * 0.8, CycleSource.loadCycle(), LOAN_YEARS))
+      loan = Some(Bank.getLoan(airline.id, (capital * 2).toInt, BASE_INTEREST_RATE / 2, CycleSource.loadCycle(), LOAN_YEARS))
     )
     profiles.append(loanProfile)
 
@@ -132,8 +116,9 @@ class ProfileApplication @Inject()(cc: ControllerComponents) extends AbstractCon
       description = "Your home town has charged you with connecting it to the world!",
       rule = MegaHqAirline.description,
       cash = (capital * 3).toInt + difficulty * BONUS_PER_DIFFICULTY_POINT, //receive double bonus for starting in small airport
+      quality = 35,
       airport = airport,
-      loan = Some(Bank.getLoan(airline.id, (capital * 1.75).toInt, BASE_INTEREST_RATE / 2, CycleSource.loadCycle(), LOAN_YEARS * 2))
+      loan = Some(Bank.getLoan(airline.id, (capital * 2.5).toInt, BASE_INTEREST_RATE / 3, CycleSource.loadCycle(), LOAN_YEARS * 2))
     )
     profiles.append(megaHQ)
 
@@ -155,6 +140,7 @@ class ProfileApplication @Inject()(cc: ControllerComponents) extends AbstractCon
       profiles.append(cheapAirplaneProfile)
     }
 
+    val regionalAirplanes = generateAirplanes((capital * 2.9).toInt, 60 to 112, 4, airport, 82, airline, random)
     if (!regionalAirplanes.isEmpty) {
       val regionalProfile = Profile(
         name = "Regional Partner Airline",
@@ -172,6 +158,22 @@ class ProfileApplication @Inject()(cc: ControllerComponents) extends AbstractCon
       profiles.append(regionalProfile)
     }
 
+    val smallAirplanes = generateAirplanes((capital * 1.5).toInt, 1 to 70, 4, airport, 90, airline, random)
+    if (!smallAirplanes.isEmpty && airport.size <= 4) {
+      val regionalProfile = Profile(
+        name = "Small Town Flyer",
+        airlineType = RegionalAirline,
+        description = "Small planes for a small flyer!",
+        rule = RegionalAirline.description,
+        cash = (capital * 3).toInt - smallAirplanes.map(_.purchasePrice).sum,
+        airport = airport,
+        reputation = 20,
+        airplanes = smallAirplanes,
+        loan = Some(Bank.getLoan(airline.id, (capital * 1.5).toInt, BASE_INTEREST_RATE / 2, CycleSource.loadCycle(), LOAN_YEARS))
+      )
+      profiles.append(regionalProfile)
+    }
+
     val fancyAirplanes = generateAirplanes((capital * 2.5).toInt, (36 to 90), 10, airport, 85, airline, random)
     if (fancyAirplanes.nonEmpty) {
       val luxuryAirlineProfile = Profile(
@@ -185,7 +187,7 @@ class ProfileApplication @Inject()(cc: ControllerComponents) extends AbstractCon
         reputation = 25,
         quality = 70,
         airplanes = fancyAirplanes,
-        loan = Some(Bank.getLoan(airline.id, (capital * 2).toInt, BASE_INTEREST_RATE, CycleSource.loadCycle(), LOAN_YEARS))
+        loan = Some(Bank.getLoan(airline.id, (capital * 2.5).toInt, BASE_INTEREST_RATE, CycleSource.loadCycle(), LOAN_YEARS))
       )
       profiles.append(luxuryAirlineProfile)
     }
@@ -220,7 +222,6 @@ class ProfileApplication @Inject()(cc: ControllerComponents) extends AbstractCon
         airport = airport,
         airplanes = List.empty,
         loan = None,
-        reputation = 0,
         quality = quality,
       )
     }
@@ -262,14 +263,14 @@ class ProfileApplication @Inject()(cc: ControllerComponents) extends AbstractCon
           AirlineSource.updateAirlineType(airlineId, airline.airlineType.id)
           AirlineSource.saveAirlineBase(base)
           Prestige.updatePrestigeCharmForAirport(airportId)
+          AirlineSource.saveLedgerEntry(AirlineLedgerEntry(airlineId, currentCycle, LedgerType.LOAN_DISBURSEMENT, profile.cash, Some(s"Starting capital")))
           airline.setCountryCode(airport.countryCode)
           airline.setReputation(profile.reputation)
           airline.setCurrentServiceQuality(profile.quality)
           airline.setTargetServiceQuality(targetQuality)
-          airline.setBalance(profile.cash)
           airline.setSharesOutstanding(500_000_000)
-          val startingActionPoints = Math.min(100, 25 + (cycle.toDouble / 48).toInt)
-          airline.setActionPoints(25)
+          val startingActionPoints = Math.min(100, 30 + (cycle.toDouble / 48).toInt)
+          airline.setActionPoints(startingActionPoints)
 
           profile.airplanes.foreach(_.assignDefaultConfiguration())
           AirplaneSource.saveAirplanes(profile.airplanes)
@@ -279,7 +280,7 @@ class ProfileApplication @Inject()(cc: ControllerComponents) extends AbstractCon
           AirlineSource.saveFoundedCycle(airlineId, cycle)
 
           airline.setInitialized(true)
-          AirlineSource.saveAirlineInfo(airline, true)
+          AirlineSource.saveAirlineInfo(airline)
           val updatedAirline = AirlineSource.loadAirlineById(airlineId, true)
 
           Ok(Json.toJson(updatedAirline))
