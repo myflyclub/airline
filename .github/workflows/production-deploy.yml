@@ -48,7 +48,7 @@ jobs:
           script_stop: true
           source: "."
           strip_components: 0
-          target: "/var/www/myfly.club/airline/"
+          target: "/var/www/myfly/"
       - name: Build java, restart server
         uses: appleboy/ssh-action@v0.1.10
         with:
