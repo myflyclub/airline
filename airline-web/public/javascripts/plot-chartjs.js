@@ -1,3 +1,6 @@
+// Shared tooltip title callback for any chart with cycle-based X axis
+const weekYearTitle = (tooltipItems) => tooltipItems[0] ? 'Week/Year: ' + tooltipItems[0].label : '';
+
 // helper to lookup chart color case-insensitively with fallback
 function getChartColor(key, fallback) {
     if (key === null || key === undefined || key === '') {
@@ -67,24 +70,10 @@ const ChartUtils = {
         }
     }
     ,
-    // Accepts either a Chart.js config object (with `data.datasets`) or a Chart instance.
-    applyFinancialChartStyle(target) {
+    // Apply common point style and a Week/Year tooltip to a chart config.
+    // tooltipLabelFn: optional function(tooltipItem) => string for label formatting
+    applyChartStyle(target, tooltipLabelFn) {
         const commonPointOptions = { pointStyle: 'triangle', pointRadius: 4, pointHoverRadius: 14, borderWidth: 1 };
-
-        // Standard financial tooltip callbacks to use across charts
-        const financialTooltip = {
-            mode: 'index',
-            callbacks: {
-                title: function (tooltipItems) {
-                    return tooltipItems[0] ? 'Week/Year: ' + tooltipItems[0].label : '';
-                },
-                label: function (tooltipItem) {
-                    const propLabel = tooltipItem.dataset.label || tooltipItem.dataset.key || '';
-                    const value = tooltipItem.raw !== undefined ? tooltipItem.raw : tooltipItem.parsed && tooltipItem.parsed.y;
-                    return prettyLabel(propLabel, value, { currency: true });
-                }
-            }
-        };
 
         if (!target) return;
 
@@ -92,12 +81,26 @@ const ChartUtils = {
             target.data.datasets.forEach(ds => Object.assign(ds, commonPointOptions));
             if (!target.options) target.options = {};
             if (!target.options.plugins) target.options.plugins = {};
-            target.options.plugins.tooltip = financialTooltip;
+            target.options.plugins.tooltip = {
+                mode: 'index',
+                callbacks: {
+                    title: weekYearTitle,
+                    ...(tooltipLabelFn ? { label: tooltipLabelFn } : {})
+                }
+            };
             if (typeof target.update === 'function') {
                 try { target.update(); } catch (e) { /* ignore update errors */ }
             }
-            return;
         }
+    },
+
+    // Accepts either a Chart.js config object (with `data.datasets`) or a Chart instance.
+    applyFinancialChartStyle(target) {
+        this.applyChartStyle(target, (tooltipItem) => {
+            const propLabel = tooltipItem.dataset.label || tooltipItem.dataset.key || '';
+            const value = tooltipItem.raw !== undefined ? tooltipItem.raw : tooltipItem.parsed && tooltipItem.parsed.y;
+            return prettyLabel(propLabel, value, { currency: true });
+        });
     }
 };
 
@@ -454,9 +457,7 @@ function plotLinkProfit(linkConsumptions, id, plotUnit = plotUnitEnum.MONTH) {
                 tooltip: {
                     mode: 'index',
                     callbacks: {
-                        title: function (tooltipItems) {
-                            return tooltipItems[0] ? 'Week/Year: ' + tooltipItems[0].label : '';
-                        },
+                        title: weekYearTitle,
                         label: function (tooltipItem) {
                             const propLabel = tooltipItem.dataset.label || '';
                             const value = tooltipItem.raw !== undefined ? tooltipItem.raw : tooltipItem.parsed && tooltipItem.parsed.y;
@@ -600,9 +601,7 @@ function plotLinkConsumption(linkConsumptions, ridershipId, revenueId, priceId, 
                     tooltip: {
                         mode: "index",
                         callbacks: {
-                            title: function (tooltipItems) {
-                                return tooltipItems[0] ? "Week/Year: " + tooltipItems[0].label : "";
-                            },
+                            title: weekYearTitle,
                         },
                     },
                 },
@@ -658,9 +657,7 @@ function plotLinkConsumption(linkConsumptions, ridershipId, revenueId, priceId, 
                     tooltip: {
                         mode: "index",
                         callbacks: {
-                            title: function (tooltipItems) {
-                                return tooltipItems[0] ? "Week/Year: " + tooltipItems[0].label : "";
-                            },
+                            title: weekYearTitle,
                             label: function (tooltipItem) {
                                 const propLabel = tooltipItem.dataset.label || tooltipItem.dataset.key || '';
                                 const value = tooltipItem.raw !== undefined ? tooltipItem.raw : tooltipItem.parsed && tooltipItem.parsed.y;
@@ -968,7 +965,7 @@ function plotIncomeChart(airlineIncomes, period, container) {
         data: {
             labels: labels,
             datasets: [
-                { label: 'Operating Income', data: operatingData, borderColor: getChartColor('flight'), backgroundColor: getChartColor('flight') },
+                { label: 'Operating Income, Normalized', data: operatingData, borderColor: getChartColor('flight'), backgroundColor: getChartColor('flight') },
                 { label: 'Net Income', data: netIncomeData, borderColor: getChartColor('total'), backgroundColor: getChartColor('total') },
                 { label: 'Stock Price', data: stockPriceData, borderColor: getChartColor('stock'), backgroundColor: getChartColor('stock'), yAxisID: 'y1' }
             ]
@@ -1076,7 +1073,11 @@ function plotAirlineReputationChart(stats, period, container) {
         }
     };
 
-    ChartUtils.applyFinancialChartStyle(config);
+    ChartUtils.applyChartStyle(config, (tooltipItem) => {
+        const label = tooltipItem.dataset.label || '';
+        const value = tooltipItem.raw !== undefined ? tooltipItem.raw : tooltipItem.parsed?.y;
+        return `${label}: ${Number(value).toFixed(1)}`;
+    });
 
     return ChartUtils.createChart(container, config);
 }
@@ -1116,7 +1117,7 @@ function plotOpsChart(stats, period, container) {
                 { label: "Load Factor", data: loadFactorData, borderColor: getChartColor('loadfactor'), backgroundColor: getChartColor('loadfactor'), yAxisID: 'y1' },
                 { label: "On Time", data: onTimeData, borderColor: getChartColor('ontime'), backgroundColor: getChartColor('ontime'), yAxisID: 'y1' },
                 { label: "Link Count", data: linkCountData, borderColor: getChartColor('linkCountData'), backgroundColor: getChartColor('linkCountData'), yAxisID: 'y2' },
-                { label: "Months of Cash", data: linkCountData, borderColor: getChartColor('monthsCashOnHand'), backgroundColor: getChartColor('monthsCashOnHand'), yAxisID: 'y3' },
+                { label: "Months of Cash", data: monthsCashOnHand, borderColor: getChartColor('monthsCashOnHand'), backgroundColor: getChartColor('monthsCashOnHand'), yAxisID: 'y3' },
             ]
         },
         options: {
@@ -1156,7 +1157,18 @@ function plotOpsChart(stats, period, container) {
         }
     };
 
-    ChartUtils.applyFinancialChartStyle(config);
+    ChartUtils.applyChartStyle(config, (tooltipItem) => {
+        const label = tooltipItem.dataset.label || '';
+        const value = tooltipItem.raw !== undefined ? tooltipItem.raw : tooltipItem.parsed?.y;
+        if (value === null || value === undefined) return null;
+        if (label === 'EPS') return `${label}: $${Number(value).toFixed(2)}`;
+        const yAxisID = tooltipItem.dataset.yAxisID;
+        if (yAxisID === 'y') return `${label}: ${Number(value).toFixed(2)}¢/seat-km`;
+        if (yAxisID === 'y1') return `${label}: ${Number(value).toFixed(1)}%`;
+        if (yAxisID === 'y2') return `${label}: ${Math.round(value)}`;
+        if (yAxisID === 'y3') return `${label}: ${Number(value).toFixed(1)} months`;
+        return `${label}: ${value}`;
+    });
 
     return ChartUtils.createChart(container, config);
 }
@@ -1196,7 +1208,11 @@ function plotAirlineStats(stats, period, container) {
         }
     };
 
-    ChartUtils.applyFinancialChartStyle(config);
+    ChartUtils.applyChartStyle(config, (tooltipItem) => {
+        const label = tooltipItem.dataset.label || '';
+        const value = tooltipItem.raw !== undefined ? tooltipItem.raw : tooltipItem.parsed?.y;
+        return `${label}: ${commaSeparateNumber(Math.round(value))}`;
+    });
 
     return ChartUtils.createChart(container, config);
 }
@@ -1225,7 +1241,16 @@ function plotOilPriceChart(oilPrices, container) {
         },
         options: {
             plugins: {
-                legend: { display: false }
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        title: weekYearTitle,
+                        label: (tooltipItem) => {
+                            const value = tooltipItem.raw !== undefined ? tooltipItem.raw : tooltipItem.parsed?.y;
+                            return 'Price: $' + Number(value).toFixed(2);
+                        }
+                    }
+                }
             },
             scales: {
                 y: {
@@ -1265,7 +1290,16 @@ function plotLoanInterestRatesChart(rates, container) {
         options: {
             maintainAspectRatio: false,
             plugins: {
-                legend: { display: false }
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        title: weekYearTitle,
+                        label: (tooltipItem) => {
+                            const value = tooltipItem.raw !== undefined ? tooltipItem.raw : tooltipItem.parsed?.y;
+                            return 'Rate: ' + Number(value).toFixed(1) + '%';
+                        }
+                    }
+                }
             },
             scales: {
                 y: {
@@ -1345,7 +1379,17 @@ function plotRivalHistoryChart(allRivalLinkConsumptions, priceContainer, linkCla
         },
         options: {
             plugins: {
-                legend: { display: false }
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        title: weekYearTitle,
+                        label: (tooltipItem) => {
+                            const label = tooltipItem.dataset.label || '';
+                            const value = tooltipItem.raw !== undefined ? tooltipItem.raw : tooltipItem.parsed?.y;
+                            return `${label}: ${numberPrefix}${value}`;
+                        }
+                    }
+                }
             },
             scales: {
                 y: {
@@ -1406,6 +1450,18 @@ function plotLoyalistHistoryChart(loyalistHistory, container) {
         },
         options: {
             maintainAspectRatio: false,
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        title: weekYearTitle,
+                        label: (tooltipItem) => {
+                            const label = tooltipItem.dataset.label || '';
+                            const value = tooltipItem.raw !== undefined ? tooltipItem.raw : tooltipItem.parsed?.y;
+                            return `${label}: ${commaSeparateNumber(Math.round(value))}`;
+                        }
+                    }
+                }
+            },
             scales: {
                 y: {
                     title: { display: true, text: 'Loyalist Amount' }

@@ -13,7 +13,7 @@ import scala.util.Using
 object AirplaneSource {
   val LINK_ID_LOAD : Map[DetailType.Value, Boolean] = Map.empty
   val allModels = ModelSource.loadAllModels().map(model => (model.id, model)).toMap
-  private[this] val BASE_QUERY = "SELECT owner, a.id as id, a.model as model, name, capacity, quality, ascent_burn, cruise_burn, speed, fly_range, price, constructed_cycle, purchased_cycle, airplane_condition, purchase_price, is_sold, configuration, home, version, economy, business, first, is_default FROM " + AIRPLANE_TABLE + " a LEFT JOIN " + AIRPLANE_MODEL_TABLE + " m ON a.model = m.id LEFT JOIN " + AIRPLANE_CONFIGURATION_TABLE + " c ON c.airplane = a.id LEFT JOIN " + AIRPLANE_CONFIGURATION_TEMPLATE_TABLE + " t ON c.configuration = t.id"
+  private[this] val BASE_QUERY = "SELECT owner, a.id as id, a.model as model, name, capacity, quality, ascent_burn, cruise_burn, speed, fly_range, price, constructed_cycle, purchased_cycle, airplane_condition, purchase_price, is_sold, configuration, a.home as home, a.version as version, economy, business, first, is_default FROM " + AIRPLANE_TABLE + " a LEFT JOIN " + AIRPLANE_MODEL_TABLE + " m ON a.model = m.id LEFT JOIN " + AIRPLANE_CONFIGURATION_TABLE + " c ON c.airplane = a.id LEFT JOIN " + AIRPLANE_CONFIGURATION_TEMPLATE_TABLE + " t ON c.configuration = t.id"
 
 
   def loadAirplanesCriteria(criteria : List[(String, Any)]) = {
@@ -497,7 +497,7 @@ object AirplaneSource {
       connection.commit()
 
       // Invalidate cache for affected airlines
-      (airplaneIdsToDelete ++ newAirplanesToCreate.map(_.owner.id)).distinct.foreach { airlineId =>
+      newAirplanesToCreate.map(_.owner.id).distinct.foreach { airlineId =>
         AirplaneOwnershipCache.invalidate(airlineId)
       }
 

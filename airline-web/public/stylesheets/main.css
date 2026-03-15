@@ -2007,6 +2007,7 @@ div {
     height: 32px;
 }
 #planLinkExtendedDetails .label {
+    vertical-align: middle;
     width: 30%
 }
 

@@ -1213,6 +1213,7 @@ function handleAirplaneClick(event, airplaneId, element) {
     if (isAirplaneSelectionMode) {
         planeSelect(event, element);
     } else {
+        $('.isAirplane').removeClass('selected')
         loadOwnedAirplaneDetails(airplaneId, element, refreshBaseAfterAirplaneUpdate);
     }
 }
@@ -2049,7 +2050,7 @@ function promptSwapModels() {
         if (!Object.prototype.hasOwnProperty.call(loadedModelsById, mId)) continue;
         var model = loadedModelsById[mId];
         // Same or smaller size
-        if (model.size <= selectedAirplaneModel.size + 0.01) {
+        if (model.size <= selectedAirplaneModel.size + 0.01 && ! model.hasOwnProperty("rejecton")) {
             var option = document.createElement('option');
             option.value = model.id;
             option.textContent = model.name;
