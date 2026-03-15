@@ -6,31 +6,30 @@ import com.patson.util.AllianceCache
 
 
 case class AirlineBase(airline : Airline, airport : Airport, countryCode : String, scale : Int, foundedCycle : Int, headquarter : Boolean = false) {
+  private val effectiveScale = if (scale <= 6) {
+    Math.max(1.0, scale * 2.0)
+  } else {
+    12.0 + 0.2 * (scale - 6.0)
+  }
 
   lazy val getValue : Long = {
     calculateUpgradeCost()
   }
 
-  def calculateUpgradeCost (scale: Int = scale, airlineType: AirlineType = airline.airlineType): Long = {
-    val mappedAdjustedScale = Math.min(2.2 * scale - 1.2, 0.4 * scale + 9.6) //for non-existing base, calculate as if the base is 1, cap at 6
-    val airportSizeDiscount =  (Math.max(6, airport.size).toDouble / 2) * 0.1
-    val baseCost = airport.rating.overallDifficulty * 105000
+  def calculateUpgradeCost(scale: Int = scale, airlineType: AirlineType = airline.airlineType): Long = {
+    val airportSizeDiscount = Math.max(6.0, airport.size.toDouble) * 0.05
+    val baseCost = airport.rating.overallDifficulty * 200000 // Doubled
 
     if (headquarter && scale == 1) {
-      //free to start HQ
       0
     } else if (airlineType == MegaHqAirline && headquarter) {
-      //mega hq hq
-      val cost: Long = baseCost.toLong * Math.pow(0.92 + airportSizeDiscount, mappedAdjustedScale).toLong
-      Math.max(10_000_000, cost - 50_000_000)
-    } else if (airlineType == MegaHqAirline && ! headquarter) {
-      //mega hq base
-      val cost: Long = (baseCost.toLong * Math.pow(1.2 + airportSizeDiscount, mappedAdjustedScale)).toLong
-      cost + 30_000_000
+      val cost: Long = (baseCost * Math.pow(0.93 + airportSizeDiscount, effectiveScale)).toLong
+      Math.max(10_000_000L, cost - 80_000_000L) // Modifiers doubled
+    } else if (airlineType == MegaHqAirline && !headquarter) {
+      val cost: Long = (baseCost * Math.pow(1.2 + airportSizeDiscount, effectiveScale)).toLong
+      cost + 60_000_000L // Modifier doubled
     } else {
-      //regular
-      val cost: Long = (baseCost.toLong * Math.pow(1.1 + airportSizeDiscount, mappedAdjustedScale)).toLong
-      cost
+      (baseCost * Math.pow(1.1 + airportSizeDiscount, effectiveScale)).toLong
     }
   }
 
@@ -38,20 +37,16 @@ case class AirlineBase(airline : Airline, airport : Airport, countryCode : Strin
     calculateUpkeep(scale)
   }
 
-  def calculateUpkeep (scale: Int, airlineType: AirlineType = airline.airlineType): Long = {
-    val mappedAdjustedScale = (19.0 * Math.max(1, scale) - 10.0) / 9.0 //for non-existing base, calculate as if the base is 1
-    val baseUpkeep = airport.rating.overallDifficulty * 68
-    val airportSizeMod =  (airport.size.toDouble / 2) * 0.1
+  def calculateUpkeep(scale: Int, airlineType: AirlineType = airline.airlineType): Long = {
+    val baseUpkeep = airport.rating.overallDifficulty * 135
+    val airportSizeMod = airport.size.toDouble * 0.05
 
     if (airlineType == MegaHqAirline && headquarter) {
-      //mega hq hq
-      (baseUpkeep.toLong * Math.pow(mappedAdjustedScale, 1.84)).toLong
-    } else if (airlineType == MegaHqAirline && ! headquarter) {
-      //mega hq base
-      (baseUpkeep.toLong * Math.pow(mappedAdjustedScale, 2.0 + airportSizeMod)).toLong
+      (baseUpkeep * Math.pow(effectiveScale, 1.85)).toLong
+    } else if (airlineType == MegaHqAirline && !headquarter) {
+      (baseUpkeep * Math.pow(effectiveScale, 1.9 + airportSizeMod)).toLong
     } else {
-      //regular
-      (baseUpkeep.toLong * Math.pow(mappedAdjustedScale, 1.9 + airportSizeMod)).toLong
+      (baseUpkeep * Math.pow(effectiveScale, 1.8 + airportSizeMod)).toLong
     }
   }
 
@@ -64,7 +59,7 @@ case class AirlineBase(airline : Airline, airport : Airport, countryCode : Strin
     } else {
       val delta = staffRequired.toInt - getOfficeStaffCapacity
       var compensation = 0
-      compensation += (delta.toDouble * (50000 + airport.income.toDouble * 0.8) / 52 * 10).toInt //weekly compensation, *10, as otherwise it's too low
+      compensation += (delta.toDouble * (50000 + airport.income.toDouble * 0.8) / Period.yearLength * 10).toInt //weekly compensation, *10, as otherwise it's too low
 
       compensation
     }

@@ -10,15 +10,22 @@ function createProfileDiv(profile, profileId) {
 	var $profileDiv = $('<div class="option available" onclick="selectProfile(' + profileId + ', this)"></div>')
     $profileDiv.append('<h4>' + profile.name + '</h4>')
     if (profile.typeLabel) {
-        var $typeSpan = $('<span>' + profile.typeLabel + '</span>')
+        var $typeSpan = $('<span data-tooltip-trigger>' + profile.typeLabel + '</span>')
         $typeSpan.css('text-decoration', 'underline dashed')
         $typeSpan.css('cursor', 'help')
-        $typeSpan.mouseover(function() {
+        $typeSpan.on('mouseover', function() {
             showAirlineTypeTooltip($(this), profile.typeLabel, profile.rule)
-        }).mouseout(function() {
-            $('#airlineTypeTooltip').hide()
-        }).click(function() {
-            showAirlineTypeTooltip($(this), profile.typeLabel, profile.rule)
+        }).on('mouseout', function() {
+            hideTooltip()
+        })
+        $typeSpan.on('click touchend', function(e) {
+            e.preventDefault()
+            e.stopPropagation()
+            if ($('#popperTooltip').is(':visible')) {
+                hideTooltip()
+            } else {
+                showAirlineTypeTooltip($(this), profile.typeLabel, profile.rule)
+            }
         })
         var $typeP = $('<p class="pb-2"></p>')
         $typeP.append($typeSpan)
@@ -30,20 +37,22 @@ function createProfileDiv(profile, profileId) {
     if (profile.airplanes.length > 0) {
         var $airplaneLi = $('<li class="dot"></li>')
         $airplaneLi.appendTo($list).append('<span>' + profile.airplanes.length + ' X&nbsp;</span>')
-        var $airplaneSpan = $('<span>' + profile.airplanes[0].name + '</span>')
-        //$airplaneSpan.css('text-decoration-style', 'dashed')
+        var $airplaneSpan = $('<span data-tooltip-trigger>' + profile.airplanes[0].name + '</span>')
         $airplaneSpan.css('text-decoration', 'underline dashed')
-
-        $airplaneSpan.bind('click', function() {
+        $airplaneSpan.on('mouseover', function() {
             showAirplaneQuickSummary($(this), profile.airplanes[0])
+        }).on('mouseout', function() {
+            hideTooltip()
         })
-        $airplaneSpan.mouseover(function() {
-            showAirplaneQuickSummary($(this), profile.airplanes[0])
-        }).mouseout(function() {
-            $('#airplaneSummaryTooltip').hide()
+        $airplaneSpan.on('click touchend', function(e) {
+            e.preventDefault()
+            e.stopPropagation()
+            if ($('#popperTooltip').is(':visible')) {
+                hideTooltip()
+            } else {
+                showAirplaneQuickSummary($(this), profile.airplanes[0])
+            }
         })
-
-
         $airplaneLi.append($airplaneSpan)
     }
     $('<li class="dot"></li>').appendTo($list).text(profile.reputation + " reputation")
@@ -67,45 +76,41 @@ function selectProfile(profileId, profileDiv) {
 }
 
 function showAirplaneQuickSummary($trigger, airplane) {
-    var yPos = $trigger.offset().top - $(window).scrollTop() + $trigger.height()
-    var xPos = $trigger.offset().left - $(window).scrollLeft() + $trigger.width() - $('#airplaneSummaryTooltip').width()
-
-    $('#airplaneSummaryTooltip .capacity').text(airplane.capacity)
-    $('#airplaneSummaryTooltip .range').text(airplane.range)
-    $('#airplaneSummaryTooltip .airplaneValue').text(commaSeparateNumber(airplane.value))
-    $('#airplaneSummaryTooltip .condition').text(airplane.condition)
-    $('#airplaneSummaryTooltip .lifespan').text(airplane.lifespan / 52)
-
-    $('#airplaneSummaryTooltip').css('top', yPos + 'px')
-    $('#airplaneSummaryTooltip').css('left', xPos + 'px')
-    $('#airplaneSummaryTooltip').show()
-
-    $('#airplaneSummaryTooltip').off('click.close').on('click.close', function() {
-        $(this).hide()
+    var $content = $('<div class="table" style="min-width:150px;"></div>')
+    ;[
+        ['Capacity',  airplane.capacity],
+        ['Range',     airplane.range + ' km'],
+        ['Lifespan',  (airplane.lifespan / 52) + ' years'],
+        ['Condition', airplane.condition + '%'],
+        ['Value',     '$' + commaSeparateNumber(airplane.value)]
+    ].forEach(function(row) {
+        $content.append(
+            $('<div class="table-row"></div>')
+                .append($('<div class="cell"></div>').text(row[0] + ':'))
+                .append($('<div class="cell"></div>').text(row[1]))
+        )
     })
+    showTooltip($trigger[0], $content, { rich: true, placement: 'bottom' })
 }
 
 function showAirlineTypeTooltip($trigger, typeLabel, rules) {
-    var yPos = $trigger.offset().top - $(window).scrollTop() + $trigger.height()
-    var xPos = $trigger.offset().left - $(window).scrollLeft() + $trigger.width() - $('#airlineTypeTooltip').width()
-
-    $('#airlineTypeTooltip .typeLabel').text(typeLabel)
-    var $ruleList = $('#airlineTypeTooltip .ruleList')
-    $ruleList.empty()
+    var $content = $('<div></div>')
+    $content.append($('<h4></h4>').text(typeLabel))
     if (rules && rules.length > 0 && rules[0].length > 0) {
+        var $ul = $('<ul style="list-style:disc; padding-left:16px;"></ul>')
         rules.forEach(function(ruleText) {
-            $ruleList.append($('<li></li>').text(ruleText))
+            $ul.append($('<li></li>').text(ruleText))
         })
+        $content.append($ul)
     }
-
-    $('#airlineTypeTooltip').css('top', yPos + 'px')
-    $('#airlineTypeTooltip').css('left', xPos + 'px')
-    $('#airlineTypeTooltip').show()
-
-    $('#airlineTypeTooltip').off('click.close').on('click.close', function() {
-        $(this).hide()
-    })
+    showTooltip($trigger[0], $content, { rich: true, placement: 'bottom' })
 }
+
+$(document).on('touchend click', function(e) {
+    if (!$(e.target).closest('#popperTooltip, [data-tooltip-trigger]').length) {
+        hideTooltip()
+    }
+})
 
 function buildHqWithProfile() {
     $.ajax({
@@ -116,10 +121,13 @@ function buildHqWithProfile() {
             dataType: 'json',
             success: function(result) {
                 closeModal($('#profilesModal'))
-                updateAirlineInfo(activeAirline.id)
-                $('#planLinkFromAirportId').val(activeAirline.headquarterAirport.airportId)
-                loadAllCountries() //has a home country now, reload country info
-                showWorldMap()
+                updateAirlineInfo(activeAirline.id).then(function() {
+                    if (activeAirline.headquarterAirport) {
+                        $('#planLinkFromAirportId').val(activeAirline.headquarterAirport.airportId)
+                    }
+                    loadAllCountries() //has a home country now, reload country info
+                    showWorldMap()
+                })
             },
             error: function(jqXHR, textStatus, errorThrown) {
                     console.log(JSON.stringify(jqXHR));
