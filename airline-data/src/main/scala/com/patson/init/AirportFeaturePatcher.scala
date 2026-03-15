@@ -1632,6 +1632,7 @@ ELITE_CHARM -> getEliteDestinations()
     list -= "SUV"
     list -= "AEP" //Argentina
     list += "EZE"
+    list -= "CIS" //KI
     list -= "SKB" //Remove minor Caribbean ones
     list -= "SVD"
     list -= "DCF"

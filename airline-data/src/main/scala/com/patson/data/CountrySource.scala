@@ -214,7 +214,7 @@ object CountrySource {
       val ALBA = Set("VE","CU","BO","NI")
       val USMCA = Set("US","PR","CA","MX")
       val AngloCaribbean = Set("US","CA","PR","AG","BB","BS","GY","JM","TT")
-      val TaxHavens = Set("GB","NL","US","CA","PR","FR","PA","IE")
+      val TaxHavens = Set("GB","NL","US","CA","PR","PA","IE")
       val EastCaribbean = Set("AG", "BB", "DM", "PR", "FR", "VC", "GD", "TT", "US")
       val CAFTA = Set("US","MX","GT","HN","SV","NI","PA","PR","DO")
       val ASEANPlus = Set("BN","KH","ID","LA","MY","PH","SG","TH","VN","TW")
@@ -268,14 +268,16 @@ object CountrySource {
       addOverride(scores, 3, "US", Set("CO")) // CO = FTA + Plan Colombia alliance;
       addOverride(scores, 2, "US", Set("ZA","KE","NG"))
       addOverride(scores, 4, "CA", OECDish -- Set("US","TR"))
-      addOverride(scores, 2, "MX", Set("CO","PE"))
-      addOverride(scores, 1, "HT", Set("US","FR","CA"))
+      addOverride(scores, 1, "MX", Set("CN","BR"))
+      addOverride(scores, 2, "MX", ComunidadAndina ++ Set("AR","MY","VN"))
+      addOverride(scores, 2, "HT", Set("US","FR","CA"))
       addOverride(scores, 2, "DO", Set("ES","DE","NL","FR","PE","CO"))
       addOverride(scores, 3, "DO", Set("CA","PR","JM"))
       addOverride(scores, -1, "DO", Set("HT"))
       addOverride(scores, 2, "CU", Set("AO","PE"))
       addOverride(scores, -3, "CU", Set("US","PR"))
       addOverride(scores, 3, "PR", Set("ES","PA","CO"))
+      addOverride(scores, 2, "PA", Set("ES","DE","FR","AE","HK","PE","CO","JP","CN"))
       addOverride(scores, 3, "CR", Set("US","CA","MX","PR","PA","CO"))
       addOverride(scores, 2, "TT", Set("VE"))
       addOverride(scores, 2, "SR", Set("NL","BR","GY"))
@@ -284,14 +286,16 @@ object CountrySource {
       addOverride(scores, 1, "BR", Set("IN","GB","FR"))
       addOverride(scores, 2, "BR", Set("BO","CO","MX","US","ZA","AO","JP","CN","ES","DE","PL","CV"))
       addOverride(scores, 3, "BR", Set("PT","CL"))
-      addOverride(scores, 2, "CO", Set("ES","MX","PA","NI"))
-      addOverride(scores, 3, "AR", Set("ES","US")) // UY/PY already 3 via Mercosur
-      addOverride(scores, 2, "PE", Set("MX","ES","JP","CN","CL"))
+      addOverride(scores, 2, "CO", Set("ES","NI"))
+      addOverride(scores, 2, "EC", Set("ES","CN"))
+      addOverride(scores, 3, "AR", Set("ES","GB","US","CO","IT"))
+      addOverride(scores, 2, "PE", Set("ES","JP","CN","CL","NI"))
       addOverride(scores, 4, "VE", Set("IR","RU","CU"))
       addOverride(scores, -1, "VE", Set("CL","AR","BR","GB","FR","US"))
       addOverride(scores, -2, "VE", Set("GY"))
       addOverride(scores, 2, "CL", Set("PE","BO","CN"))
-      addOverride(scores, 4, "CL", Set("CO","AR","UY","PY","MX","ES","CA","PA"))
+      addOverride(scores, 3, "CL", Set("AR","UY","PY","MX"))
+      addOverride(scores, 4, "CL", Set("CO","ES","CA"))
       addOverride(scores, 4, "PY", Set("TW"))
 
       // Europe
@@ -304,6 +308,7 @@ object CountrySource {
       addOverride(scores, 2, "GB", Set("LK","PG","ZM","MW","FJ","UG","RW","GY"))
       addOverride(scores, 3, "GB", Set("JM","TT","BB","SL","BN"))
       addOverride(scores, 4, "GB", ECAA ++ Set("AU","NZ"))
+      addOverride(scores, 3, "CH", Set("AE","QA","TR"))
       addOverride(scores, 4, "CH", ECAA)
       addOverride(scores, 2, "DE", Set("VN","BD"))
       addOverride(scores, 1, "DE", Set("NG","KE"))
@@ -337,13 +342,15 @@ object CountrySource {
       addOverride(scores, -1, "CN", Set("US","IN","AU","JP","TW","PH","PY"))
       addOverride(scores, 3, "HK", ASEANPlus ++ OECDish)
       addOverride(scores, 2, "MO", ASEANPlus ++ Set("KP","PH","JP","KR"))
+      addOverride(scores, 2, "BN", GCCPlus -- Set("JO","EG") ++ Set("CA","AU","JP"))
       addOverride(scores, 2, "ID", GCCPlus)
       addOverride(scores, 2, "ID", Set("JP","NL","KR"))
       addOverride(scores, 1, "ID", Set("DE","US","CA","BR","IN","ET","RU","CN","IR"))
-      addOverride(scores, 2, "MY", GCCPlus ++ OECDish)
+      addOverride(scores, 2, "MY", OECDish)
+      addOverride(scores, 3, "MY", GCCPlus -- Set("JO","EG"))
       addOverride(scores, 3, "SG", GCCPlus)
       addOverride(scores, 1, "TH", OECDish ++ Set("IN","BR"))
-      addOverride(scores, 2, "VN", Set("CN","JP","KR","US","CA","AU","NZ"))
+      addOverride(scores, 2, "VN", Set("CN","JP","KR","US","CA","AU","NZ","GB"))
       addOverride(scores, 2, "PH", Set("AU","JP","KR"))
       addOverride(scores, 2, "MN", Set("KZ","JP", "CN", "RU", "KR", "NP","DE"))
 
@@ -388,7 +395,7 @@ object CountrySource {
       addOverride(scores, 2, "SA", Set("MY","PK","BN","GB","DJ","SG","CN","IN","BD","TR"))
       addOverride(scores, 2, "OM", Set("MY","FR","DJ"))
       addOverride(scores, -3, "YE", Set("SA","AE"))
-      addOverride(scores, 3, "YE", Set("IR"))
+      addOverride(scores, 4, "YE", Set("IR"))
       addOverride(scores, 1, "YE", Set("JO","EG","OM"))
       addOverride(scores, 3, "JO", Set("IQ","US"))
       addOverride(scores, 2, "SY", Set("FR","RU"))
@@ -411,10 +418,11 @@ object CountrySource {
       addOverride(scores, 1, "LY", Set("EG","RU","CN"))
       addOverride(scores, 2, "LY", Set("IT","TN","DZ"))
       addOverride(scores, 3, "LY", Set("TR"))
-      addOverride(scores, 2, "EG", Set("ZA","MY","FR","IT","IE","GB","DE","CH","US","CA","UA","RU"))
       addOverride(scores, 1, "EG", EAC ++ Set("PK"))
+      addOverride(scores, 2, "EG", Set("MY","FR","IT","IE","GB","DE","CH","US","CA","UA","RU"))
       addOverride(scores, -2, "ER", Set("ET"))
       addOverride(scores, -1, "ER", Set("DJ"))
+      addOverride(scores, 2, "ER", Set("EG","RU"))
       addOverride(scores, -1, "ET", Set("EG"))
       addOverride(scores, 1, "ET", Set("IT","SD","US","KE","DE","TR"))
       addOverride(scores, 2, "ET", Set("UG","RW","AE","QA","SO","TZ"))
@@ -451,7 +459,8 @@ object CountrySource {
       addOverride(scores, -1, "RW", Set("BI","CD"))
       addOverride(scores, 2, "SN", Set("FR","CV","GM","GH","GN","ML","MR"))
       addOverride(scores, 2, "LR", Set("US","SL","GN","NG","ST","UG"))
-      addOverride(scores, 1, "NG", Set("GB","KE","UG","GQ"))
+      addOverride(scores, 1, "NG", Set("GB","KE","UG","GQ","QA"))
+      addOverride(scores, 2, "NG", Set("SA","AE"))
       addOverride(scores, 2, "CV", Set("NL","GB","PT"))
       addOverride(scores, 2, "AO", Set("PT","MZ","CV","KE","ET","NG"))
       addOverride(scores, 2, "SC", GCCPlus ++ Set("GB","TR","SG","MY","ET","IN"))
@@ -460,7 +469,8 @@ object CountrySource {
       addOverride(scores, 3, "TD", Set("FR"))
       addOverride(scores, -2, "TD", Set("SD"))
       addOverride(scores, 1, "TD", Set("NG","CM","NE","CF","LY"))
-      addOverride(scores, 2, "ZA", Set("GB","DE","US","AU","IN","TZ","KE","UG"))
+      addOverride(scores, 1, "ZA", GCCPlus)
+      addOverride(scores, 2, "ZA", Set("GB","DE","RU","US","AU","IN","TZ","KE","UG","BR"))
 
       // Oceania
       addOverride(scores, 2, "AU", Set("ID","PH","PG","FJ","WS"))
@@ -473,13 +483,18 @@ object CountrySource {
       addOverride(scores, 4, "KI", Set("CN"))
       addOverride(scores, 4, "TV", Set("TW"))
       addOverride(scores, 4, "PW", Set("TW"))
+      
+      addOverride(scores, 4, "AQ", Set("CL","AR","ZA","NZ","AU","US","GB","RU","JP","CN"))
 
       scores.toMap
     }
 
     def getScore(c1: String, c2: String): Option[Int] = {
-      val (pair, sameFamily) = resolveRelationshipPair(c1, c2)
-      if (sameFamily) Some(5) else scoreMap.get(pair)
+      if (c1 == c2) Some(5)
+      else {
+        val (pair, sameFamily) = resolveRelationshipPair(c1, c2)
+        if (sameFamily) Some(5) else scoreMap.get(pair)
+      }
     }
   }
 
