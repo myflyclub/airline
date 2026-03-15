@@ -3,7 +3,7 @@ package controllers
 import com.patson.data.airplane.ModelSource
 
 import java.util.Random
-import com.patson.data.{AirlineSource, AirplaneSource, AirportSource, BankSource, CycleSource, TutorialSource}
+import com.patson.data.{AirlineSource, AirplaneSource, AirportSource, BankSource, CycleSource}
 import com.patson.model._
 import com.patson.model.AirlineType._
 import com.patson.model.airplane._
@@ -88,7 +88,7 @@ class ProfileApplication @Inject()(cc: ControllerComponents) extends AbstractCon
       cash = (capital * 3).toInt,
       airport = airport,
       quality = 35,
-      rule = MegaHqAirline.description,
+      rule = LegacyAirline.description,
       loan = Some(Bank.getLoan(airline.id, (capital * 2).toInt, BASE_INTEREST_RATE / 2, CycleSource.loadCycle(), LOAN_YEARS))
     )
     profiles.append(loanProfile)
@@ -103,7 +103,7 @@ class ProfileApplication @Inject()(cc: ControllerComponents) extends AbstractCon
         airport = airport,
         reputation = 30,
         quality = 35,
-        rule = MegaHqAirline.description,
+        rule = LegacyAirline.description,
         airplanes = largeAirplanes,
         loan = Some(Bank.getLoan(airline.id, (capital * 4).toInt, BASE_INTEREST_RATE, CycleSource.loadCycle(), LOAN_YEARS * 2))
       )
@@ -174,12 +174,11 @@ class ProfileApplication @Inject()(cc: ControllerComponents) extends AbstractCon
       profiles.append(regionalProfile)
     }
 
-    val fancyAirplanes = generateAirplanes((capital * 2.5).toInt, (36 to 90), 10, airport, 85, airline, random)
+    val fancyAirplanes = generateAirplanes((capital * 2.5).toInt, (5 to 60), 10, airport, 85, airline, random)
     if (fancyAirplanes.nonEmpty) {
       val luxuryAirlineProfile = Profile(
         name = "Luxury Startup",
         airlineType = LuxuryAirline,
-        difficulty = "Very Hard",
         description = "Profit from business passengers while gaining reputation by carrying the world's elite!",
         rule = LuxuryAirline.description,
         cash = (capital * 3.75).toInt - fancyAirplanes.map(_.purchasePrice).sum,
@@ -256,7 +255,7 @@ class ProfileApplication @Inject()(cc: ControllerComponents) extends AbstractCon
           val cycle = CycleSource.loadCycle()
           val airport = AirportCache.getAirport(airportId, true).get
           val profile = generateProfiles(airline, airport)(profileId)
-          val targetQuality = profile.quality
+          val targetQuality = Math.max(25, profile.quality) //set sane default
 
           val base = AirlineBase(airline, airport, airport.countryCode, 1, cycle, true)
           airline.airlineType = profile.airlineType

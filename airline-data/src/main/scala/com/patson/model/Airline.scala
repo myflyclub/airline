@@ -257,7 +257,14 @@ object Airline {
   val EQ_INTITIAL: Int = 35
 
 
-  def resetAirline(airlineId : Int, newBalance : Long, resetExtendedInfo : Boolean = false) : Option[Airline] = {
+  /**
+   * bankruptcy or rebuild
+   * @param airlineId
+   * @param newBalance
+   * @param resetExtendedInfo
+   * @return
+   */
+  def resetAirline(airlineId: Int, newBalance: Long, resetExtendedInfo: Boolean = false) : Option[Airline] = {
     AirlineSource.loadAirlineById(airlineId, true) match {
       case Some(airline) =>
         // Will need this for prestige charm update after prestige info is processed
@@ -329,7 +336,7 @@ object Airline {
         //reset all notice
         NoticeSource.deleteNoticesByAirline(airline.id)
 
-        AirlineSource.saveAirlineInfo(airline)
+        AirlineSource.saveAirlineInfo(airline, updateBalance = true)
         AirlineCache.invalidateAirline(airlineId)
         println(s"!! Reset airline - $airline")
         Some(airline)
