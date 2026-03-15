@@ -6,10 +6,10 @@ import com.patson.util.AllianceCache
 
 
 case class AirlineBase(airline : Airline, airport : Airport, countryCode : String, scale : Int, foundedCycle : Int, headquarter : Boolean = false) {
-  private val effectiveScale = if (scale <= 6) {
-    Math.max(1.0, scale * 2.0)
+  private def computeEffectiveScale(s: Int): Double = if (s <= 6) {
+    Math.max(1.0, s * 2.0)
   } else {
-    12.0 + 0.2 * (scale - 6.0)
+    12.0 + 0.2 * (s - 6.0)
   }
 
   lazy val getValue : Long = {
@@ -17,6 +17,7 @@ case class AirlineBase(airline : Airline, airport : Airport, countryCode : Strin
   }
 
   def calculateUpgradeCost(scale: Int = scale, airlineType: AirlineType = airline.airlineType): Long = {
+    val effectiveScale = computeEffectiveScale(scale)
     val airportSizeDiscount = Math.max(6.0, airport.size.toDouble) * 0.05
     val baseCost = airport.rating.overallDifficulty * 200000 // Doubled
 
@@ -38,6 +39,7 @@ case class AirlineBase(airline : Airline, airport : Airport, countryCode : Strin
   }
 
   def calculateUpkeep(scale: Int, airlineType: AirlineType = airline.airlineType): Long = {
+    val effectiveScale = computeEffectiveScale(scale)
     val baseUpkeep = airport.rating.overallDifficulty * 135
     val airportSizeMod = airport.size.toDouble * 0.05
 
