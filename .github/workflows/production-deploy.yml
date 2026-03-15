@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Generate New Secret and Update application.conf
         shell: bash
@@ -38,17 +38,17 @@ jobs:
 
           grep 'play.crypto.secret' airline-web/conf/application.conf
 
-      - name: SCP to Contabo
+      - name: SCP to Server
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.production_host }}
           username: ${{ secrets.production_user }}
           key: ${{ secrets.production_key }}
           port: 22
-          script_stop: true
           source: "."
           strip_components: 0
           target: "/var/www/myfly/"
+
       - name: Build java, restart server
         uses: appleboy/ssh-action@v0.1.10
         with:
@@ -58,6 +58,5 @@ jobs:
           port: 22
           script_stop: true
           script: |
-            cd /var/www/myfly.club/airline/airline-data/
+            cd /var/www/myfly/airline/airline-data/
             sbt clean publishLocal
-      
