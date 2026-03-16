@@ -384,7 +384,7 @@ object GeoDataGenerator extends App {
         //https://en.wikipedia.org/wiki/List_of_countries_by_number_of_millionaires
         val underRepresentedCountries = List("ES", "PT", "GB", "FR", "BE", "NL", "LU", "CH", "DE", "AT", "DK", "NO", "SE", "FI", "IT", "GR", "MT", "CA", "CN", "HK", "MO", "TW", "KR", "JP", "MA", "NA", "AE")
         //https://www.henleyglobal.com/publications/wealthiest-cities
-        val nationalCenters = List("ALA","TAS","IKA","KHI","DEL","BOM","PVG","FNJ","ICN","GMP","HND","NRT","KIX","ITM","KUL","SGN","CGK","DPS","YYZ","YVR","SFO","MIA","FLL","PBI","MAD","BCN","LIS","LHR","LGW","LTN","EDI","CDG","ORY","CPH","ARN","FCO","CIA","MXP","BGY","LIN","BUD","ACC","KGL","LUN","MPM","NBO")
+        val nationalCenters = List("ALA","TAS","IKA","KHI","DEL","BOM","PVG","FNJ","ICN","GMP","HND","NRT","KIX","ITM","KUL","SGN","CGK","DPS","YYZ","YVR","SFO","MIA","FLL","PBI","MAD","BCN","LIS","LHR","LGW","LTN","EDI","CDG","ORY","LUX","CPH","ARN","FCO","CIA","MXP","BGY","LIN","BUD","ACC","KGL","LUN","MPM","NBO")
 
         val gini = if (normalizedIncome <= 4000 && airport.countryCode != "IN" && airport.countryCode != "ZA") {
             giniMap.getOrElse(airport.countryCode, 69.0) + 17 //need to account for global inequality? output is better this way
