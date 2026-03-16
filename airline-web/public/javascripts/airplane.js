@@ -485,8 +485,8 @@ function validateAirplaneQuantity() {
 function promptBuyAirplane(modelId, condition, price, deliveryTime, explicitHomeAirportId, multipleAble, buyAirplaneFunction) {
     var model = loadedModelsById[modelId]
     if (model.imageUrl) {
-        const imageLocation = '/assets/images/airplanes/' + model.name.replace(/\s+/g, '-').toLowerCase() + '.webp'
-        const fallbackLocation = '/assets/images/airplanes/' + model.name.replace(/\s+/g, '-').toLowerCase() + '.png'
+        const imageLocation = '/assets/images/airplanes/' + model.name.replace(/[''']/g, '').replace(/[–—]/g, '-').replace(/\s+/g, '-').toLowerCase() + '.webp'
+        const fallbackLocation = '/assets/images/airplanes/' + model.name.replace(/[''']/g, '').replace(/[–—]/g, '-').replace(/\s+/g, '-').toLowerCase() + '.png'
         $('#buyAirplaneModal .modelIllustration source').attr('srcset', imageLocation)
         $('#buyAirplaneModal .modelIllustration img').attr('src', fallbackLocation)
         $('#buyAirplaneModal .modelIllustration a').attr('href', model.imageUrl)
@@ -814,8 +814,8 @@ function selectAirplaneModel(model) {
 	//show basic airplane model details
 	//model = loadedModels[modelId]
 	if (model.imageUrl) {
-		const imageLocation = '/assets/images/airplanes/' + model.name.replace(/\s+/g, '-').toLowerCase() + '.webp'
-        const fallbackLocation = '/assets/images/airplanes/' + model.name.replace(/\s+/g, '-').toLowerCase() + '.png'
+		const imageLocation = '/assets/images/airplanes/' + model.name.replace(/[''']/g, '').replace(/[–—]/g, '-').replace(/\s+/g, '-').toLowerCase() + '.webp'
+        const fallbackLocation = '/assets/images/airplanes/' + model.name.replace(/[''']/g, '').replace(/[–—]/g, '-').replace(/\s+/g, '-').toLowerCase() + '.png'
         $('#airplaneCanvas .modelIllustration source').attr('srcset', imageLocation)
         $('#airplaneCanvas .modelIllustration img').attr('src', fallbackLocation)
 		$('#airplaneCanvas .modelIllustration a').attr('href', model.imageUrl)
@@ -1490,8 +1490,8 @@ function loadOwnedAirplaneDetails(airplaneId, selectedItem, closeCallback, disab
     	    success: function(airplane) {
     	        var model = loadedModelsById[airplane.modelId]
                 if (model.imageUrl) {
-                    const imageLocation = '/assets/images/airplanes/' + model.name.replace(/\s+/g, '-').toLowerCase() + '.webp'
-                    const fallbackLocation = '/assets/images/airplanes/' + model.name.replace(/\s+/g, '-').toLowerCase() + '.png'
+                    const imageLocation = '/assets/images/airplanes/' + model.name.replace(/[''']/g, '').replace(/[–—]/g, '-').replace(/\s+/g, '-').toLowerCase() + '.webp'
+                    const fallbackLocation = '/assets/images/airplanes/' + model.name.replace(/[''']/g, '').replace(/[–—]/g, '-').replace(/\s+/g, '-').toLowerCase() + '.png'
                     $('#ownedAirplaneDetail .modelIllustration source').attr('srcset', imageLocation)
                     $('#ownedAirplaneDetail .modelIllustration img').attr('src', fallbackLocation)
                     $('#ownedAirplaneDetail .modelIllustration a').attr('href', model.imageUrl)
@@ -2014,8 +2014,8 @@ function promptSwapModels() {
     $('#swapAirplaneModal .oldCruise').text(selectedAirplaneModel.cruiseBurn);
     
     if (selectedAirplaneModel.imageUrl) {
-        const imageLocation = '/assets/images/airplanes/' + selectedAirplaneModel.name.replace(/\s+/g, '-').toLowerCase() + '.webp'
-        const fallbackLocation = '/assets/images/airplanes/' + selectedAirplaneModel.name.replace(/\s+/g, '-').toLowerCase() + '.png'
+        const imageLocation = '/assets/images/airplanes/' + selectedAirplaneModel.name.replace(/[''']/g, '').replace(/[–—]/g, '-').replace(/\s+/g, '-').toLowerCase() + '.webp'
+        const fallbackLocation = '/assets/images/airplanes/' + selectedAirplaneModel.name.replace(/[''']/g, '').replace(/[–—]/g, '-').replace(/\s+/g, '-').toLowerCase() + '.png'
         $('#swapAirplaneModal .old-model-stats .modelIllustration source').attr('srcset', imageLocation)
         $('#swapAirplaneModal .old-model-stats .modelIllustration img').attr('src', fallbackLocation)
     }
@@ -2082,8 +2082,8 @@ function processSwapModels(isEstimate = true) {
         $('#swapAirplaneModal .newCruise').text(newModel.cruiseBurn);
 
         if (newModel.imageUrl) {
-            const imageLocation = '/assets/images/airplanes/' + newModel.name.replace(/\s+/g, '-').toLowerCase() + '.webp'
-            const fallbackLocation = '/assets/images/airplanes/' + newModel.name.replace(/\s+/g, '-').toLowerCase() + '.png'
+            const imageLocation = '/assets/images/airplanes/' + newModel.name.replace(/[''']/g, '').replace(/[–—]/g, '-').replace(/\s+/g, '-').toLowerCase() + '.webp'
+            const fallbackLocation = '/assets/images/airplanes/' + newModel.name.replace(/[''']/g, '').replace(/[–—]/g, '-').replace(/\s+/g, '-').toLowerCase() + '.png'
             $('#swapAirplaneModal .new-model-stats .modelIllustration source').attr('srcset', imageLocation)
             $('#swapAirplaneModal .new-model-stats .modelIllustration img').attr('src', fallbackLocation)
         }
