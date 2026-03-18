@@ -71,10 +71,9 @@ object RankingSimulation {
   }
 
   def updateRankings(currentCycle: Int, allAirlines: List[Airline], flightLinkResult: List[LinkConsumptionDetails], loungeConsumptions: List[LoungeConsumptionDetails], paxStats: immutable.Map[Int, AirlinePaxStat]): Map[RankingType.Value, List[Ranking]] = {
-    val airlinesSource = AirlineSource.loadAllAirlines(fullLoad = true)
     val devMode = if (configFactory.hasPath("dev")) configFactory.getBoolean("dev") else false
     val invalidAirlinesIds: Set[Int] = if (devMode) Set.empty else allAirlines.filter(airline => airline.airlineType == NonPlayerAirline || airline.getReputation < 60).map(_.id).toSet
-    val airlinesById = airlinesSource.filter(airline => ! invalidAirlinesIds.contains(airline.id)).map(airline => (airline.id, airline)).toMap
+    val airlinesById = allAirlines.filter(airline => ! invalidAirlinesIds.contains(airline.id)).map(airline => (airline.id, airline)).toMap
     val flightConsumptions = flightLinkResult.filter { consumption =>
       consumption.link.transportType == TransportType.FLIGHT && consumption.link.soldSeats.total > 0 && !invalidAirlinesIds.contains(consumption.link.airline.id)
     }
