@@ -353,92 +353,90 @@ case class AirlineGrade(level: Int, reputationCeiling: Double, reputationFloor: 
   }
 }
 
-object AirlineGrades {
-  val grades = List(
-    25 -> "Embryonic",
-    50 -> "Sprout",
-    75 -> "Fledgling",
-    100 -> "Small Airline",
-    125 -> "Minor Airline",
-    150 -> "Established Airline",
-    175 -> "Networked Airline",
-    200 -> "Major Airline",
-    240 -> "Leading Airline",
-    280 -> "Ascending",
-    320 -> "Skybound",
-    360 -> "High Flyer",
-    400 -> "Stratospheric",
-    450 -> "Sub-Orbital",
-    500 -> "Orbital",
-    600 -> "Exospheric",
-    700 -> "Apogee",
-    800 -> "Epic",
-    900 -> "Ultimate",
-    1000 -> "Fabled",
-    1100 -> "Legendary",
-    1200 -> "Mythic",
-    1400 -> "Celestial",
-    1600 -> "Empyrean",
-    1800 -> "Transcendent",
-    2000 -> "Apex Rat"
+trait GradeEvaluator {
+  protected val grades: Vector[(Double, String)]
+
+  def findGrade(value: Double): AirlineGrade = {
+    val idx = grades.indexWhere(_._1 > value)
+
+    if (idx == -1) {
+      // Above highest threshold
+      val (lastFloor, lastDesc) = grades.last
+      AirlineGrade(grades.length, Double.MaxValue, lastFloor, lastDesc)
+    } else {
+      val floor = if (idx == 0) 0.0 else grades(idx - 1)._1
+      val ceiling = grades(idx)._1
+      AirlineGrade(idx, ceiling, floor, grades(idx)._2)
+    }
+  }
+}
+
+object AirlineGrades extends GradeEvaluator {
+  override val grades: Vector[(Double, String)] = Vector(
+    25.0 -> "Embryonic",
+    50.0 -> "Sprout",
+    75.0 -> "Fledgling",
+    100.0 -> "Small Airline",
+    125.0 -> "Minor Airline",
+    150.0 -> "Established Airline",
+    175.0 -> "Networked Airline",
+    200.0 -> "Major Airline",
+    240.0 -> "Leading Airline",
+    280.0 -> "Ascending",
+    320.0 -> "Skybound",
+    360.0 -> "High Flyer",
+    400.0 -> "Stratospheric",
+    450.0 -> "Sub-Orbital",
+    500.0 -> "Orbital",
+    600.0 -> "Exospheric",
+    700.0 -> "Apogee",
+    800.0 -> "Epic",
+    900.0 -> "Ultimate",
+    1000.0 -> "Fabled",
+    1100.0 -> "Legendary",
+    1200.0 -> "Mythic",
+    1400.0 -> "Celestial",
+    1600.0 -> "Empyrean",
+    1800.0 -> "Transcendent",
+    2000.0 -> "Apex Rat"
   )
 
   val taxRate = List(
-    25 -> 0,
-    50 -> 0,
-    75 -> 1,
-    100 -> 1,
-    125 -> 1,
-    150 -> 2,
-    175 -> 3,
-    200 -> 4,
-    240 -> 5,
-    280 -> 6,
-    320 -> 7,
-    360 -> 8,
-    400 -> 10,
-    450 -> 13,
-    500 -> 16,
-    600 -> 19,
-    700 -> 22,
-    800 -> 24,
-    900 -> 26,
-    1000 -> 28,
-    1100 -> 30,
-    1200 -> 32,
-    1400 -> 34,
-    1600 -> 36,
-    1800 -> 38,
-    2000 -> 40,
+    25.0 -> 0,
+    50.0 -> 0,
+    75.0 -> 1,
+    100.0 -> 1,
+    125.0 -> 1,
+    150.0 -> 2,
+    175.0 -> 3,
+    200.0 -> 4,
+    240.0 -> 5,
+    280.0 -> 6,
+    320.0 -> 7,
+    360.0 -> 8,
+    400.0 -> 10,
+    450.0 -> 13,
+    500.0 -> 16,
+    600.0 -> 19,
+    700.0 -> 22,
+    800.0 -> 24,
+    900.0 -> 26,
+    1000.0 -> 28,
+    1100.0 -> 30,
+    1200.0 -> 32,
+    1400.0 -> 34,
+    1600.0 -> 36,
+    1800.0 -> 38,
+    2000.0 -> 40,
   )
 
   def findTaxRate(reputation: Double) : Int = {
     taxRate.find(_._1 > reputation).getOrElse(taxRate.last)._2
   }
-
-  def findGrade(value: Double): AirlineGrade = {
-    val thresholds = grades.map(_._1.toDouble)
-    val descriptions = grades.map(_._2)
-    val idx = thresholds.indexWhere(_ > value)
-    if (idx == -1) {
-      // Above top level: use last grade, ceiling is infinity
-      if (grades.isEmpty) {
-        AirlineGrade(1, Double.MaxValue, 0.0, "Unknown")
-      } else {
-        val lastIdx = grades.length - 1
-        val floor = thresholds(lastIdx)
-        AirlineGrade(lastIdx + 1, Double.MaxValue, floor, descriptions(lastIdx))
-      }
-    } else {
-      val floor = if (idx == 0) 0.0 else thresholds(idx - 1)
-      val ceiling = thresholds(idx)
-      AirlineGrade(idx + 1, ceiling, floor, descriptions(idx))
-    }
-  }
 }
 
-object AirlineGradeStockPrice {
-  val grades: List[(Double, String)] = List(
+object AirlineGradeStockPrice extends GradeEvaluator {
+  override val grades: Vector[(Double, String)] = Vector(
     0.7 -> "Toilet Paper",
     1.2 -> "Penny Stock",
     3.5 -> "Bargain?",
@@ -453,105 +451,42 @@ object AirlineGradeStockPrice {
     1075.0 -> "Wall Street Legend",
     1725.0 -> "Aerial Singularity"
   )
-
-  def findGrade(value: Double): AirlineGrade = {
-    val thresholds = grades.map(_._1)
-    val descriptions = grades.map(_._2)
-    val idx = thresholds.indexWhere(_ > value)
-    if (idx == -1) {
-      // Above top level: use last grade, ceiling is infinity
-      if (grades.isEmpty) {
-        // Fallback for empty grades list (defensive)
-        AirlineGrade(1, Double.MaxValue, 0.0, "Unknown")
-      } else {
-        val lastIdx = grades.length - 1
-        val floor = thresholds(lastIdx)
-        AirlineGrade(lastIdx + 1, Double.MaxValue, floor, descriptions(lastIdx))
-      }
-    } else {
-      val floor = if (idx == 0) 0.0 else thresholds(idx - 1)
-      val ceiling = thresholds(idx)
-      AirlineGrade(idx + 1, ceiling, floor, descriptions(idx))
-    }
-  }
 }
 
-object AirlineGradeElites {
-  val grades = List(
-    100 -> "Nothing",
-    450 -> "Paper",
-    1650 -> "Plastic",
-    4400 -> "Iron",
-    8000 -> "Steel",
-    12800 -> "Aluminum",
-    17400 -> "Nickel",
-    22000 -> "Copper",
-    27000 -> "Gold",
-    32000 -> "Platinum",
-    37000 -> "Rhenium",
-    42000 -> "Painite",
-    47000 -> "Rat Fur"
+object AirlineGradeElites extends GradeEvaluator {
+  override val grades: Vector[(Double, String)] = Vector(
+    100.0 -> "Nothing",
+    450.0 -> "Paper",
+    1650.0 -> "Plastic",
+    4400.0 -> "Iron",
+    8000.0 -> "Steel",
+    12800.0 -> "Aluminum",
+    17400.0 -> "Nickel",
+    22000.0 -> "Copper",
+    27000.0 -> "Gold",
+    32000.0 -> "Platinum",
+    37000.0 -> "Rhenium",
+    42000.0 -> "Painite",
+    47000.0 -> "Rat Fur"
   )
-
-  def findGrade(value: Int): AirlineGrade = {
-    val thresholds = grades.map(_._1.toDouble)
-    val descriptions = grades.map(_._2)
-    val idx = thresholds.indexWhere(_ > value)
-    if (idx == -1) {
-      // Above top level: use last grade, ceiling is infinity
-      if (grades.isEmpty) {
-        // Fallback for empty grades list (defensive)
-        AirlineGrade(1, Double.MaxValue, 0.0, "Unknown")
-      } else {
-        val lastIdx = grades.length - 1
-        val floor = thresholds(lastIdx)
-        AirlineGrade(lastIdx + 1, Double.MaxValue, floor, descriptions(lastIdx))
-      }
-    } else {
-      val floor = if (idx == 0) 0.0 else thresholds(idx - 1)
-      val ceiling = thresholds(idx)
-      AirlineGrade(idx + 1, ceiling, floor, descriptions(idx))
-    }
-  }
 }
 
-object AirlineGradeTouristsTravelers {
-  val grades = List(
-    1500 -> "Discount Disaster",
-    6000 -> "Leisure Loser",
-    22500 -> "Semi Bargain Bin",
-    63000 -> "Holiday Hauler",
-    126000 -> "Package Deal Pal",
-    201000 -> "Resort Runner",
-    282000 -> "Deal Seeker Favorite",
-    375000 -> "Bargain Bin Bonanza",
-    480000 -> "Detours Delight",
-    585000 -> "Cheapo Champion",
-    690000 -> "Penny Pitchers' Paradise",
-    780000 -> "Budget Behemoth",
-    900000 -> "Low-Cost Leviathan"
+object AirlineGradeTouristsTravelers extends GradeEvaluator {
+  override val grades: Vector[(Double, String)] = Vector(
+    5000.0 -> "Discount Disaster",
+    12500.0 -> "Leisure Loser",
+    31250.0 -> "Semi Bargain Bin",
+    62500.0 -> "Holiday Hauler",
+    126000.0 -> "Package Deal Pal",
+    201000.0 -> "Resort Runner",
+    282000.0 -> "Deal Seeker Favorite",
+    375000.0 -> "Bargain Bin Bonanza",
+    480000.0 -> "Detours Delight",
+    585000.0 -> "Cheapo Champion",
+    690000.0 -> "Penny Pitchers' Paradise",
+    780000.0 -> "Budget Behemoth",
+    900000.0 -> "Low-Cost Leviathan"
   )
-
-  def findGrade(value: Int): AirlineGrade = {
-    val thresholds = grades.map(_._1.toDouble)
-    val descriptions = grades.map(_._2)
-    val idx = thresholds.indexWhere(_ > value)
-    if (idx == -1) {
-      // Above top level: use last grade, ceiling is infinity
-      if (grades.isEmpty) {
-        // Fallback for empty grades list (defensive)
-        AirlineGrade(1, Double.MaxValue, 0.0, "Unknown")
-      } else {
-        val lastIdx = grades.length - 1
-        val floor = thresholds(lastIdx)
-        AirlineGrade(lastIdx + 1, Double.MaxValue, floor, descriptions(lastIdx))
-      }
-    } else {
-      val floor = if (idx == 0) 0.0 else thresholds(idx - 1)
-      val ceiling = thresholds(idx)
-      AirlineGrade(idx + 1, ceiling, floor, descriptions(idx))
-    }
-  }
 }
 
 object AirlineModifier {
