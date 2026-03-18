@@ -13,17 +13,18 @@ import com.patson.util.{AirlineCache, AirplaneOwnershipCache, AirportCache, Airp
 
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration.{Duration, FiniteDuration}
 
 object MainSimulation extends App {
-  val CYCLE_DURATION : Int = 60 * 5
+  val CYCLE_DURATION : Int = 60 * 15
+  val SCHEDULE_BUFFER_SECS : Int = 30
+  val SCHEDULE_OVERHEAD_FACTOR : Double = 1.2
   var currentWeek: Int = 0
 
   mainFlow
 
   def mainFlow() = {
     val actor = actorSystem.actorOf(Props[MainSimulationActor])
-    actorSystem.scheduler.schedule(Duration.Zero, Duration(CYCLE_DURATION, TimeUnit.SECONDS), actor, Start)
     Await.result(actorSystem.whenTerminated, Duration.Inf)
   }
 
@@ -136,12 +137,31 @@ object MainSimulation extends App {
     */
   class MainSimulationActor extends Actor {
     currentWeek = CycleSource.loadCycle()
+    private var lastExecutionMs: Long = 0L  // in-memory only; 0 means start immediately
+
+    private def calculateDelay(): FiniteDuration = {
+      if (lastExecutionMs == 0L) {
+        Duration.Zero
+      } else {
+        val anticipatedMs = (lastExecutionMs * SCHEDULE_OVERHEAD_FACTOR).toLong + SCHEDULE_BUFFER_SECS * 1000L
+        val delayMs = Math.max(0L, CYCLE_DURATION * 1000L - anticipatedMs)
+        println(s"Next cycle delay: ${delayMs / 1000}s (anticipated: ${anticipatedMs / 1000}s, last execution: ${lastExecutionMs / 1000}s)")
+        Duration(delayMs, TimeUnit.MILLISECONDS)
+      }
+    }
+
+    override def preStart(): Unit = {
+      context.system.scheduler.scheduleOnce(Duration.Zero, self, Start)
+    }
+
     def receive = {
       case Start =>
         status = SimulationStatus.IN_PROGRESS
+        val cycleStartTime = System.currentTimeMillis()
         try {
           val endTime = startCycle(currentWeek)
 
+          lastExecutionMs = endTime - cycleStartTime
           currentWeek += 1
           CycleSource.setCycle(currentWeek)
           status = SimulationStatus.WAITING_CYCLE_START
@@ -153,7 +173,10 @@ object MainSimulation extends App {
         } catch {
           case e : Exception =>
             println(s"!!!!!!! Cycle $currentWeek failed with exception: ${e.getClass.getSimpleName}: ${e.getMessage}. Will retry next tick.")
+            lastExecutionMs = 0L  // reset so retry fires immediately
             status = SimulationStatus.WAITING_CYCLE_START
+        } finally {
+          context.system.scheduler.scheduleOnce(calculateDelay(), self, Start)
         }
     }
   }
