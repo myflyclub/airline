@@ -414,7 +414,6 @@ object PassengerSimulation {
     val distanceMap = new java.util.HashMap[Int, Double]()
     var predecessorMap = new java.util.HashMap[Int, LinkConsideration]()
     var activeVertices = new java.util.HashSet[Int]()
-    val assetDiscountByAirportId = mutable.HashMap[Int, Option[(Double, List[AirportAsset])]]() //key is airport
     activeVertices.add(from.id)
     allVertices.foreach { vertex => 
       if (vertex == from.id) {
@@ -500,29 +499,12 @@ object PassengerSimulation {
             connectionCost *= Math.min(1.0, 0.4 + 0.6 * passengerGroup.fromAirport.income.toDouble / Airport.HIGH_INCOME)
             connectionCost *= passengerGroup.preference.preferredLinkClass.spaceMultiplier
             connectionCost *= passengerGroup.preference.connectionCostRatio
-
-            if (flightTransit) {
-              val waitTimeDiscount = Math.min(0.5, linkConsideration.from.computeTransitDiscount(
-                predecessorLinkConsideration,
-                linkConsideration,
-                passengerGroup))
-              connectionCost *= (1 - waitTimeDiscount)
-            }
-
           }
 
           if (isValid) {
             val cost = Math.max(0, linkConsideration.cost + connectionCost) //just to avoid loop in graph
             val fromCost = distanceMap.get(linkConsideration.from.id)
             var newCost = fromCost + cost
-
-            assetDiscountByAirportId.getOrElseUpdate(linkConsideration.to.id, linkConsideration.to.computePassengerCostAssetDiscount(linkConsideration, passengerGroup)).foreach {
-              case(discount, _) =>
-                //discount scale by cost travelled so far ie bigger impact for pax from far away
-                //however the discount should never be more than half the new cost, otherwise it COULD potentially get cheaper the further it goes
-                val costDiscount = Math.min(cost * 0.5, newCost * discount)
-                newCost -= costDiscount
-            }
 
             if (newCost < distanceMap.get(linkConsideration.to.id)) {
               distanceMap.put(linkConsideration.to.id, newCost)
@@ -544,17 +526,12 @@ object PassengerSimulation {
       var foundSolution = false
       var hasFlight = false
       val route = ListBuffer[LinkConsideration]()
-      val visitedAssetsListBuffer = ListBuffer[AirportAsset]()
       while (!foundSolution && !noSolution) {
         val link = predecessorMap.get(walker)
         if (link != null) {
           route.prepend(link)
           if (link.link.transportType == TransportType.FLIGHT) {
             hasFlight = true
-          }
-          assetDiscountByAirportId.get(walker).foreach { _.foreach {
-              case(_, visitedAssetsOfThisAirport) => visitedAssetsListBuffer.addAll(visitedAssetsOfThisAirport)
-            }
           }
           walker = link.from.id
           if (walker == from.id && hasFlight) { //at least 1 leg has to be a flight. We don't want route with no flights
@@ -565,12 +542,7 @@ object PassengerSimulation {
         }
       }
       if (foundSolution) {
-        if (visitedAssetsListBuffer.isEmpty) {
-          resultMap.put(to, Route(route.toList, distanceMap.get(to.id)))
-        } else {
-          resultMap.put(to, Route(route.toList, distanceMap.get(to.id), visitedAssetsListBuffer.toList))
-        }
-
+        resultMap.put(to, Route(route.toList, distanceMap.get(to.id)))
       }  
     }
     

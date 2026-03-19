@@ -82,6 +82,26 @@ object DestinationSource {
     }
   }
   
+  /** Returns Map[airportId, destinationCount] without touching AirportCache. */
+  def countDestinationsByAirport(): Map[Int, Int] = {
+    val connection = Meta.getConnection()
+    try {
+      val statement = connection.prepareStatement(
+        "SELECT airport, COUNT(*) AS cnt FROM " + DESTINATIONS_TABLE + " GROUP BY airport"
+      )
+      val resultSet = statement.executeQuery()
+      val result = scala.collection.mutable.HashMap[Int, Int]()
+      while (resultSet.next()) {
+        result.put(resultSet.getInt("airport"), resultSet.getInt("cnt"))
+      }
+      resultSet.close()
+      statement.close()
+      result.toMap
+    } finally {
+      connection.close()
+    }
+  }
+
   def deleteAllDestinations() = {
     val connection = Meta.getConnection()
     try {  

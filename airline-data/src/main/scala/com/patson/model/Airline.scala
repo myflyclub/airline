@@ -229,7 +229,6 @@ object LedgerType extends Enumeration {
       BASE_CONSTRUCTION,
       FACILITY_CONSTRUCTION,
       OIL_CONTRACT,
-      ASSET_TRANSACTION,
       PRIZE,
       BUY_BACK,
       CREATE_LINK = Value
@@ -282,10 +281,6 @@ object Airline {
         LinkSource.deleteLinksByAirlineId(airlineId)
         //remove all airplanes
         AirplaneSource.deleteAirplanesByCriteria(List(("owner", airlineId)));
-        //remove all assets
-        AirportAssetSource.loadAirportAssetsByAirline(airlineId).foreach { asset =>
-          AirportAssetSource.deleteAirportAsset(asset.id)
-        }
         //remove all bases
         airline.getBases().foreach(_.delete)
         //remove all loans

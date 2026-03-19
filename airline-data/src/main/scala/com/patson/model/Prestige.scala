@@ -1,11 +1,6 @@
 package com.patson.model
 
-import com.patson.model.Airline
-import com.patson.model.Airport
-import com.patson.model.AirportFeatureType
-import com.patson.model.PrestigeFeature
-import com.patson.data.PrestigeSource
-import com.patson.data.CycleSource
+import com.patson.data.{CycleSource, PrestigeSource}
 
 object Prestige {
   def processPrestige(airline : Airline) = {
@@ -18,21 +13,11 @@ object Prestige {
   }
 
   /**
-   * Update the prestige charm at an airport based on total prestige points
-   * If total prestige is 0, removes the prestige charm
-   * Otherwise, upserts the prestige charm with the total as strength
+   * Invalidate the airport cache so the prestige feature is re-computed from DB on next load.
+   * Prestige is computed at airport load time from the prestige and airline_info tables,
    */
   def updatePrestigeCharmForAirport(airportId: Int): Unit = {
-    val prestigeFromTable = PrestigeSource.sumPrestigePointsByAirport(airportId)
-    val prestigeFromAirlines = com.patson.data.AirlineSource.sumPrestigePointsByHeadquarterAirport(airportId)
-    val totalPrestige = prestigeFromTable + prestigeFromAirlines
-
-    if (totalPrestige == 0) {
-      com.patson.data.AirportSource.deleteAirportFeature(airportId, AirportFeatureType.PRESTIGE_CHARM)
-    } else {
-      val prestigeCharm = PrestigeFeature(totalPrestige)
-      com.patson.data.AirportSource.saveAirportFeature(airportId, prestigeCharm)
-    }
+    com.patson.util.AirportCache.refreshAirport(airportId)
   }
 }
 

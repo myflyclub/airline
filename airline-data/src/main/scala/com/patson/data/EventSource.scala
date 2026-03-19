@@ -5,8 +5,8 @@ import scala.util.Using
 
 import com.patson.LinkSimulation.PassengerTransportStats
 import com.patson.data.Constants._
-import com.patson.model.{Airline, Airport}
-import com.patson.model.event.{Event, EventReward, EventType, Olympics, OlympicsAirlineVote, OlympicsVoteRound, RewardCategory, RewardOption}
+import com.patson.model.{Airline, Airport, AirportFeature, OlympicsInProgressFeature, OlympicsPreparationsFeature}
+import com.patson.model.event.{Event, EventReward, EventType, Olympics, OlympicsAirlineVote, OlympicsVoteRound, OlympicsStatus, RewardCategory, RewardOption}
 import com.patson.util.{AirlineCache, AirportCache}
 
 import scala.collection.{immutable, mutable}
@@ -370,8 +370,8 @@ object EventSource {
         val principalAirportId = resultSet.getInt("principal_airport")
         val affectedAirportId = resultSet.getInt("affected_airport")
 
-        val principalAirport = AirportCache.getAirport(principalAirportId).getOrElse(Airport.fromId(principalAirportId))
-        val affectedAirport = AirportCache.getAirport(affectedAirportId).getOrElse(Airport.fromId(affectedAirportId))
+        val principalAirport = Airport.fromId(principalAirportId)
+        val affectedAirport = Airport.fromId(affectedAirportId)
         val airportsOfThisPrincipal = result.getOrElseUpdate(principalAirport, ListBuffer[Airport]())
         airportsOfThisPrincipal.append(affectedAirport)
       }
@@ -611,6 +611,54 @@ object EventSource {
 
 
   
+  /**
+   * For a single airport: look up the active Olympics event and return the appropriate
+   * AirportFeature (OlympicsPreparationsFeature or OlympicsInProgressFeature) if the
+   * airport is in its affected-airports list, or List.empty otherwise.
+   */
+  def loadOlympicsFeatureByAirport(airportId: Int): List[AirportFeature] = {
+    val currentCycle = CycleSource.loadCycle()
+    loadEvents().find { e => e.eventType == EventType.OLYMPICS && e.isActive(currentCycle) }.flatMap { event =>
+      val olympics = event.asInstanceOf[Olympics]
+      val affectedAirportIds = loadOlympicsAffectedAirports(olympics.id).values.flatten.map(_.id).toSet
+      if (affectedAirportIds.contains(airportId)) {
+        val phase = olympics.status(currentCycle)
+        phase match {
+          case OlympicsStatus.PREPARATION => Some(OlympicsPreparationsFeature(1))
+          case OlympicsStatus.OLYMPICS_YEAR | OlympicsStatus.IN_PROGRESS => Some(OlympicsInProgressFeature(1))
+          case _ => None
+        }
+      } else {
+        None
+      }
+    }.toList
+  }
+
+  /**
+   * Batch version: return Map[airportId, AirportFeature] for all affected airports of the active Olympics.
+   * Used during bulk airport loading to avoid N+1 queries.
+   */
+  def loadActiveOlympicsAffectedAirportFeatures(currentCycle: Int): Map[Int, AirportFeature] = {
+    loadEvents().find { e => e.eventType == EventType.OLYMPICS && e.isActive(currentCycle) } match {
+      case None => Map.empty
+      case Some(event) =>
+        val olympics = event.asInstanceOf[Olympics]
+        val phase = olympics.status(currentCycle)
+        val featureOpt: Option[AirportFeature] = phase match {
+          case OlympicsStatus.PREPARATION => Some(OlympicsPreparationsFeature(1))
+          case OlympicsStatus.OLYMPICS_YEAR | OlympicsStatus.IN_PROGRESS => Some(OlympicsInProgressFeature(1))
+          case _ => None
+        }
+        featureOpt match {
+          case None => Map.empty
+          case Some(feature) =>
+            loadOlympicsAffectedAirports(olympics.id).values.flatten.map { airport =>
+              airport.id -> feature
+            }.toMap
+        }
+    }
+  }
+
   def deleteEventsBeforeCycle(cutoffCycle : Int) = {
     val connection = Meta.getConnection()
     try {  

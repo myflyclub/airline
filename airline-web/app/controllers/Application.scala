@@ -128,13 +128,13 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
         CACHE_CONTROL -> "public, max-age=2419200",
         ETAG -> s""""$currentApiVersion"""", // Use version as ETag
         EXPIRES -> java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME
-          .format(java.time.ZonedDateTime.now().plusWeeks(4))
+          .format(java.time.ZonedDateTime.now().plusWeeks(2))
       )
   }
 
   /**
    * Dynamic airport data
-   * - boostFactorsByType: base specialization, assets
+   * - boostFactorsByType: base specialization
    * - loyalist data
    * - linkCount
    *
@@ -161,15 +161,7 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
     )
     val dynamicFeaturesObject = JsObject(
       airportData.flatMap { a =>
-        val dynFeatures = a.airport.getFeatures().filter {
-          case hub: InternationalHubFeature => hub.boosts.nonEmpty
-          case hub: VacationHubFeature      => hub.boosts.nonEmpty
-          case hub: FinancialHubFeature     => hub.boosts.nonEmpty
-          case hub: EliteFeature            => hub.boosts.nonEmpty
-          case _: OlympicsPreparationsFeature => true
-          case _: OlympicsInProgressFeature   => true
-          case _                              => false
-        }
+        val dynFeatures = a.airport.getFeatures().filter(_.isDynamic)
         if (dynFeatures.nonEmpty) {
           Some(a.airport.id.toString -> JsArray(dynFeatures.sortBy(_.featureType.id).map { f =>
             Json.obj("type" -> f.featureType.toString, "strength" -> f.strength, "title" -> f.getDescription)

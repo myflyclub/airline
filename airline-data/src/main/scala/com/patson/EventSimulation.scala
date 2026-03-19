@@ -1,8 +1,8 @@
 package com.patson
 
-import com.patson.data.{AirportSource, CycleSource, EventSource, LinkStatisticsSource}
+import com.patson.data.{CycleSource, EventSource, LinkStatisticsSource}
 import com.patson.model.event.{EventType, Olympics, OlympicsAirlineVote, OlympicsAirlineVoteWithWeight, OlympicsVoteRound}
-import com.patson.model.{Airline, Airport, AirportFeatureType, Computation, OlympicsInProgressFeature, OlympicsPreparationsFeature, Period}
+import com.patson.model.{Airline, Airport, Computation, Period}
 import com.patson.util.AirportCache
 
 import scala.collection.{MapView, mutable}
@@ -63,9 +63,9 @@ object EventSimulation {
             val selectedAirport = voteRounds.last.votes.toList.sortBy(_._2).last._1
             println(s"Olympics airport: $selectedAirport")
           }
-          //mark airports as in preparations
+          //invalidate airport cache so preparations feature is picked up on next load
           Olympics.getSelectedAffectedAirports(olympics.id).foreach { airport =>
-            AirportSource.saveAirportFeature(airport.id, OlympicsPreparationsFeature(1))
+            AirportCache.invalidateAirport(airport.id)
           }
 
           //set airline target
@@ -75,10 +75,9 @@ object EventSimulation {
 
 
         case 4 =>
-          //mark airports as in progress
+          //invalidate airport cache so in-progress feature is picked up on next load
           Olympics.getSelectedAffectedAirports(olympics.id).foreach { airport =>
-            AirportSource.deleteAirportFeature(airport.id, AirportFeatureType.OLYMPICS_PREPARATIONS)
-            AirportSource.saveAirportFeature(airport.id, OlympicsInProgressFeature(1))
+            AirportCache.invalidateAirport(airport.id)
           }
         case _ =>
           // No action needed for other years
@@ -219,8 +218,9 @@ object EventSimulation {
   }
 
   def simulateOlympicsEnding(olympics : Olympics) = {
+    //invalidate airport cache so the in-progress feature is dropped on next load (Olympics no longer active)
     Olympics.getSelectedAffectedAirports(olympics.id).foreach { airport =>
-      AirportSource.deleteAirportFeature(airport.id, AirportFeatureType.OLYMPICS_IN_PROGRESS)
+      AirportCache.invalidateAirport(airport.id)
     }
   }
   

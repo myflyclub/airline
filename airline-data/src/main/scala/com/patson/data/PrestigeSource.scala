@@ -58,4 +58,27 @@ object PrestigeSource {
       connection.close()
     }
   }
+
+  /**
+   * Sum prestige points from the prestige table grouped by airport, for all airports.
+   * Returns Map[airportId, total prestige points].
+   */
+  def sumPrestigePointsAllAirports(): Map[Int, Int] = {
+    val connection = Meta.getConnection()
+    try {
+      val statement = connection.prepareStatement("SELECT airport, SUM(prestige_points) AS total FROM " + PRESTIGE_TABLE + " GROUP BY airport")
+      val resultSet = statement.executeQuery()
+      val result = scala.collection.mutable.HashMap[Int, Int]()
+      while (resultSet.next()) {
+        val airportId = resultSet.getInt("airport")
+        val total = resultSet.getInt("total")
+        result.put(airportId, total)
+      }
+      resultSet.close()
+      statement.close()
+      result.toMap
+    } finally {
+      connection.close()
+    }
+  }
 }

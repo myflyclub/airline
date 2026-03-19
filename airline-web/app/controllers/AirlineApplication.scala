@@ -144,7 +144,6 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
       JsObject(List(
         "airplanes" -> JsNumber(info.airplanes),
         "bases" -> JsNumber(info.bases),
-        "assets" -> JsNumber(info.assets),
         "loans" -> JsNumber(info.loans),
         "oilContracts" -> JsNumber(info.oilContracts),
         "existingBalance" -> JsNumber(info.existingBalance),
@@ -501,12 +500,6 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
       }
     }
 
-    AirportAssetSource.loadAirportAssetsByAirport(base.airport.id).filter(asset => asset.airline.isDefined && asset.airline.get.id == base.airline.id).foreach { ownedAsset =>
-      if (ownedAsset.blueprint.assetType.baseRequirement > base.scale - 1) {
-        return Some(s"This cannot be downgraded as asset ${ownedAsset.name} requires base level ${ownedAsset.blueprint.assetType.baseRequirement}")
-      }
-    }
-
     return None
   }
 
@@ -539,12 +532,6 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
               airplane
             }
             AirplaneSource.updateAirplanes(updatingAirplanes)
-
-            //delete assets
-            AirportAssetSource.loadAirportAssetsByAirline(airlineId).filter(_.airport.id == airportId).foreach { asset =>
-              AirportAssetSource.deleteAirportAsset(asset.id)
-              AirlineSource.saveLedgerEntry(AirlineLedgerEntry(airlineId, currentCycle, LedgerType.ASSET_TRANSACTION, asset.sellValue, Some(asset.name)))
-            }
 
             base.delete()
             ManagerSource.deleteManagerBaseDelegates(airlineId, base.scale)

@@ -2,7 +2,6 @@ package com.patson.model
 
 import com.github.benmanes.caffeine.cache.{Caffeine, CacheLoader, LoadingCache}
 import com.patson.data.{AirportSource, CountrySource, DestinationSource, GameConstants}
-import com.patson.model.AirportAssetType.{PassengerCostModifier, TransitModifier}
 import com.patson.model.airplane.Model
 
 import scala.collection.mutable
@@ -20,17 +19,12 @@ case class Airport(iata: String, icao: String, name: String, latitude: Double, l
   private[this] var airlineBasesLoaded = false
   private[this] val baseFeatures = ListBuffer[AirportFeature]()
   private[this] var featuresLoaded = false
-  private[this] var assetsLoaded = false
   private[this] val loungesByAirline = scala.collection.mutable.Map[Int, Lounge]()
   private[this] val loungesByAlliance = scala.collection.mutable.Map[Int, Lounge]()
-  private[this] var assets = List[AirportAsset]()
-  lazy val transitModifiers = getTransitModifiers()
-  lazy val assetPassengerCostModifiers = getPassengerCostModifiers()
-
 
   private[model] var country : Option[Country] = None
 
-  private[model] var assetBoostFactors : Map[AirportBoostType.Value, List[(AirportAsset, AirportBoost)]] = Map.empty
+  private[model] var boostFactors : Map[AirportBoostType.Value, List[(AirportBoost)]] = Map.empty
   private[model] var specializationBoostFactors : Map[AirportBoostType.Value, List[(String, Double)]] = Map.empty
 
   @deprecated lazy val baseIncomeLevel = baseIncome
@@ -261,69 +255,6 @@ case class Airport(iata: String, icao: String, name: String, latitude: Double, l
     featuresLoaded = true
   }
 
-  def initAssets(assets : List[AirportAsset]) = {
-    this.assets = assets
-    assetsLoaded = true
-    val result = mutable.HashMap[AirportBoostType.Value, ListBuffer[(AirportAsset, AirportBoost)]]()
-    assets.foreach { asset =>
-      asset.boosts.foreach { boost =>
-        val list = result.getOrElseUpdate(boost.boostType, ListBuffer[(AirportAsset, AirportBoost)]())
-        list.append((asset, boost))
-      }
-    }
-    assetBoostFactors = result.view.mapValues(_.toList).toMap
-  }
-
-  private[this] def getTransitModifiers() : List[TransitModifier] = {
-    if (!assetsLoaded) {
-      println("Cannot get airline transit modifiers w/o assets loaded")
-      List.empty
-    } else {
-      assets.filter(asset => asset.isInstanceOf[TransitModifier] && asset.level > 0).groupBy(_.assetType).map {
-        case (_, assetsByType) => assetsByType.maxBy(_.level).asInstanceOf[TransitModifier] //only count the top one for now...
-      }.toList
-    }
-  }
-
-  private[this] def getPassengerCostModifiers() : List[PassengerCostModifier] = {
-    if (!assetsLoaded) {
-      println("Cannot get airline pax cost modifiers w/o assets loaded")
-      List.empty
-    } else {
-      assets.filter(asset => asset.isInstanceOf[PassengerCostModifier] && asset.level > 0).map(_.asInstanceOf[PassengerCostModifier])
-    }
-  }
-
-  def computePassengerCostAssetDiscount(linkConsideration : LinkConsideration, paxGroup : PassengerGroup) : Option[(Double, List[AirportAsset])] = {
-    if (assetPassengerCostModifiers.isEmpty) {
-      None
-    } else {
-      val visitedAssets = ListBuffer[AirportAsset]()
-      var totalDiscount = 0.0
-      assetPassengerCostModifiers.foreach { costModifier =>
-        costModifier.computeDiscount(linkConsideration, paxGroup).foreach { discount =>
-          totalDiscount += discount
-          visitedAssets.append(costModifier.asInstanceOf[AirportAsset])
-        }
-      }
-      if (visitedAssets.isEmpty) {
-        None
-      } else {
-        Some(totalDiscount, visitedAssets.toList)
-      }
-    }
-  }
-
-  def computeTransitDiscount(fromLinkConsideration : LinkConsideration, toLinkConsideration : LinkConsideration, paxGroup : PassengerGroup): Double = {
-    if (transitModifiers.isEmpty) {
-      0
-    } else {
-      transitModifiers.map { transitModifier =>
-        transitModifier.computeTransitDiscount(fromLinkConsideration, toLinkConsideration, paxGroup)
-      }.sum
-    }
-  }
-
   def initLounges(lounges : List[Lounge]) = {
     this.loungesByAirline.clear()
     lounges.foreach { lounge =>
@@ -408,19 +339,18 @@ case class Airport(iata: String, icao: String, name: String, latitude: Double, l
       com.patson.model.AirportBoostType.FINANCIAL_HUB,
       com.patson.model.AirportBoostType.ELITE_CHARM
     )
-    val allBoostedHubTypes = (assetBoostFactors.keySet ++ specializationBoostFactors.keySet).filter(hubBoostTypes)
+    val allBoostedHubTypes = (boostFactors.keySet ++ specializationBoostFactors.keySet).filter(hubBoostTypes)
 
     allBoostedHubTypes.foreach { boostType =>
-      val assetBoosts = assetBoostFactors.getOrElse(boostType, List.empty).map(_._2)
       val specBoosts = specializationBoostFactors.getOrElse(boostType, List.empty).map {
         case (_, value) => AirportBoost(boostType, value)
       }
-      val allBoosts = assetBoosts ++ specBoosts
+      val allBoosts = specBoosts
       boostType match {
-        case com.patson.model.AirportBoostType.INTERNATIONAL_HUB => newFeatures.append(InternationalHubFeature(0, allBoosts))
-        case com.patson.model.AirportBoostType.VACATION_HUB      => newFeatures.append(VacationHubFeature(0, allBoosts))
-        case com.patson.model.AirportBoostType.FINANCIAL_HUB     => newFeatures.append(FinancialHubFeature(0, allBoosts))
-        case com.patson.model.AirportBoostType.ELITE_CHARM        => newFeatures.append(EliteFeature(0, allBoosts))
+        case com.patson.model.AirportBoostType.INTERNATIONAL_HUB => newFeatures.append(InternationalHubFeature(0, allBoosts, isDynamic = true))
+        case com.patson.model.AirportBoostType.VACATION_HUB      => newFeatures.append(VacationHubFeature(0, allBoosts, isDynamic = true))
+        case com.patson.model.AirportBoostType.FINANCIAL_HUB     => newFeatures.append(FinancialHubFeature(0, allBoosts, isDynamic = true))
+        case com.patson.model.AirportBoostType.ELITE_CHARM        => newFeatures.append(EliteFeature(0, allBoosts, isDynamic = true))
         case _ =>
       }
     }
@@ -428,12 +358,12 @@ case class Airport(iata: String, icao: String, name: String, latitude: Double, l
       case(_, features) =>
         if (features.size <= 1) {
           features(0)
-        } else { //should be 2
+        } else { //should be 2 — static base merged with dynamic boost; result is dynamic
           features(0) match {
-            case b : InternationalHubFeature => InternationalHubFeature(b.baseStrength, features(1).asInstanceOf[InternationalHubFeature].boosts)
-            case b : FinancialHubFeature     => FinancialHubFeature(b.baseStrength, features(1).asInstanceOf[FinancialHubFeature].boosts)
-            case b : VacationHubFeature      => VacationHubFeature(b.baseStrength, features(1).asInstanceOf[VacationHubFeature].boosts)
-            case b : EliteFeature            => EliteFeature(b.baseStrength, features(1).asInstanceOf[EliteFeature].boosts)
+            case b : InternationalHubFeature => InternationalHubFeature(b.baseStrength, features(1).asInstanceOf[InternationalHubFeature].boosts, isDynamic = true)
+            case b : FinancialHubFeature     => FinancialHubFeature(b.baseStrength, features(1).asInstanceOf[FinancialHubFeature].boosts, isDynamic = true)
+            case b : VacationHubFeature      => VacationHubFeature(b.baseStrength, features(1).asInstanceOf[VacationHubFeature].boosts, isDynamic = true)
+            case b : EliteFeature            => EliteFeature(b.baseStrength, features(1).asInstanceOf[EliteFeature].boosts, isDynamic = true)
             case _ => features(0) //don't know how to merge
           }
         }
@@ -542,13 +472,9 @@ object Airport {
   def createBoostFactorsLoader(airport: Airport): CacheLoader[AirportBoostType.Value, List[(String, Double)]] = {
     new CacheLoader[AirportBoostType.Value, List[(String, Double)]] {
       override def load(boostType: AirportBoostType.Value): List[(String, Double)] = {
-        val assetFactors = airport.assetBoostFactors.getOrElse(boostType, List.empty).map {
-          case (asset, boost) => (asset.name, boost.value)
-        }
-
         val specializationFactors = airport.specializationBoostFactors.getOrElse(boostType, List.empty)
 
-        assetFactors ++ specializationFactors
+        specializationFactors
       }
     }
   }

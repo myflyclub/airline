@@ -51,7 +51,7 @@ object AirlineSimulation {
     }
 
     var startTime = System.currentTimeMillis()
-    val leaderboardsByAirlineId = RankingSimulation.process(cycle, allAirlines, flightLinkResult, loungeResult, paxStats)
+    val leaderboardsByAirlineId = RankingSimulation.process(cycle, allAirlines.filter(_.getReputation() > 60), flightLinkResult, loungeResult, paxStats)
     Util.outputTimeDiff(startTime, "Generating rankings took")
 
     val fuelContractsByAirlineId = OilSource.loadAllOilContracts().groupBy(contract => contract.airline.id)

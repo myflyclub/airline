@@ -1341,8 +1341,8 @@
 				</div>
 				<div class="homeView flex-row">
 					<p class="home m-0"></p>
-					<div data-tooltip-text="Change home airport"><img class="img-button svg hover-rotate edit" src='@routes.Assets.versioned("images/icons/gear.svg")'' style="vertical-align: middle;" onclick="toggleAirplaneHome()"/></div>
-					<div data-tooltip-text="Cannot change home airport with active route(s)"><img class="info svg" src='@routes.Assets.versioned("/images/icons/information.svg")' class='button editDisabled' style="vertical-align: middle; display: none;"/></div>
+					<div data-tooltip-text="Change home airport"><img class="img-button svg hover-rotate edit" src='@routes.Assets.versioned("images/icons/gear.svg")' style="vertical-align: middle;" onclick="toggleAirplaneHome()"/></div>
+					<div data-tooltip-text="Cannot change home airport with active route(s)"><img class="info svg editDisabled" src='@routes.Assets.versioned("/images/icons/information.svg")' style="vertical-align: middle; display: none;"/></div>
 				</div>
 				<div class="homeEdit" style="display:none">
 					<select class="homeOptions select-css"></select>
@@ -1760,130 +1760,6 @@
 	  </div>
   </div>
 
-  <div id="airportAssetDetailsModal" class="modal">
-	  <div class="modal-content" style="width : 600px; max-width: 100%">
-		  <span class="close" onclick="closeModal($(this).closest('.modal'))">&times;</span>
-		  <h4><span class="name"></span></h4>
-<!--		  <div class="descriptions"></div>-->
-		  <div style="margin-bottom : 5px;">
-			  <img class="assetImage" src="" style="width: 200px; display: block; margin: auto;" >
-		  </div>
-		  <div class="table" style="width: 100%">
-			  <div class="table-row">
-				  <div class="label" style="width: 50%"><h5>Name:</h5></div>
-				  <div class="value" style="width: 50%">
-					  <div class="assetName"></div>
-					  <div class="assetNameInputDiv"><input type="text" class="assetNameInput"></div>
-				  </div>
-			  </div>
-			  <div class="table-row assetNameWarningDiv" style="display: none;">
-				  <div class="warning"></div>
-			  </div>
-			  <div class="table-row">
-				  <div class="label" style="width: 50%"><h5>Airport:</h5></div>
-				  <div class="value assetAirport" style="width: 50%"></div>
-			  </div>
-			  <div class="table-row">
-				  <div class="label" style="width: 50%"><h5>Asset Type:</h5></div>
-				  <div class="value assetType" style="width: 50%"></div>
-			  </div>
-			  <div class="table-row">
-				  <div class="label" style="width: 50%"><h5>Status:</h5></div>
-				  <div class="value assetStatus" style="width: 50%"></div>
-			  </div>
-			  <div class="table-row">
-				  <div class="label" style="width: 50%"><h5>Owner:</h5></div>
-				  <div class="value assetOwner" style="width: 50%"></div>
-			  </div>
-			  <div class="table-row">
-				  <div class="label" style="width: 50%"><h5>Level:</h5></div>
-				  <div class="value assetLevel" style="width: 50%"></div>
-			  </div>
-			  <div class="table-row activeBoostsRow">
-				  <div class="label" style="width: 50%"><h5>Active Boosts:</h5></div>
-				  <div class="value" style="width: 50%">
-					  <span class="assetBoosts"></span>
-<!--					  <span class="assetBoostHistoryIcon clickable" onmousedown="showAssetBoostHistory($('#airportAssetDetailsModal').data('boostHistory'))" onmouseout="hideAssetBoostHistory()"><img src='@routes.Assets.versioned("/images/icons/information.png")'></span>-->
-				  </div>
-			  </div>
-			  <div class="table-row assetOwnerRow">
-				  <div class="label">Expense:</div>
-				  <div class="value assetExpense"></div>
-			  </div>
-			  <div class="table-row assetOwnerRow">
-				  <div class="label">Revenue:</div>
-				  <div class="value assetRevenue"></div>
-			  </div>
-			  <div class="table-row assetOwnerRow">
-				  <div class="label">Profit:</div>
-				  <div class="value assetProfit"></div>
-			  </div>
-			  <div class="table-row assetOwnerRow">
-				  <div class="label">Performance Grade:</div>
-				  <div class="value assetPerformance"></div>
-			  </div>
-			  <div class="table-row">
-				  <div class="label">Build/Upgrade Cost:</div>
-				  <div class="value cost"></div>
-			  </div>
-			  <div class="table-row">
-				  <div class="label">Build/Upgrade Duration:</div>
-				  <div class="value constructionDuration"></div>
-			  </div>
-			  <div class="table-row">
-				  <div class="label">Sell Value:</div>
-				  <div class="value sellValue"></div>
-			  </div>
-		  </div>
-
-		  <div class="visitorByAir">
-			  <h5 style="margin-top: 8px; margin-bottom: 10px;">Visitors by Air</h5>
-			  <div style="width: 100%; display: flex; flex-wrap: wrap">
-				  <div style="flex-grow: 1; display:flex; flex-direction: column; align-items: center;">
-					  <h5>Country</h5>
-					  <div class="visitorCompositionByCountryPie" style="height: 160px; width: 250px"></div>
-					  <div class="table data topCountryTable" style="width: 250px;">
-					  </div>
-				  </div>
-				  <div style="flex-grow: 1; display:flex; flex-direction: column; align-items: center;">
-					  <h5>Passenger Type</h5>
-					  <div class="visitorCompositionByPassengerTypePie" style="height: 160px; width: 250px"></div>
-					  <div class="table data passengerTypeTable" style="width: 250px;">
-					  </div>
-				  </div>
-			  </div>
-		  </div>
-
-		  <h5>Level History</h5>
-		  <div class="table data" style="width: 100%;">
-			  <div class="table-header">
-				  <div class="cell" style="width: 10%">Lv</div>
-				  <div class="cell" style="width: 40%">Boost</div>
-				  <div class="cell" style="width: 20%; text-align: right;">Growth</div>
-				  <div class="cell" style="width: 20%; text-align: right;">Value</div>
-				  <div class="cell" style="width: 10%">&nbsp;</div>
-			  </div>
-		  </div>
-		  <div style="max-height: 150px; width: 100%; overflow-y:auto;">
-			  <div class="table data airportBoostHistoryTable" style="max-height: 100%; width: 100%">
-				  <div class="table-header">
-					  <div class="cell" style="width: 10%; border-bottom: none;"></div>
-					  <div class="cell" style="width: 40%; border-bottom: none;"></div>
-					  <div class="cell" style="width: 20%; border-bottom: none;"></div>
-					  <div class="cell" style="width: 20%; border-bottom: none;"></div>
-					  <div class="cell" style="width: 10%; border-bottom: none;"></div>
-				  </div>
-			  </div>
-		  </div>
-
-		  <button type="button" class="button buildButton" onclick="promptConfirm('Build this Asset?', buildOrModifyAsset, $('#airportAssetDetailsModal').data('asset'))">Build</button>
-		  <button type="button" class="button upgradeButton" onclick="promptConfirm('Upgrade this Asset?', buildOrModifyAsset, $('#airportAssetDetailsModal').data('asset'))">Upgrade</button>
-		  <button type="button" class="button downgradeButton" onclick="promptConfirm('Downgrade this Asset?', downgradeAsset, $('#airportAssetDetailsModal').data('asset'))">Downgrade</button>
-		  <button type="button" class="button sellButton" onclick="promptConfirm('Sell this Asset?', sellAsset, $('#airportAssetDetailsModal').data('asset'))">Sell</button>
-	  </div>
-  </div>
-
-
   <div id="loyalistHistoryModal" class="modal">
 	  <div class="modal-content"  style="width : 700px;">
 		  <span class="close" onclick="closeModal($('#loyalistHistoryModal'))">&times;</span>
@@ -2020,7 +1896,7 @@
         <div class="cell" style="width: 5%"></div>
       </div>
     </div>
-    <div id="managerModalEmpty" class="notice" style="display:none">No managers currently assigned to tasks.</div>
+    <div id="managerModalEmpty" class="notice py-4" style="display:none">No managers currently assigned to tasks.</div>
   </div>
 </div>
 

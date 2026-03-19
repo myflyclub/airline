@@ -734,7 +734,7 @@ object LinkSimulation {
     val scoresByAirline = mutable.HashMap[Airline, BigDecimal]()
 
     olympicsConsumptions.foreach {
-      case ((_, _, Route(links, _, _, _)), passengerCount) =>
+      case ((_, _, Route(links, _, _)), passengerCount) =>
         links.foreach { link =>
           if (link.link.transportType == TransportType.FLIGHT) {
             val existingScore : BigDecimal = scoresByAirline.getOrElse(link.link.airline, 0)

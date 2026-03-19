@@ -8,9 +8,9 @@ var airportBaseScale
 var _toggleState_AllianceBaseMapView = false
 const _etagStore = {}
 const DYNAMIC_FEATURE_TYPES = new Set([
-    'INTERNATIONAL_HUB', 'VACATION_HUB', 'FINANCIAL_HUB', 'ELITE_CHARM',
-    'OLYMPICS_PREPARATIONS', 'OLYMPICS_IN_PROGRESS'
+    'INTERNATIONAL_HUB', 'VACATION_HUB', 'FINANCIAL_HUB', 'ELITE_CHARM','OLYMPICS_PREPARATIONS', 'OLYMPICS_IN_PROGRESS','PRESTIGE_CHARM'
 ])
+const EXCLUSIVELY_DYNAMIC_TYPES = new Set(['OLYMPICS_PREPARATIONS', 'OLYMPICS_IN_PROGRESS', 'PRESTIGE_CHARM'])
 /**
  * Find an airport by id (O(1) lookup)
  */
@@ -55,8 +55,12 @@ async function loadAirportsDynamic() {
         for (const [airportId, features] of Object.entries(dynamicFeatures)) {
             const airport = window.airportsById?.[airportId];
             if (!airport) continue;
-            // Remove stale dynamic features, keep static ones
-            const staticFeatures = (airport.features || []).filter(f => !DYNAMIC_FEATURE_TYPES.has(f.type));
+            // Remove: (1) exclusively-dynamic types (Olympics — never in static data) and
+            //         (2) any type the backend is actively sending an update for (avoid duplicates)
+            const incomingTypes = new Set(features.map(f => f.type));
+            const staticFeatures = (airport.features || []).filter(f =>
+                !EXCLUSIVELY_DYNAMIC_TYPES.has(f.type) && !incomingTypes.has(f.type)
+            );
             airport.features = [...staticFeatures, ...features];
         }
     } catch (error) {
@@ -861,7 +865,7 @@ function updateFacilityList(statistics) {
  * Helper function for features, map & airport views
  */
 function updateFeatures(feature) {
-    const image = `<img width='16' height='16' src='/assets/images/icons/airport-features/${feature.type}.png' title='${feature.title}'>`;
+    const image = `<img width='16' height='16' src='/assets/images/icons/airport-features/${feature.type}.png' data-tooltip='${feature.title}'>`;
     const strength = feature.strength > 0 ? `<p>${feature.strength}</p>` : "";
     return `<div class='feature'>${image}${strength}</div>`;
 }
@@ -1100,9 +1104,14 @@ function confirmSpecializations() {
             success: function (response) {
                 if (response.features && window.airportsById?.[activeAirportId]) {
                     const airport = window.airportsById[activeAirportId];
-                    const staticFeatures = (airport.features || []).filter(f => !DYNAMIC_FEATURE_TYPES.has(f.type));
                     const newDynamic = response.features.filter(f => DYNAMIC_FEATURE_TYPES.has(f.type));
-                    airport.features = [...staticFeatures, ...newDynamic];
+                    const newDynamicTypes = new Set(newDynamic.map(f => f.type))
+                    const retained = (airport.features || []).filter(f => {
+                        if (!DYNAMIC_FEATURE_TYPES.has(f.type)) return true
+                        if (EXCLUSIVELY_DYNAMIC_TYPES.has(f.type)) return newDynamicTypes.has(f.type)
+                        return !newDynamicTypes.has(f.type)
+                    })
+                    airport.features = [...retained, ...newDynamic];
                 }
                 closeModal($('#baseSpecializationModal'))
                 showAirportDetails(activeAirportId)

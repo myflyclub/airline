@@ -237,7 +237,7 @@ object ConsumptionHistorySource {
         val result: Map[Route, (PassengerType.Value, Int)] = linkConsiderationsByRouteId.view.map {
           case (routeId: Int, considerations: ListBuffer[LinkConsideration]) =>
             val sortedConsiderations = sortLinks(considerations.toList, fromAirportId)
-            (Route(sortedConsiderations, routeIdsCostsMap(routeId), List.empty, routeId), routeConsumptions(routeId))
+            (Route(sortedConsiderations, routeIdsCostsMap(routeId), routeId), routeConsumptions(routeId))
         }.toMap
 
         println(s"Loaded ${result.size} routes for airport pair ${fromAirportId} and ${toAirportId})")
@@ -367,7 +367,7 @@ object ConsumptionHistorySource {
               }
 
               val result = linkConsiderationsByRouteId.map {
-                case (routeId, considerations) => (Route(considerations.toList, routeCosts(routeId), List.empty, routeId), routeConsumptions(routeId))
+                case (routeId, considerations) => (Route(considerations.toList, routeCosts(routeId), routeId), routeConsumptions(routeId))
               }.toMap
 
               println("Loaded " + result.size + " routes related to link " + link)

@@ -27,10 +27,10 @@ abstract class AirportFeature {
       case DOMESTIC_AIRPORT => s"Domestic Airport – Supports higher frequencies with lower base upkeep. If flight is international, only accepts aircraft smaller than ${DomesticAirportFeature.internationalMaxCapacity} capacity"
       case ISOLATED_TOWN => s"Isolated - Increased demand within ${this.asInstanceOf[IsolatedTownFeature].boostRange}km."
       case BUSH_HUB => s"Bush hub - Higher demand to nearby isolated airports."
-      case GATEWAY_AIRPORT => "Gateway - Has increased demand with other gateway airports."
+      case GATEWAY_AIRPORT => "Gateway - Allows foreign airlines to build bases more easily."
       case OLYMPICS_PREPARATIONS => "Preparing the Olympic Games."
       case OLYMPICS_IN_PROGRESS => "Year of the Olympic Games."
-      case PRESTIGE_CHARM => "Prestige Charm - Prestigious airport."
+      case PRESTIGE_CHARM => "Prestige Charm - has increased demand to other prestigious airports."
       case UNKNOWN => "Unknown"
     }
   }
@@ -55,9 +55,8 @@ object AirportFeature {
   }
 }
 
-sealed case class InternationalHubFeature(baseStrength : Int, boosts : List[AirportBoost] = List.empty) extends AirportFeature {
+sealed case class InternationalHubFeature(baseStrength : Int, boosts : List[AirportBoost] = List.empty, override val isDynamic: Boolean = false) extends AirportFeature {
   val featureType = AirportFeatureType.INTERNATIONAL_HUB
-  override val isDynamic = true
   override def demandAdjustment(rawDemand: Double, passengerType: PassengerType.Value, airportId: Int, fromAirport: Airport, toAirport: Airport, affinity: Int, distance: Int) : Int = {
     if (airportId == toAirport.id  && passengerType == PassengerType.TOURIST) { //only affect if as a destination
       val charmStrength = 0.0004 * strengthFactor
@@ -97,9 +96,8 @@ sealed case class InternationalHubFeature(baseStrength : Int, boosts : List[Airp
   override lazy val strength = baseStrength + boosts.filter(_.boostType == AirportBoostType.INTERNATIONAL_HUB).map(_.value).sum.toInt
 }
 
-sealed case class EliteFeature(baseStrength : Int, boosts : List[AirportBoost] = List.empty) extends AirportFeature {
+sealed case class EliteFeature(baseStrength : Int, boosts : List[AirportBoost] = List.empty, override val isDynamic: Boolean = false) extends AirportFeature {
   val featureType = AirportFeatureType.ELITE_CHARM
-  override val isDynamic = true
 
   override def demandAdjustment(rawDemand: Double, passengerType: PassengerType.Value, airportId: Int, fromAirport: Airport, toAirport: Airport, affinity: Int, distance: Int) : Int = {
     0
@@ -111,9 +109,8 @@ sealed case class EliteFeature(baseStrength : Int, boosts : List[AirportBoost] =
 /**
  * applies strongly to domestic / high affinity matches
  */
-sealed case class VacationHubFeature(baseStrength : Int, boosts : List[AirportBoost] = List.empty) extends AirportFeature {
+sealed case class VacationHubFeature(baseStrength : Int, boosts : List[AirportBoost] = List.empty, override val isDynamic: Boolean = false) extends AirportFeature {
   val featureType = AirportFeatureType.VACATION_HUB
-  override val isDynamic = true
 
   override def demandAdjustment(rawDemand: Double, passengerType: PassengerType.Value, airportId: Int, fromAirport: Airport, toAirport: Airport, affinity: Int, distance: Int) : Int = {
     if (toAirport.id == airportId && passengerType == PassengerType.TOURIST) { //only affect if as a destination and tourists
@@ -150,9 +147,8 @@ sealed case class VacationHubFeature(baseStrength : Int, boosts : List[AirportBo
   override lazy val strength = baseStrength + boosts.filter(_.boostType == AirportBoostType.VACATION_HUB).map(_.value).sum.toInt
 }
 
-sealed case class FinancialHubFeature(baseStrength : Int, boosts : List[AirportBoost] = List.empty) extends AirportFeature {
+sealed case class FinancialHubFeature(baseStrength : Int, boosts : List[AirportBoost] = List.empty, override val isDynamic: Boolean = false) extends AirportFeature {
   val featureType = AirportFeatureType.FINANCIAL_HUB
-  override val isDynamic = true
   override def demandAdjustment(rawDemand: Double, passengerType: PassengerType.Value, airportId: Int, fromAirport: Airport, toAirport: Airport, affinity: Int, distance: Int) : Int = {
     if (passengerType == PassengerType.BUSINESS) {
       val hasFeatureInBothAirports = fromAirport.hasFeature(AirportFeatureType.FINANCIAL_HUB) && toAirport.hasFeature(AirportFeatureType.FINANCIAL_HUB)
@@ -282,7 +278,7 @@ sealed case class IsolatedTownFeature(strength : Int) extends AirportFeature {
       // Most isolated demand is created in the base getHubAirports() function
       if (toAirport.isGateway() && fromAirport.zone.contains("CC") && distance <= boostRange) {
         (rawDemand * affinityMod * distanceMod).toInt //Increase Caribbean demand
-      } else if (toAirport.isGateway() && fromAirport.countryCode == toAirport.countryCode && List("GB", "NL", "FR", "DK", "GR", "JP", "ID", "PH", "MH", "PG", "RU").contains(fromAirport.countryCode)) {
+      } else if (toAirport.isGateway() && fromAirport.countryCode == toAirport.countryCode && List("GB", "ES", "NL", "FR", "DK", "GR", "JP", "ID", "PH", "MH", "PG", "RU").contains(fromAirport.countryCode)) {
         rng //add demand from territories or islands back to Metropol
       } else if ((toAirport.hasFeature(AirportFeatureType.BUSH_HUB) || fromAirport.hasFeature(AirportFeatureType.BUSH_HUB)) && distance <= boostRange * 2 && affinity >= 4) {
         (rawDemand * distanceMod * affinityMod * 1.5).toInt //Create bush hub demand
@@ -315,8 +311,6 @@ sealed case class PrestigeFeature(baseStrength : Int, boosts : List[AirportBoost
       }
       val affinityMultiplier = (affinity.toDouble + 1.0) / 4.0 + 0.5
       (Math.log(strength) * distanceMultiplier * affinityMultiplier).toInt
-    } else if (toAirport.id == airportId && fromAirport.countryCode == toAirport.countryCode && fromAirport.baseIncome >= 40000 && toAirport.hasFeature(AirportFeatureType.PRESTIGE_CHARM)) {
-      Math.min(Math.min(100, strength * 10), 3 + (rawDemand * 0.2).toInt) //add domestic demand to prestige charms, but only for rich airports
     } else {
       0
     }

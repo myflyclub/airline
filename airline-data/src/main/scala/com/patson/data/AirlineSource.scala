@@ -415,6 +415,33 @@ object AirlineSource {
     }
   }
 
+  /**
+   * Sum prestige_points from airline_info joined with airline_base (headquarter=true),
+   * grouped by airport. Returns Map[airportId, total prestige points from airlines].
+   */
+  def sumPrestigePointsByHeadquarterAirportAll(): Map[Int, Int] = {
+    val connection = Meta.getConnection()
+    try {
+      val statement = connection.prepareStatement(
+        "SELECT ab.airport, SUM(ai.prestige_points) AS total FROM " + AIRLINE_BASE_TABLE + " ab " +
+        "JOIN " + AIRLINE_INFO_TABLE + " ai ON ab.airline = ai.airline " +
+        "WHERE ab.headquarter = 1 GROUP BY ab.airport"
+      )
+      val resultSet = statement.executeQuery()
+      val result = scala.collection.mutable.HashMap[Int, Int]()
+      while (resultSet.next()) {
+        val airportId = resultSet.getInt("airport")
+        val total = resultSet.getInt("total")
+        result.put(airportId, total)
+      }
+      resultSet.close()
+      statement.close()
+      result
+    } finally {
+      connection.close()
+    }
+  }
+
   def loadAirlineBaseByAirlineAndAirport(airlineId : Int, airportId : Int) : Option[AirlineBase] = {
     val result = loadAirlineBasesByCriteria(List(("airline", airlineId), ("airport", airportId)))
     if (result.isEmpty) {

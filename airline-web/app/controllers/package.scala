@@ -20,7 +20,7 @@ package object controllers {
   implicit val ec: ExecutionContext = ExecutionContext.global
   implicit val actorSystem: ActorSystem = ActorSystem("patson-web-app-system")
   implicit val order: Double.IeeeOrdering.type = Ordering.Double.IeeeOrdering
-  val currentApiVersion = "v5.0.3" // Update this when schema changes
+  val currentApiVersion = "v5.0.4" // Update this when schema changes
   @volatile var cachedCurrentCycle: Int = CycleSource.loadCycle()
   def currentCycle: Int = cachedCurrentCycle
 
@@ -539,7 +539,7 @@ package object controllers {
     }
   }
 
-  implicit object AirportAssetBoostWrites extends Writes[AirportBoost] {
+  implicit object AirportBoostWrites extends Writes[AirportBoost] {
     def writes(entry: AirportBoost): JsValue = {
       Json.obj(
         "boostType" -> entry.boostType.toString,
@@ -602,15 +602,7 @@ package object controllers {
       if (airport.getFeatures().nonEmpty) {
         airportObject = airportObject + (
           "features" -> JsArray(airport.getFeatures().sortBy(_.featureType.id).map { airportFeature =>
-            var featureJson = Json.obj("type" -> airportFeature.featureType.toString(), "strength" -> airportFeature.strength)
-            airportFeature match {
-              case f: InternationalHubFeature => featureJson = featureJson
-              case f: FinancialHubFeature => featureJson = featureJson
-              case f: VacationHubFeature => featureJson = featureJson
-              case f: PrestigeFeature => featureJson = featureJson
-              case _ =>
-            }
-            featureJson
+            Json.obj("type" -> airportFeature.featureType.toString(), "strength" -> airportFeature.strength, "title" -> airportFeature.getDescription)
           })
           )
       }
@@ -648,7 +640,7 @@ package object controllers {
         if (airport.getFeatures().nonEmpty) {
           properties = properties + (
             "features" -> JsArray(airport.getFeatures().sortBy(_.featureType.id).map { airportFeature =>
-              Json.obj("type" -> airportFeature.featureType.toString(), "strength" -> airportFeature.strength)
+              Json.obj("type" -> airportFeature.featureType.toString(), "strength" -> airportFeature.strength, "title" -> airportFeature.getDescription)
             })
           )
         }
@@ -775,7 +767,7 @@ package object controllers {
           }
         }
         airportObject = airportObject + ("features" -> JsArray(airport.getFeatures().sortBy(_.featureType.id).map { airportFeature =>
-          var featureJson = Json.obj("type" -> airportFeature.featureType.toString(), "strength" -> airportFeature.strength)
+          var featureJson = Json.obj("type" -> airportFeature.featureType.toString(), "strength" -> airportFeature.strength, "title" -> airportFeature.getDescription)
           airportFeature match {
             case f: InternationalHubFeature => featureJson = featureJson + ("boosts" -> Json.toJson(airport.boostFactorsByType.get(AirportBoostType.INTERNATIONAL_HUB)))
             case f: FinancialHubFeature => featureJson = featureJson + ("boosts" -> Json.toJson(airport.boostFactorsByType.get(AirportBoostType.FINANCIAL_HUB)))

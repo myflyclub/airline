@@ -150,7 +150,6 @@ function showOfficeCanvas() {
 	writeMilestones(activeAirline.reputationBreakdowns.breakdowns)
 	loadSheets();
 	updateResetAirlineInfo()
-	updateAirlineAssets()
 	updateChampionedCountriesDetails()
 	updateChampionedAirportsDetails()
 	updateServiceFundingDetails()
@@ -163,52 +162,6 @@ function showOfficeCanvas() {
 	updateManagerStatus()
 	loadSlogan(function(slogan) { $('#officeCanvas .slogan').val(slogan)})
 }
-
-function updateAirlineAssets() {
-    $.ajax({
-        type: 'GET',
-        url: "/airlines/" + activeAirline.id + "/airport-assets",
-        contentType: 'application/json; charset=utf-8',
-        dataType: 'json',
-        success: function(result) {
-            var $assetList = $("#officeCanvas .assetList")
-            $assetList.children("div.table-row").remove()
-
-            $.each(result, function(index, asset) {
-                var profit = asset.revenue - asset.expense
-                var margin
-                if (asset.expense == 0) {
-                    margin = "-"
-                } else {
-                    margin = (profit * 100.0 / asset.revenue).toFixed(2)
-                }
-                var $row = $("<div class='table-row clickable'></div>")
-                $row.append("<div class='cell'>" + getCountryFlagImg(asset.airport.countryCode) + asset.airport.iata + "</div>")
-                $row.append("<div class='cell'>" + asset.name + "</div>")
-                $row.append("<div class='cell' style='text-align: right;'>" + asset.level + "</div>")
-                $row.append("<div class='cell' style='text-align: right;'>$" + commaSeparateNumber(profit) + "</div>")
-                $row.append("<div class='cell' style='text-align: right;'>" + margin  + "%</div>")
-
-                $row.click(function() {
-                    showAssetModal(asset)
-                    $("#airportAssetDetailsModal").data('postUpdateFunc', function() {
-                        updateAirlineAssets()
-                    })
-                })
-                $assetList.append($row)
-            });
-            if (result.length == 0) {
-                $assetList.append("<div class='table-row'><div class='cell'>-</div><div class='cell'>-</div><div class='cell'>-</div><div class='cell'>-</div><div class='cell'>-</div></div>")
-            }
-        },
-        error: function(jqXHR, textStatus, errorThrown) {
-	            console.log(JSON.stringify(jqXHR));
-	            console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
-	    }
-    });
-}
-
-
 
 function updateAirlineBases() {
         $('#officeCanvas .bases').children('.table-row').remove()
