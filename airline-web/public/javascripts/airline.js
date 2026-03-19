@@ -1673,19 +1673,15 @@ function showLinksCanvas(selectedLink = null, isReload = true) {
 
 function computeLinkDerivedProperties(links) {
     $.each(links, function(key, link) {
+        if (link.currentStaffRequired == null) link.currentStaffRequired = 0
         link.profitMargin = link.revenue > 0 ? link.profit / link.revenue : 0
-        link.profitPerStaff = Math.round( link.profit / link.currentStaffRequired )
-        link.totalCapacity = link.capacity.economy + link.capacity.business + link.capacity.first
-        link.totalCapacityHistory = link.capacityHistory.economy + link.capacityHistory.business + link.capacityHistory.first
-        link.totalPassengers = link.passengers.economy + link.passengers.business + link.passengers.first
-        link.totalLoadFactor = link.totalCapacityHistory > 0 ? Math.round(link.totalPassengers / (link.totalCapacityHistory - link.cancelledSeats.total)* 100) : 0
-        var assignedModel
-        if (link.assignedAirplanes && link.assignedAirplanes.length > 0) {
-            assignedModel = link.assignedAirplanes[0].airplane.name
-        } else {
-            assignedModel = "-"
-        }
-        link.model = assignedModel //so this can be sorted
+        link.profitPerStaff = link.currentStaffRequired > 0 ? Math.round(link.profit / link.currentStaffRequired) : 0
+        link.totalCapacity = link.capacity ? link.capacity.economy + link.capacity.business + link.capacity.first : 0
+        link.totalCapacityHistory = link.capacityHistory ? link.capacityHistory.economy + link.capacityHistory.business + link.capacityHistory.first : 0
+        link.totalPassengers = link.passengers ? link.passengers.economy + link.passengers.business + link.passengers.first : 0
+        const cancelledTotal = link.cancelledSeats ? link.cancelledSeats.total : 0
+        link.totalLoadFactor = link.totalCapacityHistory > 0 ? Math.round(link.totalPassengers / (link.totalCapacityHistory - cancelledTotal) * 100) : 0
+        link.model = (link.assignedAirplanes && link.assignedAirplanes.length > 0) ? link.assignedAirplanes[0].airplane.name : "-"
     })
 }
 
@@ -2903,20 +2899,40 @@ function refreshAssignedAirplanesBar(container, assignedAirplanes) {
 }
 
 function refreshSavedLink(savedLink) {
-	if (!flightPaths[savedLink.id]) { //new link
-		//remove temp path
-		removeTempPath()
-		//draw flight path
-		var newPath = AirlineMap.drawFlightPath(savedLink)
-		selectLinkFromMap(savedLink.id, false)
-	}
-	setActiveDiv($('#linkDetails'))
-    hideActiveDiv($('#extendedPanel #airplaneModelDetails'))
-	refreshPanels(activeAirline.id) //refresh panels would update link details
+    removeTempPath()
 
-	if ($('#linksCanvas').is(':visible')) { //reload the links table then
-		loadLinksTable(null, true)
-	}
+    // Store update first so refreshFlightPath gets correct profit/revenue for coloring
+    if (loadedLinksById[savedLink.id]) {
+        Object.assign(loadedLinksById[savedLink.id], savedLink)
+        refreshFlightPath(loadedLinksById[savedLink.id], true)
+    } else {
+        computeLinkDerivedProperties([savedLink])
+        loadedLinks.push(savedLink)
+        loadedLinksById[savedLink.id] = savedLink
+        AirlineMap.drawFlightPath(savedLink)
+    }
+    selectLinkFromMap(savedLink.id, false)
+
+    setActiveDiv($('#linkDetails'))
+    hideActiveDiv($('#extendedPanel #airplaneModelDetails'))
+
+    // Fetch fresh balance/AP for toolbar
+    $.ajax({
+        type: 'GET',
+        url: "/airlines/" + activeAirline.id,
+        dataType: 'json',
+        success: function(airline) {
+            Object.keys(airline).forEach(function(key) { activeAirline[key] = airline[key] })
+            refreshTopBar(activeAirline)
+        }
+    })
+
+    if ($("#linkDetails").is(":visible")) {
+        refreshLinkDetails(savedLink.id)
+    }
+    if ($('#linksCanvas').is(':visible')) {
+        loadLinksTable(null, true)
+    }
 }
 
 
