@@ -63,7 +63,9 @@ class OlympicsApplication @Inject()(cc: ControllerComponents) extends AbstractCo
       var candidatesJson = Json.arr()
 
       EventSource.loadOlympicsAffectedAirports(eventId).foreach {
-        case(principalAirport, affectedAirports) =>
+        case(principalAirportStub, affectedAirportStubs) =>
+          val principalAirport = AirportCache.getAirport(principalAirportStub.id).getOrElse(principalAirportStub)
+          val affectedAirports = affectedAirportStubs.flatMap(s => AirportCache.getAirport(s.id))
           val airportJson = Json.toJson(principalAirport).asInstanceOf[JsObject] + ("affectedAirports" -> Json.toJson(affectedAirports))
           candidatesJson = candidatesJson.append(airportJson)
       }

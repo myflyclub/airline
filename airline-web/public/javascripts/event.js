@@ -141,9 +141,14 @@ function loadOlympicsDetails(row) {
 
                 if (activeAirline) {
                     $("#olympicsDetails .button.vote").show();
-                    $("#olympicsDetails .button.vote").off("click").on("click", function() {
-                        showOlympicsVoteModal()
-                    })
+                    if (event.votingActive) {
+                        enableButton($("#olympicsDetails .button.vote"))
+                        $("#olympicsDetails .button.vote").off("click").on("click", function() {
+                            showOlympicsVoteModal()
+                        })
+                    } else {
+                        disableButton($("#olympicsDetails .button.vote"), "Voting closed")
+                    }
 
                     $.ajax({
                         type: 'GET',
