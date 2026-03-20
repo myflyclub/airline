@@ -135,7 +135,7 @@ function enhanceAirportsGeoJSON(geojson, options = {}) {
             if (isBase) sortKey = 999;
 
             const icon = (state.championMapMode && championInfo)
-                ? `airline-logo-${championInfo.championAirlineId}`
+                ? `champion-logo-${championInfo.championAirlineId}`
                 : getAirportIconName(props, baseInfo);
 
             return {
@@ -441,7 +441,7 @@ async function useChampionLogos(champions) {
 
     const uniqueAirlineIds = [...new Set(Object.values(champions).map(c => c.championAirlineId))].filter(id => id !== undefined);
     const loadPromises = uniqueAirlineIds.map(async (airlineId) => {
-        const imageName = `airline-logo-${airlineId}`;
+        const imageName = `champion-logo-${airlineId}`;
         if (state.map.hasImage(imageName)) return;
 
         try {
@@ -454,7 +454,7 @@ async function useChampionLogos(champions) {
             await new Promise((resolve, reject) => {
                 img.onload = () => {
                     if (!state.map.hasImage(imageName)) {
-                        state.map.addImage(imageName, img, { pixelRatio: 2 });
+                        state.map.addImage(imageName, img, { pixelRatio: 3 });
                     }
                     URL.revokeObjectURL(imgUrl);
                     resolve();

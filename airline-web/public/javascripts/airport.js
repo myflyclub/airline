@@ -63,6 +63,16 @@ async function loadAirportsDynamic() {
             );
             airport.features = [...staticFeatures, ...features];
         }
+
+        // Patch travelRate, reputation, congestion into the global airport store
+        const champions = data.champions || {};
+        for (const [airportId, stats] of Object.entries(champions)) {
+            const airport = window.airportsById?.[airportId];
+            if (!airport) continue;
+            airport.travelRate = stats.travelRate;
+            airport.reputation = stats.reputation;
+            airport.congestion = stats.hasOwnProperty('congestion') ? stats.congestion : 0;
+        }
     } catch (error) {
         console.error('Error fetching data:', error);
     }
