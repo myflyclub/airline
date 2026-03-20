@@ -2947,7 +2947,7 @@ function refreshSavedLink(savedLink) {
     // Store update first so refreshFlightPath gets correct profit/revenue for coloring
     if (loadedLinksById[savedLink.id]) {
         Object.assign(loadedLinksById[savedLink.id], savedLink)
-        refreshFlightPath(loadedLinksById[savedLink.id], true)
+        AirlineMap.refreshFlightPath(loadedLinksById[savedLink.id], true)
     } else {
         computeLinkDerivedProperties([savedLink])
         loadedLinks.push(savedLink)

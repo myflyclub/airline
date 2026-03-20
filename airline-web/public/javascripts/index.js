@@ -8,22 +8,25 @@
 let airports = null;
 let gameConstants = null;
 let postLoginScriptsLoaded = false;
-const SCRIPT_BASE_PATH = `${location.origin}/assets/javascripts/`;
 
 const POPPER_JS = 'https://unpkg.com/@popperjs/core@2/dist/umd/popper.min.js';
 const PAGE_JS = 'https://cdnjs.cloudflare.com/ajax/libs/page.js/1.11.6/page.js';
 const MAPLIBRE_JS = 'https://unpkg.com/maplibre-gl@5.17.0/dist/maplibre-gl.js';
 const MAPLIBRE_CSS = 'https://unpkg.com/maplibre-gl@5.17.0/dist/maplibre-gl.css';
 
+function asset(name) {
+    return (window.VERSIONED_ASSETS && window.VERSIONED_ASSETS[name]) || `/assets/javascripts/${name}`;
+}
+
 // Only what login/signup pages need
 const LOGIN_SCRIPTS = [
     'login.js', 'signup.js', 'routes.js', 'main.js', 'gadgets.js', 'local-storage.js'
-].map(s => SCRIPT_BASE_PATH + s);
+].map(asset);
 
 // Needed once logged in (before routes fire)
 const SESSION_SCRIPTS = [
     'airline.js', 'websocket.js', 'prompt.js', 'color.js', 'settings.js'
-].map(s => SCRIPT_BASE_PATH + s);
+].map(asset);
 
 // Scripts loaded after successful login (game features)
 const POST_LOGIN_SCRIPTS = [
@@ -31,12 +34,12 @@ const POST_LOGIN_SCRIPTS = [
     'manager.js', 'country.js', 'office.js', 'ranking.js', 'christmas.js',
     'bank.js', 'admin.js', 'oil.js', 'rivals.js', 'alliance.js', 'event.js',
     'search.js', 'profile.js', 'pending-action.js', 'table-utils.js',
-].map(s => SCRIPT_BASE_PATH + s);
+].map(asset);
 
 const DEFERRED_SCRIPTS = [
     'link-history.js', 'confetti.js', 'departures.js', 'campaign.js',
     'log.js', 'mobile.js', 'chat-popup.js', 'tiles.js', 'facility.js',
-].map(s => SCRIPT_BASE_PATH + s);
+].map(asset);
 
 /**
  * Loads a single script dynamically and returns a promise.
@@ -190,7 +193,7 @@ async function loadChatApp() {
         return;
     }
     try {
-        await loadScript(SCRIPT_BASE_PATH + 'chat.js');
+        await loadScript(asset('chat.js'));
         _chatInitialized = true;
         initChat();
         if (typeof updateChatTabs === 'function') {

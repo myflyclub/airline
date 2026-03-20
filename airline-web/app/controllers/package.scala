@@ -20,7 +20,7 @@ package object controllers {
   implicit val ec: ExecutionContext = ExecutionContext.global
   implicit val actorSystem: ActorSystem = ActorSystem("patson-web-app-system")
   implicit val order: Double.IeeeOrdering.type = Ordering.Double.IeeeOrdering
-  val currentApiVersion = "v5.0.4" // Update this when schema changes
+  val currentApiVersion = "v5.0.5" // Update this when schema changes
   @volatile var cachedCurrentCycle: Int = CycleSource.loadCycle()
   def currentCycle: Int = cachedCurrentCycle
 
@@ -784,6 +784,9 @@ package object controllers {
         }
         if (airport.boostFactorsByType.get(AirportBoostType.INCOME).nonEmpty) {
           airportObject = airportObject + ("incomeLevelBoost" -> Json.toJson(airport.boostFactorsByType.get(AirportBoostType.INCOME)))
+        }
+        if (airport.boostFactorsByType.get(AirportBoostType.ELITE).nonEmpty) {
+          airportObject = airportObject + ("eliteBoost" -> Json.toJson(airport.boostFactorsByType.get(AirportBoostType.ELITE)))
         }
       }
 
