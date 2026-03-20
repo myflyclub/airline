@@ -322,9 +322,10 @@ class SearchApplication @Inject()(cc: ControllerComponents) extends AbstractCont
     val affinity = Computation.calculateAffinityValue(fromAirport.zone, toAirport.zone, relationship)
     val affinityText = Computation.constructAffinityText(fromAirport.zone, toAirport.zone, fromAirport.countryCode, toAirport.countryCode, relationship, affinity)
 
-    val (fromDemandDetailsJson, toDemandDetailsJson, fromDemandTotal, toDemandTotal) = LinkApplication.generateDemands(fromAirport, toAirport, affinity, distance, flightCategory)
+    val (fromDemand, toDemand) = LinkApplication.generateDemands(fromAirport, toAirport, affinity, distance, flightCategory)
 
-    val directDemand = fromDemandTotal + toDemandTotal
+    val directDemand         = fromDemand.adjustedTotal + toDemand.adjustedTotal
+    val baselineDirectDemand = fromDemand.baselineTotal  + toDemand.baselineTotal
 
     val fromQualitySearch = LinkUtil.findExpectedQuality(fromAirportId: Int, toAirportId: Int, fromAirportId: Int)
     val fromExpectedQualities = fromQualitySearch match {
@@ -362,13 +363,14 @@ class SearchApplication @Inject()(cc: ControllerComponents) extends AbstractCont
       "distance" -> distance,
       "flightType" -> FlightCategory.label(flightCategory),
       "directDemand" -> directDemand,
+      "baselineDirectDemand" -> baselineDirectDemand,
       "mutualRelationship" -> relationship,
       "affinity" -> affinityText,
       "basePrice" -> basePrice,
-      "fromDemands" -> fromDemandDetailsJson,
-      "toDemands" -> toDemandDetailsJson,
-      "fromAirportDemand" -> fromDemandTotal,
-      "toAirportDemand" -> toDemandTotal,
+      "fromDemands" -> fromDemand.baselineDetailsJson,
+      "toDemands" -> toDemand.baselineDetailsJson,
+      "fromAirportDemand" -> fromDemand.adjustedTotal,
+      "toAirportDemand" -> toDemand.adjustedTotal,
       "fromExpectedQualities" -> fromExpectedQualities,
       "toExpectedQualities" -> toExpectedQualities,
     )

@@ -4,7 +4,6 @@ html {
   --search-text-shadow: 0 0 3px rgba(255, 255, 255, 0.4);
   --search-placeholder-color: rgba(0, 0, 0, 0.4);
   --search-canvas-background: linear-gradient(to bottom, rgba(255, 255, 255, 0.5) 20%, rgba(255, 255, 255, 0.6) 30%, rgba(255, 255, 255, 0.8) 100%), url(../images/background/sky.jpg);
-
 }
 
 html[data-theme='dark'] {
@@ -111,7 +110,8 @@ html[data-theme='dark'] #searchCanvas input {
 
 #searchCanvas .mainSection {
     background: var(--search-canvas-background);
-    background-size: cover;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
 }
 
 #searchCanvas .search.button {

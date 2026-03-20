@@ -1519,7 +1519,6 @@ html[data-theme='dark'] .section {
 }
 /* Search Canvas */
 #searchCanvas > .section {
-    height: calc(100vh - 90px);
     display: flex;
     flex-direction: column;
 }

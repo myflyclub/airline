@@ -775,7 +775,7 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
             )
         }.toMap
 
-        val (fromDemandDetailsJson, toDemandDetailsJson, fromDemand, toDemand) = LinkApplication.generateDemands(fromAirport, toAirport, affinity, distance, flightCategory)
+        val (fromDemand, toDemand) = LinkApplication.generateDemands(fromAirport, toAirport, affinity, distance, flightCategory)
 
         val cost = if (existingLink.isEmpty) Computation.getLinkCreationCost(fromAirport, toAirport) else 0
         val quality = if (existingLink.isEmpty) 0 else existingLink.get.computedQuality()
@@ -829,7 +829,7 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
           "fromAirportLongitude" -> fromAirport.longitude,
           "fromCountryCode" -> fromAirport.countryCode,
           "fromExpectedQuality" -> fromExpectedQuality,
-          "fromDemandDetails" -> fromDemandDetailsJson,
+          "fromDemandDetails" -> fromDemand.adjustedDetailsJson,
           "toAirportId" -> toAirport.id,
           "toAirportName" -> toAirport.name,
           "toAirportCode" -> toAirport.iata,
@@ -838,7 +838,7 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
           "toAirportLongitude" -> toAirport.longitude,
           "toCountryCode" -> toAirport.countryCode,
           "toExpectedQuality" -> toExpectedQuality,
-          "toDemandDetails" -> toDemandDetailsJson,
+          "toDemandDetails" -> toDemand.adjustedDetailsJson,
           "quality" -> quality,
           "flightCode" -> flightCode,
           "mutualRelationship" -> relationship,
@@ -1668,11 +1668,17 @@ object LinkApplication {
     )
   }
 
+  case class DemandResult(
+    baselineDetailsJson: JsArray,
+    adjustedDetailsJson: JsArray,
+    baselineTotal: LinkClassValues,
+    adjustedTotal: LinkClassValues)
+
   // Helper cache, used in research and link negotiation
   @volatile private var demandCacheCycle: Int = -1
-  private val demandCache = new java.util.concurrent.ConcurrentHashMap[(Int, Int), (JsArray, JsArray, LinkClassValues, LinkClassValues)]()
+  private val demandCache = new java.util.concurrent.ConcurrentHashMap[(Int, Int), (DemandResult, DemandResult)]()
 
-  def generateDemands(fromAirport: Airport, toAirport: Airport, affinity: Int, distance: Int, flightCategory: FlightCategory.Value): (JsArray, JsArray, LinkClassValues, LinkClassValues) = {
+  def generateDemands(fromAirport: Airport, toAirport: Airport, affinity: Int, distance: Int, flightCategory: FlightCategory.Value): (DemandResult, DemandResult) = {
     val cycle = currentCycle
     if (cycle != demandCacheCycle) {
       demandCache.clear()
@@ -1681,79 +1687,67 @@ object LinkApplication {
     demandCache.computeIfAbsent((fromAirport.id, toAirport.id), _ => computeDemands(fromAirport, toAirport, affinity, distance, flightCategory, cycle))
   }
 
-  private def computeDemands(fromAirport: Airport, toAirport: Airport, affinity: Int, distance: Int, flightCategory: FlightCategory.Value, cycle: Int): (JsArray, JsArray, LinkClassValues, LinkClassValues) = {
+  private def loadTravelRate(airport: Airport): Double =
+    AirportStatisticsSource.loadAirportStatsById(airport.id)
+      .map(s => Airport.travelRateAdjusted(s.fromPax, s.baselineDemand, airport.size))
+      .getOrElse(1.0)
+
+  private def buildDemandResult(
+    sortedDetails: List[(Int, LinkClass, PassengerType.Value, FlightPreferenceType.Value, Int)],
+    demandByTypeAndPreference: Map[(LinkClass, PassengerType.Value, FlightPreferenceType.Value), Int],
+    travelRate: Double
+  ): DemandResult = {
+    val baselineJson = Json.toJson(sortedDetails.map {
+      case (price, linkClass, passengerType, preferenceType, total) =>
+        createDemandJsonObject(linkClass, passengerType, preferenceType, price, total)
+    }).as[JsArray]
+
+    val adjustedJson = Json.toJson(sortedDetails.map {
+      case (price, linkClass, passengerType, preferenceType, total) =>
+        createDemandJsonObject(linkClass, passengerType, preferenceType, price, (total * travelRate).toInt)
+    }).as[JsArray]
+
+    val initialTotals = LinkClassValues.getInstance()
+    val baselineTotal = demandByTypeAndPreference.foldLeft(initialTotals) {
+      case (acc, ((linkClass, _, _), count)) =>
+        acc + (linkClass match {
+          case DISCOUNT_ECONOMY => LinkClassValues.getInstance(discount = count)
+          case ECONOMY          => LinkClassValues.getInstance(economy = count)
+          case BUSINESS         => LinkClassValues.getInstance(business = count)
+          case FIRST            => LinkClassValues.getInstance(first = count)
+          case _                => initialTotals
+        })
+    }
+
+    DemandResult(baselineJson, adjustedJson, baselineTotal, baselineTotal * travelRate)
+  }
+
+  private def computeDemands(fromAirport: Airport, toAirport: Airport, affinity: Int, distance: Int, flightCategory: FlightCategory.Value, cycle: Int): (DemandResult, DemandResult) = {
     val fromDemand = DemandGenerator.computeDemandWithPreferencesBetweenAirports(fromAirport, toAirport, affinity, distance, cycle)
     val toDemand = DemandGenerator.computeDemandWithPreferencesBetweenAirports(toAirport, fromAirport, affinity, distance, cycle)
 
-    // Group demands by type and preference, summing counts
-    val fromDemandByTypeAndPreference = fromDemand.groupBy {
-      case ((linkClass, preference, passengerType), _) =>
-        (linkClass, passengerType, preference.getPreferenceType)
-    }.view.mapValues(_.values.sum).toMap
+    val fromTravelRate = loadTravelRate(fromAirport)
+    val toTravelRate   = loadTravelRate(toAirport)
 
-    val toDemandByTypeAndPreference = toDemand.groupBy {
-      case ((linkClass, preference, passengerType), _) =>
-        (linkClass, passengerType, preference.getPreferenceType)
-    }.view.mapValues(_.values.sum).toMap
+    def groupByTypeAndPreference(demand: Map[(LinkClass, FlightPreference, PassengerType.Value), Int]) =
+      demand.groupBy { case ((lc, pref, pt), _) => (lc, pt, pref.getPreferenceType) }
+        .view.mapValues(_.values.sum).toMap
 
-    val fromDemandDetails = fromDemandByTypeAndPreference.map {
+    val fromDemandByTypeAndPreference = groupByTypeAndPreference(fromDemand)
+    val toDemandByTypeAndPreference   = groupByTypeAndPreference(toDemand)
+
+    val sortedFromDetails = fromDemandByTypeAndPreference.map {
       case ((linkClass, passengerType, preferenceType), total) =>
-        val price = calculateDemandPrice(distance, flightCategory, linkClass, passengerType, fromAirport.income, preferenceType)
-        (price, linkClass, passengerType, preferenceType, total)
-    }.toList
+        (calculateDemandPrice(distance, flightCategory, linkClass, passengerType, fromAirport.income, preferenceType), linkClass, passengerType, preferenceType, total)
+    }.toList.sortBy(_._1).reverse
 
-    // Sort by the first element of the tuple (price)
-    val sortedFromDemandDetails = fromDemandDetails.sortBy(_._1).reverse
-
-    val fromDemandJsonObjects: List[JsObject] = sortedFromDemandDetails.map {
-      case (price, linkClass, passengerType, preferenceType, total) =>
-        createDemandJsonObject(linkClass, passengerType, preferenceType, price, total)
-    }
-    val fromDemandDetailsJson = Json.toJson(fromDemandJsonObjects).as[JsArray]
-
-    val toDemandDetails = toDemandByTypeAndPreference.map {
+    val sortedToDetails = toDemandByTypeAndPreference.map {
       case ((linkClass, passengerType, preferenceType), total) =>
-        val price = calculateDemandPrice(distance, flightCategory, linkClass, passengerType, toAirport.income, preferenceType)
-        (price, linkClass, passengerType, preferenceType, total)
-    }.toList
+        (calculateDemandPrice(distance, flightCategory, linkClass, passengerType, toAirport.income, preferenceType), linkClass, passengerType, preferenceType, total)
+    }.toList.sortBy(_._1).reverse
 
-    val sortedToDemandDetails = toDemandDetails.sortBy(_._1).reverse
-
-    val toDemandJsonObjects = sortedToDemandDetails.map {
-      case (price, linkClass, passengerType, preferenceType, total) =>
-        createDemandJsonObject(linkClass, passengerType, preferenceType, price, total)
-    }
-    val toDemandDetailsJson = Json.toJson(toDemandJsonObjects).as[JsArray]
-
-
-    val initialTotals = LinkClassValues.getInstance() // Creates LinkClassValues(0, 0, 0, 0)
-
-    val fromDemandTotals =
-      fromDemandByTypeAndPreference.foldLeft(initialTotals) {
-        case (currentTotals, ((linkClass, _, _), count)) =>
-          val countAsValues = linkClass match {
-            case DISCOUNT_ECONOMY => LinkClassValues.getInstance(discount = count)
-            case ECONOMY => LinkClassValues.getInstance(economy = count)
-            case BUSINESS => LinkClassValues.getInstance(business = count)
-            case FIRST => LinkClassValues.getInstance(first = count)
-            case _ => initialTotals // Or LinkClassValues.getInstance() - represents zero
-          }
-          currentTotals + countAsValues
-      }
-
-    val toDemandTotals = toDemandByTypeAndPreference.foldLeft(initialTotals) {
-      case (currentTotals, ((linkClass, _, _), count)) =>
-        val countAsValues = linkClass match {
-          case DISCOUNT_ECONOMY => LinkClassValues.getInstance(discount = count)
-          case ECONOMY => LinkClassValues.getInstance(economy = count)
-          case BUSINESS => LinkClassValues.getInstance(business = count)
-          case FIRST => LinkClassValues.getInstance(first = count)
-          case _ => initialTotals // Or LinkClassValues.getInstance() - represents zero
-        }
-        currentTotals + countAsValues
-    }
-
-    (fromDemandDetailsJson, toDemandDetailsJson, fromDemandTotals, toDemandTotals)
+    (buildDemandResult(sortedFromDetails, fromDemandByTypeAndPreference, fromTravelRate),
+     buildDemandResult(sortedToDetails,   toDemandByTypeAndPreference,   toTravelRate))
   }
 
 }

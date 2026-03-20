@@ -1074,7 +1074,7 @@ function populateResearchHeader(result) {
         fromAirportId, toAirportId, fromAirportText, toAirportText,
         fromAirportPopulation, fromAirportIncome, toAirportPopulation, toAirportIncome,
         fromAirportCountryCode, toAirportCountryCode, mutualRelationship,
-        affinity, distance, flightType, directDemand
+        affinity, distance, flightType, directDemand, baselineDirectDemand
     } = result;
 
     const researchResult = $('#researchSearchResult');
@@ -1095,6 +1095,7 @@ function populateResearchHeader(result) {
     researchResult.find(".distance").text(distance);
     researchResult.find(".flightType").text(flightType);
     researchResult.find(".demand").text(toLinkClassValueString(directDemand));
+    researchResult.find(".baselineDemand").text(toLinkClassValueString(baselineDirectDemand));
 }
 
 function populateResearchLinksTable(links, consumptions, basePrice) {
