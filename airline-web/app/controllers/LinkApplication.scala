@@ -261,7 +261,7 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
 
   def addLinkBlock(request : AuthenticatedRequest[AnyContent, Airline]) : Result = {
     val incomingLink = request.body.asInstanceOf[AnyContentAsJson].json.as[Link]
-    val delegateCount = request.body.asInstanceOf[AnyContentAsJson].json.\("assignedDelegates").as[Int]
+    val actionPoints = request.body.asInstanceOf[AnyContentAsJson].json.\("assignedDelegates").as[Int]
 
     val airlineId = incomingLink.airline.id
 
@@ -355,12 +355,8 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
 
     //if assign more action points then available.
     //However assigning no action points should be allowed even if negative balance
-    if (delegateCount > 0 && delegateCount > airline.getActionPoints()) {
-      return BadRequest(s"Assigning $delegateCount action points but only ${airline.getActionPoints()} available")
-    }
-
-    if (delegateCount > NegotiationUtil.MAX_ASSIGNED_DELEGATE) {
-      return BadRequest(s"Assigning $delegateCount action points > ${NegotiationUtil.MAX_ASSIGNED_DELEGATE}")
+    if (actionPoints > 0 && actionPoints > airline.getActionPoints()) {
+      return BadRequest(s"Assigning $actionPoints action points but only ${airline.getActionPoints()} available")
     }
 
     if (existingLink.isEmpty) {
@@ -372,14 +368,14 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
     val negotiationInfo = NegotiationUtil.getLinkNegotiationInfo(airline, incomingLink, existingLink)
     val negotiationResultOption =
       if (negotiationInfo.finalRequirementValue > 0) { //then negotiation is required
-        if (delegateCount <= negotiationInfo.finalRequirementValue) {
-          return BadRequest(s"Must assign at least ${negotiationInfo.finalRequirementValue} delegates")
+        if (actionPoints <= negotiationInfo.finalRequirementValue) {
+          return BadRequest(s"Must assign at least ${negotiationInfo.finalRequirementValue} action points")
         }
         getNegotiationRejectionReason(airline, incomingLink.from, incomingLink.to, existingLink) foreach {
           case (reason, rejectionType) =>
             return BadRequest(s"No negotiation : $reason")
         }
-        Some(NegotiationUtil.negotiate(negotiationInfo, delegateCount))
+        Some(NegotiationUtil.negotiate(negotiationInfo, actionPoints))
       } else if (negotiationInfo.finalRequirementValue < 0 && negotiationInfo.actionPointRefund.getOrElse(0) > 1) {
         val cycle = CycleSource.loadCycle()
         AirlineSource.adjustAirlineActionPoints(airline, negotiationInfo.actionPointRefund.getOrElse(0).toDouble)
@@ -586,9 +582,9 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
       link.getAssignedAirplanes()
     }
     val emptyLink = Link(link.from, link.to, link.airline, LinkClassValues(0,0,0), link.distance, LinkClassValues(0,0,0), link.rawQuality, link.duration, 0, link.flightNumber, link.id)
-    val delegateCount = NegotiationUtil.getLinkNegotiationInfo(link.airline, emptyLink, Some(link)).deleteLinkRefund.getOrElse(0)
-    AirlineSource.adjustAirlineActionPoints(airlineId, delegateCount.toDouble)
-    delegateCount
+    val actionPoints = NegotiationUtil.getLinkNegotiationInfo(link.airline, emptyLink, Some(link)).deleteLinkRefund.getOrElse(0)
+    AirlineSource.adjustAirlineActionPoints(airlineId, actionPoints.toDouble)
+    actionPoints
   }
 
   def deleteLink(airlineId : Int, linkId: Int) = AuthenticatedAirline(airlineId) { request =>
@@ -598,8 +594,8 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
         if (link.airline.id != request.user.id) {
           Forbidden
         } else {
-          val delegateCount = deleteLinkLogic(link, airlineId)
-          Ok(Json.obj("count" -> 1, "actionPointRefund" -> JsNumber(delegateCount)))
+          val actionPoints = deleteLinkLogic(link, airlineId)
+          Ok(Json.obj("count" -> 1, "actionPointRefund" -> JsNumber(actionPoints)))
         }
       case None =>
         NotFound
@@ -631,8 +627,8 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
       LinkSource.loadFlightLinkById(linkId).foreach { link =>
         if (link.airline.id == airlineId) {
           val emptyLink = Link(link.from, link.to, link.airline, LinkClassValues(0,0,0), link.distance, LinkClassValues(0,0,0), link.rawQuality, link.duration, 0, link.flightNumber, link.id)
-          val delegateCount = NegotiationUtil.getLinkNegotiationInfo(link.airline, emptyLink, Some(link)).deleteLinkRefund.getOrElse(0)
-          totalRefund += delegateCount
+          val actionPoints = NegotiationUtil.getLinkNegotiationInfo(link.airline, emptyLink, Some(link)).deleteLinkRefund.getOrElse(0)
+          totalRefund += actionPoints
           totalCapacityToRemove += link.capacity.total
         }
       }
@@ -1580,7 +1576,6 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
 
   def getLinkNegotiation(airlineId : Int) = AuthenticatedAirline(airlineId)  { implicit request =>
     val incomingLink = request.body.asInstanceOf[AnyContentAsJson].json.as[Link]
-    //val delegatesCount = request.body.asInstanceOf[AnyContentAsJson].json.\("assignedDelegates").as[Int]
     val existingLinkOption = LinkSource.loadFlightLinkByAirportsAndAirline(incomingLink.from.id, incomingLink.to.id, airlineId)
     val negotiationInfo = NegotiationUtil.getLinkNegotiationInfo(request.user, incomingLink, existingLinkOption)
 
