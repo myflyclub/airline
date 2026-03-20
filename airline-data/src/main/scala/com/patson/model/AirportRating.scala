@@ -43,10 +43,6 @@ object AirportRating {
       }
     }.sum.toInt
 
-    if (detailedAirport.iata == "MCO") {
-      print("MCO: " + ratioToModelAirportPower + " " + ratioToModelCountryPower + " " + airportScalePower + " " + featurePower + " " + detailedAirport.size + " " + detailedAirport.getFeatures().map(_.featureType).mkString(", ") )
-    }
-
     AirportRating(ratioToModelAirportPower, ratioToModelCountryPower, featurePower + airportScalePower)
   }
 }

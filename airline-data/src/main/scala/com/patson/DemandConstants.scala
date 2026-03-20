@@ -4,11 +4,11 @@ object DemandConstants {
   /**
    * min distance is used in two contexts:
    * 1) find nearby domestic between minDistance and 4x minDistance
-   *    - standard catchment is 1200km
+   *    - default catchment is 1400km (350 * 4)
    * 2) reduce demand under minDistance (if not island or high affinity)
    */
   val localityMinDistanceMap = Map(
-    "default" -> 325,
+    "default" -> 350,
     "CA" -> 400,
     "US" -> 400,
     "DO" -> 100,
@@ -31,6 +31,7 @@ object DemandConstants {
     "ZA" -> 300,
     "IS" -> 100,
     "GB" -> 400,
+    "ES" -> 275, //Make traveler stay within Canaries
     "NL" -> 400,
     "BE" -> 450,
     "DE" -> 320,

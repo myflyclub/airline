@@ -91,8 +91,9 @@ object DemandGenerator {
     if (SKIP_AIRPORTS.contains(fromAirport.iata)) {
       List.empty
     } else {
-      val minDistance = if (GameConstants.isIsland(fromAirport)) 25 else DemandConstants.localityMinDistanceMap.getOrElse(fromAirport.countryCode, DemandConstants.localityMinDistanceMap("default"))
-      val maxDistance = Math.max(1400, IsolatedTownFeature.HUB_RANGE_BRACKETS(isIsolatedMultiplier))
+      val localizedDistance = DemandConstants.localityMinDistanceMap.getOrElse(fromAirport.countryCode, DemandConstants.localityMinDistanceMap("default"))
+      val minDistance = if (GameConstants.isIsland(fromAirport)) 25 else localizedDistance
+      val maxDistance = Math.max(localizedDistance * 4, IsolatedTownFeature.HUB_RANGE_BRACKETS(isIsolatedMultiplier))
       //mostly trying to generate a base of domestic demand (also is more performant), but in smaller markets do int'l
       val intlCountries = List("AE","AL","AM","AT","AZ","BD","BY","BE","BJ","BT","BA","BI","BW","CH","CW","CZ","DE","DJ","DM","EE","GB","GE","GM","GH","GD","GN","GY","HK","HR","HU","IE","IL","JM","JO","KI","KW","KG","LV","LS","LR","LI","LT","LU","MO","MT","MD","MK","NA","NL","PR","QA","RW","RS","SG","SK","SI","SR","SY","SX","SZ","TC","TJ","UY","UZ","VC","VG","VI","VU")
       val intlAirports = List("TPE","KHH")
@@ -391,7 +392,7 @@ object DemandGenerator {
    * compute raw demand, before classing it
    */
   private def computeRawDemandBetweenAirports(fromAirport: Airport, toAirport: Airport, affinity: Int, distance: Int): Int = {
-    val drivingDistance = 1.2 * DemandConstants.localityMinDistanceMap.getOrElse(fromAirport.countryCode, DemandConstants.localityMinDistanceMap("default"))
+    val drivingDistance = DemandConstants.localityMinDistanceMap.getOrElse(fromAirport.countryCode, DemandConstants.localityMinDistanceMap("default"))
     val distanceReducerExponent: Double =
       if (distance < drivingDistance && affinity < 6 && ! GameConstants.connectsIsland(fromAirport, toAirport)) {
         distance.toDouble / drivingDistance //don't apply to islands or business shuttle routes

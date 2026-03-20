@@ -377,7 +377,7 @@ object CountrySource {
       addOverride(scores, -2, "KG", Set("TJ"))
       addOverride(scores, 3, "KZ", Set("UZ","KG"))
       addOverride(scores, 2, "UZ", Set("AF"))
-      addOverride(scores, 3, "AF", Set("PK","CN"))
+      addOverride(scores, 3, "AF", Set("CN"))
       addOverride(scores, 2, "AF", Set("IR","RU"))
       addOverride(scores, -1, "AF", Set("US"))
       addOverride(scores, -1, "IR", OECDish -- Set("US","TR"))
