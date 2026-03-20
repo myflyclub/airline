@@ -443,7 +443,7 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
     }
 
     //alliance
-    if (airline.getAllianceId().isDefined) {
+    if (! airline.getAllianceId().isDefined) {
       return Consideration(cost, newLounge, Some("Must be in an alliance to build/upgrade lounge"))
     }
 
