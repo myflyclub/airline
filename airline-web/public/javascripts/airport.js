@@ -412,7 +412,6 @@ async function updateAirportChampionDetails(airport) {
         if (etag) _etagStore[key] = etag
         const result = await res.json()
 
-        document.getElementById('maxRep').textContent = result.maxRep
         var champions = result.champions
         $('#airportDetailsChampionList').children('div.table-row').remove()
         $(champions).each(function (index, championDetails) {
@@ -495,6 +494,17 @@ function checkForAirportUpdate(airport) {
             boostFactors.income = airport.incomeLevelBoost
         }
         airport.boosts = boostFactors
+
+        // Write fresh boost data back to airportsLatestData so the stale bulk cache
+        // doesn't override it on subsequent reads (e.g. after a specialization change).
+        if (airportsLatestData) {
+            if (!airportsLatestData.boosts) airportsLatestData.boosts = {}
+            if (Object.keys(boostFactors).length > 0) {
+                airportsLatestData.boosts[airport.id] = { boostFactorsByType: boostFactors }
+            } else {
+                delete airportsLatestData.boosts[airport.id]
+            }
+        }
 
         // Still pull travelRate / reputation / congestion from the bulk cache if available
         const stats = airportsLatestData?.champions?.[airport.id]

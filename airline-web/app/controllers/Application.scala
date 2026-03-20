@@ -677,8 +677,6 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
           champsJson = champsJson.append(Json.toJson(info).asInstanceOf[JsObject] + ("loyalty" -> JsNumber(BigDecimal(airport.getAirlineLoyalty(info.loyalist.airline.id)).setScale(2, RoundingMode.HALF_EVEN))))
         }
         result = result + ("champions" -> champsJson)
-        //    val maxRep = ChampionUtil.computeFullReputationBoost(airport, 1)
-        //    result = result + ("maxRep" -> JsNumber(maxRep))
         airlineId.foreach { airlineId =>
           if (champsSortedByRank.find(_.loyalist.airline.id == airlineId).isEmpty) { //query airline not a champ, now see check ranking
             val loyalistsSorted = LoyalistSource.loadLoyalistsByAirportId(airportId).sortBy(_.amount).reverse
