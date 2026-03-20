@@ -344,7 +344,7 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
 
         val aircraftStats = links.flatMap(link =>
           link.getAssignedModel().map(model => model.name -> link.capacity.total)
-        ).toMap
+        ).groupBy(_._1).mapValues(_.map(_._2).sum).toList.sortBy(_._1).toMap
 
         val flightFrequency = links.map(_.frequency).sum
         val linkAvgDistance = (links.map(_.distance).sum.toDouble / links.size).toInt
