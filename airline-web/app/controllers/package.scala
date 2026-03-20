@@ -763,7 +763,7 @@ package object controllers {
       if (airport.isFeaturesLoaded) {
         implicit val boostWriter = new Writes[(String, Double)] {
           override def writes(o: (String, Double)): JsValue = {
-            Json.obj("boost" -> o._2)
+            Json.obj("source" -> o._1, "value" -> o._2)
           }
         }
         airportObject = airportObject + ("features" -> JsArray(airport.getFeatures().sortBy(_.featureType.id).map { airportFeature =>
