@@ -16,7 +16,7 @@ public class LogoGenerator {
     private static final Random random = new Random();
     public static final int TARGET_WIDTH = 128;
     public static final int TARGET_HEIGHT = 64;
-    public static final int PROCEDURAL_COUNT = 56;
+    public static final int PROCEDURAL_COUNT = 63;
 
     public static byte[] generateLogo(int patternIndex, int color1Rgb, int color2Rgb) throws IOException {
         BufferedImage image = new BufferedImage(TARGET_WIDTH, TARGET_HEIGHT, BufferedImage.TYPE_INT_ARGB);
@@ -110,11 +110,11 @@ public class LogoGenerator {
             // GROUP 2: AVIATION
             // ==========================================
             case 9: // Delta
-                g.fillPolygon(new int[]{cx - 40, cx + 40, cx - 25},
-                        new int[]{cy + 25, cy, cy - 28}, 3);
-                g.setColor(c2.darker().darker());
-                g.fillPolygon(new int[]{cx - 40, cx + 40, cx - 12},
-                        new int[]{cy + 25, cy, cy + 10}, 3);
+                // Left facet
+                g.fillPolygon(new int[]{cx, cx - 22, cx}, new int[]{cy - 25, cy + 22, cy + 10}, 3);
+                // Right facet (darker for 3D depth)
+                g.setColor(c2.darker());
+                g.fillPolygon(new int[]{cx, cx + 22, cx}, new int[]{cy - 25, cy + 22, cy + 10}, 3);
                 break;
             case 10: // Airliner
                 g.translate(cx, cy);
@@ -228,10 +228,11 @@ public class LogoGenerator {
                 }
                 break;
             case 23: // Globe Arcs
-                g.setStroke(new BasicStroke(2));
-                g.drawOval(cx - 25, cy - 25, 50, 50);
-                g.drawArc(cx - 25, cy - 10, 50, 20, 0, 360);
-                g.drawLine(cx, cy - 25, cx, cy + 25);
+                g.setStroke(new BasicStroke(3));
+                g.drawOval(cx - 22, cy - 22, 44, 44);
+                g.drawOval(cx - 11, cy - 22, 22, 44);
+                g.drawLine(cx - 22, cy, cx + 22, cy);
+                g.drawLine(cx, cy - 22, cx, cy + 22);
                 break;
             case 24: // Global Grid
                 g.setStroke(new BasicStroke(1));
@@ -480,7 +481,155 @@ public class LogoGenerator {
                 g.drawLine(arrowX + 5, cy - 10, arrowX, cy - 15);
                 break;
             }
-        }
+
+            // ==========================================
+            // NEW ABSTRACTIONS (V5: Additions & Refinements)
+            // ==========================================
+            case 56: // Rooster (Logomark style: cohesive, thicker strokes)
+                g.setColor(c2);
+                // Body & Neck
+                g.fillOval(cx - 10, cy - 8, 28, 26);
+                g.fillPolygon(new int[]{cx + 2, cx + 18, cx + 22, cx + 8}, new int[]{cy + 12, cy - 18, cy - 8, cy + 18}, 4);
+                // Head
+                g.fillOval(cx + 10, cy - 22, 16, 16);
+                // Beak
+                g.fillPolygon(new int[]{cx + 24, cx + 36, cx + 22}, new int[]{cy - 18, cy - 12, cy - 8}, 3);
+                // Comb (rounded peaks)
+                g.fillArc(cx + 10, cy - 30, 12, 12, 0, 180);
+                g.fillArc(cx + 16, cy - 26, 10, 10, 0, 180);
+                // Tail (thick, logomark sweeps)
+                g.setStroke(new BasicStroke(7, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                g.drawArc(cx - 30, cy - 20, 32, 32, 30, 120);
+                g.drawArc(cx - 34, cy - 8, 32, 30, 15, 120);
+                g.drawArc(cx - 28, cy + 2, 26, 25, 0, 130);
+                // Legs
+                g.setStroke(new BasicStroke(3, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                g.drawLine(cx, cy + 16, cx - 4, cy + 28);
+                g.drawLine(cx - 4, cy + 28, cx + 2, cy + 28);
+                g.drawLine(cx + 10, cy + 16, cx + 8, cy + 28);
+                g.drawLine(cx + 8, cy + 28, cx + 14, cy + 28);
+                break;
+
+            case 57: // Hammer & Sickle (V2 geometry, correct draw order)
+                g.setColor(c2);
+                g.fillOval(cx - 22, cy - 22, 40, 40); // Sickle outer base
+
+                g.setColor(c1);
+                g.fillOval(cx - 15, cy - 27, 42, 42); // Sickle inner cutout
+
+                g.setColor(c2);
+                g.setStroke(new BasicStroke(5));
+                g.drawLine(cx - 12, cy + 18, cx + 18, cy - 12); // Handle
+                g.fillPolygon(new int[]{cx + 12, cx + 24, cx + 18, cx + 6},
+                        new int[]{cy - 18, cy - 6, cy - 2, cy - 14}, 4); // Head
+                break;
+
+            case 58: // Islamic Crescent Moon & Star
+                g.setColor(c2);
+                g.fillOval(cx - 20, cy - 20, 40, 40);
+                g.setColor(c1);
+                g.fillOval(cx - 12, cy - 24, 38, 38);
+
+                g.setColor(c2);
+                int[] sx = new int[10];
+                int[] sy = new int[10];
+                for (int i = 0; i < 10; i++) {
+                    double angle = i * Math.PI / 5 - Math.PI / 2;
+                    double rr = (i % 2 == 0) ? 9 : 3.5;
+                    sx[i] = (int) (cx + 8 + Math.cos(angle) * rr);
+                    sy[i] = (int) (cy - 4 + Math.sin(angle) * rr);
+                }
+                g.fillPolygon(sx, sy, 10);
+                break;
+
+            case 59: // Cityscape
+                g.setColor(c2);
+                g.fillRect(cx - 30, cy + 15, 60, 4);
+                g.fillRect(cx - 25, cy - 10, 12, 25);
+                g.fillRect(cx - 10, cy - 20, 16, 35);
+                g.fillRect(cx + 8,  cy - 5,  18, 20);
+                g.drawLine(cx - 2, cy - 20, cx - 2, cy - 28);
+
+                g.setColor(c1);
+                g.fillRect(cx - 20, cy - 5, 2, 4);
+                g.fillRect(cx - 6, cy - 15, 3, 4);
+                g.fillRect(cx - 6, cy - 5, 3, 4);
+                g.fillRect(cx + 12, cy, 4, 4);
+                g.fillRect(cx + 18, cy, 4, 4);
+                break;
+
+            case 60: // Rat Silhouette (Proportions corrected)
+                g.setColor(c2);
+                // Larger Body & Snout
+                g.fillOval(cx - 22, cy - 8, 42, 24);
+                g.fillPolygon(new int[]{cx + 10, cx + 36, cx + 10}, new int[]{cy - 2, cy + 10, cy + 14}, 3);
+
+                // Ear (moved forward)
+                g.fillOval(cx + 8, cy - 12, 14, 14);
+                g.setColor(c1);
+                g.fillOval(cx + 12, cy - 8, 8, 8); // Ear depth
+                g.fillOval(cx + 24, cy + 4, 3, 3); // Eye
+
+                g.setColor(c2);
+                // S-Curve tail
+                g.setStroke(new BasicStroke(4, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                g.drawArc(cx - 38, cy - 2, 24, 16, 0, 180);
+                g.drawArc(cx - 56, cy - 2, 18, 16, 180, 180);
+
+                // Feet
+                g.fillRect(cx - 12, cy + 12, 4, 8);
+                g.fillRect(cx + 4, cy + 14, 4, 8);
+                break;
+
+            case 61: // Skull & Crossbones
+                g.setColor(c2);
+                // Crossbones
+                g.setStroke(new BasicStroke(7, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                g.drawLine(cx - 24, cy - 20, cx + 24, cy + 20);
+                g.drawLine(cx - 24, cy + 20, cx + 24, cy - 20);
+
+                // Skull Cranium & Jaw
+                g.fillOval(cx - 16, cy - 20, 32, 28);
+                g.fillRoundRect(cx - 10, cy - 4, 20, 18, 4, 4);
+
+                g.setColor(c1);
+                // Eyes & Nose Cutouts
+                g.fillOval(cx - 10, cy - 12, 8, 10);
+                g.fillOval(cx + 2, cy - 12, 8, 10);
+                g.fillPolygon(new int[]{cx, cx - 3, cx + 3}, new int[]{cy - 2, cy + 4, cy + 4}, 3);
+
+                // Teeth Cutouts
+                g.setStroke(new BasicStroke(2));
+                g.drawLine(cx - 4, cy + 8, cx - 4, cy + 14);
+                g.drawLine(cx, cy + 8, cx, cy + 14);
+                g.drawLine(cx + 4, cy + 8, cx + 4, cy + 14);
+                break;
+
+            case 62: // Cat Face
+                g.setColor(c2);
+                // Ears
+                g.fillPolygon(new int[]{cx - 22, cx - 10, cx - 22}, new int[]{cy - 5, cy - 18, cy - 24}, 3);
+                g.fillPolygon(new int[]{cx + 22, cx + 10, cx + 22}, new int[]{cy - 5, cy - 18, cy - 24}, 3);
+
+                // Main Face
+                g.fillOval(cx - 26, cy - 18, 52, 38);
+
+                g.setColor(c1);
+                // Slanted Almond Eyes
+                g.fillPolygon(new int[]{cx - 18, cx - 12, cx - 8, cx - 14}, new int[]{cy - 6, cy - 10, cy - 2, cy + 2}, 4);
+                g.fillPolygon(new int[]{cx + 18, cx + 12, cx + 8, cx + 14}, new int[]{cy - 6, cy - 10, cy - 2, cy + 2}, 4);
+
+                // Nose
+                g.fillPolygon(new int[]{cx, cx - 4, cx + 4}, new int[]{cy + 8, cy + 4, cy + 4}, 3);
+
+                // Whiskers
+                g.setStroke(new BasicStroke(2, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                g.drawLine(cx - 14, cy + 6, cx - 34, cy + 2);
+                g.drawLine(cx - 14, cy + 10, cx - 34, cy + 12);
+                g.drawLine(cx + 14, cy + 6, cx + 34, cy + 2);
+                g.drawLine(cx + 14, cy + 10, cx + 34, cy + 12);
+                break;
+                }
     }
 
     public static int getTemplateCount() {
