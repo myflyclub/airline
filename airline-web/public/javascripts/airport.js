@@ -1177,6 +1177,9 @@ async function toggleAllianceBaseMapViewButton(state) {
     //if on turn off toggleState = false
     if (!toggleState) return AirlineMap.updateAirportMarkers(activeAirline);
 
+    // Clear existing base markers while loading alliance data
+    AirlineMap.updateAirportBaseMarkers([]);
+
     // if off turn on toggleState = ture
     try {
         const res = await fetch(`/alliances/${alliancesId}/details`)
