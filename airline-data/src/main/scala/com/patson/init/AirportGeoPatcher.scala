@@ -76,7 +76,6 @@ object AirportGeoPatcher extends App {
 
     //Features
     DestinationsPatcher.loadDestinations()
-    AirportFeaturePatcher.patchFeatures()
 
     Await.result(actorSystem.terminate(), Duration.Inf)
   }

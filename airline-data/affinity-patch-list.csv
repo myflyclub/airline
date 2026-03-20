@@ -19,6 +19,7 @@ ABJ,Logistics MEA
 ABJ,Offshore oil
 ABJ,Rubber
 ABJ,Sapeur Network
+ABK,Somali|
 ABQ,Academia
 ABQ,Hispanic|
 ABQ,Renewables
@@ -162,11 +163,11 @@ AMS,|NL|Turkish
 AMS,Beer
 AMS,Diamonds
 AMS,Drug trafficking
+AMS,Dutch holiday
 AMS,Eurozone banking
 AMS,Horticulture
 AMS,Offshore finance
 AMS,Oil
-AMS,Dutch holiday
 AMS,Semiconductors
 AMV,Gazprom
 ANC,|US|Samoan
@@ -222,6 +223,7 @@ ASP,Cryptids
 ASP,Spirituality
 ASR,CPG & Retail
 ASU,Soybeans
+ASV,Conservation
 ATH,|AU|Greek
 ATH,Marine
 ATH,Mediterranean Ag
@@ -285,12 +287,14 @@ AYT,Russian|
 AZD,Ceramics
 AZS,Sugar
 BAG,Evangelicalism
+BAH,|BA|Malayali
 BAH,Aluminum
 BAH,Islamic finance
 BAH,LNG
 BAQ,|CL|Colombian
 BAQ,|MX|Colombian
 BAQ,|US|Colombian
+BAQ,Lebanese|
 BAR,Monsoon Ag
 BAV,Aluminum
 BAV,Coal CN
@@ -305,6 +309,7 @@ BCN,|ES|Romanian
 BCN,Apparel
 BCN,Logistics EU Med
 BCN,Mediterranean marine
+BCU,Sunni|
 BDA,Offshore finance
 BDA,Spirits
 BDB,Sugar
@@ -378,6 +383,7 @@ BHQ,Zinc
 BHX,|GB|Indian
 BHX,Loves Alps|
 BHX,Machinery
+BHX,Sunni|
 BHY,Logistics APAC
 BHY,Marine
 BIL,Big Sky
@@ -543,6 +549,7 @@ BSR,|SE|Iraqi
 BSR,|TR|Iraqi
 BSR,Oil
 BSR,Shia|
+BSZ,Agriculture
 BTH,Electronics
 BTH,Shipbuilding
 BTJ,Indian Ocean fishing
@@ -593,9 +600,9 @@ BVJ,Gazprom
 BWI,|US|Guatemalan
 BWI,|US|Nigerian
 BWI,|US|Salvadoran
-BWI,US Defense
 BWI,Healthcare admin
 BWI,Logistics NAC
+BWI,US Defense
 BWN,LNG
 BWN,Offshore oil
 BWN,Sinophone|
@@ -641,6 +648,7 @@ CBR,Aussie Outliers
 CBR,Bureaucracy
 CBR,US Defense
 CCJ,|AE|Malayali
+CCJ,|BA|Malayali
 CCJ,|MY|Malayali
 CCJ,|OM|Malayali
 CCJ,|SA|Malayali
@@ -851,10 +859,11 @@ CNF,Autos
 CNF,Bauxite
 CNF,Coffee
 CNF,Dairy
-CNF,Steel
 CNF,Drug trafficking
+CNF,Steel
 CNJ,Gold FIFO
 CNN,|AE|Malayali
+CNN,|BA|Malayali
 CNN,|MY|Malayali
 CNN,|OM|Malayali
 CNN,|SA|Malayali
@@ -868,6 +877,7 @@ CNX,Sugar
 COD,Coal seam gas
 COD,Oil fracking
 COK,|AE|Malayali
+COK,|BA|Malayali
 COK,|MY|Malayali
 COK,|OM|Malayali
 COK,|SA|Malayali
@@ -880,8 +890,8 @@ COR,Autos
 COR,Loves Florianopolis x2|
 COR,Peanuts
 COR,Ranching
-COS,US Defense
 COS,Evangelicalism
+COS,US Defense
 COU,Soybeans
 COV,Logistics EU Med
 COV,Mediterranean Ag
@@ -929,6 +939,7 @@ CTA,|US|Italian
 CTA,Mediterranean Ag
 CTG,Anglophone|
 CTG,Coffee
+CTG,Lebanese|
 CTG,Petrochemicals
 CTL,Coal seam gas
 CTM,Pemex
@@ -1015,11 +1026,11 @@ DBO,Sheep
 DBV,Mediterranean Ag
 DCA,Asset management
 DCA,Bureaucracy
-DCA,US Defense
 DCA,Healthcare admin
 DCA,NA Capitols|
 DCA,Professional services
 DCA,Space
+DCA,US Defense
 DCA,US military
 DDC,Grain Belt
 DEC,Soybeans
@@ -1033,7 +1044,6 @@ DEN,|US|Ethiopian
 DEN,Aerospace
 DEN,Asset management
 DEN,Cryptocurrency
-DEN,US Defense
 DEN,Gold
 DEN,Logistics NAC
 DEN,Mountaineering
@@ -1041,23 +1051,26 @@ DEN,Regional banking US
 DEN,Renewables
 DEN,Software
 DEN,Telco
+DEN,US Defense
 DFW,|US|Chinese
 DFW,|US|Durango & Zacatecas
 DFW,|US|Indian
 DFW,|US|Jalisco & Michoacán
-DFW,US Defense
 DFW,Oil
 DFW,Professional services
 DFW,Regional banking US
 DFW,Semiconductors
 DFW,Telco
+DFW,US Defense
 DGO,|US|Durango & Zacatecas
 DGT,Geothermal
 DHN,Peanuts
 DIB,Oil
 DIK,Oil fracking
 DIL,Offshore oil
+DIR,Somali|
 DIY,Agriculture
+DKA,Sunni|
 DLA,Chocolate
 DLA,Logistics MEA
 DLA,Offshore oil
@@ -1151,7 +1164,6 @@ DTM,Petrochemicals
 DTW,Auto parts
 DTW,Autos
 DTW,Regional banking US
-DTW,Sunni|
 DUB,|IE|Polish
 DUB,|US|Irish American
 DUB,Asset management
@@ -1335,6 +1347,7 @@ FIH,Gemstones
 FIH,Peacekeeping
 FIH,Sapeur Network
 FJR,|AE|Malayali
+FJR,|BA|Malayali
 FKB,Paper & furniture
 FKI,Diamonds
 FKI,Sapeur Network
@@ -1382,7 +1395,6 @@ FRA,Pharma
 FRA,Professional services
 FRA,Telco
 FRD,Northwest Passage
-FRU,Agriculture
 FRW,Diamonds
 FSD,Nordic|
 FSD,Regional banking US
@@ -1419,6 +1431,7 @@ GCH,NIOC
 GCI,Offshore finance
 GCK,Wind energy
 GCM,Offshore finance
+GDE,Somali|
 GDL,|US|Jalisco & Michoacán
 GDL,Apparel
 GDL,CPG & Retail
@@ -1457,10 +1470,10 @@ GIZ,Horticulture
 GIZ,Oil refining
 GJA,Soybeans
 GJL,|FR|Algerian x2
-GLA,US Defense
 GLA,Loves Alps|
 GLA,Machinery
 GLA,Marine
+GLA,US Defense
 GLA,Whiskey
 GLH,Rice
 GLT,Coal
@@ -1468,6 +1481,7 @@ GLT,Coal seam gas
 GLT,LNG
 GMO,|US|Nigerian
 GMO,Dark economy
+GMO,Sunni|
 GMP,|JP|Korean
 GMP,|US|Korean
 GMP,Appliances
@@ -1524,6 +1538,7 @@ GRU,Ceramics
 GRU,Lebanese|
 GRU,Telco
 GRV,Defense RU
+GRV,Sunni|
 GRX,Mediterranean Ag
 GSO,Paper & furniture
 GSO,Tobacco
@@ -1761,8 +1776,8 @@ HSR,Auto parts
 HSR,Heavy industry
 HSR,Peanuts
 HSV,Academia
-HSV,US Defense
 HSV,Space
+HSV,US Defense
 HTA,Coal RU
 HTA,Rosneft
 HTA,Taiga
@@ -1836,9 +1851,9 @@ ICN,TV / movies
 ICN,US military
 ICT,|US|Jalisco & Michoacán
 ICT,Aerospace
-ICT,US Defense
 ICT,Grain Belt
 ICT,Machinery
+ICT,US Defense
 IDA,Gemstones
 IDA,Nuclear energy
 IDR,Agriculture
@@ -1850,6 +1865,7 @@ IFN,|TR|Iranian
 IFN,|US|Iranian x2
 IFN,Steel
 IGS,Auto parts
+IGT,Sunni|
 IGU,|BR|Nikkei
 IGU,Soybeans
 IGU,UFOs
@@ -2019,6 +2035,7 @@ JHG,Sinopec
 JIB,Belt & Road|
 JIB,Logistics MEA
 JIC,Copper
+JIJ,Somali|
 JIU,Horticulture
 JJN,Ceramics
 JJN,Footwear
@@ -2032,13 +2049,13 @@ JNB,Copperbelt
 JNB,Diamonds
 JNB,Gold
 JNB,Logistics MEA
+JNB,Platinum
 JNB,Rare earths
 JNB,Telco
 JNB,Uranium
-JNB,Platinum
 JNG,Machinery
-JNU,Arctic fishing
 JNU,Alaska Milk Run
+JNU,Arctic fishing
 JNZ,Horticulture
 JNZ,Textiles
 JOG,Apparel
@@ -2066,6 +2083,7 @@ JXA,Gemstones
 JZH,Aluminum
 JZH,Iron ore
 KAN,Peanuts
+KAN,Sunni|
 KBL,|DE|Afghan
 KBL,|PK|Afghan
 KBL,|TR|Afghan
@@ -2158,7 +2176,6 @@ KJA,Rosneft
 KJA,Russian Vacay x2|
 KJA,Taiga
 KJT,Tea
-KME,|US|Salvadoran
 KME,Rare earths
 KMG,|AU|Chinese
 KMG,|CA|Chinese
@@ -2218,6 +2235,10 @@ KSU,Equinor
 KTA,Copper FIFO
 KTA,Iron ore
 KTA,LNG
+KTI,|KH|Indonesian
+KTI,Apparel
+KTI,Dark Economy
+KTI,Spices / Tropical Ag
 KTM,Cryptids
 KTM,Mountaineering
 KTM,Peacekeeping
@@ -2265,6 +2286,7 @@ KZN,|US|Russian
 KZN,Aluminum
 KZN,Machinery
 KZN,Russian Vacay x2|
+KZN,Sunni|
 KZO,Oil refining
 KZO,Space
 KZO,Uranium
@@ -2327,7 +2349,6 @@ LCY,Offshore finance
 LCY,Professional services
 LCY,Spirits
 LDB,Poultry
-LDE,Spirituality
 LDH,Aussie Outliers
 LEA,Copper FIFO
 LEA,Gemstones
@@ -2341,6 +2362,7 @@ LED,Machinery
 LED,Russian Vacay x2|
 LED,Shipbuilding
 LED,Vodka
+LEH,Spirituality
 LEI,British Sunny Vacay x2|
 LEI,Horticulture
 LEJ,Auto parts
@@ -2369,12 +2391,12 @@ LGA,Telco
 LGB,|US|Nikkei
 LGB,|US|Salvadoran
 LGB,|US|Samoan
-LGB,US Defense
 LGB,Global logistics
 LGB,Logistics NAC
 LGB,Petrochemicals
 LGB,SoCal NoCal
 LGB,Toys
+LGB,US Defense
 LGK,|MY|Tamil
 LGK,German|
 LGK,Indian Ocean fishing
@@ -2404,11 +2426,11 @@ LHR,Asset management
 LHR,Bengali|
 LHR,Bureaucracy
 LHR,Commonwealth ties
-LHR,US Defense
 LHR,Investment banking
 LHR,Professional services
 LHR,Telco
 LHR,TV / movies
+LHR,US Defense
 LHW,Aluminum
 LHW,PetroChina
 LHW,Potato
@@ -2588,9 +2610,9 @@ MCM,Casinos
 MCO,|CU|Cuban x2
 MCO,|US|Brazilian
 MCO,|US|Stateside Puerto Ricans
-MCO,US Defense
 MCO,Golf
 MCO,Lusophone|
+MCO,US Defense
 MCP,Amazonia
 MCP,Paper & furniture
 MCT,|OM|Baloch
@@ -2599,6 +2621,7 @@ MCT,Offshore oil
 MCT,Oil
 MCV,Zinc
 MCX,Oil refining
+MCX,Sunni|
 MCZ,Petrobras
 MCZ,Sugar
 MDC,Nickel
@@ -2715,8 +2738,8 @@ MKR,Sheep
 MKY,Coal
 MKY,Sugar
 MLA,Offshore finance
-MLB,US Defense
 MLB,Space
+MLB,US Defense
 MLE,Indian Ocean fishing
 MLE,Italian|
 MLE,Russian Vacay x2|
@@ -2786,6 +2809,7 @@ MRV,|AE|Russian
 MRV,|US|Russian
 MRV,Grain Belt
 MRV,Russian Vacay x2|
+MRV,Sunni|
 MRX,NIOC
 MRY,Surfing
 MSJ,Arctic fishing
@@ -2872,6 +2896,7 @@ NAG,|SG|Marathi
 NAG,Ceramics
 NAG,Manganese
 NAG,Soybeans
+NAL,Sunni|
 NAN,Melanesia
 NAN,Surfing
 NAN,Water
@@ -2885,6 +2910,7 @@ NAS,Offshore finance
 NAT,Petrobras
 NBC,Logistics APAC
 NBC,Petrochemicals
+NBC,Sunni|
 NBE,|FR|Tunisian x2
 NBJ,Logistics MEA
 NBJ,Oil
@@ -2982,8 +3008,8 @@ NQY,Atlantic Fishing
 NQY,Surfing
 NQZ,Belt & Road|
 NQZ,Gazprom
-NQZ,Regional banking APAC
 NQZ,PetroChina
+NQZ,Regional banking APAC
 NRT,|AR|Nikkei
 NRT,|BR|Nikkei
 NRT,|JP|Korean
@@ -3017,6 +3043,7 @@ NTG,Wind energy
 NTL,Coal
 NTL,Surfing
 NTQ,Spirituality
+NTT,Polynesia
 NTY,Casinos
 NUE,Auto parts
 NUE,Robotics
@@ -3161,8 +3188,8 @@ PBI,Golf
 PBI,Hispanic|
 PBM,|NL|Surinamese
 PBM,Bauxite
-PBM,Dutch holiday
 PBM,Bauxite
+PBM,Dutch holiday
 PBO,Iron ore
 PBU,Drug trafficking
 PCL,Amazonia
@@ -3244,10 +3271,10 @@ PHX,|US|Jalisco & Michoacán
 PHX,Aerospace
 PHX,Back office
 PHX,Copper
-PHX,US Defense
 PHX,Logistics NAC
 PHX,Renewables
 PHX,Semiconductors
+PHX,US Defense
 PIA,Healthcare admin
 PIA,Machinery
 PIT,Academia
@@ -3292,19 +3319,15 @@ PMO,Mediterranean Ag
 PMR,Dairy
 PMV,PDVSA
 PMW,Gemstones
-PNH,|KH|Indonesian
-PNH,Apparel
-PNH,Dark Economy
-PNH,Spices / Tropical Ag
 PNI,Micronesia
 PNK,|ID|Chinese
 PNK,Monsoon Ag
 PNK,Rubber
 PNQ,|SG|Marathi
 PNQ,Autos
+PNQ,Back office
 PNQ,Machinery
 PNQ,Sugar
-PNQ,Back office
 PNR,Offshore oil
 PNS,Cotton
 PNS,Offshore oil
@@ -3320,6 +3343,7 @@ POA,Tobacco
 POG,Offshore oil
 POM,ExxonMobil
 POM,Melanesia
+POM,Anglophone|
 POP,Anglophone|
 POS,Forestry
 POS,Oil refining
@@ -3433,7 +3457,6 @@ QRW,Oil
 QSZ,Sunni|
 RAB,Melanesia
 RAB,Melanesia
-RAI,Lusophone|
 RAK,|FR|Moroccan
 RAK,|NL|Moroccan
 RAK,Francophonie|
@@ -3538,11 +3561,11 @@ RSW,Hispanic|
 RTB,Anglophone|
 RTB,Offshore oil
 RTM,|NL|Indonesian
+RTM,Dutch holiday
 RTM,Equinor
 RTM,Fine cheese
 RTM,Global logistics
 RTM,Logistics EU Med
-RTM,Dutch holiday
 RTM,Petrochemicals
 RTM,Vodka
 RUH,|SA|Bangladeshi
@@ -3575,9 +3598,9 @@ SAN,|US|Filipino
 SAN,|US|Guerrero & Oaxaca
 SAN,|US|Iranian
 SAN,|US|Samoan
-SAN,US Defense
 SAN,Life sciences
 SAN,SoCal NoCal
+SAN,US Defense
 SAN,US military
 SAP,Chocolate
 SAP,Zinc
@@ -3625,7 +3648,6 @@ SCO,Gazprom
 SCO,PetroChina
 SCO,Uranium
 SCQ,British Sunny Vacay x2|
-SCQ,Spirituality
 SCR,Anglophone|
 SCU,Sugar
 SCV,|ES|Romanian
@@ -3766,6 +3788,8 @@ SKG,German|
 SKG,Heavy industry
 SKG,Marine
 SKG,Mediterranean Ag
+SKO,Sunni|
+SKP,Albanian|
 SKT,Monsoon Ag
 SKT,Toys
 SKZ,Agriculture
@@ -3797,6 +3821,7 @@ SMF,SoCal NoCal
 SMI,Nordic|
 SMR,Drug trafficking
 SMR,Latifundia Legacy
+SMR,Lebanese|
 SMR,Logistics LATAM
 SNA,|US|Iranian x2
 SNA,|US|Jewish
@@ -3817,7 +3842,8 @@ SON,Melanesia
 SON,Seafood
 SOQ,Nickel
 SOU,UFOs
-SPC,British Sunny Vacay x2|
+SPC,German|
+SPC,Anglophone|
 SPC,Science megastructure
 SPI,Grain Belt
 SPN,Korean|
@@ -4057,12 +4083,12 @@ TLV,|IE|Filipino
 TLV,|IL|Russian
 TLV,|UK|Jewish
 TLV,|US|Jewish
-TLV,US Defense
 TLV,Diamonds
 TLV,Horticulture
 TLV,Israeli Vacay x2
 TLV,Semiconductors
 TLV,Software
+TLV,US Defense
 TLV,Water
 TLY,Taiga
 TMC,Nickel
@@ -4114,6 +4140,7 @@ TRS,Mediterranean marine
 TRU,Coffee
 TRU,Copper
 TRV,|AE|Malayali
+TRV,|BA|Malayali
 TRV,|MY|Malayali
 TRV,|OM|Malayali
 TRV,|SA|Malayali
@@ -4160,10 +4187,10 @@ TUN,Auto parts
 TUN,Mediterranean Ag
 TUN,Offshore oil
 TUR,Amazonia
-TUS,US Defense
 TUS,Gemstones
 TUS,Golf
 TUS,Hispanic|
+TUS,US Defense
 TUS,Water
 TVS,Steel
 TWU,Chinese tourism|
@@ -4195,6 +4222,7 @@ UFA,|US|Russian
 UFA,Oil refining
 UFA,Petrochemicals
 UFA,Russian Vacay x2|
+UFA,Sunni|
 UIO,|ES|Ecuadorian
 UIO,|US|Ecuadorian
 UIO,Coffee
@@ -4240,6 +4268,7 @@ UTP,Appliances
 UTP,Auto parts
 UTP,Petrochemicals
 UTP,Russian Vacay x2|
+UUA,Sunni|
 UUD,Gold
 UUD,Jade
 UUS,Defense RU
@@ -4433,8 +4462,8 @@ YBC,Boreal
 YBC,Francophonie|
 YBG,Aluminum
 YBG,Francophonie|
-YBG,Maple syrup
 YBG,Francophonie|
+YBG,Maple syrup
 YBP,Baijiu
 YBP,PetroChina
 YBR,Grain Belt
@@ -4452,6 +4481,7 @@ YEG,Loves Cancun x2|
 YEG,Oil fracking
 YEI,Appliances
 YEI,Auto parts
+YEU,Polar research
 YEV,Canadian Arctic 
 YFB,Canadian Arctic 
 YFB,Loves Arctic|
@@ -4498,9 +4528,9 @@ YNZ,Auto parts
 YOW,|CA|Filipino
 YOW,Bureaucracy
 YOW,Canadian Arctic 
-YOW,US Defense
 YOW,Loves Cancun x2|
 YOW,NA Capitols|
+YOW,US Defense
 YPE,Oil fracking
 YPR,Coal seam gas
 YPR,Northwest Passage
@@ -4606,9 +4636,9 @@ YYE,Boreal
 YYG,Atlantic Fishing
 YYG,Potato
 YYG,Wind energy
-YYJ,US Defense
 YYJ,Marine
 YYJ,Northwest Passage
+YYJ,US Defense
 YYR,Boreal
 YYT,Arctic oil
 YYT,Atlantic Fishing

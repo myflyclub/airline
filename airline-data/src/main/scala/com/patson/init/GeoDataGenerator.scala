@@ -238,9 +238,7 @@ object GeoDataGenerator extends App {
     
     saveAirportRunways(rawAirportResult, runwayResult, airports)
 
-    //patch features
     DestinationsPatcher.loadDestinations()
-    AirportFeaturePatcher.patchFeatures()
 
     airports
   }
