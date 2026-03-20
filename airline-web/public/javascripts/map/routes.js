@@ -3,7 +3,7 @@
  * Handles drawing and interaction with flight paths.
  */
 
-import { state, pathOpacityByStyle } from './state.js';
+import { state } from './state.js';
 import { hasSource, hasLayer, addSource, addLayer, removeLayer, removeSource, setSourceData, on, off, setCursor } from './core.js';
 import { createGreatCircleGeometry } from './geodesic.js';
 import { getCurrentStyle, getPathOpacity } from './styles.js';

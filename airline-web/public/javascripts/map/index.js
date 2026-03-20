@@ -5,9 +5,8 @@
 
 // Import all modules
 import { state, pathOpacityByStyle } from './state.js';
-import { initMap, getMap, centerOnHQ, addControl, removeControl, hasSource, hasLayer, addSource, addLayer, removeLayer, removeSource, setSourceData, on, off, setCursor, flyTo, drawCircle, removeCircle } from './core.js';
+import { initMap, getMap, centerOnHQ, flyTo, drawCircle, removeCircle } from './core.js';
 import { initStyles, getMapStyle, getCurrentStyle, toggleMapLight, updateMapStyle, getPathOpacity } from './styles.js';
-import { createGreatCircleGeometry } from './geodesic.js';
 import { initMarkers, addMarkers, removeMarkers, updateAirportBaseMarkers, updateAirportMarkers, toggleChampionMap } from './markers.js';
 import { initRoutes, drawFlightPath, refreshFlightPath, getLinkColor, highlightPath, unhighlightPath, highlightLink, unhighlightLink, clearAllPaths, clearPathEntry, drawTempPath, removeTempPath, drawAirportLinkPath, clearAirportLinkPaths, drawAllianceLink, drawLinkHistoryPath, showLinkHistory, clearHistoryPaths, setRoutesFromGeoJSON, getHistoryRoutesClickLayerId, ensureHistoryRoutesLayers, setRouteSelectable } from './routes.js';
 import { showAirportPopup, closeAirportPopup, closeAirportInfoPopup, showLinkPopup, showAirportLinkPopup, showAllianceBasePopup, showLinkHistoryPopup, closePopup, closeAlliancePopups, closeAllianceLinkPopup } from './popups.js';

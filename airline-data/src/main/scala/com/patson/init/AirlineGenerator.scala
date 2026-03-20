@@ -273,7 +273,7 @@ object AirlineGenerator extends App {
     val user = User(userName = userName, email = "bot", Calendar.getInstance, Calendar.getInstance, UserStatus.ACTIVE, level = 0, None, List.empty)
 
     val devMode = if (configFactory.hasPath("dev")) configFactory.getBoolean("dev") else false
-    val password = if (devMode) "12345" else Random.nextInt(5000).toString
+    val password = if (!devMode) "12345" else Random.nextInt(5000).toString
     UserSource.saveUser(user)
     Authentication.createUserSecret(userName, password)
 
