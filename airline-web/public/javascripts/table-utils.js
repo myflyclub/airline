@@ -446,6 +446,7 @@ function addTableSummaryRow(tableSelector, dataArray, columnConfigs, aggregation
     columnConfigs.forEach((config) => {
         if (!config.getValue) {
             // Non-numeric column, just add empty cell or label
+            summaryRow.append("<div class='cell'> </div>");
             summaryRow.append("<div class='cell'>" + (config.label || '') + "</div>");
             return;
         }
