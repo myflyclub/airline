@@ -153,28 +153,33 @@ class AirportSpec(_system: ActorSystem) extends TestKit(_system) with ImplicitSe
     }
   }
 
-  "Data output scripts" should {
-    "output upkeep and upgrade cost for various base sizes and airports" in {
-      val iatas = List("JFK", "ADD", "DXB", "MAD", "SCE", "PVG")
-      val baseSizes = List(4, 8, 12, 16)
-      val airline = Airline("TestAirline", id = 999)
+  "Airline base" should {
+    "MegaHQ should have cheapest base costs" in {
+      val iatas = List("JFK", "CAI", "SCE")
+      val baseSizes = List(2, 4, 8)
+      val airlineNormal = Airline("TestAirline", id = 999)
       val airlineMHQ = Airline("TestMegaHQ", id = 1000, airlineType = MegaHqAirline)
-      val airlineRegional = Airline("TestMegaHQ", id = 1001, airlineType = RegionalAirline)
+//      val airlineRegional = Airline("TestMegaHQ", id = 1001, airlineType = RegionalAirline)
       val airports = iatas.flatMap(iata => AirportSource.loadAirportByIata(iata, true))
 
-      println(s"Airport, BaseSize, Upkeep, UpgradeCost")
+      println("Airport, Difficulty, BaseSize, Upkeep(Normal), Upkeep(MegaHQ), Upkeep(MegaHQ Not HQ), Upgrade(Normal), Upgrade(MegaHQ), Upgrade(MegaHQ Not HQ)")
       for (airport <- airports; baseSize <- baseSizes) {
-        val base = AirlineBase(airline, airport, airport.countryCode, baseSize, foundedCycle = 0, headquarter = false)
-        println(s"${airport.iata}, ${airport.rating.overallDifficulty}, $baseSize, ${base.getUpkeep}, ${base.getValue}")
-
+        val baseNormal = AirlineBase(airlineNormal, airport, airport.countryCode, baseSize, foundedCycle = 0, headquarter = false)
         val baseMHQ = AirlineBase(airlineMHQ, airport, airport.countryCode, baseSize, foundedCycle = 0, headquarter = true)
-        println(s"${airport.iata}, ${airport.rating.overallDifficulty}, $baseSize, ${baseMHQ.getUpkeep}, ${baseMHQ.getValue}")
+        val baseMHQnotHQ = AirlineBase(airlineMHQ, airport, airport.countryCode, baseSize, foundedCycle = 0, headquarter = false)
 
-        val baseAirlineRegional = AirlineBase(airlineRegional, airport, airport.countryCode, baseSize, foundedCycle = 0, headquarter = true)
-        println(s"${airport.iata}, ${airport.rating.overallDifficulty}, $baseSize, ${baseAirlineRegional.getUpkeep}, ${baseAirlineRegional.getValue}")
+        // Grouping metrics
+        val upkeepCompare = s"${baseNormal.getUpkeep}, ${baseMHQ.getUpkeep}, ${baseMHQnotHQ.getUpkeep}"
+        val upgradeCompare = s"${baseNormal.getValue}, ${baseMHQ.getValue}, ${baseMHQnotHQ.getValue}"
+
+        println(s"${airport.iata}, ${airport.rating.overallDifficulty}, $baseSize, $upkeepCompare, $upgradeCompare")
+
+        baseMHQnotHQ.getUpkeep should be > baseNormal.getUpkeep
+        baseNormal.getUpkeep should be > baseMHQ.getUpkeep
+
+        baseMHQnotHQ.getValue should be > baseNormal.getValue
+        baseNormal.getValue should be > baseMHQ.getValue
       }
-      succeed
     }
-
   }
 }

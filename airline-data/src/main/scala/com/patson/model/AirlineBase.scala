@@ -24,7 +24,7 @@ case class AirlineBase(airline : Airline, airport : Airport, countryCode : Strin
     if (headquarter && scale == 1) {
       0
     } else if (airlineType == MegaHqAirline && headquarter) {
-      val cost: Long = (baseCost * Math.pow(0.93 + airportSizeDiscount, effectiveScale)).toLong
+      val cost: Long = (baseCost * Math.pow(0.8 + airportSizeDiscount, effectiveScale)).toLong
       Math.max(10_000_000L, cost - 80_000_000L) // Modifiers doubled
     } else if (airlineType == MegaHqAirline && !headquarter) {
       val cost: Long = (baseCost * Math.pow(1.2 + airportSizeDiscount, effectiveScale)).toLong
@@ -44,7 +44,7 @@ case class AirlineBase(airline : Airline, airport : Airport, countryCode : Strin
     val airportSizeMod = airport.size.toDouble * 0.05
 
     if (airlineType == MegaHqAirline && headquarter) {
-      (baseUpkeep * Math.pow(effectiveScale, 1.85)).toLong
+      (baseUpkeep * Math.pow(effectiveScale, 1.7 + airportSizeMod / 2)).toLong
     } else if (airlineType == MegaHqAirline && !headquarter) {
       (baseUpkeep * Math.pow(effectiveScale, 1.9 + airportSizeMod)).toLong
     } else {

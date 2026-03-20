@@ -4,7 +4,7 @@ import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
 class AirlineGradeSpec extends AnyFunSuite with Matchers {
-  
+
   test("AirlineGrades: value below smallest threshold returns level 0 with correct ceiling") {
     val grade = AirlineGrades.findGrade(10.0)
     grade.level shouldBe 0

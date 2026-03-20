@@ -3,11 +3,10 @@ package com.patson.model
 case class StockMetric(value: Int, floor: Double, target: Double)
 
 object StockModel {
-  val STOCK_EXPONENT = 2.3
-  val STOCK_BROKER_FEE = 0.08
+  val STOCK_BROKER_FEE = 0.07
   val STOCK_BROKER_FEE_BASE = 250_000
-  val STOCK_BUYBACK_MIN_CHANGE = 0.03
-  val STOCK_BUYBACK_MAX_CHANGE = 0.12
+  val STOCK_BUYBACK_MIN_CHANGE = 0.05
+  val STOCK_BUYBACK_MAX_CHANGE = 0.14
   val TOOLTIP_STOCK_EPS = List(
     "Earnings per share is the primary metric with a 6x weight.",
     "Increasing your revenue and decreasing the shares outstanding will cause EPS to go up."
@@ -82,7 +81,7 @@ object StockModel {
         stockPrice * 0.15 + targetPrice * 0.85
       } else {
         // price falls slower, making buybacks more impactful
-        stockPrice * 0.8 + targetPrice * 0.2
+        stockPrice * 0.9 + targetPrice * 0.1
       }
 
     BigDecimal(result).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble

@@ -22,7 +22,7 @@ object AirportStatsInit extends App {
   }
 
   def initAirportStats() = {
-    val demands = DemandGenerator.computeDemand(0, Map(0 -> AirportStatistics(0,0,0,0.0,0.0,0.0)))
+    val demands = DemandGenerator.computeDemand(0, Map().empty)
     val totalDemandByAirport = demands.foldLeft(Map[Airport, Int]().withDefaultValue(0)) {
       case (acc, (passengerGroup, toAirport, demand)) =>
         // Add the demand to the total for the 'from' airport

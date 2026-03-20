@@ -46,8 +46,8 @@ object AirlineMilestones {
         "MILESTONE_AIRCRAFT_TYPES",
         "Aircraft Types",
         List(
-          MilestoneCondition(8, 40),
-          MilestoneCondition(4, 15)
+          MilestoneCondition(6, 40),
+          MilestoneCondition(3, 15)
         )
       ),
       Milestone(
@@ -129,7 +129,7 @@ object AirlineMilestones {
         "MILESTONE_AIRCRAFT_TYPES",
         "Aircraft Types",
         List(
-          MilestoneCondition(7, 60),
+          MilestoneCondition(6, 60),
           MilestoneCondition(3, 20)
         )
       ),
@@ -149,7 +149,7 @@ object AirlineMilestones {
         "Passenger KM",
         List(
           MilestoneCondition(100000000, 60),
-          MilestoneCondition(50000, 20)
+          MilestoneCondition(50000, 15)
         )
       ),
       Milestone(
@@ -181,7 +181,7 @@ object AirlineMilestones {
         "Number Bases",
         List(
           MilestoneCondition(18, 90),
-          MilestoneCondition(6, 30)
+          MilestoneCondition(5, 30)
         )
       ),
       Milestone(
@@ -223,7 +223,7 @@ object AirlineMilestones {
         "MILESTONE_AIRCRAFT_TYPES",
         "Aircraft Types",
         List(
-          MilestoneCondition(8, 60),
+          MilestoneCondition(6, 60),
           MilestoneCondition(4, 20)
         )
       ),
@@ -282,8 +282,8 @@ object AirlineMilestones {
         "MILESTONE_AIRCRAFT_TYPES",
         "Aircraft Types",
         List(
-          MilestoneCondition(9, 60),
-          MilestoneCondition(4, 20)
+          MilestoneCondition(6, 60),
+          MilestoneCondition(3, 20)
         )
       ),
       Milestone(
