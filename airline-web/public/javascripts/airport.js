@@ -210,7 +210,8 @@ function updateAirportDetails(airport) {
     var $incomeLevelSpan = getBoostSpan(airport.income, airport?.boosts?.income, $('#incomeDetailsTooltip'), "$")
     $("#airportDetailsIncomeLevel").html($incomeLevelSpan)
     $("#airportDetailsPopMiddleIncome").html(airport.popMiddleIncome + "%")
-    $("#airportDetailsPopElite").html("~" + Number(airport.popElite).toLocaleString())
+    var $eliteSpan = getBoostSpan(airport.popElite, airport?.boosts?.elite, $('#eliteDetailsTooltip'))
+    $("#airportDetailsPopElite").html("~").append($eliteSpan)
 
     $(".airportCountryName").text(loadedCountriesByCode[airport.countryCode].name)
     $(".airportCountryFlag").empty()
@@ -491,7 +492,7 @@ function checkForAirportUpdate(airport) {
     // Prefer fresh boost data embedded in the airport detail response (populationBoost /
     // incomeLevelBoost from AirportExtendedWrites) — avoids relying on the potentially
     // stale airportsLatestData bulk cache (e.g. after a specialization change).
-    if (airport.populationBoost || airport.incomeLevelBoost) {
+    if (airport.populationBoost || airport.incomeLevelBoost || airport.eliteBoost) {
         const boostFactors = {}
         if (airport.populationBoost) {
             const popBoost = airport.populationBoost.reduce((sum, item) => sum + (Number(item.value) || 0), 0)
@@ -502,6 +503,11 @@ function checkForAirportUpdate(airport) {
         }
         if (airport.incomeLevelBoost) {
             boostFactors.income = airport.incomeLevelBoost
+        }
+        if (airport.eliteBoost) {
+            const eliteBoostTotal = airport.eliteBoost.reduce((sum, item) => sum + (Number(item.value) || 0), 0)
+            airport.popElite += eliteBoostTotal
+            boostFactors.elite = airport.eliteBoost
         }
         airport.boosts = boostFactors
 
@@ -538,6 +544,10 @@ function checkForAirportUpdate(airport) {
             const oldMiddleIncome = airport.population * airport.popMiddleIncome / 100
             airport.popMiddleIncome = ((oldMiddleIncome + popBoost) / (airport.population + popBoost) * 100).toFixed(1)
             airport.population += popBoost
+        }
+        if (boostFactors.hasOwnProperty('elite')) {
+            let eliteBoost = boostFactors.elite.reduce((sum, item) => sum + (Number(item.value) || 0), 0)
+            airport.popElite += eliteBoost
         }
 
         airport.boosts = Object.assign({}, boostFactors)
