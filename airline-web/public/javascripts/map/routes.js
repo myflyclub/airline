@@ -717,7 +717,7 @@ export function drawLinkHistoryPath(link, inverted, watchedLinkId, step) {
     const historyPath = state.historyPaths[pathKey];
     if (link.airlineId === window.activeAirline?.id) {
         historyPath.thisAirlinePassengers += link.passenger;
-    } else if (window.currentAirlineAllianceMembers?.includes(link.airlineId)) {
+    } else if (window.Alliance?.getMyAllianceMemberIds().has(link.airlineId)) {
         historyPath.thisAlliancePassengers += link.passenger;
     } else {
         historyPath.otherAirlinePassengers += link.passenger;
@@ -782,22 +782,7 @@ function refreshHistoryRoutesGeoJSON() {
         if (pathData.visible === false) return;
 
         const link = pathData.link;
-        let geometry = pathData.geometry;
-        
-        if (pathData.inverted) {
-            // Reverse geometry for symbol-placement: line to point in correct direction
-            if (geometry.type === 'LineString') {
-                geometry = {
-                    type: 'LineString',
-                    coordinates: [...geometry.coordinates].reverse()
-                };
-            } else if (geometry.type === 'MultiLineString') {
-                geometry = {
-                    type: 'MultiLineString',
-                    coordinates: geometry.coordinates.map(line => [...line].reverse()).reverse()
-                };
-            }
-        }
+        const geometry = pathData.geometry;
 
         features.push({
             type: 'Feature',

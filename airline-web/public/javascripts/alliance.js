@@ -1037,6 +1037,22 @@ const Alliance = (() => {
     // =========================================================================
     // Public API
     // =========================================================================
+
+    /**
+     * Returns a Set of airlineIds that are approved members of the active airline's alliance.
+     * Used by routes.js to classify passengers on history paths.
+     */
+    function getMyAllianceMemberIds() {
+        if (!activeAirline || !activeAirline.allianceId) return new Set();
+        const alliance = loadedAlliancesById[activeAirline.allianceId];
+        if (!alliance) return new Set();
+        return new Set(
+            alliance.members
+                .filter(m => m.allianceRole !== 'Applicant')
+                .map(m => m.airlineId)
+        );
+    }
+
     return {
         // Entry
         show,
@@ -1072,6 +1088,9 @@ const Alliance = (() => {
         // State accessors (for external callers)
         get selectedAllianceId() { return selectedAllianceId; },
         get loadedAlliancesById() { return loadedAlliancesById; },
+
+        // Utilities for other modules
+        getMyAllianceMemberIds,
     };
 })();
 

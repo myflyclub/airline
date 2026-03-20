@@ -7,7 +7,6 @@ var linksTableSummaryState = false
 var linksAverages = null
 var linksViewMode = 'weekly'
 var currentAnimationStatus = false
-var currentAirlineAllianceMembers = []
 var selectedLinkIds = new Set()
 var linkColors = JSON.parse(localStorage.getItem('linkColors')) || {}
 const CLASSES = ['economy', 'business', 'first'];

@@ -55,30 +55,28 @@
 		<div id="cityPie" style="height: 70px;"></div>
     </div>
 
-    <div style="display: none; width: 350px;" id="linkHistoryPopup" class="mapPopup">
-    	<input type="hidden" id="linkHistoryPopupId">
-    	<div class="table" style="width: 100%">
-   			<div class="table-row">
-   				<div class="label" style="width: 60%"><h5>From :</h5></div>
-   				<div class="value" style="width: 40%" id="linkHistoryPopupFrom"></div>
-   			</div>
-   			<div class="table-row">
-   				<div class="label">To:</div>
-   				<div class="value" id="linkHistoryPopupTo"></div>
-   			</div>
-   			<div class="table-row">
-   				<div class="label">Your Passengers:</div>
-   				<div class="value" id="linkHistoryThisAirlinePassengers"></div>
-   			</div>
-   			<div class="table-row">
-   				<div class="label">Alliance Passengers:</div>
-   				<div class="value" id="linkHistoryThisAlliancePassengers"></div>
-   			</div>
-   			<div class="table-row">
-   				<div class="label">Other Passengers:</div>
-   				<div class="value" id="linkHistoryOtherAirlinePassengers"></div>
-   			</div>
-		</div>
+    <div style="display: none;" id="linkHistoryPopup" class="mapPopup px-4 py-2">
+        <div class="mb-2">
+            <div class="flex-align-center gap-2">
+                <span id="linkHistoryPopupFrom"></span>
+                <p class="opacity-80 text-sm">→</p>
+            </div>
+            <div class="flex-align-center" id="linkHistoryPopupTo"></div>
+        </div>
+        <div class="table data">
+            <div class="table-row">
+                <div style="width:70%;" class="label">Your airline:</div>
+                <div style="width:30%;" class="value text-right" id="linkHistoryThisAirlinePassengers"></div>
+            </div>
+            <div class="table-row">
+                <div class="label">Alliance:</div>
+                <div class="value text-right" id="linkHistoryThisAlliancePassengers"></div>
+            </div>
+            <div class="table-row">
+                <div class="label">Other airline:</div>
+                <div class="value text-right" id="linkHistoryOtherAirlinePassengers"></div>
+            </div>
+        </div>
     </div>
 
     <div style="display: none; width: 350px;" id="airportLinkPopup" class="mapPopup">
