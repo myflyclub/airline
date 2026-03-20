@@ -584,7 +584,7 @@ class AirplaneApplication @Inject()(cc: ControllerComponents) extends AbstractCo
           case None =>
             BadRequest(s"Home airport ID $homeAirportId is not valid")
           case Some(homeBase) =>
-            val airplane = Airplane(model, airline, constructedCycle = constructedCycle, purchasedCycle = constructedCycle, Airplane.MAX_CONDITION, purchasePrice = model.price, home = homeBase.airport)
+            val airplane = Airplane(model, airline, constructedCycle = constructedCycle, purchasedCycle = currentCycle, Airplane.MAX_CONDITION, purchasePrice = model.price, home = homeBase.airport)
 
             val rejectionOption = getRejection(model, quantity, airline)
             if (rejectionOption.isDefined) {
