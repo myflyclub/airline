@@ -192,7 +192,10 @@ export function addMarkers(airportsGeoJSON, options = {}) {
                 'symbol-sort-key': ['get', 'sortKey']
             },
             paint: {
-                'icon-opacity': ['case', ['boolean', ['feature-state', 'hover'], false], 1.0, 0.8]
+                'icon-opacity': ['case',
+                    ['boolean', ['get', 'isChampion'], false], 1.0,
+                    ['case', ['boolean', ['feature-state', 'hover'], false], 1.0, 0.8]
+                ]
             }
         });
 
@@ -451,7 +454,7 @@ async function useChampionLogos(champions) {
             await new Promise((resolve, reject) => {
                 img.onload = () => {
                     if (!state.map.hasImage(imageName)) {
-                        state.map.addImage(imageName, img);
+                        state.map.addImage(imageName, img, { pixelRatio: 2 });
                     }
                     URL.revokeObjectURL(imgUrl);
                     resolve();
