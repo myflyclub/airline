@@ -182,7 +182,7 @@
   .notify-bubble {
     position: absolute;
     top: -8px;
-    right: -7px;
+    right: 1px;
     padding: 2px 5px 2px 6px;
     background-color: green;
     color: white;

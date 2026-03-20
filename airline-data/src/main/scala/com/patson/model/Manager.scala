@@ -8,7 +8,7 @@ case class Manager(airline : Airline, assignedTask : ManagerTask, availableCycle
 
 object Manager {
   val TOOLTIP = List(
-    "Mangers are the key currency of the game. You need them to build new bases and open links. You get more as your reputation increases.",
+    "Managers are the key currency of the game. You need them to build new bases and open links. You get more as your reputation increases.",
     s"Any \"actioning\" manager generates ${ManagerBaseTask.GENERATION_RATE} action points per week / cycle, accruing up to a maximum of ${ManagerBaseTask.MAX_CYCLES_STORED_THRESHOLD} weeks / cycles * actioning manager.",
     s"When assigned to tasks, such as improving county relations \"public affairs\" or manufacturer relations, they gain experience and level up automatically at the rate of ${LevelingManagerTask.LEVEL_CYCLE_THRESHOLDS(0)}, ${LevelingManagerTask.LEVEL_CYCLE_THRESHOLDS(1)}, ${LevelingManagerTask.LEVEL_CYCLE_THRESHOLDS(2)}, ${LevelingManagerTask.LEVEL_CYCLE_THRESHOLDS(3)} weeks for each level respectively.",
   )
