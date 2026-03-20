@@ -563,6 +563,23 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
 
   case class LinkExtendedInfo(link : Link, profit : Int, revenue : Int, soldSeats : LinkClassValues, capacityHistory : LinkClassValues, cancelledSeats : LinkClassValues, satisfaction : Double, lastUpdate : Calendar, currentStaffRequired : Double)
 
+  def getLinksAverages(airlineId: Int, weeks: Int = 48) = AuthenticatedAirline(airlineId) { _ =>
+    val consumptions = LinkSource.loadLinkConsumptionsByAirline(airlineId, weeks)
+    val grouped = consumptions.groupBy(_.link.id)
+    val stats = grouped.map { case (linkId, entries) =>
+      val totalPassengers = entries.map(e => e.link.soldSeats.total).sum
+      val totalCapacity   = entries.map(e => e.link.capacity.total).sum
+      val totalCancelled  = entries.map(e => e.link.cancelledSeats.total).sum
+      val effective = totalCapacity - totalCancelled
+      val avgLoadFactor   = if (effective > 0) Math.round(totalPassengers.toDouble / effective * 100) else 0L
+      val avgSatisfaction = entries.map(_.satisfaction).sum / entries.size
+      val avgProfit       = entries.map(_.profit).sum / entries.size
+      val avgRevenue      = entries.map(_.revenue).sum / entries.size
+      linkId -> Json.obj("loadFactor" -> avgLoadFactor, "satisfaction" -> avgSatisfaction, "profit" -> avgProfit, "revenue" -> avgRevenue)
+    }
+    Ok(JsObject(stats.map { case (k, v) => k.toString -> v }.toSeq))
+  }
+
   private def deleteLinkLogic(link : Link, airlineId : Int) : Int = {
     val count = LinkSource.deleteLink(link.id)
     if (count == 1) { //update airplane available minutes too

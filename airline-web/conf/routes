@@ -44,6 +44,7 @@ PUT	     /airlines/:airlineId/airplanes	  controllers.AirplaneApplication.addAir
 PUT	     /airlines/:airlineId/swap-airplanes/:fromAirplaneId/:toAirplaneId	  controllers.AirplaneApplication.swapAirplane(airlineId : Int, fromAirplaneId : Int, toAirplaneId : Int)
 GET		 /airlines/:airlineId/links  	  controllers.LinkApplication.getLinks(airlineId : Int, toAirportId : Int = -1)
 GET		 /airlines/:airlineId/links-details  	  controllers.LinkApplication.getLinksDetails(airlineId : Int)
+GET      /airlines/:airlineId/links-averages    controllers.LinkApplication.getLinksAverages(airlineId: Int, weeks: Int ?= 48)
 PUT 	 /airlines/:airlineId/links 	  controllers.LinkApplication.addLink(airlineId : Int)
 POST 	 /airlines/:airlineId/link-overtime-compensation 	  controllers.LinkApplication.getOvertimeCompensation(airlineId : Int)
 DELETE   /airlines/:airlineId/links/bulk-delete 	controllers.LinkApplication.bulkDeleteLinks(airlineId : Int)

@@ -6,6 +6,15 @@
                     <a class="px-2 button secondary py-1 flex-align-center tooltip-attr tooltip-attr-bottom" data-tooltip="Show / Hide Filter Row" onclick="toggleLinksTableFilterRow()"><img src='@routes.Assets.versioned("/images/icons/funnel.png")'></a>
                     <a class="px-2 button secondary flex-align-center tooltip-attr tooltip-attr-bottom opacity-80" data-tooltip="Show Averages" onclick="toggleLinksTableAverage()" style="font-family:monospace; font-size: 18px;">x̄</a>
                     <a class="px-2 button secondary py-1 flex-align-center tooltip-attr tooltip-attr-bottom opacity-80" data-tooltip="Show Medians" onclick="toggleLinksTableMedian()" style="font-size: 16px;">M</a>
+                    <div id="linksViewSwitchContainer" class="ml-auto mt-2">
+                      <div class="switch">
+                        <input type="radio" class="switch-input" name="linksView" value="weekly" id="switchLinksWeekly" checked>
+                        <label class="switch-label switch-label-off" for="switchLinksWeekly">This Week</label>
+                        <input type="radio" class="switch-input" name="linksView" value="avg" id="switchLinksAvg">
+                        <label class="switch-label switch-label-on" for="switchLinksAvg">48w Avg</label>
+                        <span class="switch-selection"></span>
+                      </div>
+                    </div>
 				</div>
 				<div class="table-container-x">
 					<div class="table data" style="min-width: 980px; height: 20px;">
@@ -27,15 +36,12 @@
 							<div class="cell clickable" style="width: 8%" align="right"
 								data-sort-property="totalCapacity" data-sort-order="ascending"
 								onclick="toggleLinksTableSortOrder($(this))">Capacity (Freq.)</div>
-							<div class="cell clickable" style="width: 4%" align="right"
-								data-sort-property="totalPassengers" data-sort-order="ascending"
-								onclick="toggleLinksTableSortOrder($(this))">Pax</div>
-							<div class="cell clickable" style="width: 4%" align="right"
-								data-sort-property="totalLoadFactor" data-sort-order="ascending"
-								onclick="toggleLinksTableSortOrder($(this))" title="Load Factor">LF</div>
 							<div class="cell clickable" style="width: 3%" align="right"
 								data-sort-property="computedQuality" data-sort-order="ascending"
-								onclick="toggleLinksTableSortOrder($(this))" title="Quality">Q</div>
+								onclick="toggleLinksTableSortOrder($(this))" title="Quality">Q</div>							
+                            <div class="cell clickable" style="width: 4%" align="right"
+								data-sort-property="totalLoadFactor" data-sort-order="ascending"
+								onclick="toggleLinksTableSortOrder($(this))" title="Load Factor">LF</div>
 							<div class="cell clickable" style="width: 5%" align="right"
 								data-sort-property="satisfaction" data-sort-order="ascending"
 								onclick="toggleLinksTableSortOrder($(this))" title="Satisfaction Factor">SF</div>
@@ -46,7 +52,7 @@
 							<div class="cell clickable" style="width: 7%" align="right"
 								data-sort-property="profitMargin" data-sort-order="ascending"
 								onclick="toggleLinksTableSortOrder($(this))">Margin</div>
-							<div class="cell clickable" style="width: 5%" align="right"
+							<div class="cell clickable" style="width: 6%" align="right"
 								data-sort-property="currentStaffRequired" data-sort-order="ascending"
 								onclick="toggleLinksTableSortOrder($(this))" title="Current Staff Required">Staff</div>
 							<div class="cell clickable" style="width: 8%" align="right"
@@ -62,13 +68,13 @@
 							<div class="cell" style="width: 8%" data-filter-property="distance">&nbsp;</div>
 							<div class="cell" style="width: 8%">&nbsp;</div>
 							<div class="cell" style="width: 4%">&nbsp;</div>
-							<div class="cell" style="width: 4%">&nbsp;</div>
 							<div class="cell" style="width: 3%">&nbsp;</div>
+							<div class="cell" style="width: 4%">&nbsp;</div>
 							<div class="cell" style="width: 5%">&nbsp;</div>
 							<div class="cell" style="width: 8%">&nbsp;</div>
 							<div class="cell" style="width: 8%">&nbsp;</div>
 							<div class="cell" style="width: 7%">&nbsp;</div>
-							<div class="cell" style="width: 5%">&nbsp;</div>
+							<div class="cell" style="width: 6%">&nbsp;</div>
 							<div class="cell" style="width: 8%">&nbsp;</div>
 						</div>
 					</div>
@@ -81,14 +87,13 @@
 								<div class="cell" style="width: 14%; border-bottom: none;"></div>
 								<div class="cell" style="width: 8%; border-bottom: none;"></div>
 								<div class="cell" style="width: 8%; border-bottom: none;"></div>
-								<div class="cell" style="width: 4%; border-bottom: none;"></div>
-								<div class="cell" style="width: 4%; border-bottom: none;"></div>
 								<div class="cell" style="width: 3%; border-bottom: none;"></div>
+								<div class="cell" style="width: 4%; border-bottom: none;"></div>
 								<div class="cell" style="width: 5%; border-bottom: none;"></div>
 								<div class="cell" style="width: 8%; border-bottom: none;"></div>
 								<div class="cell" style="width: 8%; border-bottom: none;"></div>
 								<div class="cell" style="width: 7%; border-bottom: none;"></div>
-								<div class="cell" style="width: 5%; border-bottom: none;"></div>
+								<div class="cell" style="width: 6%; border-bottom: none;"></div>
 								<div class="cell" style="width: 8%; border-bottom: none;"></div>
 							</div>
 						</div>

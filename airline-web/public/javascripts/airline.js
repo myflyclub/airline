@@ -4,6 +4,8 @@ var tempPath //temp path for new link creation
 var loadedLinks = []
 var loadedLinksById = {}
 var linksTableSummaryState = false
+var linksAverages = null
+var linksViewMode = 'weekly'
 var currentAnimationStatus = false
 var currentAirlineAllianceMembers = []
 var selectedLinkIds = new Set()
@@ -1654,6 +1656,7 @@ function removeTempPath() {
 }
 
 function showLinksCanvas(selectedLink = null, isReload = true) {
+    initLinksViewSwitch()
     var selectLinkId = selectedLink ? parseInt(selectedLink) : null
     loadLinksTable(function() {
         if (selectLinkId) {
@@ -1682,6 +1685,46 @@ function computeLinkDerivedProperties(links) {
         const cancelledTotal = link.cancelledSeats ? link.cancelledSeats.total : 0
         link.totalLoadFactor = link.totalCapacityHistory > 0 ? Math.round(link.totalPassengers / (link.totalCapacityHistory - cancelledTotal) * 100) : 0
         link.model = (link.assignedAirplanes && link.assignedAirplanes.length > 0) ? link.assignedAirplanes[0].airplane.name : "-"
+        link.displayLoadFactor   = link.totalLoadFactor
+        link.displaySatisfaction = link.satisfaction
+        link.displayProfit       = link.profit
+        link.displayRevenue      = link.revenue
+        link.displayProfitMargin = link.profitMargin
+    })
+}
+
+function applyLinksViewMode() {
+    $.each(loadedLinks, function(i, link) {
+        const avg = linksViewMode === 'avg' && linksAverages && linksAverages[link.id]
+        link.displayLoadFactor   = avg ? avg.loadFactor   : link.totalLoadFactor
+        link.displaySatisfaction = avg ? avg.satisfaction : link.satisfaction
+        link.displayProfit       = avg ? avg.profit       : link.profit
+        link.displayRevenue      = avg ? avg.revenue      : link.revenue
+        link.displayProfitMargin = avg ? (avg.revenue > 0 ? avg.profit / avg.revenue : 0) : link.profitMargin
+    })
+}
+
+function initLinksViewSwitch() {
+    const $container = $('#linksViewSwitchContainer')
+    if ($container.data('inited')) return
+    $container.data('inited', true)
+    $('input[name="linksView"]').on('change', function() {
+        linksViewMode = $(this).val()
+        if (linksViewMode === 'avg' && !linksAverages) {
+            $.ajax({
+                type: 'GET',
+                url: '/airlines/' + activeAirline.id + '/links-averages',
+                dataType: 'json',
+                success: function(data) {
+                    linksAverages = data
+                    applyLinksViewMode()
+                    updateLinksTable()
+                }
+            })
+        } else {
+            applyLinksViewMode()
+            updateLinksTable()
+        }
     })
 }
 
@@ -1761,14 +1804,13 @@ function addSummaryRow(links) {
         {}, // Model
         { getValue: (link) => link.distance, format: (val) => val.toFixed(0) + "km" },
         { getValue: (link) => link.totalCapacity, format: (val) => val.toFixed(0) }, // Capacity
-        { getValue: (link) => link.totalPassengers, format: (val) => val.toFixed(0) },
-        { getValue: (link) => link.totalLoadFactor, format: (val) => val.toFixed(0) + '%' },
         { getValue: (link) => link.computedQuality > 0 ? link.computedQuality : '-', format: (val) => val.toFixed(0) },
-        { getValue: (link) => Math.round(link.satisfaction * 100), format: (val) => val.toFixed(0) + '%' },
-        { getValue: (link) => link.revenue, format: (val) => '$' + commaSeparateNumber(val.toFixed(0)) },
-        { getValue: (link) => link.profit, format: (val) => '$' + commaSeparateNumber(val.toFixed(0)) },
-        { getValue: (link) => link.profitMargin, format: (val) => (val * 100).toFixed(2) + "%" },
-        { getValue: (link) => link.currentStaffRequired, format: (val) => val.toFixed(1) },
+        { getValue: (link) => link.displayLoadFactor, format: (val) => val.toFixed(0) + '%' },
+        { getValue: (link) => Math.round(link.displaySatisfaction * 100), format: (val) => val.toFixed(0) + '%' },
+        { getValue: (link) => link.displayRevenue, format: (val) => '$' + commaSeparateNumber(val.toFixed(0)) },
+        { getValue: (link) => link.displayProfit, format: (val) => '$' + commaSeparateNumber(val.toFixed(0)) },
+        { getValue: (link) => link.displayProfitMargin, format: (val) => (val * 100).toFixed(2) + "%" },
+        { getValue: (link) => link.currentStaffRequired, format: (val) => val },
         { getValue: (link) => link.profitPerStaff, format: (val) => '$' + commaSeparateNumber(val.toFixed(0)) }
     ];
     addTableSummaryRow("#linksCanvas #linksTable", data, linkColumnConfigs, linksTableSummaryState);
@@ -1802,6 +1844,7 @@ function updateLinksTable(sortProperty, sortOrder) {
     // show summary for the filtered set
     filteredLinks.length > 0 && addSummaryRow(filteredLinks)
 
+    const avgClass = linksViewMode === 'avg' ? ' avg-cell' : ''
     const rowsHtml = [];
     filteredLinks.forEach((link) => {
         const quality = link.computedQuality > 0 ? link.computedQuality : "-"
@@ -1816,14 +1859,13 @@ function updateLinksTable(sortProperty, sortOrder) {
             `<div class='cell'>${link.model}</div>` +
             `<div class='cell' align='right'>${link.distance}km</div>` +
             `<div class='cell' align='right'>${link.totalCapacity}(${link.frequency})</div>` +
-            `<div class='cell' align='right'>${link.totalPassengers}</div>` +
-            `<div class='cell' align='right'>${link.totalLoadFactor}%</div>` +
             `<div class='cell' align='right'>${quality}</div>` +
-            `<div class='cell' align='right'>${Math.round(link.satisfaction * 100)}%</div>` +
-            `<div class='cell' align='right'>$${commaSeparateNumber(link.revenue)}</div>` +
-            `<div class='cell' align='right'>$${commaSeparateNumber(link.profit)}</div>` +
-            `<div class='cell' align='right'>${(link.profitMargin * 100).toFixed(2)}%</div>` +
-            `<div class='cell' align='right'>${link.currentStaffRequired.toFixed(1)}</div>` +
+            `<div class='cell${avgClass}' align='right'>${link.displayLoadFactor}%</div>` +
+            `<div class='cell${avgClass}' align='right'>${Math.round(link.displaySatisfaction * 100)}%</div>` +
+            `<div class='cell${avgClass}' align='right'>$${commaSeparateNumber(link.revenue)}</div>` +
+            `<div class='cell${avgClass}' align='right'>$${commaSeparateNumber(link.displayProfit)}</div>` +
+            `<div class='cell${avgClass}' align='right'>${(link.displayProfitMargin * 100).toFixed(2)}%</div>` +
+            `<div class='cell' align='right'>${link.currentStaffRequired}</div>` +
             `<div class='cell' align='right'>$${commaSeparateNumber(link.profitPerStaff)}</div>` +
             `</div>`
         );
@@ -1858,6 +1900,7 @@ function selectLinkFromTable(row, linkId) {
 }
 
 function updateLoadedLinks(links) {
+    linksAverages = null
     if (links && links.type === 'FeatureCollection' && links.features) {
         links = links.features.map(f => f.properties);
     }

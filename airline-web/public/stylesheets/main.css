@@ -10,7 +10,8 @@ html {
     --background-3: #ccc8;
     --input-background: #aaa3;
     --section-background-image: linear-gradient(180deg, #ffffff 0%, #f6f7f9 100%);
-    --zing-background: linear-gradient(to bottom, #b0eea5, #7fd47a); 
+    --zing-background: linear-gradient(to bottom, #b0eea5, #7fd47a);
+    --zing-color: #7fd47a;
 
     --button-color: rgba(0, 0, 0, 0.7);
     --button-background: rgba(0, 0, 0, 0.04);
@@ -120,6 +121,7 @@ html[data-theme='dark'] {
     --shadow-1: 0 4px 12px rgba(0, 0, 0, 0.4);
     --shadow-2: none;
     --link-decoration-color: #6a6a8a;
+    --zing-color: #4a9e4a;
 }
 
 /******************************************************************
@@ -721,6 +723,9 @@ li.row, div.table-row {
 .table .cell {
     display: table-cell;
     vertical-align: middle;
+}
+.avg-cell {
+    background-color: color-mix(in srgb, var(--zing-color) 40%, transparent) !important;
 }
 .table .cell.detailsSelection {
     box-shadow: var(--shadow-1) !important;

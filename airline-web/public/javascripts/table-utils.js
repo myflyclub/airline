@@ -442,11 +442,11 @@ function addTableSummaryRow(tableSelector, dataArray, columnConfigs, aggregation
     }
 
     const summaryRow = $("<div class='table-row summary-row'></div>");
+    summaryRow.append("<div class='cell'> </div>");
 
     columnConfigs.forEach((config) => {
         if (!config.getValue) {
             // Non-numeric column, just add empty cell or label
-            summaryRow.append("<div class='cell'> </div>");
             summaryRow.append("<div class='cell'>" + (config.label || '') + "</div>");
             return;
         }
