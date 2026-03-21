@@ -473,6 +473,8 @@ object CountrySource {
       addOverride(scores, 2, "ZA", Set("GB","DE","RU","US","AU","IN","TZ","KE","UG","BR"))
 
       // Oceania
+      addOverride(scores, 3, "TL", Set("AU","MY","ID"))
+      addOverride(scores, 2, "TL", Set("FJ","IN"))
       addOverride(scores, 2, "AU", Set("ID","PH","PG","FJ","WS"))
       addOverride(scores, 2, "NZ", Set("ID","PG","WS","FJ"))
       addOverride(scores, 3, "NZ", Set("TO"))
