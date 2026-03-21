@@ -2050,7 +2050,7 @@ function promptSwapModels() {
         if (!Object.prototype.hasOwnProperty.call(loadedModelsById, mId)) continue;
         var model = loadedModelsById[mId];
         // Same or smaller size
-        if (model.size <= selectedAirplaneModel.size + 0.01 && ! model.hasOwnProperty("rejecton")) {
+        if (model.size <= selectedAirplaneModel.size + 0.01 && (!model.rejection || model.rejection.length === 0)) {
             var option = document.createElement('option');
             option.value = model.id;
             option.textContent = model.name;
@@ -2161,12 +2161,28 @@ function processSwapModels(isEstimate = true) {
                     $('#swapAirplaneModal .envelope-runway-row').hide();
                 }
 
+                if (result.frequencyCuts && result.frequencyCuts.length > 0) {
+                    var cutsContainer = $('#swapAirplaneModal #frequencyCutsRows');
+                    cutsContainer.empty();
+                    result.frequencyCuts.forEach(function(cut) {
+                        var row = $('<div class="table-row"></div>');
+                        row.append('<div class="label">' + cut.fromAirport + ' \u2192 ' + cut.toAirport + ':</div>');
+                        row.append('<div class="value" style="color: red;">' + cut.oldFrequency + ' \u2192 ' + cut.newFrequency + '/week</div>');
+                        cutsContainer.append(row);
+                    });
+                    $('#swapAirplaneModal .frequency-cuts-section').show();
+                } else {
+                    $('#swapAirplaneModal .frequency-cuts-section').hide();
+                    $('#swapAirplaneModal #frequencyCutsRows').empty();
+                }
+
                 if (costDiff > activeAirline.balance) {
                      disableButton($('#swapAirplaneModal .add'), "Not enough cash");
                 } else {
                      enableButton($('#swapAirplaneModal .add'));
                 }
             } else {
+                storeSelectedAirplaneIds = [];
                 closeModal($('#swapAirplaneModal'));
                 // Refresh the airplane canvas to show updated models
                 showAirplaneCanvas();

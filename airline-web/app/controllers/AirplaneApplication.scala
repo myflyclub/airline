@@ -719,7 +719,20 @@ class AirplaneApplication @Inject()(cc: ControllerComponents) extends AbstractCo
                 val linksOfSwappingAirplanes = allLinksWithAssignedAirplanes.filter { link =>
                   (link.getAssignedAirplanes().keys.map(_.id).toSet intersect airplaneIdSet).nonEmpty
                 }
-                
+
+                // Pre-load airplane link assignments (airplane-centric, one DB call).
+                // Done here so the data is available for home-airport fallback and link update.
+                val ownerLinkAssignments = AirplaneSource.loadAirplaneLinkAssignmentsByOwner(airlineId)
+                val oldAirplaneAssignments: Map[Int, LinkAssignments] = airplanesToSwap.map { a =>
+                  (a.id, ownerLinkAssignments.getOrElse(a.id, LinkAssignments(Map.empty)))
+                }.toMap
+
+                val swappingLinkIds = oldAirplaneAssignments.values.flatMap(_.assignments.keys).toSet
+                val linkById: Map[Int, Link] = allLinksWithAssignedAirplanes
+                  .filter(l => swappingLinkIds.contains(l.id) || linksOfSwappingAirplanes.exists(_.id == l.id))
+                  .map(l => (l.id, l.asInstanceOf[Link]))
+                  .toMap
+
                 // 1. Mixed aircraft check
                 for (link <- linksOfSwappingAirplanes if validationError.isEmpty) {
                   val assignedAirplaneIds = link.getAssignedAirplanes().keys.map(_.id).toSet
@@ -762,13 +775,54 @@ class AirplaneApplication @Inject()(cc: ControllerComponents) extends AbstractCo
                   )
                   val totalBuyCost = newModelWithDiscounts.price.toLong * airplanesToSwap.length
 
+                  // Per-airplane utilization check: detect if new model would push any airplane over 100%.
+                  // airplaneFrequencyCuts: (airplaneId, linkId) -> new (reduced) frequency
+                  val airplaneFrequencyCuts = scala.collection.mutable.Map[(Int, Int), Int]()
+                  for (airplane <- airplanesToSwap) {
+                    val assignments = oldAirplaneAssignments.getOrElse(airplane.id, LinkAssignments(Map.empty)).assignments
+                    if (assignments.nonEmpty) {
+                      val newTotalFM = assignments.iterator.map { case (linkId, assignment) =>
+                        linkById.get(linkId).map { link =>
+                          assignment.frequency * Computation.calculateFlightMinutesRequired(newModelWithDiscounts, link.distance)
+                        }.getOrElse(0)
+                      }.sum
+                      if (newTotalFM > Airplane.MAX_FLIGHT_MINUTES) {
+                        val scale = Airplane.MAX_FLIGHT_MINUTES.toDouble / newTotalFM
+                        for ((linkId, assignment) <- assignments) {
+                          airplaneFrequencyCuts((airplane.id, linkId)) = (scale * assignment.frequency).toInt
+                        }
+                      }
+                    }
+                  }
+
+                  // Aggregate per-airplane cuts into per-link totals for display
+                  val linkFrequencyChanges: List[(Link, Int, Int)] = {
+                    val affectedLinkIds = airplaneFrequencyCuts.keys.map(_._2).toSet
+                    affectedLinkIds.flatMap { linkId =>
+                      linkById.get(linkId).map { link =>
+                        val oldTotalFreq = airplanesToSwap.flatMap { a =>
+                          oldAirplaneAssignments.get(a.id).flatMap(_.assignments.get(linkId)).map(_.frequency)
+                        }.sum
+                        val newTotalFreq = airplanesToSwap.map { a =>
+                          oldAirplaneAssignments.get(a.id).flatMap(_.assignments.get(linkId)).map { asgn =>
+                            airplaneFrequencyCuts.getOrElse((a.id, linkId), asgn.frequency)
+                          }.getOrElse(0)
+                        }.sum
+                        (link, oldTotalFreq, newTotalFreq)
+                      }
+                    }.toList.sortBy(_._1.id)
+                  }
+
                   // If estimate mode, just return the cost difference and envelope
                   if (isEstimate) {
                     val costDifference = totalBuyCost - totalSellValue
                     val maxDistance = if (linksOfSwappingAirplanes.nonEmpty) linksOfSwappingAirplanes.map(_.distance).max else 0
                     val maxRunwayRequired = if (linksOfSwappingAirplanes.nonEmpty) linksOfSwappingAirplanes.flatMap(l => List(l.from.runwayLength, l.to.runwayLength)).min else 0
                     val hasCustomsRestriction = linksOfSwappingAirplanes.exists(l => Computation.getFlightCategory(l.from, l.to) == FlightCategory.INTERNATIONAL && (l.from.isDomesticAirport() || l.to.isDomesticAirport()))
-                    
+                    val frequencyCutsJson = linkFrequencyChanges.map { case (link, oldFreq, newFreq) =>
+                      Json.obj("linkId" -> link.id, "fromAirport" -> link.from.iata, "toAirport" -> link.to.iata, "oldFrequency" -> oldFreq, "newFrequency" -> newFreq)
+                    }
+
                     Ok(Json.obj(
                       "sellValue" -> totalSellValue,
                       "buyCost" -> totalBuyCost,
@@ -779,7 +833,8 @@ class AirplaneApplication @Inject()(cc: ControllerComponents) extends AbstractCo
                         "minRunway" -> maxRunwayRequired,
                         "hasCustomsRestriction" -> hasCustomsRestriction,
                         "customsMaxCapacity" -> DomesticAirportFeature.internationalMaxCapacity
-                      )
+                      ),
+                      "frequencyCuts" -> JsArray(frequencyCutsJson)
                     ))
                   } else if (request.user.getBalance() < (totalBuyCost - totalSellValue)) {
                     BadRequest(s"Insufficient balance to perform swap. Required: ${totalBuyCost - totalSellValue}, available: ${request.user.getBalance()}")
@@ -803,14 +858,21 @@ class AirplaneApplication @Inject()(cc: ControllerComponents) extends AbstractCo
 
                     val hqAirport = request.user.getHeadQuarter().map(_.airport)
                     for (i <- 0 until airplanesToSwap.length) {
-                      val homeAirport = if (airplanesToSwap(i).home.id != 0) {
-                        airplanesToSwap(i).home
+                      val oldAirplane = airplanesToSwap(i)
+                      val homeAirport = if (oldAirplane.home.id != 0) {
+                        oldAirplane.home
                       } else {
-                        hqAirport.getOrElse(Airport.fromId(0))
+                        // Tier 1: use FROM airport of any assigned link (actual base, not necessarily HQ)
+                        val linkFromFallback = oldAirplaneAssignments.get(oldAirplane.id)
+                          .flatMap(_.assignments.keys.headOption)
+                          .flatMap(linkId => linkById.get(linkId))
+                          .map(_.from)
+                        // Tier 2: HQ
+                        linkFromFallback.orElse(hqAirport).getOrElse(Airport.fromId(0))
                       }
                       val newAirplane: Airplane = Airplane(
                         newModelWithDiscounts,
-                        airplanesToSwap(i).owner,
+                        oldAirplane.owner,
                         constructedCycle = currentCycle,
                         purchasedCycle = currentCycle,
                         Airplane.MAX_CONDITION,
@@ -844,38 +906,37 @@ class AirplaneApplication @Inject()(cc: ControllerComponents) extends AbstractCo
                         AirlineLedgerEntry(airlineId, currentCycle, LedgerType.BUY_AIRPLANE, -1 * totalBuyCost, Some(s"${countPrefix}${newModelWithDiscounts.name}"))
                       ))
 
-                      // Update link assignments with new airplanes
-                      for (link <- linksOfSwappingAirplanes) {
-                        val assignedAirplanes = link.getAssignedAirplanes()
-                        val assignedAirplaneIds = assignedAirplanes.keys.map(_.id).toSet
-                        
-                        val intersectingAirplanes = assignedAirplaneIds intersect airplaneIdSet
-                        if (intersectingAirplanes.nonEmpty) {
-                          // Build new assignments map with new airplanes
-                          val newAssignments = scala.collection.mutable.Map[Airplane, LinkAssignment]()
-                          
-                          // Map old airplanes to new airplanes and preserve frequency
-                          val oldToNewMapping = airplanesToSwap.zip(newAirplanesToCreate).map(p => (p._1.id, p._2)).toMap
-                          
-                          for ((oldAirplane, assignment) <- assignedAirplanes) {
-                            val newAirplane = oldToNewMapping.get(oldAirplane.id)
-                            if (newAirplane.isDefined) {
-                              // Recalculate flight minutes for the new model
-                              val newFlightMinutes = Computation.calculateFlightMinutesRequired(newModelWithDiscounts, link.distance)
-                              newAssignments.put(newAirplane.get, LinkAssignment(assignment.frequency, newFlightMinutes))
-                            } else {
-                              // This airplane wasn't swapped, keep it as-is
-                              newAssignments.put(oldAirplane, assignment)
+                      // Update link assignments using airplane-centric pre-loaded data (avoids stale cache).
+                      val newAssignmentsByLink = scala.collection.mutable.Map[Int, scala.collection.mutable.Map[Airplane, LinkAssignment]]()
+
+                      airplanesToSwap.zip(newAirplanesToCreate.toList).foreach { case (oldAirplane, newAirplane) =>
+                        oldAirplaneAssignments.getOrElse(oldAirplane.id, LinkAssignments(Map.empty)).assignments.foreach {
+                          case (linkId, assignment) =>
+                            val newFreq = airplaneFrequencyCuts.getOrElse((oldAirplane.id, linkId), assignment.frequency)
+                            if (newFreq > 0) {
+                              linkById.get(linkId).foreach { link =>
+                                val newFlightMinutes = Computation.calculateFlightMinutesRequired(newModelWithDiscounts, link.distance) * newFreq
+                                newAssignmentsByLink
+                                  .getOrElseUpdate(linkId, scala.collection.mutable.Map())
+                                  .put(newAirplane, LinkAssignment(newFreq, newFlightMinutes))
+                              }
                             }
-                          }
-                          
-                          // Update the link with new assignments and model.
-                          // duration is a val on Link so we must copy to get the new model's flight time.
+                        }
+                      }
+                      // Ensure links where all planes were cut to 0 still get their assignments cleaned up
+                      swappingLinkIds.foreach { linkId =>
+                        if (!newAssignmentsByLink.contains(linkId)) {
+                          newAssignmentsByLink(linkId) = scala.collection.mutable.Map()
+                        }
+                      }
+
+                      newAssignmentsByLink.foreach { case (linkId, newAssignments) =>
+                        linkById.get(linkId).foreach { link =>
                           val updatedLink = link.copy(duration = Computation.calculateDuration(newModelWithDiscounts, link.distance))
                           updatedLink.setAssignedModel(newModelWithDiscounts)
-                          updatedLink.setAssignedAirplanes(newAssignments.toMap) // also recomputes capacity + frequency
+                          updatedLink.setAssignedAirplanes(newAssignments.toMap)
                           LinkSource.updateLink(updatedLink)
-                          LinkSource.updateAssignedPlanes(updatedLink.id, newAssignments.toMap)
+                          LinkSource.updateAssignedPlanes(linkId, newAssignments.toMap)
                         }
                       }
 
