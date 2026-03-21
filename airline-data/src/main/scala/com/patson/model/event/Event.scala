@@ -2,6 +2,7 @@ package com.patson.model.event
 
 import com.patson.data.{AirlineSource, AirportSource, CycleSource, EventSource}
 import com.patson.model._
+import com.patson.util.AirportCache
 
 import scala.collection.mutable
 
@@ -84,10 +85,13 @@ object Olympics {
     EventSource.loadOlympicsAffectedAirports(eventId)
   }
 
-  val VOTE_REPUTATION_THRESHOLD = 30
+  val VOTE_REPUTATION_THRESHOLD = 25
 
   def getAffectedAirport(eventId : Int, principalAirport : Airport) : List[Airport] = {
-    EventSource.loadOlympicsAffectedAirports(eventId).apply(principalAirport)
+    EventSource.loadOlympicsAffectedAirports(eventId)
+      .find(_._1.id == principalAirport.id)
+      .map(_._2.flatMap(stub => AirportCache.getAirport(stub.id)))
+      .getOrElse(List.empty)
   }
 
   def getVoteWeight(airline : Airline) : Int = {

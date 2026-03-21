@@ -255,7 +255,7 @@ class OlympicsApplication @Inject()(cc: ControllerComponents) extends AbstractCo
         EventSource.loadOlympicsAirlineGoal(eventId, airlineId) match {
           case Some(goal) =>
             if (totalScore >= goal) {
-              if (olympics.startCycle + olympics.duration * 2 < currentCycle) {
+              if (olympics.startCycle + olympics.duration * 3 < currentCycle) {
                 Left("Cannot redeem reward, it has already been expired")
               } else if (olympics.isActive(currentCycle)) {
                 Left("Cannot yet claim reward, olympics still active")

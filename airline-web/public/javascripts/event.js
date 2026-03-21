@@ -64,6 +64,7 @@ function updateOlympicTable(sortProperty, sortOrder) {
 
 function loadOlympicsDetails(row) {
     var event = row.data('event')
+    if (!event) return
     row.siblings().removeClass("selected")
     row.addClass("selected")
     $("#olympicsDetails").data("eventId", event.id)
