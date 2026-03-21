@@ -28,7 +28,7 @@ object SimulationEventStream{
     var currentCycle : Int = 0
     var previousCycleEndTime : Long = 0
     var cycleDurationHistory = ListBuffer[Long]()
-    var cycleDurationAverage : Long = 0
+    var cycleDurationAverage : Long = MainSimulation.CYCLE_DURATION * 1000L
     var cycleCount : Int = 0
     val MAX_DURATION_SAMPLE = 10
 
@@ -64,6 +64,12 @@ object SimulationEventStream{
         topic match {
           case CycleStart(cycle, newCycleStartTime) => //notified by the simulation process that a cycle has started
             currentCycle = cycle
+            val fraction = if (previousCycleEndTime > 0) {
+              Math.min(1.0, (newCycleStartTime - previousCycleEndTime).toDouble / cycleDurationAverage)
+            } else 0.0
+            registeredActor.foreach { actor =>
+              actor ! (CycleInfo(currentCycle, fraction, cycleDurationAverage), None)
+            }
           case cycleComplete : CycleCompleted =>
             val CycleCompleted(cycle, cycleEndTime) = cycleComplete
             if (cycleCount > 0) { //with previous record, calculate the average then
