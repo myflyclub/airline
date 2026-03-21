@@ -71,3 +71,17 @@
   background-image: -o-linear-gradient(top, #e0dd94, #c4bb61);
   background-image: linear-gradient(to bottom, #e0dd94, #c4bb61);
 }
+
+/* 3-option switch variant */
+.switch-3 .switch-label {
+  width: 33.33%;
+}
+.switch-3 .switch-selection {
+  width: 33.34%;
+}
+.switch-input.mid:checked ~ .switch-selection {
+  left: 33.33%;
+}
+.switch-input.right:checked ~ .switch-selection {
+  left: 66.66%;
+}

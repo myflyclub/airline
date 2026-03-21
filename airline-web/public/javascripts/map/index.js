@@ -5,7 +5,7 @@
 
 // Import all modules
 import { state, pathOpacityByStyle } from './state.js';
-import { initMap, getMap, centerOnHQ, flyTo, drawCircle, removeCircle } from './core.js';
+import { initMap, getMap, centerOnHQ, flyTo, drawCircle, removeCircle, applyMapProjection, applyMapCentering } from './core.js';
 import { initStyles, getMapStyle, getCurrentStyle, toggleMapLight, updateMapStyle, getPathOpacity } from './styles.js';
 import { initMarkers, addMarkers, removeMarkers, updateAirportBaseMarkers, updateAirportMarkers, toggleChampionMap } from './markers.js';
 import { initRoutes, drawFlightPath, refreshFlightPath, getLinkColor, highlightPath, unhighlightPath, highlightLink, unhighlightLink, clearAllPaths, clearPathEntry, drawTempPath, removeTempPath, drawAirportLinkPath, clearAirportLinkPaths, drawAllianceLink, drawLinkHistoryPath, showLinkHistory, clearHistoryPaths, setRoutesFromGeoJSON, getHistoryRoutesClickLayerId, ensureHistoryRoutesLayers, setRouteSelectable } from './routes.js';
@@ -45,6 +45,8 @@ const AirlineMap = {
     getMap,
     centerOnHQ,
     flyTo,
+    applyMapProjection,
+    applyMapCentering,
     getMapStyle,
     getCurrentStyle,
     toggleMapLight,

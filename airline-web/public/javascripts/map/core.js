@@ -8,6 +8,10 @@ import { initStyles, getMapStyle } from './styles.js';
 
 const MAX_ZOOM = 12;
 
+function toProjectionType(userProjection) {
+    return userProjection === 'flat' ? 'mercator' : 'globe';
+}
+
 /**
  * Initialize the MapLibre map instance.
  * @returns {maplibregl.Map} The initialized map instance
@@ -47,15 +51,18 @@ export function initMap() {
     setMap(mapInstance);
     state.map = mapInstance;
 
-    // Set globe projection after style loads and add padding so it's left centered
-    mapInstance.setPadding({
-        left: 0,
-        right: mapInstance.getContainer().offsetWidth * 0.48,
-        top: 0,
-        bottom: 0
-    });
+    // Apply saved centering (default: center on wide screens, left otherwise)
+    const savedCentering = localStorage.getItem('mapCentering') ||
+        (window.innerWidth >= 1400 ? 'center' : 'left');
+    const initRightPad = savedCentering === 'left'
+        ? mapInstance.getContainer().offsetWidth * 0.48
+        : 0;
+    mapInstance.setPadding({ left: 0, right: initRightPad, top: 0, bottom: 0 });
+
+    // Re-read projection on every style.load so theme switches don't reset it
     mapInstance.on('style.load', () => {
-        mapInstance.setProjection({ type: 'globe' });
+        const savedProjection = localStorage.getItem('mapProjection') || 'globe';
+        mapInstance.setProjection({ type: toProjectionType(savedProjection) });
         window.dispatchEvent(new CustomEvent('mapReady', { detail: { map: mapInstance } }));
     });
 
@@ -340,6 +347,19 @@ export function flyTo(lng, lat, zoom = 8, options = {}) {
             ...options
         });
     }
+}
+
+export function applyMapProjection(type) {
+    if (!state.map || !state.map.isStyleLoaded()) return;
+    state.map.setProjection({ type: toProjectionType(type) });
+}
+
+export function applyMapCentering(mode) {
+    if (!state.map) return;
+    const rightPad = mode === 'left'
+        ? state.map.getContainer().offsetWidth * 0.48
+        : 0;
+    state.map.setPadding({ left: 0, right: rightPad, top: 0, bottom: 0 });
 }
 
 function _createCircleGeoJSON(lng, lat, radiusMeters) {

@@ -1784,11 +1784,45 @@
 				  </div>
 				  <div class="cell" style="vertical-align:middle; text-align:center;">
 					  <fieldset>
+						  <div class="switch switch-3">
+							  <input type="radio" class="switch-input" name="themeMode" value="dark" id="switchThemeDark">
+							  <label for="switchThemeDark" class="switch-label">Dark</label>
+							  <input type="radio" class="switch-input mid" name="themeMode" value="device" id="switchThemeDevice">
+							  <label for="switchThemeDevice" class="switch-label">Auto</label>
+							  <input type="radio" class="switch-input right" name="themeMode" value="light" id="switchThemeLight">
+							  <label for="switchThemeLight" class="switch-label">Light</label>
+							  <span class="switch-selection"></span>
+						  </div>
+					  </fieldset>
+				  </div>
+			  </div>
+			  <div class="table-row pb-4">
+				  <div class="cell">
+					  <h5>Map Projection</h5>
+				  </div>
+				  <div class="cell" style="vertical-align:middle; text-align:center;">
+					  <fieldset>
 						  <div class="switch">
-							  <input type="radio" class="switch-input" name="theme" value="light" id="switchDark" onchange="switchTheme()">
-							  <label for="switchDark" class="switch-label switch-label-off">Dark</label>
-							  <input type="radio" class="switch-input dark" name="theme" value="dark" id="switchLight" onchange="switchTheme()">
-							  <label for="switchLight" class="switch-label switch-label-on">Light</label>
+							  <input type="radio" class="switch-input" name="mapProjection" value="globe" id="switchProjectionGlobe" onchange="switchMapProjection()">
+							  <label for="switchProjectionGlobe" class="switch-label switch-label-off">Globe</label>
+							  <input type="radio" class="switch-input dark" name="mapProjection" value="flat" id="switchProjectionFlat" onchange="switchMapProjection()">
+							  <label for="switchProjectionFlat" class="switch-label switch-label-on">Flat</label>
+							  <span class="switch-selection"></span>
+						  </div>
+					  </fieldset>
+				  </div>
+			  </div>
+			  <div class="table-row pb-4">
+				  <div class="cell">
+					  <h5>Map Centering</h5>
+				  </div>
+				  <div class="cell" style="vertical-align:middle; text-align:center;">
+					  <fieldset>
+						  <div class="switch">
+							  <input type="radio" class="switch-input" name="mapCentering" value="left" id="switchCenteringLeft" onchange="switchMapCentering()">
+							  <label for="switchCenteringLeft" class="switch-label switch-label-off">Left</label>
+							  <input type="radio" class="switch-input dark" name="mapCentering" value="center" id="switchCenteringCenter" onchange="switchMapCentering()">
+							  <label for="switchCenteringCenter" class="switch-label switch-label-on">Center</label>
 							  <span class="switch-selection"></span>
 						  </div>
 					  </fieldset>
