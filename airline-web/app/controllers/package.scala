@@ -717,9 +717,9 @@ package object controllers {
 
     def writes(airport: Airport): JsValue = {
       val popElite = if (airport.basePopElite.toString.length <= 2) {
-        airport.basePopElite.toString.take(1) + "0" * (airport.basePopElite.toString.length - 1)
+        (airport.basePopElite.toString.take(1) + "0" * (airport.basePopElite.toString.length - 1)).toLong
       } else {
-        airport.basePopElite.toString.take(2) + "0" * (airport.basePopElite.toString.length - 2)
+        (airport.basePopElite.toString.take(2) + "0" * (airport.basePopElite.toString.length - 2)).toLong
       }
       val popMiddleIncome = BigDecimal(airport.basePopMiddleIncome / Math.max(1, airport.basePopulation).toDouble * 100).setScale(1, RoundingMode.HALF_EVEN).toDouble
 
@@ -728,7 +728,7 @@ package object controllers {
         "size" -> JsNumber(airport.size),
         "countryCode" -> JsString(airport.countryCode),
         "population" -> JsNumber(airport.population.toInt),
-        "popElite" -> JsString(popElite),
+        "popElite" -> JsNumber(popElite),
         "popMiddleIncome" -> JsNumber(popMiddleIncome),
         "zone" -> JsString(airport.getZoneAffinities()),
         "income" -> JsNumber(airport.baseIncome)
