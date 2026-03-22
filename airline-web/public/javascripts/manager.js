@@ -1,6 +1,6 @@
-function computeApTooltip(currentAP, delegatesInfo) {
-    if (!delegatesInfo) return "Action Points"
-    const available = Math.max(0, delegatesInfo.availableCount)
+function computeApTooltip(currentAP, managersInfo) {
+    if (!managersInfo) return "Action Points"
+    const available = Math.max(0, managersInfo.availableCount)
     var rate = 0.0
     if (available > 0) {
         if (currentAP > 24.0 * 2 * available) rate = 0.0
@@ -16,34 +16,33 @@ function computeApTooltip(currentAP, delegatesInfo) {
     return "Action Points! Generating " + perCycle.toFixed(1) + " ⚡ per week · " + per48.toFixed(0) + " ⚡ in " + formatCycleCountTime(48)
 }
 
-function changeTaskDelegateCount($delegateSection, delta, callback) {
-    var assignedDelegateCount = $delegateSection.data('assignedDelegateCount')
-    var availableDelegates = $delegateSection.data('availableDelegates')
-    // var originalDelegates = $delegateSection.data('originalDelegates')
-    var delegatesRequired = $delegateSection.data('delegatesRequired')
+function changeTaskManagerCount($managerSection, delta, callback) {
+    var assignedManagerCount = $managerSection.data('assignedManagerCount')
+    var availableManagers = $managerSection.data('availableManagers')
+    var managersRequired = $managerSection.data('managersRequired')
 
     var newLength = -1
     if (delta > 0) {
-        if (availableDelegates >= delta) {
-            newLength = assignedDelegateCount + delta
+        if (availableManagers >= delta) {
+            newLength = assignedManagerCount + delta
         }
     } else if (delta < 0) {
-        if (assignedDelegateCount + delta >= delegatesRequired) {
-            newLength = assignedDelegateCount + delta
+        if (assignedManagerCount + delta >= managersRequired) {
+            newLength = assignedManagerCount + delta
         }
     }
 
     if (newLength != -1) {
-        $delegateSection.data('availableDelegates', availableDelegates - delta)
-        $delegateSection.data('assignedDelegateCount', newLength)
-        refreshAssignedDelegates(newLength, '#4a9eed', $delegateSection.find('.assignedDelegatesIcons'))
+        $managerSection.data('availableManagers', availableManagers - delta)
+        $managerSection.data('assignedManagerCount', newLength)
+        refreshAssignedManagers(newLength, '#4a9eed', $managerSection.find('.assignedActionPointsIcons'))
         if (callback) {
             callback(newLength)
         }
     }
 }
 
-function refreshAssignedDelegates(number, color, containerSelector) {
+function refreshAssignedManagers(number, color, containerSelector) {
     renderManagerAssignment({ container: containerSelector, count: number, color })
 }
 
@@ -148,7 +147,7 @@ function renderManagerAssignment(options) {
     if (extraInfo != null) $container.append($(extraInfo))
 }
 
-function refreshAirlineDelegateStatus($container, delegateInfo) {
+function refreshAirlineManagerStatus($container, managersInfo) {
     $container.empty()
 
     const FLOORS = [
@@ -160,7 +159,7 @@ function refreshAirlineDelegateStatus($container, delegateInfo) {
     ]
 
     const grouped = {}
-    delegateInfo.busyManagers.forEach(d => {
+    managersInfo.busyManagers.forEach(d => {
         const key = d.taskType || 'OTHER'
         if (!grouped[key]) grouped[key] = []
         grouped[key].push(d)
@@ -197,7 +196,7 @@ function refreshAirlineDelegateStatus($container, delegateInfo) {
         if (floor.type === '_AVAILABLE') {
             renderManagerAssignment({
                 container: $managerRow,
-                count: delegateInfo.availableCount,
+                count: managersInfo.availableCount,
                 color: '#5cb85c',
                 emptyText: '—',
             })
@@ -320,19 +319,19 @@ function removeManagerFromModal(managerId) {
     })
 }
 
-function updateAirlineDelegateStatus($delegateStatusDiv, successFunction) {
-    $delegateStatusDiv.empty()
+function updateAirlineManagerStatus($managerStatusDiv, successFunction) {
+    $managerStatusDiv.empty()
 
 	$.ajax({
 		type: 'GET',
 		url: "/managers/airline/" + activeAirline.id,
 		contentType: 'application/json; charset=utf-8',
 		dataType: 'json',
-	    success: function(delegateInfo) {
-	        refreshAirlineDelegateStatus($delegateStatusDiv, delegateInfo)
+	    success: function(managersInfo) {
+	        refreshAirlineManagerStatus($managerStatusDiv, managersInfo)
 
             if (successFunction) {
-                successFunction(delegateInfo)
+                successFunction(managersInfo)
             }
 	    },
         error: function(jqXHR, textStatus, errorThrown) {

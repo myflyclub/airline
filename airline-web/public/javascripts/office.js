@@ -1434,8 +1434,8 @@ function updateManagerStatus() {
         url: '/managers/airline/' + activeAirline.id,
         contentType: 'application/json; charset=utf-8',
         dataType: 'json',
-        success: function(delegateInfo) {
-            refreshAirlineDelegateStatus($('#managerStatus .managerGroups'), delegateInfo)
+        success: function(managersInfo) {
+            refreshAirlineManagerStatus($('#managerStatus .managerGroups'), managersInfo)
         },
         error: function(jqXHR, textStatus, errorThrown) {
             console.log('AJAX error: ' + textStatus + ' : ' + errorThrown)

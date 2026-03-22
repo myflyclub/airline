@@ -13,7 +13,7 @@ const campaignOverlay = {
     existingCampaign: null,
     assignedCount: 0,
     availableManagers: 0,
-    costPerDelegate: 0,
+    costPerManager: 0,
 }
 
 async function showCampaignOverlay(airportId, popupPosition) {
@@ -25,7 +25,7 @@ async function showCampaignOverlay(airportId, popupPosition) {
         existingCampaign: null,
         assignedCount: 0,
         availableManagers: 0,
-        costPerDelegate: 0,
+        costPerManager: 0,
     })
 
     const $panel = $('#campaignOverlayPanel')
@@ -42,15 +42,15 @@ async function showCampaignOverlay(airportId, popupPosition) {
     $panel.show()
 
     try {
-        const [delegateInfo, campaigns] = await Promise.all([
+        const [managersInfo, campaigns] = await Promise.all([
             $.ajax({ type: 'GET', url: `/managers/airline/${activeAirline.id}`, dataType: 'json' }),
             $.ajax({ type: 'GET', url: `/airlines/${activeAirline.id}/campaigns?fullLoad=true`, dataType: 'json' }),
         ])
-        campaignOverlay.availableManagers = delegateInfo.availableCount || 0
+        campaignOverlay.availableManagers = managersInfo.availableCount || 0
         const existing = campaigns.find(c => c.principalAirport?.id === airportId)
         if (existing) {
             campaignOverlay.existingCampaign = existing
-            campaignOverlay.assignedCount = existing.delegates?.length || 0
+            campaignOverlay.assignedCount = existing.managers?.length || 0
             campaignOverlay.availableManagers += campaignOverlay.assignedCount
             $panel.data('radius', existing.radius).data('campaignId', existing.id)
         }
@@ -82,7 +82,7 @@ function refreshCampaignOverlay() {
             $('.campaignOverlayRadius').text(radius)
             $('.campaignOverlayPopulation').text(commaSeparateNumber(result.population))
             $('.campaignOverlayLoyalty').text(result.bonus?.loyalty ?? '-')
-            campaignOverlay.costPerDelegate = result.costPerDelegate || 0
+            campaignOverlay.costPerManager = result.costPerManager || 0
 
             const hasExisting = !!campaignOverlay.existingCampaign
             $('#campaignOverlayPanel .create').toggle(!hasExisting)
@@ -121,14 +121,14 @@ function updateCampaignOverlayManagerUI() {
         onRemove: () => { campaignOverlay.assignedCount--; campaignOverlay.availableManagers++; updateCampaignOverlayManagerUI() }
     })
 
-    $('.campaignOverlayCost').text(assigned > 0 ? '$' + commaSeparateNumber(assigned * campaignOverlay.costPerDelegate) : '-')
+    $('.campaignOverlayCost').text(assigned > 0 ? '$' + commaSeparateNumber(assigned * campaignOverlay.costPerManager) : '-')
     $('#campaignOverlayPanel .campaignOverlaySave').prop('disabled', assigned <= 0).css('opacity', assigned <= 0 ? '0.5' : '')
 }
 
 function saveCampaignOverlay() {
     const radius = $('#campaignOverlayPanel').data('radius') || MIN_CAMPAIGN_RADIUS
     const campaignId = $('#campaignOverlayPanel').data('campaignId')
-    const payload = { delegateCount: campaignOverlay.assignedCount, radius }
+    const payload = { managerCount: campaignOverlay.assignedCount, radius }
     if (campaignId) payload.campaignId = campaignId
     else payload.airportId = campaignOverlay.airportId
 
@@ -138,7 +138,7 @@ function saveCampaignOverlay() {
         contentType: 'application/json; charset=utf-8',
         data: JSON.stringify(payload),
         dataType: 'json',
-        success() { closeCampaignOverlay(); updateAirlineDelegateStatus($('#officeCanvas .delegateStatus')) },
+        success() { closeCampaignOverlay(); updateAirlineManagerStatus($('#officeCanvas .managerStatus')) },
         error(jqXHR) { console.log(JSON.stringify(jqXHR)) }
     })
 }
@@ -152,7 +152,7 @@ function deleteCampaignOverlay() {
             url: `/airlines/${activeAirline.id}/campaigns/${campaignId}`,
             contentType: 'application/json; charset=utf-8',
             dataType: 'json',
-            success() { closeCampaignOverlay(); updateAirlineDelegateStatus($('#officeCanvas .delegateStatus')) },
+            success() { closeCampaignOverlay(); updateAirlineManagerStatus($('#officeCanvas .managerStatus')) },
             error(jqXHR, textStatus) { console.log(`Delete campaign error: ${textStatus}`) }
         })
     })

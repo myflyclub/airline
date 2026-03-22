@@ -855,8 +855,8 @@
                 Difficulty must be less than action points available.
             </div>
             <div class="section tight">
-                <p class="delegateStatus h4"></p>
-                <div style="width: 100%; margin-top: 4px;" class="delegatesAssignment table data">
+                <p class="managerStatus h4"></p>
+                <div style="width: 100%; margin-top: 4px;" class="managersAssignment table data">
                     <div class="table-header">
                         <div class="cell" style="width: 80%">Action points for negotiation</div>
                         <div class="cell" style="width: 20%">Success Rate</div>
@@ -864,7 +864,7 @@
                     <div class="table-row">
                         <div class="cell">
                             <div class="flex-row">
-                                <div class="mr-auto assignedDelegatesIcons text-xl"></div>
+                                <div class="mr-auto assignedActionPointsIcons text-xl"></div>
                                 <img class="img-button px-1 svg svg-monochrome svg-hover-red" src='@routes.Assets.versioned("images/icons/minus.svg")' onclick="changeAssignedActionPoints(-1)" />
                                 <img class="img-button px-1 svg svg-monochrome svg-hover-red" src='@routes.Assets.versioned("images/icons/plus.svg")' onclick="changeAssignedActionPoints(1)" />
                                 <button type="button" class="button hover:bg-red" onclick="addMaximumActionPoints()">Max</button>
@@ -886,7 +886,7 @@
             <button type="button" class="button negotiateButton" onclick="createLink()">Negotiate</button>
             <button type="button" class="button cancel"
                 onclick="closeModal($('#linkConfirmationModal'))">Cancel</button>
-            <i class="planLinkDelegateRefundRow" style="display:none;"><span class="planLinkDelegateRefund"></span>
+            <i class="planLinkActionPointRefundRow" style="display:none;"><span class="planLinkActionPointRefund"></span>
                 action points to be returned</i>
         </div>
     </div>
@@ -1546,19 +1546,19 @@
 			  </div>
 
 			  <h4 style="margin-bottom: 10px; margin-top: 30px;">Managers<span class="delegatesTooltip"><img class="info svg" src='@routes.Assets.versioned("/images/icons/information.svg")'></span></h4>
-			  <div class="delegateSection section">
-				  <div style="width: 100%; margin-bottom: 10px" class="delegatesAssignment table data">
+			  <div class="managerSection section">
+				  <div style="width: 100%; margin-bottom: 10px" class="managersAssignment table data">
 					  <div class="table-header">
 						  <div class="cell">Assigned managers to develop relationship</div>
 					  </div>
 					  <div class="table-row">
 						  <div class="cell">
-							  <div id="countryDelegatesDisplay"></div>
+							  <div id="countryManagersDisplay"></div>
 						  </div>
 					  </div>
 				  </div>
-				  <p><span class="dot"></span>Each manager level provides <span class="delegateMultiplier"></span>&nbsp;relationship points. Each manager starts at level 0 and gains levels over time. Hover for details.</p>
-				  <button type="button" class="button" onclick="updateCountryDelegates()">Confirm</button>
+				  <p><span class="dot"></span>Each manager level provides <span class="managerMultiplier"></span>&nbsp;relationship points. Each manager starts at level 0 and gains levels over time. Hover for details.</p>
+				  <button type="button" class="button" onclick="updateCountryManagers()">Confirm</button>
 				  <button type="button" class="button" onclick="closeModal($('#airlineCountryRelationshipModal'))">Cancel</button>
 			  </div>
 
@@ -1616,7 +1616,7 @@
 						<div style="width: 100%; height: 100%">
 							<div class="section">
 								<h4>Available Managers<span class="delegatesTooltip"><img class="info svg" src='@routes.Assets.versioned("/images/icons/information.svg")'></span></h4>
-								<div class="delegateStatus"></div>
+								<div class="managerStatus"></div>
 							</div>
 
 							<div class="section campaignDetails">
@@ -1653,8 +1653,8 @@
 										<div class="value cost"></div>
 									</div>
 								</div>
-								<div style="width: 100%; margin-top: 8px;" class="delegateSection">
-									<div id="campaignDelegatesDisplay"></div>
+								<div style="width: 100%; margin-top: 8px;" class="managerSection">
+									<div id="campaignManagersDisplay"></div>
 								</div>
 								<p>Each manager level provides <span class="loyaltyBonus"></span> loyalty. Manager starts at level 0 and progresses over time. Hover over each manager above to see details.</p>
 							</div>
@@ -1765,11 +1765,11 @@
 	  </div>
 
 <!-- maybe deprecated -->
-  <div id="delegateStatusModal" class="modal">
+  <div id="managerStatusModal" class="modal">
 	  <div class="modal-content"  style="width: 480px;">
-		  <span class="close" onclick="closeModal($('#delegateStatusModal'))">&times;</span>
+		  <span class="close" onclick="closeModal($('#managerStatusModal'))">&times;</span>
 		  <h4>Action points<span class="delegatesTooltip"><img class="info svg" src='@routes.Assets.versioned("/images/icons/information.svg")'></span></h4>
-		  <div class="delegateStatus py-2"></div>
+		  <div class="managerStatus py-2"></div>
 	  </div>
   </div>
 

@@ -81,8 +81,8 @@ function updateCountryTable(sortProperty, sortOrder, selectedCountry) {
 		row.append("<div class='cell' align='right'>" + country.gini + "</div>")
         var countryRelationship = country.countryRelationship ? "<div class='cell' align='right'>" + country.CountryTitle.description + ", " + country.countryRelationship.total + "</div>" : "<div class='cell' align='right'>" + "-" + "</div>"
         row.append(countryRelationship)
-        var delegatesCount = country.delegatesCount ? country.delegatesCount : "-"
-        row.append("<div class='cell' align='right'>" + delegatesCount + "</div>")
+        var managersCount = country.managersCount ? country.managersCount : "-"
+        row.append("<div class='cell' align='right'>" + managersCount + "</div>")
 		
 		if (selectedCountry == country.countryCode) {
 		    row.addClass("selected")
@@ -377,7 +377,7 @@ function showRelationshipDetailsModal(countryCode, closeCallback) {
 
     $table.append('<div class="table-row"><div class="cell">Total</div><div class="cell"><b>' + relationship.total + '</b></div></div>')
 
-    getCountryDelegatesSummary(countryCode)
+    getCountryManagersSummary(countryCode)
 
     if (closeCallback) {
         $('#airlineCountryRelationshipModal').data('closeCallback', closeCallback)
@@ -388,16 +388,16 @@ function showRelationshipDetailsModal(countryCode, closeCallback) {
     $('#airlineCountryRelationshipModal').fadeIn(500)
 }
 
-function updateCountryDelegates() {
-    var $delegateSection = $('#airlineCountryRelationshipModal .delegateSection')
-    var countryCode = $delegateSection.data("countryCode")
+function updateCountryManagers() {
+    var $managerSection = $('#airlineCountryRelationshipModal .managerSection')
+    var countryCode = $managerSection.data("countryCode")
 
-    var assignedDelegateCount = $delegateSection.data('assignedDelegateCount')
+    var assignedManagerCount = $managerSection.data('assignedManagerCount')
     $.ajax({
         type: 'POST',
         url: "/managers/airline/" + activeAirline.id + "/country/" + countryCode,
         contentType: 'application/json; charset=utf-8',
-        data:  JSON.stringify({ 'delegateCount' : assignedDelegateCount }) ,
+        data:  JSON.stringify({ 'managerCount' : assignedManagerCount }) ,
         dataType: 'json',
         success: function(result) {
             closeModal($('#airlineCountryRelationshipModal'))
@@ -410,44 +410,44 @@ function updateCountryDelegates() {
 }
 
 
-function renderCountryDelegates(assignedCount) {
-    var $delegateSection = $('#airlineCountryRelationshipModal .delegateSection')
-    var availableCount = $delegateSection.data('availableDelegates') || 0
-    var original = $delegateSection.data('originalDelegates') || []
+function renderCountryManagers(assignedCount) {
+    var $managerSection = $('#airlineCountryRelationshipModal .managerSection')
+    var availableCount = $managerSection.data('availableManagers') || 0
+    var original = $managerSection.data('originalManagers') || []
 
-    // Use rich objects for already-fetched delegates; synthesise a level-0 entry for each new addition
+    // Use rich objects for already-fetched managers; synthesise a level-0 entry for each new addition
     var managers = original.slice(0, assignedCount)
     while (managers.length < assignedCount) {
         managers.push({ taskType: 'COUNTRY', levelDescription: 'Trainee', taskDescription: 'New assignment · pending confirmation', completed: false, nextLevelCycleCount: 4 })
     }
 
     renderManagerAssignment({
-        container: '#countryDelegatesDisplay',
+        container: '#countryManagersDisplay',
         managers: managers,
         availableCount: availableCount,
         headerText: 'Managers (' + availableCount + ' available)',
         onAdd: function() {
-            var current = $delegateSection.data('assignedDelegateCount')
-            var avail = $delegateSection.data('availableDelegates')
-            $delegateSection.data('assignedDelegateCount', current + 1)
-            $delegateSection.data('availableDelegates', avail - 1)
-            renderCountryDelegates(current + 1)
+            var current = $managerSection.data('assignedManagerCount')
+            var avail = $managerSection.data('availableManagers')
+            $managerSection.data('assignedManagerCount', current + 1)
+            $managerSection.data('availableManagers', avail - 1)
+            renderCountryManagers(current + 1)
         },
         onRemove: function() {
-            var current = $delegateSection.data('assignedDelegateCount')
-            var avail = $delegateSection.data('availableDelegates')
-            $delegateSection.data('assignedDelegateCount', current - 1)
-            $delegateSection.data('availableDelegates', avail + 1)
-            renderCountryDelegates(current - 1)
+            var current = $managerSection.data('assignedManagerCount')
+            var avail = $managerSection.data('availableManagers')
+            $managerSection.data('assignedManagerCount', current - 1)
+            $managerSection.data('availableManagers', avail + 1)
+            renderCountryManagers(current - 1)
         }
     })
 }
 
-function getCountryDelegatesSummary(countryCode) {
-    var $delegateSection = $('#airlineCountryRelationshipModal .delegateSection')
-    $delegateSection.removeData('assignedDelegateCount')
-    $delegateSection.removeData('originalDelegates')
-    $delegateSection.data("countryCode", countryCode)
+function getCountryManagersSummary(countryCode) {
+    var $managerSection = $('#airlineCountryRelationshipModal .managerSection')
+    $managerSection.removeData('assignedManagerCount')
+    $managerSection.removeData('originalManagers')
+    $managerSection.data("countryCode", countryCode)
 
 	$.ajax({
         type: 'GET',
@@ -455,15 +455,15 @@ function getCountryDelegatesSummary(countryCode) {
         contentType: 'application/json; charset=utf-8',
         dataType: 'json',
         success: function(result) {
-            $('#airlineCountryRelationshipModal span.delegateMultiplier').text(result.multiplier)
+            $('#airlineCountryRelationshipModal span.managerMultiplier').text(result.multiplier)
 
-            var countryDelegates = result.delegates
-            countryDelegates.sort(function(a, b) { return a.startCycle - b.startCycle })
-            $delegateSection.data('originalDelegates', countryDelegates)
-            $delegateSection.data('assignedDelegateCount', countryDelegates.length)
-            $delegateSection.data('availableDelegates', result.availableCount)
+            var countryManagers = result.managers
+            countryManagers.sort(function(a, b) { return a.startCycle - b.startCycle })
+            $managerSection.data('originalManagers', countryManagers)
+            $managerSection.data('assignedManagerCount', countryManagers.length)
+            $managerSection.data('availableManagers', result.availableCount)
 
-            renderCountryDelegates(countryDelegates.length)
+            renderCountryManagers(countryManagers.length)
         },
         error: function(jqXHR, textStatus, errorThrown) {
                 console.log(JSON.stringify(jqXHR));

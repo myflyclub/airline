@@ -246,7 +246,7 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
       }
       val reputationBreakdowns = AirlineSource.loadReputationBreakdowns(airlineId)
       airlineJson = airlineJson + ("baseAirports" -> Json.toJson(bases)) + ("reputationBreakdowns" -> Json.toJson(reputationBreakdowns)) +
-        ("delegatesInfo" -> Json.toJson(airline.getManagerInfo()))
+        ("managersInfo" -> Json.toJson(airline.getManagerInfo()))
       AllianceSource.loadAllianceMemberByAirline(airline).foreach { allianceMembership =>
         airlineJson = airlineJson +
           ("allianceId" -> JsNumber(allianceMembership.allianceId)) +

@@ -933,8 +933,8 @@ function loadAircraftModelManagers(model) {
         contentType: 'application/json; charset=utf-8',
         dataType: 'json',
         success: function(result) {
-            loadedAircraftModelManagers = result.delegates
-            renderAircraftModelManagers(model.id, result.delegates, result.availableCount, result.maxManagers)
+            loadedAircraftModelManagers = result.managers
+            renderAircraftModelManagers(model.id, result.managers, result.availableCount, result.maxManagers)
         },
         error: function(jqXHR, textStatus, errorThrown) {
             console.log("AJAX error loading aircraft managers: " + textStatus + ' : ' + errorThrown)
@@ -987,7 +987,7 @@ function addAircraftModelManager(modelId) {
         url: "/managers/airline/" + activeAirline.id + "/aircraft-model/" + modelId,
         contentType: 'application/json; charset=utf-8',
         dataType: 'json',
-        data: JSON.stringify({ delegateCount: loadedAircraftModelManagers.length + 1 }),
+        data: JSON.stringify({ managerCount: loadedAircraftModelManagers.length + 1 }),
         success: function() {
             loadAircraftModelManagers(loadedModelsById[modelId])
         },
@@ -1003,7 +1003,7 @@ function removeAircraftModelManager(modelId) {
         url: "/managers/airline/" + activeAirline.id + "/aircraft-model/" + modelId,
         contentType: 'application/json; charset=utf-8',
         dataType: 'json',
-        data: JSON.stringify({ delegateCount: loadedAircraftModelManagers.length - 1 }),
+        data: JSON.stringify({ managerCount: loadedAircraftModelManagers.length - 1 }),
         success: function() {
             loadAircraftModelManagers(loadedModelsById[modelId])
         },

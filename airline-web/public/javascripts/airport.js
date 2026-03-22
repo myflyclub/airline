@@ -299,17 +299,17 @@ if (activeAirline) {
                 //                        airportBaseDetailsHeadingELM.appendChild(specializationList);
                 //                    }
 
-                // MANAGER_BASE delegates: 1 per level, except first HQ level is free
-                const managedDelegates = targetBase.headquarter ? Math.max(0, airportBaseScale - 1) : airportBaseScale
-                if (managedDelegates === 0) {
-                    $('#airportDetailsBaseDelegatesRequired').text('None')
+                // MANAGER_BASE managers: 1 per level, except first HQ level is free
+                const managersRequired = targetBase.headquarter ? Math.max(0, airportBaseScale - 1) : airportBaseScale
+                if (managersRequired === 0) {
+                    $('#airportDetailsBaseManagersRequired').text('None')
                 } else {
-                    $('#airportDetailsBaseDelegatesRequired').empty()
-                    var $delegatesSpan = $('<span style="display: flex;"></span>')
-                    for (let i = 0; i < managedDelegates; i++) {
-                        $delegatesSpan.append($('<img src="/assets/images/icons/user-silhouette-available.png"/>'))
+                    $('#airportDetailsBaseManagersRequired').empty()
+                    var $managersSpan = $('<span style="display: flex;"></span>')
+                    for (let i = 0; i < managersRequired; i++) {
+                        $managersSpan.append($('<img src="/assets/images/icons/user-silhouette-available.png"/>'))
                     }
-                    $('#airportDetailsBaseDelegatesRequired').append($delegatesSpan)
+                    $('#airportDetailsBaseManagersRequired').append($managersSpan)
                 }
 
                 var capacityInfo = baseDetails.officeCapacity

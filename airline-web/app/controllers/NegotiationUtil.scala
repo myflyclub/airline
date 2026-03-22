@@ -378,7 +378,7 @@ object NegotiationUtil {
       totalFromDiscount,
       finalToDiscountValue = totalToDiscount,
       finalRequirementValue,
-      computeOdds(finalRequirementValue, Math.min(MAX_ASSIGNED_DELEGATE, airline.getManagerInfo().availableCount)),
+      computeOdds(finalRequirementValue, MAX_ASSIGNED_DELEGATE),
       existingLinkCancellationValue,
       hasActionPointRefund
     )

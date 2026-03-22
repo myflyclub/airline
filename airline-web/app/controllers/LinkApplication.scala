@@ -261,7 +261,7 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
 
   def addLinkBlock(request : AuthenticatedRequest[AnyContent, Airline]) : Result = {
     val incomingLink = request.body.asInstanceOf[AnyContentAsJson].json.as[Link]
-    val actionPoints = request.body.asInstanceOf[AnyContentAsJson].json.\("assignedDelegates").as[Int]
+    val actionPoints = request.body.asInstanceOf[AnyContentAsJson].json.\("assignedActionPoints").as[Int]
 
     val airlineId = incomingLink.airline.id
 

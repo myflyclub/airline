@@ -874,37 +874,37 @@ package object controllers {
     }
   }
 
-  implicit object DelegateInfoWrites extends Writes[ManagerInfo] {
+  implicit object ManagerInfoWrites extends Writes[ManagerInfo] {
     def writes(managerInfo: ManagerInfo): JsValue = {
 
       var result = Json.obj("availableCount" -> managerInfo.availableCount)
       var busyManagersJson = Json.arr()
-      val delegateWrites = new BusyDelegateWrites(currentCycle)
+      val managerWrites = new BusyManagerWrites(currentCycle)
       managerInfo.busyManagers.foreach { manager =>
-        busyManagersJson = busyManagersJson.append(Json.toJson(manager)(delegateWrites))
+        busyManagersJson = busyManagersJson.append(Json.toJson(manager)(managerWrites))
       }
       result = result + ("busyManagers", busyManagersJson)
       result
     }
   }
 
-  class BusyDelegateWrites(currentCycle : Int) extends Writes[Manager] {
-    override def writes(busyDelegate: Manager): JsValue = {
-      var busyDelegateJson = Json.obj("id" -> busyDelegate.id, "taskType" -> busyDelegate.assignedTask.getTaskType.toString, "taskDescription" -> busyDelegate.assignedTask.description, "completed" -> busyDelegate.taskCompleted)
-      busyDelegate.availableCycle.map(_ - currentCycle).foreach {
-        coolDown : Int => busyDelegateJson = busyDelegateJson + ("coolDown" -> JsNumber(coolDown))
+  class BusyManagerWrites(currentCycle : Int) extends Writes[Manager] {
+    override def writes(busyManager: Manager): JsValue = {
+      var busyManagerJson = Json.obj("id" -> busyManager.id, "taskType" -> busyManager.assignedTask.getTaskType.toString, "taskDescription" -> busyManager.assignedTask.description, "completed" -> busyManager.taskCompleted)
+      busyManager.availableCycle.map(_ - currentCycle).foreach {
+        coolDown : Int => busyManagerJson = busyManagerJson + ("coolDown" -> JsNumber(coolDown))
       }
-      busyDelegate.assignedTask match {
+      busyManager.assignedTask match {
         case levelingTask : LevelingManagerTask =>
-          busyDelegateJson = busyDelegateJson +
+          busyManagerJson = busyManagerJson +
             ("level" -> JsNumber(levelingTask.level(currentCycle))) +
             ("levelDescription" -> JsString(levelingTask.levelDescription(currentCycle)))
           levelingTask.nextLevelCycleCount(currentCycle).foreach { cycles =>
-            busyDelegateJson = busyDelegateJson + ("nextLevelCycleCount" -> JsNumber(cycles))
+            busyManagerJson = busyManagerJson + ("nextLevelCycleCount" -> JsNumber(cycles))
           }
         case _ =>
       }
-      busyDelegateJson
+      busyManagerJson
     }
   }
 

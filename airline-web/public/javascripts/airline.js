@@ -68,7 +68,7 @@ function refreshTopBar(airline) {
     var currentAP = airline.actionPoints != null ? airline.actionPoints : 0.0
     $(".actionPoints").text("⚡ " + currentAP.toFixed(1))
 
-    $(".actionPoints").attr('data-tooltip', computeApTooltip(currentAP, airline.delegatesInfo))
+    $(".actionPoints").attr('data-tooltip', computeApTooltip(currentAP, airline.managersInfo))
 	$(".reputationValue").text(airline.reputation)
 	$(".reputationStars").empty()
 
@@ -1465,11 +1465,11 @@ function updateTotalValues() {
             }
         }
         if (result.negotiationInfo.actionPointRefund && result.negotiationInfo.actionPointRefund !== 0) {
-            $('.planLinkDelegateRefundRow').show()
-            $('.planLinkDelegateRefund').text(result.negotiationInfo.actionPointRefund)
+            $('.planLinkActionPointRefundRow').show()
+            $('.planLinkActionPointRefund').text(result.negotiationInfo.actionPointRefund)
         } else {
-            $('.planLinkDelegateRefundRow').hide()
-            $('.planLinkDelegateRefund').text('')
+            $('.planLinkActionPointRefundRow').hide()
+            $('.planLinkActionPointRefund').text('')
         }
     })
 }
@@ -1525,7 +1525,7 @@ function createLink() {
 			"price" : { "economy" : parseInt($("#planLinkEconomyPrice").val()), "business" : parseInt($("#planLinkBusinessPrice").val()), "first" : parseInt($("#planLinkFirstPrice").val())},
 			"model" : parseInt($("#planLinkModelSelect").val()),
 			"rawQuality" : parseInt($("#planLinkServiceLevel").val()) * 20,
-			"assignedDelegates" : assignedActionPoints }
+			"assignedActionPoints" : assignedActionPoints }
 		$.ajax({
 			type: 'PUT',
 			url: url,
@@ -1595,7 +1595,7 @@ function getLinkStaffingInfo() {
         "price" : { "economy" : parseInt($("#planLinkEconomyPrice").val()), "business" : parseInt($("#planLinkBusinessPrice").val()), "first" : parseInt($("#planLinkFirstPrice").val())},
         "model" : parseInt($("#planLinkModelSelect").val()),
         "rawQuality" : parseInt($("#planLinkServiceLevel").val()) * 20,
-        "assignedDelegates" : assignedActionPoints }
+        "assignedActionPoints" : assignedActionPoints }
     $.ajax({
         type: 'POST',
         url: url,
@@ -2734,9 +2734,9 @@ function addMaximumActionPoints() {
 	}
 }
 
-function updateAssignedActionPoints(delegateCount) {
-    assignedActionPoints = delegateCount
-    $('#linkConfirmationModal .assignedDelegatesIcons').html(
+function updateAssignedActionPoints(count) {
+    assignedActionPoints = count
+    $('#linkConfirmationModal .assignedActionPointsIcons').html(
         assignedActionPoints > 0 ? '⚡'.repeat(assignedActionPoints) : '<span>None</span>'
     )
     //look up the odds
@@ -2889,7 +2889,7 @@ function getLinkNegotiation(callback) {
 
                     //finish updating the negotiationDifficultyModal
 
-                    $('#linkConfirmationModal div.delegateStatus').html(
+                    $('#linkConfirmationModal div.managerStatus').html(
                         '<span>Action Points available: <b>' + availableActionPoints.toFixed(1) + '</b></span>'
                     )
 
@@ -3315,7 +3315,7 @@ function promptBulkDelete() {
 
             var message = "Are you sure you want to delete " + count + " selected links?<br><br>";
             message += "&bull; <b>Capacity to remove:</b> " + commaSeparateNumber(capacityToRemove) + " seats<br>";
-            message += "&bull; <b>Delegates to refund:</b> " + actionPointRefund;
+            message += "&bull; <b>Action points to refund:</b> " + actionPointRefund;
 
             promptConfirm(message, function () {
                 executeBulkDelete();

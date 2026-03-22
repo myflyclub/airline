@@ -27,18 +27,18 @@ class CampaignApplication @Inject()(cc: ControllerComponents) extends AbstractCo
 
   implicit object CampaignDetailsWrites extends Writes[CampaignDetails] {
     def writes(entry : CampaignDetails): JsValue = {
-      var delegatesJson = Json.arr()
+      var managersJson = Json.arr()
       val currentCycle = CycleSource.loadCycle()
-      val taskWrites = new CampaignDelegateTaskWrites(currentCycle)
-      entry.delegateTasks.foreach { task =>
-        delegatesJson = delegatesJson.append(Json.toJson(task)(taskWrites))
+      val taskWrites = new CampaignManagerTaskWrites(currentCycle)
+      entry.managerTasks.foreach { task =>
+        managersJson = managersJson.append(Json.toJson(task)(taskWrites))
       }
 
-      Json.toJson(entry.campaign).as[JsObject] + ("delegates" -> delegatesJson) + ("level" -> JsNumber(entry.delegateTasks.map(_.level(currentCycle)).sum))
+      Json.toJson(entry.campaign).as[JsObject] + ("managers" -> managersJson) + ("level" -> JsNumber(entry.managerTasks.map(_.level(currentCycle)).sum))
     }
   }
 
-  class CampaignDelegateTaskWrites(currentCycle : Int) extends Writes[CampaignManagerTask] {
+  class CampaignManagerTaskWrites(currentCycle : Int) extends Writes[CampaignManagerTask] {
     def writes(entry : CampaignManagerTask): JsValue = {
       var result = Json.obj(
         "level" -> entry.level(currentCycle),
@@ -58,7 +58,7 @@ class CampaignApplication @Inject()(cc: ControllerComponents) extends AbstractCo
   def getCampaigns(airlineId : Int, fullLoad : Boolean) = AuthenticatedAirline(airlineId) { request =>
     val campaigns = CampaignSource.loadCampaignsByCriteria(List(("airline", airlineId)), loadArea = fullLoad)
     val result = ManagerSource.loadBusyDelegatesByCampaigns(campaigns).map {
-      case (campaign, delegates) => CampaignDetails(campaign, delegates.map(_.assignedTask.asInstanceOf[CampaignManagerTask]))
+      case (campaign, managers) => CampaignDetails(campaign, managers.map(_.assignedTask.asInstanceOf[CampaignManagerTask]))
     }
 
     Ok(Json.toJson(result))
@@ -73,14 +73,14 @@ class CampaignApplication @Inject()(cc: ControllerComponents) extends AbstractCo
         val population = areaAirports.map(_.population).sum
         val bonus = Campaign.getAirlineBonus(population, 1)
         val loyaltyBonus = BigDecimal(bonus.loyalty).setScale(2, RoundingMode.HALF_UP)
-        val costPerDelegate = Campaign.getCost(areaAirports.map(_.popMiddleIncome).sum + areaAirports.map(_.popElite).sum * 100)
+        val costPerManager = Campaign.getCost(areaAirports.map(_.popMiddleIncome).sum + areaAirports.map(_.popElite).sum * 100)
 
         Ok(Json.obj(
           "principalAirport" -> principalAirport,
           "radius" -> radius,
           "population" ->  population,
           "bonus" -> Json.obj("loyalty" -> loyaltyBonus),
-          "costPerDelegate" -> costPerDelegate
+          "costPerManager" -> costPerManager
         ))
       case None => NotFound(s"airport with id $airportId not found")
     }
@@ -92,7 +92,7 @@ class CampaignApplication @Inject()(cc: ControllerComponents) extends AbstractCo
     if (radius < MIN_CAMPAIGN_RADIUS || radius > MAX_CAMPAIGN_RADIUS) {
       BadRequest(s"Invalid radius $radius")
     } else {
-      val delegateCount = request.body.asInstanceOf[AnyContentAsJson].json.\("delegateCount").as[Int]
+      val managerCount = request.body.asInstanceOf[AnyContentAsJson].json.\("managerCount").as[Int]
       val savedCampaignResult : Either[Result, Campaign] = request.body.asInstanceOf[AnyContentAsJson].json.\("campaignId").asOpt[Int] match {
         case Some(campaignId) => { //update
           CampaignSource.loadCampaignById(campaignId) match {
@@ -127,22 +127,22 @@ class CampaignApplication @Inject()(cc: ControllerComponents) extends AbstractCo
         case Left(badResult) => badResult
         case Right(campaign) =>
           //save delegates
-          val existingDelegates : List[Manager] = ManagerSource.loadBusyDelegatesByCampaigns(List(campaign)).getOrElse(campaign, List.empty).sortBy(_.assignedTask.getStartCycle)
-          val delta = delegateCount - existingDelegates.length
-          if (delegateCount >= 0 && delta <= airline.getManagerInfo().availableCount) {
+          val existingManagers : List[Manager] = ManagerSource.loadBusyDelegatesByCampaigns(List(campaign)).getOrElse(campaign, List.empty).sortBy(_.assignedTask.getStartCycle)
+          val delta = managerCount - existingManagers.length
+          if (managerCount >= 0 && delta <= airline.getManagerInfo().availableCount) {
             if (delta < 0) { //unassign the most junior ones first
-              existingDelegates.takeRight(delta * -1).foreach { unassigningDelegate =>
+              existingManagers.takeRight(delta * -1).foreach { unassigningDelegate =>
                 ManagerSource.deleteBusyDelegateByCriteria(List(("id", "=", unassigningDelegate.id)))
               }
             } else if (delta > 0) {
               val managerTask = ManagerTask.campaign(CycleSource.loadCycle(), campaign)
-              val newDelegates = (0 until delta).map(_ => Manager(airline, managerTask, None))
+              val newManagers = (0 until delta).map(_ => Manager(airline, managerTask, None))
 
-              ManagerSource.saveBusyDelegates(newDelegates.toList)
+              ManagerSource.saveBusyDelegates(newManagers.toList)
             }
             Ok(Json.obj())
           } else {
-            BadRequest(s"Invalid manager value $delegateCount")
+            BadRequest(s"Invalid manager value $managerCount")
           }
       }
     }
@@ -163,6 +163,6 @@ class CampaignApplication @Inject()(cc: ControllerComponents) extends AbstractCo
     }
   }
 
-  case class CampaignDetails(campaign: Campaign, delegateTasks : List[CampaignManagerTask])
+  case class CampaignDetails(campaign: Campaign, managerTasks : List[CampaignManagerTask])
 
 }

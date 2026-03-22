@@ -16,7 +16,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.{Duration, FiniteDuration}
 
 object MainSimulation extends App {
-  val CYCLE_DURATION : Int = 60 * 15
+  val CYCLE_DURATION : Int = 60 * 1
   val SCHEDULE_BUFFER_SECS : Int = 30
   val SCHEDULE_OVERHEAD_FACTOR : Double = 1.2
   var currentWeek: Int = 0

@@ -20,9 +20,9 @@ class ManagerApplication @Inject()(cc: ControllerComponents) extends AbstractCon
 
   def getCountryDelegates(countryCode : String, airlineId : Int) = AuthenticatedAirline(airlineId) { request =>
     val multiplier = AirlineCountryRelationship.getDelegateBonusMultiplier(CountryCache.getCountry(countryCode).get)
-    implicit val writes = new CountryDelegateWrites(CycleSource.loadCycle())
+    implicit val writes = new CountryManagerWrites(CycleSource.loadCycle())
     Ok(Json.obj(
-      "delegates" -> ManagerSource.loadCountryDelegateByAirlineAndCountry(airlineId, countryCode),
+      "managers" -> ManagerSource.loadCountryDelegateByAirlineAndCountry(airlineId, countryCode),
       "multiplier" -> multiplier,
       "availableCount" -> request.user.getManagerInfo().availableCount
     ))
@@ -30,15 +30,15 @@ class ManagerApplication @Inject()(cc: ControllerComponents) extends AbstractCon
 
   def updateCountryDelegates(countryCode : String, airlineId : Int) = AuthenticatedAirline(airlineId) { request =>
     val airline = request.user
-    val delegateCount = request.body.asInstanceOf[AnyContentAsJson].json.\("delegateCount").as[Int]
-    val existingDelegates = ManagerSource.loadCountryDelegateByAirlineAndCountry(airlineId, countryCode)
-    val delta = delegateCount - existingDelegates.length
+    val managerCount = request.body.asInstanceOf[AnyContentAsJson].json.\("managerCount").as[Int]
+    val existingManagers = ManagerSource.loadCountryDelegateByAirlineAndCountry(airlineId, countryCode)
+    val delta = managerCount - existingManagers.length
 
-    if (delegateCount < 0) {
-      BadRequest(s"Invalid manager value $delegateCount")
+    if (managerCount < 0) {
+      BadRequest(s"Invalid manager value $managerCount")
     } else {
       if (delta < 0) { //unassign the most junior ones first
-        ManagerSource.deleteBusyDelegates(existingDelegates.sortBy(_.assignedTask.getStartCycle).takeRight(-delta))
+        ManagerSource.deleteBusyDelegates(existingManagers.sortBy(_.assignedTask.getStartCycle).takeRight(-delta))
       } else if (delta > 0) {
         val task = ManagerTask.country(CycleSource.loadCycle(), CountryCache.getCountry(countryCode).get)
         ManagerSource.saveBusyDelegates((0 until delta).map(_ => Manager(airline, task, None)).toList)
@@ -49,28 +49,28 @@ class ManagerApplication @Inject()(cc: ControllerComponents) extends AbstractCon
 
   def getAircraftModelDelegates(modelId : Int, airlineId : Int) = AuthenticatedAirline(airlineId) { request =>
     val currentCycle = CycleSource.loadCycle()
-    implicit val writes = new AircraftModelDelegateWrites(currentCycle)
-    val delegates = ManagerSource.loadAircraftModelDelegatesByAirlineAndModel(airlineId, modelId)
-    val delegateInfo = request.user.getManagerInfo()
+    implicit val writes = new AircraftModelManagerWrites(currentCycle)
+    val managers = ManagerSource.loadAircraftModelDelegatesByAirlineAndModel(airlineId, modelId)
+    val managerInfo = request.user.getManagerInfo()
     Ok(Json.obj(
-      "delegates" -> Json.toJson(delegates),
-      "availableCount" -> delegateInfo.availableCount,
+      "managers" -> Json.toJson(managers),
+      "availableCount" -> managerInfo.availableCount,
       "maxManagers" -> AircraftModelManagerTask.MAX_MANAGERS_PER_MODEL
     ))
   }
 
   def updateAircraftModelDelegates(modelId : Int, airlineId : Int) = AuthenticatedAirline(airlineId) { request =>
     val airline = request.user
-    val delegateCount = request.body.asInstanceOf[AnyContentAsJson].json.\("delegateCount").as[Int]
-    val existingDelegates = ManagerSource.loadAircraftModelDelegatesByAirlineAndModel(airlineId, modelId).sortBy(_.assignedTask.getStartCycle)
-    val delta = delegateCount - existingDelegates.length
+    val managerCount = request.body.asInstanceOf[AnyContentAsJson].json.\("managerCount").as[Int]
+    val existingManagers = ManagerSource.loadAircraftModelDelegatesByAirlineAndModel(airlineId, modelId).sortBy(_.assignedTask.getStartCycle)
+    val delta = managerCount - existingManagers.length
 
-    if (delegateCount < 0) {
-      BadRequest(s"Invalid manager count $delegateCount (max ${AircraftModelManagerTask.MAX_MANAGERS_PER_MODEL})")
+    if (managerCount < 0) {
+      BadRequest(s"Invalid manager count $managerCount (max ${AircraftModelManagerTask.MAX_MANAGERS_PER_MODEL})")
     } else if (delta > airline.getManagerInfo().availableCount) {
       BadRequest(s"Not enough available managers")
     } else if (delta < 0) {
-      existingDelegates.takeRight(delta * -1).foreach { delegate =>
+      existingManagers.takeRight(delta * -1).foreach { delegate =>
         ManagerSource.deleteBusyDelegateByCriteria(List(("id", "=", delegate.id)))
       }
       Ok(Json.obj())
@@ -122,19 +122,19 @@ class ManagerApplication @Inject()(cc: ControllerComponents) extends AbstractCon
 
 }
 
-class CountryDelegateWrites(currentCycle : Int) extends Writes[Manager] {
+class CountryManagerWrites(currentCycle : Int) extends Writes[Manager] {
   override def writes(countryDelegate: Manager): JsValue = {
     val task = countryDelegate.assignedTask.asInstanceOf[CountryManagerTask]
-    Json.toJson(countryDelegate)(new BusyDelegateWrites(currentCycle)).asInstanceOf[JsObject] +
+    Json.toJson(countryDelegate)(new BusyManagerWrites(currentCycle)).asInstanceOf[JsObject] +
       ("countryCode" -> JsString(task.country.countryCode)) +
       ("startCycle" -> JsNumber(task.startCycle))
   }
 }
 
-class AircraftModelDelegateWrites(currentCycle : Int) extends Writes[Manager] {
+class AircraftModelManagerWrites(currentCycle : Int) extends Writes[Manager] {
   override def writes(delegate: Manager): JsValue = {
     val task = delegate.assignedTask.asInstanceOf[AircraftModelManagerTask]
-    Json.toJson(delegate)(new BusyDelegateWrites(currentCycle)).asInstanceOf[JsObject] +
+    Json.toJson(delegate)(new BusyManagerWrites(currentCycle)).asInstanceOf[JsObject] +
       ("modelId" -> JsNumber(task.modelId)) +
       ("startCycle" -> JsNumber(task.startCycle))
   }
@@ -146,7 +146,7 @@ class LevelingManagerWrites(
   discountsByModelId: Map[Int, List[ModelDiscount]]
 ) extends Writes[Manager] {
   override def writes(m: Manager): JsValue = {
-    val base = Json.toJson(m)(new BusyDelegateWrites(currentCycle)).asInstanceOf[JsObject]
+    val base = Json.toJson(m)(new BusyManagerWrites(currentCycle)).asInstanceOf[JsObject]
     m.assignedTask match {
       case task: CountryManagerTask =>
         val mult = AirlineCountryRelationship.getDelegateBonusMultiplier(task.country)
