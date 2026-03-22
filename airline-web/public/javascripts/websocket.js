@@ -17,11 +17,22 @@ function checkWebSocket(airlineId) {
 }
 
 function connectWebSocket(airlineId) {
+    if (websocket) {
+        websocket.onclose = null
+        if (websocket.readyState !== WebSocket.CLOSED) {
+            websocket.close()
+        }
+    }
     websocket = new WebSocket(wsUri)
     websocket.onopen = function() {
+        var isReconnect = reconnectAttempts > 0
         reconnectAttempts = 0
         wsSend(airlineId)
         console.log("websocket open for airline " + airlineId)
+        if (isReconnect && selectedAirlineId) {
+            var jitter = Math.floor(Math.random() * 3000)
+            setTimeout(function() { updateAirlineInfo(selectedAirlineId); loadAirportsDynamic() }, jitter)
+        }
     }
     websocket.onclose = function() {
         if (selectedAirlineId) {

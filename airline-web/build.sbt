@@ -11,6 +11,8 @@ libraryDependencies ++= Seq(
   ws,
   guice,
   specs2 % Test,
+  "org.apache.pekko" %% "pekko-testkit" % "1.0.3" % Test,
+  "org.scalatest" %% "scalatest" % "3.2.19" % Test,
   "org.apache.pekko" %% "pekko-remote" % "1.0.3",
   "org.apache.commons" % "commons-text" % "1.13.0",
   "default" %% "airline-data" % "4.1-SNAPSHOT",
@@ -28,5 +30,3 @@ libraryDependencies ++= Seq(
 routesGenerator := InjectedRoutesGenerator
 
 Assets / pipelineStages := Seq(digest)
-
-Assets / digest / includeFilter := "*.js" || "*.css" || "*.png" || "*.jpg" || "*.gif"

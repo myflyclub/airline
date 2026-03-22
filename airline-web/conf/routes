@@ -229,6 +229,7 @@ PUT		 /admin-action/:action/:targetUserId		controllers.AdminApplication.adminAct
 PUT		 /admin-multi-action/:action	            controllers.AdminApplication.adminMultiAction(action : String)
 PUT		 /admin/send-airline-message/:targetAirlineId		controllers.AdminApplication.sendAirlineMessage(targetAirlineId : Int)
 PUT		 /admin/send-broadcast-message		            controllers.AdminApplication.sendBroadcastMessage()
+POST     /admin/trigger-cycle-completed               controllers.AdminApplication.triggerCycleCompleted()
 POST      /admin/invalidate-image/:airportId/:imageType  controllers.AdminApplication.invalidateImage(imageType : String, airportId : Int)
 POST      /admin/invalidate-customization/:airlineId  controllers.AdminApplication.invalidateCustomization(airlineId : Int)
 GET      /admin/user-ips/:userId   controllers.AdminApplication.getUserIps(userId : Int)

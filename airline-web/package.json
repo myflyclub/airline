@@ -1,0 +1,14 @@
+{
+  "name": "airline-web-js-tests",
+  "private": true,
+  "scripts": {
+    "test": "jest"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": ["**/test/javascript/**/*.test.js"]
+  },
+  "devDependencies": {
+    "jest": "^29.0.0"
+  }
+}

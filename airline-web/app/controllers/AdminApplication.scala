@@ -1,6 +1,8 @@
 package controllers
 
 import com.patson.data.{AdminSource, AirlineSource, CycleSource, IpSource, UserSource, UserUuidSource}
+import com.patson.stream.CycleCompleted
+import websocket.ActorCenter
 import com.patson.model.UserStatus.UserStatus
 import com.patson.model.{Airline, AirlineModifier, AirlineModifierType, BannerLoyaltyAirlineModifier, User, UserModifier, UserStatus}
 import com.patson.util.{AirlineCache, AirportCache}
@@ -298,6 +300,17 @@ class AdminApplication @Inject()(cc: ControllerComponents) extends AbstractContr
       Ok(Json.obj())
     } else {
       println(s"Non admin ${request.user} tried to access admin operations!!")
+      Forbidden("Not a super admin user")
+    }
+  }
+
+  def triggerCycleCompleted() = Authenticated { implicit request =>
+    if (request.user.isSuperAdmin) {
+      val cycle = CycleSource.loadCycle()
+      ActorCenter.localMainActor ! (CycleCompleted(cycle, System.currentTimeMillis()), ())
+      println(s"ADMIN - triggerCycleCompleted for cycle $cycle by ${request.user.userName}")
+      Ok(Json.obj("cycle" -> cycle))
+    } else {
       Forbidden("Not a super admin user")
     }
   }
