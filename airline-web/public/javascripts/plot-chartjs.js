@@ -947,7 +947,7 @@ function plotPie(dataSource, currentKey = null, container, keyName = null, value
     return ChartUtils.createChart(container, config);
 }
 
-function plotIncomeChart(airlineIncomes, period, container) {
+function plotIncomeChart(airlineIncomes, period, container, showStock = true) {
     const labels = [];
     const operatingData = [];
     const netIncomeData = [];
@@ -957,38 +957,43 @@ function plotIncomeChart(airlineIncomes, period, container) {
         labels.push(getGameDate(b.cycle));
         operatingData.push(b.normalizedOperatingIncome);
         netIncomeData.push(b.income);
-        stockPriceData.push(b.stockPrice);
+        if (showStock) stockPriceData.push(b.stockPrice);
     });
+
+    const datasets = [
+        { label: 'Operating Income, Normalized', data: operatingData, borderColor: getChartColor('flight'), backgroundColor: getChartColor('flight') },
+        { label: 'Net Income', data: netIncomeData, borderColor: getChartColor('total'), backgroundColor: getChartColor('total') },
+    ];
+    if (showStock) {
+        datasets.push({ label: 'Stock Price', data: stockPriceData, borderColor: getChartColor('stock'), backgroundColor: getChartColor('stock'), yAxisID: 'y1' });
+    }
+
+    const scales = {
+        y: {
+            type: 'linear',
+            display: true,
+            position: 'left',
+            title: { display: true, text: 'Income' },
+            ticks: { callback: function (value) { return '$' + commaSeparateNumber(value, 'auto'); } }
+        }
+    };
+    if (showStock) {
+        scales.y1 = {
+            type: 'linear',
+            display: true,
+            position: 'right',
+            title: { display: true, text: 'Stock Price' },
+            grid: { drawOnChartArea: false },
+            ticks: { callback: function (value) { return '$' + Number(value).toFixed(2); } }
+        };
+    }
 
     const config = {
         type: 'line',
-        data: {
-            labels: labels,
-            datasets: [
-                { label: 'Operating Income, Normalized', data: operatingData, borderColor: getChartColor('flight'), backgroundColor: getChartColor('flight') },
-                { label: 'Net Income', data: netIncomeData, borderColor: getChartColor('total'), backgroundColor: getChartColor('total') },
-                { label: 'Stock Price', data: stockPriceData, borderColor: getChartColor('stock'), backgroundColor: getChartColor('stock'), yAxisID: 'y1' }
-            ]
-        },
+        data: { labels: labels, datasets: datasets },
         options: {
             maintainAspectRatio: false,
-            scales: {
-                y: {
-                    type: 'linear',
-                    display: true,
-                    position: 'left',
-                    title: { display: true, text: 'Income' },
-                    ticks: { callback: function (value) { return '$' + commaSeparateNumber(value, 'auto'); } }
-                },
-                y1: {
-                    type: 'linear',
-                    display: true,
-                    position: 'right',
-                    title: { display: true, text: 'Stock Price' },
-                    grid: { drawOnChartArea: false },
-                    ticks: { callback: function (value) { return '$' + Number(value).toFixed(2); } }
-                }
-            },
+            scales: scales,
         }
     };
 

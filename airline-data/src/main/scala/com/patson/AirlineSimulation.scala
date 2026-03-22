@@ -382,7 +382,7 @@ object AirlineSimulation {
         repLeaderboards = reputationBonusFromLeaderboards.toInt
       )
       allAirlineStats += airlineWeeklyStats
-      val stockPrice = if (isBankrupt) {
+      val stockPrice = if (isBankrupt || airline.airlineType.stockRepPerLevel == 0) {
          0.0
       } else {
         StockModel.updateStockPrice(airline.getStockPrice(), airlineWeeklyStats, latestQuarterStatsByAirlineId.get(airline.id), currentInterestRate)

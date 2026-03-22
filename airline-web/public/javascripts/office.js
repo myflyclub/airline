@@ -564,7 +564,7 @@ async function loadSheets() {
 function updateIncomeChart(airlineIncomes) {
 	var incomes = airlineIncomes || loadedIncomes[officePeriod];
 	ensureChart('totalProfitChart', function() {
-		plotIncomeChart(incomes, officePeriod, 'totalProfitChart')
+		plotIncomeChart(incomes, officePeriod, 'totalProfitChart', activeAirline.stock !== undefined)
 	})
 }
 
