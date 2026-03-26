@@ -24,8 +24,8 @@ class DemandGeneratorSpec extends AnyWordSpecLike with Matchers {
       assert(!canHaveDemand)
     }
      "isolatedAirportTest".in {
-       val fromAirport = AirportSource.loadAirportByIata("TER", true).get
-       val toAirport = AirportSource.loadAirportByIata("PDL", true).get
+       val fromAirport = AirportSource.loadAirportByIata("FLW", true).get
+       val toAirport = AirportSource.loadAirportByIata("TER", true).get
        val distance = Computation.calculateDistance(fromAirport, toAirport)
        val relationship = CountrySource.getCountryMutualRelationships().getOrElse((fromAirport.countryCode, toAirport.countryCode), 0)
        val affinity = Computation.calculateAffinityValue(fromAirport.zone, toAirport.zone, relationship)
@@ -69,6 +69,18 @@ class DemandGeneratorSpec extends AnyWordSpecLike with Matchers {
         val percent = (linkClassValues.total.toDouble / total * 100).toInt
         val formattedPercentage = f"$percent%.2f%%"
         println(s"$airport, $formattedPercentage")
+      }
+      assert(hubAirports.size == 13)
+    }
+    "Size 1 Isolated Town strength 4 hub airports".in {
+      val fromAirport = AirportSource.loadAirportByIata("FLW", true).get
+      val hubAirports: List[(String, LinkClassValues)] = DemandGenerator.generateHubAirportDemand(fromAirport, cycle).toList
+      val total = hubAirports.map(_._2.total).sum
+      println(s"from ${fromAirport.iata} ${fromAirport.countryCode}:")
+      hubAirports.foreach { case (airport, linkClassValues) =>
+        val percent = (linkClassValues.total.toDouble / total * 100).toInt
+        val formattedPercentage = f"$percent%.2f%%"
+        println(s"$airport, ${linkClassValues.total}, $formattedPercentage")
       }
       assert(hubAirports.size == 13)
     }

@@ -152,10 +152,12 @@ object AirportSizeAdjust {
         "HLZ" -> 3,
         //https://en.wikipedia.org/wiki/List_of_airports_in_Albania
         //algeria
+        "DJG" -> 4,
         "TMR" -> 3,
         //https://en.wikipedia.org/wiki/List_of_airports_in_Angola
-        "LAD" -> 3,
         "MSZ" -> 4,
+        "LAD" -> 3,
+        "SDD" -> 3,
         //https://en.wikipedia.org/wiki/List_of_the_busiest_airports_in_Argentina
         "MDZ" -> 5,
         "BRC" -> 5,
@@ -313,6 +315,7 @@ object AirportSizeAdjust {
         "GYE" -> 5,
         //egypt
         "SPX" -> 4,
+        "PSD" -> 3,
         //https://en.wikipedia.org/wiki/List_of_the_busiest_airports_in_France
         "NTE" -> 6,
         "MPL" -> 5,
@@ -354,6 +357,7 @@ object AirportSizeAdjust {
         //https://en.wikipedia.org/wiki/List_of_the_busiest_airports_in_Greece
         "CFU" -> 5,
         "GPA" -> 4,
+        "PVK" -> 4,
         "JMK" -> 3,
         "JSI" -> 3,
         "JTR" -> 3,
@@ -460,6 +464,7 @@ object AirportSizeAdjust {
         "BXR" -> 3,
         "ZBR" -> 3,
         "AZD" -> 3,
+        "GSM" -> 3,
         //iraq
         "EBL" -> 5,
         //https://en.wikipedia.org/wiki/List_of_the_busiest_airports_in_Italy
@@ -535,11 +540,15 @@ object AirportSizeAdjust {
         //https://en.wikipedia.org/wiki/List_of_airports_in_Mozambique
         "APL" -> 4,
         "INH" -> 3,
+        //https://en.wikipedia.org/wiki/List_of_airports_in_Myanmar
+        "NYT" -> 3,
         //namibia
         "WVB" -> 3,
         "OMD" -> 3,
         "MPA" -> 3,
         //https://en.wikipedia.org/wiki/List_of_airports_in_Niger
+        //https://en.wikipedia.org/wiki/List_of_airports_in_Nigeria
+        "BCU" -> 3,
         //https://en.wikipedia.org/wiki/List_of_airports_in_Nicaragua
         //https://en.wikipedia.org/wiki/List_of_airports_in_Nepal
         //norway
@@ -552,9 +561,11 @@ object AirportSizeAdjust {
         "KRS" -> 4,
         "MOL" -> 3,
         //https://en.wikipedia.org/wiki/List_of_the_busiest_airports_in_Pakistan
+        "MUX" -> 5,
+        "PEW" -> 4,
         "SKT" -> 3,
         "UET" -> 3,
-        "PEW" -> 4,
+        "KDU" -> 3,
         //panama
         "BLB" -> 3,
         "RIH" -> 3,
@@ -578,6 +589,7 @@ object AirportSizeAdjust {
         //portugal
         "CAT" -> 3,
         //https://en.wikipedia.org/wiki/List_of_the_busiest_airports_in_Romania
+        "BBU" -> 5,
         "CLJ" -> 6,
         "IAS" -> 6,
         //https://en.wikipedia.org/wiki/List_of_airports_in_Rwanda
@@ -600,6 +612,7 @@ object AirportSizeAdjust {
         "PWE" -> 3,
         "ESL" -> 2,
         "KPW" -> 4,
+        "NSK" -> 4,
         //https://en.wikipedia.org/wiki/List_of_airports_in_Saudi_Arabia
         "EJH" -> 3,
         "ABT" -> 3,
@@ -607,6 +620,8 @@ object AirportSizeAdjust {
         "WAE" -> 3,
         "GIZ" -> 4,
         //https://en.wikipedia.org/wiki/List_of_airports_in_Sierra_Leone
+        //https://en.wikipedia.org/wiki/List_of_airports_in_Slovenia
+        "TAT" -> 4,
         //https://en.wikipedia.org/wiki/List_of_the_busiest_airports_in_Spain
         "VLC" -> 6,
         "SVQ" -> 6,
@@ -679,6 +694,8 @@ object AirportSizeAdjust {
         "ADA" -> 5,
         "TZX" -> 5,
         "GZT" -> 5,
+        "ADF" -> 4,
+        "GNY" -> 4,
         "KYA" -> 4,
         "MLX" -> 4,
         "MSR" -> 4,
@@ -688,6 +705,7 @@ object AirportSizeAdjust {
         "YEI" -> 3,
         //https://en.wikipedia.org/wiki/List_of_airports_in_Turkmenistan
         "CRZ" -> 4,
+        "TAZ" -> 3,
         //UAE
         "SHJ" -> 5,
         "AAN" -> 4,
@@ -696,7 +714,7 @@ object AirportSizeAdjust {
         //https://en.wikipedia.org/wiki/List_of_airports_in_Uruguay
         "PDP" -> 4,
         //https://en.wikipedia.org/wiki/List_of_busiest_airports_in_the_United_Kingdom
-        "LTN" -> 6,
+        "LTN" -> 5,
         "STN" -> 6,
         "SEN" -> 4,
         "BRS" -> 6,
@@ -743,6 +761,8 @@ object AirportSizeAdjust {
         "ISP" -> 4,
         "LNS" -> 3,
         "TTN" -> 3,
+        //metro boston
+        "MHT" -> 4,
         //metro LA
         "BUR" -> 4,
         "SNA" -> 4,
@@ -785,7 +805,6 @@ object AirportSizeAdjust {
         "LRU" -> 2,
         "USA" -> 3,
         "SWO" -> 2,
-        "BKG" -> 2,
         "OWB" -> 2,
         //upgrade established city airports
         "SAT" -> 6,
@@ -829,6 +848,7 @@ object AirportSizeAdjust {
         "FSD" -> 4,
         //colorado
         "COS" -> 4,
+        "GJT" -> 4,
         "PUB" -> 3,
         "MTJ" -> 3,
         "GUC" -> 3,
@@ -858,6 +878,7 @@ object AirportSizeAdjust {
         "AVL" -> 5,
         "AGS" -> 4,
         "CAE" -> 4,
+        "GSO" -> 4,
         //florida
         "PGD" -> 4,
         "TLH" -> 4,

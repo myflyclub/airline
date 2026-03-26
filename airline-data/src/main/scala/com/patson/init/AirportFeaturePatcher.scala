@@ -88,7 +88,7 @@ ELITE_CHARM -> getEliteDestinations()
     list -= "KRT"
     list -= "OND" //Namibia
     list += "WDH"
-    list -= "LAD" //Angola
+    list -= "NBJ" //Angola
     list += "NBJ"
     list -= "ZND" //Mali
     list += "NIM"

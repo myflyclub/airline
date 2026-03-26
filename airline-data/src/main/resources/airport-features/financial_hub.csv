@@ -1,289 +1,292 @@
 iata,strength,comment
-NRT,70, //Tokyo
-PVG,60, //Shanghai
-SIN,60, //Singapore
-HND,60, //Tokyo
-ICN,55, //Seoul
-GVA,54, //Geneva
-SZX,53, //Shenzhen
-FRA,52, //Frankfurt
-DXB,50, //Dubai
-LAX,50, //Los Angeles
-BOM,49, //Mumbai
-ZRH,49, //Zurich
-JFK,48, //New York
-SCL,47, //Santiago
-KUL,46, //Kuala Lumpur
-DEL,45, //New Delhi
-HKG,45, //Hong Kong
-LHR,44, //London
-CAN,44, //Guangzhou
-JNB,43, //Johannesburg
-GRU,43, //Sao Paulo
-BOG,42, //Bogota
-YYZ,42, //Toronto
-SFO,42, //San Francisco
-PHX,41, //Phoenix
-TPE,41, //Taipei
-SEA,40, //Seattle
-AUH,40, //Abu Dhabi
-AMS,40, //Amsterdam
-MAD,39, //Madrid
-YVR,39, //Vancouver
-SVO,39, //Moscow
-MNL,39, //Manila
-ORD,39, //Chicago
-DOH,38, //Doha
-DFW,38, //Dallas Fort Worth
-SGN,38, //Ho Chi Minh City
-MUC,37, //Munich
-MEX,37, //Mexico City
-FUK,35, //Fukuoka
-SYD,35, //Sydney
-DEN,35, //Denver
-CLT,35, //Charlotte
-IAH,35, //Houston
-EWR,35, //New York
-PEK,35, //Beijing
-CPH,34, //Copenhagen
-AKL,34, //Auckland
-BER,34, //Berlin
-KIX,33, //Osaka
-TLV,33, //Tel Aviv
-YUL,33, //Montreal
-PUS,33, //Busan
-ITM,32, //Osaka
-YYC,32, //Calgary
-JED,32, //Jeddah
-CDG,31, //Paris
-DME,31, //Moscow
-MIA,31, //Miami
-KWI,30, //Kuwait City
-CGK,30, //Jakarta
-IST,30, //Istanbul
-SLC,30, //Salt Lake City
-TFU,30, //Chengdu
-MEL,29, //Melbourne
-GMP,29, //Seoul
-BRU,29, //Brussels
-PTY,29, //Panama City
-ATL,29, //Atlanta
-VIE,28, //Vienna
-MXP,28, //Milan
-SHA,27, //Shanghai
-LIM,27, //Lima
-DUS,27, //Dusseldorf
-LED,27, //St Petersburg
-OSL,26, //Oslo
-TAS,26, //Tashkent
-BAH,25, //Bahrain
-GIG,25, //Rio de Janeiro
-DUB,24, //Dublin
-LGW,24, //London
-LGA,24, //New York
-BCN,23, //Barcelona
-DCA,23, //Washington DC
-EZE,22, //Buenos Aires
-LIN,22, //Milan
-HAN,22, //Hanoi
-KHH,22, //Kaohsiung
-RUH,21, //Riyadh
-LUX,21, //Luxembourg
-LOS,21, //Lagos
-CTU,21, //Chengdu
-BLR,21, //Bangalore
-MSP,21, //Minneapolis
-BKK,20, //Bangkok
-ARN,20, //Stockholm
-BUD,20, //Budapest
-VKO,20, //
-CGH,20, //Sao Paulo
-NBO,20, //Nairobi
-FCO,19, //Rome
-PER,19, //Perth
-PRG,19, //Prague
-WAW,19, //Warsaw
-SAN,19, //San Diego
-BOS,18, //Boston
-NGO,18, //Nagoya
-BLQ,18, //Bologna
-CGN,18, //Cologne
-HEL,17, //Helsinki
-KMG,17, //
-TRN,17, //Turin
-LCY,17, //London
-IKA,17, //Tehran
-BSB,16, //Brasilia
-ALG,16, //Algiers
-TLL,16, //Tallinn
-YTZ,16, //Toronto
-IAD,16, //Washington DC
-HYD,16, //Hyderabad
-DMM,16, //
-MDW,15, //Chicago
-LAS,15, //
-DTW,15, //Detroit
-RMO,15, //Chisinau
-YQB,15, //Quebec City
-YOW,15, //Ottawa
-FLL,15, //
-TPA,15, //Tampa
-GYD,15, //Baku
-DAL,14, //Dallas
-PKX,14, //Beijing
-VNO,14, //Vilnius
-HAJ,14, //Hanover
-MTY,14, //Monterrey
-TAE,14, //
-YEG,14, //Edmonton
-CPT,14, //Cape Town
-PDX,14, //Portland
-GDL,14, //
-ADD,14, //Addis Ababa
-ALA,13, //Almaty
-RIX,13, //Riga
-BWI,13, //Baltimore
-BNE,12, //Brisbane
-EDI,12, //Edinburgh
-RTM,12, //The Hague
-TAO,12, //Qingdao
-BEG,12, //Belgrade
-CEB,12, //
-DVO,12, //
-BNA,12, //Nashville
-MLA,12, //Malta
-SHJ,12, //
-SJC,11, //San Francisco
-KUN,11, //Kaunas
-CCP,11, //Concepcion
-AEP,10, //Buenos Aires
-PHL,10, //Philadelphia
-TSA,10, //Taipei
-HAM,10, //Hamburg
-ESB,10, //Ankara
-DUR,10, //Durban
-MCT,10, //
-BGO,9, //Bergen
-AMD,9, //GIFT City-Gujarat
-AUS,9, //Austin
-MDE,9, //Medellin
-WLG,9, //Wellington
-XIY,9, //Xi'an
-ORY,8, //Paris
-ADL,8, //Adelaide
-CBR,8, //Canberra
-BDA,8, //Bermuda
-BTS,8, //Bratislava
-KHI,8, //Karachi
-NLU,8, //Mexico City
-POS,8, //Port of Spain
-STR,8, //Stuttgart
-YWG,8, //Winnipeg
-SMF,8, //Sacramento
-HOU,8, //Houston
-ACC,8, //
-THR,8, //
-CMN,7, //Casablanca
-LIS,7, //
-MAA,7, //Chennai
-ANC,7, //Anchorage
-TSN,7, //Tianjin
-NQZ,7, //Nur-Sultan
-PNQ,7, //Pune
-PEN,7, //
-KGL,7, //Kigali
-LIN,7, //Milan
-LEJ,7, //Leipzig
-YQR,7, //Regina
-AMM,7, //
-MAN,7, //Manchester
-DMK,6, //Bangkok
-UPG,6, //Makassar
-NCL,6, //Newcastle
-NAS,6, //Nassau
-OAK,6, //San Francisco
-SOF,6, //Sofia
-GLA,6, //Glasgow
-ABV,6, //
-UIO,6, //
-BSZ,9, //
-AAL,5, //Aalborg
-GOT,5, //Gothenburg
-ATH,5, //Athens
-PIT,5, //Pittsburgh
-AHB,5, //
-CLO,5, //Cali
-CZX,5, //Changzhou
-MBA,5, //Mombasa
-MVD,5, //
-UKB,5, //
-OVB,5, //
-BOI,5, //
-LAD,5, //Luanda
-ABJ,5, //
-TLS,4, //Toulouse
-STL,4, //
-SDQ,4, //
-CRL,4, //Brussles
-NKG,4, //Nanjing
-BGI,4, //Bridgetown
-SNA,4, //
-YXE,4, //Saskatoon
-HAV,4, //Havanna
-GYE,4, //
-HLP,4, //Jakarta
-CVG,4, //
-LFW,4, //
-NUE,4, //
-BUR,4, //
-ILO,4, //
-DAR,4, //
-DYU,4, //
-BHX,4, //Birmingham
-NSI,4, //
-LYS,3, //Grenoble
-TRD,3, //Trondheim
-KEF,3, //Reykjavik
-IOM,3, //Castletown
-JNU,3, //Juneau
-MCI,3, //
-SJJ,3, //Sarajevo
-LCA,3, //Nicosia
-RDU,3, //
-CCU,3, //
-JAX,3, //
-JIB,3, ////Djibouti
-SVX,3, //
-ISB,3, //
-RGN,3, //
-ASB,3, //
-EBL,3, //
-EBB,3, //
-DLA,3, //
-KNO,2, //
-SDJ,2, //Sendai
-ABQ,2, //
-CLE,2, //
-EBL,2, //Arbil
-MKE,2, //
-YWG,2, //
-PZU,2, //Port Sudan
-CAY,2, //
-AOJ,2, //Aomori
-CMH,2, //
-IND,2, //
-SAT,2, //
-BSL,2, //
-KGD,2, //
-DSS,2, //
-MPM,2, //
-CHC,2, //
-HGH,2, //Hangzhou
-MRV,2, //
-BPN,2, //
-CXH,1, //Vancouver Heliport
-JRA,1, //NYC Heliport
-JRB,1, //NYC Heliport
-SKM,1, //Sao Paulo, fictional IATA code
-HHP,1, //Hong Kong
-SDB,1, //Rio Heliport
+NRT,70,Tokyo
+PVG,60,Shanghai
+SIN,60,Singapore
+HND,60,Tokyo
+ICN,55,Seoul
+GVA,54,Geneva
+SZX,53,Shenzhen
+FRA,52,Frankfurt
+DXB,50,Dubai
+LAX,50,Los Angeles
+BOM,49,Mumbai
+ZRH,49,Zurich
+JFK,48,New York
+SCL,47,Santiago
+KUL,46,Kuala Lumpur
+DEL,45,New Delhi
+HKG,45,Hong Kong
+LHR,44,London
+CAN,44,Guangzhou
+JNB,43,Johannesburg
+GRU,43,Sao Paulo
+BOG,42,Bogota
+YYZ,42,Toronto
+SFO,42,San Francisco
+PHX,41,Phoenix
+TPE,41,Taipei
+SEA,40,Seattle
+AUH,40,Abu Dhabi
+AMS,40,Amsterdam
+MAD,39,Madrid
+YVR,39,Vancouver
+SVO,39,Moscow
+MNL,39,Manila
+ORD,39,Chicago
+DOH,38,Doha
+DFW,38,Dallas Fort Worth
+SGN,38,Ho Chi Minh City
+MUC,37,Munich
+MEX,37,Mexico City
+FUK,35,Fukuoka
+SYD,35,Sydney
+DEN,35,Denver
+CLT,35,Charlotte
+IAH,35,Houston
+EWR,35,New York
+PEK,35,Beijing
+CPH,34,Copenhagen
+AKL,34,Auckland
+BER,34,Berlin
+KIX,33,Osaka
+TLV,33,Tel Aviv
+YUL,33,Montreal
+PUS,33,Busan
+ITM,32,Osaka
+YYC,32,Calgary
+JED,32,Jeddah
+CDG,31,Paris
+DME,31,Moscow
+MIA,31,Miami
+KWI,30,Kuwait City
+CGK,30,Jakarta
+IST,30,Istanbul
+SLC,30,Salt Lake City
+TFU,30,Chengdu
+MEL,29,Melbourne
+GMP,29,Seoul
+BRU,29,Brussels
+PTY,29,Panama City
+ATL,29,Atlanta
+VIE,28,Vienna
+MXP,28,Milan
+SHA,27,Shanghai
+LIM,27,Lima
+DUS,27,Dusseldorf
+LED,27,St Petersburg
+OSL,26,Oslo
+TAS,26,Tashkent
+BAH,25,Bahrain
+GIG,25,Rio de Janeiro
+DUB,24,Dublin
+LGW,24,London
+LGA,24,New York
+BCN,23,Barcelona
+DCA,23,Washington DC
+EZE,22,Buenos Aires
+LIN,22,Milan
+HAN,22,Hanoi
+KHH,22,Kaohsiung
+RUH,21,Riyadh
+LUX,21,Luxembourg
+LOS,21,Lagos
+CTU,21,Chengdu
+BLR,21,Bangalore
+MSP,21,Minneapolis
+BKK,20,Bangkok
+ARN,20,Stockholm
+BUD,20,Budapest
+VKO,20,
+CGH,20,Sao Paulo
+NBO,20,Nairobi
+FCO,19,Rome
+PER,19,Perth
+PRG,19,Prague
+WAW,19,Warsaw
+SAN,19,San Diego
+BOS,18,Boston
+NGO,18,Nagoya
+BLQ,18,Bologna
+CGN,18,Cologne
+HEL,17,Helsinki
+KMG,17,
+TRN,17,Turin
+LCY,17,London
+IKA,17,Tehran
+BSB,16,Brasilia
+ALG,16,Algiers
+TLL,16,Tallinn
+YTZ,16,Toronto
+IAD,16,Washington DC
+HYD,16,Hyderabad
+DMM,16,
+MDW,15,Chicago
+LAS,15,
+DTW,15,Detroit
+RMO,15,Chisinau
+YQB,15,Quebec City
+YOW,15,Ottawa
+FLL,15,
+TPA,15,Tampa
+GYD,15,Baku
+DAL,14,Dallas
+PKX,14,Beijing
+VNO,14,Vilnius
+HAJ,14,Hanover
+MTY,14,Monterrey
+TAE,14,
+YEG,14,Edmonton
+CPT,14,Cape Town
+PDX,14,Portland
+GDL,14,
+ADD,14,Addis Ababa
+ALA,13,Almaty
+RIX,13,Riga
+BWI,13,Baltimore
+BNE,12,Brisbane
+EDI,12,Edinburgh
+RTM,12,The Hague
+TAO,12,Qingdao
+BEG,12,Belgrade
+CEB,12,
+DVO,12,
+BNA,12,Nashville
+MLA,12,Malta
+SHJ,12,
+SJC,11,San Francisco
+KUN,11,Kaunas
+CCP,11,Concepcion
+AEP,10,Buenos Aires
+PHL,10,Philadelphia
+TSA,10,Taipei
+HAM,10,Hamburg
+ESB,10,Ankara
+DUR,10,Durban
+MCT,10,
+BGO,9,Bergen
+AMD,9,GIFT City-Gujarat
+AUS,9,Austin
+MDE,9,Medellin
+WLG,9,Wellington
+XIY,9,Xi'an
+ORY,8,Paris
+ADL,8,Adelaide
+CBR,8,Canberra
+BDA,8,Bermuda
+BTS,8,Bratislava
+KHI,8,Karachi
+NLU,8,Mexico City
+POS,8,Port of Spain
+STR,8,Stuttgart
+YWG,8,Winnipeg
+SMF,8,Sacramento
+HOU,8,Houston
+ACC,8,
+THR,8,
+CMN,7,Casablanca
+LIS,7,
+MAA,7,Chennai
+ANC,7,Anchorage
+TSN,7,Tianjin
+NQZ,7,Nur-Sultan
+PNQ,7,Pune
+PEN,7,
+KGL,7,Kigali
+LIN,7,Milan
+LEJ,7,Leipzig
+YQR,7,Regina
+AMM,7,
+MAN,7,Manchester
+DMK,6,Bangkok
+UPG,6,Makassar
+NCL,6,Newcastle
+NAS,6,Nassau
+OAK,6,San Francisco
+SOF,6,Sofia
+GLA,6,Glasgow
+ABV,6,
+UIO,6,
+BSZ,9,
+AAL,5,Aalborg
+GOT,5,Gothenburg
+ATH,5,Athens
+PIT,5,Pittsburgh
+AHB,5,
+CLO,5,Cali
+CZX,5,Changzhou
+MBA,5,Mombasa
+MVD,5,
+UKB,5,
+OVB,5,
+BOI,5,
+NBJ,5,Luanda
+ABJ,5,
+TLS,4,Toulouse
+STL,4,
+SDQ,4,
+CRL,4,Brussles
+NKG,4,Nanjing
+BGI,4,Bridgetown
+SNA,4,
+YXE,4,Saskatoon
+HAV,4,Havanna
+GYE,4,
+HLP,4,Jakarta
+CVG,4,
+LFW,4,
+NUE,4,
+BUR,4,
+ILO,4,
+DAR,4,
+DYU,4,
+BHX,4,Birmingham
+NSI,4,
+LYS,3,Grenoble
+TRD,3,Trondheim
+KEF,3,Reykjavik
+IOM,3,Castletown
+JNU,3,Juneau
+MCI,3,
+SJJ,3,Sarajevo
+LCA,3,Nicosia
+RDU,3,
+CCU,3,
+JAX,3,
+JIB,3,Djibouti
+SVX,3,
+ISB,3,
+RGN,3,
+ASB,3,
+EBL,3,
+EBB,3,
+SAL,3,San Salvador
+SKP,2,Skopje
+DLA,3,
+KNO,2,
+SDJ,2,Sendai
+ABQ,2,
+CLE,2,
+EBL,2,Arbil
+MKE,2,
+YWG,2,
+PZU,2,Port Sudan
+CAY,2,
+AOJ,2,Aomori
+CMH,2,
+IND,2,
+SAT,2,
+BSL,2,
+KGD,2,
+DSS,2,
+MPM,2,
+CHC,2,
+HGH,2,Hangzhou
+MRV,2,
+BPN,2,
+SAP,1,San Pedro Sula
+CXH,1,Vancouver Heliport
+JRA,1,NYC Heliport
+JRB,1,NYC Heliport
+SKM,1,Sao Paulo, fictional IATA code
+HHP,1,Hong Kong
+SDB,1,Rio Heliport

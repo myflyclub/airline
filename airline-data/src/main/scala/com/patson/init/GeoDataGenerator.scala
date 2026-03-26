@@ -264,7 +264,7 @@ object GeoDataGenerator extends App {
     airportResult = airportResult ++ additionalAirports
 
     println(s"Sorting cities to airports!")
-    val airportsSortedByLongitude = airportResult.sortBy(_.longitude)
+    val airportsSortedByLongitude = airportResult.groupBy(_.iata).values.map(_.head).toList.sortBy(_.longitude)
     val citiesSortedByLongitude = cities.sortBy(_.longitude)
 
     var counter = 0;
