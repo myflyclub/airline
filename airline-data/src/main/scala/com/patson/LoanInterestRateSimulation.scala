@@ -28,20 +28,8 @@ object LoanInterestRateSimulation {
     if (previousRates.isEmpty) {
       return Bank.DEFAULT_ANNUAL_RATE
     }
-    //check when was the last time a rate changed
-    var walker = previousRates.last
-    var cycleCount = 0
-    previousRates.findLast { rate =>
-      cycleCount += 1
-      if (rate != walker) { //found it
-        true
-      } else {
-        walker = rate
-        false
-      }
-    }
-
-    //cycle count contains either the last change, or the max of the list length - both can be used for the next logic
+    // Count consecutive cycles at the current rate
+    val cycleCount = previousRates.reverse.takeWhile(_ == previousRates.last).length
 
     //the closer a change has been made the less likely it will change again
     val shouldChange =
@@ -60,21 +48,26 @@ object LoanInterestRateSimulation {
     }
   }
 
-  val MAX_DELTA : BigDecimal = 0.012
-  val RATE_STEP : BigDecimal = 0.005 // 0.5 % is a step
+  val MAX_DELTA : BigDecimal = 0.025
+  val RATE_STEP : BigDecimal = 0.005
   val MIN_RATE : BigDecimal = 0.01 //min rate is -1%
-  val MAX_RATE = 0.34
+  val MAX_RATE : BigDecimal = 0.34
   val BOUNDARY_ZONE_DELTA_ADJUSTMENT = 0.005 // 0.5% adjustment if it's considered in abnormal range (ie > HIGH or < LOW threshold)
-  val HIGH_RATE_THRESHOLD = MAX_RATE - (MAX_RATE - MIN_RATE)
-  val LOW_RATE_THRESHOLD = MIN_RATE + (MAX_RATE - MIN_RATE)
+  val HIGH_RATE_THRESHOLD : BigDecimal = BigDecimal("0.3") //above here, dampen further rises
+  val LOW_RATE_THRESHOLD  : BigDecimal = BigDecimal("0.08") //below here, dampen further drops
+  private val TARGET_RATE : BigDecimal = BigDecimal(Bank.DEFAULT_ANNUAL_RATE.toString)
+  private val FULL_RANGE  : BigDecimal = MAX_RATE - MIN_RATE
 
   def simulateNextRate(previousRate: BigDecimal): BigDecimal = {
      var newDelta = (Random.nextInt((MAX_DELTA / RATE_STEP).toInt) + 1) * RATE_STEP
 
-     if (Random.nextBoolean()) {
-       newDelta *= -1 //could either go up or down
+     // Bias direction toward DEFAULT_ANNUAL_RATE: the further away, the stronger the pull
+     val distanceFromTarget = ((previousRate - TARGET_RATE) / FULL_RANGE).toDouble
+     val upProbability = (0.5 - distanceFromTarget).max(0.15).min(0.85)
+     if (Random.nextDouble() >= upProbability) {
+       newDelta *= -1
      }
-     
+
      //now adjust the delta if it's very close to boundary zone
      if (previousRate <= LOW_RATE_THRESHOLD && newDelta < 0) { //still dropping
        newDelta += BOUNDARY_ZONE_DELTA_ADJUSTMENT
