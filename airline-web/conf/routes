@@ -76,6 +76,7 @@ PUT      /airlines/:airlineId/minimum-renewal-balance           controllers.Airl
 GET		 /airlines/:airlineId/airplane-renewal			controllers.AirlineApplication.getAirplaneRenewal(airlineId: Int)
 PUT		 /airlines/:airlineId/airplane-renewal			controllers.AirlineApplication.updateAirplaneRenewal(airlineId: Int)
 PUT		 /airlines/:airlineId/stock-op/:operation			controllers.AirlineApplication.doStockOp(airlineId: Int, operation: String)
+PUT		 /airlines/:airlineId/dividends						controllers.AirlineApplication.setDividends(airlineId: Int)
 POST	 /airlines/:airlineId/plan-link	  controllers.LinkApplication.planLink(airlineId : Int)
 POST	 /airlines/:airlineId/get-link-negotiation	  controllers.LinkApplication.getLinkNegotiation(airlineId : Int)
 GET	     /airlines/:airlineId/office-capacity	  controllers.AirlineApplication.getOfficeCapacity(airlineId : Int)

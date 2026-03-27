@@ -161,11 +161,22 @@ object AirlineSimulation {
       val (loanPayment, interestPayment) = updateLoans(airline, currentCycle + 1) //have to plus one cycle, as this is supposed to be done postcycle, but accounting is here
       val loanInterestEntry = -interestPayment + negativeCashInterest // negative or zero
 
+      val dividendsPaid: Long = if (airline.getDividends() > 0) {
+        if (airlineValue.existingBalance >= 100 * airline.getDividends()) {
+          airline.getDividends()
+        } else {
+          airline.setDividends(0) // auto-zero; persisted by saveAirlinesInfo
+          0L
+        }
+      } else 0L
+      val dividendsPerShare = if (airline.getSharesOutstanding() > 0)
+        dividendsPaid.toDouble / airline.getSharesOutstanding() else 0.0
+
       // sum it all up; create vals for EPS etc
       val airlineRevenue = linksRevenue + loungeRevenue
       val airlineExpenseNormalized = staffCost + staffOvertimeCost + linksAirportFee + linksCrewCost + linksFuelCost + linksInflightCost + linksDelayCompensation + linksMaintenanceCost + linksDepreciation + loungeTotalCost + advertisementEntry
       val airlineExpense = airlineExpenseNormalized + -loanInterestEntry + linksFuelTax + (actualFuelCost - linksFuelCost)
-      val airlineProfit = airlineRevenue - airlineExpense
+      val airlineProfit = airlineRevenue - airlineExpense - dividendsPaid
 
       // Record weekly ledger entries
       if (!isBankrupt) {
@@ -186,7 +197,8 @@ object AirlineSimulation {
             AirlineLedgerEntry(airline.id, currentCycle, LedgerType.FUEL_COST, -actualFuelCost.toLong, Some(fuelCostDescription)),
             AirlineLedgerEntry(airline.id, currentCycle, LedgerType.CARBON_TAX, -linksFuelTax, Some(carbonTaxDescription)),
             AirlineLedgerEntry(airline.id, currentCycle, LedgerType.LOAN_PAYMENT, -loanPayment),
-            AirlineLedgerEntry(airline.id, currentCycle, LedgerType.NEGATIVE_BALANCE_LOAN_INTEREST, -negativeCashInterest)
+            AirlineLedgerEntry(airline.id, currentCycle, LedgerType.NEGATIVE_BALANCE_LOAN_INTEREST, -negativeCashInterest),
+            AirlineLedgerEntry(airline.id, currentCycle, LedgerType.DIVIDEND_PAYMENT, -dividendsPaid)
         )
 
         allLedgerEntries ++= weeklyLedger
@@ -379,7 +391,8 @@ object AirlineSimulation {
         eps = eps,
         linkCount = linkCount,
         repTotal = finalBreakdowns.total.toInt,
-        repLeaderboards = reputationBonusFromLeaderboards.toInt
+        repLeaderboards = reputationBonusFromLeaderboards.toInt,
+        dividendsPerShare = dividendsPerShare
       )
       allAirlineStats += airlineWeeklyStats
       val stockPrice = if (isBankrupt || airline.airlineType.stockRepPerLevel == 0) {
@@ -407,6 +420,7 @@ object AirlineSimulation {
         lounge = -loungeTotalCost, // per-flight lounge cost + facility upkeep/visitor cost
         advertising = advertisementEntry,
         loanInterest = loanInterestEntry,
+        dividends = -dividendsPaid,
         cycle = currentCycle)
       val weeklyBalance = AirlineBalance(
         airlineId = airline.id,
@@ -483,7 +497,8 @@ object AirlineSimulation {
               deprecation = a.deprecation + b.deprecation, airportRentals = a.airportRentals + b.airportRentals,
               inflightService = a.inflightService + b.inflightService, delay = a.delay + b.delay,
               maintenance = a.maintenance + b.maintenance, lounge = a.lounge + b.lounge,
-              advertising = a.advertising + b.advertising, loanInterest = a.loanInterest + b.loanInterest)
+              advertising = a.advertising + b.advertising, loanInterest = a.loanInterest + b.loanInterest,
+              dividends = a.dividends + b.dividends)
           }
           val lastWeek = weeks.maxBy(_._1.cycle)._1
           val periodBal = sumBal.copy(

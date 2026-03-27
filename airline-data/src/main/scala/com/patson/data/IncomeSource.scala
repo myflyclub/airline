@@ -18,8 +18,8 @@ object IncomeSource {
       "REPLACE INTO " + BALANCE_DETAILS_TABLE +
       "(airline, ticket_revenue, lounge_revenue, staff, staff_overtime, flight_crew, fuel, fuel_tax," +
       " fuel_normalized, deprecation, airport_rentals, inflight_service, delay, maintenance, lounge," +
-      " advertising, loan_interest, period, cycle)" +
-      " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
+      " advertising, loan_interest, dividends, period, cycle)" +
+      " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
     try {
       connection.setAutoCommit(false)
       balances.foreach { case (bal, det) =>
@@ -50,8 +50,9 @@ object IncomeSource {
         detStmt.setLong(15, det.lounge)
         detStmt.setLong(16, det.advertising)
         detStmt.setLong(17, det.loanInterest)
-        detStmt.setInt(18, det.period.id)
-        detStmt.setInt(19, det.cycle)
+        detStmt.setLong(18, det.dividends)
+        detStmt.setInt(19, det.period.id)
+        detStmt.setInt(20, det.cycle)
         detStmt.addBatch()
       }
       balStmt.executeBatch()
@@ -186,6 +187,7 @@ object IncomeSource {
       lounge = rs.getLong("d.lounge"),
       advertising = rs.getLong("d.advertising"),
       loanInterest = rs.getLong("d.loan_interest"),
+      dividends = rs.getLong("d.dividends"),
       period = period,
       cycle = cycle)
     (bal, det)

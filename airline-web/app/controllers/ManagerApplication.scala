@@ -24,7 +24,8 @@ class ManagerApplication @Inject()(cc: ControllerComponents) extends AbstractCon
     Ok(Json.obj(
       "managers" -> ManagerSource.loadCountryDelegateByAirlineAndCountry(airlineId, countryCode),
       "multiplier" -> multiplier,
-      "availableCount" -> request.user.getManagerInfo().availableCount
+      "availableCount" -> request.user.getManagerInfo().availableCount,
+      "maxManagers" -> CountryManagerTask.MAX_MANAGERS_PER_COUNTRY
     ))
   }
 
@@ -36,6 +37,8 @@ class ManagerApplication @Inject()(cc: ControllerComponents) extends AbstractCon
 
     if (managerCount < 0) {
       BadRequest(s"Invalid manager value $managerCount")
+    } else if (managerCount > CountryManagerTask.MAX_MANAGERS_PER_COUNTRY) {
+      BadRequest(s"Invalid manager count $managerCount (max ${CountryManagerTask.MAX_MANAGERS_PER_COUNTRY})")
     } else {
       if (delta < 0) { //unassign the most junior ones first
         ManagerSource.deleteBusyDelegates(existingManagers.sortBy(_.assignedTask.getStartCycle).takeRight(-delta))

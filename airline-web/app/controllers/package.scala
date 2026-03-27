@@ -413,7 +413,8 @@ package object controllers {
         "maintenance" -> JsNumber(details.maintenance),
         "lounge" -> JsNumber(details.lounge),
         "advertising" -> JsNumber(details.advertising),
-        "loanInterest" -> JsNumber(details.loanInterest)
+        "loanInterest" -> JsNumber(details.loanInterest),
+        "dividends" -> JsNumber(details.dividends)
       ))
     }
   }

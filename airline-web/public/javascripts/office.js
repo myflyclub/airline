@@ -431,6 +431,7 @@ function updateAirlineDetails() {
     document.querySelector('.stockBuyBackCost').textContent = "$" + commaSeparateNumber(1000000 * airline.tempStockPrice + brokerFee, "m");
     document.querySelector('.stockSellRevenue').textContent = "$" + commaSeparateNumber(1000000 * airline.tempStockPrice - brokerFee, "m");
     document.querySelector('.stockBuybackInfo').textContent = "";
+    $('#dividendsInput').attr('placeholder', commaSeparateNumber(airline.stock.dividends || 0));
   }
 
   cancelAirlineRename()
@@ -651,7 +652,8 @@ function updateIncomeSheet(b) {
 	$('#balFuelTax').text(fmt(b.fuelTax))
 	$('#balDenormalizedFuel').text(fmt(b.fuel - b.fuelNormalized))
 	$('#balLoanInterest').text(fmt(b.loanInterest))
-	const totalNonOperating = b.fuelTax + (b.fuel - b.fuelNormalized) + b.loanInterest
+	$('#balDividends').text(fmt(b.dividends || 0))
+	const totalNonOperating = b.fuelTax + (b.fuel - b.fuelNormalized) + b.loanInterest + (b.dividends || 0)
 	$('#balNonOperatingTot').text(fmt(totalNonOperating))
 
 	$('#balNetIncome').text(fmt(b.income))
@@ -879,6 +881,30 @@ function doStockOp(operation = 'buyback') {
 	            buttons.forEach(button => { button.disabled = false; });
 	    }
 	})
+}
+
+function setDividends() {
+  const amount = parseInt($('#dividendsInput').val()) || 0
+  const btn = document.getElementById('setDividendBtn')
+  btn.disabled = true
+  document.querySelector('.dividendInfo').textContent = ''
+  $.ajax({
+    type: 'PUT',
+    url: `/airlines/${activeAirline.id}/dividends`,
+    data: JSON.stringify({ dividends: amount }),
+    contentType: 'application/json; charset=utf-8',
+    dataType: 'json',
+    success: function(result) {
+      activeAirline.stock.dividends = result.dividends
+      $('#dividendsInput').val('')
+      updateAirlineDetails()
+      btn.disabled = false
+    },
+    error: function(jqXHR, textStatus, errorThrown) {
+      document.querySelector('.dividendInfo').textContent = jqXHR.responseText || errorThrown
+      btn.disabled = false
+    }
+  })
 }
 
 function editAirlineCode() {

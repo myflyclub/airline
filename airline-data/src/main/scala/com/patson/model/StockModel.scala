@@ -17,6 +17,11 @@ object StockModel {
     "Lower your CASK – which includes all flight costs except fuel taxes and also includes base upkeep and base overtime.",
   )
 
+  val TOOLTIP_STOCK_DIVIDENDS = List(
+    "Dividends per share reward consistent cash returns to shareholders with a 4x weight.",
+    "Set a weekly dividend payout. It will be cancelled if your balance drops below 100x the amount."
+  )
+
   val allMetrics: Map[String, StockMetric] = Map(
     "eps" ->                  StockMetric(35, 0.0, 25.0),
     "pask" ->                 StockMetric(25, 0.05, 0.1),
@@ -28,7 +33,7 @@ object StockModel {
     "codeshares" ->           StockMetric(6, 200, 100000),
     "rep_leaderboards" ->     StockMetric(6, 0, 200),
     "months_cash_on_hand" ->  StockMetric(6, 48, 12),
-    //add one more 5 value and lower PASK by
+    "dividends" ->            StockMetric(4, 0.0, 2.0),  // floor=$0/share/week, target=$2/share/week
   )
 
   /**
@@ -59,8 +64,8 @@ object StockModel {
       StockModel.getMetricValue("codeshares", stats.codeshares),
       StockModel.getMetricValue("rep_leaderboards", stats.repLeaderboards),
       StockModel.getMetricValue("months_cash_on_hand", stats.cashOnHand / 4),
-      StockModel.getMetricValue("interest", currentInterestRate) * sizeAdjust
-      //let's add one more
+      StockModel.getMetricValue("interest", currentInterestRate) * sizeAdjust,
+      StockModel.getMetricValue("dividends", stats.dividendsPerShare)
     ).sum
   }
 

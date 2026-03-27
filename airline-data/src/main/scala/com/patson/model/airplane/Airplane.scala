@@ -65,7 +65,7 @@ case class Airplane(model : Model, var owner : Airline, constructedCycle : Int, 
 
 object Airplane {
   val MAX_CONDITION = 100
-  val BAD_CONDITION = 50
+  val BAD_CONDITION = 40
   val CRITICAL_CONDITION = 15
   val MAX_DEALER_WEEKS = 72
   val MAX_FLIGHT_MINUTES : Int = (24 * 60 * 4.5).toInt

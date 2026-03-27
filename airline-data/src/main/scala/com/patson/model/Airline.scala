@@ -50,6 +50,9 @@ case class Airline(name: String, var airlineType: AirlineType = LegacyAirline, v
     airlineInfo.sharesOutstanding = sharesOutstanding
   }
 
+  def getDividends(): Long = airlineInfo.dividends
+  def setDividends(dividends: Long): Unit = { airlineInfo.dividends = dividends }
+
   def doStockOp(isSellShares: Int): (Long, Long) = {
     val shareCost: Long = (1_000_000 * airlineInfo.stockPrice).toLong
     val fee: Long = StockModel.STOCK_BROKER_FEE_BASE + (shareCost * StockModel.STOCK_BROKER_FEE).toLong
@@ -197,7 +200,7 @@ case class Airline(name: String, var airlineType: AirlineType = LegacyAirline, v
 
 case class ManagerInfo(availableCount : Int, busyManagers: List[Manager])
 
-case class AirlineInfo(var balance : Long, var currentServiceQuality : Double, var stockPrice : Double, var sharesOutstanding : Int, var targetServiceQuality : Int, var reputation : Double, var minimumRenewalBalance: Long, var actionPoints: Double = 0.0, var countryCode : Option[String] = None, var initialized : Boolean = false, var prestigePoints: Int = 0)
+case class AirlineInfo(var balance : Long, var currentServiceQuality : Double, var stockPrice : Double, var sharesOutstanding : Int, var targetServiceQuality : Int, var reputation : Double, var minimumRenewalBalance: Long, var actionPoints: Double = 0.0, var countryCode : Option[String] = None, var initialized : Boolean = false, var prestigePoints: Int = 0, var dividends: Long = 0)
 
 case class AirlineMeta(airlineCode: Option[String] = None, color: Option[String] = None, skipTutorial: Boolean = false)
 
@@ -222,7 +225,8 @@ object LedgerType extends Enumeration {
   // Financing — weekly aggregates
   val LOAN_PAYMENT,
       NEGATIVE_BALANCE_LOAN_INTEREST,
-      LOAN_DISBURSEMENT = Value
+      LOAN_DISBURSEMENT,
+      DIVIDEND_PAYMENT = Value
   // Capital events — one entry per event
   val BUY_AIRPLANE,
       SELL_AIRPLANE,
@@ -242,6 +246,7 @@ case class AirlineBalanceDetails(airlineId: Int, ticketRevenue: Long, loungeReve
   staff: Long, staffOvertime: Long, flightCrew: Long, fuel: Long, fuelTax: Long,
   fuelNormalized: Long, deprecation: Long, airportRentals: Long, inflightService: Long,
   delay: Long, maintenance: Long, lounge: Long, advertising: Long, loanInterest: Long,
+  dividends: Long = 0,
   period: Period.Value = Period.WEEKLY, var cycle: Int = 0)
 
 
@@ -314,6 +319,7 @@ object Airline {
         NegotiationSource.deleteLinkDiscountsByAirline(airline.id)
 
         airline.setBalance(newBalance)
+        airline.setDividends(0)
 
         airline.removeCountryCode()
         airline.setTargetServiceQuality(EQ_INTITIAL)

@@ -74,6 +74,7 @@ object AirlineSource {
               airline.setCountryCode(countryCode)
             }
             airline.setInitialized(resultSet.getBoolean("initialized"))
+            airline.setDividends(resultSet.getLong("dividends"))
             airlines += airline
           }
           airlines.toList
@@ -240,7 +241,7 @@ object AirlineSource {
       if (updateBalance) {
         query += "balance = ?, "
       }
-      query += "action_point = ?, service_quality = ?, target_service_quality = ?, stock_price = ?, shares_outstanding = ?, reputation = ?, country_code = ?, initialized = ?, minimum_renewal_balance = ?, prestige_points = ? WHERE airline = ?"
+      query += "action_point = ?, service_quality = ?, target_service_quality = ?, stock_price = ?, shares_outstanding = ?, reputation = ?, country_code = ?, initialized = ?, minimum_renewal_balance = ?, prestige_points = ?, dividends = ? WHERE airline = ?"
 
       Using.resource(Meta.getConnection()) { connection =>
         Using.resource(connection.prepareStatement(query)) { updateStatement =>
@@ -271,6 +272,8 @@ object AirlineSource {
           index += 1
           updateStatement.setInt(index, airline.getPrestigePoints())
           index += 1
+          updateStatement.setLong(index, airline.getDividends())
+          index += 1
           updateStatement.setInt(index, airline.id)
           updateStatement.executeUpdate()
         }
@@ -294,7 +297,7 @@ object AirlineSource {
 
   def saveAirlinesInfo(airlines : List[Airline]) = {
     this.synchronized {
-      val query = "UPDATE " + AIRLINE_INFO_TABLE + " SET service_quality = ?, target_service_quality = ?, stock_price = ?, shares_outstanding = ?, reputation = ?, minimum_renewal_balance = ?, prestige_points = ? WHERE airline = ?"
+      val query = "UPDATE " + AIRLINE_INFO_TABLE + " SET service_quality = ?, target_service_quality = ?, stock_price = ?, shares_outstanding = ?, reputation = ?, minimum_renewal_balance = ?, prestige_points = ?, dividends = ? WHERE airline = ?"
 
       Using.resource(Meta.getConnection()) { connection =>
         connection.setAutoCommit(false)
@@ -315,6 +318,8 @@ object AirlineSource {
             updateStatement.setLong(index, airline.getMinimumRenewalBalance())
             index += 1
             updateStatement.setInt(index, airline.getPrestigePoints())
+            index += 1
+            updateStatement.setLong(index, airline.getDividends())
             index += 1
             updateStatement.setInt(index, airline.id)
             updateStatement.addBatch()

@@ -97,6 +97,8 @@
                                 <p>Stock price: <span class="airlineStockPrice"></span></p>
                                 <p>Market cap: <span class="airlineMarketCap"></span></p>
                                 <p>Shares outstanding: <span class="airlineSharesOutstanding"></span></p>
+                                <p class="mt-2">Weekly Dividends: $<input id="dividendsInput" type="number" min="0" step="100000" style="width:100px;"> <button type="button" id="setDividendBtn" class="button tight m-0" onclick="setDividends()">Set</button></p>
+                                <p class="dividendInfo"></p>
                                 <button type="button" class="button stockOpBtn m-0 mt-2" onclick="doStockOp('buyback')">Buyback 1m shares for 1⚡ and <span class="stockBuyBackCost"></span></button>
                                 <button type="button" class="button stockOpBtn m-0 mt-2" onclick="doStockOp('sell')">Sell 1m shares for 5⚡ and <span class="stockSellRevenue"></span></button>
                                 <p class="stockBuybackInfo"></p>
@@ -276,6 +278,10 @@
 									<div class="table-row">
 										<div class="cell">Loan Interest:</div>
 										<div id="balLoanInterest" class="cell" style="text-align:right;"></div>
+									</div>
+									<div class="table-row">
+										<div class="cell">Dividends:</div>
+										<div id="balDividends" class="cell" style="text-align:right;"></div>
 									</div>
                                     <div class="table-row">
 										<div class="cell h5">Total Non-Operating Income/(Expense):</div>

@@ -59,7 +59,8 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
               "stockDescription" -> airline.airlineGradeStockPrice.description,
               "stockLevel" -> airline.airlineGradeStockPrice.level,
               "stockCeiling" -> airline.airlineGradeStockPrice.reputationCeiling,
-              "stockFloor" -> airline.airlineGradeStockPrice.reputationFloor
+              "stockFloor" -> airline.airlineGradeStockPrice.reputationFloor,
+              "dividends" -> airline.getDividends()
             )
           ) else None
         ).flatten
@@ -985,6 +986,27 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
             BadRequest("Cannot parse sharesOutstanding")
         }
 
+      case _ =>
+        BadRequest("Cannot parse request body")
+    }
+  }
+
+  def setDividends(airlineId: Int) = AuthenticatedAirline(airlineId) { request =>
+    request.body match {
+      case json: AnyContentAsJson =>
+        Try(json.json.\("dividends").as[Long]) match {
+          case Success(dividends) =>
+            if (dividends < 0) {
+              BadRequest("Dividends cannot be negative")
+            } else {
+              val airline = request.user
+              airline.setDividends(dividends)
+              AirlineSource.saveAirlineInfo(airline)
+              Ok(Json.obj("dividends" -> JsNumber(dividends)))
+            }
+          case Failure(_) =>
+            BadRequest("Cannot parse dividends")
+        }
       case _ =>
         BadRequest("Cannot parse request body")
     }

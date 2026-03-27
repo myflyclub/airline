@@ -174,6 +174,7 @@ object Meta {
       "initialized TINYINT," +
       "minimum_renewal_balance INTEGER DEFAULT 0," +
       "prestige_points INTEGER UNSIGNED," +
+      "dividends BIGINT NOT NULL DEFAULT 0," +
       "FOREIGN KEY(airline) REFERENCES " + AIRLINE_TABLE + "(id) ON DELETE CASCADE ON UPDATE CASCADE" +
       ")")
 
@@ -678,6 +679,7 @@ object Meta {
       "lounge LONG, " +
       "advertising LONG," +
       "loan_interest LONG," +
+      "dividends BIGINT NOT NULL DEFAULT 0," +
       "period INTEGER," +
       "cycle INTEGER," +
       "PRIMARY KEY (airline, period, cycle)" +
@@ -1775,6 +1777,7 @@ object Meta {
       "link_count INTEGER, " +
       "rep_total DOUBLE, " +
       "rep_leaderboards DOUBLE, " +
+      "dividends_per_share DOUBLE NOT NULL DEFAULT 0," +
       "PRIMARY KEY (airline, period, cycle)," +
       "FOREIGN KEY(airline) REFERENCES " + AIRLINE_TABLE + "(id) ON DELETE CASCADE ON UPDATE CASCADE" +
       ")")

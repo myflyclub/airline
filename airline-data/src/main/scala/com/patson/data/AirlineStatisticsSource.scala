@@ -11,7 +11,7 @@ import scala.collection.mutable.ListBuffer
 object AirlineStatisticsSource {
 
   def saveAirlineStats(stats: List[AirlineStat]) = {
-    val queryString = s"REPLACE INTO $AIRLINE_STATISTICS_TABLE (airline, cycle, period, tourists, elites, business, total, codeshares, rask, cask, satisfaction, load_factor, on_time, cash_on_hand, eps, link_count, rep_total, rep_leaderboards) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
+    val queryString = s"REPLACE INTO $AIRLINE_STATISTICS_TABLE (airline, cycle, period, tourists, elites, business, total, codeshares, rask, cask, satisfaction, load_factor, on_time, cash_on_hand, eps, link_count, rep_total, rep_leaderboards, dividends_per_share) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
     val connection = Meta.getConnection()
     try {
       connection.setAutoCommit(false)
@@ -35,6 +35,7 @@ object AirlineStatisticsSource {
         preparedStatement.setInt(16, entry.linkCount)
         preparedStatement.setInt(17, entry.repTotal)
         preparedStatement.setInt(18, entry.repLeaderboards)
+        preparedStatement.setDouble(19, BigDecimal(entry.dividendsPerShare).setScale(4, BigDecimal.RoundingMode.HALF_UP).toDouble)
         preparedStatement.executeUpdate()
       }
       preparedStatement.close()
@@ -102,7 +103,7 @@ object AirlineStatisticsSource {
           val linkCount = resultSet.getInt("link_count")
           val repTotal = resultSet.getInt("rep_total")
           val repLeaderboards = resultSet.getInt("rep_leaderboards")
-          airlineStats += AirlineStat(airlineId, cycle, period, tourists, elites, business, total, codeshares, rask, cask, satisfaction, loadFactor, onTime, cashOnHand, eps, linkCount, repTotal, repLeaderboards)
+          airlineStats += AirlineStat(airlineId, cycle, period, tourists, elites, business, total, codeshares, rask, cask, satisfaction, loadFactor, onTime, cashOnHand, eps, linkCount, repTotal, repLeaderboards, resultSet.getDouble("dividends_per_share"))
         }
 
         airlineStats.toList
@@ -145,7 +146,8 @@ object AirlineStatisticsSource {
           resultSet.getDouble("eps"),
           resultSet.getInt("link_count"),
           resultSet.getInt("rep_total"),
-          resultSet.getInt("rep_leaderboards")
+          resultSet.getInt("rep_leaderboards"),
+          resultSet.getDouble("dividends_per_share")
         )
       }
       airlineStats.toList
@@ -196,7 +198,8 @@ object AirlineStatisticsSource {
           resultSet.getDouble("eps"),
           resultSet.getInt("link_count"),
           resultSet.getInt("rep_total"),
-          resultSet.getInt("rep_leaderboards")
+          resultSet.getInt("rep_leaderboards"),
+          resultSet.getDouble("dividends_per_share")
         )
       }
       preparedStatement.close()
@@ -232,7 +235,7 @@ object AirlineStatisticsSource {
         val linkCount = resultSet.getInt("link_count")
         val repTotal = resultSet.getInt("rep_total")
         val repLeaderboards = resultSet.getInt("rep_leaderboards")
-        airlineStats += AirlineStat(airlineId, cycle, period, tourists, elites, business, total, codeshares, rask, cask, satisfaction, loadFactor, onTime, cashOnHand, eps, linkCount, repTotal, repLeaderboards)
+        airlineStats += AirlineStat(airlineId, cycle, period, tourists, elites, business, total, codeshares, rask, cask, satisfaction, loadFactor, onTime, cashOnHand, eps, linkCount, repTotal, repLeaderboards, resultSet.getDouble("dividends_per_share"))
       }
 
       airlineStats.toList

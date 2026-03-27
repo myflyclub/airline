@@ -18,7 +18,8 @@ case class AirlineStat(
                         eps: Double,
                         linkCount: Int,
                         repTotal: Int,
-                        repLeaderboards: Int
+                        repLeaderboards: Int,
+                        dividendsPerShare: Double = 0.0
                       ) {
   def update(other: AirlineStat): AirlineStat = AirlineStat(
     airlineId,
@@ -38,7 +39,8 @@ case class AirlineStat(
     eps + other.eps,
     linkCount + other.linkCount,
     repTotal + other.repTotal,
-    repLeaderboards + other.repLeaderboards
+    repLeaderboards + other.repLeaderboards,
+    dividendsPerShare + other.dividendsPerShare
   )
 
   def toAverage(count: Int): AirlineStat = if (count <= 1) this else copy(
@@ -51,7 +53,8 @@ case class AirlineStat(
     eps = eps / count,
     linkCount = (linkCount.toDouble / count).toInt,
     repTotal = (repTotal.toDouble / count).toInt,
-    repLeaderboards = (repLeaderboards.toDouble / count).toInt
+    repLeaderboards = (repLeaderboards.toDouble / count).toInt,
+    dividendsPerShare = dividendsPerShare / count
   )
 }
 
