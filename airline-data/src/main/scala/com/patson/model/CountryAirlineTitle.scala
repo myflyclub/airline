@@ -6,7 +6,7 @@ import com.github.benmanes.caffeine.cache.{CacheLoader, Caffeine, LoadingCache}
 import com.patson.data.{CountrySource, CycleSource, ManagerSource}
 import com.patson.util.{AirlineCache, CountryCache}
 
-case class CountryAirlineTitle(country : Country, airline : Airline, title : Title.Value) {
+case class CountryAirlineTitle(country : Country, airline : Airline, title : Title.Value, score: Int = 0) {
 
   lazy val loyaltyBonus : Int = {
     val ratioToModelPower = country.airportPopulation * country.income.toDouble / Computation.MODEL_COUNTRY_POWER
@@ -71,27 +71,29 @@ object CountryAirlineTitle {
   val ESTABLISHED_AIRLINE_RELATIONSHIP_THRESHOLD = 20
   val APPROVED_AIRLINE_RELATIONSHIP_THRESHOLD = 5
 
-  // Caffeine cache: countryCode -> sorted list of top titles (NATIONAL + PARTNERED)
-  private val topTitleCache: LoadingCache[String, List[CountryAirlineTitle]] =
+  private case class CountryTitles(topTitles: List[CountryAirlineTitle], nextInLine: List[CountryAirlineTitle])
+
+  // Caffeine cache: countryCode -> (top titles NATIONAL+PARTNERED, next 5 in line)
+  private val countryTitlesCache: LoadingCache[String, CountryTitles] =
     Caffeine.newBuilder()
       .maximumSize(500)
       .expireAfterWrite(30, TimeUnit.MINUTES)
-      .build(new CacheLoader[String, List[CountryAirlineTitle]] {
-        override def load(countryCode: String): List[CountryAirlineTitle] = computeTopTitles(countryCode)
+      .build(new CacheLoader[String, CountryTitles] {
+        override def load(countryCode: String): CountryTitles = computeAllTitles(countryCode)
       })
 
-  def invalidateAll(): Unit = topTitleCache.invalidateAll()
+  def invalidateAll(): Unit = countryTitlesCache.invalidateAll()
 
-  private def computeTopTitles(countryCode: String): List[CountryAirlineTitle] = {
+  private def computeAllTitles(countryCode: String): CountryTitles = {
     (CountryCache.getCountry(countryCode), CountrySource.loadMarketSharesByCountryCode(countryCode)) match {
-      case (Some(country), Some(marketShares)) => computeTopTitlesFor(countryCode, country, marketShares)
-      case _ => List.empty
+      case (Some(country), Some(marketShares)) => computeAllTitlesFor(countryCode, country, marketShares)
+      case _ => CountryTitles(List.empty, List.empty)
     }
   }
 
-  private def computeTopTitlesFor(countryCode: String, country: Country, marketShares: CountryMarketShare): List[CountryAirlineTitle] = {
+  private def computeAllTitlesFor(countryCode: String, country: Country, marketShares: CountryMarketShare): CountryTitles = {
     val totalPax = marketShares.airlineShares.values.sum.toDouble
-    if (totalPax == 0) return List.empty
+    if (totalPax == 0) return CountryTitles(List.empty, List.empty)
 
     val currentCycle = CycleSource.loadCycle()
     val delegateLevels = ManagerSource.loadCountryDelegateLevelsByCountry(countryCode, currentCycle)
@@ -99,10 +101,11 @@ object CountryAirlineTitle {
     val countryMutualRelationships = AirlineCountryRelationship.countryRelationships
 
     // Score each airline using HOME_COUNTRY + MARKET_SHARE + DELEGATE factors (no TITLE — avoids circularity).
+    // Score is BigDecimal so pct acts as a tiebreaker within the same integer score.
     // Carry the Airline object to avoid repeated cache lookups during partition and result mapping.
-    val airlineScores: List[(Airline, Int)] = marketShares.airlineShares.map { case (airlineId, pax) =>
+    val airlineScores: List[(Airline, BigDecimal)] = marketShares.airlineShares.map { case (airlineId, pax) =>
       val airline = AirlineCache.getAirline(airlineId).getOrElse(Airline.fromId(airlineId))
-      var score = 0
+      var score = BigDecimal(0)
 
       // HOME_COUNTRY factor
       airline.getCountryCode().foreach { homeCode =>
@@ -113,9 +116,9 @@ object CountryAirlineTitle {
         score += rel * mult + bonus
       }
 
-      // MARKET_SHARE factor
+      // MARKET_SHARE factor (pct kept as BigDecimal sub-unit for tiebreaking)
       val pct = BigDecimal(pax.toDouble / totalPax * 100).setScale(2, BigDecimal.RoundingMode.HALF_UP)
-      score += AirlineCountryRelationship.getMarketShareRelationshipBonus(pct)
+      score += AirlineCountryRelationship.getMarketShareRelationshipBonus(pct) + pct / 1000
 
       // DELEGATE factor
       score += Math.round(delegateLevels.getOrElse(airlineId, 0) * delegateMultiplier).toInt
@@ -133,11 +136,17 @@ object CountryAirlineTitle {
     val sortedDomestic = domestic.sortBy(-_._2)
     val sortedOthers = sortedDomestic.drop(nationalQuota) ++ foreign.sortBy(-_._2)
 
-    sortedDomestic.take(nationalQuota).map { case (airline, _) =>
+    val topTitles = sortedDomestic.take(nationalQuota).map { case (airline, _) =>
       CountryAirlineTitle(country, airline, Title.NATIONAL_AIRLINE)
     } ++ sortedOthers.take(partneredQuota).map { case (airline, _) =>
       CountryAirlineTitle(country, airline, Title.PARTNERED_AIRLINE)
     }
+
+    val nextInLine = sortedOthers.drop(partneredQuota).take(5).map { case (airline, score) =>
+      CountryAirlineTitle(country, airline, Title.PRIVILEGED_AIRLINE, score.toInt)
+    }
+
+    CountryTitles(topTitles, nextInLine)
   }
 
   val getTitle : (String, Airline) => CountryAirlineTitle = (countryCode : String, airline : Airline) => {
@@ -166,7 +175,11 @@ object CountryAirlineTitle {
   }
 
   val getTopTitlesByCountry : String => List[CountryAirlineTitle] = (countryCode : String) => {
-    topTitleCache.get(countryCode)
+    countryTitlesCache.get(countryCode).topTitles
+  }
+
+  val getNextInLineByCountry : String => List[CountryAirlineTitle] = (countryCode : String) => {
+    countryTitlesCache.get(countryCode).nextInLine
   }
 
   val getTopTitlesByAirline : Int => List[CountryAirlineTitle] = (airlineId : Int) => {

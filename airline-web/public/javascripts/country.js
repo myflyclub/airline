@@ -182,33 +182,34 @@ async function loadCountryDetails(countryCode) {
     		$("#countryDetailsAirlineHeadquarters").text(country.headquartersCount)
     		$("#countryDetailsAirlineBases").text(country.basesCount)
 
-    		$("#countryCanvas .nationalAirlines").empty()
-            if (country.nationalAirlines && country.nationalAirlines.length > 0) {
-                $(".national-title-bonus").text(`receive a ${country.nationalAirlines[0].loyaltyBonus} loyalty bonus`)
-                $.each(country.nationalAirlines, function(index, nationalAirline) {
-                    var championRow = $("<div class='table-row clickable' data-link='rival'><div class='cell'><img class='px-1 svg' src='/assets/images/icons/star-full.svg'>" + getAirlineLogoImg(nationalAirline.airlineId) + "<span style='font-weight: bold;'>" + getAirlineLabelSpan(nationalAirline.airlineId, nationalAirline.airlineName) + "</span> " + nationalAirline.relationship + " relationship</div></div>")
-                    championRow.click(function() {
-                        Rivals.show(nationalAirline.airlineId)
+            function renderTitleAirlineTable(selector, airlines, iconHtml, detailsFn, bonusSelector, bonusFn) {
+                $("#countryCanvas " + selector).empty()
+                if (airlines && airlines.length > 0) {
+                    if (bonusSelector) $(bonusSelector).text(bonusFn(airlines[0]))
+                    $.each(airlines, function(index, airline) {
+                        var row = $("<div class='table-row clickable' data-link='rival'><div class='cell'>" + iconHtml + getAirlineLogoImg(airline.airlineId) + "<span style='font-weight: bold;'>" + getAirlineLabelSpan(airline.airlineId, airline.airlineName) + "</span> " + detailsFn(airline) + "</div></div>")
+                        row.click(function() { Rivals.show(airline.airlineId) })
+                        $("#countryCanvas " + selector).append(row)
                     })
-                    $("#countryCanvas .nationalAirlines").append(championRow)
-                })
-            } else {
-                $("#countryCanvas .nationalAirlines").append($("<div class='table-row'><div class='cell'>-</div></div>"))
+                } else {
+                    $("#countryCanvas " + selector).append($("<div class='table-row'><div class='cell'>-</div></div>"))
+                }
             }
 
-            $("#countryCanvas .partneredAirlines").empty()
-            if (country.partneredAirlines && country.partneredAirlines.length > 0) {
-                $(".partnered-title-bonus").text(`receive a ${country.partneredAirlines[0].loyaltyBonus} loyalty bonus`)
-                $.each(country.partneredAirlines, function(index, partneredAirline) {
-                    var championRow = $("<div class='table-row clickable' data-link='rival'><div class='cell'><img class='px-1' src='/assets/images/icons/hand-shake.png' style='vertical-align:middle;'>" + getAirlineLogoImg(partneredAirline.airlineId) + "<span style='font-weight: bold;'>" + getAirlineLabelSpan(partneredAirline.airlineId, partneredAirline.airlineName) + "</span> " + partneredAirline.relationship + " relationship</div></div>")
-                    championRow.click(function() {
-                        Rivals.show(partneredAirline.airlineId)
-                    })
-                    $("#countryCanvas .partneredAirlines").append(championRow)
-                })
-            } else {
-                $("#countryCanvas .partneredAirlines").append($("<div class='table-row'><div class='cell'>-</div></div>"))
-            }
+            renderTitleAirlineTable(".nationalAirlines", country.nationalAirlines,
+                "<img class='px-1 svg' src='/assets/images/icons/star-full.svg'>",
+                function(a) { return a.relationship + " relationship" },
+                ".national-title-bonus", function(a) { return `receive a ${a.loyaltyBonus} loyalty bonus` })
+
+            renderTitleAirlineTable(".partneredAirlines", country.partneredAirlines,
+                "<img class='px-1' src='/assets/images/icons/hand-shake.png' style='vertical-align:middle;'>",
+                function(a) { return a.relationship + " relationship" },
+                ".partnered-title-bonus", function(a) { return `receive a ${a.loyaltyBonus} loyalty bonus` })
+
+            renderTitleAirlineTable(".favoredAirlines", country.favoredAirlines,
+                "<img class='px-1' src='/assets/images/icons/medal-silver-premium.png' style='vertical-align:middle;'>",
+                function(a) { return "score: " + a.score + " | " + a.relationship + " relationship" },
+                null, null)
 
             $("#countryCanvas .countryDetailsChampion").empty()
 	    	if (country.champions) {
@@ -413,6 +414,7 @@ function updateCountryManagers() {
 function renderCountryManagers(assignedCount) {
     var $managerSection = $('#airlineCountryRelationshipModal .managerSection')
     var availableCount = $managerSection.data('availableManagers') || 0
+    var maxManagers = $managerSection.data('maxManagers')
     var original = $managerSection.data('originalManagers') || []
 
     // Use rich objects for already-fetched managers; synthesise a level-0 entry for each new addition
@@ -425,6 +427,7 @@ function renderCountryManagers(assignedCount) {
         container: '#countryManagersDisplay',
         managers: managers,
         availableCount: availableCount,
+        maxManagers: maxManagers,
         headerText: 'Managers (' + availableCount + ' available)',
         onAdd: function() {
             var current = $managerSection.data('assignedManagerCount')
@@ -462,6 +465,7 @@ function getCountryManagersSummary(countryCode) {
             $managerSection.data('originalManagers', countryManagers)
             $managerSection.data('assignedManagerCount', countryManagers.length)
             $managerSection.data('availableManagers', result.availableCount)
+            $managerSection.data('maxManagers', result.maxManagers)
 
             renderCountryManagers(countryManagers.length)
         },

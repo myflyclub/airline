@@ -30,6 +30,10 @@ case class CountryManagerTask(startCycle : Int, country: Country) extends Leveli
   override val description: String = s"Develop relationship with ${country.name}"
 }
 
+object CountryManagerTask {
+  val MAX_MANAGERS_PER_COUNTRY = 6
+}
+
 case class CampaignManagerTask(startCycle : Int, campaign : Campaign) extends LevelingManagerTask(startCycle, ManagerTaskType.CAMPAIGN) {
   override val description: String = s"Advertising in the area around ${campaign.principalAirport.displayText}"
 }
