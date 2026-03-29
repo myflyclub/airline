@@ -12,7 +12,8 @@ import com.patson.model._
 import com.patson.Authentication
 
 import java.util.Calendar
-import com.patson.data.AirlineSource
+import com.patson.data.{AirlineSource, CycleSource, NotificationSource}
+import com.patson.model.{Notification, NotificationCategory}
 import com.patson.util.AirlineCache
 import play.api.libs.ws.WSClient
 
@@ -83,13 +84,6 @@ class SignUp @Inject()(cc: ControllerComponents)(ws: WSClient) extends AbstractC
       user => Some(user.username, user.email, (user.password, ""), "", user.airlineName)
     }
   )
-  
-  /**
-   * Display an empty form.
-   */
-  def form = Action { implicit request =>
-    Ok(html.signup(signupForm))
-  }
 
   def airlineNameCheck(airlineName : String)= Action { implicit request =>
     val length = airlineName.length
@@ -102,29 +96,6 @@ class SignUp @Inject()(cc: ControllerComponents)(ws: WSClient) extends AbstractC
     } else {
       Ok(Json.obj("ok" -> true))
     }
-  }
-
- /**
- * Handle form submission (legacy form POST).
- */
-  def submit = Action { implicit request =>
-    signupForm.bindFromRequest().fold(
-      errors => BadRequest(html.signup(errors)), { userInput =>
-          val user = User(userInput.username, userInput.email, Calendar.getInstance, Calendar.getInstance, UserStatus.ACTIVE, level = 0, None, List.empty)
-          UserSource.saveUser(user)
-          Authentication.createUserSecret(userInput.username, userInput.password)
-
-          val newAirline = Airline(userInput.airlineName)
-          newAirline.setMinimumRenewalBalance(300000)
-          AirlineSource.saveAirlines(List(newAirline))
-          AirlineSource.saveAirlineCode(newAirline.id, newAirline.getDefaultAirlineCode())
-          UserSource.setUserAirline(user, newAirline)
-
-          AirlineSource.saveAirplaneRenewal(newAirline.id, 40)
-
-          Redirect("/").withCookies(Cookie("sessionActive", "true", httpOnly = false, maxAge = Some(2592000))).withSession("userToken" -> SessionUtil.addUserId(user.id))
-      }
-    )
   }
 
   /**
@@ -183,6 +154,10 @@ class SignUp @Inject()(cc: ControllerComponents)(ws: WSClient) extends AbstractC
           UserSource.setUserAirline(user, newAirline)
 
           AirlineSource.saveAirplaneRenewal(newAirline.id, 40)
+
+          if (!newAirline.isSkipTutorial) {
+            NotificationSource.insertNotification(Notification(newAirline.id, NotificationCategory.TUTORIAL, "Welcome! Choose an airport to build your HQ and get started.", CycleSource.loadCycle()))
+          }
 
           Ok(Json.obj(
             "id" -> user.id,
