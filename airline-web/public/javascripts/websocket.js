@@ -9,6 +9,7 @@ var selectedAirlineId
 var reconnectAttempts = 0
 var cycleDurationMs = 0
 var maxReconnectDelay = 30000
+var connectionOpened = false
 
 function checkWebSocket(airlineId) {
     if (!websocket || websocket.readyState === WebSocket.CLOSED) {
@@ -23,8 +24,10 @@ function connectWebSocket(airlineId) {
             websocket.close()
         }
     }
+    connectionOpened = false
     websocket = new WebSocket(wsUri)
     websocket.onopen = function() {
+        connectionOpened = true
         var isReconnect = reconnectAttempts > 0
         reconnectAttempts = 0
         wsSend(airlineId)
@@ -35,10 +38,12 @@ function connectWebSocket(airlineId) {
         }
     }
     websocket.onclose = function() {
-        if (selectedAirlineId) {
+        if (selectedAirlineId && connectionOpened) {
             var delay = Math.min(1000 * Math.pow(2, reconnectAttempts), maxReconnectDelay)
             reconnectAttempts++
             setTimeout(function() { connectWebSocket(selectedAirlineId) }, delay)
+        } else if (!connectionOpened) {
+            console.warn("websocket rejected (session expired or server restarted) — reload the page to reconnect")
         }
     }
     websocket.onmessage = function(evt) {
@@ -52,6 +57,7 @@ function connectWebSocket(airlineId) {
                 var jitter = Math.floor(Math.random() * 8000)
                 setTimeout(function() { updateAirlineInfo(selectedAirlineId); loadAirportsDynamic() }, jitter)
             }
+            loadNotificationBadge()
         } else if (json.messageType == "broadcastMessage") {
             queuePrompt("broadcastMessagePopup", json.message)
         } else if (json.messageType == "airlineMessage") {

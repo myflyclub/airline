@@ -161,6 +161,35 @@ describe('onopen: reconnect refresh', () => {
 })
 
 // ---------------------------------------------------------------------------
+// onclose — rejected connection (no session / server restart)
+// ---------------------------------------------------------------------------
+describe('onclose: rejected connection does not retry', () => {
+  test('does NOT schedule a reconnect when onopen was never called (server rejected)', () => {
+    const ctx = createContext()
+    ctx.selectedAirlineId = 42
+
+    ctx.connectWebSocket(42)
+    // Simulate server rejecting the upgrade — onopen never fires, onclose fires immediately
+    ctx.WebSocket.instances[0].onclose()
+
+    expect(ctx.setTimeout).not.toHaveBeenCalled()
+  })
+
+  test('DOES schedule a reconnect when onopen previously fired (legitimate drop)', () => {
+    const ctx = createContext()
+    ctx.selectedAirlineId = 42
+
+    ctx.connectWebSocket(42)
+    ctx.WebSocket.instances[0].onopen()  // connection was established
+    ctx.WebSocket.instances[0].onclose() // then dropped
+
+    // setTimeout called once for wsSend (in onopen) and once for reconnect (in onclose)
+    const reconnectScheduled = ctx._timeoutQueue.length > 0
+    expect(reconnectScheduled).toBe(true)
+  })
+})
+
+// ---------------------------------------------------------------------------
 // onmessage — cycle push handling
 // ---------------------------------------------------------------------------
 describe('onmessage: cycleCompleted', () => {

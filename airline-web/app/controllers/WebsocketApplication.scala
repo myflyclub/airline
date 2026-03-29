@@ -14,17 +14,23 @@ import scala.concurrent.Future
 class WebsocketApplication @Inject()(cc: ControllerComponents) extends AbstractController(cc) {
   val logger = Logger(this.getClass)
   def wsWithActor = WebSocket.acceptOrResult[JsValue, JsValue] { request =>
-    Future.successful(request.session.get("userToken").flatMap(SessionUtil.getUserId(_)) match {
+    Future.successful(request.session.get("userToken") match {
       case None =>
-        logger.info("websocket rejected")
+        logger.info(s"websocket rejected: no userToken cookie (ip=${request.remoteAddress})")
         Left(Forbidden)
-      case Some(userId) =>
-        logger.info("wsWithActor, client connected with userId " + userId)
-        Right(ActorFlow.actorRef { out =>
-          println(s"userid $userId has actor ${out.path}")
-          val airline = UserSource.loadUserById(userId).get.getAccessibleAirlines()(0)
-          MyWebSocketActor.props(out, airline.id, request.remoteAddress)
-        })
+      case Some(token) =>
+        SessionUtil.getUserId(token) match {
+          case None =>
+            logger.info(s"websocket rejected: token not found or expired (ip=${request.remoteAddress} token=${token.take(20)}...)")
+            Left(Forbidden)
+          case Some(userId) =>
+            logger.info("wsWithActor, client connected with userId " + userId)
+            Right(ActorFlow.actorRef { out =>
+              println(s"userid $userId has actor ${out.path}")
+              val airline = UserSource.loadUserById(userId).get.getAccessibleAirlines()(0)
+              MyWebSocketActor.props(out, airline.id, request.remoteAddress)
+            })
+        }
     })
   }
 }
