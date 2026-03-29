@@ -85,10 +85,6 @@ object MainSimulation extends App {
     AirplaneModelSimulation.simulate(cycle)
     println("Airplane model simulation done")
 
-    //purge log
-    println("Purging logs")
-    LogSource.deleteLogsBeforeCycle(cycle - com.patson.model.Log.RETENTION_CYCLE)
-
     //purge history
     println("Purging link history")
     ChangeHistorySource.deleteLinkChangeByCriteria(List(("cycle", "<", cycle - 400)))

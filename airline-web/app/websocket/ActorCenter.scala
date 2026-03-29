@@ -2,8 +2,7 @@ package websocket
 
 import org.apache.pekko.actor.{Actor, ActorRef, ActorSelection, ActorSystem, Props, Terminated}
 import org.apache.pekko.remote.{AssociatedEvent, DisassociatedEvent, RemotingLifecycleEvent}
-import com.patson.model.Airline
-import com.patson.model.notice.{AirlineNotice, NoticeCategory, TrackingNotice}
+import com.patson.model.{Airline, NotificationCategory}
 import com.patson.stream.{CycleCompleted, CycleInfo, KeepAlivePing, KeepAlivePong, ReconnectPing, SimulationEvent}
 import com.patson.util.{AirlineCache, AirplaneOwnershipCache, AirportCache, AirportStatisticsCache}
 import com.typesafe.config.ConfigFactory
@@ -50,26 +49,23 @@ sealed class LocalActor(out : ActorRef, airlineId : Int) extends Actor {
       out ! Json.obj("messageType" -> "airlineMessage", "message" -> text)
     case AirlinePrompts(_, prompts) =>
       //println(s"$self get prompts")
-      prompts.notices.foreach {
-        case AirlineNotice(airline, notice, description) =>
-          println(s"Sending notice $notice to $airline")
-          notice.category match {
-            case NoticeCategory.LEVEL_UP =>
-              out ! Json.obj("messageType" -> "notice", "category" -> notice.category.toString, "id" -> notice.id, "level" -> notice.id, "description" -> description)
-            case NoticeCategory.LOYALIST =>
-              out ! Json.obj("messageType" -> "notice", "category" -> notice.category.toString, "id" -> notice.id, "level" -> notice.id, "description" -> description)
-            case _ =>
-              notice match {
-                case trackingNotice: TrackingNotice =>
-                  out ! Json.obj("messageType" -> "notice", "category" -> notice.category.toString, "id" -> notice.id, "description" -> trackingNotice.descriptions(airline))
-              }
-
-          }
+      prompts.notices.foreach { notification =>
+        println(s"Sending notice ${notification.category} to airline ${notification.airlineId}")
+        val notifCategory = notification.category.toString
+        val notifId = notification.id
+        val notifMsg = notification.message
+        notification.category match {
+          case NotificationCategory.LEVEL_UP | NotificationCategory.LOYALIST =>
+            val lvl: Int = notification.level.getOrElse(0)
+            out ! Json.obj("messageType" -> "notice", "category" -> notifCategory, "notificationId" -> notifId, "description" -> notifMsg, "level" -> lvl)
+          case _ =>
+            out ! Json.obj("messageType" -> "notice", "category" -> notifCategory, "notificationId" -> notifId, "description" -> notifMsg)
+        }
       }
       prompts.tutorials.foreach {
         case AirlineTutorial(airline, tutorial) =>
           println(s"Sending tutorial $tutorial to $airline")
-          out ! Json.obj("messageType" -> "tutorial", "category" -> tutorial.category, "id" -> tutorial.id)
+          out ! Json.obj("messageType" -> "tutorial", "category" -> tutorial.category, "id" -> tutorial.id, "highlight" -> play.api.libs.json.JsString(tutorial.highlight.getOrElse("")))
       }
     case AirlinePendingActions(airline, pendingActions : List[PendingAction]) =>
       //println(s"$self get pending actions")

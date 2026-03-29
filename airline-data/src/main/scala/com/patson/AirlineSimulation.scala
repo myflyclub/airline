@@ -8,7 +8,7 @@ import scala.collection.immutable
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 import com.patson.model.airplane.Airplane
-import com.patson.model.notice.GameOverNotice
+import com.patson.model.{Notification, NotificationCategory}
 import com.patson.model.oil.OilPrice
 import com.patson.model.oil.OilInventoryPolicy
 import com.patson.model.oil.OilConsumptionHistory
@@ -71,7 +71,8 @@ object AirlineSimulation {
       if (isBankrupt) {
         println(s"Resetting $airline due to negative value")
         Airline.resetAirline(airline.id, newBalance = 0, resetExtendedInfo = true)
-        NoticeSource.saveTrackingNotice(airline.id, GameOverNotice())
+        val gameOverMessage = s"Unfortunately ${airline.name} is forced into bankruptcy due to negative value!"
+        NotificationSource.insertNotification(Notification(airline.id, NotificationCategory.GAME_OVER, gameOverMessage, cycle))
       }
 
       val (linksRevenue, linksAirportFee, linksCrewCost, linksFuelCost, linksFuelTax, linksInflightCost, linksDelayCompensation, linksMaintenanceCost, linksDepreciation, linksLoungeCost) = flightLinkResultByAirline.get(airline.id) match {

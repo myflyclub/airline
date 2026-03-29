@@ -6,7 +6,7 @@ import com.patson.model.airplane.{Airplane, LinkAssignment, LinkAssignments, Mod
 import com.patson.model.history.LinkChange
 import com.patson.model.negotiation.LinkNegotiationDiscount
 import com.patson.model.event.Olympics
-import com.patson.model.{FlightPreferenceType, _}
+import com.patson.model.{FlightPreferenceType, Notification, NotificationCategory, _}
 import com.patson.util.{AirlineCache, AirplaneOwnershipCache, AirportCache, AllianceCache, CountryCache}
 import com.patson.{DemandGenerator, Util}
 import controllers.AuthenticationObject.AuthenticatedAirline
@@ -387,6 +387,8 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
 
     println("PUT " + incomingLink)
 
+    val isFirstLink = existingLink.isEmpty && !airline.isSkipTutorial && LinkSource.loadFlightLinksByCriteria(List(("airline", airline.id))).isEmpty
+
     val resultLink : Link =
       if (negotiationResultOption.map(_.isSuccessful).getOrElse(true)) { //negotiation successful or no negotiation needed {
         if (existingLink.isEmpty) {
@@ -394,6 +396,10 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
             case Some(link) => {
               val cost = Computation.getLinkCreationCost(incomingLink.from, incomingLink.to)
               AirlineSource.saveLedgerEntry(AirlineLedgerEntry(request.user.id, currentCycle, LedgerType.CREATE_LINK, cost * -1, Some(s"${incomingLink.from.iata} \u2013 ${incomingLink.to.iata}")))
+              if (isFirstLink) {
+                NotificationSource.markCategoryRead(airline.id, NotificationCategory.TUTORIAL)
+                NotificationSource.insertNotification(Notification(airline.id, NotificationCategory.TUTORIAL, s"First route set! Next week your aircraft will be flying!", currentCycle))
+              }
               link
             }
             case None =>
@@ -444,8 +450,10 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
 
       NegotiationUtil.getNextNegotiationDiscount(resultLink, negotiationResult).foreach { discount =>
         if (discount.discount > 0) {
-          val logMessage =  s"Negotiation Discount of ${(discount.discount * 100).toInt}% for ${fromAirport.displayText} -> ${toAirport.displayText} (expires after ${LinkNegotiationDiscount.DURATION} weeks)"
-          LogSource.insertLogs(List(Log(airline, logMessage, LogCategory.NEGOTIATION, LogSeverity.INFO, cycle)))
+          val expiryGameDate = { val ec = cycle + LinkNegotiationDiscount.DURATION; s"${ec % 48}.${ec / 48}" }
+          val notificationMessage = s"Negotiation Discount of ${(discount.discount * 100).toInt}% for ${fromAirport.displayText} -> ${toAirport.displayText} | expires $expiryGameDate"
+          NotificationSource.insertNotification(Notification(airline.id, NotificationCategory.NEGOTIATION_LOSS, notificationMessage, cycle,
+            expiryCycle = Some(cycle + LinkNegotiationDiscount.DURATION)))
           NegotiationSource.saveLinkDiscount(discount)
           result = result + ("nextNegotiationDiscount" -> JsString(s"Some progress: ${(discount.discount * 100).toInt}% Negotiation Discount for the next ${LinkNegotiationDiscount.DURATION} weeks"))
         }

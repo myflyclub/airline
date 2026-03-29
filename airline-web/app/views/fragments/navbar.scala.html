@@ -18,7 +18,20 @@
                 <p class="tooltip-attr tooltip-attr-bottom" data-tooltip="An estimate of how long until next week."><img src='@routes.Assets.versioned("/images/icons/clock-moon-phase.png")' style="vertical-align: middle;"><span class="nextTickEstimation label" style="font-weight: bold;">Estimating...</span></p>
                 <p class="tooltip-attr tooltip-attr-bottom" data-tooltip="Cash money">$<span class="balance"></span></p>
                 <p class="tooltip-attr tooltip-attr-bottom actionPoints" data-tooltip="Action Points"></p>
-                <p style="font-size: 13px;" class="currentAirline label font-display"></p>
+                
+                <div id="notificationBell" class="clickable relative pr-4" title="Notifications">
+                    <p style="font-size: 13px;" class="currentAirline label font-display"></p>
+                    <span class="notify-bubble" id="notificationBadge" style="display:none;"></span>
+                    <span class="notify-bubble" id="notificationBadge" style="display:none;"></span>
+                    <div id="notificationDrawer" class="notification-drawer" style="display:none;">
+                        <div class="drawer-header">
+                            Notifications
+                            <span class="mark-read-link">Mark all read</span>/
+                            <span class="delete-read-link">Delete all read</span>
+                        </div>
+                        <div id="notificationList"></div>
+                    </div>
+                </div>
                 <div class="reputationStars" id="topReputationStars"></div>
                 <div title="Latest Oil Price" class="latestOilPriceShortCut clickable" onclick="showOilCanvas()">
                     <img src='@routes.Assets.versioned("/images/icons/oil-barrel.png")'>
@@ -31,6 +44,10 @@
 				<b class="currentAirline label"></b>
 				<span>$<span class="balance label"></span></span>
                 <span class="actionPoints label tooltip-attr tooltip-attr-bottom"></span>
+                <span id="notificationBellMobile" class="clickable" style="position:relative; margin-left: 4px;" title="Notifications">
+                    <img src='@routes.Assets.versioned("/images/icons/book-open-text.png")' style="width: 18px; vertical-align: middle;">
+                    <span class="notify-bubble notify-bubble-mobile" style="display:none;"></span>
+                </span>
 			</div>
 		</div>
   		<div class="flex-align-center">

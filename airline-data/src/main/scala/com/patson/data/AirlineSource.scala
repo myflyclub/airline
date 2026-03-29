@@ -880,14 +880,16 @@ object AirlineSource {
 
   def loadAirlineMeta(airlineId: Int): AirlineMeta = {
     Using.resource(Meta.getConnection()) { connection =>
-      Using.resource(connection.prepareStatement("SELECT airline_code, color, skip_tutorial FROM " + AIRLINE_META_TABLE + " WHERE airline = ?")) { preparedStatement =>
+      Using.resource(connection.prepareStatement("SELECT airline_code, color, skip_tutorial, notified_level, notified_loyalist_level FROM " + AIRLINE_META_TABLE + " WHERE airline = ?")) { preparedStatement =>
         preparedStatement.setInt(1, airlineId)
         Using.resource(preparedStatement.executeQuery()) { resultSet =>
           if (resultSet.next()) {
             AirlineMeta(
               airlineCode = Option(resultSet.getString("airline_code")),
               color = Option(resultSet.getString("color")),
-              skipTutorial = resultSet.getBoolean("skip_tutorial")
+              skipTutorial = resultSet.getBoolean("skip_tutorial"),
+              notifiedLevel = resultSet.getInt("notified_level"),
+              notifiedLoyalistLevel = resultSet.getInt("notified_loyalist_level")
             )
           } else {
             AirlineMeta()
@@ -896,6 +898,22 @@ object AirlineSource {
       }
     }
   }
+
+  private def saveAirlineMetaInt(airlineId: Int, column: String, value: Int): Unit = {
+    Using.resource(Meta.getConnection()) { connection =>
+      Using.resource(connection.prepareStatement(
+        s"INSERT INTO $AIRLINE_META_TABLE (airline, $column) VALUES(?, ?) ON DUPLICATE KEY UPDATE $column = VALUES($column)"
+      )) { stmt =>
+        stmt.setInt(1, airlineId)
+        stmt.setInt(2, value)
+        stmt.executeUpdate()
+      }
+      AirlineCache.invalidateAirline(airlineId)
+    }
+  }
+
+  def saveNotifiedLevel(airlineId: Int, level: Int): Unit = saveAirlineMetaInt(airlineId, "notified_level", level)
+  def saveNotifiedLoyalistLevel(airlineId: Int, level: Int): Unit = saveAirlineMetaInt(airlineId, "notified_loyalist_level", level)
 
   def saveSkipTutorial(airlineId: Int, skipTutorial: Boolean) = {
     this.synchronized {

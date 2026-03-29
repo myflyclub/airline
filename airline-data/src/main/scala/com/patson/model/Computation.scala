@@ -333,4 +333,8 @@ def constructAffinityText(fromZone : String, toZone : String, fromCountry : Stri
     }
     affectedAirports.toList
   }
+
+  def cycleToGameDate(cycle: Int): String = {
+    s"${cycle % 48}.${cycle / 48}"
+  }
 }

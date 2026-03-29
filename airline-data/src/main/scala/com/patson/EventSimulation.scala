@@ -1,8 +1,8 @@
 package com.patson
 
-import com.patson.data.{CycleSource, EventSource, LinkStatisticsSource}
+import com.patson.data.{CycleSource, EventSource, LinkStatisticsSource, NotificationSource}
 import com.patson.model.event.{EventType, Olympics, OlympicsAirlineVote, OlympicsAirlineVoteWithWeight, OlympicsVoteRound}
-import com.patson.model.{Airline, Airport, Computation, Period}
+import com.patson.model.{Airline, Airport, Computation, Notification, NotificationCategory, Period}
 import com.patson.util.AirportCache
 
 import scala.collection.{MapView, mutable}
@@ -221,6 +221,13 @@ object EventSimulation {
     //invalidate airport cache so the in-progress feature is dropped on next load (Olympics no longer active)
     Olympics.getSelectedAffectedAirports(olympics.id).foreach { airport =>
       AirportCache.invalidateAirport(airport.id)
+    }
+
+    // Notify airlines that earned Olympics rewards
+    val cycle = CycleSource.loadCycle()
+    val goals = EventSource.loadOlympicsAirlineGoals(olympics.id)
+    goals.keys.foreach { airline =>
+      NotificationSource.insertNotification(Notification(airline.id, NotificationCategory.OLYMPICS_PRIZE, "Your airline earned an Olympics reward! Claim it in the Events tab.", cycle))
     }
   }
   

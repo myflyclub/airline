@@ -224,9 +224,6 @@ object Meta {
     createOil(connection)
     createLoanInterestRate(connection)
     createResetUser(connection)
-    createLog(connection)
-    createLogProperty(connection)
-    createAlert(connection)
     createEvent(connection)
     createSantaClaus(connection)
     createAirportAirlineBonus(connection)
@@ -239,7 +236,6 @@ object Meta {
     createCampaign(connection)
     createLinkNegotiation(connection)
     createTutorial(connection)
-    createNotice(connection)
     createAirportChampion(connection)
     createAirlineBaseSpecialization(connection)
     createAirlineBaseSpecializationLastUpdate(connection)
@@ -623,6 +619,8 @@ object Meta {
       "airline_code CHAR(2) DEFAULT NULL, " +
       "color CHAR(7) DEFAULT NULL, " +
       "skip_tutorial TINYINT NOT NULL DEFAULT 0, " +
+      "notified_level INT NOT NULL DEFAULT -1, " +
+      "notified_loyalist_level INT NOT NULL DEFAULT 0, " +
       "PRIMARY KEY (airline)," +
       "FOREIGN KEY(airline) REFERENCES " + AIRLINE_TABLE + "(id) ON DELETE CASCADE ON UPDATE CASCADE" +
       ")")
@@ -892,66 +890,6 @@ object Meta {
       "FOREIGN KEY(airport) REFERENCES " + AIRPORT_TABLE + "(id) ON DELETE CASCADE ON UPDATE CASCADE," +
       "FOREIGN KEY(airline) REFERENCES " + AIRLINE_TABLE + "(id) ON DELETE CASCADE ON UPDATE CASCADE" +
       ")")
-    statement.execute()
-    statement.close()
-  }
-
-  def createLog(connection : Connection) {
-    var statement = connection.prepareStatement("DROP TABLE IF EXISTS " + LOG_TABLE)
-    statement.execute()
-    statement.close()
-
-    statement = connection.prepareStatement("CREATE TABLE " + LOG_TABLE + "(" +
-      "id INTEGER PRIMARY KEY AUTO_INCREMENT," +
-      "airline INTEGER, " +
-      "message VARCHAR(512) CHARACTER SET 'utf8'," +
-      "category INTEGER," +
-      "severity INTEGER," +
-      "cycle INTEGER," +
-      "FOREIGN KEY(airline) REFERENCES " + AIRLINE_TABLE + "(id) ON DELETE CASCADE ON UPDATE CASCADE" +
-      ")")
-    statement.execute()
-    statement.close()
-
-    statement = connection.prepareStatement("CREATE INDEX " + LOG_INDEX_1 + " ON " + LOG_TABLE + "(airline)")
-    statement.execute()
-    statement.close()
-  }
-
-  def createLogProperty(connection : Connection) {
-    var statement = connection.prepareStatement("DROP TABLE IF EXISTS " + LOG_PROPERTY_TABLE)
-    statement.execute()
-    statement.close()
-
-    statement = connection.prepareStatement("CREATE TABLE " + LOG_PROPERTY_TABLE + "(" +
-      "log INTEGER," +
-      "property VARCHAR(256)," +
-      "value VARCHAR(256)," +
-      "FOREIGN KEY(log) REFERENCES " + LOG_TABLE + "(id) ON DELETE CASCADE ON UPDATE CASCADE" +
-      ")")
-    statement.execute()
-    statement.close()
-  }
-
-  def createAlert(connection : Connection) {
-    var statement = connection.prepareStatement("DROP TABLE IF EXISTS " + ALERT_TABLE)
-    statement.execute()
-    statement.close()
-
-    statement = connection.prepareStatement("CREATE TABLE " + ALERT_TABLE + "(" +
-      "id INTEGER PRIMARY KEY AUTO_INCREMENT," +
-      "airline INTEGER, " +
-      "message VARCHAR(512) CHARACTER SET 'utf8'," +
-      "category INTEGER," +
-      "target_id INTEGER," +
-      "duration INTEGER," +
-      "cycle INTEGER," +
-      "FOREIGN KEY(airline) REFERENCES " + AIRLINE_TABLE + "(id) ON DELETE CASCADE ON UPDATE CASCADE" +
-      ")")
-    statement.execute()
-    statement.close()
-
-    statement = connection.prepareStatement("CREATE INDEX " + ALERT_INDEX_1 + " ON " + ALERT_TABLE + "(airline)")
     statement.execute()
     statement.close()
   }
@@ -1548,35 +1486,27 @@ object Meta {
 
   }
 
-  def createNotice(connection : Connection) = {
-    var statement = connection.prepareStatement("DROP TABLE IF EXISTS " + COMPLETED_NOTICE_TABLE)
+  def createNotification(connection : Connection) = {
+    var statement = connection.prepareStatement("DROP TABLE IF EXISTS " + NOTIFICATION_TABLE)
     statement.execute()
     statement.close()
 
-
-    statement = connection.prepareStatement("CREATE TABLE " + COMPLETED_NOTICE_TABLE + "(" +
-      "airline INTEGER REFERENCES " + AIRLINE_TABLE + "(id) ON DELETE CASCADE ON UPDATE CASCADE, " +
-      "category VARCHAR(256)," +
-      "id VARCHAR(256), " +
-      "PRIMARY KEY (airline, category, id)" +
-      ")")
-
-    statement.execute()
-    statement.close()
-
-    statement = connection.prepareStatement("DROP TABLE IF EXISTS " + TRACKING_NOTICE_TABLE)
-    statement.execute()
-    statement.close()
-
-
-    statement = connection.prepareStatement("CREATE TABLE " + TRACKING_NOTICE_TABLE + "(" +
+    statement = connection.prepareStatement("CREATE TABLE " + NOTIFICATION_TABLE + "(" +
       "id INTEGER PRIMARY KEY AUTO_INCREMENT," +
-      "airline INTEGER REFERENCES " + AIRLINE_TABLE + "(id) ON DELETE CASCADE ON UPDATE CASCADE, " +
-      "category VARCHAR(256)" +
+      "airline INTEGER NOT NULL REFERENCES " + AIRLINE_TABLE + "(id) ON DELETE CASCADE ON UPDATE CASCADE, " +
+      "category VARCHAR(64) NOT NULL, " +
+      "message VARCHAR(512) NOT NULL, " +
+      "cycle INTEGER NOT NULL, " +
+      "is_read TINYINT NOT NULL DEFAULT 0, " +
+      "target_id VARCHAR(256) DEFAULT NULL, " +
+      "expiry_cycle INTEGER DEFAULT NULL" +
       ")")
     statement.execute()
     statement.close()
 
+    statement = connection.prepareStatement("CREATE INDEX notification_index_1 ON " + NOTIFICATION_TABLE + "(category)")
+    statement.execute()
+    statement.close()
   }
 
   def createAirportChampion(connection : Connection) {

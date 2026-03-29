@@ -5,7 +5,6 @@ import org.apache.pekko.actor._
 import org.apache.pekko.util.Timeout
 import com.patson.data.{CycleSource, UserSource}
 import com.patson.model.{UserModifier, UserStatus}
-import com.patson.model.notice.{AirlineNotice, LoyalistNotice, NoticeCategory}
 import com.patson.stream._
 
 import java.util.concurrent.atomic.AtomicLong

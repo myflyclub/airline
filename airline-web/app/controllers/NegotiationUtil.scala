@@ -214,11 +214,20 @@ object NegotiationUtil {
       requirements.append(NegotiationRequirement(SLOT_CONTROLLED, 1.5, "High congestion: Level 3 Coordination, full slot control."))
     }
 
-    if (airline.getReputation() < STARTUP_MAX_REPUTATION) {
-      val requirementTotal = requirements.foldLeft(0.0)((sum, requirement) => sum + requirement.value)
+    val startupFadeCeiling = STARTUP_MAX_REPUTATION * 1.5
+    val rep = airline.getReputation()
+    val requirementTotal = requirements.foldLeft(0.0)((sum, requirement) => sum + requirement.value)
+
+    if (rep < STARTUP_MAX_REPUTATION) {
       val adjustment = -1 * Math.pow(requirementTotal, 0.7) + 0.7
       if (adjustment <= -1) {
-        requirements.append(NegotiationRequirement(STARTUP, adjustment, s"Startup Vigor – better at negotiation while under ${STARTUP_MAX_REPUTATION} reputation"))
+        requirements.append(NegotiationRequirement(STARTUP, adjustment, s"Startup Vigor – superior negotiation skills while under ${STARTUP_MAX_REPUTATION.toInt} rep"))
+      }
+    } else if (rep < startupFadeCeiling) {
+      val strength = 0.2 + 0.8 * (startupFadeCeiling - rep) / (startupFadeCeiling - STARTUP_MAX_REPUTATION)
+      val adjustment = (-1 * Math.pow(requirementTotal, 0.7) + 0.7) * strength
+      if (adjustment <= -1) {
+        requirements.append(NegotiationRequirement(STARTUP, adjustment, s"Startup Vigor – fading enhanced negotiation skills while under ${startupFadeCeiling.toInt} rep"))
       }
     }
 

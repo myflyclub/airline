@@ -14,10 +14,6 @@ function initPrompts() {
     }
     activePrompt = undefined
 
-    $('.nav-link').bind('click.tutorial', function() {
-        var pageId = $(this).data('link')
-        checkTutorial(pageId)
-    })
     tutorialsCompleted = new Set()
     noticesShown = new Set()
     tutorialQueue = []
@@ -31,7 +27,6 @@ function initPrompts() {
                 $.each(completedTutorials, function(index, entry) {
                        tutorialsCompleted.add(entry)
                 })
-                checkTutorial('worldMap')
             },
             error: function(jqXHR, textStatus, errorThrown) {
                     console.log(JSON.stringify(jqXHR));
@@ -67,12 +62,14 @@ function queueNotice(noticeJson) {
         htmlId = "loyalistMilestonePopup"
     } else if (category === "GAME_OVER") {
         htmlId = "bankruptcyPopup"
+    } else if (category === "OLYMPICS_PRIZE") {
+        htmlId = "olympicsPrizePopup"
     } else {
         console.warn("Unhandled notice " + noticeJson)
     }
 
     if (htmlId) {
-        var noticeKey = category + ":" + noticeJson.id
+        var noticeKey = category + ":" + noticeJson.notificationId
         if (!noticesShown.has(noticeKey)) {
             noticesShown.add(noticeKey)
             queuePrompt(htmlId, noticeJson)
@@ -88,15 +85,49 @@ function queueTutorialByJson(json) {
         htmlId = "tutorialAirlineGrade"
     } else if (category === "loyalist") {
         htmlId = "tutorialLoyalistMilestone"
-    } else if (category === "loyalist") {
-        htmlId = "trackingNotice"
+    } else if (category === "worldMap") {
+        htmlId = "tutorialViewAirport"
+    } else if (category === "planLink") {
+        htmlId = "tutorialSetupLink1"
+    } else if (category === "airline") {
+        // highlight-only step; no tutorial popup for fleet guidance
+    } else if (category === "oil") {
+        htmlId = "tutorialOilIntro1"
     } else {
-        console.warn("Unhandled tutorial " + noticeJson)
+        console.warn("Unhandled tutorial " + JSON.stringify(json))
+    }
+
+    if (json.highlight) {
+        applyTutorialHighlight(json.highlight)
     }
 
     if (htmlId) {
         queueTutorial(htmlId)
     }
+}
+
+var TUTORIAL_CATEGORIES = {
+    'worldMap':    ['tutorialViewAirport'],
+    'airport':     ['tutorialAirportDetails', 'tutorialBuildHq'],
+    'planLink':    ['tutorialSetupLink1', 'tutorialSetupLink2', 'tutorialSetupLink3'],
+    'negotiation': ['tutorialNegotiation1', 'tutorialNegotiation2', 'tutorialNegotiation3', 'tutorialNegotiation4', 'tutorialNegotiation5']
+}
+
+function checkTutorial(category) {
+    if (activeAirline && activeAirline.skipTutorial) return
+    var ids = TUTORIAL_CATEGORIES[category]
+    if (ids) {
+        ids.forEach(function(id) { queueTutorial(id) })
+    }
+}
+
+function applyTutorialHighlight(selector) {
+    clearTutorialHighlights()
+    $(selector).addClass('tutorial-pulse')
+}
+
+function clearTutorialHighlights() {
+    $('.tutorial-pulse').removeClass('tutorial-pulse')
 }
 
 function showPrompt() {
@@ -113,7 +144,7 @@ function showPrompt() {
                 if ($(promptId).hasClass('notice')) {
                     $.ajax({
                         type: 'POST',
-                        url: "/airlines/" + activeAirline.id + "/completed-notice/" + $(promptId).data('id') + "?category=" + $(promptId).data('category'),
+                        url: "/airlines/" + activeAirline.id + "/notifications/" + $(promptId).data('notificationId') + "/read",
                         data: { } ,
                         contentType: 'application/json; charset=utf-8',
                         dataType: 'json',
@@ -153,21 +184,6 @@ function showPrompt() {
 
 function closeNotice($promptModal) {
     closePrompt($promptModal)
-
-//    $.ajax({
-//        type: 'POST',
-//        url: "/airlines/" + activeAirline.id + "/completed-notice/" + $promptModal.data('id') + "?category=" + $promptModal.data('category'),
-//        data: { } ,
-//        contentType: 'application/json; charset=utf-8',
-//        dataType: 'json',
-//        success: function(result) {
-//
-//        },
-//        error: function(jqXHR, textStatus, errorThrown) {
-//                console.log(JSON.stringify(jqXHR));
-//                console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
-//        }
-//    });
 }
 
 
@@ -190,47 +206,10 @@ function queueTutorial(tutorial) {
 
 }
 
-function checkTutorial(flowId) {
-    if (activeUser && activeAirline && !activeAirline.skipTutorial) {
-        if (flowId === "worldMap" || flowId === "/") {
-            if (!activeAirline.headquarterAirport) {
-                queueTutorial("tutorialWelcome")
-                queueTutorial("tutorialControl")
-                queueTutorial("tutorialViewAirport")
-            } else if ($.isEmptyObject(flightPaths)) {
-                queueTutorial("tutorialSetupLink1")
-            }
-        } else if (flowId == "airport") {
-            queueTutorial("tutorialAirportDetails")
-            if (!activeAirline.headquarterAirport) {
-                queueTutorial("tutorialBuildHq")
-            }
-        } else if (flowId == "office") {
-            queueTutorial("tutorialOffice1")
-            queueTutorial("tutorialOffice2")
-            queueTutorial("tutorialOffice3")
-        } else if (flowId == "oil") {
-            queueTutorial("tutorialOilIntro1")
-            queueTutorial("tutorialOilIntro2")
-            queueTutorial("tutorialOilIntro3")
-        } else if (flowId == "planLink") {
-            queueTutorial("tutorialSetupLink2")
-            queueTutorial("tutorialSetupLink3")
-        } else if (flowId == "negotiation") {
-            queueTutorial("tutorialNegotiation1")
-            queueTutorial("tutorialNegotiation2")
-            queueTutorial("tutorialNegotiation3")
-            queueTutorial("tutorialNegotiation4")
-            queueTutorial("tutorialNegotiation5")
-        } else if (flowId == "search") {
-            queueTutorial("tutorialSearch1")
-            queueTutorial("tutorialSearch2")
-        }
-    }
-}
 
 function closeTutorial($tutorialModal) {
     activeTutorial = undefined
+    clearTutorialHighlights()
     tutorialsCompleted.add($tutorialModal.attr('id'))
     $.ajax({
         type: 'POST',
@@ -285,15 +264,13 @@ function setSkipTutorial(skipTutorial) {
 
 function initNotices() {
     $('#levelUpPopup').data('function', function(json) {
-        $('#levelUpPopup').data('id', json.id)
-        $('#levelUpPopup').data('category', json.category)
+        $('#levelUpPopup').data('notificationId', json.notificationId)
         showLevelUpPopup(json.level, json.description)
     })
     $('#levelUpPopup').data('promptCloseCallback', stopFirework)
 
     $('#loyalistMilestonePopup').data('function', function(json) {
-        $('#loyalistMilestonePopup').data('id', json.id)
-        $('#loyalistMilestonePopup').data('category', json.category)
+        $('#loyalistMilestonePopup').data('notificationId', json.notificationId)
         showLoyalistPopup(json.level, json.description)
     })
     $('#loyalistMilestonePopup').data('promptCloseCallback', stopFirework)
@@ -301,8 +278,7 @@ function initNotices() {
     $('.trackingNoticePopup').each(function() {
         var $this = $(this);
         $this.data('function', function(json) {
-            $this.data('id', json.id);
-            $this.data('category', json.category);
+            $this.data('notificationId', json.notificationId);
             showTrackingNoticePopup($this, json.description);
         });
     });

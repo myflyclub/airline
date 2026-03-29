@@ -93,6 +93,9 @@ case class Airline(name: String, var airlineType: AirlineType = LegacyAirline, v
     airlineMeta.skipTutorial
   }
 
+  def notifiedLevel: Int = airlineMeta.notifiedLevel
+  def notifiedLoyalistLevel: Int = airlineMeta.notifiedLoyalistLevel
+
   def setInitialized(value : Boolean) = {
     airlineInfo.initialized = value
   }
@@ -202,7 +205,7 @@ case class ManagerInfo(availableCount : Int, busyManagers: List[Manager])
 
 case class AirlineInfo(var balance : Long, var currentServiceQuality : Double, var stockPrice : Double, var sharesOutstanding : Int, var targetServiceQuality : Int, var reputation : Double, var minimumRenewalBalance: Long, var actionPoints: Double = 0.0, var countryCode : Option[String] = None, var initialized : Boolean = false, var prestigePoints: Int = 0, var dividends: Long = 0)
 
-case class AirlineMeta(airlineCode: Option[String] = None, color: Option[String] = None, skipTutorial: Boolean = false)
+case class AirlineMeta(airlineCode: Option[String] = None, color: Option[String] = None, skipTutorial: Boolean = false, notifiedLevel: Int = -1, notifiedLoyalistLevel: Int = 0)
 
 object LedgerType extends Enumeration {
   type LedgerType = Value
@@ -334,8 +337,9 @@ object Airline {
         //reset all campaigns, has to be after delegate/manager
         CampaignSource.deleteCampaignsByAirline(airline.id)
 
-        //reset all notice
-        NoticeSource.deleteNoticesByAirline(airline.id)
+        //reset notification deduplication state
+        AirlineSource.saveNotifiedLevel(airline.id, -1)
+        AirlineSource.saveNotifiedLoyalistLevel(airline.id, 0)
 
         AirlineSource.saveAirlineInfo(airline, updateBalance = true)
         AirlineCache.invalidateAirline(airlineId)

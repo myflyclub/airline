@@ -189,6 +189,7 @@ async function doPostLoginSetup(user) {
             AirlineMap.centerOnHQ(activeAirline, 6);
         }
         initPrompts();
+        if (typeof initNotificationDrawer === 'function') initNotificationDrawer();
         updateAirlineLabelColors();
         try {
             if (typeof loadAirplaneModels === 'function') loadAirplaneModels(user.airlineIds[0]);

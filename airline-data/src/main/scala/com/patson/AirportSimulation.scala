@@ -39,54 +39,36 @@ object AirportSimulation {
     baseCycle + delta * LOYALIST_HISTORY_SAVE_INTERVAL
   }
 
-  def processChampionInfoChanges(previousInfo : List[AirportChampionInfo], newInfo : List[AirportChampionInfo], currentCycle : Int) = {
-    val previousInfoByAirlineId : Predef.Map[Int, List[AirportChampionInfo]] = previousInfo.filter(_.loyalist.airline.airlineType != NonPlayerAirline).groupBy(_.loyalist.airline.id)
-    val newInfoByAirlineId : Predef.Map[Int, List[AirportChampionInfo]] = newInfo.filter(_.loyalist.airline.airlineType != NonPlayerAirline).groupBy(_.loyalist.airline.id)
+//   def processChampionInfoChanges(previousInfo : List[AirportChampionInfo], newInfo : List[AirportChampionInfo], currentCycle : Int) = {
+//     val previousInfoByAirlineId : Predef.Map[Int, List[AirportChampionInfo]] = previousInfo.filter(_.loyalist.airline.airlineType != NonPlayerAirline).groupBy(_.loyalist.airline.id)
+//     val newInfoByAirlineId : Predef.Map[Int, List[AirportChampionInfo]] = newInfo.filter(_.loyalist.airline.airlineType != NonPlayerAirline).groupBy(_.loyalist.airline.id)
 
-    val airlineIds = (previousInfoByAirlineId.keySet ++ newInfoByAirlineId.keySet)
-    val logs = ListBuffer[Log]()
+//     val airlineIds = (previousInfoByAirlineId.keySet ++ newInfoByAirlineId.keySet)
+//     var rankChangeCount = 0
 
-    airlineIds.foreach { airlineId =>
-      val changes = ListBuffer[ChampionInfoChange]()
-      previousInfoByAirlineId.get(airlineId) match {
-        case Some(previousRanks) =>
-          newInfoByAirlineId.get(airlineId) match {
-            case Some(newRanks) => //go from airport to airport
-              val previousInfoByAirport = previousRanks.groupBy(_.loyalist.airport).view.mapValues(_(0)) //should be exactly one entry
-              val newInfoByAirport = newRanks.groupBy(_.loyalist.airport).view.mapValues(_(0)) //should be exactly one entry
-              val airportIds = previousInfoByAirport.keySet ++ newInfoByAirport.keySet
-              airportIds.foreach { airportId =>
-                if (previousInfoByAirport.get(airportId).map(_.ranking).getOrElse(0) != newInfoByAirport.get(airportId).map(_.ranking).getOrElse(0) && newInfoByAirport.get(airportId).map(_.reputationBoost).exists(_ > 0.5)) {
-                  changes.append(ChampionInfoChange(previousInfoByAirport.get(airportId), newInfoByAirport.get(airportId)))
-                }
-              }
-            case None => changes.appendAll(previousRanks.map(info => ChampionInfoChange(Some(info), None))) //lost all ranks
-          }
-        case None => changes.appendAll(newInfoByAirlineId(airlineId).map(info => ChampionInfoChange(None, Some(info)))) //all ranks are new
-      }
-      val airline = AirlineCache.getAirline(airlineId, false).getOrElse(Airline.fromId(airlineId))
+//     airlineIds.foreach { airlineId =>
+//       val changes = ListBuffer[ChampionInfoChange]()
+//       previousInfoByAirlineId.get(airlineId) match {
+//         case Some(previousRanks) =>
+//           newInfoByAirlineId.get(airlineId) match {
+//             case Some(newRanks) => //go from airport to airport
+//               val previousInfoByAirport = previousRanks.groupBy(_.loyalist.airport).view.mapValues(_(0)) //should be exactly one entry
+//               val newInfoByAirport = newRanks.groupBy(_.loyalist.airport).view.mapValues(_(0)) //should be exactly one entry
+//               val airportIds = previousInfoByAirport.keySet ++ newInfoByAirport.keySet
+//               airportIds.foreach { airportId =>
+//                 if (previousInfoByAirport.get(airportId).map(_.ranking).getOrElse(0) != newInfoByAirport.get(airportId).map(_.ranking).getOrElse(0) && newInfoByAirport.get(airportId).map(_.reputationBoost).exists(_ > 0.5)) {
+//                   changes.append(ChampionInfoChange(previousInfoByAirport.get(airportId), newInfoByAirport.get(airportId)))
+//                 }
+//               }
+//             case None => changes.appendAll(previousRanks.map(info => ChampionInfoChange(Some(info), None))) //lost all ranks
+//           }
+//         case None => changes.appendAll(newInfoByAirlineId(airlineId).map(info => ChampionInfoChange(None, Some(info)))) //all ranks are new
+//       }
+//       rankChangeCount += changes.size
+//     }
+//     println(s"Ranking changes count : $rankChangeCount")
+//  }
 
-      logs.appendAll(changes.map {
-        case ChampionInfoChange(Some(previousRank), Some(newRank)) =>
-          val reputationChange = BigDecimal.valueOf(newRank.reputationBoost - previousRank.reputationBoost).setScale(2, RoundingMode.HALF_UP)
-          val displayChange =
-            if (reputationChange >= 0) {
-              "+" + reputationChange
-            } else {
-              reputationChange.toString
-            }
-          Log(airline, s"${newRank.loyalist.airport.displayText} ranking ${previousRank.ranking} -> ${newRank.ranking}. Reputation change $displayChange", LogCategory.AIRPORT_RANK_CHANGE, LogSeverity.INFO, currentCycle, immutable.Map("airportId" -> newRank.loyalist.airport.id.toString))
-        case ChampionInfoChange(None, Some(newRank)) =>
-          Log(airline, s"${newRank.loyalist.airport.displayText} new ranking ${newRank.ranking}. Reputation change +${BigDecimal.valueOf(newRank.reputationBoost).setScale(2, RoundingMode.HALF_UP)}", LogCategory.AIRPORT_RANK_CHANGE, LogSeverity.INFO, currentCycle, immutable.Map("airportId" -> newRank.loyalist.airport.id.toString))
-        case ChampionInfoChange(Some(previousRank), None) =>
-          Log(airline, s"${previousRank.loyalist.airport.displayText} lost ranking ${previousRank.ranking}. Reputation change -${BigDecimal.valueOf(previousRank.reputationBoost).setScale(2, RoundingMode.HALF_UP)}", LogCategory.AIRPORT_RANK_CHANGE, LogSeverity.INFO, currentCycle, immutable.Map("airportId" -> previousRank.loyalist.airport.id.toString))
-        case _ => //should not happen
-          Log(airline, s"Unknown rank change", LogCategory.AIRPORT_RANK_CHANGE, LogSeverity.INFO, currentCycle)
-      })
-    }
-    println(s"Ranking changes count : ${logs.size}")
-    LogSource.insertLogs(logs.toList)
- }
   case class ChampionInfoChange(previousRank : Option[AirportChampionInfo], newRank : Option[AirportChampionInfo])
 
 
@@ -108,7 +90,7 @@ object AirportSimulation {
     //compute champion info
     val previousInfo = ChampionUtil.loadAirportChampionInfo()
     val newInfo = ChampionUtil.computeAirportChampionInfo(allLoyalists)
-    processChampionInfoChanges(previousInfo, newInfo, cycle)
+    // processChampionInfoChanges(previousInfo, newInfo, cycle)
     AirportSource.updateChampionInfo(newInfo)
 
     println("Done computing champions")

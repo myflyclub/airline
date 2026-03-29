@@ -1,7 +1,7 @@
 package controllers
 
-import com.patson.data.{CountrySource, CycleSource, EventSource}
-import com.patson.model.{Airline, Airport, Country}
+import com.patson.data.{CountrySource, CycleSource, EventSource, NotificationSource}
+import com.patson.model.{Airline, Airport, Country, NotificationCategory}
 import com.patson.model.event._
 import com.patson.util.AirportCache
 import controllers.AuthenticationObject.AuthenticatedAirline
@@ -424,6 +424,7 @@ class OlympicsApplication @Inject()(cc: ControllerComponents) extends AbstractCo
             if (validOptions.contains(pickedReward)) {
               pickedReward.apply(EventSource.loadEventById(eventId).get, request.user)
               EventSource.savePickedRewardOption(eventId, airlineId, pickedReward)
+              NotificationSource.markCategoryRead(airlineId, NotificationCategory.OLYMPICS_PRIZE)
               Ok(Json.toJson(pickedReward))
             } else {
               BadRequest("Reward option not valid")

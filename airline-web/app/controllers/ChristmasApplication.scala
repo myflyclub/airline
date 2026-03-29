@@ -1,6 +1,6 @@
 package controllers
 
-import com.patson.data.{AirportSource, AlertSource, ChristmasSource}
+import com.patson.data.{AirportSource, ChristmasSource}
 import com.patson.model._
 import com.patson.model.christmas._
 import com.patson.util.AirportCache

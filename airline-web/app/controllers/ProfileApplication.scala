@@ -3,7 +3,7 @@ package controllers
 import com.patson.data.airplane.ModelSource
 
 import java.util.Random
-import com.patson.data.{AirlineSource, AirplaneSource, AirportSource, BankSource, CycleSource}
+import com.patson.data.{AirlineSource, AirplaneSource, AirportSource, BankSource, CycleSource, NotificationSource}
 import com.patson.model._
 import com.patson.model.AirlineType._
 import com.patson.model.airplane._
@@ -280,6 +280,13 @@ class ProfileApplication @Inject()(cc: ControllerComponents) extends AbstractCon
 
           airline.setInitialized(true)
           AirlineSource.saveAirlineInfo(airline)
+
+          NotificationSource.markCategoryRead(airlineId, NotificationCategory.TUTORIAL)
+          if (!airline.isSkipTutorial) {
+            NotificationSource.insertNotification(Notification(airlineId, NotificationCategory.TUTORIAL,
+              s"Headquarters established at ${airport.name}! Select an airport and click the Plan Route button to set up your first route.", cycle))
+          }
+
           val updatedAirline = AirlineSource.loadAirlineById(airlineId, true)
 
           Ok(Json.toJson(updatedAirline))

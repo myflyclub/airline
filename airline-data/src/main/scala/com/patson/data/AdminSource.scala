@@ -1,7 +1,6 @@
 package com.patson.data
 
 import com.patson.data.Constants._
-import com.patson.model.notice._
 
 import scala.collection.mutable.ListBuffer
 

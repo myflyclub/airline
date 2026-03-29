@@ -1,7 +1,7 @@
 package controllers
 
-import com.patson.data.{CycleSource, EventSource}
-import com.patson.model.{Airline, AllianceRole}
+import com.patson.data.{CycleSource, EventSource, NotificationSource}
+import com.patson.model.{Airline, AllianceRole, NotificationCategory}
 import com.patson.model.event.{EventType, Olympics, OlympicsStatus}
 import com.patson.util.AllianceCache
 import models.{PendingAction, PendingActionCategory}
@@ -13,6 +13,7 @@ object PendingActionUtil {
     val result = ListBuffer[PendingAction]()
     result.appendAll(getOlympicsPendingActions(airline))
     result.appendAll(getAlliancePendingActions(airline))
+    result.appendAll(getOlympicsPrizePendingActions(airline))
     result.toList
   }
 
@@ -36,6 +37,12 @@ object PendingActionUtil {
       List.empty
     }
 
+  }
+
+  private def getOlympicsPrizePendingActions(airline: Airline) = {
+    val hasUnclaimedPrize = NotificationSource.loadUnreadByCategory(airline.id, NotificationCategory.OLYMPICS_PRIZE).nonEmpty
+    if (hasUnclaimedPrize) List(PendingAction(airline, PendingActionCategory.OLYMPICS_PRIZE))
+    else List.empty
   }
 
   private def getAlliancePendingActions(airline : Airline) = {

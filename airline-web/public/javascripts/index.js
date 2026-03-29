@@ -38,7 +38,7 @@ const POST_LOGIN_SCRIPTS = [
 
 const DEFERRED_SCRIPTS = [
     'link-history.js', 'confetti.js', 'departures.js', 'campaign.js',
-    'log.js', 'mobile.js', 'chat-popup.js', 'tiles.js', 'facility.js',
+    'notification.js', 'mobile.js', 'chat-popup.js', 'tiles.js', 'facility.js',
 ].map(asset);
 
 /**

@@ -230,12 +230,6 @@ function initializeRoutes() {
         showCountryCanvas(code);
     });
 
-    page('/log/', () => {
-        backgroundLoad();
-        document.title = 'Log';
-        showLogCanvas();
-    });
-
     page('/olympics/', () => {
         backgroundLoad();
         document.title = 'Olympics';

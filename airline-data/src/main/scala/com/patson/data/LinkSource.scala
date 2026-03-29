@@ -663,11 +663,13 @@ object LinkSource {
       preparedStatement.close()
 
       println("Deleted " + deletedCount + " link records")
-      //purge alert records
-      val purgingAlerts = AlertSource.loadAlertsByCategoryAndTargetIds(AlertCategory.LINK_CANCELLATION, purgingLinks.keys.toList)
-      AlertSource.deleteAlerts(purgingAlerts)
+      //purge link-cancellation notifications
+      val purgingLinkIds = purgingLinks.keys.toSet
+      val purgingNotifications = NotificationSource.loadAllByCategory(NotificationCategory.LINK_CANCELLATION)
+        .filter(n => n.targetId.flatMap(_.toIntOption).exists(purgingLinkIds.contains))
+      NotificationSource.deleteNotifications(purgingNotifications)
 
-      println("Purged " + purgingAlerts.size + " alert records")
+      println("Purged " + purgingNotifications.size + " link-cancellation notification records")
 
       //save changes
       val changeEntries = ListBuffer[LinkChange]()

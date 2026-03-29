@@ -1,7 +1,5 @@
 package controllers
 
-import com.patson.data.NoticeSource
-import com.patson.model.notice.{Notice, NoticeCategory}
 import com.typesafe.config.ConfigFactory
 import controllers.AuthenticationObject.AuthenticatedAirline
 import play.api.libs.json.Json

@@ -72,9 +72,9 @@
 
 <div class="tutorial modal" data-category="airport" id="tutorialAirportDetails">
 	<div class="modal-content" style="width: 500px;">
-		<h4>Airport Details</h4>
-		<h5>Click the Build Headquarters button if you decide to start your HQ here.</h5>
-		<p>The more challenging the airport, the more start-up capital you will obtain.</p>
+        <h4 class="pb-2">Get started</h4>
+		<p class="pb-2">Click the <b>Build Headquarters</b> button to HQ here.</p>
+		<p class="pb-2">Smaller, poorer airports will give you more start-up capital.</p>
 		<div class="flex-row">
 			<button class="ml-auto button" onclick="promptSkipTutorial(event)">Disable Tutorials</button>
 			<button class="button primary" onclick="closeModal($(this).closest('.modal'))">Next</button>
@@ -86,11 +86,10 @@
 	<div class="modal-content" style="width: 500px;">
 		<h4>Airport Details</h4>
 		<ul>
-			<li class="label">Once HQ is built, you can no longer move it unless you rebuild your airlines.</li>
+			<li class="label">Once HQ is built, you cannot move it unless you rebuild your airline.</li>
 			<li class="label">Your HQ's country will also become your company's home country, which determines your initial relationship with airplane manufacturers and other countries.</li>
 		</ul>
 		<div class="flex-row">
-			<button class="ml-auto button" onclick="promptSkipTutorial(event)">Disable Tutorials</button>
 			<button class="button primary" onclick="closeModal($(this).closest('.modal'))">Next</button>
 		</div>
 	</div>
@@ -116,10 +115,10 @@
 		<ul>
 			<li class="label">Select airplane model, assign airplane, frequency, pricing and service star</li>
 		</ul>
-		<picture>
+		<!-- <picture>
 			<source srcset="/assets/images/tutorial/plan-link-1.avif" type="image/avif">
 			<img loading="lazy" src="/assets/images/tutorial/plan-link-1.png" style="vertical-align:middle; max-width: 100%">
-		</picture>
+		</picture> -->
 		<div class="flex-row">
 			<button class="ml-auto button" onclick="promptSkipTutorial(event)">Disable Tutorials</button>
 			<button class="button primary" onclick="closeModal($(this).closest('.modal'))">Next</button>
@@ -165,10 +164,10 @@
 		<ul>
 			<li class="label">Looks like negotiation is required to set up this flight!</li>
 		</ul>
-		<picture>
+		<!-- <picture>
 			<source srcset="/assets/images/tutorial/negotiation-1.avif" type="image/avif">
 			<img loading="lazy" src="/assets/images/tutorial/negotiation-1.png" style="vertical-align:middle; max-width: 100%">
-		</picture>
+		</picture> -->
 		<div class="flex-row">
 			<button class="ml-auto button" onclick="promptSkipTutorial(event)">Disable Tutorials</button>
 			<button class="button primary" onclick="closeModal($(this).closest('.modal'))">Next</button>
@@ -180,11 +179,12 @@
 		<h4>Negotiation Difficulty</h4>
 		<ul>
 			<li class="label">Every negotiation has its difficulty, the higher the value the more difficult it gets!</li>
+            <li class="label">To understand the difficulty details, hover over the bubble next to the difficulty value.</li>
 		</ul>
-		<picture>
+		<!-- <picture>
 			<source srcset="/assets/images/tutorial/negotiation-2.avif" type="image/avif">
 			<img loading="lazy" src="/assets/images/tutorial/negotiation-2.png" style="vertical-align:middle; max-width: 100%">
-		</picture>
+		</picture> -->
 		<div class="flex-row">
 			<button class="ml-auto button" onclick="promptSkipTutorial(event)">Disable Tutorials</button>
 			<button class="button primary" onclick="closeModal($(this).closest('.modal'))">Next</button>
@@ -193,28 +193,17 @@
 </div>
 <div class="tutorial modal" data-category="plan-link" id="tutorialNegotiation3">
 	<div class="modal-content" style="width: 500px;">
-		<h4>Negotiation Difficulty Breakdown</h4>
+		<h4>Action points</h4>
 		<ul>
-			<li class="label">To understand the difficulty details. Hover over the bubble next to the difficulty value.</li>
+			<li class="label">You spend action points.</li>
+			<li class="label">The difficulty is the minimum required.</li>
+			<li class="label">The more the Action points, the higher the success rate, the rate is indicated on the right side.</li>
+			<li class="label">Maximum of 11 action points can be spent.</li>
 		</ul>
-		<img loading="lazy" src="/assets/images/tutorial/negotiation-1.gif" style="vertical-align:middle; max-width: 100%">
-		<div class="clickable footer" onclick='promptSkipTutorial(event)'>Disable Tutorials</div>
-	</div>
-</div>
-<div class="tutorial modal" data-category="plan-link" id="tutorialNegotiation4">
-	<div class="modal-content" style="width: 500px;">
-		<h4>Assign Delegates</h4>
-		<ul>
-			<li class="label">You would need to assign delegates to start the negotiations.</li>
-			<li class="label">The difficulty indicates the minimum delegates required.</li>
-			<li class="label">The more the delegates, the higher the success rate, the rate is indicated on the right side.</li>
-			<li class="label">Maximum of 10 delegates can be assigned for the negotiation.</li>
-			<li class="label">After the negotiation, the delegates involved will have 12 weeks cooldown if the negotiation was successful and 6 weeks if it failed</li>
-		</ul>
-		<picture>
+		<!-- <picture>
 			<source srcset="/assets/images/tutorial/negotiation-3.avif" type="image/avif">
 			<img loading="lazy" src="/assets/images/tutorial/negotiation-3.png" style="vertical-align:middle; max-width: 100%">
-		</picture>
+		</picture> -->
 
 		<div class="flex-row">
 			<button class="ml-auto button" onclick="promptSkipTutorial(event)">Disable Tutorials</button>
@@ -223,11 +212,11 @@
 	</div>
 </div>
 
-<div class="tutorial modal" data-category="plan-link" id="tutorialNegotiation5">
+<div class="tutorial modal" data-category="plan-link" id="tutorialNegotiation4">
 	<div class="modal-content" style="width: 500px;">
 		<h4>Too Difficult!</h4>
 		<ul>
-			<li class="label">Sometimes the negotiation could be too difficult for your available delegates to take action</li>
+			<li class="label">Sometimes the negotiation could be too difficult for your available Action points to take action</li>
 			<li class="label">This will be indicated by the red cross next to the difficulty value</li>
 			<picture>
 				<source srcset="/assets/images/tutorial/negotiation-4.avif" type="image/avif">
@@ -238,7 +227,7 @@
 		<ul>
 			<li class="label">There are several ways to decrease the difficulty, for example:</li>
 			<li class="label">- Decrease the frequency of the flight</li>
-			<li class="label">- Improve the relationship with the target country with country delegates</li>
+			<li class="label">- Improve the relationship with the target country with country Action points</li>
 			<li class="label">- Fly to a different airport etc</li>
 			<li class="label">Always inspect the difficulty breakdown to better understand the issues</li>
 		</ul>
@@ -384,7 +373,7 @@
 			<li class="label">2. Becoming a ranked Champion in an airport by having more loyalists</li>
 			<li class="label">3. In a ranked Alliance</li>
 			<br/>
-			<li class="label">You will get more delegates (the little green men in office view) each time you level up.</li>
+			<li class="label">You will get more Action points (the little green men in office view) each time you level up.</li>
 		</ul>
 		<div class="flex-row">
 			<button class="ml-auto button" onclick="promptSkipTutorial(event)">Disable Tutorials</button>

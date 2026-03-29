@@ -11,6 +11,11 @@ function handlePendingActions(pendingActions) {
             var $icon = $('<img src="/assets/images/icons/exclamation.png">')
             $icon.attr('title', "Pending Application")
             $pendingActionDiv.append($icon)
+        } else if (pendingAction === 'OLYMPICS_PRIZE') {
+            var $pendingActionDiv = $('<div style="position: absolute; right: -5px; bottom: -5px; height: 20px; width: 20px;" class="pendingAction"></div>').appendTo($('.nav-link[data-link="event"]'))
+            var $icon = $('<img src="/assets/images/icons/exclamation.png">')
+            $icon.attr('title', "Olympics prize available")
+            $pendingActionDiv.append($icon)
         }
     })
 }
