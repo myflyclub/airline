@@ -75,6 +75,7 @@ object Constants {
   val AIRPLANE_CONFIGURATION_TEMPLATE_INDEX_1 ="airplane_configuration_template_index_1"
   val AIRPLANE_CONFIGURATION_TEMPLATE_INDEX_2 = "airplane_configuration_template_index_2"
   val AIRPLANE_MODEL_TABLE = "airplane_model"
+  val AIRPLANE_MODEL_META_TABLE = "airplane_model_meta"
   val AIRPLANE_TABLE = "airplane"
   val AIRPLANE_INDEX_1 = "airplane_index_1"
   val AIRPLANE_INDEX_2 = "airplane_index_2"

@@ -635,6 +635,13 @@ function buyAirplane(modelId, quantity, homeAirportId, configurationId, callback
 	    		showAirplaneCanvas()
 	    	}
 	    	closeModal($('#buyAirplaneModal'))
+	    	if (response.isLaunchCustomer) {
+	    		$('#launchCustomerMessage').text('You are the ' + response.modelName + ' launch customer!')
+	    		var $modal = $('#launchCustomerModal')
+	    		$modal.data('closeCallback', stopFirework)
+	    		$modal.fadeIn(200)
+	    		startFirework(8000, 3)
+	    	}
 	    },
         error: function(jqXHR, textStatus, errorThrown) {
 	            console.log(JSON.stringify(jqXHR));
@@ -883,6 +890,7 @@ function selectAirplaneModel(model) {
 		enableButton($('#airplaneCanvas .add'))
 		$('#airplaneCanvas .canPurchase').text('✓')
 	}
+	$('#airplaneCanvas #launchCustomer').text(model.launchCustomer || '—')
 	loadAirplaneModelStats(model)
     loadAircraftModelManagers(model)
 
@@ -916,6 +924,7 @@ function loadAirplaneModelStats(modelInfo) {
 	    success: function(stats) {
 	    	updateTopOperatorsTable(stats)
 	    	$('#airplaneCanvas .total').text(stats.total)
+	    	$('#airplaneCanvas #launchCustomer').text(stats.launchCustomer || '—')
 	    },
 	    error: function(jqXHR, textStatus, errorThrown) {
 	            console.log(JSON.stringify(jqXHR));

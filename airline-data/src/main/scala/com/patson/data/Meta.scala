@@ -445,6 +445,14 @@ object Meta {
     statement.execute()
     statement.close()
 
+    statement = connection.prepareStatement("CREATE TABLE " + AIRPLANE_MODEL_META_TABLE + "(" +
+      "airplane_model INT PRIMARY KEY, " +
+      "launch_customer VARCHAR(256) NOT NULL, " +
+      "FOREIGN KEY(airplane_model) REFERENCES " + AIRPLANE_MODEL_TABLE + "(id) ON DELETE CASCADE ON UPDATE CASCADE" +
+      ")")
+    statement.execute()
+    statement.close()
+
     statement = connection.prepareStatement("CREATE TABLE " + USER_TABLE + "(" +
       "id INTEGER PRIMARY KEY AUTO_INCREMENT, " +
       "user_name VARCHAR(100) UNIQUE, " +

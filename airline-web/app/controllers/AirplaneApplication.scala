@@ -2,10 +2,10 @@ package controllers
 
 import scala.math.BigDecimal.int2bigDecimal
 import com.patson.data.{AirlineSource, AirplaneSource, CountrySource, CycleSource, LinkSource}
-import com.patson.data.airplane.ModelSource
+import com.patson.data.airplane.{AirplaneModelMetaSource, ModelSource}
 import com.patson.model.airplane.{Model, _}
 import com.patson.model._
-import play.api.libs.json.{JsArray, JsNumber, JsObject, JsString, JsValue, Json, Writes}
+import play.api.libs.json.{JsArray, JsBoolean, JsNumber, JsObject, JsString, JsValue, Json, Writes}
 import play.api.mvc._
 
 import scala.collection.mutable.ListBuffer
@@ -152,6 +152,10 @@ class AirplaneApplication @Inject()(cc: ControllerComponents) extends AbstractCo
 
     result = result + ("topAirlines" -> topAirlinesJson)
 
+    AirplaneModelMetaSource.loadLaunchCustomer(modelId).foreach { name =>
+      result = result + ("launchCustomer" -> JsString(name))
+    }
+
     result
   }
 
@@ -164,6 +168,7 @@ class AirplaneApplication @Inject()(cc: ControllerComponents) extends AbstractCo
   def getAirplaneModelsByAirline(airlineId: Int) = AuthenticatedAirline(airlineId) { request =>
     val discountsByModelId: Map[Int, List[ModelDiscount]] = ModelDiscount.getAllCombinedDiscountsByAirlineId(airlineId)
     val countsByModel: Map[Int, Int] = AirplaneSource.loadAirplaneModelCounts()
+    val launchCustomers: Map[Int, String] = AirplaneModelMetaSource.loadAllLaunchCustomers()
     // Batch all rejection checks: computes country relationships and owned models once for all models
     val rejections: Map[Model, Option[String]] = getRejections(allAirplaneModels, request.user)
 
@@ -218,6 +223,10 @@ class AirplaneApplication @Inject()(cc: ControllerComponents) extends AbstractCo
         baseJson = baseJson +
           ("maxManagerConstructionTimeDiscountPct" -> JsNumber(BigDecimal(maxManagerTimePct).setScale(1, BigDecimal.RoundingMode.HALF_UP))) +
           ("discountPerManagerConstructionTimeLevelPct" -> JsNumber(BigDecimal(maxManagerTimePct * 0.125).setScale(1, BigDecimal.RoundingMode.HALF_UP)))
+      }
+
+      launchCustomers.get(modelId).foreach { name =>
+        baseJson = baseJson + ("launchCustomer" -> JsString(name))
       }
 
       baseJson
@@ -611,13 +620,23 @@ class AirplaneApplication @Inject()(cc: ControllerComponents) extends AbstractCo
                     case Some(configuration) => airplane.configuration = configuration
                   }
                 }
+                val prePurchaseCount = AirplaneSource.loadAirplaneModelCounts().getOrElse(modelId, 0)
                 val updateCount = AirplaneSource.saveAirplanes(airplanes.toList)
                 if (updateCount > 0) {
                   val amount: Long = -1 * airplane.model.price.toLong * updateCount
                   val buyDesc = if (updateCount == 1) model.name else s"${updateCount}x ${model.name}"
                   AirlineSource.saveLedgerEntry(AirlineLedgerEntry(airlineId, currentCycle, LedgerType.BUY_AIRPLANE, amount, Some(buyDesc)))
 
-                  Accepted(Json.obj("updateCount" -> updateCount))
+                  val isLaunchCustomer = prePurchaseCount == 0
+                  if (isLaunchCustomer) {
+                    AirplaneModelMetaSource.saveLaunchCustomer(modelId, airline.name)
+                  }
+
+                  var result = Json.obj("updateCount" -> updateCount)
+                  if (isLaunchCustomer) {
+                    result = result + ("isLaunchCustomer" -> JsBoolean(true)) + ("modelName" -> JsString(originalModel.name))
+                  }
+                  Accepted(result)
                 } else {
                   UnprocessableEntity("Cannot save airplane")
                 }
