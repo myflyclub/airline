@@ -98,7 +98,7 @@ async function loadAirportsData() {
 
         // Build O(1) lookup maps from GeoJSON features
         window.airportsById = {};
-        window.airportsByIata = {};
+        window.airportIataToId = {};
         if (airports.features) {
             for (const feature of airports.features) {
                 const props = feature.properties;
@@ -106,7 +106,9 @@ async function loadAirportsData() {
                 props.longitude = feature.geometry.coordinates[0];
                 props.latitude = feature.geometry.coordinates[1];
                 window.airportsById[props.id] = props;
-                window.airportsByIata[props.iata] = props;
+                props._basePopulation = props.population;
+                props._baseIncome = props.income;
+                window.airportIataToId[props.iata] = props.id;
             }
         }
 

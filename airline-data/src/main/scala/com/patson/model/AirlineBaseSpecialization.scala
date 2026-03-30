@@ -128,17 +128,23 @@ case object PowerhouseSpecialization extends AirlineBaseSpecialization with Airp
   override val getType = BaseSpecializationType.AIRPORT_POWER
   override val label = "Powerhouse"
   override val scaleRequirement: Int = 9
-  val populationBoost = 38000
-  private val minIncomeBoost = 4000 //should at least boost income by $4000
-  private val percentageBoost = 12
+  private val maxPopBoost = 100000
+  private val floorPopBoost = 1500
+  private val floorIncomeBoost = 3500
+  private val percentageBoost = 8
 
   def incomeBoost(airport: Airport) = {
-    val incomeIncrement = airport.baseIncome * percentageBoost / 100
-    Math.max(incomeIncrement, minIncomeBoost)
+    val incomeIncrement = airport.baseIncome * percentageBoost.toDouble / 100
+    incomeIncrement.toInt + floorIncomeBoost
+  }
+
+  def populationBoost(airport: Airport) = {
+    val popIncrement = airport.basePopulation * percentageBoost.toDouble / 100
+    Math.min(popIncrement, maxPopBoost).toInt + floorPopBoost
   }
   
   override def descriptions(airport: Airport) = {
-    List(s"Increase population by $populationBoost", s"Increase income level by ${incomeBoost(airport)}")
+    List(s"Increase population by ${populationBoost(airport)}", s"Increase income by ${incomeBoost(airport)}")
   }
   
   override def apply(airline: Airline, airport: Airport) = {
@@ -152,7 +158,7 @@ case object PowerhouseSpecialization extends AirlineBaseSpecialization with Airp
   override def getAirportBoostContributions(airport: Airport, airline: Airline): Map[AirportBoostType.Value, (String, Double)] = {
     Map(
       AirportBoostType.INCOME -> (s"${airline.name} Powerhouse", incomeBoost(airport).toDouble),
-      AirportBoostType.POPULATION -> (s"${airline.name} Powerhouse", populationBoost.toDouble)
+      AirportBoostType.POPULATION -> (s"${airline.name} Powerhouse", populationBoost(airport).toDouble)
     )
   }
 }

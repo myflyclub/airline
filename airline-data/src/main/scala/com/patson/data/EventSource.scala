@@ -620,7 +620,7 @@ object EventSource {
     val currentCycle = CycleSource.loadCycle()
     loadEvents().find { e => e.eventType == EventType.OLYMPICS && e.isActive(currentCycle) }.flatMap { event =>
       val olympics = event.asInstanceOf[Olympics]
-      val affectedAirportIds = loadOlympicsAffectedAirports(olympics.id).values.flatten.map(_.id).toSet
+      val affectedAirportIds = Olympics.getSelectedAffectedAirports(olympics.id).map(_.id).toSet
       if (affectedAirportIds.contains(airportId)) {
         val phase = olympics.status(currentCycle)
         phase match {
@@ -652,10 +652,65 @@ object EventSource {
         featureOpt match {
           case None => Map.empty
           case Some(feature) =>
-            loadOlympicsAffectedAirports(olympics.id).values.flatten.map { airport =>
-              airport.id -> feature
-            }.toMap
+            // Load airport IDs directly from DB to avoid re-entrant AirportCache access.
+            // This method is called during airport cache loading (loadFeatures=true), so
+            // going through AirportCache here would cause a Caffeine recursive update error.
+            loadOlympicsSelectedPrincipalAirportId(olympics.id) match {
+              case None => Map.empty
+              case Some(principalId) =>
+                loadOlympicsAffectedAirportIds(olympics.id, principalId).map(_ -> feature).toMap
+            }
         }
+    }
+  }
+
+  /**
+   * Returns the winning principal airport ID from the last vote round, using a direct DB
+   * query with no AirportCache access (safe to call from within cache loaders).
+   */
+  private def loadOlympicsSelectedPrincipalAirportId(eventId: Int): Option[Int] = {
+    val connection = Meta.getConnection()
+    try {
+      val preparedStatement = connection.prepareStatement(
+        "SELECT airport FROM " + OLYMPIC_VOTE_ROUND_TABLE +
+        " WHERE event = ? AND round = (SELECT MAX(round) FROM " + OLYMPIC_VOTE_ROUND_TABLE + " WHERE event = ?)" +
+        " ORDER BY vote DESC LIMIT 1"
+      )
+      preparedStatement.setInt(1, eventId)
+      preparedStatement.setInt(2, eventId)
+      val resultSet = preparedStatement.executeQuery()
+      val result = if (resultSet.next()) Some(resultSet.getInt("airport")) else None
+      resultSet.close()
+      preparedStatement.close()
+      result
+    } finally {
+      connection.close()
+    }
+  }
+
+  /**
+   * Returns affected airport IDs for a given principal airport ID, using a direct DB
+   * query with no AirportCache access (safe to call from within cache loaders).
+   */
+  private def loadOlympicsAffectedAirportIds(eventId: Int, principalAirportId: Int): List[Int] = {
+    val connection = Meta.getConnection()
+    try {
+      val preparedStatement = connection.prepareStatement(
+        "SELECT affected_airport FROM " + OLYMPIC_AFFECTED_AIRPORT_TABLE +
+        " WHERE event = ? AND principal_airport = ?"
+      )
+      preparedStatement.setInt(1, eventId)
+      preparedStatement.setInt(2, principalAirportId)
+      val resultSet = preparedStatement.executeQuery()
+      val result = mutable.ListBuffer[Int]()
+      while (resultSet.next()) {
+        result += resultSet.getInt("affected_airport")
+      }
+      resultSet.close()
+      preparedStatement.close()
+      result.toList
+    } finally {
+      connection.close()
     }
   }
 

@@ -1,5 +1,6 @@
 var airportsLatestData
 var airportLinkPaths = {}
+var _prevBoostedAirportIds = new Set()
 var activeAirport
 var activeAirportId
 var activeAirportPopupInfoWindow
@@ -8,7 +9,7 @@ var airportBaseScale
 var _toggleState_AllianceBaseMapView = false
 const _etagStore = {}
 const DYNAMIC_FEATURE_TYPES = new Set([
-    'INTERNATIONAL_HUB', 'VACATION_HUB', 'FINANCIAL_HUB', 'ELITE_CHARM','OLYMPICS_PREPARATIONS', 'OLYMPICS_IN_PROGRESS','PRESTIGE_CHARM'
+    'INTERNATIONAL_HUB', 'VACATION_HUB', 'FINANCIAL_HUB', 'ELITE_CHARM', 'OLYMPICS_PREPARATIONS', 'OLYMPICS_IN_PROGRESS', 'PRESTIGE_CHARM'
 ])
 const EXCLUSIVELY_DYNAMIC_TYPES = new Set(['OLYMPICS_PREPARATIONS', 'OLYMPICS_IN_PROGRESS', 'PRESTIGE_CHARM'])
 /**
@@ -22,7 +23,7 @@ function getAirportById(id) {
  * Find an airport by IATA code (O(1) lookup)
  */
 function getAirportByIata(iata) {
-    return window.airportsByIata?.[iata] || null;
+    return getAirportById(window.airportIataToId?.[iata]);
 }
 
 /**
@@ -62,6 +63,38 @@ async function loadAirportsDynamic() {
                 !EXCLUSIVELY_DYNAMIC_TYPES.has(f.type) && !incomingTypes.has(f.type)
             );
             airport.features = [...staticFeatures, ...features];
+        }
+
+        // Patch population/income from boosts into the global airport store so map
+        // popups show boosted values without requiring a prior detail-view visit.
+        // Always recomputes from _basePopulation/_baseIncome to avoid double-counting on re-calls.
+        const boosts = data.boosts || {};
+        const nowBoostedIds = new Set(Object.keys(boosts));
+
+        // Reset airports that dropped off the boost list back to their base values.
+        for (const id of _prevBoostedAirportIds) {
+            if (!nowBoostedIds.has(id)) {
+                const airport = window.airportsById?.[id];
+                if (airport) {
+                    airport.population = airport._basePopulation ?? airport.population;
+                    airport.income = airport._baseIncome ?? airport.income;
+                }
+            }
+        }
+        _prevBoostedAirportIds = nowBoostedIds;
+
+        for (const [airportId, boostData] of Object.entries(boosts)) {
+            const airport = window.airportsById?.[airportId];
+            if (!airport) continue;
+            const bfbt = boostData.boostFactorsByType || {};
+            if (bfbt.population) {
+                const boost = bfbt.population.reduce((s, item) => s + (Number(item.value) || 0), 0);
+                airport.population = (airport._basePopulation ?? airport.population) + boost;
+            }
+            if (bfbt.income) {
+                const boost = bfbt.income.reduce((s, item) => s + (Number(item.value) || 0), 0);
+                airport.income = (airport._baseIncome ?? airport.income) + boost;
+            }
         }
 
         // Patch travelRate, reputation, congestion into the global airport store
@@ -488,31 +521,34 @@ async function updateAirportChampionDetails(airport) {
 
 
 
+function _patchChampionStats(airport, stats) {
+    if (stats) {
+        airport.travelRate = stats.travelRate
+        airport.reputation = stats.reputation
+        airport.congestion = stats.hasOwnProperty('congestion') ? stats.congestion : 0
+    }
+}
+
 function checkForAirportUpdate(airport) {
-    // Prefer fresh boost data embedded in the airport detail response (populationBoost /
-    // incomeLevelBoost from AirportExtendedWrites) — avoids relying on the potentially
-    // stale airportsLatestData bulk cache (e.g. after a specialization change).
-    if (airport.populationBoost || airport.incomeLevelBoost || airport.eliteBoost) {
+    // population, income, popElite, popMiddleIncome are already boosted by the server
+    // (AirportExtendedWrites). This function only stores boost arrays for tooltip display
+    // and patches travelRate/reputation/congestion from the bulk champions cache.
+
+    // Prefer fresh boost arrays embedded in the airport detail response.
+    if (airport.populationBoost || airport.incomeBoost || airport.eliteBoost) {
         const boostFactors = {}
         if (airport.populationBoost) {
-            const popBoost = airport.populationBoost.reduce((sum, item) => sum + (Number(item.value) || 0), 0)
-            const oldMiddleIncome = airport.population * airport.popMiddleIncome / 100
-            airport.popMiddleIncome = ((oldMiddleIncome + popBoost) / (airport.population + popBoost) * 100).toFixed(1)
-            airport.population += popBoost
             boostFactors.population = airport.populationBoost
         }
-        if (airport.incomeLevelBoost) {
-            boostFactors.income = airport.incomeLevelBoost
+        if (airport.incomeBoost) {
+            boostFactors.income = airport.incomeBoost
         }
         if (airport.eliteBoost) {
-            const eliteBoostTotal = airport.eliteBoost.reduce((sum, item) => sum + (Number(item.value) || 0), 0)
-            airport.popElite += eliteBoostTotal
             boostFactors.elite = airport.eliteBoost
         }
         airport.boosts = boostFactors
 
-        // Write fresh boost data back to airportsLatestData so the stale bulk cache
-        // doesn't override it on subsequent reads (e.g. after a specialization change).
+        // Write fresh boost data back to airportsLatestData cache.
         if (airportsLatestData) {
             if (!airportsLatestData.boosts) airportsLatestData.boosts = {}
             if (Object.keys(boostFactors).length > 0) {
@@ -522,13 +558,7 @@ function checkForAirportUpdate(airport) {
             }
         }
 
-        // Still pull travelRate / reputation / congestion from the bulk cache if available
-        const stats = airportsLatestData?.champions?.[airport.id]
-        if (stats) {
-            airport.travelRate = stats.travelRate
-            airport.reputation = stats.reputation
-            airport.congestion = stats.hasOwnProperty('congestion') ? stats.congestion : 0
-        }
+        _patchChampionStats(airport, airportsLatestData?.champions?.[airport.id])
         return airport
     }
 
@@ -538,28 +568,10 @@ function checkForAirportUpdate(airport) {
 
     const boostEntry = airportsLatestData.boosts[airport.id]
     if (boostEntry) {
-        const boostFactors = boostEntry.boostFactorsByType || {}
-        if (boostFactors.hasOwnProperty('population')) {
-            let popBoost = boostFactors.population.reduce((sum, item) => sum + (Number(item.value) || 0), 0)
-            const oldMiddleIncome = airport.population * airport.popMiddleIncome / 100
-            airport.popMiddleIncome = ((oldMiddleIncome + popBoost) / (airport.population + popBoost) * 100).toFixed(1)
-            airport.population += popBoost
-        }
-        if (boostFactors.hasOwnProperty('elite')) {
-            let eliteBoost = boostFactors.elite.reduce((sum, item) => sum + (Number(item.value) || 0), 0)
-            airport.popElite += eliteBoost
-        }
-
-        airport.boosts = Object.assign({}, boostFactors)
+        airport.boosts = { ...(boostEntry.boostFactorsByType || {}) }
     }
 
-    const stats = airportsLatestData.champions[airport.id]
-    if (stats) {
-        airport.travelRate = stats.travelRate
-        airport.reputation = stats.reputation
-        airport.congestion = stats.hasOwnProperty('congestion') ? stats.congestion : 0
-    }
-
+    _patchChampionStats(airport, airportsLatestData.champions[airport.id])
     return airport
 }
 
@@ -653,6 +665,12 @@ function loadAndUpdateAirportImage(airportId) {
 
 function populateAirportDetails(airport) {
     airport = checkForAirportUpdate(airport) || airport;
+    // Write boosted scalars back so map popups show correct values after a detail visit.
+    const _cached = window.airportsById?.[airport.id]
+    if (_cached) {
+        _cached.population = airport.population
+        _cached.income = airport.income
+    }
     loadAirportStatistics(airport)
     loadGenericTransits()
     updateAirportLoyalistDetails(airport)
@@ -1131,7 +1149,7 @@ function confirmSpecializations() {
             url: url,
             contentType: 'application/json; charset=utf-8',
             dataType: 'json',
-            success: function (response) {
+            success: async function (response) {
                 if (response.features && window.airportsById?.[activeAirportId]) {
                     const airport = window.airportsById[activeAirportId];
                     const newDynamic = response.features.filter(f => DYNAMIC_FEATURE_TYPES.has(f.type));
@@ -1144,7 +1162,10 @@ function confirmSpecializations() {
                     airport.features = [...retained, ...newDynamic];
                 }
                 closeModal($('#baseSpecializationModal'))
-                showAirportDetails(activeAirportId)
+                await Promise.all([
+                    loadAirportsDynamic(),
+                    showAirportDetails(activeAirportId)
+                ])
             },
             error: function (jqXHR, textStatus, errorThrown) {
                 console.log(JSON.stringify(jqXHR));

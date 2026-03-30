@@ -27,10 +27,6 @@ case class Airport(iata: String, icao: String, name: String, latitude: Double, l
   private[model] var boostFactors : Map[AirportBoostType.Value, List[(AirportBoost)]] = Map.empty
   private[model] var specializationBoostFactors : Map[AirportBoostType.Value, List[(String, Double)]] = Map.empty
 
-  @deprecated lazy val baseIncomeLevel = baseIncome
-  @deprecated lazy val incomeLevel = baseIncomeLevel + incomeLevelBoost
-  @deprecated lazy val incomeLevelBoost = boostFactorsByType.get(AirportBoostType.INCOME).map(_._2).sum
-
   /**
    * These are the four critical variables for demand generation, modded by dynamic boost factors
    */

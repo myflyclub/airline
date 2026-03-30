@@ -717,12 +717,12 @@ package object controllers {
     }
 
     def writes(airport: Airport): JsValue = {
-      val popElite = if (airport.basePopElite.toString.length <= 2) {
-        (airport.basePopElite.toString.take(1) + "0" * (airport.basePopElite.toString.length - 1)).toLong
+      val popElite = if (airport.popElite.toString.length <= 2) {
+        (airport.popElite.toString.take(1) + "0" * (airport.popElite.toString.length - 1)).toLong
       } else {
-        (airport.basePopElite.toString.take(2) + "0" * (airport.basePopElite.toString.length - 2)).toLong
+        (airport.popElite.toString.take(2) + "0" * (airport.popElite.toString.length - 2)).toLong
       }
-      val popMiddleIncome = BigDecimal(airport.basePopMiddleIncome / Math.max(1, airport.basePopulation).toDouble * 100).setScale(1, RoundingMode.HALF_EVEN).toDouble
+      val popMiddleIncome = BigDecimal(airport.popMiddleIncome.toDouble / Math.max(1, airport.population) * 100).setScale(1, RoundingMode.HALF_EVEN).toDouble
 
       var airportObject = JsObject(List(
         "id" -> JsNumber(airport.id),
@@ -732,7 +732,7 @@ package object controllers {
         "popElite" -> JsNumber(popElite),
         "popMiddleIncome" -> JsNumber(popMiddleIncome),
         "zone" -> JsString(airport.getZoneAffinities()),
-        "income" -> JsNumber(airport.baseIncome)
+        "income" -> JsNumber(airport.income)
       ))
 
       if (airport.isAirlineAppealsInitialized) {
@@ -784,7 +784,7 @@ package object controllers {
           airportObject = airportObject + ("populationBoost" -> Json.toJson(airport.boostFactorsByType.get(AirportBoostType.POPULATION)))
         }
         if (airport.boostFactorsByType.get(AirportBoostType.INCOME).nonEmpty) {
-          airportObject = airportObject + ("incomeLevelBoost" -> Json.toJson(airport.boostFactorsByType.get(AirportBoostType.INCOME)))
+          airportObject = airportObject + ("incomeBoost" -> Json.toJson(airport.boostFactorsByType.get(AirportBoostType.INCOME)))
         }
         if (airport.boostFactorsByType.get(AirportBoostType.ELITE).nonEmpty) {
           airportObject = airportObject + ("eliteBoost" -> Json.toJson(airport.boostFactorsByType.get(AirportBoostType.ELITE)))
