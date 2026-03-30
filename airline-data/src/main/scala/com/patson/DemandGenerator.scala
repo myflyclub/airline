@@ -95,8 +95,8 @@ object DemandGenerator {
       val minDistance = if (GameConstants.isIsland(fromAirport)) 25 else localizedDistance
       val maxDistance = Math.max(localizedDistance * 4, IsolatedTownFeature.HUB_RANGE_BRACKETS(isIsolatedMultiplier))
       //mostly trying to generate a base of domestic demand (also is more performant), but in smaller markets do int'l
-      val intlCountries = List("AE","AL","AM","AT","AZ","BD","BY","BE","BJ","BT","BA","BI","BW","CH","CW","CZ","DE","DJ","DM","EE","GB","GE","GM","GH","GD","GN","GY","HK","HR","HU","IE","IL","JM","JO","KI","KW","KG","LV","LS","LR","LI","LT","LU","MO","MT","MD","MK","NA","NL","PR","QA","RW","RS","SG","SK","SI","SR","SY","SX","SZ","TC","TJ","UY","UZ","VC","VG","VI","VU")
-      val intlAirports = List("TPE","KHH")
+      val intlCountries = List("AE","AL","AM","AT","AZ","BD","BY","BE","BJ","BT","BA","BI","BW","CH","CW","CZ","DE","DJ","DM","EE","GE","GM","GH","GD","GN","GY","HK","HR","HU","IE","IL","JM","JO","KI","KW","KG","LV","LS","LR","LI","LT","LU","MO","MT","MD","MK","NA","NL","PA","PR","QA","RW","RS","SG","SK","SI","SR","SY","SX","SZ","TC","TJ","UY","UZ","VC","VG","VI","VU")
+      val intlAirports = List("TPE","KHH","LHR","LGW","STN","LTN","MAN","EDI","CDG","FSP")
       val isDomestic = if (intlCountries.contains(fromAirport.countryCode) || intlAirports.contains(fromAirport.iata)) false else true
       val airports = Computation.getAirportWithinRange(fromAirport, maxDistance, minDistance, isDomestic)
       val numberDestinations = Math.min(22, (isIsolatedMultiplier + 1) * (fromAirport.size + 6))
@@ -155,7 +155,7 @@ object DemandGenerator {
       } else if (isIsolatedMultiplier > 0) {
         Math.min(4800, fromAirport.popMiddleIncome.toDouble / (225.0 / (isIsolatedMultiplier + 2) * Math.min(5, fromAirport.size)))
       } else {
-        Math.min(4800, fromAirport.popMiddleIncome.toDouble / 950 * Math.min(5, fromAirport.size + 1))
+        Math.min(4800, Math.max(30, fromAirport.popMiddleIncome.toDouble / 800) * Math.min(5, fromAirport.size + 1)) * Math.max(1.0, DemandConstants.localityAdjustMap.getOrElse(fromAirport.countryCode, 1.0))
       }
 
       // Divide the demand among hubAirports based on percentages
@@ -413,21 +413,22 @@ object DemandGenerator {
       else if (affinity < 0) 0.025
       else affinity * 0.1 + 0.025
 
-    //set very low income floor, specifically traffic to/from central airports that is otherwise missing
-    def addToVeryLowIncome(fromPop: Long, airportScale: Int): Int = {
+    //set low income floor, specifically traffic to/from central airports that is otherwise missing
+    def addToVeryLowIncome(fromPop: Long, income: Int): Int = {
       val minPop = 5e5
-      val minDenominator = 13000
+      val minDenominator = 35000
 
       val boost = if (fromPop <= minPop) {
-        (fromPop / minDenominator).toInt
+        (fromPop / minDenominator).toInt + 5
       } else {
         val logFactor = 1 + Math.log10(fromPop / minPop)
         val adjustedDenominator = (minDenominator * logFactor)
-        (fromPop / adjustedDenominator).toInt + 8
+        (fromPop / adjustedDenominator).toInt
       }
-      Math.min(575, boost).toInt
+      val fadeEffect = Math.min(1, 1 - (income - 4000).toDouble / 8000) //denominator is larger so more income is always good
+      (Math.min(525, boost) * fadeEffect).toInt
     }
-    val buffLowIncomeAirports = if (fromAirport.income <= 5000 && toAirport.income <= 8000 && distance <= 3000 && affinity >= 2 && (toAirport.size >= 4 || fromAirport.size >= 4)) addToVeryLowIncome(fromAirport.population, fromAirport.size) else 0
+    val buffLowIncomeAirports = if (fromAirport.income <= 10000 && toAirport.income <= 10000 && distance <= 3000 && affinity >= 2 && (toAirport.size >= 4 || fromAirport.size >= 4)) addToVeryLowIncome(fromAirport.population, fromAirport.income) else 0
   
     val baseDemand: Double = Math.max(0, airportAffinityMultiplier * fromAirport.popMiddleIncome * toPopIncomeAdjusted / 225_000 / 225_000) + buffLowIncomeAirports
     Math.pow(baseDemand, distanceReducerExponent).toInt

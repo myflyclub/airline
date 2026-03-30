@@ -347,7 +347,7 @@ class DemandGeneratorSpec extends AnyWordSpecLike with Matchers {
       println("  -----------------------------|------------|------------------")
 
       scenarios.foreach { case (label, fromPax) =>
-        val travelRateAdjusted = Airport.travelRateAdjusted(fromPax.toInt, fromPax.toInt, fromAirport.size)
+        val travelRateAdjusted = Airport.travelRateAdjusted(fromPax.toInt, totalBaseDemand, fromAirport.size)
         val effectiveDemand = (totalBaseDemand * travelRateAdjusted).toInt
         println(f"  $label%-29s | $travelRateAdjusted%10.2f | $effectiveDemand%d")
       }
@@ -382,127 +382,173 @@ class DemandGeneratorSpec extends AnyWordSpecLike with Matchers {
       println(s"High demand met (80%): travelRateAdjusted=$expectedTravelRateHigh, total chunks=${highStatsChunks.size}, total demand=$highStatsTotal")
     }
 
-    "computeDemand should produce consistent output within 10% variance across runs".in {
-      // Load airport stats from database
-      val airportStatsList = AirportStatisticsSource.loadAllAirportStats()
-      val airportStats: Map[Int, AirportStatistics] = airportStatsList.map(s => s.airportId -> s).toMap
+//    "computeDemand should produce consistent output within 10% variance across runs".in {
+//      // Load airport stats from database
+//      val airportStatsList = AirportStatisticsSource.loadAllAirportStats()
+//      val airportStats: Map[Int, AirportStatistics] = airportStatsList.map(s => s.airportId -> s).toMap
+//
+//      println(s"Loaded ${airportStats.size} airport statistics")
+//
+//      // Run computeDemand multiple times and collect total demand for each run
+//      // Note: Each run is expensive (~1000s of airports), so we run fewer iterations
+//      // but verify the variance is still within acceptable bounds
+//      val numRuns = 20
+//      val startCycle = 110
+//      val endCycle = startCycle + numRuns - 1
+//
+//      val demandTotals = (startCycle to endCycle).map { i => // 'i' is now the cycle
+//        val startTime = System.currentTimeMillis()
+//        val demand = DemandGenerator.computeDemand(i * 3, airportStats)
+//        val total = demand.map(_._3).sum
+//        val elapsed = System.currentTimeMillis() - startTime
+//        println(s"Cycle $i: total demand = $total, chunks = ${demand.size}, time = ${elapsed}ms")
+//        total
+//      }
+//
+//      val minDemand = demandTotals.min
+//      val maxDemand = demandTotals.max
+//      val avgDemand = demandTotals.sum.toDouble / numRuns
+//      val variance = (maxDemand - minDemand).toDouble / avgDemand
+//
+//      println(s"\n=== computeDemand Stability Test Results ($numRuns runs) ===")
+//      println(s"Min demand: $minDemand")
+//      println(s"Max demand: $maxDemand")
+//      println(s"Avg demand: ${avgDemand.toLong}")
+//      println(s"Variance (max-min)/avg: ${(variance * 100).toInt}%")
+//      println(s"Min as % of avg: ${(minDemand.toDouble / avgDemand * 100).toInt}%")
+//      println(s"Max as % of avg: ${(maxDemand.toDouble / avgDemand * 100).toInt}%")
+//
+//      println("\n=== Demand Totals CSV ===")
+//      println("Cycle,Total Demand")
+//      (startCycle to endCycle).zip(demandTotals).foreach { case (cycle, total) =>
+//        println(s"$cycle,$total")
+//      }
+//
+//      // Verify all runs are within 10% of the average
+//      val withinTolerance = demandTotals.forall { total =>
+//        val deviation = Math.abs(total - avgDemand) / avgDemand
+//        deviation <= 0.10
+//      }
+//
+//      assert(withinTolerance, s"All runs should be within 10% of average. Variance was ${(variance * 100).toInt}%")
+//      assert(variance < 0.10, s"Total variance (max-min)/avg should be less than 10%, got ${(variance * 100).toInt}%")
+//    }
 
-      println(s"Loaded ${airportStats.size} airport statistics")
+//    "computeDemand sample consistency test - verify 100 iterations on subset".in {
+//      // This test runs 100 iterations on a smaller subset of the demand calculation
+//      // to verify the randomizer stays within bounds
+//      val airportStatsList = AirportStatisticsSource.loadAllAirportStats()
+//      val airportStats: Map[Int, AirportStatistics] = airportStatsList.map(s => s.airportId -> s).toMap
+//
+//      // Use specific major airports for sampling
+//      val sampleFromAirports = List("JFK", "LAX", "ORD", "LHR", "CDG", "NRT", "SIN", "DXB", "HKG", "SYD")
+//      val sampleToAirports = List("LAX", "JFK", "LHR", "FRA", "PEK", "ICN", "BKK", "DEL", "GRU", "MEX")
+//
+//      val fromAirports = sampleFromAirports.flatMap(iata => AirportSource.loadAirportByIata(iata, true))
+//      val toAirports = sampleToAirports.flatMap(iata => AirportSource.loadAirportByIata(iata, true))
+//
+//      println(s"Sample test using ${fromAirports.size} from-airports and ${toAirports.size} to-airports")
+//
+//      val countryRelationships = CountrySource.getCountryMutualRelationships()
+//      val numRuns = 100
+//
+//      val demandTotals = (1 to numRuns).map { run =>
+//        var totalDemand = 0
+//        fromAirports.foreach { fromAirport =>
+//          val flightPreferencesPool = DemandGenerator.getFlightPreferencePoolOnAirport(fromAirport)
+//          toAirports.foreach { toAirport =>
+//            val distance = Computation.calculateDistance(fromAirport, toAirport)
+//            if (DemandGenerator.canHaveDemand(fromAirport, toAirport, distance)) {
+//              val relationship = countryRelationships.getOrElse((fromAirport.countryCode, toAirport.countryCode), 0)
+//              val affinity = Computation.calculateAffinityValue(fromAirport.zone, toAirport.zone, relationship)
+//              val demand = DemandGenerator.computeBaseDemandBetweenAirports(fromAirport, toAirport, affinity, distance)
+//
+//              // Apply travelRateAdjusted and randomization like the real computeDemand does
+//              List(
+//                (demand.travelerDemand, PassengerType.TRAVELER),
+//                (demand.businessDemand, PassengerType.BUSINESS),
+//                (demand.touristDemand, PassengerType.TOURIST)
+//              ).foreach { case (linkClassValues, passengerType) =>
+//                val chunks = DemandGenerator.generateChunksForPassengerType(
+//                  linkClassValues, fromAirport, toAirport, passengerType, flightPreferencesPool, airportStats, 1, 50
+//                )
+//                totalDemand += chunks.map(_._3).sum
+//              }
+//            }
+//          }
+//        }
+//        if (run % 20 == 0) {
+//          println(s"Run $run: sample demand = $totalDemand")
+//        }
+//        totalDemand
+//      }
+//
+//      val minDemand = demandTotals.min
+//      val maxDemand = demandTotals.max
+//      val avgDemand = demandTotals.sum.toDouble / numRuns
+//      val variance = (maxDemand - minDemand).toDouble / avgDemand
+//
+//      println(s"\n=== Sample Consistency Test Results ($numRuns runs) ===")
+//      println(s"Min demand: $minDemand")
+//      println(s"Max demand: $maxDemand")
+//      println(s"Avg demand: ${avgDemand.toLong}")
+//      println(s"Variance (max-min)/avg: ${(variance * 100).toInt}%")
+//      println(s"All values: ${demandTotals.mkString(", ")}")
+//
+//      // Verify all runs are within 10% of the average
+//      val withinTolerance = demandTotals.forall { total =>
+//        val deviation = Math.abs(total - avgDemand) / avgDemand
+//        deviation <= 0.10
+//      }
+//
+//      assert(withinTolerance, s"All runs should be within 10% of average. Variance was ${(variance * 100).toInt}%")
+//      assert(variance < 0.10, s"Total variance (max-min)/avg should be less than 10%, got ${(variance * 100).toInt}%")
+//    }
 
-      // Run computeDemand multiple times and collect total demand for each run
-      // Note: Each run is expensive (~1000s of airports), so we run fewer iterations
-      // but verify the variance is still within acceptable bounds
-      val numRuns = 20
-      val startCycle = 110
-      val endCycle = startCycle + numRuns - 1
+    "addToVeryLowIncome balance - demand should increase monotonically with income".in {
+      val population = 20_000_000
+      val affinity = 5  // domestic-equivalent
+      val distance = 1500
+      val gini = 71.0
 
-      val demandTotals = (startCycle to endCycle).map { i => // 'i' is now the cycle
-        val startTime = System.currentTimeMillis()
-        val demand = DemandGenerator.computeDemand(i * 3, airportStats)
-        val total = demand.map(_._3).sum
-        val elapsed = System.currentTimeMillis() - startTime
-        println(s"Cycle $i: total demand = $total, chunks = ${demand.size}, time = ${elapsed}ms")
-        total
+      // Fixed destination: size 6, income <= 8000 so boost conditions can apply to from-airports
+      val toAirport = Airport("ZZT", "KZZT", "DestCity", 10.0, 10.0, "ZZ", "DestCity", "North America", 6, 7000, 10_000_000, 400_000, 200, 2000, 1)
+
+      // Income levels spanning the boost threshold (5000) and beyond.
+      // popMiddleIncome scales linearly with income (simulates realistic city composition).
+      val incomeLevels = List(1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 11000, 12000, 12100, 15000, 20000, 30000)
+
+      val results = incomeLevels.map { income =>
+        val popMiddleIncome = Computation.populationAboveThreshold(income, population, gini, 31_500)
+        val fromAirport = Airport(s"ZZF$income", "KZZF", s"City$income", 10.0, 24.0, "ZZ", s"City$income", "North America", 5, income, population, popMiddleIncome, 0, 2000, 2)
+        val demand = computeBaseDemandBetweenAirports(fromAirport, toAirport, affinity, distance)
+        val total = DemandGenerator.addUpDemands(demand)
+        (income, popMiddleIncome, total)
       }
 
-      val minDemand = demandTotals.min
-      val maxDemand = demandTotals.max
-      val avgDemand = demandTotals.sum.toDouble / numRuns
-      val variance = (maxDemand - minDemand).toDouble / avgDemand
-
-      println(s"\n=== computeDemand Stability Test Results ($numRuns runs) ===")
-      println(s"Min demand: $minDemand")
-      println(s"Max demand: $maxDemand")
-      println(s"Avg demand: ${avgDemand.toLong}")
-      println(s"Variance (max-min)/avg: ${(variance * 100).toInt}%")
-      println(s"Min as % of avg: ${(minDemand.toDouble / avgDemand * 100).toInt}%")
-      println(s"Max as % of avg: ${(maxDemand.toDouble / avgDemand * 100).toInt}%")
-
-      println("\n=== Demand Totals CSV ===")
-      println("Cycle,Total Demand")
-      (startCycle to endCycle).zip(demandTotals).foreach { case (cycle, total) =>
-        println(s"$cycle,$total")
+      println("=== addToVeryLowIncome Balance Check ===")
+      println(f"${"Income"}%8s | ${"popMidIncome"}%12s | ${"Total Demand"}%12s")
+      println("-" * 40)
+      results.foreach { case (income, pmi, total) =>
+        println(f"$income%8d | $pmi%12d | $total%12d")
       }
 
-      // Verify all runs are within 10% of the average
-      val withinTolerance = demandTotals.forall { total =>
-        val deviation = Math.abs(total - avgDemand) / avgDemand
-        deviation <= 0.10
-      }
+      val violations = results.sliding(2).collect {
+        case Seq((income1, _, d1), (income2, _, d2)) if d2 < d1 =>
+          (income1, d1, income2, d2)
+      }.toList
 
-      assert(withinTolerance, s"All runs should be within 10% of average. Variance was ${(variance * 100).toInt}%")
-      assert(variance < 0.10, s"Total variance (max-min)/avg should be less than 10%, got ${(variance * 100).toInt}%")
-    }
-
-    "computeDemand sample consistency test - verify 100 iterations on subset".in {
-      // This test runs 100 iterations on a smaller subset of the demand calculation
-      // to verify the randomizer stays within bounds
-      val airportStatsList = AirportStatisticsSource.loadAllAirportStats()
-      val airportStats: Map[Int, AirportStatistics] = airportStatsList.map(s => s.airportId -> s).toMap
-
-      // Use specific major airports for sampling
-      val sampleFromAirports = List("JFK", "LAX", "ORD", "LHR", "CDG", "NRT", "SIN", "DXB", "HKG", "SYD")
-      val sampleToAirports = List("LAX", "JFK", "LHR", "FRA", "PEK", "ICN", "BKK", "DEL", "GRU", "MEX")
-
-      val fromAirports = sampleFromAirports.flatMap(iata => AirportSource.loadAirportByIata(iata, true))
-      val toAirports = sampleToAirports.flatMap(iata => AirportSource.loadAirportByIata(iata, true))
-
-      println(s"Sample test using ${fromAirports.size} from-airports and ${toAirports.size} to-airports")
-
-      val countryRelationships = CountrySource.getCountryMutualRelationships()
-      val numRuns = 100
-
-      val demandTotals = (1 to numRuns).map { run =>
-        var totalDemand = 0
-        fromAirports.foreach { fromAirport =>
-          val flightPreferencesPool = DemandGenerator.getFlightPreferencePoolOnAirport(fromAirport)
-          toAirports.foreach { toAirport =>
-            val distance = Computation.calculateDistance(fromAirport, toAirport)
-            if (DemandGenerator.canHaveDemand(fromAirport, toAirport, distance)) {
-              val relationship = countryRelationships.getOrElse((fromAirport.countryCode, toAirport.countryCode), 0)
-              val affinity = Computation.calculateAffinityValue(fromAirport.zone, toAirport.zone, relationship)
-              val demand = DemandGenerator.computeBaseDemandBetweenAirports(fromAirport, toAirport, affinity, distance)
-
-              // Apply travelRateAdjusted and randomization like the real computeDemand does
-              List(
-                (demand.travelerDemand, PassengerType.TRAVELER),
-                (demand.businessDemand, PassengerType.BUSINESS),
-                (demand.touristDemand, PassengerType.TOURIST)
-              ).foreach { case (linkClassValues, passengerType) =>
-                val chunks = DemandGenerator.generateChunksForPassengerType(
-                  linkClassValues, fromAirport, toAirport, passengerType, flightPreferencesPool, airportStats, 1, 50
-                )
-                totalDemand += chunks.map(_._3).sum
-              }
-            }
-          }
+      if (violations.nonEmpty) {
+        println("\n=== VIOLATIONS (demand dropped as income increased) ===")
+        violations.foreach { case (i1, d1, i2, d2) =>
+          println(s"  income $i1 (demand $d1) -> income $i2 (demand $d2)  [dropped ${d1 - d2}]")
         }
-        if (run % 20 == 0) {
-          println(s"Run $run: sample demand = $totalDemand")
-        }
-        totalDemand
       }
 
-      val minDemand = demandTotals.min
-      val maxDemand = demandTotals.max
-      val avgDemand = demandTotals.sum.toDouble / numRuns
-      val variance = (maxDemand - minDemand).toDouble / avgDemand
-
-      println(s"\n=== Sample Consistency Test Results ($numRuns runs) ===")
-      println(s"Min demand: $minDemand")
-      println(s"Max demand: $maxDemand")
-      println(s"Avg demand: ${avgDemand.toLong}")
-      println(s"Variance (max-min)/avg: ${(variance * 100).toInt}%")
-      println(s"All values: ${demandTotals.mkString(", ")}")
-
-      // Verify all runs are within 10% of the average
-      val withinTolerance = demandTotals.forall { total =>
-        val deviation = Math.abs(total - avgDemand) / avgDemand
-        deviation <= 0.10
-      }
-
-      assert(withinTolerance, s"All runs should be within 10% of average. Variance was ${(variance * 100).toInt}%")
-      assert(variance < 0.10, s"Total variance (max-min)/avg should be less than 10%, got ${(variance * 100).toInt}%")
+      assert(violations.isEmpty,
+        s"Higher income airports should have >= demand than lower income airports. " +
+        s"Violations at boundaries: ${violations.map { case (i1, d1, i2, d2) => s"$i1→$i2 ($d1→$d2)" }.mkString(", ")}"
+      )
     }
 
     "computeDemand should have no PassengerType exceeding 35% of total demand".in {

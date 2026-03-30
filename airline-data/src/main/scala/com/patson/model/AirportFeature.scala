@@ -246,8 +246,6 @@ sealed case class GatewayAirportFeature() extends AirportFeature {
       } else {
         0
       }
-    } else if (toAirport.id == airportId && fromAirport.countryCode == toAirport.countryCode && fromAirport.baseIncome <= 20000 && toAirport.hasFeature(AirportFeatureType.GATEWAY_AIRPORT) && ! List("IN","ZA","CN").contains(fromAirport.countryCode)) {
-      Math.min(200, 7 + (rawDemand * 0.4).toInt) //add domestic demand to gateways, but not to rich / high-demand countries
     } else {
       0
     }
