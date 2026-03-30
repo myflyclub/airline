@@ -307,7 +307,6 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
         val existingBase = airport.getAirlineBase(airlineId)
 
         existingBase.foreach { base =>
-          //            result = result + ("base" -> Json.toJson(base))
           result = result + ("baseScale" -> Json.toJson(base.scale))
 
           val linksFromThisBase = LinkSource.loadFlightLinksByFromAirportAndAirlineId(base.airport.id, airlineId, LinkSource.SIMPLE_LOAD)

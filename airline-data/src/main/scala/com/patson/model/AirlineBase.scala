@@ -17,20 +17,17 @@ case class AirlineBase(airline : Airline, airport : Airport, countryCode : Strin
   }
 
   def calculateUpgradeCost(scale: Int = scale, airlineType: AirlineType = airline.airlineType): Long = {
-    val effectiveScale = computeEffectiveScale(scale)
-    val airportSizeDiscount = Math.max(6.0, airport.size.toDouble) * 0.05
-    val baseCost = airport.rating.overallDifficulty * 200000 // Doubled
+    val airportSizeMod = Math.max(8.0, airport.size.toDouble) * 0.05
+    val baseCost = 1_350_000 + airport.rating.overallDifficulty * 115_000
 
     if (headquarter && scale == 1) {
       0
     } else if (airlineType == MegaHqAirline && headquarter) {
-      val cost: Long = (baseCost * Math.pow(0.95 + airportSizeDiscount, effectiveScale)).toLong
-      Math.max(12_000_000L, cost - 60_000_000L) // Modifiers doubled
+      Math.max(12_000_000L, baseCost * Math.pow(1.0 + airportSizeMod, computeEffectiveScale(scale)) - 20_000_000).toLong
     } else if (airlineType == MegaHqAirline && !headquarter) {
-      val cost: Long = (baseCost * Math.pow(1.2 + airportSizeDiscount, effectiveScale)).toLong
-      cost + 60_000_000L // Modifier doubled
+      60_000_000L + (baseCost * Math.pow(1.25 + airportSizeMod, computeEffectiveScale(scale))).toLong
     } else {
-      (baseCost * Math.pow(1.1 + airportSizeDiscount, effectiveScale)).toLong
+      5_000_000L + (baseCost * Math.pow(1.15 + airportSizeMod, computeEffectiveScale(scale))).toLong
     }
   }
 
@@ -40,30 +37,30 @@ case class AirlineBase(airline : Airline, airport : Airport, countryCode : Strin
 
   def calculateUpkeep(scale: Int, airlineType: AirlineType = airline.airlineType): Long = {
     val effectiveScale = computeEffectiveScale(scale)
-    val baseUpkeep = airport.rating.overallDifficulty * 135
-    val airportSizeMod = airport.size.toDouble * 0.05
+    val baseUpkeep = 22_000 + airport.rating.overallDifficulty * 260
+    val airportSizeMod = Math.max(8.0, airport.size.toDouble) * 0.04
+    val startingHQDiscount = if (scale == 1) 0.1 else if (scale == 2) 0.5 else 1.0
 
     if (airlineType == MegaHqAirline && headquarter) {
-      (baseUpkeep * Math.pow(effectiveScale, 1.7 + airportSizeMod / 2)).toLong
+      (baseUpkeep * Math.pow(effectiveScale, 1.3 + airportSizeMod / 2) * startingHQDiscount).toLong
     } else if (airlineType == MegaHqAirline && !headquarter) {
-      (baseUpkeep * Math.pow(effectiveScale, 1.9 + airportSizeMod)).toLong
+      (baseUpkeep * Math.pow(effectiveScale, 1.5 + airportSizeMod)).toLong
+    } else if (headquarter) {
+      (baseUpkeep * Math.pow(effectiveScale, 1.4 + airportSizeMod) * startingHQDiscount).toLong
     } else {
-      (baseUpkeep * Math.pow(effectiveScale, 1.8 + airportSizeMod)).toLong
+      (baseUpkeep * Math.pow(effectiveScale, 1.4 + airportSizeMod)).toLong
     }
   }
 
   val getOfficeStaffCapacity = AirlineBase.getOfficeStaffCapacity(scale, headquarter)
 
-
-  def getOvertimeCompensation(staffRequired: Double) = {
+  def getOvertimeCompensation(staffRequired: Int) = {
     if (getOfficeStaffCapacity >= staffRequired) {
       0
     } else {
-      val delta = staffRequired.toInt - getOfficeStaffCapacity
-      var compensation = 0
-      compensation += (delta.toDouble * (50000 + airport.income.toDouble * 0.8) / Period.yearLength * 10).toInt //weekly compensation, *10, as otherwise it's too low
-
-      compensation
+      val delta = staffRequired - getOfficeStaffCapacity
+      val compensation = calculateUpkeep(scale + 1, LegacyAirline).toDouble / AirlineBase.getOfficeStaffCapacity(scale + 1, headquarter)
+      (Math.log(delta) * delta * compensation).toInt
     }
   }
 
@@ -126,7 +123,7 @@ object AirlineBase {
       }
     val scaleBonus =
       if (isHeadquarters) {
-        220 * scale
+        (BASE_STAFF_PER_LEVEL + 25) * scale
       } else {
         BASE_STAFF_PER_LEVEL * scale
       }
