@@ -14,7 +14,6 @@ case class AirlineStat(
                         satisfaction: Double,
                         loadFactor: Double,
                         onTime: Double,
-                        cashOnHand: Int,
                         eps: Double,
                         linkCount: Int,
                         repTotal: Int,
@@ -35,7 +34,6 @@ case class AirlineStat(
     satisfaction + other.satisfaction,
     loadFactor + other.loadFactor,
     onTime + other.onTime,
-    cashOnHand + other.cashOnHand,
     eps + other.eps,
     linkCount + other.linkCount,
     repTotal + other.repTotal,
@@ -49,7 +47,6 @@ case class AirlineStat(
     satisfaction = satisfaction / count,
     loadFactor = loadFactor / count,
     onTime = onTime / count,
-    cashOnHand = (cashOnHand.toDouble / count).toInt,
     eps = eps / count,
     linkCount = (linkCount.toDouble / count).toInt,
     repTotal = (repTotal.toDouble / count).toInt,
@@ -60,11 +57,11 @@ case class AirlineStat(
 
 //intermediate data objects
 case class AirlinePaxStat(tourists : Int, elites : Int, business : Int, total : Int, codeshares : Int)
-case class AirlineSimStat(RASK: Double, CASK: Double, satisfaction: Double, loadFactor: Double, onTime: Double, cashOnHand: Int, eps: Double, linkCount: Int)
+case class AirlineSimStat(RASK: Double, CASK: Double, satisfaction: Double, loadFactor: Double, onTime: Double, eps: Double, linkCount: Int)
 
 object AirlinePaxStat {
   val empty: AirlinePaxStat = AirlinePaxStat(0, 0, 0, 0, 0)
 }
 object AirlineSimStat {
-  val empty: AirlineSimStat = AirlineSimStat(0.0, 0.0, 0.0, 0.0, 0.0, 0, 0.0, 0)
+  val empty: AirlineSimStat = AirlineSimStat(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0)
 }

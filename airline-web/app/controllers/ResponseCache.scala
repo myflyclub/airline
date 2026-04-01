@@ -1,13 +1,11 @@
 package controllers
 
 import com.github.benmanes.caffeine.cache.{Cache, Caffeine}
-import play.api.libs.json.JsValue
+import play.api.libs.json.{JsNull, JsValue}
 
 import java.util.concurrent.TimeUnit
 
 /**
- * Centralized Guava caches for per-cycle JSON responses.
- *
  * Values store a (cycle, JsValue) tuple so the cycle-safety check in each
  * controller still works as a secondary guard even if invalidateAll() hasn't
  * fired yet (e.g. during the brief window between simulation completing and
@@ -67,7 +65,11 @@ object ResponseCache {
       .expireAfterWrite(CYCLE_DURATION_SECONDS, TimeUnit.SECONDS)
       .build[String, (Int, JsValue)]()
 
+  /** Cycle-keyed cache for the global stock benchmarks JSON (single value) */
+  @volatile var benchmarks: (Int, JsValue) = (-1, JsNull)
+
   def invalidateAll(): Unit = {
+    benchmarks = (-1, JsNull)
     transitCache.invalidateAll()
     airportDetailCache.invalidateAll()
     demandCache.invalidateAll()

@@ -976,6 +976,27 @@ object AirlineSource {
     }
   }
 
+  def saveDividendsCoolDown(airlineId: Int, expirationCycle: Int): Unit = {
+    Using.resource(Meta.getConnection()) { connection =>
+      Using.resource(connection.prepareStatement(s"REPLACE INTO $AIRLINE_DIVIDENDS_COOL_DOWN_TABLE (airline, expiration_cycle) VALUES(?,?)")) { preparedStatement =>
+        preparedStatement.setInt(1, airlineId)
+        preparedStatement.setInt(2, expirationCycle)
+        preparedStatement.executeUpdate()
+      }
+    }
+  }
+
+  def loadDividendsCoolDownExpiration(airlineId: Int): Option[Int] = {
+    Using.resource(Meta.getConnection()) { connection =>
+      Using.resource(connection.prepareStatement(s"SELECT expiration_cycle FROM $AIRLINE_DIVIDENDS_COOL_DOWN_TABLE WHERE airline = ?")) { preparedStatement =>
+        preparedStatement.setInt(1, airlineId)
+        Using.resource(preparedStatement.executeQuery()) { resultSet =>
+          if (resultSet.next()) Some(resultSet.getInt("expiration_cycle")) else None
+        }
+      }
+    }
+  }
+
   def loadReputationBreakdowns(airlineId : Int) = {
     Using.resource(Meta.getConnection()) { connection =>
       Using.resource(connection.prepareStatement(s"SELECT * FROM $AIRLINE_REPUTATION_BREAKDOWN WHERE airline = ?")) { preparedStatement =>

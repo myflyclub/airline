@@ -20,7 +20,7 @@ package object controllers {
   implicit val ec: ExecutionContext = ExecutionContext.global
   implicit val actorSystem: ActorSystem = ActorSystem("patson-web-app-system")
   implicit val order: Double.IeeeOrdering.type = Ordering.Double.IeeeOrdering
-  val currentApiVersion = "v5.0.5" // Update this when schema changes
+  val currentApiVersion = "v5.0.6" // Update this when schema changes
   @volatile var cachedCurrentCycle: Int = CycleSource.loadCycle()
   def currentCycle: Int = cachedCurrentCycle
 
@@ -438,7 +438,7 @@ package object controllers {
         "satisfaction" -> JsNumber(BigDecimal(airlineStat.satisfaction).setScale(4, RoundingMode.HALF_EVEN)),
         "load_factor" -> JsNumber(BigDecimal(airlineStat.loadFactor).setScale(4, RoundingMode.HALF_EVEN)),
         "on_time" -> JsNumber(BigDecimal(airlineStat.onTime).setScale(4, RoundingMode.HALF_EVEN)),
-        "months_cash_on_hand" -> JsNumber(airlineStat.cashOnHand / 4),
+        "dividends_per_share" -> JsNumber(BigDecimal(airlineStat.dividendsPerShare).setScale(4, RoundingMode.HALF_EVEN)),
         "eps" -> JsNumber(airlineStat.eps),
         "link_count" -> JsNumber(airlineStat.linkCount),
         "rep_total" -> JsNumber(airlineStat.repTotal),

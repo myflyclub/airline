@@ -23,6 +23,14 @@ object AirlineSimulation {
   val BANKRUPTCY_CASH_THRESHOLD = -10000000 //-10M
   val BOOKKEEPING_ENTRIES_COUNT = 25
 
+  private def latestStatsByPeriod(
+    statsByAirlineId: immutable.Map[Int, List[AirlineStat]],
+    period: Period.Value
+  ): immutable.Map[Int, AirlineStat] =
+    statsByAirlineId.flatMap {
+      case (id, stats) => stats.filter(_.period == period).maxByOption(_.cycle).map(id -> _)
+    }
+
   def airlineSimulation(cycle: Int, flightLinkResult: List[LinkConsumptionDetails], loungeResult: List[LoungeConsumptionDetails], airplanes: List[Airplane], paxStats: immutable.Map[Int, AirlinePaxStat]) = {
     val allAirlines = AirlineSource.loadAllAirlines(true).filter(_.getHeadQuarter().isDefined)
     val allLinks = LinkSource.loadAllLinks(LinkSource.FULL_LOAD)
@@ -46,9 +54,13 @@ object AirlineSimulation {
     val advertisementCostByAirlineId = ManagerSource.loadCampaignCostsByAirlineId()
 
     val allAirlineStatsByAirlineId: immutable.Map[Int, List[AirlineStat]] = AirlineStatisticsSource.loadAirlineStatsForAirlineIds(allAirlines.map(_.id)).groupBy(_.airlineId) //used for stock price
-    val latestQuarterStatsByAirlineId: immutable.Map[Int, AirlineStat] = allAirlineStatsByAirlineId.flatMap {
-        case (airlineId, stats) => stats.filter(_.period == Period.QUARTER).maxByOption(_.cycle).map(stat => (airlineId, stat))
-    }
+    val latestQuarterStatsByAirlineId: immutable.Map[Int, AirlineStat] =
+      latestStatsByPeriod(allAirlineStatsByAirlineId, Period.QUARTER)
+    val latestWeeklyStatsByAirlineId: immutable.Map[Int, AirlineStat] =
+      latestStatsByPeriod(allAirlineStatsByAirlineId, Period.WEEKLY)
+
+    // Compute per-type dynamic benchmarks (floor=50th pct, target=90th pct)
+    StockModel.benchmarksByType = StockModel.computeBenchmarks(allAirlines, latestWeeklyStatsByAirlineId)
 
     var startTime = System.currentTimeMillis()
     val leaderboardsByAirlineId = RankingSimulation.process(cycle, allAirlines.filter(_.getReputation() > 60), flightLinkResult, loungeResult, paxStats)
@@ -163,7 +175,7 @@ object AirlineSimulation {
       val loanInterestEntry = -interestPayment + negativeCashInterest // negative or zero
 
       val dividendsPaid: Long = if (airline.getDividends() > 0) {
-        if (airlineValue.existingBalance >= 100 * airline.getDividends()) {
+        if (airlineValue.existingBalance >= 50 * airline.getDividends()) {
           airline.getDividends()
         } else {
           airline.setDividends(0) // auto-zero; persisted by saveAirlinesInfo
@@ -176,8 +188,8 @@ object AirlineSimulation {
       // sum it all up; create vals for EPS etc
       val airlineRevenue = linksRevenue + loungeRevenue
       val airlineExpenseNormalized = staffCost + staffOvertimeCost + linksAirportFee + linksCrewCost + linksFuelCost + linksInflightCost + linksDelayCompensation + linksMaintenanceCost + linksDepreciation + loungeTotalCost + advertisementEntry
-      val airlineExpense = airlineExpenseNormalized + -loanInterestEntry + linksFuelTax + (actualFuelCost - linksFuelCost)
-      val airlineProfit = airlineRevenue - airlineExpense - dividendsPaid
+      val airlineExpense = airlineExpenseNormalized + -loanInterestEntry + linksFuelTax + (actualFuelCost - linksFuelCost) + dividendsPaid
+      val airlineProfit = airlineRevenue - airlineExpense
 
       // Record weekly ledger entries
       if (!isBankrupt) {
@@ -212,9 +224,8 @@ object AirlineSimulation {
       var calculatedSatisfaction = 0.0 // Default to 0, could use Option or NaN if preferred
       var calculatedLoadFactor = 0.0
       var calculatedOnTime = 1.0 // Default to 100% on time if no flights
-      val weeksCashOnHand = (airlineValue.existingBalance / Math.max(1, airlineExpense)).toInt
       val sharesOutstanding = airline.getSharesOutstanding()
-      val eps = if (sharesOutstanding > 0) airlineProfit.toDouble / sharesOutstanding else 0.0
+      val eps = if (sharesOutstanding > 0) (airlineRevenue - airlineExpenseNormalized).toDouble / sharesOutstanding else 0.0
       val linkCount = allFlightLinksByAirlineId.get(airline.id) match { //used for milestones & stockPrice so we do it here
         case Some(links) =>
           links.map(link => link.to.iata ++ link.from.iata).toSet.size
@@ -318,9 +329,6 @@ object AirlineSimulation {
             }
             (value, ReputationType.MILESTONE_DESTINATIONS)
 
-          case "MILESTONE_LINKS" =>
-            (linkCount.toDouble, ReputationType.MILESTONE_LINK_COUNT)
-
           case "MILESTONE_BASES" =>
             (airline.bases.size.toDouble, ReputationType.MILESTONE_BASES)
 
@@ -333,6 +341,34 @@ object AirlineSimulation {
               case None => 0.0
             }
             (value, ReputationType.MILESTONE_PASSENGER_KM)
+
+          case "MILESTONE_COUNTRIES" =>
+            val value = allFlightLinksByAirlineId.get(airline.id) match {
+              case Some(links) =>
+                links.flatMap(link => List(link.from.countryCode, link.to.countryCode)).toSet.size.toDouble
+              case None => 0.0
+            }
+            (value, ReputationType.MILESTONE_COUNTRIES)
+
+          case "MILESTONE_DIVIDENDS" =>
+            (dividendsPaid.toDouble, ReputationType.MILESTONE_DIVIDENDS)
+
+          case "MILESTONE_HIGH_PRICES" =>
+            val value = flightLinkResultByAirline.get(airline.id) match {
+              case Some(linkConsumptions) =>
+                linkConsumptions.foldLeft(0L) { (acc, consumption) =>
+                  val link = consumption.link
+                  val flightCategory = Computation.getFlightCategory(link.from, link.to)
+                  val highPricePax = LinkClass.values.foldLeft(0) { (classAcc, linkClass) =>
+                    val standardPrice = Pricing.computeStandardPrice(link.distance, flightCategory, linkClass, PassengerType.TOURIST, link.from.income)
+                    if (link.price(linkClass) > standardPrice * 1.2) classAcc + link.soldSeats(linkClass)
+                    else classAcc
+                  }
+                  acc + highPricePax
+                }.toDouble
+              case None => 0.0
+            }
+            (value, ReputationType.MILESTONE_HIGH_PRICES)
         }
 
         val reputation = AirlineMilestones.evaluateMilestone(milestone, milestoneValue.toLong)
@@ -388,7 +424,6 @@ object AirlineSimulation {
         satisfaction = calculatedSatisfaction,
         loadFactor = calculatedLoadFactor,
         onTime = calculatedOnTime,
-        cashOnHand = weeksCashOnHand,
         eps = eps,
         linkCount = linkCount,
         repTotal = finalBreakdowns.total.toInt,
@@ -396,10 +431,11 @@ object AirlineSimulation {
         dividendsPerShare = dividendsPerShare
       )
       allAirlineStats += airlineWeeklyStats
+      val benchmarkOverride = StockModel.benchmarksByType.get(airline.airlineType.label)
       val stockPrice = if (isBankrupt || airline.airlineType.stockRepPerLevel == 0) {
          0.0
       } else {
-        StockModel.updateStockPrice(airline.getStockPrice(), airlineWeeklyStats, latestQuarterStatsByAirlineId.get(airline.id), currentInterestRate)
+        StockModel.updateStockPrice(airline.getStockPrice(), airlineWeeklyStats, latestQuarterStatsByAirlineId.get(airline.id), currentInterestRate, benchmarkOverride)
       }
       airline.setStockPrice(stockPrice)
 

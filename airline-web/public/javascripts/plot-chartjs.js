@@ -1096,7 +1096,7 @@ function plotOpsChart(stats, period, container) {
     const onTimeData = [];
     const linkCountData = [];
     const epsData = [];
-    const monthsCashOnHand = [];
+    const dividendsPerShare = [];
 
     stats.forEach(stat => {
         labels.push(getGameDate(stat.cycle));
@@ -1107,7 +1107,7 @@ function plotOpsChart(stats, period, container) {
         loadFactorData.push(stat.load_factor * 100);
         onTimeData.push(stat.on_time * 100);
         linkCountData.push(stat.link_count);
-        monthsCashOnHand.push(stat.months_cash_on_hand);
+        dividendsPerShare.push(stat.dividends_per_share);
     });
 
     const config = {
@@ -1122,7 +1122,7 @@ function plotOpsChart(stats, period, container) {
                 { label: "Load Factor", data: loadFactorData, borderColor: getChartColor('loadfactor'), backgroundColor: getChartColor('loadfactor'), yAxisID: 'y1' },
                 { label: "On Time", data: onTimeData, borderColor: getChartColor('ontime'), backgroundColor: getChartColor('ontime'), yAxisID: 'y1' },
                 { label: "Link Count", data: linkCountData, borderColor: getChartColor('linkCountData'), backgroundColor: getChartColor('linkCountData'), yAxisID: 'y2' },
-                { label: "Months of Cash", data: monthsCashOnHand, borderColor: getChartColor('monthsCashOnHand'), backgroundColor: getChartColor('monthsCashOnHand'), yAxisID: 'y3' },
+                { label: "Dividends/Share", data: dividendsPerShare, borderColor: getChartColor('dividends_per_share'), backgroundColor: getChartColor('dividends_per_share'), yAxisID: 'y3' },
             ]
         },
         options: {
@@ -1171,7 +1171,7 @@ function plotOpsChart(stats, period, container) {
         if (yAxisID === 'y') return `${label}: ${Number(value).toFixed(2)}¢/seat-km`;
         if (yAxisID === 'y1') return `${label}: ${Number(value).toFixed(1)}%`;
         if (yAxisID === 'y2') return `${label}: ${Math.round(value)}`;
-        if (yAxisID === 'y3') return `${label}: ${Number(value).toFixed(1)} months`;
+        if (yAxisID === 'y3') return `${label}: $${Number(value).toFixed(4)}`;
         return `${label}: ${value}`;
     });
 

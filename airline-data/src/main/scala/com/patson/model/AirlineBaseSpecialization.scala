@@ -129,7 +129,7 @@ case object PowerhouseSpecialization extends AirlineBaseSpecialization with Airp
   override val label = "Powerhouse"
   override val scaleRequirement: Int = 9
   private val maxPopBoost = 100000
-  private val floorPopBoost = 1500
+  private val floorPopBoost = 2000
   private val floorIncomeBoost = 3500
   private val percentageBoost = 8
 
@@ -168,7 +168,7 @@ case object DormitoriesSpecialization extends AirlineBaseSpecialization with Air
   override val getType = BaseSpecializationType.AIRPORT_POWER
   override val label = "Staff Dormitory"
   override val scaleRequirement: Int = 2
-  val pop = 1800
+  val pop = 1400
 
   override def descriptions(airport: Airport) = List(s"Increase population by $pop")
   

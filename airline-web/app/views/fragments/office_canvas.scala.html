@@ -46,15 +46,7 @@
 							<h4>Employee settings</h4>
 							<p>Current Employee Quality: <span id="currentServiceQuality"></span></p>
 							<p>Target Employee Quality:
-								<span id="serviceFundingDisplaySpan">
-									<span id="targetServiceQuality"></span>
-									<img class="img-button svg hover-rotate" src='@routes.Assets.versioned("images/icons/gear.svg")' onclick="editTargetServiceQuality()"/>
-								</span>
-								<span id="serviceFundingInputSpan">
-									<input id="targetServiceQualityInput" type="number" size="3" maxlength="3" onkeyup="checkTargetServiceQualityInput($(this).val())"/>
-									<span class="warning" style="display: none;">Value must be an integer 0 - 100</span>
-									<img src='@routes.Assets.versioned("/images/icons/tick.svg")' class='img-button svg' style="vertical-align: middle;" onclick="setTargetServiceQuality($('#targetServiceQualityInput').val())"/>
-								</span>
+								<span id="serviceFundingContainer"></span>
 								<span class="tooltip">
 									<img class="info svg" src='@routes.Assets.versioned("/images/icons/information.svg")'>
 									<span class="tooltiptext alignLeft below" style="width: 220px;">Employee quality (EQ) impacts flight quality across your entire airline.</span>
@@ -71,36 +63,17 @@
 									</span>
 								</span>
 							</h4>
-							<p>Auto Renewal:
-								<span id="airplaneRenewalDisplaySpan">
-									<span id="airplaneRenewal"></span>
-									<img class="img-button svg hover-rotate" src='@routes.Assets.versioned("images/icons/gear.svg")' onclick="editAirplaneRenewal()"/>
-								</span>
-								<span id="airplaneRenewalInputSpan" style="display:none;">
-									Condition Below&nbsp;<input id="airplaneRenwalInput" type="number" maxlength="2" size="2"/>% Age
-									<img src='@routes.Assets.versioned("/images/icons/tick.svg")' class='img-button svg' style="vertical-align: middle;" onclick="setAirplaneRenewal($('#airplaneRenwalInput').val())"/>
-									<img src='@routes.Assets.versioned("/images/icons/cross.svg")' class='img-button svg' style="vertical-align: middle;" onclick="setAirplaneRenewal()"/>
-								</span>
-							</p>
-							<p class="pb-4">Minimum Balance: Above <span id="minimumRenewalBalanceDisplaySpan">
-								<span id="minimumRenewalBalance"></span>
-									<img class="img-button svg hover-rotate" src='@routes.Assets.versioned("images/icons/gear.svg")' onclick="editMinimumRenewalBalance()"/>
-								</span>
-								<span id="minimumRenewalBalanceInputSpan" style="display:none;">
-									Minimum balance&nbsp;<input id="minimumRenewalBalanceInput" type="number" maxlength="12" size="2" onkeyup="checkEditMinimumRenewalBalanceInput($(this).val())"/>
-									<span class="warning" style="display: none;">Value must be a positive integer less than 999,999,999,999</span>
-									<img src='@routes.Assets.versioned("/images/icons/tick.svg")' class='img-button svg' style="vertical-align: middle;" onclick="setMinimumRenewalBalance($('#minimumRenewalBalanceInput').val())"/>
-								</span>
-							</p>
+							<p>Auto Renewal: <span id="airplaneRenewalContainer"></span></p>
+							<p class="pb-4">Minimum Balance: Above <span id="minimumRenewalBalanceContainer"></span></p>
                             <div class="airlineTypeHide">
                                 <h4>Company Stock</h4>
                                 <p>Stock price: <span class="airlineStockPrice"></span></p>
                                 <p>Market cap: <span class="airlineMarketCap"></span></p>
                                 <p>Shares outstanding: <span class="airlineSharesOutstanding"></span></p>
-                                <p class="mt-2">Weekly Dividends: $<input id="dividendsInput" type="number" min="0" step="100000" style="width:100px;"> <button type="button" id="setDividendBtn" class="button tight m-0" onclick="setDividends()">Set</button></p>
-                                <p class="dividendInfo"></p>
-                                <button type="button" class="button stockOpBtn m-0 mt-2" onclick="doStockOp('buyback')">Buyback 1m shares for 1⚡ and <span class="stockBuyBackCost"></span></button>
-                                <button type="button" class="button stockOpBtn m-0 mt-2" onclick="doStockOp('sell')">Sell 1m shares for 5⚡ and <span class="stockSellRevenue"></span></button>
+                                <p class="mt-2">Weekly Dividends: <span id="dividendsContainer"></span></p>
+                                <p class="dividendCoolDownInfo text-xs opacity-70"></p>
+                                <button type="button" class="button stockOpBtn m-0 mt-2" onclick="doStockOp('buyback')">Buyback 1m shares for <span class="stockBuyBackCost"></span></button>
+                                <button type="button" class="button stockOpBtn m-0 mt-2" onclick="doStockOp('sell')">Sell 1m shares for 2⚡ and <span class="stockSellRevenue"></span></button>
                                 <p class="stockBuybackInfo"></p>
                             </div>
 						</div>
@@ -392,14 +365,14 @@
 										</div></div>
 										<div class="i-value"><span class="on_time"></span>%</div>
 									</div>
-                                    <div class="item">
-                                        <div class="i-label">Cash on Hand<div class="tooltip">
+                                    <div class="item airlineTypeHide">
+                                        <div class="i-label">Dividends / Share<div class="tooltip">
                                             <img src="/assets/images/icons/information.svg">
                                             <div class="tooltiptext below" style="width: 280px;">
-                                                <p>Investors do not like companies sitting on cash and would prefer to see it returned to shareholders (through stock buybacks).</p>
+                                                <p>Weekly dividends paid per share. Investors reward consistent dividend payments.</p>
                                             </div>
                                         </div></div>
-                                        <div class="i-value"><span class="months_cash_on_hand"></span> months</div>
+                                        <div class="i-value">$<span class="dividends_per_share"></span></div>
                                     </div>
                                     <div class="item">
                                         <div class="i-label">Leading Airline<div class="tooltip">
@@ -601,7 +574,7 @@
 							</div>
 						</div>
 
-						<div style="width: 600px;" id="popover-reset" popover>
+						<div style="width: 600px; margin: auto;" id="popover-reset" popover>
 							<div class="table data" style="width: 100%;">
 								<div class="table-row">
 									<div class="label">Sold Airplanes</div>

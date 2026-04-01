@@ -19,14 +19,6 @@ object AirlineMilestones {
 
     LegacyAirline -> List(
       Milestone(
-        "MILESTONE_LOAN",
-        "Weekly Loan Payment",
-        List(
-          MilestoneCondition(50000000, 40),
-          MilestoneCondition(2500000, 20)
-        )
-      ),
-      Milestone(
         "MILESTONE_DESTINATIONS",
         "Destinations",
         List(
@@ -35,19 +27,19 @@ object AirlineMilestones {
         )
       ),
       Milestone(
+        "MILESTONE_COUNTRIES",
+        "Countries Served",
+        List(
+          MilestoneCondition(60, 40),
+          MilestoneCondition(15, 20)
+        )
+      ),
+      Milestone(
         "MILESTONE_PASSENGER_KM",
         "Passenger KM",
         List(
           MilestoneCondition(500000000, 40),
           MilestoneCondition(50000, 15)
-        )
-      ),
-      Milestone(
-        "MILESTONE_AIRCRAFT_TYPES",
-        "Aircraft Types",
-        List(
-          MilestoneCondition(6, 40),
-          MilestoneCondition(3, 15)
         )
       ),
       Milestone(
@@ -71,7 +63,7 @@ object AirlineMilestones {
         "Codeshares",
         List(
           MilestoneCondition(125000, 40),
-          MilestoneCondition(10000, 20),
+          MilestoneCondition(10000, 20)
         )
       ),
       Milestone(
@@ -82,6 +74,14 @@ object AirlineMilestones {
           MilestoneCondition(75000, 30)
         )
       ),
+      Milestone(
+        "MILESTONE_DIVIDENDS",
+        "Weekly Dividends",
+        List(
+          MilestoneCondition(10_000_000, 60),
+          MilestoneCondition(1_000_000, 20)
+        )
+      )
     ),
 
     RegionalAirline -> List(
@@ -97,7 +97,7 @@ object AirlineMilestones {
         "MILESTONE_BASES",
         "Airport Bases",
         List(
-          MilestoneCondition(16, 40),
+          MilestoneCondition(15, 40),
           MilestoneCondition(4, 15)
         )
       ),
@@ -113,8 +113,8 @@ object AirlineMilestones {
         "MILESTONE_DESTINATIONS",
         "Destinations",
         List(
-          MilestoneCondition(180, 60),
-          MilestoneCondition(80, 20)
+          MilestoneCondition(180, 40),
+          MilestoneCondition(50, 20)
         )
       ),
       Milestone(
@@ -122,15 +122,7 @@ object AirlineMilestones {
         "On-Time Departures",
         List(
           MilestoneCondition(15000, 40),
-          MilestoneCondition(750, 15),
-        )
-      ),
-      Milestone(
-        "MILESTONE_AIRCRAFT_TYPES",
-        "Aircraft Types",
-        List(
-          MilestoneCondition(6, 60),
-          MilestoneCondition(3, 20)
+          MilestoneCondition(750, 15)
         )
       ),
       Milestone(
@@ -140,6 +132,22 @@ object AirlineMilestones {
           MilestoneCondition(125000, 40),
           MilestoneCondition(50000, 20)
         )
+      ),
+      Milestone(
+        "MILESTONE_DIVIDENDS",
+        "Weekly Dividends",
+        List(
+          MilestoneCondition(7_500_000, 60),
+          MilestoneCondition(500_000, 20)
+        )
+      ),
+      Milestone(
+        "MILESTONE_HIGH_PRICES",
+        "Tickets Sold Above 120%",
+        List(
+          MilestoneCondition(75000, 50),
+          MilestoneCondition(5000, 15)
+        )
       )
     ),
 
@@ -148,7 +156,7 @@ object AirlineMilestones {
         "MILESTONE_PASSENGER_KM",
         "Passenger KM",
         List(
-          MilestoneCondition(100000000, 60),
+          MilestoneCondition(500000000, 60),
           MilestoneCondition(50000, 15)
         )
       ),
@@ -164,8 +172,8 @@ object AirlineMilestones {
         "MILESTONE_ON_TIME",
         "On-Time Departures",
         List(
-          MilestoneCondition(25000, 90),
-          MilestoneCondition(750, 30)
+          MilestoneCondition(12500, 80),
+          MilestoneCondition(750, 20)
         )
       ),
       Milestone(
@@ -191,6 +199,14 @@ object AirlineMilestones {
           MilestoneCondition(125000, 40),
           MilestoneCondition(50000, 20)
         )
+      ),
+      Milestone(
+        "MILESTONE_HIGH_PRICES",
+        "Tickets Sold Above 120%",
+        List(
+          MilestoneCondition(200000, 40),
+          MilestoneCondition(10000, 15)
+        )
       )
     ),
 
@@ -199,58 +215,50 @@ object AirlineMilestones {
         "MILESTONE_DESTINATIONS",
         "Destinations",
         List(
-          MilestoneCondition(140, 90),
+          MilestoneCondition(140, 60),
           MilestoneCondition(20, 20)
+        )
+      ),
+      Milestone(
+        "MILESTONE_COUNTRIES",
+        "Countries Served",
+        List(
+          MilestoneCondition(60, 40),
+          MilestoneCondition(20, 15)
         )
       ),
       Milestone(
         "MILESTONE_ON_TIME",
         "On-Time Departures",
         List(
-          MilestoneCondition(2400, 60),
-          MilestoneCondition(400, 20),
-        )
-      ),
-      Milestone(
-        "MILESTONE_LOAN",
-        "Weekly Loan Payment",
-        List(
-          MilestoneCondition(20000000, 60),
-          MilestoneCondition(2500000, 20)
-        )
-      ),
-      Milestone(
-        "MILESTONE_AIRCRAFT_TYPES",
-        "Aircraft Types",
-        List(
-          MilestoneCondition(6, 60),
-          MilestoneCondition(4, 20)
+          MilestoneCondition(2400, 40),
+          MilestoneCondition(400, 15)
         )
       ),
       Milestone(
         "MILESTONE_CODESHARES",
         "Codeshares",
         List(
-          MilestoneCondition(75000, 90),
-          MilestoneCondition(10000, 40)
+          MilestoneCondition(75000, 80),
+          MilestoneCondition(10000, 20)
         )
       ),
       Milestone(
         "MILESTONE_BUSINESS",
         "Business Passengers",
         List(
-          MilestoneCondition(125000, 60),
-          MilestoneCondition(50000, 30)
+          MilestoneCondition(175000, 40),
+          MilestoneCondition(50000, 20)
         )
       ),
       Milestone(
         "MILESTONE_LEADER_POINTS",
         "Leaderboard Points",
         List(
-          MilestoneCondition(160, 90),
-          MilestoneCondition(24, 30)
+          MilestoneCondition(160, 60),
+          MilestoneCondition(24, 20)
         )
-      ),
+      )
     ),
 
     LuxuryAirline -> List(
@@ -271,19 +279,11 @@ object AirlineMilestones {
         )
       ),
       Milestone(
-        "MILESTONE_LOAN",
-        "Weekly Loan Payment",
+        "MILESTONE_COUNTRIES",
+        "Countries Served",
         List(
-          MilestoneCondition(40000000, 40),
-          MilestoneCondition(2500000, 20)
-        )
-      ),
-      Milestone(
-        "MILESTONE_AIRCRAFT_TYPES",
-        "Aircraft Types",
-        List(
-          MilestoneCondition(6, 60),
-          MilestoneCondition(3, 20)
+          MilestoneCondition(90, 40),
+          MilestoneCondition(15, 20)
         )
       ),
       Milestone(
@@ -291,7 +291,7 @@ object AirlineMilestones {
         "Leaderboard Points",
         List(
           MilestoneCondition(124, 90),
-          MilestoneCondition(40, 30),
+          MilestoneCondition(40, 30)
         )
       ),
       Milestone(
@@ -300,6 +300,14 @@ object AirlineMilestones {
         List(
           MilestoneCondition(125000, 90),
           MilestoneCondition(25000, 30)
+        )
+      ),
+      Milestone(
+        "MILESTONE_DIVIDENDS",
+        "Weekly Dividends",
+        List(
+          MilestoneCondition(8_000_000, 60),
+          MilestoneCondition(750_000, 20)
         )
       )
     )

@@ -7,6 +7,7 @@
 
 let airports = null;
 let gameConstants = null;
+let stockBenchmarks = {};
 let postLoginScriptsLoaded = false;
 
 const POPPER_JS = 'https://unpkg.com/@popperjs/core@2/dist/umd/popper.min.js';
@@ -133,6 +134,16 @@ async function loadGameConstants() {
     }
 }
 
+async function loadStockBenchmarks() {
+    try {
+        const response = await fetch("/game/stock-benchmarks");
+        if (!response.ok) throw new Error(`Response status: ${response.status}`);
+        stockBenchmarks = await response.json();
+    } catch (error) {
+        console.error('Failed to load stock benchmarks:', error.message);
+    }
+}
+
 function waitForMapLibre() {
     return new Promise((resolve) => {
         const checkMapLibre = () => {
@@ -254,6 +265,7 @@ async function initializeApp() {
         _bgSessionScripts = loadScriptsParallel(SESSION_SCRIPTS);
         _bgAirports = loadAirportsData();
         _bgConstants = loadGameConstants();
+        loadStockBenchmarks();
         _bgMaplibre = loadScript(MAPLIBRE_JS);
         loadScript(POPPER_JS);
 

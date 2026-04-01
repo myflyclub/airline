@@ -219,7 +219,7 @@ object GenericTransitGenerator {
 
   def generateGenericTransit() : Unit = {
     val airports = AirportSource.loadAllAirports(true)
-      .filter(_.population >= 500)
+      .filter(_.population > 0)
       .filter(_.runwayLength >= 500)
       .sortBy { _.basePopMiddleIncome }.reverse
 
@@ -249,16 +249,17 @@ object GenericTransitGenerator {
         if (!processed.contains((airport.id, targetAirport.id))) {
           val isManualLink = TRANSIT_MANUAL_LINKS.get(airport.iata).contains(targetAirport.iata) || 
                             TRANSIT_MANUAL_LINKS.get(targetAirport.iata).contains(airport.iata)
+          val isFriendly = countryRelationships.getOrElse((airport.countryCode, targetAirport.countryCode),0) >= 2
           
           if (isManualLink || (
               airport.id != targetAirport.id &&
               ! GameConstants.connectsIsland(airport, targetAirport) &&
               targetAirport.popMiddleIncome > 2500 &&
               airport.longitude >= boundaryLongitude._1 &&
-              airport.longitude <= boundaryLongitude._2
+              airport.longitude <= boundaryLongitude._2 &&
+              isFriendly
           )) {
-            val distance = Util.calculateDistance(airport.latitude, airport.longitude, 
-                                               targetAirport.latitude, targetAirport.longitude).toInt
+            val distance = Util.calculateDistance(airport.latitude, airport.longitude, targetAirport.latitude, targetAirport.longitude).toInt
             if (isManualLink || range >= distance) {
               airportsInRange += Tuple2(targetAirport, distance)
             }
@@ -272,7 +273,7 @@ object GenericTransitGenerator {
         val isDomesticAirport = if(targetAirport.isDomesticAirport() || airport.isDomesticAirport()) 2 else 0
         val isGatewayAirport = if(targetAirport.isGateway() || airport.isGateway()) 3.5 else 0
         val multiplier = Math.min(airport.size, targetAirport.size) + isDomesticAirport + isGatewayAirport
-        val capacity = (multiplier * 12000).toInt
+        val capacity = (multiplier * 14000).toInt
         
         try {
           val genericTransit = GenericTransit(
@@ -280,8 +281,7 @@ object GenericTransitGenerator {
             to = targetAirport, 
             distance = distance.toInt, 
             capacity = LinkClassValues.getInstance(
-              economy = capacity, 
-              business = (capacity * 0.2).toInt
+              economy = capacity
             )
           )
           LinkSource.saveLink(genericTransit)

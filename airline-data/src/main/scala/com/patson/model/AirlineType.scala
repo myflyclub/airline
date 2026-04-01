@@ -35,7 +35,7 @@ case object DiscountAirline extends AirlineType {
   val id = 2
   val label = "Discount"
   override val touristTravelerRepPerLevel = 50
-  override val stockRepPerLevel = 50
+  override val stockRepPerLevel = 75
   val crewRatio = 0.4
   val description = List[String](
     "You can never add business or first class!",
@@ -50,7 +50,7 @@ case object LuxuryAirline extends AirlineType {
   val label = "Luxury"
   val staffFreqRatio = 0.8
   override val elitesRepPerLevel = 50
-  override val stockRepPerLevel = 50
+  override val stockRepPerLevel = 75
   val description = List[String](
     "You can never add economy class!",
     "Earn reputation by moving lots of elite passengers and by increasing your stock price",
@@ -67,14 +67,16 @@ case object RegionalAirline extends AirlineType {
   override val stockRepPerLevel = 50
   val extraSharedBaseLimit = 1
   val modelMaxSize = 0.13 //used in web app to set allowed planes
-  val staffFreqRatio = 0.2
+  val staffFreqRatio = 0.0
+  val staffCapRatio = 1.4
   val staffReductionRange = 1500
   val staffReductionRangeFadeTo = 2000
   val description = List[String](
     "Can only buy small, regional aircraft!",
     "Earn reputation by creating high frequency links and capturing airports!",
     "Earn additional rep by managing your finances and increasing your stock price.",
-    s"Need ${(1.0 - staffFreqRatio) * 100}% less staff to support frequency on routes under ${staffReductionRange} km (staff reduction fades up to $staffReductionRangeFadeTo km.",
+    s"Requires no staff to support frequency on routes under ${staffReductionRange} km (staff reduction fades up to $staffReductionRangeFadeTo km.",
+    s"However capacity support requires ${(1.0 - staffCapRatio) * 100}% staff.",
     "May build bases overlapping with alliance mates (one plus per airport)."
   )
 }
@@ -82,13 +84,13 @@ case object RegionalAirline extends AirlineType {
 case object MegaHqAirline extends AirlineType {
   val id = 5
   val label = "Mega-Base State-Owned"
-  override val airportRepRatio = 2
+  override val airportRepRatio = 1
   override val elitesRepPerLevel = 50
   override val touristTravelerRepPerLevel = 50
   val description = List[String](
     "Build a giant mega-base!",
     "Earn reputation by moving lots of elite passengers AND tourist and traveler passengers.",
-    "Additionally earn double rep from winning airports, but none from stock price.",
+    "Additionally earn rep from winning airports, but none from stock price.",
     "Upgrading & upkeep any additional bases is extremely expensive.",
   )
 }

@@ -107,7 +107,7 @@ abstract class FlightPreference(homeAirport : Airport) {
     val classAdjustedPrice = priceAdjustedByLinkClassDiff(link, linkClass, paxType)
     val deltaFromStandardPrice = classAdjustedPrice - standardPrice
     val priceSensitivityModifier = if (deltaFromStandardPrice < 0 && (getPreferenceType == FlightPreferenceType.FREQUENT || getPreferenceType == FlightPreferenceType.BRAND || getPreferenceType == FlightPreferenceType.LAST_MINUTE)) {
-        0.8 * priceSensitivity * classAdjustedPrice.toDouble / standardPrice //low prices impact these preferences less
+        0.7 * priceSensitivity * classAdjustedPrice.toDouble / standardPrice //low prices impact these preferences less
       } else {
         priceSensitivity
       }

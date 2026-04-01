@@ -26,7 +26,6 @@ class StockModelSpec extends AnyFunSuite with Matchers {
       satisfaction = satisfaction,
       loadFactor = 0.0,
       onTime = onTime,
-      cashOnHand = 192,
       eps = eps,
       linkCount = linkCount,
       repTotal = 0,
@@ -45,28 +44,28 @@ class StockModelSpec extends AnyFunSuite with Matchers {
   }
 
   test("getMetricValue should return metric value for value at or above target") {
-    StockModel.getMetricValue("eps", 25) shouldBe 24
-    StockModel.getMetricValue("eps", 30) shouldBe 24
+    StockModel.getMetricValue("eps", 5.0) shouldBe 30
+    StockModel.getMetricValue("eps", 10.0) shouldBe 30
   }
 
   test("getMetricValue should interpolate between floor and target") {
-    val midValue = 25.0 / 2
+    val midValue = (5.0 + 0.1) / 2  // between floor (0.1) and target (5.0)
     val result = StockModel.getMetricValue("eps", midValue)
-    result should (be > 0.0 and be < 24.0)
+    result should (be > 0.0 and be < 30.0)
   }
 
   test("getMetricValue should work for codeshares metric") {
     StockModel.getMetricValue("codeshares", 0) shouldBe 0
     StockModel.getMetricValue("codeshares", 100) shouldBe 0.0
-    StockModel.getMetricValue("codeshares", 100000) shouldBe 4
-    StockModel.getMetricValue("codeshares", 200000) shouldBe 4
+    StockModel.getMetricValue("codeshares", 100000) shouldBe 5
+    StockModel.getMetricValue("codeshares", 200000) shouldBe 5
   }
 
   test("getMetricValue should work for airport metric") {
     StockModel.getMetricValue("airport", 0.0) shouldBe 0
     StockModel.getMetricValue("airport", 5.0) shouldBe 0.0
-    StockModel.getMetricValue("airport", 500.0) shouldBe 4
-    StockModel.getMetricValue("airport", 1000.0) shouldBe 4
+    StockModel.getMetricValue("airport", 500.0) shouldBe 5
+    StockModel.getMetricValue("airport", 1000.0) shouldBe 5
   }
 
   test("updateStockPrice should return positive price even with zero stats") {
@@ -74,13 +73,13 @@ class StockModelSpec extends AnyFunSuite with Matchers {
     price should be > 0.0
   }
 
-  test("updateStockPrice should increase with higher EPS (primary driver, weight=24)") {
+  test("updateStockPrice should increase with higher EPS (primary driver, weight=30)") {
     val lowPrice = StockModel.updateStockPrice(1.0, createStat(eps = 1.0), None, 0.05)
     val highPrice = StockModel.updateStockPrice(1.0, createStat(eps = 20.0), None, 0.05)
     highPrice should be > lowPrice
   }
 
-  test("updateStockPrice should increase with higher PASK (RASK - CASK, weight=12)") {
+  test("updateStockPrice should increase with higher PASK (RASK - CASK, weight=20)") {
     val lowPask = createStat(RASK = 0.05, CASK = 0.04)
     val highPask = createStat(RASK = 0.10, CASK = 0.03)
 
@@ -90,7 +89,7 @@ class StockModelSpec extends AnyFunSuite with Matchers {
     highPrice should be > lowPrice
   }
 
-  test("updateStockPrice should increase with higher satisfaction (weight=4, floor=0.5, target=0.95)") {
+  test("updateStockPrice should increase with higher satisfaction (weight=5, floor=0.5, target=0.9)") {
     val lowPrice = StockModel.updateStockPrice(1.0, createStat(satisfaction = 0.5), None, 0.05)
     val midPrice = StockModel.updateStockPrice(1.0, createStat(satisfaction = 0.75), None, 0.05)
     val highPrice = StockModel.updateStockPrice(1.0, createStat(satisfaction = 0.95), None, 0.05)
@@ -99,14 +98,14 @@ class StockModelSpec extends AnyFunSuite with Matchers {
     midPrice should be > lowPrice
   }
 
-  test("updateStockPrice should increase with higher on-time ratio (weight=4, floor=0.7, target=0.98)") {
+  test("updateStockPrice should increase with higher on-time ratio (weight=5, floor=0.7, target=0.98)") {
     val lowPrice = StockModel.updateStockPrice(1.0, createStat(onTime = 0.7, eps = 1.0), None, 0.05)
     val highPrice = StockModel.updateStockPrice(1.0, createStat(onTime = 0.98, eps = 1.0), None, 0.05)
 
     highPrice should be > lowPrice
   }
 
-  test("updateStockPrice should increase with more links (weight=4, floor=50, target=400)") {
+  test("updateStockPrice should increase with more links (weight=5, floor=50, target=400)") {
     val lowPrice = StockModel.updateStockPrice(1.0, createStat(linkCount = 50), None, 0.05)
     val highPrice = StockModel.updateStockPrice(1.0, createStat(linkCount = 400), None, 0.05)
 
@@ -136,18 +135,18 @@ class StockModelSpec extends AnyFunSuite with Matchers {
     largePrice should be > smallPrice
   }
 
-  test("updateStockPrice should benefit from lower interest rates (weight=4, floor=0.19, target=0)") {
+  test("updateStockPrice should benefit from lower interest rates (weight=10, floor=0.22, target=0)") {
     val highInterest = StockModel.updateStockPrice(1.0, createStat(eps = 1.0), None, 0.19)
     val lowInterest = StockModel.updateStockPrice(1.0, createStat(eps = 1.0), None, 0.02)
 
     lowInterest should be > highInterest
   }
 
-  test("verify satisfaction metric uses correct range (0.5 to 0.95)") {
+  test("verify satisfaction metric uses correct range (0.5 to 0.9)") {
     StockModel.getMetricValue("satisfaction", 0.4) shouldBe 0.0
     StockModel.getMetricValue("satisfaction", 0.5) shouldBe 0.0
-    StockModel.getMetricValue("satisfaction", 0.95) shouldBe 4.0
-    StockModel.getMetricValue("satisfaction", 1.0) shouldBe 4.0
+    StockModel.getMetricValue("satisfaction", 0.9) shouldBe 5.0
+    StockModel.getMetricValue("satisfaction", 1.0) shouldBe 5.0
   }
 
   test("low EPS airline can still get very high stock price from PASK + on_time") {

@@ -9,25 +9,28 @@ case class AirlineBase(airline : Airline, airport : Airport, countryCode : Strin
   private def computeEffectiveScale(s: Int): Double = if (s <= 6) {
     Math.max(1.0, s * 2.0)
   } else {
-    12.0 + 0.2 * (s - 6.0)
+    12.0 + 0.25 * (s - 6.0)
   }
 
   lazy val getValue : Long = {
     calculateUpgradeCost()
   }
 
-  def calculateUpgradeCost(scale: Int = scale, airlineType: AirlineType = airline.airlineType): Long = {
-    val airportSizeMod = Math.max(8.0, airport.size.toDouble) * 0.05
-    val baseCost = 1_350_000 + airport.rating.overallDifficulty * 115_000
-
+  def calculateUpgradeCost(scale: Int = this.scale, airlineType: AirlineType = airline.airlineType): Long = {
     if (headquarter && scale == 1) {
-      0
-    } else if (airlineType == MegaHqAirline && headquarter) {
-      Math.max(12_000_000L, baseCost * Math.pow(1.0 + airportSizeMod, computeEffectiveScale(scale)) - 20_000_000).toLong
-    } else if (airlineType == MegaHqAirline && !headquarter) {
-      60_000_000L + (baseCost * Math.pow(1.25 + airportSizeMod, computeEffectiveScale(scale))).toLong
+      0L
     } else {
-      5_000_000L + (baseCost * Math.pow(1.15 + airportSizeMod, computeEffectiveScale(scale))).toLong
+      val airportSizeMod = Math.max(8.0, airport.size.toDouble) * 0.05
+      val baseCost = 1_350_000 + airport.rating.overallDifficulty * 115_000
+      val effScale = computeEffectiveScale(scale)
+
+      def rawCost(baseExp: Double): Long = (baseCost * Math.pow(baseExp + airportSizeMod, effScale)).toLong
+
+      (airlineType, headquarter) match {
+        case (MegaHqAirline, true)  => Math.max(12_000_000L, rawCost(1.05) - 35_000_000L)
+        case (MegaHqAirline, false) => 60_000_000L + rawCost(1.25)
+        case _                      => 5_000_000L + rawCost(1.15)
+      }
     }
   }
 
@@ -39,17 +42,20 @@ case class AirlineBase(airline : Airline, airport : Airport, countryCode : Strin
     val effectiveScale = computeEffectiveScale(scale)
     val baseUpkeep = 22_000 + airport.rating.overallDifficulty * 260
     val airportSizeMod = Math.max(8.0, airport.size.toDouble) * 0.04
-    val startingHQDiscount = if (scale == 1) 0.1 else if (scale == 2) 0.5 else 1.0
 
-    if (airlineType == MegaHqAirline && headquarter) {
-      (baseUpkeep * Math.pow(effectiveScale, 1.3 + airportSizeMod / 2) * startingHQDiscount).toLong
-    } else if (airlineType == MegaHqAirline && !headquarter) {
-      (baseUpkeep * Math.pow(effectiveScale, 1.5 + airportSizeMod)).toLong
-    } else if (headquarter) {
-      (baseUpkeep * Math.pow(effectiveScale, 1.4 + airportSizeMod) * startingHQDiscount).toLong
-    } else {
-      (baseUpkeep * Math.pow(effectiveScale, 1.4 + airportSizeMod)).toLong
+    val baseExponent = (airlineType, headquarter) match {
+      case (MegaHqAirline, true)  => 1.32
+      case (MegaHqAirline, false) => 1.5
+      case _                      => 1.4
     }
+
+    val startingDiscount = if (headquarter) scale match {
+      case 1 => 0.1
+      case 2 => 0.5
+      case _ => 1.0
+    } else 1.0
+
+    (baseUpkeep * Math.pow(effectiveScale, baseExponent + airportSizeMod) * startingDiscount).toLong
   }
 
   val getOfficeStaffCapacity = AirlineBase.getOfficeStaffCapacity(scale, headquarter)

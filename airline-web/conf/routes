@@ -8,6 +8,7 @@ GET		/chat						controllers.ChatApplication.chatSocket
 GET		/wsWithActor						controllers.WebsocketApplication.wsWithActor
 
 GET		 /game/constants			  controllers.Application.getGameRules()
+GET		 /game/stock-benchmarks		  controllers.Application.getStockBenchmarks()
 GET		 /game/tooltips			  controllers.Application.getTooltips()
 
 POST	 /user-login							  controllers.UserApplication.login

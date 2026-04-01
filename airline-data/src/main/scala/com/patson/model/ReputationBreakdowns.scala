@@ -23,10 +23,6 @@ object ReputationType extends Enumeration {
     override val label = "Milestone Destinations"
   }
 
-  val MILESTONE_LINK_COUNT = new AbstractReputationType {
-    override val label = "Number of links"
-  }
-
   val MILESTONE_CODESHARES = new AbstractReputationType {
     override val label = "Milestone Codeshares"
   }
@@ -53,6 +49,18 @@ object ReputationType extends Enumeration {
 
   val MILESTONE_BASES = new AbstractReputationType {
     override val label = "Milestone Bases"
+  }
+
+  val MILESTONE_COUNTRIES = new AbstractReputationType {
+    override val label = "Milestone Countries Served"
+  }
+
+  val MILESTONE_DIVIDENDS = new AbstractReputationType {
+    override val label = "Milestone Weekly Dividends"
+  }
+
+  val MILESTONE_HIGH_PRICES = new AbstractReputationType {
+    override val label = "Milestone High-Priced Tickets Sold"
   }
 
   val AIRPORT_LOYALIST_RANKING = new AbstractReputationType {

@@ -8,6 +8,72 @@ var loadedAirlineReputation = {}
 var officePeriod;
 var companyValue = 0;
 
+/**
+ * get dynamic stat if available
+ */
+function getEffectiveMetric(key) {
+    const dynamicMetric = stockBenchmarks?.[activeAirline?.type]?.[key.toLowerCase()];
+    return dynamicMetric ?? gameConstants?.stockMetrics?.[key.toLowerCase()];
+}
+/**
+ * Build a gear-toggled inline edit widget inside $container.
+ * @param {jQuery|string} $container  emptied and populated
+ * @param {Object} opts
+ *   displayText    {string}    text to show in display mode
+ *   $input         {jQuery}    the <input> element
+ *   onConfirm      {Function}  called with (value) when tick clicked
+ *   warningText    {string}    initial text for the hidden warning span
+ *   disabledReason {string}    if set, shows text instead of gear (editing disabled)
+ *   prefix         {string}    text before input in edit mode
+ *   suffix         {string}    text after input in edit mode
+ *   note           {string}    static info text shown in edit mode
+ *   extraAction    {Object}    { label, action } — secondary action link in edit mode
+ */
+function buildInlineInput($container, opts) {
+    const { displayText, $input, onConfirm, warningText, disabledReason, prefix, suffix, note, extraAction } = opts
+    $container = $($container)
+    $container.empty()
+
+    const $display = $('<span class="inline-display"></span>')
+    const $edit = $('<span class="inline-edit ml-1"></span>').hide()
+
+    $display.append($('<span class="inline-value"></span>').text(displayText))
+    if (disabledReason) {
+        $display.append($('<span class="text-xs opacity-60 ml-1"></span>').text('(' + disabledReason + ')'))
+    } else {
+        const $gear = $('<img class="img-button svg hover-rotate ml-1">').attr('src', '/assets/images/icons/gear.svg')
+        $gear.on('click', () => { $display.hide(); $edit.show() })
+        $display.append($gear)
+    }
+
+    if (prefix) $edit.append($('<span></span>').text(prefix + ' '))
+    $edit.append($input)
+    if (suffix) $edit.append($('<span></span>').text(' ' + suffix))
+
+    const $tick = $('<img class="img-button svg ml-1">').attr('src', '/assets/images/icons/tick.svg')
+    $tick.on('click', () => onConfirm($input.val()))
+    const $cross = $('<img class="img-button svg ml-1">').attr('src', '/assets/images/icons/cross.svg')
+    $cross.on('click', () => { $edit.hide(); $display.show() })
+    $edit.append($tick).append($cross)
+
+    if (warningText) {
+        $edit.append($('<span class="inline-warning" style="display:none"></span>').text(warningText))
+    }
+
+    if (note) {
+        $edit.append($('<p class="text-xs opacity-60 ml-2"></p>').text(note))
+    }
+
+    if (extraAction) {
+        const $extra = $('<span class="text-xs opacity-70 ml-2" style="cursor:pointer;text-decoration:underline"></span>').text(extraAction.label)
+        $extra.on('click', extraAction.action)
+        $edit.append($extra)
+    }
+
+    $container.append($display).append($edit)
+}
+
+
 const minPositiveLog = 0.2 //manually defined lower bound for log
 
 // --- Unified sheet system ---
@@ -431,7 +497,7 @@ function updateAirlineDetails() {
     document.querySelector('.stockBuyBackCost').textContent = "$" + commaSeparateNumber(1000000 * airline.tempStockPrice + brokerFee, "m");
     document.querySelector('.stockSellRevenue').textContent = "$" + commaSeparateNumber(1000000 * airline.tempStockPrice - brokerFee, "m");
     document.querySelector('.stockBuybackInfo').textContent = "";
-    $('#dividendsInput').attr('placeholder', commaSeparateNumber(airline.stock.dividends || 0));
+    if (!$('#dividendsContainer .inline-edit').is(':visible')) updateDividendsDetails()
   }
 
   cancelAirlineRename()
@@ -708,10 +774,11 @@ function updateAirlineOpSheet(opsData) {
     Object.keys(opsData).forEach(key => {
         const element = document.querySelector(`#opsSheet .${key}`)
         if (!element) return
-        element.textContent = opsData[key] < 1
+        const isPercentField = key !== 'dividends_per_share' && key !== 'eps'
+        element.textContent = (isPercentField && opsData[key] < 1)
             ? commaSeparateNumber(opsData[key] * 100)
             : commaSeparateNumber(opsData[key])
-        const metric = gameConstants?.stockMetrics?.[key.toLowerCase()]
+        const metric = getEffectiveMetric(key)
         if (metric) {
             const normalizedValue = (opsData[key] - metric.floor) / (metric.target - metric.floor)
             element.classList.remove('text-success', 'text-middling', 'text-danger', 'text-warning')
@@ -732,121 +799,56 @@ function updateAirlineReputationSheet(airlineReputation) {
 }
 
 function setTargetServiceQuality(targetServiceQuality) {
-	var airlineId = activeAirline.id
-	var url = "/airlines/" + airlineId + "/target-service-quality"
-	if (!checkTargetServiceQualityInput(targetServiceQuality)) { //if invalid, then return
-	    return;
-	}
-
-    var data = { "targetServiceQuality" : parseInt(targetServiceQuality) }
-	$.ajax({
-		type: 'PUT',
-		url: url,
-	    data: JSON.stringify(data),
-	    contentType: 'application/json; charset=utf-8',
-	    dataType: 'json',
-	    success: function(result) {
-	    	activeAirline.targetServiceQuality = result.targetServiceQuality
-	    	updateServiceFundingDetails()
-	    },
+    $.ajax({
+        type: 'PUT',
+        url: "/airlines/" + activeAirline.id + "/target-service-quality",
+        data: JSON.stringify({ targetServiceQuality: parseInt(targetServiceQuality) }),
+        contentType: 'application/json; charset=utf-8',
+        dataType: 'json',
+        success: function(result) {
+            activeAirline.targetServiceQuality = result.targetServiceQuality
+            updateServiceFundingDetails()
+        },
         error: function(jqXHR, textStatus, errorThrown) {
-	            console.log(JSON.stringify(jqXHR));
-	            console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
-	    }
-	});
+            console.log(JSON.stringify(jqXHR))
+            console.log("AJAX error: " + textStatus + ' : ' + errorThrown)
+        }
+    })
 }
 
-function checkTargetServiceQualityInput(input) {
-    var value = parseInt(input)
-    if (value === undefined) {
-        $("#serviceFundingInputSpan .warning").show()
-        return false;
-    } else {
-        if (input < 0 || input > 100) {
-            $("#serviceFundingInputSpan .warning").show()
-            return false;
-        } else { //ok
-            $("#serviceFundingInputSpan .warning").hide()
-            return true;
-        }
-    }
-}
 
 function setMinimumRenewalBalance(minimumRenewalBalance) {
-	var airlineId = activeAirline.id
-	var url = "/airlines/" + airlineId + "/minimum-renewal-balance"
-	if (!checkEditMinimumRenewalBalanceInput(minimumRenewalBalance)) { //if invalid, then return
-	    return;
-	}
-
-    var data = { "minimumRenewalBalance" : parseInt(minimumRenewalBalance) }
-	$.ajax({
-		type: 'PUT',
-		url: url,
-	    data: JSON.stringify(data),
-	    contentType: 'application/json; charset=utf-8',
-	    dataType: 'json',
-	    success: function(result) {
-	    	activeAirline.minimumRenewalBalance = result.minimumRenewalBalance
-	    	updateMinimumRenewalBalanceDetails()
-	    },
+    $.ajax({
+        type: 'PUT',
+        url: "/airlines/" + activeAirline.id + "/minimum-renewal-balance",
+        data: JSON.stringify({ minimumRenewalBalance: parseInt(minimumRenewalBalance) }),
+        contentType: 'application/json; charset=utf-8',
+        dataType: 'json',
+        success: function(result) {
+            activeAirline.minimumRenewalBalance = result.minimumRenewalBalance
+            updateMinimumRenewalBalanceDetails()
+        },
         error: function(jqXHR, textStatus, errorThrown) {
-	            console.log(JSON.stringify(jqXHR));
-	            console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
-	    }
-	});
+            console.log(JSON.stringify(jqXHR))
+            console.log("AJAX error: " + textStatus + ' : ' + errorThrown)
+        }
+    })
 }
 
-function checkEditMinimumRenewalBalanceInput(input) {
-
-	var value = parseInt(input)
-
-	if (Number.isNaN(value)) {
-		$("#minimumRenewalBalanceInputSpan .warning").show()
-		return false;
-	} else {
-		if (value > 999999999999 || value < 0) {
-            $("#minimumRenewalBalanceInputSpan .warning").show()
-            return false;
-		} else {
-            $("#minimumRenewalBalanceInputSpan .warning").hide()
-            return true;
-		}
-	}
-}
 
 function setAirplaneRenewal(threshold) {
-	var airlineId = activeAirline.id
-	var url = "/airlines/" + airlineId + "/airplane-renewal"
-	var data
-	if (threshold) {
-		data = { "threshold" : parseInt(threshold) }
-	} else {
-		data = { "threshold" : -1 } //disable
-	}
-
-	$.ajax({
-		type: 'PUT',
-		url: url,
-	    data: JSON.stringify(data),
-	    contentType: 'application/json; charset=utf-8',
-	    dataType: 'json',
-	    success: function(result) {
-	    	if (result.threshold) {
-	    		$('#airplaneRenewal').text('Below ' + result.threshold + "%")
-	    		$('#airplaneRenewalInput').val(result.threshold)
-	    	} else {
-	    		$('#airplaneRenewal').text('-')
-	    		$('#airplaneRenewalInput').val(40)
-	    	}
-	    	$('#airplaneRenewalDisplaySpan').show()
-	    	$('#airplaneRenewalInputSpan').hide()
-	    },
+    $.ajax({
+        type: 'PUT',
+        url: "/airlines/" + activeAirline.id + "/airplane-renewal",
+        data: JSON.stringify({ threshold: threshold ? parseInt(threshold) : -1 }),
+        contentType: 'application/json; charset=utf-8',
+        dataType: 'json',
+        success: function() { updateAirplaneRenewalDetails() },
         error: function(jqXHR, textStatus, errorThrown) {
-	            console.log(JSON.stringify(jqXHR));
-	            console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
-	    }
-	});
+            console.log(JSON.stringify(jqXHR))
+            console.log("AJAX error: " + textStatus + ' : ' + errorThrown)
+        }
+    })
 }
 
 function doStockOp(operation = 'buyback') {
@@ -883,28 +885,50 @@ function doStockOp(operation = 'buyback') {
 	})
 }
 
-function setDividends() {
-  const amount = parseInt($('#dividendsInput').val()) || 0
-  const btn = document.getElementById('setDividendBtn')
-  btn.disabled = true
-  document.querySelector('.dividendInfo').textContent = ''
-  $.ajax({
-    type: 'PUT',
-    url: `/airlines/${activeAirline.id}/dividends`,
-    data: JSON.stringify({ dividends: amount }),
-    contentType: 'application/json; charset=utf-8',
-    dataType: 'json',
-    success: function(result) {
-      activeAirline.stock.dividends = result.dividends
-      $('#dividendsInput').val('')
-      updateAirlineDetails()
-      btn.disabled = false
-    },
-    error: function(jqXHR, textStatus, errorThrown) {
-      document.querySelector('.dividendInfo').textContent = jqXHR.responseText || errorThrown
-      btn.disabled = false
-    }
-  })
+function setDividends(amount) {
+    document.querySelector('.dividendCoolDownInfo').textContent = ''
+    $.ajax({
+        type: 'PUT',
+        url: `/airlines/${activeAirline.id}/dividends`,
+        data: JSON.stringify({ dividends: amount }),
+        contentType: 'application/json; charset=utf-8',
+        dataType: 'json',
+        success: function(result) {
+            activeAirline.stock.dividends = result.dividends
+            activeAirline.stock.dividendCoolDownExpiry = result.dividendCoolDownExpiry
+            updateDividendsDetails()
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            document.querySelector('.dividendCoolDownInfo').textContent = jqXHR.responseText || errorThrown
+        }
+    })
+}
+
+function updateDividendsDetails() {
+    if (!activeAirline.stock) return
+    const currentDividends = activeAirline.stock.dividends || 0
+    const coolDownExpiry = activeAirline.stock.dividendCoolDownExpiry || 0
+    const cycle = currentCycle || 0
+    const startCycle = coolDownExpiry - 96 // 2 * yearLength
+    const weeksRemaining = coolDownExpiry > cycle && startCycle < cycle ? coolDownExpiry - cycle : 0
+    const disabledReason = weeksRemaining > 0 ? `Locked for ${weeksRemaining} more week${weeksRemaining === 1 ? '' : 's'}` : null
+
+    const $input = $('<input type="number" min="0" step="1000000" style="width:90px">').val(currentDividends)
+    buildInlineInput($('#dividendsContainer'), {
+        displayText: '$' + commaSeparateNumber(currentDividends),
+        $input,
+        disabledReason,
+        note: 'Min $2,000,000 · Changes lock for 2 years',
+        onConfirm: (val) => {
+            const amount = parseInt(val) || 0
+            if (amount > 0 && amount < 2000000) {
+                document.querySelector('.dividendCoolDownInfo').textContent = 'Minimum dividends are $2,000,000 (or $0 to disable)'
+                return
+            }
+            setDividends(amount)
+        }
+    })
+    document.querySelector('.dividendCoolDownInfo').textContent = ''
 }
 
 function editAirlineCode() {
@@ -1216,80 +1240,77 @@ function loadSlogan(callback) {
 
 
 
-function editTargetServiceQuality() {
-	$('#serviceFundingDisplaySpan').hide()
-	$('#serviceFundingInputSpan').show()
-}
-
-function editMinimumRenewalBalance() {
-	$('#minimumRenewalBalanceDisplaySpan').hide()
-	$('#minimumRenewalBalanceInputSpan').show()
-}
-
-
 function updateServiceFundingDetails() {
-    $('#currentServiceQuality').empty()
-    $('#currentServiceQuality').append($(getGradeStarsImgs(Math.round(activeAirline.serviceQuality/10))))
-
-	$('#targetServiceQuality').text(activeAirline.targetServiceQuality)
-	$('#targetServiceQualityInput').val(activeAirline.targetServiceQuality)
-
-	$('#serviceFundingDisplaySpan').show()
-	$('#serviceFundingInputSpan').hide()
-
-	$('#fundingProjection').text('...')
-	$.ajax({
-		type: 'GET',
-		url: "/airlines/" + activeAirline.id + "/service-funding-projection",
-	    contentType: 'application/json; charset=utf-8',
-	    dataType: 'json',
-	    success: function(result) {
-	    	$('#fundingProjection').text(commaSeparateNumber(result.fundingProjection))
-	    },
+    $('#currentServiceQuality').empty().append($(getGradeStarsImgs(Math.round(activeAirline.serviceQuality / 10))))
+    const tsq = activeAirline.targetServiceQuality
+    const $input = $('<input type="number" size="3" maxlength="3">').val(tsq)
+    buildInlineInput($('#serviceFundingContainer'), {
+        displayText: tsq,
+        $input,
+        warningText: 'Value must be an integer 0 – 100',
+        onConfirm: (val) => {
+            const v = parseInt(val)
+            const $warn = $('#serviceFundingContainer .inline-warning')
+            if (isNaN(v) || v < 0 || v > 100) { $warn.show(); return }
+            $warn.hide()
+            setTargetServiceQuality(v)
+        }
+    })
+    $('#fundingProjection').text('...')
+    $.ajax({
+        type: 'GET',
+        url: "/airlines/" + activeAirline.id + "/service-funding-projection",
+        contentType: 'application/json; charset=utf-8',
+        dataType: 'json',
+        success: function(result) { $('#fundingProjection').text(commaSeparateNumber(result.fundingProjection)) },
         error: function(jqXHR, textStatus, errorThrown) {
-	            console.log(JSON.stringify(jqXHR));
-	            console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
-	    }
-	});
-
+            console.log(JSON.stringify(jqXHR))
+            console.log("AJAX error: " + textStatus + ' : ' + errorThrown)
+        }
+    })
 }
 
 function updateMinimumRenewalBalanceDetails() {
-	$('#minimumRenewalBalance').text('$' + commaSeparateNumber(activeAirline.minimumRenewalBalance))
-	$('#minimumRenewalBalanceInput').val(activeAirline.minimumRenewalBalance)
-
-	$('#minimumRenewalBalanceDisplaySpan').show()
-	$('#minimumRenewalBalanceInputSpan').hide()
+    const val = activeAirline.minimumRenewalBalance
+    const $input = $('<input type="number" maxlength="12" size="2">').val(val)
+    buildInlineInput($('#minimumRenewalBalanceContainer'), {
+        displayText: '$' + commaSeparateNumber(val),
+        $input,
+        warningText: 'Value must be a positive integer less than 999,999,999,999',
+        onConfirm: (inputVal) => {
+            const v = parseInt(inputVal)
+            const $warn = $('#minimumRenewalBalanceContainer .inline-warning')
+            if (isNaN(v) || v < 0 || v > 999999999999) { $warn.show(); return }
+            $warn.hide()
+            setMinimumRenewalBalance(v)
+        }
+    })
 }
-
-function editAirplaneRenewal() {
-	$('#airplaneRenewalDisplaySpan').hide()
-	$('#airplaneRenewalInputSpan').show()
-}
-
 
 function updateAirplaneRenewalDetails() {
-	$.ajax({
-		type: 'GET',
-		url: "/airlines/" + activeAirline.id + "/airplane-renewal",
-	    contentType: 'application/json; charset=utf-8',
-	    dataType: 'json',
-	    success: function(airplaneRenewal) {
-	    	if (airplaneRenewal.threshold) {
-	    		$('#airplaneRenewal').text('Below ' + airplaneRenewal.threshold + "%")
-	    		$('#airplaneRenewalInput').val(airplaneRenewal.threshold)
-	    	} else {
-	    		$('#airplaneRenewal').text('-')
-	    		$('#airplaneRenewalInput').val(40)
-	    	}
-	    	$('#airplaneRenewalDisplaySpan').show()
-	    	$('#airplaneRenewalInputSpan').hide()
-	    },
+    $.ajax({
+        type: 'GET',
+        url: "/airlines/" + activeAirline.id + "/airplane-renewal",
+        contentType: 'application/json; charset=utf-8',
+        dataType: 'json',
+        success: function(airplaneRenewal) {
+            const threshold = airplaneRenewal.threshold
+            const displayText = threshold ? 'Below ' + threshold + '%' : 'Off'
+            const $input = $('<input type="number" maxlength="2" size="2">').val(threshold || 40)
+            buildInlineInput($('#airplaneRenewalContainer'), {
+                displayText,
+                prefix: 'Below',
+                suffix: '% Age',
+                $input,
+                onConfirm: (val) => setAirplaneRenewal(val),
+                extraAction: { label: 'Turn Off', action: () => setAirplaneRenewal() }
+            })
+        },
         error: function(jqXHR, textStatus, errorThrown) {
-	            console.log(JSON.stringify(jqXHR));
-	            console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
-	    }
-	});
+            console.log(JSON.stringify(jqXHR))
+            console.log("AJAX error: " + textStatus + ' : ' + errorThrown)
+        }
+    })
 }
 
 function updateChampionedCountriesDetails() {

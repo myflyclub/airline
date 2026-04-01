@@ -120,6 +120,7 @@ object Constants {
   val COUNTRY_DELEGATE_TASK_TABLE = "country_delegate_task"
   val LINK_NEGOTIATION_TASK_TABLE = "link_negotiation_delegate_task"
   val LINK_NEGOTIATION_COOL_DOWN_TABLE = "link_negotiation_cool_down"
+  val AIRLINE_DIVIDENDS_COOL_DOWN_TABLE = "airline_dividends_cool_down"
   val LOYALIST_TABLE = "loyalist"
   val LOYALIST_HISTORY_TABLE = "loyalist_history"
   val LOYALIST_HISTORY_INDEX_PREFIX = "loyalist_history_index_"

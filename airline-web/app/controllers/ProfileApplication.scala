@@ -267,7 +267,7 @@ class ProfileApplication @Inject()(cc: ControllerComponents) extends AbstractCon
           airline.setReputation(profile.reputation)
           airline.setCurrentServiceQuality(profile.quality)
           airline.setTargetServiceQuality(targetQuality)
-          airline.setSharesOutstanding(300_000_000)
+          airline.setSharesOutstanding(250_000_000)
           val startingActionPoints = Math.min(100, 30 + (cycle.toDouble / 48).toInt)
           airline.setActionPoints(startingActionPoints)
 

@@ -60,7 +60,8 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
               "stockLevel" -> airline.airlineGradeStockPrice.level,
               "stockCeiling" -> airline.airlineGradeStockPrice.reputationCeiling,
               "stockFloor" -> airline.airlineGradeStockPrice.reputationFloor,
-              "dividends" -> airline.getDividends()
+              "dividends" -> airline.getDividends(),
+              "dividendCoolDownExpiry" -> JsNumber(AirlineSource.loadDividendsCoolDownExpiration(airline.id).getOrElse(0: Int).toLong)
             )
           ) else None
         ).flatten
@@ -944,9 +945,9 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
       case json: AnyContentAsJson =>
         Try(json.json.\("sharesOutstanding").as[Int]) match {
           case Success(sharesOutstanding) =>
-            if (sharesOutstanding < 10_000_000) {
+            if (sharesOutstanding <= 10_000_000) {
               BadRequest("Cannot have less than 10m shares")
-            } else if (sharesOutstanding > 2_000_000_000) {
+            } else if (sharesOutstanding >= 2_000_000_000) {
               BadRequest(s"Cannot have more than 2b shares")
             } else {
               val airline = request.user
@@ -961,7 +962,7 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
                 if (isBuyback && airline.getBalance() < 10 * totalBuybackCost) {
                   BadRequest(s"Insufficient balance: need at least 10x buyback cost ($totalBuybackCost)")
                 } else {
-                  val apCost = if (isBuyback) 1 else 5
+                  val apCost = if (isBuyback) 0 else 2
                   if (airline.getActionPoints() < apCost) {
                     BadRequest(s"Insufficient action points: need $apCost")
                   } else {
@@ -990,24 +991,38 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
     }
   }
 
+  val MIN_DIVIDENDS = 2000000L
+
   def setDividends(airlineId: Int) = AuthenticatedAirline(airlineId) { request =>
-    request.body match {
-      case json: AnyContentAsJson =>
-        Try(json.json.\("dividends").as[Long]) match {
-          case Success(dividends) =>
-            if (dividends < 0) {
-              BadRequest("Dividends cannot be negative")
-            } else {
-              val airline = request.user
-              airline.setDividends(dividends)
-              AirlineSource.saveAirlineInfo(airline)
-              Ok(Json.obj("dividends" -> JsNumber(dividends)))
-            }
-          case Failure(_) =>
-            BadRequest("Cannot parse dividends")
-        }
-      case _ =>
-        BadRequest("Cannot parse request body")
+    val cycle = currentCycle
+    val cooldownExpiry = AirlineSource.loadDividendsCoolDownExpiration(airlineId)
+    val canChange = cooldownExpiry.forall(expiry => expiry <= cycle || expiry - 2 * Period.yearLength >= cycle)
+    if (!canChange) {
+      val expiry = cooldownExpiry.get
+      BadRequest(s"Dividends are locked until cycle $expiry (${expiry - cycle} weeks remaining)")
+    } else {
+      request.body match {
+        case json: AnyContentAsJson =>
+          Try(json.json.\("dividends").as[Long]) match {
+            case Success(dividends: Long) =>
+              if (dividends > 0 && dividends < MIN_DIVIDENDS) {
+                BadRequest(s"Minimum dividends are $$$MIN_DIVIDENDS")
+              } else if (dividends < 0) {
+                BadRequest("Dividends cannot be negative")
+              } else {
+                val airline = request.user
+                airline.setDividends(dividends)
+                AirlineSource.saveAirlineInfo(airline)
+                val expirationCycle = cycle + 2 * Period.yearLength
+                AirlineSource.saveDividendsCoolDown(airlineId, expirationCycle)
+                Ok(Json.obj("dividends" -> JsNumber(dividends), "dividendCoolDownExpiry" -> expirationCycle))
+              }
+            case Failure(_) =>
+              BadRequest("Cannot parse dividends")
+          }
+        case _ =>
+          BadRequest("Cannot parse request body")
+      }
     }
   }
 

@@ -11,7 +11,7 @@ import scala.collection.mutable.ListBuffer
 object AirlineStatisticsSource {
 
   def saveAirlineStats(stats: List[AirlineStat]) = {
-    val queryString = s"REPLACE INTO $AIRLINE_STATISTICS_TABLE (airline, cycle, period, tourists, elites, business, total, codeshares, rask, cask, satisfaction, load_factor, on_time, cash_on_hand, eps, link_count, rep_total, rep_leaderboards, dividends_per_share) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
+    val queryString = s"REPLACE INTO $AIRLINE_STATISTICS_TABLE (airline, cycle, period, tourists, elites, business, total, codeshares, rask, cask, satisfaction, load_factor, on_time, eps, link_count, rep_total, rep_leaderboards, dividends_per_share) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
     val connection = Meta.getConnection()
     try {
       connection.setAutoCommit(false)
@@ -30,12 +30,11 @@ object AirlineStatisticsSource {
         preparedStatement.setDouble(11, BigDecimal(entry.satisfaction).setScale(4, BigDecimal.RoundingMode.HALF_UP).toDouble)
         preparedStatement.setDouble(12, BigDecimal(entry.loadFactor).setScale(4, BigDecimal.RoundingMode.HALF_UP).toDouble)
         preparedStatement.setDouble(13, BigDecimal(entry.onTime).setScale(4, BigDecimal.RoundingMode.HALF_UP).toDouble)
-        preparedStatement.setInt(14, entry.cashOnHand)
-        preparedStatement.setDouble(15, BigDecimal(entry.eps).setScale(4, BigDecimal.RoundingMode.HALF_UP).toDouble)
-        preparedStatement.setInt(16, entry.linkCount)
-        preparedStatement.setInt(17, entry.repTotal)
-        preparedStatement.setInt(18, entry.repLeaderboards)
-        preparedStatement.setDouble(19, BigDecimal(entry.dividendsPerShare).setScale(4, BigDecimal.RoundingMode.HALF_UP).toDouble)
+        preparedStatement.setDouble(14, BigDecimal(entry.eps).setScale(4, BigDecimal.RoundingMode.HALF_UP).toDouble)
+        preparedStatement.setInt(15, entry.linkCount)
+        preparedStatement.setInt(16, entry.repTotal)
+        preparedStatement.setInt(17, entry.repLeaderboards)
+        preparedStatement.setDouble(18, BigDecimal(entry.dividendsPerShare).setScale(4, BigDecimal.RoundingMode.HALF_UP).toDouble)
         preparedStatement.executeUpdate()
       }
       preparedStatement.close()
@@ -98,12 +97,11 @@ object AirlineStatisticsSource {
           val satisfaction = resultSet.getDouble("satisfaction")
           val loadFactor = resultSet.getDouble("load_factor")
           val onTime = resultSet.getDouble("on_time")
-          val cashOnHand = resultSet.getInt("cash_on_hand")
           val eps = resultSet.getDouble("eps")
           val linkCount = resultSet.getInt("link_count")
           val repTotal = resultSet.getInt("rep_total")
           val repLeaderboards = resultSet.getInt("rep_leaderboards")
-          airlineStats += AirlineStat(airlineId, cycle, period, tourists, elites, business, total, codeshares, rask, cask, satisfaction, loadFactor, onTime, cashOnHand, eps, linkCount, repTotal, repLeaderboards, resultSet.getDouble("dividends_per_share"))
+          airlineStats += AirlineStat(airlineId, cycle, period, tourists, elites, business, total, codeshares, rask, cask, satisfaction, loadFactor, onTime, eps, linkCount, repTotal, repLeaderboards, resultSet.getDouble("dividends_per_share"))
         }
 
         airlineStats.toList
@@ -142,7 +140,6 @@ object AirlineStatisticsSource {
           resultSet.getDouble("satisfaction"),
           resultSet.getDouble("load_factor"),
           resultSet.getDouble("on_time"),
-          resultSet.getInt("cash_on_hand"),
           resultSet.getDouble("eps"),
           resultSet.getInt("link_count"),
           resultSet.getInt("rep_total"),
@@ -194,7 +191,6 @@ object AirlineStatisticsSource {
           resultSet.getDouble("satisfaction"),
           resultSet.getDouble("load_factor"),
           resultSet.getDouble("on_time"),
-          resultSet.getInt("cash_on_hand"),
           resultSet.getDouble("eps"),
           resultSet.getInt("link_count"),
           resultSet.getInt("rep_total"),
@@ -230,12 +226,11 @@ object AirlineStatisticsSource {
         val satisfaction = resultSet.getDouble("satisfaction")
         val loadFactor = resultSet.getDouble("load_factor")
         val onTime = resultSet.getDouble("on_time")
-        val cashOnHand = resultSet.getInt("cash_on_hand")
         val eps = resultSet.getDouble("eps")
         val linkCount = resultSet.getInt("link_count")
         val repTotal = resultSet.getInt("rep_total")
         val repLeaderboards = resultSet.getInt("rep_leaderboards")
-        airlineStats += AirlineStat(airlineId, cycle, period, tourists, elites, business, total, codeshares, rask, cask, satisfaction, loadFactor, onTime, cashOnHand, eps, linkCount, repTotal, repLeaderboards, resultSet.getDouble("dividends_per_share"))
+        airlineStats += AirlineStat(airlineId, cycle, period, tourists, elites, business, total, codeshares, rask, cask, satisfaction, loadFactor, onTime, eps, linkCount, repTotal, repLeaderboards, resultSet.getDouble("dividends_per_share"))
       }
 
       airlineStats.toList

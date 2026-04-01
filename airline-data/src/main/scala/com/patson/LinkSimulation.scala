@@ -592,7 +592,7 @@ object LinkSimulation {
     } else {
       airportStats.map { case (airport, (fromPax, allPax)) =>
         val airportStats = airportStatsLookup.getOrElse(airport.id, AirportStatistics(airport.id, 100, 100, 0.0, 0.0, 0.0))
-        val smallAirportBoost = 2 - (10 - airport.size).toDouble / 10.0
+        val smallAirportBoost = 1.5 - (10 - airport.size).toDouble / 20.0
         val localDemandMet = fromPax.toDouble / airportStats.baselineDemand
         val localTravelRate = Airport.travelRateAdjusted(fromPax, airportStats.baselineDemand, airport.size)
         val percentGlobally = allPax.toDouble / worldStats.totalPax

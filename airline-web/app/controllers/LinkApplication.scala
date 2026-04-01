@@ -510,7 +510,7 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
         val existingLinks = LinkSource.loadFlightLinksByFromAirportAndAirlineId(base.airport.id, airline.id, LinkSource.SIMPLE_LOAD)
         val existingStaffRequired = existingLinks.map(_.getFutureOfficeStaffRequired).sum
         val newStaffRequired = existingStaffRequired - existingListOption.map(_.getFutureOfficeStaffRequired.toDouble).getOrElse(0.0) + staffRequiredByThisLink
-        val extraCompensation = base.getOvertimeCompensation(newStaffRequired) - base.getOvertimeCompensation(existingStaffRequired)
+        val extraCompensation = base.getOvertimeCompensation(newStaffRequired.toInt) - base.getOvertimeCompensation(existingStaffRequired)
         if (extraCompensation > 0) { //then we should prompt warning of over limit
           extraCompensation
         } else {

@@ -13,7 +13,7 @@ case class Airline(name: String, var airlineType: AirlineType = LegacyAirline, v
   val airlineInfo = AirlineInfo(0, 0, 0, 0, 0, 0, 0, 0)
   var allianceId : Option[Int] = None
   var bases : List[AirlineBase] = List.empty
-  var stats = AirlineStat(0, 0, Period.WEEKLY, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+  var stats = AirlineStat(0, 0, Period.WEEKLY, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 
   /**
    * private method to set balance, only used for resetAirline & AirlineSource. For normal balance change, use AirlineSource.saveLedgerEntry 
@@ -442,19 +442,21 @@ object AirlineGrades extends GradeEvaluator {
 
 object AirlineGradeStockPrice extends GradeEvaluator {
   override val grades: Vector[(Double, String)] = Vector(
-    0.7 -> "Toilet Paper",
-    1.2 -> "Penny Stock",
-    3.5 -> "Bargain?",
-    7.0 -> "Promising",
-    16.0 -> "On the Radar",
-    40.0 -> "Industry Disruptor",
-    75.0 -> "Blue Chip Beauty",
-    125.0 -> "Flying Cash Cow",
-    215.0 -> "Russell 2000 Company",
-    375.0 -> "Megacorporation",
-    625.0 -> "S&P 500 Company",
-    1075.0 -> "Wall Street Legend",
-    1725.0 -> "Aerial Singularity"
+    0.39 -> "Toilet Paper",
+    0.73 -> "Penny Stock",
+    1.36 -> "Floundering",
+    2.53 -> "Not Bankrupt",
+    4.71 -> "Bargain?",
+    8.76 -> "Promising",
+    16.29 -> "On the Radar",
+    30.30 -> "Industry Disruptor",
+    56.36 -> "Blue Chip Beauty",
+    104.83 -> "Flying Cash Cow",
+    194.98 -> "Russell 2000 Company",
+    362.66 -> "Megacorporation",
+    674.55 -> "S&P 500 Company",
+    1254.66 -> "Wall Street Legend",
+    2333.67 -> "Aerial Singularity"
   )
 }
 
@@ -462,35 +464,39 @@ object AirlineGradeElites extends GradeEvaluator {
   override val grades: Vector[(Double, String)] = Vector(
     100.0 -> "Nothing",
     450.0 -> "Paper",
-    1650.0 -> "Plastic",
-    4400.0 -> "Iron",
-    8000.0 -> "Steel",
-    12800.0 -> "Aluminum",
-    17400.0 -> "Nickel",
-    22000.0 -> "Copper",
-    27000.0 -> "Gold",
-    32000.0 -> "Platinum",
-    37000.0 -> "Rhenium",
-    42000.0 -> "Painite",
-    47000.0 -> "Rat Fur"
+    1650.0 -> "Nylon",
+    4400.0 -> "Plastic",
+    8000.0 -> "Fiberglass",
+    12800.0 -> "Bronze",
+    17400.0 -> "Steel",
+    22000.0 -> "Aluminum",
+    27000.0 -> "Silver",
+    32000.0 -> "Gold",
+    37000.0 -> "Platinum",
+    42000.0 -> "Rhenium",
+    47000.0 -> "Painite",
+    52000.0 -> "Graphene",
+    60000.0 -> "Aerogel"
   )
 }
 
 object AirlineGradeTouristsTravelers extends GradeEvaluator {
   override val grades: Vector[(Double, String)] = Vector(
-    5000.0 -> "Discount Disaster",
-    12500.0 -> "Leisure Loser",
-    31250.0 -> "Semi Bargain Bin",
-    62500.0 -> "Holiday Hauler",
-    126000.0 -> "Package Deal Pal",
-    201000.0 -> "Resort Runner",
-    282000.0 -> "Deal Seeker Favorite",
-    375000.0 -> "Bargain Bin Bonanza",
-    480000.0 -> "Detours Delight",
-    585000.0 -> "Cheapo Champion",
-    690000.0 -> "Penny Pitchers' Paradise",
-    780000.0 -> "Budget Behemoth",
-    900000.0 -> "Low-Cost Leviathan"
+    4000.0 -> "Discount Disaster",
+    12000.0 -> "Leisure Loser",
+    24000.0 -> "Semi Bargain Bin",
+    48000.0 -> "Holiday Hauler",
+    96000.0 -> "Package Deal Pal",
+    175000.0 -> "Resort Runner",
+    280000.0 -> "Deal Seeker Favorite",
+    390000.0 -> "Bargain Bin Bonanza",
+    470000.0 -> "Detours Delight",
+    560000.0 -> "Cheapo Champion",
+    670000.0 -> "Penny Pitchers' Paradise",
+    800000.0 -> "Mega Mover",
+    880000.0 -> "Mega Mega Mega Mover",
+    970000.0 -> "Budget Behemoth",
+    1070000.0 -> "Low-Cost Leviathan"
   )
 }
 

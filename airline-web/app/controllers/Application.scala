@@ -522,6 +522,7 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
       "congestion" -> JsArray(Airport.TOOLTIP_CONGESTION.map(JsString(_))),
       "stock_eps" -> JsArray(StockModel.TOOLTIP_STOCK_EPS.map(JsString(_))),
       "stock_pask" -> JsArray(StockModel.TOOLTIP_STOCK_PASK.map(JsString(_))),
+      "stock_dividends" -> JsArray(StockModel.TOOLTIP_STOCK_DIVIDENDS.map(JsString(_))),
       "manager" -> JsArray(Manager.TOOLTIP.map(JsString(_))),
       "model_discount" -> JsArray(ModelDiscount.TOOLTIP.map(JsString(_))),
     )
@@ -626,15 +627,7 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
       }
     )
 
-    val stockModel = JsObject(
-      StockModel.allMetrics.map { case (key, metric) =>
-        key -> Json.obj(
-          "value" -> metric.value,
-          "floor" -> metric.floor,
-          "target" -> metric.target
-        )
-      }
-    )
+    val stockModel = JsObject(StockModel.allMetrics.map { case (key, m) => key -> metricJson(m) })
     val stockConsts = Json.obj(
       "brokerFee" -> JsNumber(StockModel.STOCK_BROKER_FEE),
       "brokerFeeBase" -> JsNumber(StockModel.STOCK_BROKER_FEE_BASE),
@@ -661,6 +654,40 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
         EXPIRES -> java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME
           .format(java.time.ZonedDateTime.now().plusWeeks(4))
       )
+  }
+
+  private def metricJson(m: StockMetric): JsObject =
+    Json.obj("value" -> m.value, "floor" -> m.floor, "target" -> m.target)
+
+  def getStockBenchmarks() = Action {
+    val cycle = currentCycle
+    val benchmarksJson = ResponseCache.benchmarks match {
+      case (`cycle`, json) => json
+      case _ =>
+        val allAirlines = AirlineSource.loadAllAirlines(fullLoad = true).filter(_.getHeadQuarter().isDefined)
+        val latestWeeklyStats: mutable.Map[Int, AirlineStat] = mutable.Map()
+        AirlineStatisticsSource.loadAirlineStatsForAirlineIds(allAirlines.map(_.id))
+          .filter(_.period == Period.WEEKLY)
+          .foreach { s =>
+            latestWeeklyStats.get(s.airlineId) match {
+              case Some(existing) if existing.cycle >= s.cycle => // keep existing
+              case _ => latestWeeklyStats(s.airlineId) = s
+            }
+          }
+        val benchmarks = StockModel.computeBenchmarks(allAirlines, latestWeeklyStats.toMap)
+        val json = JsObject(benchmarks.map { case (typeLabel, tb) =>
+          typeLabel -> Json.obj(
+            "pask"                -> metricJson(tb.pask),
+            "dividends_per_share" -> metricJson(tb.dividendsPerShare)
+          )
+        })
+        ResponseCache.benchmarks = (cycle, json)
+        json
+    }
+    Ok(benchmarksJson).withHeaders(
+      CACHE_CONTROL -> "public, max-age=1800",
+      ETAG -> s""""$currentCycle""""
+    )
   }
 
   def getAirportChampions(airportId: Int, airlineId: Option[Int]) = Action { request =>
