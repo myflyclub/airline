@@ -575,7 +575,7 @@ case object NegoHopper extends NegotiationSpecialization {
   override val label = "Hopper Negotiator"
   override val scaleRequirement: Int = 2
   val maxDistance: Int = 800
-  val distanceIncrement: Int = 50
+  val distanceIncrement: Int = 80
   override def descriptions(airport: Airport) = List(s"Assists creating short-distance, high-frequency links. For each ${distanceIncrement}km under ${maxDistance}km, the base's frequency threshold is increased by 1.")
 }
 

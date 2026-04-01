@@ -178,7 +178,7 @@ object NegotiationUtil {
     if (existingLinkOption.isEmpty) {
       val negotiationLong = if(baseSpecializations.contains(AirlineBaseSpecialization.NEGOTIATION_LONG) && newLink.distance > NegoLong.minDistance) 0.95 - (newLink.distance - NegoLong.minDistance) / NegoLong.minDistance else 1
       val negotiationLongText = if(baseSpecializations.contains(AirlineBaseSpecialization.NEGOTIATION_LONG) && newLink.distance > NegoLong.minDistance) "New Flight – Foreign Mission Negotiator" else "New Flight Negotiation"
-      requirements.append(NegotiationRequirement(NEW_LINK, NEW_LINK_BASE_REQUIREMENT * multiplier * negotiationLong, negotiationLongText))
+      requirements.append(NegotiationRequirement(NEW_LINK, NEW_LINK_BASE_REQUIREMENT * multiplier * -negotiationLong, negotiationLongText))
       val mutualRelationship = CountrySource.getCountryMutualRelationship(newLink.from.countryCode, newLink.to.countryCode)
       if (mutualRelationship < 0) {
         requirements.append(NegotiationRequirement(BAD_MUTUAL_RELATIONSHIP, mutualRelationship * -2, s"Bad relationship between ${newLink.from.countryCode} and ${newLink.to.countryCode}"))
