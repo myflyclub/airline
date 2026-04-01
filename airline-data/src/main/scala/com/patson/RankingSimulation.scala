@@ -79,7 +79,7 @@ object RankingSimulation {
     }
     val flightConsumptionsByAirline = flightConsumptions.groupBy(_.link.airline.id)
     val airlineStats = paxStats.view.filterKeys(id => !invalidAirlinesIds.contains(id))
-    val airlineIncomes = IncomeSource.loadAllBalancesByCycle(currentCycle)
+    val airlineIncomes = IncomeSource.loadAllBalancesByCycle(currentCycle - 1)
     val linksByAirline = LinkSource.loadAllFlightLinks().filterNot(link => invalidAirlinesIds.contains(link.airline.id)).groupBy(_.airline.id)
 
     val updatedRankings = scala.collection.mutable.Map.empty[RankingType.Value, List[Ranking]]
@@ -113,7 +113,7 @@ object RankingSimulation {
     updatedRankings.put(RankingType.INTERNATIONAL_PAX, getAirportPairRanking(paxByAirportPair, (airport1, airport2) => airport1.countryCode != airport2.countryCode))
     updatedRankings.put(RankingType.DOMESTIC_PAX, getAirportPairRanking(paxByAirportPair, (airport1, airport2) => airport1.countryCode == airport2.countryCode))
     updatedRankings.put(RankingType.PASSENGER_MILE, getPassengerMileRanking(flightConsumptionsByAirline, airlinesById))
-    updatedRankings.put(RankingType.LINK_PROFIT_TOTAL, getLinkProfitTotalRanking(flightConsumptions, airlinesById))
+    updatedRankings.put(RankingType.LINK_PROFIT_ALL, getLinkProfitAllRanking(flightConsumptions, airlinesById))
     updatedRankings.put(RankingType.AIRLINE_PRESTIGE, getAirlinePrestigeRanking(airlinesById))
 
     //alliance rankings
@@ -313,28 +313,20 @@ object RankingSimulation {
     }.sortBy(_.ranking).take(200)
   }
 
-  private[this] def getLinkProfitTotalRanking(linkConsumptions: List[LinkConsumptionDetails], airlinesById: Map[Int, Airline]): List[Ranking] = {
-    // Aggregate total link profit per airline to ensure unique key per airline
-    val profitByAirline: List[(Int, Int)] = linkConsumptions
-      .groupBy(_.link.airline.id)
-      .view
-      .mapValues(cons => cons.map(_.profit).sum)
-      .toList
-
-    profitByAirline
-      .sortBy(_._2)(Ordering[Int].reverse)
-      .zipWithIndex
-      .map { case ((airlineId, totalProfit), index) =>
-        Ranking(
-          RankingType.LINK_PROFIT_TOTAL,
-          key = AirlineKey(airlineId),
-          entry = airlinesById.getOrElse(airlineId, Airline.fromId(airlineId)),
-          ranking = index + 1,
-          rankedValue = totalProfit,
-          reputationPrize = reputationBonus(32, index)
-        )
-      }
+  private[this] def getLinkProfitAllRanking(linkConsumptions: List[LinkConsumptionDetails], airlinesById: Map[Int, Airline]): List[Ranking] = {
+    linkConsumptions
+      .sortBy(_.profit)(Ordering[Int].reverse)
       .take(200)
+      .zipWithIndex.map { case (lc, index) =>
+        val airlineId = lc.link.airline.id
+        Ranking(
+          RankingType.LINK_PROFIT_ALL,
+          key = LinkKey(airlineId, lc.link.id),
+          entry = lc.link.asInstanceOf[Link].copy(airline = airlinesById.getOrElse(airlineId, Airline.fromId(airlineId))),
+          ranking = index + 1,
+          rankedValue = lc.profit
+        )
+      }.toList
   }
 
   private[this] def getLinkShortest(linkConsumptions: List[LinkConsumptionDetails], airlinesById: Map[Int, Airline]): List[Ranking] = {
@@ -528,8 +520,9 @@ object RankingSimulation {
 
   private[this] def getSmallTownRanking(linksByAirline: Map[Int, List[Link]], airlinesById: Map[Int, Airline]): List[Ranking] = {
     val smallTownCounts: Map[Int, Int] = linksByAirline.mapValues { links =>
-      val lowPopLinks = links.filter { link => link.to.population <= 500000 || link.from.population <= 500000 }
-      lowPopLinks.flatMap(link => Seq(link.from.iata, link.to.iata)).toSet.size
+      links.flatMap(link => Seq(link.from, link.to))
+        .filter(_.population <= 500000)
+        .map(_.iata).toSet.size
     }.toMap
     val sortedLinkCountByAirline = smallTownCounts.toList.sortBy(_._2)(Ordering[Int].reverse)
     var prevValue: Int = 0
@@ -551,8 +544,9 @@ object RankingSimulation {
 
   private[this] def getLowIncomeRanking(linksByAirline: Map[Int, List[Link]], airlinesById: Map[Int, Airline]): List[Ranking] = {
     val lowIncomeUniqueIataCounts: Map[Int, Int] = linksByAirline.mapValues { links =>
-      val lowIncomeLinks = links.filter { link => link.to.income <= 10000 || link.from.income <= 10000 }
-      lowIncomeLinks.flatMap(link => Seq(link.from.iata, link.to.iata)).toSet.size
+      links.flatMap(link => Seq(link.from, link.to))
+        .filter(_.income <= 10000)
+        .map(_.iata).toSet.size
     }.toMap
     val sortedLinkCountByAirline = lowIncomeUniqueIataCounts.toList.sortBy(_._2)(Ordering[Int].reverse)
     var prevValue: Int = 0
@@ -564,9 +558,9 @@ object RankingSimulation {
         Ranking(RankingType.LINK_COUNT_LOW_INCOME,
           key = AirlineKey(airlineId),
           entry = airlinesById.getOrElse(airlineId, Airline.fromId(airlineId)),
-          ranking = index + 1,
+          ranking = prevRanking + 1,
           rankedValue = prevValue,
-          reputationPrize = reputationBonus(32, index)
+          reputationPrize = reputationBonus(32, prevRanking)
         )
       }
     }.toList.take(200)

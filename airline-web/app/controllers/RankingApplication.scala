@@ -97,7 +97,7 @@ class RankingApplication @Inject()(cc: ControllerComponents)(implicit ec: Execut
   }
 
   def getRankingsWithAirline(airlineId: Int) = AuthenticatedAirline(airlineId).async { request =>
-    
+
     // Execute the O(1) query on the isolated database thread pool
     val cycleFuture: Future[Int] = Future {
       CycleSource.loadCycle() - 1 // Want last completed cycle, so -1
@@ -110,15 +110,24 @@ class RankingApplication @Inject()(cc: ControllerComponents)(implicit ec: Execut
         case _ =>
           // Cache miss/stale: fetch new data
           val rankingsFuture: Future[Map[RankingType.Value, List[Ranking]]] = rankingsCache.get(cycle).asScala
+          val hqAirportIdFuture: Future[Option[Int]] = Future {
+            AirlineSource.loadAirlineById(airlineId, fullLoad = true)
+              .flatMap(_.getHeadQuarter())
+              .map(_.airport.id)
+          }
 
-          rankingsFuture.map { rankings =>
+          (rankingsFuture zip hqAirportIdFuture).map { case (rankings, hqAirportId) =>
             val airlineKey = RankingKey.AirlineKey(airlineId)
             val topJson = getTopRankingsJson(rankings, cycle)
 
             val rankingJson = topJson.foldLeft(Json.obj()) {
               case (acc, (rankingType, topArr)) =>
                 val allRankings = rankings.getOrElse(rankingType, Nil)
-                val airlineExtra = allRankings.find(_.key == airlineKey).filter(_.ranking > MAX_ENTRY)
+                val extraKey: Option[RankingKey] = rankingType match {
+                  case RankingType.AIRPORT => hqAirportId.map(RankingKey.AirportKey)
+                  case _                   => Some(airlineKey)
+                }
+                val airlineExtra = extraKey.flatMap(k => allRankings.find(_.key == k)).filter(_.ranking > MAX_ENTRY)
                 val arr: JsValue = airlineExtra.fold(topArr: JsValue)(r => topArr :+ Json.toJson(r))
                 acc + (rankingType.toString -> arr)
             }

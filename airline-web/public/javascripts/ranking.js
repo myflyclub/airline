@@ -29,6 +29,9 @@ function loadRanking() {
     });
 }
 
+var CURRENCY_TYPES = new Set(["STOCK_PRICE", "LINK_PROFIT", "LINK_PROFIT_ALL", "LINK_LOSS", "AIRLINE_VALUE"])
+var PERCENTAGE_TYPES = new Set(["PASSENGER_SATISFACTION"])
+
 function updateRankingTable(rankingType, rankings) {
     //locate which table
     var rankingTable;
@@ -54,8 +57,6 @@ function updateRankingTable(rankingType, rankings) {
         rankingTable = $('#linkShortestRank')
     } else if (rankingType == "PASSENGER_SATISFACTION") {
         rankingTable = $('#satisfactionRank')
-    } else if (rankingType == "PASSENGER_QUALITY") {
-        rankingTable = $('#passengerQualityRank')
     } else if (rankingType == "PASSENGER_SPEED") {
         rankingTable = $('#speedRank')
     } else if (rankingType == "REPUTATION") {
@@ -72,7 +73,7 @@ function updateRankingTable(rankingType, rankings) {
         rankingTable = $('#linkFrequency')
     } else if (rankingType == "LINK_PROFIT") {
         rankingTable = $('#linkProfitRank')
-    } else if (rankingType == "LINK_PROFIT_TOTAL") {
+    } else if (rankingType == "LINK_PROFIT_ALL") {
         rankingTable = $('#linkProfitTotalRank')
     } else if (rankingType == "LINK_LOSS") {
         rankingTable = $('#linkLossRank')
@@ -90,11 +91,9 @@ function updateRankingTable(rankingType, rankings) {
         rankingTable = $('#loungeRank')
     } else if (rankingType == "AIRPORT_TRAFFIC") {
         rankingTable = $('#airportTrafficRank')
-    } else if (rankingType == "STOCK_PRICE") {
-        rankingTable = $('#stockRank')
     } else if (rankingType == "AIRLINE_VALUE") {
         rankingTable = $('#airlineValueRank')
-        } else if (rankingType == "AIRLINE_PRESTIGE") {
+    } else if (rankingType == "AIRLINE_PRESTIGE") {
         rankingTable = $('#airlinePrestigeRank')
     } else if (rankingType == "AIRPORT") {
         rankingTable = $('#airportRank')
@@ -111,7 +110,7 @@ function updateRankingTable(rankingType, rankings) {
     } else if (rankingType == "ALLIANCE_AIRPORT_REP") {
         rankingTable = $('#allianceAirportRank')
     } else if (rankingType == "ALLIANCE_STOCKS") {
-    rankingTable = $('#allianceStockRank')
+        rankingTable = $('#allianceStockRank')
     } else if (rankingType == "ALLIANCE_LOUNGE") {
         rankingTable = $('#allianceLoungeRank')
     } else {
@@ -125,10 +124,16 @@ function updateRankingTable(rankingType, rankings) {
         var hasPrize = rankings.length > 0 && rankings[0].reputationPrize;
         $.each(rankings, function (index, ranking) {
             if (index < maxEntry) {
-                rankingTable.append(getRankingRow(ranking))
+                rankingTable.append(getRankingRow(ranking, rankingType))
             }
-            if (activeAirline && !currentAirlineRanking && ranking.airlineId == activeAirline.id) {
-                currentAirlineRanking = ranking
+            if (rankingType != "LINK_PROFIT_ALL" && activeAirline && !currentAirlineRanking) {
+                if (ranking.airlineId == activeAirline.id) {
+                    currentAirlineRanking = ranking
+                } else if (rankingType == "AIRPORT" && ranking.airportId &&
+                           activeAirline.headquarterAirport &&
+                           ranking.airportId == activeAirline.headquarterAirport.airportId) {
+                    currentAirlineRanking = ranking
+                }
             }
         })
 
@@ -137,13 +142,13 @@ function updateRankingTable(rankingType, rankings) {
             if (hasPrize) {
                 currentAirlineRanking.reputationPrize = currentAirlineRanking.reputationPrize || 0
             }
-            rankingTable.append(getRankingRow(currentAirlineRanking)) //lastly append a row of current airline
+            rankingTable.append(getRankingRow(currentAirlineRanking, rankingType)) //lastly append a row of current airline
         }
 
     }
 }
 
-function getRankingRow(ranking) {
+function getRankingRow(ranking, rankingType) {
     var row = $("<div class='table-row'></div>")
     row.append("<div class='cell'>" + ranking.rank + "</div>")
     row.append("<div class='cell'>" + getMovementLabel(ranking.movement) + "</div>")
@@ -167,7 +172,10 @@ function getRankingRow(ranking) {
         var entry = getAirportSpan(ranking.airport1) + " ↔ " + getAirportSpan(ranking.airport2)
         row.append("<div class='cell'>" + entry + "</div>")
     }
-    row.append("<div class='cell' style='text-align: right;'>" + commaSeparateNumber(ranking.rankedValue) + "</div>")
+    var valueDisplay = commaSeparateNumber(ranking.rankedValue)
+    if (CURRENCY_TYPES.has(rankingType)) valueDisplay = '$' + valueDisplay
+    else if (PERCENTAGE_TYPES.has(rankingType)) valueDisplay = valueDisplay + '%'
+    row.append("<div class='cell' style='text-align: right;'>" + valueDisplay + "</div>")
 
     if (ranking.reputationPrize || ranking.reputationPrize === 0) {
         row.append("<div class='cell' style='text-align: right;'>" + getRankingImg(ranking.rank, true) + commaSeparateNumber(ranking.reputationPrize) + "</div>")
