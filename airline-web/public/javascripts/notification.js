@@ -9,7 +9,7 @@ function initNotificationDrawer() {
     })
 
     $(document).off('click.notification').on('click.notification', function(e) {
-        if ($('#notificationDrawer').is(':visible') && !$(e.target).closest('#notificationDrawer, #notificationBell, #notificationBellMobile').length) {
+        if (document.getElementById('notificationDrawer').matches(':popover-open') && !$(e.target).closest('#notificationDrawer, #notificationBell, #notificationBellMobile').length) {
             closeNotificationDrawer()
         }
     })
@@ -26,7 +26,8 @@ function initNotificationDrawer() {
 }
 
 function toggleNotificationDrawer() {
-    if ($('#notificationDrawer').is(':visible')) {
+    var drawer = document.getElementById('notificationDrawer')
+    if (drawer.matches(':popover-open')) {
         closeNotificationDrawer()
     } else {
         openNotificationDrawer()
@@ -35,11 +36,16 @@ function toggleNotificationDrawer() {
 
 function openNotificationDrawer() {
     loadNotifications()
-    $('#notificationDrawer').show()
+    var bell = document.getElementById('notificationBell')
+    var drawer = document.getElementById('notificationDrawer')
+    var rect = bell.getBoundingClientRect()
+    drawer.style.top = (rect.bottom + 8) + 'px'
+    drawer.style.left = (rect.left - 80) + 'px'
+    drawer.showPopover()
 }
 
 function closeNotificationDrawer() {
-    $('#notificationDrawer').hide()
+    document.getElementById('notificationDrawer').hidePopover()
 }
 
 function loadNotificationBadge() {
@@ -52,9 +58,9 @@ function loadNotificationBadge() {
             var count = data.count
             if (count > 0) {
                 var label = count > 99 ? '99+' : count
-                $('.notify-bubble').text(label).show()
+                $('#notificationBell .notify-bubble').text(label).show()
             } else {
-                $('.notify-bubble').hide()
+                $('#notificationBell .notify-bubble').hide()
             }
         },
         error: function(jqXHR, textStatus, errorThrown) {
@@ -76,9 +82,10 @@ function loadNotifications() {
                 $list.append('<div class="notification-empty">No notifications</div>')
                 return
             }
+            var expiredIds = []
             $.each(notifications, function(i, n) {
                 if (n.expiryCycle !== undefined && currentCycle && n.expiryCycle <= currentCycle) {
-                    deleteNotification(n.id, null)
+                    expiredIds.push(n.id)
                     return true
                 }
                 var $item = $('<div class="notification-item"></div>')
@@ -96,8 +103,11 @@ function loadNotifications() {
                 $item.append($del)
                 if (n.targetId) {
                     $item.addClass('clickable')
-                    ;(function(targetId) {
+                    ;(function(notifId, $row, targetId) {
                         $item.on('click', function() {
+                            if ($row.hasClass('unread')) {
+                                markNotificationRead(notifId, $row)
+                            }
                             closeNotificationDrawer()
                             if (/^\d+$/.test(targetId)) {
                                 navigateTo('/flights/' + targetId)
@@ -105,10 +115,22 @@ function loadNotifications() {
                                 navigateTo(targetId)
                             }
                         })
-                    })(n.targetId)
+                    })(n.id, $item, n.targetId)
+                } else {
+                    ;(function(notifId, $row) {
+                        $item.on('click', function() {
+                            if ($row.hasClass('unread')) {
+                                markNotificationRead(notifId, $row)
+                            }
+                        })
+                    })(n.id, $item)
                 }
                 $list.append($item)
             })
+            if ($list.children().length === 0) {
+                $list.append('<div class="notification-empty">No notifications</div>')
+            }
+            $.each(expiredIds, function(i, id) { deleteNotification(id, null) })
         },
         error: function(jqXHR, textStatus, errorThrown) {
             $list.append('<div class="notification-empty">Failed to load notifications</div>')
@@ -128,6 +150,20 @@ function getCategoryIcon(category) {
     }
 }
 
+function markNotificationRead(notifId, $item) {
+    if (!activeAirline) return
+    $.ajax({
+        type: 'POST',
+        url: '/airlines/' + activeAirline.id + '/notifications/' + notifId + '/read',
+        success: function() {
+            $item.removeClass('unread')
+            if ($('#notificationList .notification-item.unread').length === 0) {
+                $('#notificationBell .notify-bubble').hide()
+            }
+        }
+    })
+}
+
 function markAllNotificationsRead() {
     if (!activeAirline) return
     $.ajax({
@@ -136,7 +172,7 @@ function markAllNotificationsRead() {
         contentType: 'application/json; charset=utf-8',
         dataType: 'json',
         success: function() {
-            $('.notify-bubble').hide()
+            $('#notificationBell .notify-bubble').hide()
             $('#notificationList .notification-item').removeClass('unread')
         },
         error: function(jqXHR, textStatus, errorThrown) {
