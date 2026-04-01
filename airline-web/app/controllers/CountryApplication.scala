@@ -171,7 +171,7 @@ class CountryApplication @Inject()(cc: ControllerComponents) extends AbstractCon
         var partneredAirlinesJson = Json.arr()
         CountryAirlineTitle.getTopTitlesByCountry(countryCode).foreach {
           case countryAirlineTitle =>
-            val CountryAirlineTitle(country, airline, title, _) = countryAirlineTitle
+            val CountryAirlineTitle(country, airline, title) = countryAirlineTitle
             val share: Long = marketShares.airlineShares.getOrElse(airline.id, 0L)
             val relationship = AirlineCountryRelationship.getAirlineCountryRelationship(countryCode, airline).relationship
             title match {
@@ -184,9 +184,9 @@ class CountryApplication @Inject()(cc: ControllerComponents) extends AbstractCon
 
         var favoredAirlinesJson = Json.arr()
         CountryAirlineTitle.getNextInLineByCountry(countryCode).foreach { countryAirlineTitle =>
-          val CountryAirlineTitle(_, airline, _, score) = countryAirlineTitle
+          val CountryAirlineTitle(_, airline, _) = countryAirlineTitle
           val relationship = AirlineCountryRelationship.getAirlineCountryRelationship(countryCode, airline).relationship
-          favoredAirlinesJson = favoredAirlinesJson.append(Json.obj("airlineId" -> airline.id, "airlineName" -> airline.name, "score" -> score, "relationship" -> relationship))
+          favoredAirlinesJson = favoredAirlinesJson.append(Json.obj("airlineId" -> airline.id, "airlineName" -> airline.name, "relationship" -> relationship))
         }
 
         jsonObject = jsonObject + ("nationalAirlines" -> nationalAirlinesJson) + ("partneredAirlines" -> partneredAirlinesJson) + ("favoredAirlines" -> favoredAirlinesJson)

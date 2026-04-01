@@ -6,7 +6,7 @@ import com.github.benmanes.caffeine.cache.{CacheLoader, Caffeine, LoadingCache}
 import com.patson.data.{CountrySource, CycleSource, ManagerSource}
 import com.patson.util.{AirlineCache, CountryCache}
 
-case class CountryAirlineTitle(country : Country, airline : Airline, title : Title.Value, score: Int = 0) {
+case class CountryAirlineTitle(country : Country, airline : Airline, title : Title.Value) {
 
   lazy val loyaltyBonus : Int = {
     val ratioToModelPower = country.airportPopulation * country.income.toDouble / Computation.MODEL_COUNTRY_POWER
@@ -142,8 +142,8 @@ object CountryAirlineTitle {
       CountryAirlineTitle(country, airline, Title.PARTNERED_AIRLINE)
     }
 
-    val nextInLine = sortedOthers.drop(partneredQuota).take(5).map { case (airline, score) =>
-      CountryAirlineTitle(country, airline, Title.PRIVILEGED_AIRLINE, score.toInt)
+    val nextInLine = sortedOthers.drop(partneredQuota).take(5).map { case (airline, _) =>
+      CountryAirlineTitle(country, airline, Title.PRIVILEGED_AIRLINE)
     }
 
     CountryTitles(topTitles, nextInLine)

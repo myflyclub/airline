@@ -208,7 +208,7 @@ async function loadCountryDetails(countryCode) {
 
             renderTitleAirlineTable(".favoredAirlines", country.favoredAirlines,
                 "<img class='px-1' src='/assets/images/icons/medal-silver-premium.png' style='vertical-align:middle;'>",
-                function(a) { return "score: " + a.score + " | " + a.relationship + " relationship" },
+                function(a) { return a.relationship + " relationship" },
                 null, null)
 
             $("#countryCanvas .countryDetailsChampion").empty()
