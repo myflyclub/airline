@@ -210,7 +210,7 @@ object DemandGenerator {
       val eliteDemand = generateEliteDemand(fromAirport, destinationList).getOrElse(List.empty)
       val eliteDemandChunks = eliteDemand.flatMap {
         case (toAirport, (passengerType, demand)) =>
-          generateChunksForPassengerType(demand, fromAirport, toAirport, passengerType, flightPreferencesPool, airportStats, cycle, cyclePhaseLength) //pass empty map to bypass travelRate and randomizer
+          generateChunksForPassengerType(demand, fromAirport, toAirport, passengerType, flightPreferencesPool, Map.empty, cycle, cyclePhaseLength) //pass empty map to bypass travelRate and randomizer
       }
 
       // Return all chunks originating from `fromAirport`
