@@ -30,6 +30,34 @@ const ChartUtils = {
             config.options.plugins.legend.position = 'bottom';
         }
 
+        // Determine a stable key for localStorage (only if we have an ID)
+        const storageKey = typeof containerId === 'string' ? containerId
+            : (container && container.id ? container.id : null);
+
+        // Wrap legend onClick to persist dataset hidden state
+        if (storageKey && config.options.plugins.legend.display !== false) {
+            const originalOnClick = config.options.plugins.legend.onClick;
+            config.options.plugins.legend.onClick = function(e, legendItem, legend) {
+                if (typeof originalOnClick === 'function') {
+                    originalOnClick.call(this, e, legendItem, legend);
+                } else {
+                    const index = legendItem.datasetIndex;
+                    const ci = legend.chart;
+                    if (ci.isDatasetVisible(index)) {
+                        ci.hide(index);
+                    } else {
+                        ci.show(index);
+                    }
+                }
+                const chart = legend.chart;
+                chart.data.datasets.forEach((dataset, i) => {
+                    const meta = chart.getDatasetMeta(i);
+                    const key = 'chartDataset_' + storageKey + '_' + dataset.label;
+                    try { localStorage.setItem(key, meta.hidden ? '1' : '0'); } catch(e) {}
+                });
+            };
+        }
+
         // Create fresh canvas
         const canvas = document.createElement('canvas');
         container.innerHTML = '';
@@ -38,6 +66,26 @@ const ChartUtils = {
         // Create and store chart
         const chart = new Chart(canvas, config);
         container._chart = chart;
+
+        // Restore saved dataset states
+        if (storageKey) {
+            let needsUpdate = false;
+            chart.data.datasets.forEach((dataset, i) => {
+                const key = 'chartDataset_' + storageKey + '_' + dataset.label;
+                try {
+                    const val = localStorage.getItem(key);
+                    if (val !== null) {
+                        const shouldHide = val === '1';
+                        const meta = chart.getDatasetMeta(i);
+                        if (meta.hidden !== shouldHide) {
+                            meta.hidden = shouldHide;
+                            needsUpdate = true;
+                        }
+                    }
+                } catch(e) {}
+            });
+            if (needsUpdate) chart.update('none');
+        }
 
         this.applyTheme(chart);
         return chart;
@@ -150,6 +198,7 @@ function preparePieData(dataSource, keyName = null, valueName = null, thresholdF
     const labels = [];
     const data = [];
     const backgroundColors = [];
+    if (!dataSource) return { labels, data, backgroundColors };
 
     // compute total
     let totalValue = 0;
@@ -281,6 +330,24 @@ function createCustomLinkLegend(charts) {
         });
     });
 
+    // Apply any saved localStorage states to charts before rendering the legend
+    const chartsToUpdate = new Set();
+    baseClassMap.forEach((props, baseClass) => {
+        const saved = loadLegendState(baseClass);
+        if (saved !== null && saved !== props.initialHidden) {
+            props.initialHidden = saved;
+            charts.forEach(chart => {
+                chart.data.datasets.forEach((dataset, i) => {
+                    if (getBaseClass(dataset.label) === baseClass) {
+                        const meta = chart.getDatasetMeta(i);
+                        if (meta && meta.hidden !== saved) { meta.hidden = saved; chartsToUpdate.add(chart); }
+                    }
+                });
+            });
+        }
+    });
+    chartsToUpdate.forEach(chart => chart.update('none'));
+
     // Create a legend item for each unique base class
     baseClassMap.forEach((props, baseClass) => {
         const li = document.createElement('li');
@@ -336,14 +403,27 @@ function createCustomLinkLegend(charts) {
                 }
             });
 
-            // 3. Update the legend item's opacity
+            // 3. Update the legend item's opacity and persist the choice
             li.style.opacity = setNewStateToHidden ? '0.5' : '1';
+            saveLegendState(baseClass, setNewStateToHidden);
         });
 
         li.appendChild(box);
         li.appendChild(text);
         legendContainer.appendChild(li);
     });
+}
+
+// Legend state persistence helpers
+const LEGEND_STORAGE_PREFIX = 'chartLegend_';
+function saveLegendState(baseClass, hidden) {
+    try { localStorage.setItem(LEGEND_STORAGE_PREFIX + baseClass, hidden ? '1' : '0'); } catch (e) { /* ignore */ }
+}
+function loadLegendState(baseClass) {
+    try {
+        const val = localStorage.getItem(LEGEND_STORAGE_PREFIX + baseClass);
+        return val === null ? null : val === '1';
+    } catch (e) { return null; }
 }
 
 // Chart plotting functions
