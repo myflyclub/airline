@@ -172,8 +172,8 @@ const lightTheme = createTheme('light');
  * Initialize styles from localStorage or default.
  */
 export function initStyles() {
-    const theme = localStorage.getItem("theme");
-    state.currentStyles = theme === 'dark' ? 'dark' : 'light';
+    const theme = localStorage.getItem("themeMode");
+    state.currentStyles = theme === 'dark' ? 'dark' : 'dark';
 }
 
 /**
