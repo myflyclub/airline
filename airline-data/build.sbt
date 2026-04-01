@@ -18,7 +18,3 @@ libraryDependencies ++= Seq(
   "org.apache.commons" % "commons-math3" % "3.6.1",
   "com.mchange" % "c3p0" % "0.10.1",
   "com.github.ben-manes.caffeine" % "caffeine" % "3.2.0")
-
-  
-  
-  

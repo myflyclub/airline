@@ -10,36 +10,22 @@ import com.mchange.v2.c3p0.ComboPooledDataSource
 object Meta {
   Class.forName(DB_DRIVER)
   val dataSource = new ComboPooledDataSource()
-  //    val properties = new Properties()
-  //    properties.put("user", DATABASE_USER);
-  //    properties.put("password", "admin");
-  //DriverManager.getConnection(DATABASE_CONNECTION, properties);    
-  //mysql end
 
-  //dataSource.setProperties(properties)
   dataSource.setUser(DATABASE_USER)
   dataSource.setPassword(DATABASE_PASSWORD)
   dataSource.setJdbcUrl(DATABASE_CONNECTION)
-  dataSource.setMaxPoolSize(100)
+  dataSource.setMaxPoolSize(20)
+  dataSource.setIdleConnectionTestPeriod(60)
+  dataSource.setMaxIdleTime(300)
+  dataSource.setMaxConnectionAge(3600)
+  dataSource.setUnreturnedConnectionTimeout(60) // Forcibly reclaim leaked connections after 60s
+  dataSource.setDebugUnreturnedConnectionStackTraces(true) // Logs EXACTLY where the leak happened
   dataSource.setTestConnectionOnCheckout(true)
   dataSource.setPreferredTestQuery("SELECT 1")
   dataSource.setCheckoutTimeout(30000)
 
-  def getConnection(enforceForeignKey: Boolean = true) = {
-
-    //sqlite start
-    //    val config = new SQLiteConfig();
-    //    if (enforceForeignKey) {
-    //      config.enforceForeignKeys(true);
-    //    }
-    //    val properties = config.toProperties()
-    //properties.put("password", "");
-    //sqlite end
-
-    //mysql start
-
+  def getConnection(): java.sql.Connection = {
     dataSource.getConnection()
-
   }
 
 
