@@ -2043,6 +2043,7 @@ function promptSwapModels() {
     $('#swapAirplaneModal #swapError').hide().text('');
     $('#swapAirplaneModal .cost').text('-');
     $('#swapAirplaneModal .delivery').text('-');
+    $('#swapAirplaneModal .apCost').text('-');
 
     $('#swapAirplaneModal').fadeIn(200)
 
@@ -2185,8 +2186,14 @@ function processSwapModels(isEstimate = true) {
                     $('#swapAirplaneModal #frequencyCutsRows').empty();
                 }
 
+                const apCost = result.actionPointCost || 0;
+                const availableAP = activeAirline.actionPoints != null ? activeAirline.actionPoints : 0;
+                $('#swapAirplaneModal .apCost').text("⚡" + apCost).css('color', availableAP < apCost ? 'red' : '');
+
                 if (costDiff > activeAirline.balance) {
                      disableButton($('#swapAirplaneModal .add'), "Not enough cash");
+                } else if (apCost > availableAP) {
+                     disableButton($('#swapAirplaneModal .add'), "Not enough action points (⚡" + apCost + " required)");
                 } else {
                      enableButton($('#swapAirplaneModal .add'));
                 }
@@ -2195,6 +2202,10 @@ function processSwapModels(isEstimate = true) {
                 closeModal($('#swapAirplaneModal'));
                 // Refresh the airplane canvas to show updated models
                 showAirplaneCanvas();
+                if (result.actionPointCost != null) {
+                    activeAirline.actionPoints = (activeAirline.actionPoints || 0) - result.actionPointCost;
+                    refreshTopBar(activeAirline);
+                }
             }
         },
         error: function(jqXHR, textStatus, errorThrown) {

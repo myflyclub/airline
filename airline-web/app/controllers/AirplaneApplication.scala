@@ -783,8 +783,12 @@ class AirplaneApplication @Inject()(cc: ControllerComponents) extends AbstractCo
                 if (validationError.isDefined) {
                   BadRequest(validationError.get)
                 } else {
+                  // Calculate action point cost: 1 per 500 total capacity or 1 per 5 aircraft, whichever is more, at least 1
+                  val totalCapacity = airplanesToSwap.map(_.model.capacity).sum
+                  val apCost = Math.max(Math.max(totalCapacity / 500, airplanesToSwap.length / 5), 1)
+
                   // Calculate total sell value
-                  val totalSellValue: Long = airplanesToSwap.map(airplane => 
+                  val totalSellValue: Long = airplanesToSwap.map(airplane =>
                     Computation.calculateAirplaneSellValue(airplane).toLong
                   ).sum
 
@@ -846,6 +850,7 @@ class AirplaneApplication @Inject()(cc: ControllerComponents) extends AbstractCo
                       "sellValue" -> totalSellValue,
                       "buyCost" -> totalBuyCost,
                       "costDifference" -> costDifference,
+                      "actionPointCost" -> apCost,
                       "isEstimate" -> true,
                       "envelope" -> Json.obj(
                         "maxDistance" -> maxDistance,
@@ -857,6 +862,8 @@ class AirplaneApplication @Inject()(cc: ControllerComponents) extends AbstractCo
                     ))
                   } else if (request.user.getBalance() < (totalBuyCost - totalSellValue)) {
                     BadRequest(s"Insufficient balance to perform swap. Required: ${totalBuyCost - totalSellValue}, available: ${request.user.getBalance()}")
+                  } else if (request.user.getActionPoints() < apCost) {
+                    BadRequest(s"Insufficient action points to perform swap. Required: $apCost, available: ${request.user.getActionPoints().toInt}")
                   } else {
                     // Process the actual swap using batch operations
                     val airplanesToDelete = scala.collection.mutable.ListBuffer[Int]()
@@ -959,11 +966,14 @@ class AirplaneApplication @Inject()(cc: ControllerComponents) extends AbstractCo
                         }
                       }
 
+                      AirlineSource.adjustAirlineActionPoints(request.user, -apCost.toDouble)
+
                       Ok(Json.obj(
                         "swappedCount" -> airplanesToSwap.length,
                         "sellValue" -> totalSellValue,
                         "buyCost" -> totalBuyCost,
                         "netCost" -> netCost,
+                        "actionPointCost" -> apCost,
                         "newAirplanes" -> Json.toJson(newAirplanesToCreate.toList)
                       ))
                     }
