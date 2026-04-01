@@ -31,7 +31,7 @@ object Meta {
 
 
   def createSchema() {
-    val connection = getConnection(false)
+    val connection = getConnection()
     var statement: PreparedStatement = null
 
     statement = connection.prepareStatement("SET FOREIGN_KEY_CHECKS = 0")
@@ -1929,7 +1929,7 @@ object Meta {
   }
 
   def createMissedDemandTableIfNotExists(): Unit = {
-    val connection = getConnection(false)
+    val connection = getConnection()
     try {
       val stmt = connection.prepareStatement(
         "CREATE TABLE IF NOT EXISTS " + PASSENGER_MISSED_DEMAND_TABLE + " (" +

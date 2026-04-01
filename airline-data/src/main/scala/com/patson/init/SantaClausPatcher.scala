@@ -26,8 +26,8 @@ object SantaClausPatcher extends App {
   dataSource.setUser(DATABASE_USER)
   dataSource.setPassword(DATABASE_PASSWORD)
   dataSource.setJdbcUrl(DATABASE_CONNECTION)
-  dataSource.setMaxPoolSize(100)
-  val connection = getConnection(false)
+  dataSource.setMaxPoolSize(10)
+  val connection = getConnection()
   createSchema(connection)
   connection.close
 
