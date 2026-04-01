@@ -22,12 +22,12 @@
                 <div id="notificationBell" class="clickable relative pr-4" title="Notifications">
                     <p style="font-size: 13px;" class="currentAirline label font-display"></p>
                     <span class="notify-bubble" id="notificationBadge" style="display:none;"></span>
-                    <span class="notify-bubble" id="notificationBadge" style="display:none;"></span>
-                    <div id="notificationDrawer" class="notification-drawer" style="display:none;">
+                    <div id="notificationDrawer" class="notification-drawer" popover="manual">
                         <div class="drawer-header">
                             Notifications
-                            <span class="mark-read-link">Mark all read</span>/
-                            <span class="delete-read-link">Delete all read</span>
+                            <span class="mark-read-link ml-auto pr-1">Mark all read</span>
+                            <span class="opacity-30">/</span>
+                            <span class="delete-read-link pl-1">Delete all read</span>
                         </div>
                         <div id="notificationList"></div>
                     </div>

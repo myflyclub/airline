@@ -179,7 +179,7 @@
 	margin: 0 0 0 80px;
 }
 
-  .notify-bubble {
+.notify-bubble {
     position: absolute;
     top: -8px;
     right: 1px;
@@ -187,6 +187,6 @@
     background-color: green;
     color: white;
     border-radius: 50%;
-    box-shadow: 1px 1px 1px gray;
+    box-shadow: 2px 1px 1px #000000ab;
     display: none;
-  }
+}

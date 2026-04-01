@@ -255,7 +255,7 @@ object PassengerSimulation {
     PassengerConsumptionResult(collapsedMap, missedMap, worldStatistics)
   }
 
-  val LINK_COST_TOLERANCE_FACTOR = 1.0 //used by computePassengerSatisfaction
+  val LINK_COST_TOLERANCE_FACTOR = Computation.LINK_COST_TOLERANCE_FACTOR //used by computePassengerSatisfaction
   val LINK_DISTANCE_TOLERANCE_FACTOR = 1.6
   val ROUTE_DISTANCE_TOLERANCE_FACTOR = 3.25
 

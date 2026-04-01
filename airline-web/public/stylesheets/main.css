@@ -528,7 +528,9 @@ li.row, div.table-row {
 }
 .sheetOptions .cell:hover:not(.selected) {
     background: var(--table-header-selected-background);
-    color: #ffffff;
+}
+.sheetOptions .cell:hover:not(.selected) a {
+    color: var(--table-selected-color);
 }
 .sheet-frame {
     width: 100%;
@@ -622,7 +624,7 @@ li.row, div.table-row {
     z-index: 2;
 }
 #topBar > div {
-    background-color: color-mix(in srgb, var(--background-2) 75%, transparent);
+    background: var(--background-1);
 }
 #topBar * {
     pointer-events: auto;
@@ -977,9 +979,6 @@ a:focus, button:focus {
     border-color: var(--button-hover-border);
 }
 .disabled {
-    color: var(--table-header-color) !important;
-    pointer-events: none !important;
-    opacity: 0.4 !important;
 }
 
 .button.small {
@@ -1804,21 +1803,19 @@ html[data-theme="dark"] [title="Close"] > span {
    ======================================== */
 
 [popover] {
-    background: black;
-    color: white;
-    font-weight: 400;
+    color: var(--text-color);
+    background: var(--background-1, #1a1a2e);
+    border: 1px solid var(--border-color, #444);
+    border-radius: 6px;
+    overflow-y: auto;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
     padding: 1rem 1.5rem;
-    border-radius: 1rem;
-    max-width: 20ch;
-    line-height: 1.4;
-    top: 2rem;
-    margin: 0 auto;
 }
 [popover]:popover-open {
     translate: 0 0;
 }
 [popover] {
-    transition: translate 0.7s ease-out, display 0.7s ease-out allow-discrete;
+    transition: translate 0.2s ease-out, display 0.2s ease-out allow-discrete;
     translate: 0 -22rem;
 }
 
@@ -2415,14 +2412,14 @@ i, .italic {
    Utility Classes - Sizing
    ======================================== */
 
-.h-1 { height: 4px; }
-.h-2 { height: 8px; }
-.h-3 { height: 12px; }
-.h-4 { height: 16px; }
-.h-5 { height: 20px; }
-.h-6 { height: 24px; }
-.h-7 { height: 28px; }
-.h-8 { height: 32px; }
+.h-1 { height: 4px !important; }
+.h-2 { height: 8px !important; }
+.h-3 { height: 12px !important; }
+.h-4 { height: 16px !important; }
+.h-5 { height: 20px !important; }
+.h-6 { height: 24px !important; }
+.h-7 { height: 28px !important; }
+.h-8 { height: 32px !important; }
 .w-56 {width: 56px;}
 .w-68 {width: 68px;}
 .min-w-40 { min-width: 10rem; }

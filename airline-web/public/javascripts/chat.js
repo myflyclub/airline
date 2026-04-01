@@ -63,7 +63,7 @@ function initChat() {
             $('#chat-box .chat-history.tab-content ul li.message').remove()
             for (var i = 0; i < r_msg.messages.length; i++) pushMessage(r_msg.messages[i])
             if ($('.chat').is(':hidden') && r_msg.unreadMessageCount > 0) {
-                $('.notify-bubble').show(400).text(r_msg.unreadMessageCount)
+                $('#live-chat .notify-bubble').show(400).text(r_msg.unreadMessageCount)
             }
             adjustScroll()
         } else if (r_msg.type === 'previous') {
@@ -76,7 +76,7 @@ function initChat() {
             var atBottom = Math.round($activeHistory[0].scrollHeight - $activeHistory[0].scrollTop) == $activeHistory[0].clientHeight
             pushMessage(r_msg)
             if ($('.chat').is(':hidden')) {
-                $('.notify-bubble').show(400).text(parseInt($('.notify-bubble').text()) + 1)
+                $('#live-chat .notify-bubble').show(400).text(parseInt($('#live-chat .notify-bubble').text()) + 1)
             }
             if (atBottom) adjustScroll()
         }

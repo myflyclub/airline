@@ -1,6 +1,5 @@
 package com.patson.model
 
-import com.patson.PassengerSimulation.{LINK_COST_TOLERANCE_FACTOR, countryOpenness}
 import com.patson.model.airplane._
 import com.patson.data.{AirlineSource, AirplaneSource, AirportSource, AllianceSource, BankSource, CountrySource, CycleSource, OilSource}
 import com.patson.Util
@@ -273,6 +272,7 @@ def constructAffinityText(fromZone : String, toZone : String, fromCountry : Stri
     val overall = airplanes + bases + loans + oilContracts + existingBalance
   }
 
+  val LINK_COST_TOLERANCE_FACTOR = 1.0
   val SATISFACTION_MAX_PRICE_RATIO_THRESHOLD: Double = 0.7 //at 100% satisfaction is <= this threshold
   private val SATISFACTION_MIN_PRICE_RATIO_THRESHOLD = LINK_COST_TOLERANCE_FACTOR //0% satisfaction >= this threshold
 

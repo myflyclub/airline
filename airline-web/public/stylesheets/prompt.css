@@ -24,17 +24,12 @@
 }
 
 .notification-drawer {
-    position: absolute;
-    left: -80px;
-    top: calc(100% + 8px);
+    position: fixed;
+    inset: unset;
+    margin: 0;
+    padding: 0;
     width: 380px;
     max-height: 420px;
-    background: var(--modal-bg, #1a1a2e);
-    border: 1px solid var(--border-color, #444);
-    border-radius: 6px;
-    z-index: 1000;
-    overflow-y: auto;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
 }
 
 .drawer-header {
@@ -61,7 +56,7 @@
 
 .notification-item {
     padding: 8px 14px;
-    border-bottom: 1px solid rgba(255,255,255,0.08);
+    border-bottom: var(--button-border);
     font-size: 13px;
     display: flex;
     gap: 8px;
@@ -70,7 +65,6 @@
 
 .notification-item.unread {
     font-weight: bold;
-    background: rgba(255,255,255,0.05);
 }
 
 .notification-icon {
@@ -86,7 +80,7 @@
 
 .notification-empty {
     padding: 16px 14px;
-    color: rgba(255,255,255,0.5);
+    color: var(--text-color);
     font-size: 13px;
     text-align: center;
 }

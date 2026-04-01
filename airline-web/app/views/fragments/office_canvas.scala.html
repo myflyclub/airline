@@ -328,12 +328,19 @@
                                         <p>These are the key metrics investors look at when buying / selling your stock.</p>
                                     </div>
 									<div class="item airlineTypeHide">
-										<div class="i-label">Earnings per share<div class="tooltip">
+										<div class="i-label">Earnings / Share<div class="tooltip">
                                             <img src="/assets/images/icons/information.svg">
                                             <div id="tooltip_stock_eps" class="tooltiptext below" style="width: 280px;"></div>
                                         </div></div>
 										<div class="i-value eps"></div>
 									</div>
+                                    <div class="item airlineTypeHide">
+                                        <div class="i-label">Dividends / Share<div class="tooltip">
+                                            <img src="/assets/images/icons/information.svg">
+                                            <div id="tooltip_stock_dividends" class="tooltiptext below" style="width: 280px;"></div>
+                                        </div></div>
+                                        <div class="i-value">$<span class="dividends_per_share"></span></div>
+                                    </div>
                                     <div class="item">
                                         <div class="i-label">Profit Available<br>Seat km<div class="tooltip">
                                             <img src="/assets/images/icons/information.svg">
@@ -365,15 +372,6 @@
 										</div></div>
 										<div class="i-value"><span class="on_time"></span>%</div>
 									</div>
-                                    <div class="item airlineTypeHide">
-                                        <div class="i-label">Dividends / Share<div class="tooltip">
-                                            <img src="/assets/images/icons/information.svg">
-                                            <div class="tooltiptext below" style="width: 280px;">
-                                                <p>Weekly dividends paid per share. Investors reward consistent dividend payments.</p>
-                                            </div>
-                                        </div></div>
-                                        <div class="i-value">$<span class="dividends_per_share"></span></div>
-                                    </div>
                                     <div class="item">
                                         <div class="i-label">Leading Airline<div class="tooltip">
                                             <img src="/assets/images/icons/information.svg">
@@ -538,15 +536,15 @@
 							<h4>Championed Countries</h4>
 							<div class="table data" style="width: 100%;">
 								<div class="table-header">
-									<div class="cell" style="width: 5%; min-width: 20px;">&nbsp;</div>
-									<div class="cell" style="width: 95%">Country</div>
+									<div class="cell" style="width: 10%; min-width: 20px;">&nbsp;</div>
+									<div class="cell" style="width: 90%">Country</div>
 								</div>
 							</div>
 							<div style="max-height: 500px; overflow: auto;">
 								<div class="table data" id="championedCountriesList" style="width: 100%;">
 									<div class="table-header">
-										<div class="cell" style="width: 5%; min-width: 20px; border-bottom: none;"></div>
-										<div class="cell" style="width: 95%; border-bottom: none;"></div>
+										<div class="cell" style="width: 10%; border-bottom: none;"></div>
+										<div class="cell" style="width: 90%; border-bottom: none;"></div>
 									</div>
 								</div>
 							</div>
@@ -556,8 +554,8 @@
 							<h4>Championed Airports</h4>
 							<div class="table data" style="width: 100%;">
 								<div class="table-header">
-									<div class="cell" style="width: 5%">&nbsp;</div>
-									<div class="cell" style="width: 55%">Airport</div>
+									<div class="cell" style="width: 8%">&nbsp;</div>
+									<div class="cell" style="width: 52%">Airport</div>
 									<div class="cell" style="width: 20%">Loyalists</div>
 									<div class="cell" style="width: 20%">Reputation Bonus</div>
 								</div>
@@ -565,10 +563,10 @@
 							<div style="max-height: 250px; overflow: auto;">
 								<div class="table data" id="championedAirportsList" style="width: 100%;">
 									<div class="table-header">
-										<div class="cell" style="width: 5%; border-bottom: none;"></div>
-										<div class="cell" style="width: 60%; border-bottom: none;"></div>
+										<div class="cell" style="width: 8%; border-bottom: none;"></div>
+										<div class="cell" style="width: 52%; border-bottom: none;"></div>
 										<div class="cell" style="width: 20%; border-bottom: none;"></div>
-										<div class="cell" style="width: 15%; border-bottom: none;"></div>
+										<div class="cell" style="width: 20%; border-bottom: none;"></div>
 									</div>
 								</div>
 							</div>

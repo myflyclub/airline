@@ -15,8 +15,8 @@ $('#live-chat header span i').on('click', function() {
 				$("#live-chat h4").show();
 				$(".chatOption").show();
 				
-				$('.notify-bubble').hide();
-				$('.notify-bubble').text("0");
+				$('#live-chat .notify-bubble').hide();
+				$('#live-chat .notify-bubble').text("0");
 				var scroller = document.getElementById("chatBox-1");
 				scroller.scrollTop = scroller.scrollHeight;
 				var scroller = document.getElementById("chatBox-2");

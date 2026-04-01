@@ -311,7 +311,7 @@ const Alliance = (() => {
                                 } else if (entry.acceptPrompt) {
                                     const icon = document.createElement('img');
                                     icon.src = '/assets/images/icons/tick.svg';
-                                    icon.className = 'img-button';
+                                    icon.className = 'svg img-button';
                                     icon.title = 'Accept Member';
                                     icon.addEventListener('click', e => {
                                         e.stopPropagation();
@@ -603,8 +603,8 @@ const Alliance = (() => {
                     ${entry.name}
                     ${sloganHtml}
                 </div>
-                <div class="cell" style="width:9%;" align="right">${rep}</div>
                 <div class="cell" style="width:9%;" align="right">${commaSeparateNumber(entry.championPoints)}</div>
+                <div class="cell" style="width:9%;" align="right">${rep}</div>
                 <div class="cell" style="width:20%;" align="right">$${commaSeparateNumber(entry.combinedMarketCap)}</div>
                 <div class="cell" style="width:11%;" align="right">${commaSeparateNumber(entry.elitePax)}</div>
                 <div class="cell" style="width:13%;" align="right">${commaSeparateNumber(entry.touristPax)}</div>

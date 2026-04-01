@@ -111,8 +111,8 @@ function renderManagerAssignment(options) {
     }
 
     const assignedLen = Array.isArray(managers) ? managers.length : (count || 0)
-    const $row = $('<div>').css({ display:'flex', alignItems:'center', gap:'4px', flexWrap:'wrap' })
-    const $icons = $('<div>').css({ display:'flex', alignItems:'center', flexWrap:'wrap', gap:'2px' })
+    const $row = $('<div>').addClass("flex-align-center")
+    const $icons = $('<div>').addClass("flex-align-center flex-wrap")
 
     if (Array.isArray(managers) && managers.length > 0) {
         managers.forEach(m => $icons.append(createManagerIcon(_managerColor(m), _managerTooltip(m))))
@@ -127,8 +127,7 @@ function renderManagerAssignment(options) {
     if (onAdd) {
         const atMax = maxManagers != null && assignedLen >= maxManagers
         const noAvail = availableCount <= 0
-        const $btn = $('<img class="img-button svg svg-hover-green svg-monochrome" src="/assets/images/icons/plus.svg">')
-            .css({ width:'14px', height:'14px' })
+        const $btn = $('<img class="ml-auto p-2 img-button svg svg-hover-green svg-monochrome" src="/assets/images/icons/plus.svg">')
             .attr('title', atMax ? 'Maximum managers reached' : noAvail ? 'No managers available' : 'Assign manager')
         if (atMax || noAvail) $btn.css('opacity', '0.35')
         else $btn.css('cursor','pointer').on('click', onAdd)
@@ -136,8 +135,8 @@ function renderManagerAssignment(options) {
     }
 
     if (onRemove) {
-        const $btn = $('<img class="img-button svg svg-hover-green svg-monochrome" src="/assets/images/icons/minus.svg">')
-            .css({ width:'14px', height:'14px' }).attr('title', 'Remove manager')
+        const $btn = $('<img class="p-2 img-button svg svg-hover-green svg-monochrome" src="/assets/images/icons/minus.svg">')
+            .attr('title', 'Remove manager')
         if (assignedLen <= 0) $btn.css('opacity', '0.35')
         else $btn.css('cursor','pointer').on('click', onRemove)
         $row.append($btn)

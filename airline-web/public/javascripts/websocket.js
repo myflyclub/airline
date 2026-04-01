@@ -8,7 +8,7 @@ var websocket
 var selectedAirlineId
 var reconnectAttempts = 0
 var cycleDurationMs = 0
-var maxReconnectDelay = 30000
+var maxReconnectDelay = 60000
 var connectionOpened = false
 
 function checkWebSocket(airlineId) {
@@ -39,7 +39,7 @@ function connectWebSocket(airlineId) {
     }
     websocket.onclose = function() {
         if (selectedAirlineId && connectionOpened) {
-            var delay = Math.min(1000 * Math.pow(2, reconnectAttempts), maxReconnectDelay)
+            var delay = Math.min(5000 * Math.pow(2, reconnectAttempts), maxReconnectDelay)
             reconnectAttempts++
             setTimeout(function() { connectWebSocket(selectedAirlineId) }, delay)
         } else if (!connectionOpened) {
