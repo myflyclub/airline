@@ -11,9 +11,11 @@ object ConsumptionHistorySource {
   var MAX_CONSUMPTION_HISTORY_WEEK = 30
 
   val updateConsumptions = (consumptions : Map[(PassengerGroup, Airport, Route), Int]) => {
+    // Phase 1: fill temp tables. Uses its own connection so that c3p0's
+    // unreturnedConnectionTimeout cannot reclaim this connection mid-rotation
+    // and leave the base table renamed away with no replacement.
     Using.resource(Meta.getConnection()) { connection =>
       connection.setAutoCommit(false)
-      // Drop and recreate temp tables before the batch insert
       Using.resource(connection.createStatement()) { ddlStatement =>
         ddlStatement.executeUpdate("DROP TABLE IF EXISTS " + PASSENGER_ROUTE_HISTORY_TABLE_TEMP)
         ddlStatement.executeUpdate("DROP TABLE IF EXISTS " + PASSENGER_LINK_HISTORY_TABLE_TEMP)
@@ -66,46 +68,45 @@ object ConsumptionHistorySource {
           passengerLinkHistoryStatement.executeBatch()
         }
       }
-
-      //rotate the tables
-      println("Rotating tables")
-      Using.resource(connection.createStatement()) { rotateStatement =>
-        for (i <- MAX_CONSUMPTION_HISTORY_WEEK to 1 by -1) {
-          val fromTableName =
-            if (i == 1) {
-              PASSENGER_ROUTE_HISTORY_TABLE
-            } else {
-              PASSENGER_ROUTE_HISTORY_TABLE + "_" + (i - 1)
-            }
-          val toTableName = PASSENGER_ROUTE_HISTORY_TABLE + "_" + i
-
-          if (Meta.isTableExist(connection, fromTableName)) {
-            rotateStatement.executeUpdate(s"DROP TABLE IF EXISTS $toTableName")
-            rotateStatement.executeUpdate(s"ALTER TABLE $fromTableName RENAME $toTableName")
-          }
-        }
-
-        for (i <- MAX_CONSUMPTION_HISTORY_WEEK to 1 by -1) {
-          val fromTableName =
-            if (i == 1) {
-              PASSENGER_LINK_HISTORY_TABLE
-            } else {
-              PASSENGER_LINK_HISTORY_TABLE + "_" + (i - 1)
-            }
-          val toTableName = PASSENGER_LINK_HISTORY_TABLE + "_" + i
-
-          if (Meta.isTableExist(connection, fromTableName)) {
-            rotateStatement.executeUpdate(s"DROP TABLE IF EXISTS $toTableName")
-            rotateStatement.executeUpdate(s"ALTER TABLE $fromTableName RENAME $toTableName")
-          }
-        }
-
-        rotateStatement.executeUpdate("DROP TABLE IF EXISTS " + PASSENGER_ROUTE_HISTORY_TABLE)
-        rotateStatement.executeUpdate("ALTER TABLE " + PASSENGER_ROUTE_HISTORY_TABLE_TEMP + " RENAME " + PASSENGER_ROUTE_HISTORY_TABLE)
-        rotateStatement.executeUpdate("DROP TABLE IF EXISTS " + PASSENGER_LINK_HISTORY_TABLE)
-        rotateStatement.executeUpdate("ALTER TABLE " + PASSENGER_LINK_HISTORY_TABLE_TEMP + " RENAME " + PASSENGER_LINK_HISTORY_TABLE)
-      }
       connection.commit()
+    }
+
+    // Phase 2: rotate tables using a fresh connection. DDL-only, completes in seconds,
+    // so c3p0 timeout cannot reclaim it mid-rotation.
+    println("Rotating tables")
+    Using.resource(Meta.getConnection()) { connection =>
+      Using.resource(connection.createStatement()) { rotateStatement =>
+        // Rotate _N-1 → _N for i >= 2 (skip i=1; base→_1 is handled atomically below)
+        for (i <- MAX_CONSUMPTION_HISTORY_WEEK to 2 by -1) {
+          val fromTableName = PASSENGER_ROUTE_HISTORY_TABLE + "_" + (i - 1)
+          val toTableName = PASSENGER_ROUTE_HISTORY_TABLE + "_" + i
+          if (Meta.isTableExist(connection, fromTableName)) {
+            rotateStatement.executeUpdate(s"DROP TABLE IF EXISTS $toTableName")
+            rotateStatement.executeUpdate(s"RENAME TABLE $fromTableName TO $toTableName")
+          }
+        }
+
+        for (i <- MAX_CONSUMPTION_HISTORY_WEEK to 2 by -1) {
+          val fromTableName = PASSENGER_LINK_HISTORY_TABLE + "_" + (i - 1)
+          val toTableName = PASSENGER_LINK_HISTORY_TABLE + "_" + i
+          if (Meta.isTableExist(connection, fromTableName)) {
+            rotateStatement.executeUpdate(s"DROP TABLE IF EXISTS $toTableName")
+            rotateStatement.executeUpdate(s"RENAME TABLE $fromTableName TO $toTableName")
+          }
+        }
+
+        // Atomically swap base→_1 and temp→base in a single RENAME TABLE statement.
+        // If temp doesn't exist the whole statement is reverted, leaving base intact.
+        rotateStatement.executeUpdate(s"DROP TABLE IF EXISTS ${PASSENGER_ROUTE_HISTORY_TABLE}_1")
+        rotateStatement.executeUpdate(s"DROP TABLE IF EXISTS ${PASSENGER_LINK_HISTORY_TABLE}_1")
+        rotateStatement.executeUpdate(
+          s"RENAME TABLE " +
+          s"$PASSENGER_ROUTE_HISTORY_TABLE TO ${PASSENGER_ROUTE_HISTORY_TABLE}_1, " +
+          s"$PASSENGER_ROUTE_HISTORY_TABLE_TEMP TO $PASSENGER_ROUTE_HISTORY_TABLE, " +
+          s"$PASSENGER_LINK_HISTORY_TABLE TO ${PASSENGER_LINK_HISTORY_TABLE}_1, " +
+          s"$PASSENGER_LINK_HISTORY_TABLE_TEMP TO $PASSENGER_LINK_HISTORY_TABLE"
+        )
+      }
       println("Finished rotating tables")
     }
   }

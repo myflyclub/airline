@@ -18,7 +18,7 @@ object Meta {
   dataSource.setIdleConnectionTestPeriod(60)
   dataSource.setMaxIdleTime(300)
   dataSource.setMaxConnectionAge(3600)
-  dataSource.setUnreturnedConnectionTimeout(60) // Forcibly reclaim leaked connections after 60s
+  dataSource.setUnreturnedConnectionTimeout(180) // Forcibly reclaim leaked connections after 60s
   dataSource.setDebugUnreturnedConnectionStackTraces(true) // Logs EXACTLY where the leak happened
   dataSource.setTestConnectionOnCheckout(true)
   dataSource.setPreferredTestQuery("SELECT 1")
