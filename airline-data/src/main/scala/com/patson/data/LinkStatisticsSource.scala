@@ -131,14 +131,20 @@ object LinkStatisticsSource {
    * Deletes all link before this cycle (exclusive)
    */
   def deleteLinkStatisticsBeforeCycle(cutoffCycle : Int) = {
-    Using.resource(Meta.getConnection()) { connection =>
-      Using.resource(connection.prepareStatement("DELETE FROM " + LINK_STATISTICS_TABLE + " WHERE cycle < ?")) { preparedStatement =>
-        preparedStatement.setObject(1, cutoffCycle)
-        val deletedCount = preparedStatement.executeUpdate()
-        println("Deleted " + deletedCount + " link statistics records")
-        deletedCount
+    val batchSize = 10000
+    var totalDeleted = 0
+    var deleted = 0
+    do {
+      Using.resource(Meta.getConnection()) { connection =>
+        Using.resource(connection.prepareStatement("DELETE FROM " + LINK_STATISTICS_TABLE + " WHERE cycle < ? LIMIT " + batchSize)) { preparedStatement =>
+          preparedStatement.setObject(1, cutoffCycle)
+          deleted = preparedStatement.executeUpdate()
+          totalDeleted += deleted
+        }
       }
-    }
+    } while (deleted == batchSize)
+    println("Deleted " + totalDeleted + " link statistics records")
+    totalDeleted
   }
 
 }

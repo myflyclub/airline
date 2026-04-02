@@ -14,11 +14,11 @@ object Meta {
   dataSource.setUser(DATABASE_USER)
   dataSource.setPassword(DATABASE_PASSWORD)
   dataSource.setJdbcUrl(DATABASE_CONNECTION)
-  dataSource.setMaxPoolSize(20)
+  dataSource.setMaxPoolSize(25)
   dataSource.setIdleConnectionTestPeriod(60)
   dataSource.setMaxIdleTime(300)
   dataSource.setMaxConnectionAge(3600)
-  dataSource.setUnreturnedConnectionTimeout(180) // Forcibly reclaim leaked connections after 60s
+  dataSource.setUnreturnedConnectionTimeout(180) // Forcibly reclaim leaked connections after 180s
   dataSource.setDebugUnreturnedConnectionStackTraces(true) // Logs EXACTLY where the leak happened
   dataSource.setTestConnectionOnCheckout(true)
   dataSource.setPreferredTestQuery("SELECT 1")
