@@ -1962,4 +1962,18 @@
 </div>
 
 
+<!-- Create Airline Modal -->
+<div id="createAirlineModal" class="modal" style="display:none">
+  <div class="modal-content" style="width: 400px;">
+    <span class="close" onclick="closeModal($('#createAirlineModal'))">&times;</span>
+    <h2>Create New Airline</h2>
+    <div style="margin: 16px 0;">
+      <label for="createAirlineName" style="display:block; margin-bottom:6px;">Airline Name</label>
+      <input id="createAirlineName" type="text" style="width:100%; box-sizing:border-box;" maxlength="50" onkeydown="if(event.keyCode===13) submitCreateAirline()">
+    </div>
+    <p id="createAirlineError" class="warning" style="display:none; margin-bottom:8px;"></p>
+    <button id="createAirlineSubmitBtn" class="button" onclick="submitCreateAirline()">Create</button>
+  </div>
+</div>
+
 <!--  end profiles-->

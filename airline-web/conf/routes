@@ -250,6 +250,7 @@ GET      /admin/uuid-airlines/:uuid    controllers.AdminApplication.getAirlinesB
 #POST    /signup                     controllers.SignUp.submit
 POST    /signup/json                controllers.SignUp.submitJson
 GET     /signup/airline-name-check  controllers.SignUp.airlineNameCheck(airlineName : String)
+POST    /create-airline             controllers.SignUp.createAdditionalAirline
 
 # PasswordReset
 GET    /password-reset				controllers.AccountApplication.passwordResetForm(resetToken : String)

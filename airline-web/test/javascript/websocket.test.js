@@ -49,6 +49,7 @@ function createContext() {
     queueNotice: jest.fn(),
     queueTutorialByJson: jest.fn(),
     handlePendingActions: jest.fn(),
+    loadNotificationBadge: jest.fn(),
     // Capture setTimeout callbacks so tests can fire them on demand
     setTimeout: jest.fn().mockImplementation((fn) => timeoutQueue.push(fn)),
     clearTimeout: jest.fn(),

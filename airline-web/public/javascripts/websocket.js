@@ -76,8 +76,9 @@ function connectWebSocket(airlineId) {
 }
 
 function initWebSocket(airlineId) {
+    var changed = selectedAirlineId !== airlineId
     selectedAirlineId = airlineId
-    if (!websocket || websocket.readyState === WebSocket.CLOSED) {
+    if (!websocket || websocket.readyState === WebSocket.CLOSED || changed) {
         connectWebSocket(airlineId)
     }
 }

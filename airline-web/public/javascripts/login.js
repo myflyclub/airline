@@ -184,15 +184,24 @@ async function doPostLoginSetup(user) {
 
     // Airline-specific setup
     if (user.airlineIds && user.airlineIds.length > 0) {
-        await selectAirline(user.airlineIds[0]);
+        var lastId = parseInt(localStorage.getItem('lastAirlineId'))
+        var airlineToSelect = (lastId && user.airlineIds.includes(lastId)) ? lastId : user.airlineIds[0]
+
+        syncAllianceFields(airlineToSelect)
+
+        await selectAirline(airlineToSelect);
         if (window.AirlineMap && activeAirline) {
             AirlineMap.centerOnHQ(activeAirline, 6);
         }
         initPrompts();
         if (typeof initNotificationDrawer === 'function') initNotificationDrawer();
+        if (typeof initAirlineSwitcher === 'function') {
+            initAirlineSwitcher();
+            populateAirlineSwitcher();
+        }
         updateAirlineLabelColors();
         try {
-            if (typeof loadAirplaneModels === 'function') loadAirplaneModels(user.airlineIds[0]);
+            if (typeof loadAirplaneModels === 'function') loadAirplaneModels(airlineToSelect);
             if (typeof loadOilPrices === 'function') loadOilPrices();
         } catch (e) {
             console.warn('Airline setup error:', e);

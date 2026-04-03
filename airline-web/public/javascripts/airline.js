@@ -60,7 +60,10 @@ function updateAirlineInfo(airlineId) {
 }
 
 function updateAirlineLogo() {
-	$('.airlineLogo').attr('src', '/airlines/' + activeAirline.id + "/logo?dummy=" + Math.random())
+	var bust = Math.random()
+	$('.airlineLogo').attr('src', '/airlines/' + activeAirline.id + "/logo?dummy=" + bust)
+	// Also refresh logo in the airline switcher list
+	$('#airlineSwitcherList img.logo[data-airline-id="' + activeAirline.id + '"]').attr('src', '/airlines/' + activeAirline.id + '/logo?dummy=' + bust)
 }
 
 function refreshTopBar(airline) {
@@ -89,6 +92,195 @@ async function selectAirline(airlineId) {
 	initWebSocket(airlineId)
 	await updateAirlineInfo(airlineId)
 	loadAndWatchAirlineNotes(airlineId)
+}
+
+/**
+ * Update activeUser's flat alliance fields from the per-airline alliance map.
+ * Called on airline switch and login restore so chat tabs show the correct alliance.
+ */
+function syncAllianceFields(airlineId) {
+    if (!activeUser || !activeUser.alliancesByAirline) return
+    var info = activeUser.alliancesByAirline[airlineId]
+    if (info) {
+        activeUser.allianceId = info.allianceId
+        activeUser.allianceName = info.allianceName
+        activeUser.allianceRole = info.allianceRole
+    } else {
+        delete activeUser.allianceId
+        delete activeUser.allianceName
+        delete activeUser.allianceRole
+    }
+}
+
+async function switchAirline(airlineId) {
+    // Remove old airlineType body class
+    document.body.className = document.body.className.replace(/\bairlineType-\S+/g, '').trim()
+
+    // Clear existing flight paths
+    if (window.AirlineMap) AirlineMap.clearAllPaths()
+
+    syncAllianceFields(airlineId)
+
+    await selectAirline(airlineId)
+
+    loadNotificationBadge()
+
+    // Update chat tabs for new alliance context
+    if (typeof updateChatTabs === 'function') updateChatTabs()
+
+    // Center map on new HQ
+    if (window.AirlineMap && activeAirline) {
+        AirlineMap.centerOnHQ(activeAirline, 6)
+    }
+
+    localStorage.setItem('lastAirlineId', airlineId)
+
+    populateAirlineSwitcher()
+
+    navigateTo('/map/')
+}
+
+function initAirlineSwitcher() {
+    $('#airlineSwitcherBtn, #airlineSwitcherBtnMobile').off('click.switcher').on('click.switcher', function(e) {
+        e.stopPropagation()
+        if (!$(e.target).closest('#airlineSwitcherDropdown').length) {
+            toggleAirlineSwitcher()
+        }
+    })
+
+    $(document).on('click.switcher', function(e) {
+        var dropdown = document.getElementById('airlineSwitcherDropdown')
+        if (dropdown && dropdown.matches(':popover-open') && !$(e.target).closest('#airlineSwitcherDropdown, #airlineSwitcherBtn, #airlineSwitcherBtnMobile').length) {
+            dropdown.hidePopover()
+        }
+    })
+}
+
+function toggleAirlineSwitcher() {
+    var dropdown = document.getElementById('airlineSwitcherDropdown')
+    if (dropdown.matches(':popover-open')) {
+        dropdown.hidePopover()
+    } else {
+        openAirlineSwitcher()
+    }
+}
+
+function openAirlineSwitcher() {
+    var btn = document.getElementById('airlineSwitcherBtn')
+    if (!btn || btn.style.display === 'none') {
+        btn = document.getElementById('airlineSwitcherBtnMobile')
+    }
+    var dropdown = document.getElementById('airlineSwitcherDropdown')
+    var rect = btn.getBoundingClientRect()
+    dropdown.style.top = (rect.bottom + 8) + 'px'
+    dropdown.style.left = Math.max(4, rect.right - 240) + 'px'
+    dropdown.showPopover()
+}
+
+function populateAirlineSwitcher() {
+    if (!activeUser) return
+
+    var airlines = activeUser.airlineIds || []
+    var maxAllowed = activeUser.maxAirlinesAllowed || 2
+    var showSwitcher = airlines.length > 1 || airlines.length < maxAllowed
+
+    $('#airlineSwitcherBtn').toggle(showSwitcher)
+    $('#airlineSwitcherBtnMobile').toggle(showSwitcher)
+
+    if (!showSwitcher) return
+
+    var $list = $('#airlineSwitcherList')
+    $list.empty()
+
+    var names = activeUser.airlineNames || {}
+    airlines.forEach(function(id) {
+        var isActive = activeAirline && activeAirline.id === id
+        var displayName = names[id] || (activeAirline && activeAirline.id === id ? activeAirline.name : 'Airline #' + id)
+        var $item = $('<div class="switcher-item' + (isActive ? ' active' : ' clickable') + '"></div>')
+        $item.html('<img class="logo" data-airline-id="' + id + '" loading="lazy" width="36px" height="auto" src="/airlines/' + id + '/logo">'
+            + '<span class="switcher-airline-name">' + displayName + '</span>')
+        if (!isActive) {
+            $item.on('click', function() {
+                document.getElementById('airlineSwitcherDropdown').hidePopover()
+                switchAirline(id)
+            })
+        }
+        $list.append($item)
+    })
+
+    if (airlines.length < maxAllowed) {
+        var $create = $('<div class="switcher-item clickable switcher-create"></div>')
+        $create.html('<img src="/assets/images/icons/24px/plus-circle.png" style="width:20px; height:20px; vertical-align:middle; margin-right:6px"> Create New Airline')
+        $create.on('click', function() {
+            document.getElementById('airlineSwitcherDropdown').hidePopover()
+            showCreateAirlineModal()
+        })
+        $list.append($create)
+    }
+}
+
+function showCreateAirlineModal() {
+    $('#createAirlineError').text('').hide()
+    $('#createAirlineName').val('')
+    $('#createAirlineModal').show()
+    $('#createAirlineName').focus()
+}
+
+function submitCreateAirline() {
+    var name = $('#createAirlineName').val().trim()
+    var $error = $('#createAirlineError')
+    var $btn = $('#createAirlineSubmitBtn')
+    $error.text('').hide()
+
+    if (!name) {
+        $error.text('Please enter an airline name').show()
+        return
+    }
+
+    $btn.prop('disabled', true).text('Creating...')
+
+    // Validate name first
+    $.ajax({
+        type: 'GET',
+        url: '/signup/airline-name-check?airlineName=' + encodeURIComponent(name),
+        dataType: 'json',
+        success: function(result) {
+            if (result.rejection) {
+                $error.text(result.rejection).show()
+                $btn.prop('disabled', false).text('Create')
+                return
+            }
+            // Name OK, create the airline
+            $.ajax({
+                type: 'POST',
+                url: '/create-airline',
+                contentType: 'application/json',
+                data: JSON.stringify({ airlineName: name }),
+                dataType: 'json',
+                success: function(data) {
+                    closeModal($('#createAirlineModal'))
+                    $btn.prop('disabled', false).text('Create')
+                    // Add new airline to user's list
+                    if (!activeUser.airlineIds.includes(data.airlineId)) {
+                        activeUser.airlineIds.push(data.airlineId)
+                    }
+                    if (!activeUser.airlineNames) activeUser.airlineNames = {}
+                    activeUser.airlineNames[data.airlineId] = data.airlineName
+                    switchAirline(data.airlineId)
+                },
+                error: function(jqXHR) {
+                    var msg = 'Failed to create airline'
+                    try { msg = JSON.parse(jqXHR.responseText).error || msg } catch(e) {}
+                    $error.text(msg).show()
+                    $btn.prop('disabled', false).text('Create')
+                }
+            })
+        },
+        error: function() {
+            $error.text('Failed to validate airline name').show()
+            $btn.prop('disabled', false).text('Create')
+        }
+    })
 }
 
 function selectHeadquarters(airportId) {

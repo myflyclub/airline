@@ -22,7 +22,7 @@ import scala.util.{Failure, Success}
 object MyWebSocketActor {
   val counter = new AtomicLong()
 
-  def props(out: ActorRef, airlineId: Int, remoteAddress : String) = Props(classOf[MyWebSocketActor], out, airlineId, remoteAddress)
+  def props(out: ActorRef, userId: Int, remoteAddress : String) = Props(classOf[MyWebSocketActor], out, userId : java.lang.Integer, remoteAddress)
 
   def nextSubscriberId(airlineId: Int) = {
     airlineId.toString + "-" + counter.getAndIncrement
@@ -58,38 +58,47 @@ object MyWebSocketActor {
  *
  *
  * @param out
- * @param airlineId
+ * @param userId
  * @param remoteAddress
  */
-class MyWebSocketActor(out: ActorRef, airlineId : Int, remoteAddress : String) extends Actor {
-  //do NOT create as a child, otherwise it cannot receive message from remote actor...
-  //this actor talks directly to the sim server
-  val outActor = ActorCenter.remoteSystem.actorOf(Props(classOf[LocalActor], out, airlineId), nextSubscriberId(airlineId))
+class MyWebSocketActor(out: ActorRef, userId : Int, remoteAddress : String) extends Actor {
+  //outActor is created when the client sends its first message with the desired airline ID
+  var outActor: Option[ActorRef] = None
 
   override def preStart() = {
     val _ = MyWebSocketActor.backgroundPingTriggerStarted // ensure 30s ping scheduler is running
-    val airline = AirlineCache.getAirline(airlineId).get
-    println(s"Starting websocket on airline $airline with remoteAddress $remoteAddress path ${self}. With output actor ${outActor.path}")
+    println(s"Starting websocket for userId $userId with remoteAddress $remoteAddress path ${self}. Waiting for airline selection...")
   }
 
   def receive = {
-    case JsNumber(_) => //directly receive message from the websocket (the only message the websocket client send down now is the airline id
+    case JsNumber(requestedId) =>
+      val requestedAirlineId = requestedId.toInt
       try {
-        Broadcaster.checkPrompts(airlineId) //check notice on connect
-        checkWarnings(airlineId)
+        UserCache.getUser(userId) match {
+          case Some(user) if user.hasAccessToAirline(requestedAirlineId) =>
+            // Kill previous outActor if switching airlines
+            outActor.foreach(_ ! PoisonPill)
+            //do NOT create as a child, otherwise it cannot receive message from remote actor...
+            val actor = ActorCenter.remoteSystem.actorOf(Props(classOf[LocalActor], out, requestedAirlineId), nextSubscriberId(requestedAirlineId))
+            outActor = Some(actor)
+            println(s"userId $userId selected airline $requestedAirlineId, created outActor ${actor.path}")
+            Broadcaster.checkPrompts(requestedAirlineId)
+            checkWarnings(requestedAirlineId)
+          case Some(_) =>
+            println(s"userId $userId tried to access airline $requestedAirlineId without permission!")
+          case None =>
+            println(s"userId $userId not found in cache!")
+        }
       } catch {
-        case _ : NumberFormatException => println("Received websocket message " +  airlineId + " which is not numeric!")
+        case _ : NumberFormatException => println("Received websocket message " + requestedId + " which is not numeric!")
       }
     case any =>
-      println("received " + any + " not handled")  
+      println("received " + any + " not handled")
   }
 
   override def postStop() = {
-    //subscriberId.foreach { ActorCenter.unsubscribe(_) }
     println(s"${self.path} is stopped")
-    //actorSystem.eventStream.unsubscribe(self)
-    outActor ! PoisonPill //have to explicitly kill the output actor since it is not a child
-    //MyWebSocketActor.backgroundActor ! RemoveFromBackground
+    outActor.foreach(_ ! PoisonPill)
   }
 
   def checkWarnings(airlineId : Int) = {
@@ -100,4 +109,3 @@ class MyWebSocketActor(out: ActorRef, airlineId : Int, remoteAddress : String) e
     }
   }
 }
-

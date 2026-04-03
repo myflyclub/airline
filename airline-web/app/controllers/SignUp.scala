@@ -147,17 +147,7 @@ class SignUp @Inject()(cc: ControllerComponents)(ws: WSClient) extends AbstractC
           UserSource.saveUser(user)
           Authentication.createUserSecret(username, password)
 
-          val newAirline = Airline(airlineName)
-          newAirline.setMinimumRenewalBalance(300000)
-          AirlineSource.saveAirlines(List(newAirline))
-          AirlineSource.saveAirlineCode(newAirline.id, newAirline.getDefaultAirlineCode())
-          UserSource.setUserAirline(user, newAirline)
-
-          AirlineSource.saveAirplaneRenewal(newAirline.id, 40)
-
-          if (!newAirline.isSkipTutorial) {
-            NotificationSource.insertNotification(Notification(newAirline.id, NotificationCategory.TUTORIAL, "Welcome! Choose an airport to build your HQ and get started.", CycleSource.loadCycle()))
-          }
+          val newAirline = initializeNewAirline(airlineName, user)
 
           Ok(Json.obj(
             "id" -> user.id,
@@ -168,7 +158,42 @@ class SignUp @Inject()(cc: ControllerComponents)(ws: WSClient) extends AbstractC
         }
     }
   }
-  
+
+  def createAdditionalAirline = AuthenticationObject.Authenticated { implicit request =>
+    val user = request.user
+    request.body.asJson match {
+      case None => BadRequest(Json.obj("error" -> "Expected JSON body"))
+      case Some(json) =>
+        val airlineName = (json \ "airlineName").asOpt[String].getOrElse("").trim
+
+        if (user.getAccessibleAirlines().size >= user.maxAirlinesAllowed) {
+          BadRequest(Json.obj("error" -> s"You already have the maximum of ${user.maxAirlinesAllowed} airlines"))
+        } else if (airlineName.length < MIN_AIRLINE_NAME_LENGTH || airlineName.length > MAX_AIRLINE_NAME_LENGTH) {
+          BadRequest(Json.obj("error" -> s"Airline name must be $MIN_AIRLINE_NAME_LENGTH-$MAX_AIRLINE_NAME_LENGTH characters"))
+        } else if (!airlineName.forall(isValidAirlineNameChar) || airlineName.isEmpty) {
+          BadRequest(Json.obj("error" -> airlineNameCharError))
+        } else if (AirlineSource.loadAirlinesByCriteria(List(("name", airlineName))).nonEmpty) {
+          BadRequest(Json.obj("error" -> "This airline name is not available"))
+        } else {
+          val newAirline = initializeNewAirline(airlineName, user)
+          Ok(Json.obj("airlineId" -> newAirline.id, "airlineName" -> newAirline.name))
+        }
+    }
+  }
+
+  private def initializeNewAirline(airlineName: String, user: User): Airline = {
+    val newAirline = Airline(airlineName)
+    newAirline.setMinimumRenewalBalance(300000)
+    AirlineSource.saveAirlines(List(newAirline))
+    AirlineSource.saveAirlineCode(newAirline.id, newAirline.getDefaultAirlineCode())
+    UserSource.setUserAirline(user, newAirline)
+    AirlineSource.saveAirplaneRenewal(newAirline.id, 40)
+    if (!newAirline.isSkipTutorial) {
+      NotificationSource.insertNotification(Notification(newAirline.id, NotificationCategory.TUTORIAL, "Welcome! Choose an airport to build your HQ and get started.", CycleSource.loadCycle()))
+    }
+    newAirline
+  }
+
   def isValidRecaptcha(recaptchaToken: String) : Boolean = {
     println("checking token " + recaptchaToken)
     val request = ws.url(recaptchaUrl).withQueryStringParameters("secret" -> recaptchaSecret, "response" -> recaptchaToken)

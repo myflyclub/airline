@@ -16,6 +16,7 @@ import javax.inject.Inject
 class UserApplication @Inject()(cc: ControllerComponents) extends AbstractController(cc) {
   implicit object UserWrites extends Writes[User] {
     def writes(user: User): JsValue = {
+      val airlines = user.getAccessibleAirlines()
       var result = JsObject(List(
         "id" -> JsNumber(user.id),
         "userName" -> JsString(user.userName),
@@ -24,21 +25,34 @@ class UserApplication @Inject()(cc: ControllerComponents) extends AbstractContro
         "level" -> JsNumber(user.level),
         "creationTime" -> JsString(user.creationTime.getTime.toString()),
         "lastActiveTime" -> JsString(user.lastActiveTime.getTime.toString()),
-        "airlineIds" -> JsArray(user.getAccessibleAirlines().map { airline => JsNumber(airline.id) })))
+        "airlineIds" -> JsArray(airlines.map { airline => JsNumber(airline.id) }),
+        "airlineNames" -> JsObject(airlines.map { airline => airline.id.toString -> JsString(airline.name) }),
+        "maxAirlinesAllowed" -> JsNumber(user.maxAirlinesAllowed)))
 
       user.adminStatus.foreach { adminStatus =>
         result = result + ("adminStatus" -> JsString(adminStatus.toString))
       }
-      
-      if (user.getAccessibleAirlines().isDefinedAt(0)) {
-        AllianceSource.loadAllianceMemberByAirline(user.getAccessibleAirlines()(0)).foreach { allianceMember => //if this airline belongs to an alliance
-          val allianceId = allianceMember.allianceId
-          AllianceCache.getAlliance(allianceId).foreach { alliance =>
-            result = result + ("allianceId" -> JsNumber(allianceId)) + ("allianceName" -> JsString(alliance.name)) + ("allianceRole" -> JsString(allianceMember.role.toString))
-          }
+
+      // Per-airline alliance info (single batch query instead of N individual lookups)
+      val allianceMemberMap = AllianceSource.loadAllianceMemberByAirlines(airlines)
+      val alliancesByAirline = JsObject(allianceMemberMap.toSeq.flatMap { case (airline, allianceMember) =>
+        AllianceCache.getAlliance(allianceMember.allianceId).map { alliance =>
+          airline.id.toString -> JsObject(Seq(
+            "allianceId" -> JsNumber(allianceMember.allianceId),
+            "allianceName" -> JsString(alliance.name),
+            "allianceRole" -> JsString(allianceMember.role.toString)
+          ))
+        }
+      })
+      result = result + ("alliancesByAirline" -> alliancesByAirline)
+
+      // Backward-compat: flat fields for first airline (chat.js reads these directly)
+      airlines.headOption.foreach { firstAirline =>
+        (alliancesByAirline \ firstAirline.id.toString).asOpt[JsObject].foreach { info =>
+          result = result + ("allianceId" -> info("allianceId")) + ("allianceName" -> info("allianceName")) + ("allianceRole" -> info("allianceRole"))
         }
       }
-        
+
       result
     }
   }
