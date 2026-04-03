@@ -480,6 +480,21 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
     }
   }
 
+  def updateLinkFlightNumber(airlineId: Int, linkId: Int) = AuthenticatedAirline(airlineId) { request =>
+    val newFlightNumber = (request.body.asInstanceOf[AnyContentAsJson].json \ "flightNumber").as[Int]
+    if (newFlightNumber < 1 || newFlightNumber > 9999) {
+      BadRequest("Flight number must be between 1 and 9999")
+    } else {
+      LinkSource.loadFlightLinkById(linkId) match {
+        case Some(link) if link.airline.id == airlineId =>
+          LinkSource.updateLink(link.copy(flightNumber = newFlightNumber))
+          Ok(Json.obj("flightCode" -> LinkUtil.getFlightCode(link.airline, newFlightNumber)))
+        case Some(_) => Forbidden
+        case None => NotFound
+      }
+    }
+  }
+
   def updateLinkPrice(airlineId: Int, linkId: Int) = AuthenticatedAirline(airlineId) { request =>
     val body = request.body.asInstanceOf[AnyContentAsJson].json
     val economyPrice = (body \ "economy").as[Int]

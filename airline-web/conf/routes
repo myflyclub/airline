@@ -54,6 +54,7 @@ PUT 	 /airlines/:airlineId/links/bulk-update-quality	controllers.LinkApplication
 DELETE   /airlines/:airlineId/links/:linkId 		 	controllers.LinkApplication.deleteLink(airlineId : Int, linkId : Int)
 GET		 /airlines/:airlineId/links/:linkId 			controllers.LinkApplication.getLink(airlineId : Int, linkId : Int)
 PATCH    /airlines/:airlineId/links/:linkId/price	controllers.LinkApplication.updateLinkPrice(airlineId : Int, linkId : Int)
+PATCH    /airlines/:airlineId/links/:linkId/flight-number	controllers.LinkApplication.updateLinkFlightNumber(airlineId : Int, linkId : Int)
 GET		 /airlines/:airlineId/bases		  controllers.AirlineApplication.getBases(airlineId : Int)
 GET		 /airlines/:airlineId/bases/:airportId  		controllers.AirlineApplication.getBase(airlineId : Int, airportId : Int)
 DELETE	 /airlines/:airlineId/bases/:airportId  		controllers.AirlineApplication.deleteBase(airlineId : Int, airportId : Int)

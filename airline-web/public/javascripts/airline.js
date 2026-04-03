@@ -304,7 +304,25 @@ function refreshLinkDetails(linkId) {
 	    	if (linkId !== selectedLink) return //stale response - user has selected a different link
 	    	$("#linkFromAirport").attr("href", "/airport/" + link.fromAirportCode).html(getCountryFlagImg(link.fromCountryCode, "15px") + link.fromAirportCity + "<i class='pl-1 iata'>" + link.fromAirportCode + "</i>")
 	    	$("#linkToAirport").attr("href", "/airport/" + link.toAirportCode).html(getCountryFlagImg(link.toCountryCode, "15px") + link.toAirportCity + "<i class='pl-1 iata'>" + link.toAirportCode + "</i>")
-	    	$("#linkFlightCode").text(link.flightCode)
+	    	const [linkAirlineCode, linkFlightNum] = link.flightCode.split(' ')
+	    	$("#linkAirlineCode").text(linkAirlineCode)
+	    	$("#linkFlightNumber").val(parseInt(linkFlightNum))
+	    	$("#linkFlightNumber").off('.flightNumber').on('change.flightNumber', function() {
+	    	    const newNumber = parseInt($(this).val())
+	    	    if (newNumber >= 1 && newNumber <= 9999) {
+	    	        $.ajax({
+	    	            type: 'PATCH',
+	    	            url: '/airlines/' + airlineId + '/links/' + linkId + '/flight-number',
+	    	            contentType: 'application/json; charset=utf-8',
+	    	            data: JSON.stringify({ flightNumber: newNumber }),
+	    	            dataType: 'json',
+	    	            success: function(result) {
+	    	                const cached = loadedLinksById[linkId]
+	    	                if (cached) cached.flightCode = result.flightCode
+	    	            }
+	    	        })
+	    	    }
+	    	})
 	    	if (link.assignedAirplanes && link.assignedAirplanes.length > 0) {
 	    		$('#linkAirplaneModel').text(link.assignedAirplanes[0].airplane.name)
 	    	} else {
