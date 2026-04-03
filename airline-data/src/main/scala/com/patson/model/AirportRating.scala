@@ -9,7 +9,7 @@ case class AirportRating(economicPowerRating: Int, countryPowerRating: Int, feat
    * Return 1 - 100 difficulty rating.
    * Used by airlineBase and profile app to price cost and starting money
    */
-  val overallDifficulty = Math.max(1.0, Math.min(100.0, economicPowerRating * 0.65 + countryPowerRating * 0.2 + featurePower * 0.7)).toInt
+  val overallDifficulty = Math.max(1.0, Math.min(100.0, economicPowerRating * 1.2 + countryPowerRating * 0.1 + featurePower * 0.9)).toInt
 }
 
 object AirportRating {
@@ -27,19 +27,19 @@ object AirportRating {
     val country = CountryCache.getCountry(airport.countryCode).get
     // Perform clamping on Doubles, then convert to Int at the end
     val ratioToModelAirportPower = Math.max(1.0, Math.min(100.0, 100.0 * airport.popMiddleIncome / modelAirportPower)).toInt
-    val boostForEU = if (airport.zone.contains("EU")) 10 else 0
+    val boostForEU = if (airport.zone.contains("EU")) 15 else 0
     val ratioToModelCountryPower = Math.max(0.0, Math.min(100.0, 100.0 * country.income * country.airportPopulation / modelCountryPower)).toInt + boostForEU
 
-    val airportScalePower = if (detailedAirport.size >= 7) 25 else 0
+    val airportScalePower = if (detailedAirport.size >= 7) 20 else 0
     val featurePower = detailedAirport.getFeatures().map { feature =>
       feature.featureType match {
         case FINANCIAL_HUB => feature.strength.toDouble / 3
-        case ELITE_CHARM => feature.strength.toDouble / 2
+        case ELITE_CHARM => feature.strength.toDouble / 3
         case INTERNATIONAL_HUB => feature.strength.toDouble / 4
-        case VACATION_HUB => feature.strength.toDouble / 6
-        case ISOLATED_TOWN => -5 * feature.strength
+        case VACATION_HUB => feature.strength.toDouble / 5
+        case ISOLATED_TOWN => -1 * feature.strength
         case DOMESTIC_AIRPORT => -5
-        case GATEWAY_AIRPORT => ratioToModelCountryPower.toDouble / 3
+        case GATEWAY_AIRPORT => ratioToModelCountryPower.toDouble / 4
         case _ => 0
       }
     }.sum.toInt

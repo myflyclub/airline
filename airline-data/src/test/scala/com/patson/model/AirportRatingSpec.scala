@@ -18,7 +18,7 @@ class AirportRatingSpec(_system: ActorSystem) extends TestKit(_system) with Impl
     "output iata and rating for each airport" in {
       val airports = com.patson.data.AirportSource.loadAllAirports(fullLoad = false, loadFeatures = true)
       airports.sortBy(_.rating.overallDifficulty).reverse.foreach { airport =>
-        println(s"${airport.iata}, ${airport.rating.overallDifficulty}")
+        println(s"${airport.iata}, ${airport.countryCode}, ${airport.rating.overallDifficulty}")
       }
      val jfk = airports.find(_.iata == "JFK").get.rating.overallDifficulty
      val lhr = airports.find(_.iata == "LHR").get.rating.overallDifficulty

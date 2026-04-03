@@ -6,10 +6,11 @@ import com.patson.util.AllianceCache
 
 
 case class AirlineBase(airline : Airline, airport : Airport, countryCode : String, scale : Int, foundedCycle : Int, headquarter : Boolean = false) {
-  private def computeEffectiveScale(s: Int): Double = if (s <= 6) {
-    Math.max(1.0, s * 2.0)
-  } else {
-    12.0 + 0.25 * (s - 6.0)
+  // Returns a multiplier that starts at 1.0 and smoothly rides the S-Curve to the 'plateau'
+  private def computeScaleMultiplier(scale: Int, plateau: Double, steepness: Double, midpoint: Double = 6.0): Double = {
+    val rawLogistic = plateau / (1.0 + Math.exp(-steepness * (scale - midpoint)))
+    val offset = plateau / (1.0 + Math.exp(-steepness * (1.0 - midpoint)))
+    1.0 + rawLogistic - offset
   }
 
   lazy val getValue : Long = {
@@ -20,17 +21,15 @@ case class AirlineBase(airline : Airline, airport : Airport, countryCode : Strin
     if (headquarter && scale == 1) {
       0L
     } else {
-      val airportSizeMod = Math.max(8.0, airport.size.toDouble) * 0.05
-      val baseCost = 1_350_000 + airport.rating.overallDifficulty * 115_000
-      val effScale = computeEffectiveScale(scale)
-
-      def rawCost(baseExp: Double): Long = (baseCost * Math.pow(baseExp + airportSizeMod, effScale)).toLong
-
-      (airlineType, headquarter) match {
-        case (MegaHqAirline, true)  => Math.max(12_000_000L, rawCost(1.05) - 35_000_000L)
-        case (MegaHqAirline, false) => 60_000_000L + rawCost(1.25)
-        case _                      => 5_000_000L + rawCost(1.15)
+      val baseCost = airport.rating.overallDifficulty * 400_000
+      val (plateau, steepness, midpoint, mod) = (airlineType, headquarter) match {
+        case (MegaHqAirline, true)  => ( 80.0, 0.9, 7.0, 0)
+        case (MegaHqAirline, false) => (200.0, 0.6, 6.0, 1000000)
+        case _                      => (180.0, 0.8, 7.5, 0)
       }
+
+      val curveMultiplier = computeScaleMultiplier(scale, plateau, steepness, midpoint)
+      (baseCost * curveMultiplier + mod).toLong
     }
   }
 
@@ -39,15 +38,15 @@ case class AirlineBase(airline : Airline, airport : Airport, countryCode : Strin
   }
 
   def calculateUpkeep(scale: Int, airlineType: AirlineType = airline.airlineType): Long = {
-    val effectiveScale = computeEffectiveScale(scale)
-    val baseUpkeep = 22_000 + airport.rating.overallDifficulty * 260
-    val airportSizeMod = Math.max(8.0, airport.size.toDouble) * 0.04
+    val baseUpkeep = 15000 + airport.rating.overallDifficulty * 1600
 
-    val baseExponent = (airlineType, headquarter) match {
-      case (MegaHqAirline, true)  => 1.32
-      case (MegaHqAirline, false) => 1.5
-      case _                      => 1.4
+    val (plateau, steepness, mod) = (airlineType, headquarter) match {
+      case (MegaHqAirline, true)  => (68.0, 0.14, -5_000)
+      case (MegaHqAirline, false) => (90.0, 0.18, 5_000)
+      case _                      => (75.0, 0.16, 0)
     }
+
+    val curveMultiplier = computeScaleMultiplier(scale, plateau, steepness, 7.0)
 
     val startingDiscount = if (headquarter) scale match {
       case 1 => 0.1
@@ -55,7 +54,7 @@ case class AirlineBase(airline : Airline, airport : Airport, countryCode : Strin
       case _ => 1.0
     } else 1.0
 
-    (baseUpkeep * Math.pow(effectiveScale, baseExponent + airportSizeMod) * startingDiscount).toLong
+    Math.max(10_000 + mod, baseUpkeep * curveMultiplier * startingDiscount + mod).toLong
   }
 
   val getOfficeStaffCapacity = AirlineBase.getOfficeStaffCapacity(scale, headquarter)
