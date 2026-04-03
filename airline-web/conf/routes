@@ -16,6 +16,7 @@ POST	 /user-logout						  controllers.UserApplication.logout
 GET      /current-cycle                   controllers.Application.getCurrentCycle()
 GET      /cache-stats                     controllers.Application.getCacheStats()
 GET      /cache-clear                     controllers.Application.clearCache()
+GET      /pool-stats                      controllers.Application.getPoolStats()
 
 GET		 /airports						  controllers.Application.getAirports()
 GET		 /airports-static						  controllers.Application.getAirportsStatic()

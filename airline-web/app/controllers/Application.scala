@@ -109,6 +109,18 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
     ))
   }
 
+  def getPoolStats() = Action {
+    val ds = com.patson.data.Meta.dataSource
+    Ok(Json.obj(
+      "numConnections" -> ds.getNumConnections(),
+      "numBusyConnections" -> ds.getNumBusyConnections(),
+      "numIdleConnections" -> ds.getNumIdleConnections(),
+      "maxPoolSize" -> ds.getMaxPoolSize(),
+      "numFailedCheckouts" -> ds.getNumFailedCheckoutsDefaultUser(),
+      "threadPoolNumActiveThreads" -> ds.getThreadPoolNumActiveThreads()
+    ))
+  }
+
   def clearCache() = Action {
     AirlineCache.invalidateAll()
     AirportCache.invalidateAll()
