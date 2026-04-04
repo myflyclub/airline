@@ -42,6 +42,7 @@ PUT		 /airlines/:airlineId/airplanes/:airplaneId		controllers.AirplaneApplicatio
 PUT	     /airlines/:airlineId/airplanes	  controllers.AirplaneApplication.addAirplane(airlineId : Int, modelId: Int, quantity: Int, homeAirportId : Int, configurationId :Int)
 PUT	     /airlines/:airlineId/swap-airplanes/:fromAirplaneId/:toAirplaneId	  controllers.AirplaneApplication.swapAirplane(airlineId : Int, fromAirplaneId : Int, toAirplaneId : Int)
 GET		 /airlines/:airlineId/links  	  controllers.LinkApplication.getLinks(airlineId : Int, toAirportId : Int = -1)
+GET		 /airlines/:airlineId/links-summary  	  controllers.LinkApplication.getLinksSummary(airlineId : Int)
 GET		 /airlines/:airlineId/links-details  	  controllers.LinkApplication.getLinksDetails(airlineId : Int)
 GET      /airlines/:airlineId/links-averages    controllers.LinkApplication.getLinksAverages(airlineId: Int, weeks: Int ?= 48)
 PUT 	 /airlines/:airlineId/links 	  controllers.LinkApplication.addLink(airlineId : Int)

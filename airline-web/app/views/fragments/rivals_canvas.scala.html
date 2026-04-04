@@ -203,19 +203,23 @@
 						<h4>Routes</h4>
 						<div class="table data" style="width: 100%; height: 20px;">
 							<div class="table-header">
-								<div class="cell clickable" style="width: 25%" data-sort-property="fromAirportCity" data-sort-order="ascending" onclick="Rivals.toggleLinksSortOrder($(this))">From</div>
-								<div class="cell clickable" style="width: 25%" data-sort-property="toAirportCity" data-sort-order="ascending" onclick="Rivals.toggleLinksSortOrder($(this))">To</div>
-								<div class="cell clickable" style="width: 25%" align="right" data-sort-property="distance" data-sort-order="descending" onclick="Rivals.toggleLinksSortOrder($(this))">Distance</div>
-								<div class="cell clickable" style="width: 25%" align="right" data-sort-property="frequency" data-sort-order="descending" onclick="Rivals.toggleLinksSortOrder($(this))">Frequency</div>
+								<div class="cell clickable" style="width: 22%" data-sort-property="fromAirportCity" data-sort-order="ascending" onclick="Rivals.toggleLinksSortOrder($(this))">From</div>
+								<div class="cell clickable" style="width: 22%" data-sort-property="toAirportCity" data-sort-order="ascending" onclick="Rivals.toggleLinksSortOrder($(this))">To</div>
+								<div class="cell clickable" style="width: 18%" data-sort-property="modelName" data-sort-order="ascending" onclick="Rivals.toggleLinksSortOrder($(this))">Model</div>
+								<div class="cell clickable" style="width: 8%" align="right" data-sort-property="computedQuality" data-sort-order="descending" onclick="Rivals.toggleLinksSortOrder($(this))">Quality</div>
+								<div class="cell clickable" style="width: 18%" align="right" data-sort-property="price.economy" data-sort-order="ascending" onclick="Rivals.toggleLinksSortOrder($(this))">Percent of Price</div>
+								<div class="cell clickable" style="width: 12%" align="right" data-sort-property="frequency" data-sort-order="descending" onclick="Rivals.toggleLinksSortOrder($(this))">Freq</div>
 							</div>
 						</div>
 						<div style="max-height: 600px; overflow: auto;">
 							<div id="rivalLinksTable" class="table data" style="width: 100%;">
 								<div class="table-header">
-									<div class="cell" style="width: 25%; border-bottom: none;"></div>
-									<div class="cell" style="width: 25%; border-bottom: none;"></div>
-									<div class="cell" style="width: 25%; border-bottom: none;"></div>
-									<div class="cell" style="width: 25%; border-bottom: none;"></div>
+									<div class="cell" style="width: 22%; border-bottom: none;"></div>
+									<div class="cell" style="width: 22%; border-bottom: none;"></div>
+									<div class="cell" style="width: 18%; border-bottom: none;"></div>
+									<div class="cell" style="width: 8%; border-bottom: none;"></div>
+									<div class="cell" style="width: 18%; border-bottom: none;"></div>
+									<div class="cell" style="width: 12%; border-bottom: none;"></div>
 								</div>
 							</div>
 						</div>

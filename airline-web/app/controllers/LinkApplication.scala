@@ -562,6 +562,18 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
     )
   }
 
+  def getLinksSummary(airlineId : Int) = Action {
+    val links = LinkSource.loadFlightLinksByAirlineId(airlineId)
+    val linksJson = links.map { link =>
+      val basePrice = Pricing.computeStandardPriceForAllClass(link.distance, Computation.getFlightCategory(link.from, link.to), PassengerType.TOURIST, link.from.income)
+      Json.toJson(link).as[JsObject] ++ Json.obj("basePrice" -> basePrice)
+    }
+    Ok(JsArray(linksJson)).withHeaders(
+      ETAG -> s""""$currentCycle"""",
+      ACCESS_CONTROL_ALLOW_ORIGIN -> "*"
+    )
+  }
+
   def getLinksDetails(airlineId : Int) = AuthenticatedAirline(airlineId) { request =>
     val links = LinkSource.loadFlightLinksByAirlineId(airlineId)
     val consumptions = LinkSource.loadLinkConsumptionsByAirline(airlineId).foldLeft(immutable.Map[Int, LinkConsumptionDetails]()) { (foldMap, linkConsumptionDetails) =>
