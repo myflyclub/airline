@@ -342,6 +342,40 @@ class ComputationSpec(_system: ActorSystem) extends TestKit(_system) with Implic
     }
   }
 
+  "getLinkCreationCost".must {
+    val airplaneClassSizes = List(0.06, 0.1, 0.14, 0.20, 0.30)
+    val destinations = List("SCE", "MKE", "ORD", "LHR", "HND")
+
+    lazy val jfk = com.patson.data.AirportSource.loadAirportByIata("JFK").get
+    lazy val airports = destinations.map(iata => iata -> com.patson.data.AirportSource.loadAirportByIata(iata).get).toMap
+
+    "output cost matrix as TSV (airports=rows, airplaneClassSize=cols)".in {
+      println("\ngetLinkCreationCost from JFK — TSV matrix")
+      val header = "Airport\t" + airplaneClassSizes.map(s => f"size=$s%.2f").mkString("\t")
+      println(header)
+      for (iata <- destinations) {
+        val costs = airplaneClassSizes.map(s => Computation.getLinkCreationCost(jfk, airports(iata), s))
+        println(iata + "\t" + costs.map(c => f"$c%,d").mkString("\t"))
+      }
+      true shouldBe true
+    }
+
+    "longer distance flights are more expensive (for each airplaneClassSize)".in {
+      for (size <- airplaneClassSizes) {
+        val sceCost = Computation.getLinkCreationCost(jfk, airports("SCE"), size)
+        val mkeCost = Computation.getLinkCreationCost(jfk, airports("MKE"), size)
+        val ordCost = Computation.getLinkCreationCost(jfk, airports("ORD"), size)
+        val lhrCost = Computation.getLinkCreationCost(jfk, airports("LHR"), size)
+        val hndCost = Computation.getLinkCreationCost(jfk, airports("HND"), size)
+        println(f"size=$size%.2f  SCE=$sceCost%,d  MKE=$mkeCost%,d  ORD=$ordCost%,d  LHR=$lhrCost%,d  HND=$hndCost%,d")
+        mkeCost.shouldBe(>(sceCost))
+        ordCost.shouldBe(>(mkeCost))
+        lhrCost.shouldBe(>(ordCost))
+        hndCost.shouldBe(>(lhrCost))
+      }
+    }
+  }
+
   "calculateAffinityValue".must {
 //    "output airport pairs with high affinity value".in {
 //      import com.patson.data.{AirportSource,CountrySource}

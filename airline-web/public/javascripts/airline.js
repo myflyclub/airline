@@ -1251,6 +1251,13 @@ function updatePlanLinkInfoWithModelSelected(newModelId, assignedModelId, isRefr
 
 		updateFrequencyDetail(thisModelPlanLinkInfo)
 
+		if (thisModelPlanLinkInfo.cost && thisModelPlanLinkInfo.cost !== 0) {
+			$('#planLinkSetupCostRow').show()
+			$('#planLinkSetupCost').text("$" + commaSeparateNumber(thisModelPlanLinkInfo.cost))
+		} else {
+			$('#planLinkSetupCostRow').hide()
+		}
+
 		var serviceLevelBar = $("#serviceLevelBar")
 		generateImageBar(serviceLevelBar.data("emptyIcon"), serviceLevelBar.data("fillIcon"), 5, serviceLevelBar, $("#planLinkServiceLevel"))
 		$("#planLinkExtendedDetails").show()
