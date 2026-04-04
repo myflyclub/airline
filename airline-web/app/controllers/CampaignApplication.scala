@@ -57,7 +57,7 @@ class CampaignApplication @Inject()(cc: ControllerComponents) extends AbstractCo
 
   def getCampaigns(airlineId : Int, fullLoad : Boolean) = AuthenticatedAirline(airlineId) { request =>
     val campaigns = CampaignSource.loadCampaignsByCriteria(List(("airline", airlineId)), loadArea = fullLoad)
-    val result = ManagerSource.loadBusyDelegatesByCampaigns(campaigns).map {
+    val result = ManagerSource.loadBusyManagersByCampaigns(campaigns).map {
       case (campaign, managers) => CampaignDetails(campaign, managers.map(_.assignedTask.asInstanceOf[CampaignManagerTask]))
     }
 
@@ -127,7 +127,7 @@ class CampaignApplication @Inject()(cc: ControllerComponents) extends AbstractCo
         case Left(badResult) => badResult
         case Right(campaign) =>
           //save delegates
-          val existingManagers : List[Manager] = ManagerSource.loadBusyDelegatesByCampaigns(List(campaign)).getOrElse(campaign, List.empty).sortBy(_.assignedTask.getStartCycle)
+          val existingManagers : List[Manager] = ManagerSource.loadBusyManagersByCampaigns(List(campaign)).getOrElse(campaign, List.empty).sortBy(_.assignedTask.getStartCycle)
           val delta = managerCount - existingManagers.length
           if (managerCount >= 0 && delta <= airline.getManagerInfo().availableCount) {
             if (delta < 0) { //unassign the most junior ones first
@@ -138,7 +138,7 @@ class CampaignApplication @Inject()(cc: ControllerComponents) extends AbstractCo
               val managerTask = ManagerTask.campaign(CycleSource.loadCycle(), campaign)
               val newManagers = (0 until delta).map(_ => Manager(airline, managerTask, None))
 
-              ManagerSource.saveBusyDelegates(newManagers.toList)
+              ManagerSource.saveBusyManagers(newManagers.toList)
             }
             Ok(Json.obj())
           } else {
