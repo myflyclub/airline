@@ -15,8 +15,8 @@ object Meta {
   dataSource.setPassword(DATABASE_PASSWORD)
   dataSource.setJdbcUrl(DATABASE_CONNECTION)
   dataSource.setMaxPoolSize(
-    if (Constants.configFactory.hasPath("db.maxPoolSize"))
-      Constants.configFactory.getInt("db.maxPoolSize")
+    if (Constants.configFactory.hasPath("c3p0.maxPoolSize"))
+      Constants.configFactory.getInt("c3p0.maxPoolSize")
     else 25
   )
   dataSource.setIdleConnectionTestPeriod(60)

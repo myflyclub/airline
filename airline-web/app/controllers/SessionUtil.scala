@@ -26,6 +26,8 @@ object Session {
     token
   }
 
+  def size: Int = sessions.size
+
   def extractUserId(token : String) : Option[Int] = {
     sessions.get(token) match {
       case Some(session) =>

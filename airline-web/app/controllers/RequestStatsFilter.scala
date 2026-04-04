@@ -10,15 +10,9 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class RequestStatsFilter @Inject()(implicit val mat: Materializer, ec: ExecutionContext) extends Filter {
 
-  // userId -> endpoint -> count
-  val stats = new ConcurrentHashMap[Int, ConcurrentHashMap[String, LongAdder]]()
-  // Track anonymous requests separately
-  val anonStats = new ConcurrentHashMap[String, LongAdder]()
-  val totalRequests = new AtomicLong(0)
-
   def apply(nextFilter: RequestHeader => Future[Result])
            (requestHeader: RequestHeader): Future[Result] = {
-    totalRequests.incrementAndGet()
+    RequestStats.totalRequests.incrementAndGet()
 
     // Extract user from session — pure in-memory lookup, no DB
     val userIdOpt = requestHeader.session.get("userToken").flatMap(SessionUtil.getUserId)
@@ -28,14 +22,21 @@ class RequestStatsFilter @Inject()(implicit val mat: Materializer, ec: Execution
 
     userIdOpt match {
       case Some(userId) =>
-        val userMap = stats.computeIfAbsent(userId, _ => new ConcurrentHashMap[String, LongAdder]())
+        val userMap = RequestStats.stats.computeIfAbsent(userId, _ => new ConcurrentHashMap[String, LongAdder]())
         userMap.computeIfAbsent(endpoint, _ => new LongAdder()).increment()
       case None =>
-        anonStats.computeIfAbsent(endpoint, _ => new LongAdder()).increment()
+        RequestStats.anonStats.computeIfAbsent(endpoint, _ => new LongAdder()).increment()
     }
 
     nextFilter(requestHeader)
   }
+}
+
+object RequestStats {
+  // userId -> endpoint -> count
+  val stats = new ConcurrentHashMap[Int, ConcurrentHashMap[String, LongAdder]]()
+  val anonStats = new ConcurrentHashMap[String, LongAdder]()
+  val totalRequests = new AtomicLong(0)
 
   def getTopUsers(n: Int): Seq[(Int, Long)] = {
     import scala.jdk.CollectionConverters._
