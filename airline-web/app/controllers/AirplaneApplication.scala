@@ -783,9 +783,9 @@ class AirplaneApplication @Inject()(cc: ControllerComponents) extends AbstractCo
                 if (validationError.isDefined) {
                   BadRequest(validationError.get)
                 } else {
-                  // Calculate action point cost: 1 per 500 total capacity or 1 per 5 aircraft, whichever is more, at least 1
+                  // Calculate action point cost: 1 per 400 total capacity or 1 per 5 aircraft, whichever is more rounded down, at least 1
                   val totalCapacity = airplanesToSwap.map(_.model.capacity).sum
-                  val apCost = Math.max(Math.max(totalCapacity / 500, airplanesToSwap.length / 5), 1)
+                  val apCost = Math.max(Math.max(totalCapacity / 400, airplanesToSwap.length / 5), 1)
 
                   // Calculate total sell value
                   val totalSellValue: Long = airplanesToSwap.map(airplane =>
