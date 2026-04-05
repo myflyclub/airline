@@ -5,7 +5,7 @@ import com.patson.stream.CycleCompleted
 import websocket.ActorCenter
 import com.patson.model.UserStatus.UserStatus
 import com.patson.model.{Airline, AirlineModifier, AirlineModifierType, BannerLoyaltyAirlineModifier, User, UserModifier, UserStatus}
-import com.patson.util.{AirlineCache, AirportCache}
+import com.patson.util.{AirlineCache, AirplaneOwnershipCache, AirportCache, AirportStatisticsCache, AllianceCache, CountryCache, UserCache}
 import controllers.AuthenticationObject.Authenticated
 import controllers.GoogleImageUtil.{AirportKey, CityKey}
 import play.api.libs.json.{JsArray, JsObject, Json}
@@ -332,5 +332,104 @@ class AdminApplication @Inject()(cc: ControllerComponents) extends AbstractContr
 
   }
 
+  private def caffeineStats(cache: com.github.benmanes.caffeine.cache.Cache[_, _], maxSize: Long): JsObject = {
+    Json.obj(
+      "size" -> cache.estimatedSize(),
+      "maxSize" -> maxSize
+    )
+  }
+
+  def getCacheStats() = Authenticated { implicit request =>
+    if (request.user.isAdmin) {
+      Ok(Json.obj(
+        "airlineCache" -> Json.obj(
+          "detailed" -> caffeineStats(AirlineCache.detailedCache, 5000),
+          "simple" -> caffeineStats(AirlineCache.simpleCache, 5000)
+        ),
+        "airportCache" -> Json.obj(
+          "detailed" -> caffeineStats(AirportCache.detailedCache, 2500),
+          "simple" -> caffeineStats(AirportCache.simpleCache, 5000)
+        ),
+        "allianceCache" -> Json.obj(
+          "detailed" -> caffeineStats(AllianceCache.detailedCache, 1000),
+          "simple" -> caffeineStats(AllianceCache.simpleCache, 1000)
+        ),
+        "userCache" -> caffeineStats(UserCache.simpleCache, 10000),
+        "countryCache" -> caffeineStats(CountryCache.simpleCache, 1000),
+        "airportStatisticsCache" -> caffeineStats(AirportStatisticsCache.simpleCache, 4000),
+        "airplaneOwnershipCache" -> caffeineStats(AirplaneOwnershipCache.simpleCache, 10000),
+        "responseCache" -> Json.obj(
+          "transit" -> caffeineStats(ResponseCache.transitCache, 4000),
+          "airportDetail" -> caffeineStats(ResponseCache.airportDetailCache, 4000),
+          "demand" -> caffeineStats(ResponseCache.demandCache, 4000),
+          "olympicsDetails" -> caffeineStats(ResponseCache.olympicsDetailsCache, 100),
+          "searchRoute" -> caffeineStats(ResponseCache.searchRouteCache, 1000),
+          "researchLink" -> caffeineStats(ResponseCache.researchLinkCache, 1000)
+        ),
+        "sessions" -> controllers.Session.size
+      ))
+    } else {
+      Forbidden("Not an admin user")
+    }
+  }
+
+  def getPoolStats() = Authenticated { implicit request =>
+    if (request.user.isAdmin) {
+      val ds = com.patson.data.Meta.dataSource
+      Ok(Json.obj(
+        "numConnections" -> ds.getNumConnections(),
+        "numBusyConnections" -> ds.getNumBusyConnections(),
+        "numIdleConnections" -> ds.getNumIdleConnections(),
+        "maxPoolSize" -> ds.getMaxPoolSize(),
+        "numFailedCheckouts" -> ds.getNumFailedCheckoutsDefaultUser(),
+        "threadPoolNumActiveThreads" -> ds.getThreadPoolNumActiveThreads()
+      ))
+    } else {
+      Forbidden("Not an admin user")
+    }
+  }
+
+  def getRequestStats() = Authenticated { implicit request =>
+    if (request.user.isAdmin) {
+      val topUsers = RequestStats.getTopUsers(20)
+      val total = RequestStats.totalRequests.get()
+
+      import scala.jdk.CollectionConverters._
+      Ok(Json.obj(
+        "totalRequests" -> total,
+        "topUsers" -> topUsers.map { case (userId, count) =>
+          Json.obj("userId" -> userId, "requests" -> count)
+        },
+        "anonEndpoints" -> Json.toJson(
+          RequestStats.anonStats.asScala.map { case (ep, count) => ep -> count.sum() }.toMap
+        )
+      ))
+    } else {
+      Forbidden("Not an admin user")
+    }
+  }
+
+  def resetRequestStats() = Authenticated { implicit request =>
+    if (request.user.isAdmin) {
+      RequestStats.reset()
+      Ok(Json.toJson("Request stats reset"))
+    } else {
+      Forbidden("Not an admin user")
+    }
+  }
+
+  def clearCache() = Authenticated { implicit request =>
+    if (request.user.isAdmin) {
+      AirlineCache.invalidateAll()
+      AirportCache.invalidateAll()
+      AirportCache.getAllAirports()
+      AirportStatisticsCache.invalidateAll()
+      AirplaneOwnershipCache.invalidateAll()
+      ResponseCache.invalidateAll()
+      Ok(Json.toJson("Cache cleared"))
+    } else {
+      Forbidden("Not an admin user")
+    }
+  }
 
 }

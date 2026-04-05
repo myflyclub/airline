@@ -144,7 +144,8 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
       "duration" -> JsNumber(modelPlanLinkInfo.duration),
       "flightMinutesRequired" -> JsNumber(modelPlanLinkInfo.flightMinutesRequired),
       "maxFrequency" -> JsNumber(modelPlanLinkInfo.maxFrequency),
-      "isAssigned" -> JsBoolean(modelPlanLinkInfo.isAssigned)))
+      "isAssigned" -> JsBoolean(modelPlanLinkInfo.isAssigned),
+      "cost" -> JsNumber(modelPlanLinkInfo.cost)))
 
       var airplaneArray = JsArray()
 
@@ -394,7 +395,8 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
         if (existingLink.isEmpty) {
           LinkSource.saveLink(incomingLink) match {
             case Some(link) => {
-              val cost = Computation.getLinkCreationCost(incomingLink.from, incomingLink.to)
+              val newModelSize = incomingLink.getAssignedModel().map(_.airplaneTypeSize).getOrElse(0.0)
+              val cost = if (newModelSize > 0) Computation.getLinkCreationCost(incomingLink.from, incomingLink.to, newModelSize) else 0
               AirlineSource.saveLedgerEntry(AirlineLedgerEntry(request.user.id, currentCycle, LedgerType.CREATE_LINK, cost * -1, Some(s"${incomingLink.from.iata} \u2013 ${incomingLink.to.iata}")))
               if (isFirstLink) {
                 NotificationSource.markCategoryRead(airline.id, NotificationCategory.TUTORIAL)
@@ -410,7 +412,13 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
             case 1 =>
               //update assignments
               LinkSource.updateAssignedPlanes(incomingLink.id, incomingLink.getAssignedAirplanes())
-
+              val newModelSize = incomingLink.getAssignedModel().map(_.airplaneTypeSize).getOrElse(0.0)
+              val oldModelSize = existingLink.flatMap(_.getAssignedModel()).map(_.airplaneTypeSize).getOrElse(0.0)
+              val sizeDelta = Math.max(0.0, newModelSize - oldModelSize)
+              if (sizeDelta > 0) {
+                val upgradeCost = Computation.getLinkCreationCost(incomingLink.from, incomingLink.to, sizeDelta)
+                AirlineSource.saveLedgerEntry(AirlineLedgerEntry(request.user.id, currentCycle, LedgerType.CREATE_LINK, upgradeCost * -1, Some(s"${incomingLink.from.iata} \u2013 ${incomingLink.to.iata} (upgrade)")))
+              }
               incomingLink
             case _ =>
               return UnprocessableEntity("Cannot update link")
@@ -549,6 +557,18 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
         LinkSource.loadFlightLinksByToAirportAndAirlineId(toAirportId, airlineId)
       }
     Ok(Json.toJson(links)(LinksGeoJsonWrites)).withHeaders(
+      ETAG -> s""""$currentCycle"""",
+      ACCESS_CONTROL_ALLOW_ORIGIN -> "*"
+    )
+  }
+
+  def getLinksSummary(airlineId : Int) = Action {
+    val links = LinkSource.loadFlightLinksByAirlineId(airlineId)
+    val linksJson = links.map { link =>
+      val basePrice = Pricing.computeStandardPriceForAllClass(link.distance, Computation.getFlightCategory(link.from, link.to), PassengerType.TOURIST, link.from.income)
+      Json.toJson(link).as[JsObject] ++ Json.obj("basePrice" -> basePrice)
+    }
+    Ok(JsArray(linksJson)).withHeaders(
       ETAG -> s""""$currentCycle"""",
       ACCESS_CONTROL_ALLOW_ORIGIN -> "*"
     )
@@ -758,6 +778,7 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
           case Some(link) => link.getAssignedModel()
           case None => None
         }
+        val existingModelSize = assignedModel.map(_.airplaneTypeSize).getOrElse(0.0)
 
 
         val planLinkInfoByModel = ListBuffer[ModelPlanLinkInfo]()
@@ -771,7 +792,9 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
             val flightMinutesRequired = Computation.calculateFlightMinutesRequired(model, distance)
             val maxFrequency = Airplane.MAX_FLIGHT_MINUTES / flightMinutesRequired
 
-            planLinkInfoByModel.append(ModelPlanLinkInfo(model, duration, flightMinutesRequired, assignedModel.isDefined && assignedModel.get.id == model.id, maxFrequency, airplaneList))
+            val sizeDelta = if (existingLink.isEmpty) model.airplaneTypeSize else Math.max(0.0, model.airplaneTypeSize - existingModelSize)
+            val modelCost = if (sizeDelta > 0) Computation.getLinkCreationCost(fromAirport, toAirport, sizeDelta) else 0
+            planLinkInfoByModel.append(ModelPlanLinkInfo(model, duration, flightMinutesRequired, assignedModel.isDefined && assignedModel.get.id == model.id, maxFrequency, airplaneList, modelCost))
         }
 
         val paxTypes = List(PassengerType.TOURIST, PassengerType.TRAVELER, PassengerType.BUSINESS)
@@ -796,7 +819,7 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
 
         val (fromDemand, toDemand) = LinkApplication.generateDemands(fromAirport, toAirport, affinity, distance, flightCategory)
 
-        val cost = if (existingLink.isEmpty) Computation.getLinkCreationCost(fromAirport, toAirport) else 0
+        val cost = 0
         val quality = if (existingLink.isEmpty) 0 else existingLink.get.computedQuality()
         val flightNumber = if (existingLink.isEmpty) LinkApplication.getNextAvailableFlightNumber(request.user) else existingLink.get.flightNumber
         val flightCode = LinkUtil.getFlightCode(request.user, flightNumber)
@@ -987,12 +1010,6 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
           return Some("Departure and Destination airports cannot be the same. Click and select a different destination airport.", DISTANCE)
         }
 
-        //check balance
-        val cost = Computation.getLinkCreationCost(fromAirport, toAirport)
-        if (airline.getBalance() < cost) {
-          val integerInstance = java.text.NumberFormat.getIntegerInstance
-          return Some(s"Not enough cash – need $$${integerInstance.format(cost)} to establish this route", NO_CASH)
-        }
       case Some(existingLink) => //nothing
     }
 
@@ -1616,7 +1633,7 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
     Ok(result)
   }
 
-  case class ModelPlanLinkInfo(model: Model, duration : Int, flightMinutesRequired : Int, isAssigned : Boolean, maxFrequency : Int, airplanes : List[(Airplane, Int)])
+  case class ModelPlanLinkInfo(model: Model, duration : Int, flightMinutesRequired : Int, isAssigned : Boolean, maxFrequency : Int, airplanes : List[(Airplane, Int)], cost: Int = 0)
 }
 
 object LinkApplication {

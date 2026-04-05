@@ -530,7 +530,7 @@ function refreshLinkDetails(linkId) {
 	    	    $('#quickPriceSave').show()
 	    	    $('#quickPriceMessage').text('')
 	    	})
-	    	$("#linkDistance").text(link.distance + " km")
+	    	$("#linkDistance").text(Math.round(convertDistance(link.distance)) + " " + distanceLabel())
 	    	$("#linkDuration").text(toHoursAndMinutes(link.duration).hours + "hr " + toHoursAndMinutes(link.duration).minutes + "min ")
 	    	$("#linkQuality").html(getGradeStarsImgs(Math.min(10, Math.round(link.computedQuality / 10))) + " (" + link.computedQuality + ")")
 	    	$("#linkCurrentCapacity").html(toLinkClassDiv(link.capacity))
@@ -899,7 +899,7 @@ function updatePlanLinkInfo(linkInfo, isRefresh) {
     var title = linkInfo.toCountryTitle
     updateAirlineTitle(title, $("#planLinkToCountryTitle img.airlineTitleIcon"), $("#planLinkToCountryTitle .airlineTitle"))
 
-	$('#planLinkDistance').html(linkInfo.distance + " km")
+	$('#planLinkDistance').html(Math.round(convertDistance(linkInfo.distance)) + " " + distanceLabel())
 	$('.planLinkFlightType').html(linkInfo.flightType)
 
     var $breakdown = $("#planLinkDetails .directDemandBreakdown")
@@ -1443,6 +1443,13 @@ function updatePlanLinkInfoWithModelSelected(newModelId, assignedModelId, isRefr
 
 		updateFrequencyDetail(thisModelPlanLinkInfo)
 
+		if (thisModelPlanLinkInfo.cost && thisModelPlanLinkInfo.cost !== 0) {
+			$('#planLinkSetupCostRow').show()
+			$('#planLinkSetupCost').text("$" + commaSeparateNumber(thisModelPlanLinkInfo.cost))
+		} else {
+			$('#planLinkSetupCostRow').hide()
+		}
+
 		var serviceLevelBar = $("#serviceLevelBar")
 		generateImageBar(serviceLevelBar.data("emptyIcon"), serviceLevelBar.data("fillIcon"), 5, serviceLevelBar, $("#planLinkServiceLevel"))
 		$("#planLinkExtendedDetails").show()
@@ -1937,6 +1944,12 @@ function initLinksViewSwitch() {
     })
 }
 
+document.addEventListener('distanceUnitChanged', function() {
+    if ($('#linksCanvas').is(':visible')) {
+        loadLinksTable(null, true);
+    }
+});
+
 function loadLinksTable(onComplete, forceRefresh) {
     const linksTable = $('#linksCanvas #linksTable');
     if (!linksTable.data('delegation-set')) {
@@ -2011,7 +2024,7 @@ function addSummaryRow(links) {
         { label: prettyLabel(linksTableSummaryState) }, // From Airport
         {}, // To Airport
         {}, // Model
-        { getValue: (link) => link.distance, format: (val) => val.toFixed(0) + "km" },
+        { getValue: (link) => link.distance, format: (val) => Math.round(convertDistance(val)) + distanceLabel() },
         { getValue: (link) => link.totalCapacity, format: (val) => val.toFixed(0) }, // Capacity
         { getValue: (link) => link.computedQuality > 0 ? link.computedQuality : '-', format: (val) => val.toFixed(0) },
         { getValue: (link) => link.displayLoadFactor, format: (val) => val.toFixed(0) + '%' },
@@ -2066,7 +2079,7 @@ function updateLinksTable(sortProperty, sortOrder) {
             `<div class='cell'>${getCountryFlagImg(link.fromCountryCode)}${getAirportText(link.fromAirportCity, link.fromAirportCode)}</div>` +
             `<div class='cell'>${getCountryFlagImg(link.toCountryCode)}${getAirportText(link.toAirportCity, link.toAirportCode)}</div>` +
             `<div class='cell'>${link.model}</div>` +
-            `<div class='cell' align='right'>${link.distance}km</div>` +
+            `<div class='cell' align='right'>${Math.round(convertDistance(link.distance))}${distanceLabel()}</div>` +
             `<div class='cell' align='right'>${link.totalCapacity}(${link.frequency})</div>` +
             `<div class='cell' align='right'>${quality}</div>` +
             `<div class='cell${avgClass}' align='right'>${link.displayLoadFactor}%</div>` +

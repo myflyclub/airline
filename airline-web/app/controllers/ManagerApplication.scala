@@ -41,10 +41,10 @@ class ManagerApplication @Inject()(cc: ControllerComponents) extends AbstractCon
       BadRequest(s"Invalid manager count $managerCount (max ${CountryManagerTask.MAX_MANAGERS_PER_COUNTRY})")
     } else {
       if (delta < 0) { //unassign the most junior ones first
-        ManagerSource.deleteBusyDelegates(existingManagers.sortBy(_.assignedTask.getStartCycle).takeRight(-delta))
+        ManagerSource.deleteBusyManagers(existingManagers.sortBy(_.assignedTask.getStartCycle).takeRight(-delta))
       } else if (delta > 0) {
         val task = ManagerTask.country(CycleSource.loadCycle(), CountryCache.getCountry(countryCode).get)
-        ManagerSource.saveBusyDelegates((0 until delta).map(_ => Manager(airline, task, None)).toList)
+        ManagerSource.saveBusyManagers((0 until delta).map(_ => Manager(airline, task, None)).toList)
       }
       Ok(Json.obj())
     }
@@ -82,7 +82,7 @@ class ManagerApplication @Inject()(cc: ControllerComponents) extends AbstractCon
         case Some(model) =>
           val managerTask = ManagerTask.aircraftModel(CycleSource.loadCycle(), modelId, model.name)
           val newDelegates = (0 until delta).map(_ => Manager(airline, managerTask, None))
-          ManagerSource.saveBusyDelegates(newDelegates.toList)
+          ManagerSource.saveBusyManagers(newDelegates.toList)
           Ok(Json.obj())
         case None =>
           BadRequest(s"Aircraft model $modelId not found")
@@ -93,7 +93,7 @@ class ManagerApplication @Inject()(cc: ControllerComponents) extends AbstractCon
   }
 
   def getLevelingManagers(airlineId: Int) = AuthenticatedAirline(airlineId) { request =>
-    val allManagers = ManagerSource.loadBusyDelegatesByAirline(airlineId)
+    val allManagers = ManagerSource.loadBusyManagersByAirline(airlineId)
       .filter(_.assignedTask.isInstanceOf[LevelingManagerTask])
 
     val campaignById: Map[Int, Campaign] =
@@ -112,7 +112,7 @@ class ManagerApplication @Inject()(cc: ControllerComponents) extends AbstractCon
   }
 
   def deleteManager(airlineId: Int, managerId: Int) = AuthenticatedAirline(airlineId) { request =>
-    val owned = ManagerSource.loadBusyDelegatesByCriteria(
+    val owned = ManagerSource.loadBusyManagersByCriteria(
       List(("id", "=", managerId), ("airline", "=", airlineId))
     ).nonEmpty
     if (owned) {

@@ -6,7 +6,7 @@ import com.patson.model.Scheduling.{TimeSlot, TimeSlotStatus}
 import com.patson.model.airplane.{Airplane, AirplaneConfiguration, Model, ModelDiscount}
 import com.patson.model.{Link, _}
 import com.patson.model.event.Olympics
-import com.patson.util.{AirlineCache, AirplaneOwnershipCache, AirportCache, AirportStatisticsCache, ChampionUtil}
+import com.patson.util.{AirlineCache, AirportCache, ChampionUtil}
 import controllers.AuthenticationObject.AuthenticatedAirline
 import play.api.libs.json.{Json, _}
 import play.api.mvc._
@@ -100,23 +100,6 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
             ETAG -> s""""$currentCycle""""
           )
     }
-  }
-
-  def getCacheStats() = Action {
-    Ok(Json.obj(
-      "airportCache" -> AirportCache.getCacheStats,
-      "airlineCache" -> AirlineCache.getCacheStats,
-    ))
-  }
-
-  def clearCache() = Action {
-    AirlineCache.invalidateAll()
-    AirportCache.invalidateAll()
-    AirportCache.getAllAirports()
-    AirportStatisticsCache.invalidateAll()
-    AirplaneOwnershipCache.invalidateAll()
-    ResponseCache.invalidateAll()
-    Ok(Json.toJson("Cache cleared"))
   }
 
   /**

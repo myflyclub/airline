@@ -507,7 +507,6 @@ function getBoostSpan(finalValue, boosts, $tooltip, prepend = "") {
                 boostVal = 0
             }
             var $row = $('<div class="table-row"><div class="cell" style="width: 70%;">' + description + '</div><div class="cell" style="width: 30%; text-align:right;">+' + commaSeparateNumber(boostVal) + '</div></div>')
-            $row.css('color', 'white')
             $table.append($row)
         })
 
@@ -1091,7 +1090,7 @@ function htmlToElement(html) {
  */
 function updateElementColorsByValue(currentValue, targetValue, domQueryString, inverse = false) {
     const elements = document.querySelectorAll(domQueryString);
-    const lightMode = localStorage.getItem("theme") ?? 'dark'
+    const lightMode = localStorage.getItem("themeMode") ?? 'dark'
     
     let ratio = currentValue / targetValue;
     

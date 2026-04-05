@@ -566,7 +566,7 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
                   val updateBase = headquarter.copy(scale = inputBase.scale)
                   AirlineSource.saveAirlineBase(updateBase)
                   AirlineSource.saveLedgerEntry(AirlineLedgerEntry(airlineId, currentCycle, LedgerType.BASE_CONSTRUCTION, -1 * cost, Some(s"${headquarter.airport.iata} Lv${inputBase.scale}")))
-                  ManagerSource.saveBusyDelegates(List(Manager(airline, ManagerBaseTask(), None)))
+                  ManagerSource.saveBusyManagers(List(Manager(airline, ManagerBaseTask(), None)))
                   Created(Json.toJson(updateBase))
                 }
               case None => //ok to add then
@@ -601,7 +601,7 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
                     val updateBase = base.copy(scale = inputBase.scale)
                     AirlineSource.saveAirlineBase(updateBase)
                     AirlineSource.saveLedgerEntry(AirlineLedgerEntry(airlineId, currentCycle, LedgerType.BASE_CONSTRUCTION, -1 * cost, Some(s"${base.airport.iata} Lv${inputBase.scale}")))
-                    ManagerSource.saveBusyDelegates(List(Manager(airline, ManagerBaseTask(), None)))
+                    ManagerSource.saveBusyManagers(List(Manager(airline, ManagerBaseTask(), None)))
                     Created(Json.toJson(updateBase))
                   } else {
                     BadRequest(s"Cannot upgrade existing base $base to $inputBase")
@@ -621,7 +621,7 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
                       case Right(_) =>
                         AirlineSource.saveAirlineBase(newBase)
                         AirlineSource.saveLedgerEntry(AirlineLedgerEntry(airlineId, currentCycle, LedgerType.BASE_CONSTRUCTION, -1 * cost, Some(s"${airport.iata} Lv${newBase.scale}")))
-                        ManagerSource.saveBusyDelegates(List(Manager(airline, ManagerBaseTask(), None)))
+                        ManagerSource.saveBusyManagers(List(Manager(airline, ManagerBaseTask(), None)))
                         Created(Json.toJson(newBase))
                     }
                   }

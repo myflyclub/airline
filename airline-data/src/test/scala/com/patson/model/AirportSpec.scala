@@ -155,8 +155,8 @@ class AirportSpec(_system: ActorSystem) extends TestKit(_system) with ImplicitSe
 
   "Airline base" should {
     "MegaHQ should have cheapest base costs" in {
-      val iatas = List("CDG", "LYS", "BVA")
-      val baseSizes = List(1, 2, 3, 4, 6, 9, 18, 27)
+      val iatas = List("CDG", "ORY", "LYS", "BVA")
+      val baseSizes = List(1, 2, 3, 6, 9, 12, 18, 27)
       val airlineNormal = Airline("TestAirline", id = 999)
       val airlineMHQ = Airline("TestMegaHQ", id = 1000, airlineType = MegaHqAirline)
 //      val airlineRegional = Airline("TestMegaHQ", id = 1001, airlineType = RegionalAirline)
@@ -172,7 +172,7 @@ class AirportSpec(_system: ActorSystem) extends TestKit(_system) with ImplicitSe
         val upkeepCompare = s"${baseNormal.getUpkeep}, ${baseMHQ.getUpkeep}, ${baseMHQnotHQ.getUpkeep}"
         val upgradeCompare = s"${baseNormal.getValue}, ${baseMHQ.getValue}, ${baseMHQnotHQ.getValue}"
 
-        val costPerStaff = (baseNormal.getUpkeep / baseNormal.getOfficeStaffCapacity).toInt
+        val costPerStaff = (baseNormal.getUpkeep.toDouble / baseNormal.getOfficeStaffCapacity).toInt
         val overtime15 = (baseNormal.getOvertimeCompensation(baseNormal.getOfficeStaffCapacity + 15).toDouble / 15).toInt
         val overtime100 = (baseNormal.getOvertimeCompensation(baseNormal.getOfficeStaffCapacity + 100).toDouble / 100).toInt
 

@@ -201,8 +201,8 @@
 	<!-- Logo Modal -->
 	<div id="logoModal" class="modal">
 	  <div class="modal-content"  style="width : 480px;">
-	    <span class="close" onclick="closeModal($('#logoModal'))">&times;</span>
 	    <h4>Logo Templates</h4>
+	    <span class="close" onclick="closeModal($('#logoModal'))">&times;</span>
 	    <div id="logoTemplates" class="flex-row flex-wrap pb-4"></div>
 	    <div style="clear:both;"></div>
 	    <input type="hidden" id="logoTemplateIndex"/>
@@ -223,8 +223,8 @@
 
 	<div id="uploadLogoModal" class="modal">
 		<div class="modal-content"  style="width : 480px;">
-			<span class="close" onclick="closeModal($('#uploadLogoModal'))">&times;</span>
 			<h4>Upload Own Logo</h4>
+			<span class="close" onclick="closeModal($('#uploadLogoModal'))">&times;</span>
 			<ul>
 				<li class="label" style="padding: 5px;">- Logo should be in PNG format</li>
 				<li class="label" style="padding: 5px;">- Logo must be exactly 128px wide and 64px tall</li>
@@ -254,8 +254,8 @@
 
   <div id="uploadLogoModalAlliance" class="modal">
       <div class="modal-content"  style="width : 480px;">
-          <span class="close" onclick="closeModal($('#uploadLogoModalAlliance'))">&times;</span>
           <h4>Upload Logo</h4>
+          <span class="close" onclick="closeModal($('#uploadLogoModalAlliance'))">&times;</span>
           <ul>
               <li class="label" style="padding: 5px;">- Logo should be in PNG format</li>
               <li class="label" style="padding: 5px;">- Logo must be exactly 128px wide and 64px tall</li>
@@ -285,8 +285,8 @@
 
   <div id="uploadLiveryModal" class="modal">
 	  <div class="modal-content"  style="width : 480px;">
-		  <span class="close" onclick="closeModal($('#uploadLiveryModal'))">&times;</span>
 		  <h4>Upload Airline Livery</h4>
+		  <span class="close" onclick="closeModal($('#uploadLiveryModal'))">&times;</span>
 		  <ul>
 			  <li class="label" style="padding: 5px;">- Livery should be in JPG or WebP format, max 600x300</li>
 			  <li class="label" style="padding: 5px;">- Image should not be larger than 2MB</li>
@@ -317,8 +317,8 @@
 	<!-- airport facility modal -->
 	<div id="facilityModal" class="modal facility">
 	  <div class="modal-content"  style="width : 480px;">
-	    <span class="close" onclick="closeModal($(this).closest('.modal'))">&times;</span>
 	    <h4 class="modalHeader"><span class="facilityType"></span></h4>
+	    <span class="close" onclick="closeModal($(this).closest('.modal'))">&times;</span>
 		<p class="facilityDescription"></p>
 	    <div class="table" style="width: 100%">
 			<div class="table-row">
@@ -369,8 +369,8 @@
 
     <div id="genericTransitModal" class="modal facility">
 	  <div class="modal-content"  style="width : 500px;">
-		  <span class="close" onclick="closeModal($(this).closest('.modal'))">&times;</span>
 		  <h4>Nearby metro connected airports</h4>
+		  <span class="close" onclick="closeModal($(this).closest('.modal'))">&times;</span>
 
 		  <div class="data table genericTransits" style="width: 100%">
 			  <div class="table-header">
@@ -389,9 +389,9 @@
 
   <div id="baseSpecializationModal" class="modal">
 	  <div class="modal-content"  style="width: 920px; padding: 1.5rem">
-		  <span class="close" onclick="closeModal($(this).closest('.modal'))">&times;</span>
 		  <p class="airportName text-xs m-0"></p>
 		  <h4 class="">Airport Specializations <i class="currentAirline"></i></h4>
+		  <span class="close" onclick="closeModal($(this).closest('.modal'))">&times;</span>
 		  <p class="warning pb-2"></p>
 		  <div class="container" style="width: 100%">
 
@@ -407,8 +407,8 @@
 	<!-- Santa Claus modal -->
 	<div id="santaClausModal" class="modal christmas-event" aria-hidden="true">
 		<div class="modal-content"  style="width : 500px;">
-			<span class="close" onclick="closeSantaClausModal()">&times;</span>
 			<div style="margin-bottom: 30px"><h2>Santa, Where are you?</h2></div>
+			<span class="close" onclick="closeSantaClausModal()">&times;</span>
 			<h4 style="margin-bottom: 10px;">Difficulty</h4>
 			<div class="difficultyOptions">
 				<div style="margin-bottom: 15px; display: block;">Upon first attempt, the difficulty will be fixed!</div>
@@ -448,8 +448,6 @@
 				<div style="clear:both; margin-bottom: 15px"></div>
 			</div>
 
-
-
 			<div id = "santaClausRewardOptions" style="display: none;">
 				<div style="float:left"><img src='@routes.Assets.versioned("/images/icons/rubber-balloons.png")'></div>
 				<div style="float:left"> <h4>Woohoo! You have found Santa!</h4></div>
@@ -482,8 +480,8 @@
 	<!-- airport passenger quality expectation model -->
 	<div id="expectedQualityModal" class="modal">
 		<div class="modal-content"  style="width : 500px;">
-			<span class="close" onclick="closeModal($('#expectedQualityModal'))">&times;</span>
 			<h4 style="margin-bottom: 10px;">Flight Quality Expectation</h4>
+			<span class="close" onclick="closeModal($('#expectedQualityModal'))">&times;</span>
 			<div style="margin-bottom: 10px;">Quality expection for this route from passengers of this airport:</div>
 			<div class="table expectedQualityTable py-4">
 				<div class="flex-row">
@@ -521,9 +519,8 @@
 	<!-- link passenger survey modal -->
     <div id="linkCompositionModal" class="modal">
         <div class="modal-content"  style="width: 920px; max-width: 100%;">
-            <span class="close" onclick="closeModal($('#linkCompositionModal'))">&times;</span>
 			<h4 style="margin-bottom: 10px;">Passenger Survey</h4>
-
+            <span class="close" onclick="closeModal($('#linkCompositionModal'))">&times;</span>
 
 			<div class="flex-container-width-third py-4">
 
@@ -713,9 +710,8 @@
   <!-- link event modal -->
   <div id="linkEventModal" class="modal">
 	  <div class="modal-content"  style="width : 800px;margin: 5% auto;">
-		  <span class="close" onclick="closeModal($('#linkEventModal'))">&times;</span>
-		  <div style="clear: both;"></div>
 		  <h4 style="margin-bottom: 10px;" class="title"></h4>
+		  <span class="close" onclick="closeModal($('#linkEventModal'))">&times;</span>
 		  <fieldset>
 			  <div class="switch" style="float: right;">
 				  <input type="radio" class="switch-input" name="eventGraphType" value="self" id="switchLinkEventSelf" onchange="switchLinkEventChart($('#linkEventChart'))">
@@ -771,8 +767,8 @@
 <!-- link confirmation modal -->
 <div id="linkConfirmationModal" class="modal">
     <div class="modal-content" style="width : 600px">
-        <span class="close" onclick="closeModal($('#linkConfirmationModal'))">&times;</span>
         <h4 class="modalHeader"></h4>
+        <span class="close" onclick="closeModal($('#linkConfirmationModal'))">&times;</span>
         <div
             style=" float: left; width:50%; padding-left: 10%; box-sizing: border-box; display: flex; flex-direction: column; align-items: center;">
             <img class="fromAirport roundImage" style="height: 150px; width:150px; max-height: 30vw; max-width: 30vw;">
@@ -894,9 +890,8 @@
 
   <div id="negotiationDifficultyModal" class="modal">
 	  <div class="modal-content" style="width : 750px">
-		  <span class="close" onclick="closeModal($('#negotiationDifficultyModal'))">&times;</span>
 		  <h4 class="modalHeader">Negotiation Difficulty Details</h4>
-          <div style="clear: both;"></div>
+		  <span class="close" onclick="closeModal($('#negotiationDifficultyModal'))">&times;</span>
 		  <div class="negotiationInfo">
           <!-- requirements list-->
               <div class="flex-container-width-half">
@@ -999,8 +994,8 @@
 
   <div id="negotiationAnimation" class="modal">
 	  <div class="modal-content" style="width : 520px; max-width : 95vw;">
-		  <span class="close" onclick="closeModal($('#negotiationAnimation'))">&times;</span>
 		  <h4 class="modalHeader">Negotiation in progress... Success Rate:&nbsp;<span class="successRate"></span>%</h4>
+		  <span class="close" onclick="closeModal($('#negotiationAnimation'))">&times;</span>
 		  <div class="negotiationIcons" style="width: 260px; height: 35px; margin: auto;text-align:center;"></div>
 		  <div class="negotiationDescriptions" class="py-2 px-8" style="height: 15px; text-align: center;"></div>
 		  <div class="negotiationBar progressbar" style="margin: auto;">
@@ -1021,8 +1016,8 @@
     <!-- link rival loyalty modal -->
     <div id="linkRivalHistoryModal" class="modal">
         <div class="modal-content"  style="width: 800px; height: 80vh; min-height: 600px;">
-            <span class="close" onclick="closeModal($('#linkRivalHistoryModal'))">&times;</span>
             <h4 class="pt-4 pb-2">Ticket Price History</h4>
+            <span class="close" onclick="closeModal($('#linkRivalHistoryModal'))">&times;</span>
             <div style="width: 100%;">
                 <div style="float: left;">
                     <h5>Economy</h5>
@@ -1058,8 +1053,8 @@
 	<!-- link rival network modal -->
 	<div id="linkRivalDetailsModal" class="modal">
 		<div class="modal-content"  style="width : 800px; height: 600px;">
-			<span class="close" onclick="closeModal($('#linkRivalDetailsModal'))">&times;</span>
 			<h4 style="margin-bottom: 10px;">Loyalty</h4>
+			<span class="close" onclick="closeModal($('#linkRivalDetailsModal'))">&times;</span>
 			<div style="height: 250px; width: 100%;">
 				<div style="height: 100%; width: 100%; overflow: auto; float: left;">
 					<div class="table data"style="width: 100%">
@@ -1108,8 +1103,8 @@
 	<!-- airplane model configuration -->
 	<div id="modelConfigurationModal" class="modal">
 		<div class="modal-content"  style="max-width: 940px; min-width: 600px; height: 800px; margin: 5% auto; overflow:auto;">
-			<span class="close" onclick="closeModal($('#modelConfigurationModal'))">&times;</span>
 			<h4><span class="modelName"></span>&nbsp;Configuration</h4>
+			<span class="close" onclick="closeModal($('#modelConfigurationModal'))">&times;</span>
 			<p class="pb-2"><b class="modelCapacity"></b> Capacity</p>
 			<div class="flex-row gap-4">
 				<div class="flex-align-center">
@@ -1129,8 +1124,8 @@
 <!--	airplane inventory by base-->
 	<div id="airplaneBaseModal" class="modal">
 		<div class="modal-content"  style="width : 800px; height: 800px; margin: 5% auto;">
-			<span class="close" onclick="closeModal($('#airplaneBaseModal'))">&times;</span>
 			<h4 style="margin-bottom: 10px;"><span class="modelName"></span>&nbsp;Base</h4>
+			<span class="close" onclick="closeModal($('#airplaneBaseModal'))">&times;</span>
 			<div>
 				<input type="checkbox" onclick="toggleUtilizationRate($('#airplaneBaseModal'), $(this))" class="toggleUtilizationRateBox"><img src='@routes.Assets.versioned("/images/icons/clock-select-remain.png")' data-tooltip="Toggle Utilization Rate"/>
 				<input type="checkbox" onclick="toggleCondition($('#airplaneBaseModal'), $(this))" class="toggleConditionBox"><img class="img-button svg hover-rotate" src='@routes.Assets.versioned("images/icons/gear.svg")' data-tooltip="Toggle Airplane Condition"/>
@@ -1144,8 +1139,8 @@
   <!--	all airplane inventory -->
   <div id="allAirplaneInventoryModal" class="modal">
 	  <div class="modal-content"  style="width : 800px; height: 800px; margin: 5% auto;">
-		  <span class="close" onclick="closeModal($('#allAirplaneInventoryModal'))">&times;</span>
 		  <h4 style="margin-bottom: 10px;"><span class="modelName"></span>&nbsp;Base</h4>
+		  <span class="close" onclick="closeModal($('#allAirplaneInventoryModal'))">&times;</span>
 		  <div>
 			  <input type="checkbox" onclick="toggleUtilizationRate($('#allAirplaneInventoryModal'), $(this))" class="toggleUtilizationRateBox"><img src='@routes.Assets.versioned("/images/icons/clock-select-remain.png")' data-tooltip="Toggle Utilization Rate"/>
 			  <input type="checkbox" onclick="toggleCondition($('#allAirplaneInventoryModal'), $(this))" class="toggleConditionBox"><img class="img-button svg hover-rotate" src='@routes.Assets.versioned("images/icons/gear.svg")' data-tooltip="Toggle Airplane Condition"/>
@@ -1158,8 +1153,8 @@
 
 	<div id="buyAirplaneModal" class="modal">
 		<div class="modal-content" style="max-width: 480px;">
-			<span class="close" onclick="closeModal($('#buyAirplaneModal'))">&times;</span>
 			<h4 style="margin-bottom: 10px;">Confirm Purchase of <span class="modelName"></span></h4>
+			<span class="close" onclick="closeModal($('#buyAirplaneModal'))">&times;</span>
 			<div class="modelIllustration" style="width:100%; position: relative; max-width: 500px;">
 				<picture>
 					<source srcset="" type="image/webp">
@@ -1211,8 +1206,8 @@
 
   <div id="swapAirplaneModal" class="modal">
       <div class="modal-content" style="max-width: 900px; width: 95vw;">
-          <span class="close" onclick="closeModal($('#swapAirplaneModal'))">&times;</span>
           <h4 style="margin-bottom: 10px;">Swap airplane model from <span class="modelName"></span></h4>
+          <span class="close" onclick="closeModal($('#swapAirplaneModal'))">&times;</span>
 
           <div style="display: flex; gap: 20px; flex-wrap: wrap;">
               <div style="flex: 1.5; min-width: 300px;">
@@ -1346,8 +1341,8 @@
   <!-- popup of owned airplane details and control -->
 	<div id="ownedAirplaneDetailModal" class="modal">
 		<div class="modal-content py-4 px-6" style="max-width: 560px;">
-			<span class="close" onclick="closeModal($('#ownedAirplaneDetailModal'))">&times;</span>
 			<h3 class="pb-4">Aircraft Details</h3>
+			<span class="close" onclick="closeModal($('#ownedAirplaneDetailModal'))">&times;</span>
 			<div id="ownedAirplaneDetail" style="width: 100%;">
 				<div class="modelIllustration pb-4" style="width:100%; position: relative; max-width: 500px;">
 					<picture>
@@ -1428,8 +1423,8 @@
 
 	  <div id="olympicsRankingsModal" class="modal">
 		  <div class="modal-content"  style="width : 500px; height: 800px; margin: 5% auto; overflow-y: auto;">
-			  <span class="close" onclick="closeModal($('#olympicsRankingsModal'))">&times;</span>
 			  <h4>Top Airlines</h4>
+			  <span class="close" onclick="closeModal($('#olympicsRankingsModal'))">&times;</span>
 			  <div class="table data section topAirlines" style="width: 95%">
 				  <div class="table-header">
 					  <div class="cell" style="width: 10%">Rank</div>
@@ -1492,8 +1487,8 @@
 
 	  <div id="allianceMissionModal" class="modal">
 		  <div class="modal-content"  style="width : 800px;">
-			  <span class="close" onclick="closeModal($('#allianceMissionModal'))">&times;</span>
 			  <h4 style="margin: 10px 0px;" class="phase" data-phase="1"><img>Phase 1: Select Mission Candidates&nbsp;<span class="tillNextPhase"></span></h4>
+			  <span class="close" onclick="closeModal($('#allianceMissionModal'))">&times;</span>
 			  <div class="allianceMissionCandidates">
 
 			  </div>
@@ -1531,8 +1526,8 @@
 
 	  <div id="airlineCountryRelationshipModal" class="modal">
 		  <div class="modal-content" style="width : 800px;">
-			  <span class="close" onclick="closeModal($('#airlineCountryRelationshipModal'))">&times;</span>
 			  <h2 style="margin-bottom: 20px">Relationship Management with <span class="country"></span></h2>
+			  <span class="close" onclick="closeModal($('#airlineCountryRelationshipModal'))">&times;</span>
 			  <h4 style="margin-bottom: 10px; margin-top: 30px;">Airline Title</h4>
 			  <div class="section">
 				<div class="currentTitle" style="margin-bottom: 20px; display: flex;"><span>Current: </span><img class="titleIcon svg">&nbsp;<span class="titleDescription"></span></div>
@@ -1572,8 +1567,8 @@
 
       <div id="campaignModal" class="modal">
 	    <div class="modal-content pb-16" style="width: 800px;">
-		  <span class="close" onclick="closeModal($('#campaignModal'))">&times;</span>
 		  <h2 style="margin-bottom: 20px">Campaign Management</h2>
+		  <span class="close" onclick="closeModal($('#campaignModal'))">&times;</span>
 			<div class="flex-row pb-4">
 				<h4>Active Campaigns</h4>
 				<img class="addCampaign img-button svg svg-monochrome svg-hover-green" title="Draft New Campaign" src='@routes.Assets.versioned("/images/icons/plus.svg")' onclick="toggleDraftCampaign()" width="24" height="24">
@@ -1681,8 +1676,8 @@
 
 	  <div id="baseDetailsModal" class="modal">
 		  <div class="modal-content"  style="width : 480px;">
-			  <span class="close" onclick="closeModal($(this).closest('.modal'))">&times;</span>
 			  <h4 style="margin-bottom: 10px;">Base Frequency</h4>
+			  <span class="close" onclick="closeModal($(this).closest('.modal'))">&times;</span>
 			  <p>As you level up your base, you have more capability to handle more flights at higher frequencies.</p>
 			  <div class="table data" style="width: 100%;">
 			  </div>
@@ -1693,8 +1688,8 @@
 
 	  <div id="baseUpkeepModal" class="modal">
 		  <div class="modal-content"  style="width : 480px;">
-			  <span class="close" onclick="closeModal($(this).closest('.modal'))">&times;</span>
 			  <h4 style="margin-bottom: 10px;">Base Upkeep</h4>
+			  <span class="close" onclick="closeModal($(this).closest('.modal'))">&times;</span>
 			  <div class="table data scaleDetails" style="width: 100%;">
 				  <div class="table-header">
 					  <div class="cell" style="width: 30%;"><p>Scale</p></div>
@@ -1709,8 +1704,8 @@
 
 	  <div id="sendAirlineMessageModal" class="modal">
 		  <div class="modal-content"  style="width : 500px;">
-			  <span class="close" onclick="closeModal($('#sendAirlineMessageModal'))">&times;</span>
 			  <h4 style="margin-bottom: 10px;">Send private message (popup) <span class="airlineName"></span></h4>
+			  <span class="close" onclick="closeModal($('#sendAirlineMessageModal'))">&times;</span>
               <textarea style="height: 200px; width: 95%; line-height: 20px;" class="sendMessage"></textarea>
               <div>
                   <div class="button" onclick="sendAirlineMessage()">Send</div>
@@ -1720,8 +1715,8 @@
 	  </div>
 	  <div id="sendBroadcastMessageModal" class="modal">
 		  <div class="modal-content"  style="width : 500px;">
-			  <span class="close" onclick="closeModal($('#sendBroadcastMessageModal'))">&times;</span>
 			  <h4 style="margin-bottom: 10px;">Broadcast message to all online airlines</h4>
+			  <span class="close" onclick="closeModal($('#sendBroadcastMessageModal'))">&times;</span>
 
               <textarea style="height: 200px; width: 95%; line-height: 20px;" class="sendMessage"></textarea>
               <div>
@@ -1734,8 +1729,8 @@
 
 	  <div id="broadcastMessagePopup" class="modal">
 		  <div class="modal-content"  style="width : 500px; height: 200px;">
-			  <span class="close" onclick="closeModal($('#broadcastMessagePopup'))">&times;</span>
 			  <h4 style="margin-bottom: 10px;">Broadcast message from Admin</h4>
+			  <span class="close" onclick="closeModal($('#broadcastMessagePopup'))">&times;</span>
 			  <div style="width: 95%; text-align: center;">
 				  <div class="sendMessage" style="width: 100%; height: 100px;"></div>
 				  <div class="button" onclick="closeModal($('#broadcastMessagePopup'))">Ok</div>
@@ -1745,8 +1740,8 @@
 
 	  <div id="airlineMessagePopup" class="modal">
 		  <div class="modal-content"  style="width : 500px; height: 200px;">
-			  <span class="close" onclick="closeModal($('#airlineMessagePopup'))">&times;</span>
 			  <h4 style="margin-bottom: 10px;">Private message from Admin</h4>
+			  <span class="close" onclick="closeModal($('#airlineMessagePopup'))">&times;</span>
 			  <div style="width: 95%; text-align: center;">
 				  <div class="sendMessage" style="width: 100%; height: 100px;"></div>
 				  <div class="button" onclick="closeModal($('#airlineMessagePopup'))">Ok</div>
@@ -1771,24 +1766,24 @@
 <!-- maybe deprecated -->
   <div id="managerStatusModal" class="modal">
 	  <div class="modal-content"  style="width: 480px;">
-		  <span class="close" onclick="closeModal($('#managerStatusModal'))">&times;</span>
 		  <h4>Action points<span class="delegatesTooltip"><img class="info svg" src='@routes.Assets.versioned("/images/icons/information.svg")'></span></h4>
+		  <span class="close" onclick="closeModal($('#managerStatusModal'))">&times;</span>
 		  <div class="managerStatus py-2"></div>
 	  </div>
   </div>
 
   <div id="loyalistHistoryModal" class="modal">
 	  <div class="modal-content"  style="width : 700px;">
-		  <span class="close" onclick="closeModal($('#loyalistHistoryModal'))">&times;</span>
 		  <h4>Loyalist History/Trend</span></h4>
+		  <span class="close" onclick="closeModal($('#loyalistHistoryModal'))">&times;</span>
 		  <div id="loyalistHistoryChart" style="height: 250px; width: 100%"></div>
 	  </div>
   </div>
 
   <div id="settingsModal" class="modal">
 	  <div class="modal-content"  style="width : 400px; max-width: 80%">
-		  <span class="close" onclick="closeModal($('#settingsModal'))">&times;</span>
 		  <h3 class="pb-4">Style Settings</h3>
+		  <span class="close" onclick="closeModal($('#settingsModal'))">&times;</span>
 		  <div class="table" style="width: 90%;">
 			  <div class="table-row h-8">
 				  <div class="cell">
@@ -1841,6 +1836,22 @@
 				  </div>
 			  </div>
 			  <div class="table-row h-8">
+				  <div class="cell"><h5>Distance Units</h5></div>
+				  <div class="cell" style="vertical-align:middle; text-align:center;">
+					  <fieldset>
+						  <div class="switch switch-3">
+							  <input type="radio" class="switch-input" name="distanceUnit" value="km" id="switchDistanceKm" onchange="switchDistanceUnit('km')">
+							  <label for="switchDistanceKm" class="switch-label">km</label>
+							  <input type="radio" class="switch-input mid" name="distanceUnit" value="mi" id="switchDistanceMi" onchange="switchDistanceUnit('mi')">
+							  <label for="switchDistanceMi" class="switch-label">mi</label>
+							  <input type="radio" class="switch-input right" name="distanceUnit" value="nm" id="switchDistanceNm" onchange="switchDistanceUnit('nm')">
+							  <label for="switchDistanceNm" class="switch-label">nm</label>
+							  <span class="switch-selection"></span>
+						  </div>
+					  </fieldset>
+				  </div>
+			  </div>
+			  <div class="table-row h-8">
 				  <div class="cell">
 					  <h5>Default Wallpaper</h5>
 				  </div>
@@ -1854,8 +1865,8 @@
 
   <div id="airlinesByIpModal" class="modal">
 	  <div class="modal-content"  style="width : 900px;">
-		  <span class="close" onclick="closeModal($('#airlinesByIpModal'))">&times;</span>
 		  <h4>Airlines by IP&nbsp;<span class="ip"></span></h4>
+		  <span class="close" onclick="closeModal($('#airlinesByIpModal'))">&times;</span>
 		  <div class="table data airlineByIpTable" style="max-height: 100%; width: 100%">
 			  <div class="table-header">
 				  <div class="cell" style="width: 5%; border-bottom: none;"></div>
@@ -1879,8 +1890,8 @@
 
   <div id="airlinesByUuidModal" class="modal">
 	  <div class="modal-content"  style="width: 900px;">
-		  <span class="close" onclick="closeModal($('#airlinesByUuidModal'))">&times;</span>
 		  <h4>Airlines by UUID&nbsp;<span class="uuid"></span></h4>
+		  <span class="close" onclick="closeModal($('#airlinesByUuidModal'))">&times;</span>
 		  <div class="table data airlineByUuidTable" style="max-height: 100%; width: 100%">
 			  <div class="table-header">
 				  <div class="cell" style="width: 5%; border-bottom: none;"></div>
@@ -1904,8 +1915,8 @@
 
   <div id="aircraftInfoModal" class="modal">
 	  <div class="modal-content" style="width: 600px;">
-		  <span class="close" onclick="closeModal($('#aircraftInfoModal'))">&times;</span>
 		  <h4 class="h3 m-0">Aircraft Selection Fundamentals</h4>
+		  <span class="close" onclick="closeModal($('#aircraftInfoModal'))">&times;</span>
 		  <p class="pb-2"><i>Basics of choosing the right aircraft</i></p>
           <h5 class="pt-2">Fleet Economics</h5>
           <ul class="pl-4 list-disc">
@@ -1935,8 +1946,8 @@
 
 <div id="managerModal" class="modal">
   <div class="modal-content" style="width: 900px;">
-    <span class="close" onclick="closeModal($('#managerModal'))">&times;</span>
     <h2>Managers</h2>
+    <span class="close" onclick="closeModal($('#managerModal'))">&times;</span>
     <div class="table data" id="managerModalTable">
       <div class="table-header">
         <div class="cell" style="width: 25%">Task</div>
@@ -1954,8 +1965,8 @@
 <!-- Launch Customer Celebration Modal -->
 <div id="launchCustomerModal" class="modal">
   <div class="modal-content" style="width: 480px; text-align: center;">
-    <span class="close" onclick="closeModal($('#launchCustomerModal'))">&times;</span>
     <h2 style="margin-bottom: 8px;">Launch Customer!</h2>
+    <span class="close" onclick="closeModal($('#launchCustomerModal'))">&times;</span>
     <p id="launchCustomerMessage" style="font-size: 16px; margin: 16px 0 24px;"></p>
     <button class="button" onclick="closeModal($('#launchCustomerModal'))">Awesome!</button>
   </div>

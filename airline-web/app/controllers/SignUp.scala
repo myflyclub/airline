@@ -1,12 +1,7 @@
 package controllers
 
 import play.api.mvc._
-import play.api.data._
-import play.api.data.Forms._
-
 import javax.inject._
-import views._
-import models._
 import com.patson.data.UserSource
 import com.patson.model._
 import com.patson.Authentication
@@ -40,51 +35,6 @@ class SignUp @Inject()(cc: ControllerComponents)(ws: WSClient) extends AbstractC
 
   private[this] val airlineNameCharError =
     s"Airline name can only contain letters, spaces, and these symbols: ${SignUp.AIRLINE_NAME_SAFE_SYMBOLS.toSeq.sorted.mkString(" ")}"
-  /**
-   * Sign Up Form definition.
-   *
-   * Once defined it handle automatically, ,
-   * validation, submission, errors, redisplaying, ...
-   */
-  val signupForm: Form[NewUser] = Form(
-    
-    // Define a mapping that will handle User values
-    mapping(
-      "username" -> text(minLength = 4, maxLength = 20).verifying(
-        "username can only contain alphanumeric characters",
-        userName => userName.forall(char => char.isLetterOrDigit && char <= 'z')).verifying(
-        "This username is not available",
-        userName => !UserSource.loadUsersByCriteria(List.empty).map { _.userName.toLowerCase() }.contains(userName.toLowerCase())    
-      ),
-      "email" -> email,
-      // Create a tuple mapping for the password/confirm
-      "password" -> tuple(
-        "main" -> text(minLength = 6),
-        "confirm" -> text
-      ).verifying(
-        // Add an additional constraint: both passwords must match
-        "Passwords don't match", passwords => passwords._1 == passwords._2
-      ),
-      "recaptchaToken" -> text,
-      "airlineName" -> text(minLength = MIN_AIRLINE_NAME_LENGTH, maxLength = MAX_AIRLINE_NAME_LENGTH).verifying(
-        airlineNameCharError,
-        airlineName => airlineName.forall(isValidAirlineNameChar) && !"".equals(airlineName.trim())).verifying(
-        "This airline name is not available",
-        airlineName => !AirlineSource.loadAllAirlines(false).map { _.name.toLowerCase().replaceAll("\\s", "") }.contains(airlineName.replaceAll("\\s", "").toLowerCase())
-      )
-    )
-    // The mapping signature doesn't match the User case class signature,
-    // so we have to define custom binding/unbinding functions
-    {
-      // Binding: Create a User from the mapping result (ignore the second password and the accept field)
-      (username, email, passwords, recaptureToken, airlineName) => NewUser(username.trim, passwords._1, email.trim, recaptureToken, airlineName.trim)
-    } 
-    {
-      // Unbinding: Create the mapping values from an existing User value
-      user => Some(user.username, user.email, (user.password, ""), "", user.airlineName)
-    }
-  )
-
   def airlineNameCheck(airlineName : String)= Action { implicit request =>
     val length = airlineName.length
     if (length < MIN_AIRLINE_NAME_LENGTH || length > MAX_AIRLINE_NAME_LENGTH) {
@@ -118,7 +68,7 @@ class SignUp @Inject()(cc: ControllerComponents)(ws: WSClient) extends AbstractC
           errors += "Username must be 4-20 characters"
         } else if (!username.forall(char => char.isLetterOrDigit && char <= 'z')) {
           errors += "Username can only contain alphanumeric characters"
-        } else if (UserSource.loadUsersByCriteria(List.empty).exists(_.userName.equalsIgnoreCase(username))) {
+        } else if (UserSource.loadUserByUserName(username).isDefined) {
           errors += "This username is not available"
         }
 

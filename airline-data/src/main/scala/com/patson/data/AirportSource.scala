@@ -96,9 +96,9 @@ object AirportSource {
     val campaigns = CampaignSource.loadCampaignsByAreaAirport(airport.id, true)
     val bonusByAirlineId = mutable.Map[Int, ListBuffer[AirlineBonus]]()
 
-    ManagerSource.loadBusyDelegatesByCampaigns(campaigns).foreach {
-      case(campaign, delegates) =>
-        val bonus = campaign.getAirlineBonus(campaign.airline, airport, delegates.map(_.assignedTask.asInstanceOf[CampaignManagerTask]), currentCycle)
+    ManagerSource.loadBusyManagersByCampaigns(campaigns).foreach {
+      case(campaign, managers) =>
+        val bonus = campaign.getAirlineBonus(campaign.airline, airport, managers.map(_.assignedTask.asInstanceOf[CampaignManagerTask]), currentCycle)
         bonusByAirlineId.getOrElseUpdate(campaign.airline.id, ListBuffer[AirlineBonus]()).append(bonus)
     }
 

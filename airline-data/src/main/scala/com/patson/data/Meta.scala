@@ -14,7 +14,11 @@ object Meta {
   dataSource.setUser(DATABASE_USER)
   dataSource.setPassword(DATABASE_PASSWORD)
   dataSource.setJdbcUrl(DATABASE_CONNECTION)
-  dataSource.setMaxPoolSize(25)
+  dataSource.setMaxPoolSize(
+    if (Constants.configFactory.hasPath("c3p0.maxPoolSize"))
+      Constants.configFactory.getInt("c3p0.maxPoolSize")
+    else 25
+  )
   dataSource.setIdleConnectionTestPeriod(60)
   dataSource.setMaxIdleTime(300)
   dataSource.setMaxConnectionAge(3600)
@@ -22,7 +26,7 @@ object Meta {
   dataSource.setDebugUnreturnedConnectionStackTraces(true) // Logs EXACTLY where the leak happened
   dataSource.setTestConnectionOnCheckout(true)
   dataSource.setPreferredTestQuery("SELECT 1")
-  dataSource.setCheckoutTimeout(30000)
+  dataSource.setCheckoutTimeout(10000)
 
   def getConnection(): java.sql.Connection = {
     dataSource.getConnection()

@@ -23,9 +23,9 @@ case class AirlineBase(airline : Airline, airport : Airport, countryCode : Strin
     } else {
       val baseCost = airport.rating.overallDifficulty * 400_000
       val (plateau, steepness, midpoint, mod) = (airlineType, headquarter) match {
-        case (MegaHqAirline, true)  => ( 80.0, 0.9, 7.0, 0)
-        case (MegaHqAirline, false) => (200.0, 0.6, 6.0, 1000000)
-        case _                      => (180.0, 0.8, 7.5, 0)
+        case (MegaHqAirline, true)  => (160.0, 0.78, 10.5, 0)
+        case (MegaHqAirline, false) => (275.0, 0.65, 8.5, 2000000)
+        case _                      => (250.0, 0.65, 9.0, 0)
       }
 
       val curveMultiplier = computeScaleMultiplier(scale, plateau, steepness, midpoint)
@@ -41,12 +41,12 @@ case class AirlineBase(airline : Airline, airport : Airport, countryCode : Strin
     val baseUpkeep = 15000 + airport.rating.overallDifficulty * 1600
 
     val (plateau, steepness, mod) = (airlineType, headquarter) match {
-      case (MegaHqAirline, true)  => (68.0, 0.14, -5_000)
-      case (MegaHqAirline, false) => (90.0, 0.18, 5_000)
-      case _                      => (75.0, 0.16, 0)
+      case (MegaHqAirline, true)  => (70.0, 0.135, -5_000)
+      case (MegaHqAirline, false) => (95.0, 0.175, 5_000)
+      case _                      => (79.0, 0.155, 0)
     }
 
-    val curveMultiplier = computeScaleMultiplier(scale, plateau, steepness, 7.0)
+    val curveMultiplier = computeScaleMultiplier(scale, plateau, steepness, 7.5)
 
     val startingDiscount = if (headquarter) scale match {
       case 1 => 0.1
@@ -65,7 +65,7 @@ case class AirlineBase(airline : Airline, airport : Airport, countryCode : Strin
     } else {
       val delta = staffRequired - getOfficeStaffCapacity
       val compensation = calculateUpkeep(scale + 1, LegacyAirline).toDouble / AirlineBase.getOfficeStaffCapacity(scale + 1, headquarter)
-      (Math.log(delta) * delta * compensation).toInt
+      (Math.log(delta / 2 + 1) * delta * compensation).toInt
     }
   }
 

@@ -209,13 +209,13 @@ object CampaignSource {
     val statement = connection.prepareStatement("DELETE FROM " + CAMPAIGN_TABLE + " WHERE id = ?")
 
     try {
-      statement.setInt(1, campaignId)
-      statement.executeUpdate()
+        statement.setInt(1, campaignId)
+        statement.executeUpdate()
 
-      val campaign = Campaign.fromId(campaignId)
-      ManagerSource.loadBusyDelegatesByCampaigns(List(campaign)).get(campaign).foreach { delegates =>
-        ManagerSource.deleteBusyDelegates(delegates)
-      }
+        val campaign = Campaign.fromId(campaignId)
+        ManagerSource.loadBusyManagersByCampaigns(List(campaign)).get(campaign).foreach { managers =>
+            ManagerSource.deleteBusyManagers(managers)
+        }
     } finally {
       statement.close()
       connection.close()

@@ -202,6 +202,12 @@ async function showAirplaneCanvas(selectedAircraftTab = 'hangar', airplaneModel 
     })
 }
 
+document.addEventListener('distanceUnitChanged', function() {
+    if ($('#airplaneCanvas').is(':visible')) {
+        updateAirplaneModelTable();
+    }
+});
+
 function updateAirplaneModelTable(sortProperty, sortOrder) {
     if (!sortProperty && !sortOrder) {
         var selectedSortHeader = $('#airplaneModelSortHeader .cell.selected')
@@ -259,12 +265,12 @@ function updateAirplaneModelTable(sortProperty, sortOrder) {
             `<div class='cell' align='right'>$${commaSeparateNumber(modelOwnerInfo.price)}</div>` +
             `<div class='cell' align='right'>${modelOwnerInfo.capacity}</div>` +
             `<div class='cell' align='right'>${getGradeStarsImgs(modelOwnerInfo.quality)}</div>` +
-            `<div class='cell' align='right'>${modelOwnerInfo.range} km</div>` +
+            `<div class='cell' align='right'>${Math.round(convertDistance(modelOwnerInfo.range))} ${distanceLabel()}</div>` +
             `<div class='cell' align='right'>${modelOwnerInfo.trips}</div>` +
             `<div class='cell' align='right'>${modelOwnerInfo.ascentBurn}</div>` +
             `<div class='cell' align='right'>${modelOwnerInfo.cruiseBurn}</div>` +
             `<div class='cell' align='right'>${modelOwnerInfo.lifespan / 52} yrs</div>` +
-            `<div class='cell' align='right'>${modelOwnerInfo.speed} km/h</div>` +
+            `<div class='cell' align='right'>${Math.round(convertSpeed(modelOwnerInfo.speed))} ${speedLabel()}</div>` +
             `<div class='cell' align='right'>${modelOwnerInfo.runwayRequirement} m</div>` +
             `<div class='cell' align='right'>${modelOwnerInfo.assignedAirplanes.length}/${modelOwnerInfo.availableAirplanes.length}/${modelOwnerInfo.constructingAirplanes.length}</div>` +
             `<div class='cell' align='right'>${modelOwnerInfo.total}</div>` +
@@ -775,8 +781,8 @@ function updateModelInfo(modelId) {
 	$('#airplaneModelDetails .runwayRequirement').text(model.runwayRequirement)
 	$('#airplaneModelDetails #ascentBurn').text(model.ascentBurn)
 	$('#airplaneModelDetails #cruiseBurn').text(model.cruiseBurn)
-	$('#airplaneModelDetails #range').text(model.range + "km")
-	$('#airplaneModelDetails #speed').text(model.speed + "km/h")
+	$('#airplaneModelDetails #range').text(Math.round(convertDistance(model.range)) + distanceLabel())
+	$('#airplaneModelDetails #speed').text(Math.round(convertSpeed(model.speed)) + speedLabel())
 	$('#airplaneModelDetails #lifespan').text(model.lifespan / 52 + " years")
 
 	var $manufacturerSpan = $('<span>' + model.manufacturer + '&nbsp;</span>')
@@ -843,8 +849,8 @@ function selectAirplaneModel(model) {
 	$('#airplaneCanvas .runwayRequirement').text(model.runwayRequirement)
 	$('#airplaneCanvas #ascentBurn').text(model.ascentBurn)
 	$('#airplaneCanvas #cruiseBurn').text(model.cruiseBurn)
-	$('#airplaneCanvas #range').text(model.range + " km")
-	$('#airplaneCanvas #speed').text(model.speed + " km/h")
+	$('#airplaneCanvas #range').text(Math.round(convertDistance(model.range)) + " " + distanceLabel())
+	$('#airplaneCanvas #speed').text(Math.round(convertSpeed(model.speed)) + " " + speedLabel())
 	$('#airplaneCanvas #lifespan').text(model.lifespan / 52 + " years")
 
     $('#airplaneCanvas .manufacturer').empty()
@@ -1772,7 +1778,7 @@ function populatePreferredSuppliers() {
             $.each(result, function(category, info) {
                 var $categorySection = $container.find('.' + category)
                 if ($categorySection.length > 0) { //Super sonic has no section for now...
-                    $categorySection.find('.capacityRange').text(info.minCapacity + " - " + info.maxCapacity + " capacity; " + info.minSpeed + " - " + info.maxSpeed + "km/h")
+                    $categorySection.find('.capacityRange').text(info.minCapacity + " - " + info.maxCapacity + " capacity; " + Math.round(convertSpeed(info.minSpeed)) + " - " + Math.round(convertSpeed(info.maxSpeed)) + speedLabel())
                     var $supplierList = $categorySection.find('.supplierList')
                     var $discount =  $categorySection.find('.discount')
                     $supplierList.empty()
@@ -2018,7 +2024,7 @@ function promptSwapModels() {
     // Populate old model stats
     $('#swapAirplaneModal .oldModelName').text(selectedAirplaneModel.name);
     $('#swapAirplaneModal .oldPrice').text("$" + commaSeparateNumber(selectedAirplaneModel.price));
-    $('#swapAirplaneModal .oldRange').text(selectedAirplaneModel.range + " km");
+    $('#swapAirplaneModal .oldRange').text(Math.round(convertDistance(selectedAirplaneModel.range)) + " " + distanceLabel());
     $('#swapAirplaneModal .oldAscent').text(selectedAirplaneModel.ascentBurn);
     $('#swapAirplaneModal .oldCruise').text(selectedAirplaneModel.cruiseBurn);
     
@@ -2087,7 +2093,7 @@ function processSwapModels(isEstimate = true) {
         // Update new model stats and illustration
         $('#swapAirplaneModal .newModelName').text(newModel.name);
         $('#swapAirplaneModal .newPrice').text("$" + commaSeparateNumber(newModel.price));
-        $('#swapAirplaneModal .newRange').text(newModel.range + " km");
+        $('#swapAirplaneModal .newRange').text(Math.round(convertDistance(newModel.range)) + " " + distanceLabel());
         $('#swapAirplaneModal .newAscent').text(newModel.ascentBurn);
         $('#swapAirplaneModal .newCruise').text(newModel.cruiseBurn);
 
@@ -2112,10 +2118,10 @@ function processSwapModels(isEstimate = true) {
             const turnDiffText = (turnDiff > 0 ? "+" : "") + turnDiff + " mins";
             $('#swapAirplaneModal .turnaroundDiff').text(turnDiffText).css('color', turnDiff <= 0 ? (turnDiff < 0 ? 'green' : '') : 'red');
 
-            const rangeDiffText = (rangeDiff > 0 ? "+" : "") + rangeDiff + " km";
+            const rangeDiffText = (rangeDiff > 0 ? "+" : "") + Math.round(convertDistance(rangeDiff)) + " " + distanceLabel();
             $('#swapAirplaneModal .rangeDiff').text(rangeDiffText).css('color', rangeDiff >= 0 ? (rangeDiff > 0 ? 'green' : '') : 'red');
 
-            const speedDiffText = (speedDiff > 0 ? "+" : "") + speedDiff + " km/h";
+            const speedDiffText = (speedDiff > 0 ? "+" : "") + Math.round(convertSpeed(speedDiff)) + " " + speedLabel();
             $('#swapAirplaneModal .speedDiff').text(speedDiffText).css('color', speedDiff >= 0 ? (speedDiff > 0 ? 'green' : '') : 'red');
         }
     }
@@ -2149,7 +2155,7 @@ function processSwapModels(isEstimate = true) {
                 if (result.envelope && result.envelope.maxDistance > 0) {
                     $('#swapAirplaneModal .envelope-range-row').show();
                     $('#swapAirplaneModal .envelope-runway-row').show();
-                    $('#swapAirplaneModal .envelopeDistance').text(result.envelope.maxDistance + " km");
+                    $('#swapAirplaneModal .envelopeDistance').text(Math.round(convertDistance(result.envelope.maxDistance)) + " " + distanceLabel());
                     $('#swapAirplaneModal .envelopeRunway').text(result.envelope.minRunway + " m");
                     if (result.envelope.hasCustomsRestriction) {
                         $('#swapAirplaneModal .envelopeCustoms').show().attr('title', "International flight at domestic airport restriction (Max capacity: " + result.envelope.customsMaxCapacity + ")");

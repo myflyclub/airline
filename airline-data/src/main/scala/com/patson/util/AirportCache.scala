@@ -9,8 +9,8 @@ import scala.jdk.CollectionConverters._
 
 object AirportCache {
 
-  private val detailedCache: LoadingCache[Int, Option[Airport]] = Caffeine.newBuilder().maximumSize(2500).expireAfterAccess(30, TimeUnit.MINUTES).build[Int, Option[Airport]](new DetailedLoader())
-  private val simpleCache: LoadingCache[Int, Option[Airport]] = Caffeine.newBuilder().maximumSize(5000).expireAfterAccess(30, TimeUnit.MINUTES).build[Int, Option[Airport]](new SimpleLoader())
+  val detailedCache: LoadingCache[Int, Option[Airport]] = Caffeine.newBuilder().maximumSize(2500).expireAfterAccess(30, TimeUnit.MINUTES).build[Int, Option[Airport]](new DetailedLoader())
+  val simpleCache: LoadingCache[Int, Option[Airport]] = Caffeine.newBuilder().maximumSize(5000).expireAfterAccess(30, TimeUnit.MINUTES).build[Int, Option[Airport]](new SimpleLoader())
 
   def getAirport(airportId: Int, fullLoad: Boolean = false): Option[Airport] = {
     if (fullLoad) {
