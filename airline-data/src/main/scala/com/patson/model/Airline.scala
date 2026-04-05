@@ -190,7 +190,7 @@ case class Airline(name: String, var airlineType: AirlineType = LegacyAirline, v
   lazy val previousNames = AirlineSource.loadPreviousNameHistory(id).sortBy(_.updateTimestamp.getTime)(Ordering.Long.reverse).map(_.name)
 
   def getManagerInfo() : ManagerInfo = {
-    val busyManagers = ManagerSource.loadBusyDelegatesByAirline(id)
+    val busyManagers = ManagerSource.loadBusyManagersByAirline(id)
     val availableCount = managerCount - busyManagers.size
 
     ManagerInfo(availableCount, busyManagers)
@@ -299,8 +299,6 @@ object Airline {
         airlineHQOption.foreach(hq => Prestige.updatePrestigeCharmForAirport(hq.id))
         //remove all oil contract
         OilSource.deleteOilContractByCriteria(List(("airline", airlineId)))
-        //remove any temp delegates
-        AirlineSource.deleteAirlineModifier(airline.id, AirlineModifierType.DELEGATE_BOOST) //todo: Remove this
 
         airline.getAllianceId().foreach { allianceId =>
           AllianceSource.loadAllianceById(allianceId).foreach { alliance =>
@@ -331,11 +329,11 @@ object Airline {
 
         LoyalistSource.deleteLoyalistsByAirline(airlineId)
 
-        //reset all busy delegates
+        //reset all busy managers
         ManagerSource.deleteBusyDelegateByCriteria(List(("airline", "=", airlineId)))
-
-        //reset all campaigns, has to be after delegate/manager
+        //reset all campaigns, has to be after manager
         CampaignSource.deleteCampaignsByAirline(airline.id)
+
 
         //reset notification deduplication state
         AirlineSource.saveNotifiedLevel(airline.id, -1)

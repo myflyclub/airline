@@ -6,8 +6,8 @@ import com.patson.model.Scheduling.{TimeSlot, TimeSlotStatus}
 import com.patson.model.airplane.{Airplane, AirplaneConfiguration, Model, ModelDiscount}
 import com.patson.model.{Link, _}
 import com.patson.model.event.Olympics
-import com.patson.util.{AirlineCache, AirplaneOwnershipCache, AirportCache, AirportStatisticsCache, ChampionUtil}
-import controllers.AuthenticationObject.{Authenticated, AuthenticatedAirline}
+import com.patson.util.{AirlineCache, AirportCache, ChampionUtil}
+import controllers.AuthenticationObject.AuthenticatedAirline
 import play.api.libs.json.{Json, _}
 import play.api.mvc._
 
@@ -17,7 +17,7 @@ import scala.collection.mutable.{ListBuffer, Set}
 import scala.math.BigDecimal.RoundingMode
 
 
-class Application @Inject()(cc: ControllerComponents, val configuration: play.api.Configuration, requestStatsFilter: RequestStatsFilter) extends AbstractController(cc) {
+class Application @Inject()(cc: ControllerComponents, val configuration: play.api.Configuration) extends AbstractController(cc) {
 
   implicit object AirportShareWrites extends Writes[(Airport, Double)] {
     def writes(airportShare: (Airport, Double)): JsValue = {
@@ -100,68 +100,6 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
             ETAG -> s""""$currentCycle""""
           )
     }
-  }
-
-  def getCacheStats() = Action {
-    Ok(Json.obj(
-      "airportCache" -> AirportCache.getCacheStats,
-      "airlineCache" -> AirlineCache.getCacheStats,
-    ))
-  }
-
-  def getPoolStats() = Authenticated { implicit request =>
-    if (request.user.isAdmin) {
-      val ds = com.patson.data.Meta.dataSource
-      Ok(Json.obj(
-        "numConnections" -> ds.getNumConnections(),
-        "numBusyConnections" -> ds.getNumBusyConnections(),
-        "numIdleConnections" -> ds.getNumIdleConnections(),
-        "maxPoolSize" -> ds.getMaxPoolSize(),
-        "numFailedCheckouts" -> ds.getNumFailedCheckoutsDefaultUser(),
-        "threadPoolNumActiveThreads" -> ds.getThreadPoolNumActiveThreads()
-      ))
-    } else {
-      Forbidden("Not an admin user")
-    }
-  }
-
-  def getRequestStats() = Authenticated { implicit request =>
-    if (request.user.isAdmin) {
-      val topUsers = requestStatsFilter.getTopUsers(20)
-      val total = requestStatsFilter.totalRequests.get()
-
-      import scala.jdk.CollectionConverters._
-      Ok(Json.obj(
-        "totalRequests" -> total,
-        "topUsers" -> topUsers.map { case (userId, count) =>
-          Json.obj("userId" -> userId, "requests" -> count)
-        },
-        "anonEndpoints" -> Json.toJson(
-          requestStatsFilter.anonStats.asScala.map { case (ep, count) => ep -> count.sum() }.toMap
-        )
-      ))
-    } else {
-      Forbidden("Not an admin user")
-    }
-  }
-
-  def resetRequestStats() = Authenticated { implicit request =>
-    if (request.user.isAdmin) {
-      requestStatsFilter.reset()
-      Ok(Json.toJson("Request stats reset"))
-    } else {
-      Forbidden("Not an admin user")
-    }
-  }
-
-  def clearCache() = Action {
-    AirlineCache.invalidateAll()
-    AirportCache.invalidateAll()
-    AirportCache.getAllAirports()
-    AirportStatisticsCache.invalidateAll()
-    AirplaneOwnershipCache.invalidateAll()
-    ResponseCache.invalidateAll()
-    Ok(Json.toJson("Cache cleared"))
   }
 
   /**

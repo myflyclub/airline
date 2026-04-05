@@ -66,12 +66,43 @@ function switchMapCentering() {
     if (window.AirlineMap) window.AirlineMap.applyMapCentering(centering);
 }
 
+// cached for performance — updated by switchDistanceUnit()
+let _distanceUnit = localStorage.getItem('distanceUnit') || 'km';
+
+function getDistanceUnit() { return _distanceUnit; }
+
+function distanceLabel() {
+    return _distanceUnit === 'mi' ? 'mi' : _distanceUnit === 'nm' ? 'nm' : 'km';
+}
+
+function speedLabel() {
+    return _distanceUnit === 'mi' ? 'mph' : _distanceUnit === 'nm' ? 'kts' : 'km/h';
+}
+
+function convertDistance(km) {
+    if (_distanceUnit === 'mi') return km * 0.621371;
+    if (_distanceUnit === 'nm') return km * 0.539957;
+    return km;
+}
+
+function convertSpeed(kmh) {
+    if (_distanceUnit === 'mi') return kmh * 0.621371;
+    if (_distanceUnit === 'nm') return kmh * 0.539957;
+    return kmh;
+}
+
+function switchDistanceUnit(unit) {
+    _distanceUnit = unit;
+    localStorage.setItem('distanceUnit', unit);
+    document.dispatchEvent(new Event('distanceUnitChanged'));
+}
+
 
 $( document ).ready(function() {
     //initialize theme radio buttons
     var themeMode = localStorage.getItem("themeMode") || "device";
     $("input[name='themeMode'][value='" + themeMode + "']").prop('checked', true);
-    
+
     //attach event listeners to theme radio buttons
     $("input[name='themeMode']").on('change', function() {
         switchTheme(this.value);
@@ -92,6 +123,10 @@ $( document ).ready(function() {
     } else {
         $("#switchCenteringLeft").prop('checked', true);
     }
+
+    // Distance unit radio init
+    var distanceUnit = localStorage.getItem('distanceUnit') || 'km';
+    $("input[name='distanceUnit'][value='" + distanceUnit + "']").prop('checked', true);
 })
 /**
  * global variable to store device settings

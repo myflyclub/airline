@@ -14,11 +14,6 @@ GET		 /game/tooltips			  controllers.Application.getTooltips()
 POST	 /user-login							  controllers.UserApplication.login
 POST	 /user-logout						  controllers.UserApplication.logout
 GET      /current-cycle                   controllers.Application.getCurrentCycle()
-GET      /cache-stats                     controllers.Application.getCacheStats()
-GET      /cache-clear                     controllers.Application.clearCache()
-GET      /pool-stats                      controllers.Application.getPoolStats()
-GET      /request-stats                   controllers.Application.getRequestStats()
-POST     /request-stats/reset             controllers.Application.resetRequestStats()
 
 GET		 /airports						  controllers.Application.getAirports()
 GET		 /airports-static						  controllers.Application.getAirportsStatic()
@@ -47,6 +42,7 @@ PUT		 /airlines/:airlineId/airplanes/:airplaneId		controllers.AirplaneApplicatio
 PUT	     /airlines/:airlineId/airplanes	  controllers.AirplaneApplication.addAirplane(airlineId : Int, modelId: Int, quantity: Int, homeAirportId : Int, configurationId :Int)
 PUT	     /airlines/:airlineId/swap-airplanes/:fromAirplaneId/:toAirplaneId	  controllers.AirplaneApplication.swapAirplane(airlineId : Int, fromAirplaneId : Int, toAirplaneId : Int)
 GET		 /airlines/:airlineId/links  	  controllers.LinkApplication.getLinks(airlineId : Int, toAirportId : Int = -1)
+GET		 /airlines/:airlineId/links-summary  	  controllers.LinkApplication.getLinksSummary(airlineId : Int)
 GET		 /airlines/:airlineId/links-details  	  controllers.LinkApplication.getLinksDetails(airlineId : Int)
 GET      /airlines/:airlineId/links-averages    controllers.LinkApplication.getLinksAverages(airlineId: Int, weeks: Int ?= 48)
 PUT 	 /airlines/:airlineId/links 	  controllers.LinkApplication.addLink(airlineId : Int)
@@ -245,6 +241,11 @@ GET      /admin/user-ips/:userId   controllers.AdminApplication.getUserIps(userI
 GET      /admin/user-uuids/:userId   controllers.AdminApplication.getUserUuids(userId : Int)
 GET      /admin/ip-airlines/:ip    controllers.AdminApplication.getAirlinesByIp(ip : String)
 GET      /admin/uuid-airlines/:uuid    controllers.AdminApplication.getAirlinesByUuid(uuid : String)
+GET      /admin/cache-stats              controllers.AdminApplication.getCacheStats()
+GET      /admin/cache-clear              controllers.AdminApplication.clearCache()
+GET      /admin/pool-stats               controllers.AdminApplication.getPoolStats()
+GET      /admin/request-stats            controllers.AdminApplication.getRequestStats()
+POST     /admin/request-stats/reset      controllers.AdminApplication.resetRequestStats()
 
 
 # Signup
@@ -253,6 +254,7 @@ GET      /admin/uuid-airlines/:uuid    controllers.AdminApplication.getAirlinesB
 #POST    /signup                     controllers.SignUp.submit
 POST    /signup/json                controllers.SignUp.submitJson
 GET     /signup/airline-name-check  controllers.SignUp.airlineNameCheck(airlineName : String)
+POST    /create-airline             controllers.SignUp.createAdditionalAirline
 
 # PasswordReset
 GET    /password-reset				controllers.AccountApplication.passwordResetForm(resetToken : String)

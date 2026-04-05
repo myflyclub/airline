@@ -27,8 +27,7 @@ class WebsocketApplication @Inject()(cc: ControllerComponents) extends AbstractC
             logger.info("wsWithActor, client connected with userId " + userId)
             Right(ActorFlow.actorRef { out =>
               println(s"userid $userId has actor ${out.path}")
-              val airline = UserSource.loadUserById(userId).get.getAccessibleAirlines()(0)
-              MyWebSocketActor.props(out, airline.id, request.remoteAddress)
+              MyWebSocketActor.props(out, userId, request.remoteAddress)
             })
         }
     })

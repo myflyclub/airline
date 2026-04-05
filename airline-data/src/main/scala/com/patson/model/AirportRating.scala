@@ -9,7 +9,7 @@ case class AirportRating(economicPowerRating: Int, countryPowerRating: Int, feat
    * Return 1 - 100 difficulty rating.
    * Used by airlineBase and profile app to price cost and starting money
    */
-  val overallDifficulty = Math.max(1.0, Math.min(100.0, economicPowerRating * 1.2 + countryPowerRating * 0.1 + featurePower * 0.9)).toInt
+  val overallDifficulty = Math.max(1.0, Math.min(100.0, economicPowerRating * 1.0 + countryPowerRating * 0.1 + featurePower * 0.9)).toInt
 }
 
 object AirportRating {
@@ -34,15 +34,15 @@ object AirportRating {
     val featurePower = detailedAirport.getFeatures().map { feature =>
       feature.featureType match {
         case FINANCIAL_HUB => feature.strength.toDouble / 3
-        case ELITE_CHARM => feature.strength.toDouble / 3
+        case ELITE_CHARM => feature.strength.toDouble / 4
         case INTERNATIONAL_HUB => feature.strength.toDouble / 4
         case VACATION_HUB => feature.strength.toDouble / 5
-        case ISOLATED_TOWN => -1 * feature.strength
+        case ISOLATED_TOWN => 1
         case DOMESTIC_AIRPORT => -5
         case GATEWAY_AIRPORT => ratioToModelCountryPower.toDouble / 4
         case _ => 0
       }
-    }.sum.toInt
+    }.sum.toInt + detailedAirport.size
 
     AirportRating(ratioToModelAirportPower, ratioToModelCountryPower, featurePower + airportScalePower)
   }

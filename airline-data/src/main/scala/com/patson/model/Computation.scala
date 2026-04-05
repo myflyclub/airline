@@ -242,18 +242,15 @@ def constructAffinityText(fromZone : String, toZone : String, fromCountry : Stri
     Math.ceil(population * probLognormal).toInt
   }
 
-  def getLinkCreationCost(from : Airport, to : Airport) : Int = {
+  def getLinkCreationCost(from: Airport, to: Airport, airplaneGateSize: Double) : Int = {
+    val baseCost = 50000 + (from.rating.overallDifficulty * to.rating.overallDifficulty * 1000)
 
-    val baseCost = 100000 + (from.income + to.income)
-
-    val minAirportSize = Math.min(from.size, to.size) //encourage links for smaller airport
-
-    val airportSizeMultiplier = Math.pow(1.5, minAirportSize)
+    val gateMultiplier = airplaneGateSize * 6
     val distance = calculateDistance(from, to)
-    val distanceMultiplier = distance.toDouble / 5000
-    val internationalMultiplier = if (from.countryCode == to.countryCode) 1 else 2
+    val distanceMultiplier = Math.max(0.2, distance.toDouble / 5000)
+    val internationalMultiplier = if (from.countryCode == to.countryCode) 1 else 1.5
 
-    (baseCost * airportSizeMultiplier * distanceMultiplier * internationalMultiplier).toInt
+    (baseCost * distanceMultiplier * internationalMultiplier * gateMultiplier).toInt
   }
   
   def getResetAmount(airlineId : Int) : ResetAmountInfo = {

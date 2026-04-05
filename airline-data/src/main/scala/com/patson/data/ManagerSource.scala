@@ -13,7 +13,7 @@ import scala.collection.mutable.ListBuffer
 
 
 object ManagerSource {
-  private[this] val BASE_BUSY_DELEGATE_QUERY = "SELECT * FROM " + BUSY_DELEGATE_TABLE
+  private[this] val BASE_BUSY_MANAGER_QUERY = "SELECT * FROM " + BUSY_DELEGATE_TABLE
   val TOOLTIP_MANAGERS = List(
     "Managers allow you to open more bases, more routes, lower aircraft prices, and more.",
     "<b>Actioning</b>: Generate action points."
@@ -25,13 +25,13 @@ object ManagerSource {
     * @param airlineId
     * @return
     */
-  def loadBusyDelegatesByAirline(airlineId : Int) : List[Manager] = {
-    loadBusyDelegatesByCriteria(List(("airline", "=", airlineId))).get(airlineId).getOrElse(List.empty)
+  def loadBusyManagersByAirline(airlineId : Int) : List[Manager] = {
+    loadBusyManagersByCriteria(List(("airline", "=", airlineId))).get(airlineId).getOrElse(List.empty)
   }
   
 
-  def loadBusyDelegatesByCriteria(criteria : List[(String, String, Any)]) = {
-      var queryString = BASE_BUSY_DELEGATE_QUERY
+  def loadBusyManagersByCriteria(criteria : List[(String, String, Any)]) = {
+      var queryString = BASE_BUSY_MANAGER_QUERY
       
       if (!criteria.isEmpty) {
         queryString += " WHERE "
@@ -40,7 +40,7 @@ object ManagerSource {
         }
         queryString += criteria.last._1 + criteria.last._2 + " ?"
       }
-      loadBusyDelegatesByQueryString(queryString, criteria.map(_._3))
+      loadBusyManagersByQueryString(queryString, criteria.map(_._3))
   }
 
   /**
@@ -49,7 +49,7 @@ object ManagerSource {
     * @param parameters
     * @return key is airline Id
     */
-  def loadBusyDelegatesByQueryString(queryString : String, parameters : List[Any]) : Map[Int, List[Manager]]= {
+  def loadBusyManagersByQueryString(queryString : String, parameters : List[Any]) : Map[Int, List[Manager]]= {
     val connection = Meta.getConnection()
     try {
         val preparedStatement = connection.prepareStatement(queryString)
@@ -61,7 +61,7 @@ object ManagerSource {
         
         val resultSet = preparedStatement.executeQuery()
         
-        val result = mutable.Map[Int, ListBuffer[DelegateLoadInfo]]() //key: Airline id
+        val result = mutable.Map[Int, ListBuffer[ManagerLoadInfo]]() //key: Airline id
 
 
         while (resultSet.next()) {
@@ -71,21 +71,21 @@ object ManagerSource {
           val availableCycleObject = resultSet.getObject("available_cycle")
           val availableCycle = if (availableCycleObject == null) None else Some(availableCycleObject.asInstanceOf[Int])
 
-          result.getOrElseUpdate(airlineId, ListBuffer[DelegateLoadInfo]()).append(DelegateLoadInfo(delegateId, taskType, availableCycle))
+          result.getOrElseUpdate(airlineId, ListBuffer[ManagerLoadInfo]()).append(ManagerLoadInfo(delegateId, taskType, availableCycle))
         }
         
         resultSet.close()
         preparedStatement.close()
         
         result.toList.map {
-          case (airlineId, delegateInfoEntries: ListBuffer[DelegateLoadInfo]) => {
+          case (airlineId, delegateInfoEntries: ListBuffer[ManagerLoadInfo]) => {
             val airline : Airline = AirlineCache.getAirline(airlineId).get
-            val delegateTaskByDelegateId = loadDelegateTasks(delegateInfoEntries.map {
-              case DelegateLoadInfo(delegateId, taskType, _) => (delegateId, taskType)
+            val managerTaskByDelegateId = loadManagerTasks(delegateInfoEntries.map {
+              case ManagerLoadInfo(delegateId, taskType, _) => (delegateId, taskType)
             }.toMap)
 
             val delegates : List[Manager] = delegateInfoEntries.toList.map {
-              case (DelegateLoadInfo(delegateId, _, availableCycle)) => Manager(airline, delegateTaskByDelegateId(delegateId), availableCycle, delegateId)
+              case (ManagerLoadInfo(delegateId, _, availableCycle)) => Manager(airline, managerTaskByDelegateId(delegateId), availableCycle, delegateId)
             }
 
             (airlineId, delegates)
@@ -96,27 +96,27 @@ object ManagerSource {
       }
   }
 
-  case class DelegateLoadInfo(id : Int, taskType : ManagerTaskType.Value, availableCycle : Option[Int])
+  case class ManagerLoadInfo(id : Int, taskType : ManagerTaskType.Value, availableCycle : Option[Int])
 
   /**
     *
-    * @param delegateIdAndTaskTypes
+    * @param managerIdAndTaskTypes
     * @return key delegate Id
     */
-  def loadDelegateTasks(delegateIdAndTaskTypes : Map[Int, ManagerTaskType.Value]) : Map[Int, ManagerTask] = {
+  def loadManagerTasks(managerIdAndTaskTypes : Map[Int, ManagerTaskType.Value]) : Map[Int, ManagerTask] = {
     val result = mutable.HashMap[Int, ManagerTask]()
-    delegateIdAndTaskTypes.toList.groupBy(_._2).foreach {
+    managerIdAndTaskTypes.toList.groupBy(_._2).foreach {
       case(taskType, grouped) => {
-        val delegateIdsOfThisTaskType = grouped.map(_._1)
+        val managerIdsOfThisTaskType = grouped.map(_._1)
         taskType match {
           case ManagerTaskType.COUNTRY =>
-            result.addAll(loadCountryTasks(delegateIdsOfThisTaskType))
+            result.addAll(loadCountryTasks(managerIdsOfThisTaskType))
           case ManagerTaskType.CAMPAIGN =>
-            result.addAll(loadCampaignTasks(delegateIdsOfThisTaskType))
+            result.addAll(loadCampaignTasks(managerIdsOfThisTaskType))
           case ManagerTaskType.MANAGER_BASE =>
-            delegateIdsOfThisTaskType.foreach(id => result.put(id, ManagerBaseTask()))
+            managerIdsOfThisTaskType.foreach(id => result.put(id, ManagerBaseTask()))
           case ManagerTaskType.MANAGER_AIRCRAFT_MODEL =>
-            result.addAll(loadAircraftModelTasks(delegateIdsOfThisTaskType))
+            result.addAll(loadAircraftModelTasks(managerIdsOfThisTaskType))
         }
       }
     }
@@ -125,17 +125,17 @@ object ManagerSource {
 
   /**
     *
-    * @param delegateIds
-    * @return key - delegateId
+    * @param managerIds
+    * @return key - managerId
     */
-  def loadCountryTasks(delegateIds : List[Int]) = {
+  def loadCountryTasks(managerIds : List[Int]) = {
     val connection = Meta.getConnection()
     try {
-      val delegateIdPhrase = delegateIds.mkString(",")
-      val preparedStatement = connection.prepareStatement(s"SELECT * FROM $COUNTRY_DELEGATE_TASK_TABLE WHERE delegate IN ($delegateIdPhrase)")
+      val managerIdPhrase = managerIds.mkString(",")
+      val preparedStatement = connection.prepareStatement(s"SELECT * FROM $COUNTRY_DELEGATE_TASK_TABLE WHERE delegate IN ($managerIdPhrase)")
       val resultSet = preparedStatement.executeQuery()
 
-      val result = mutable.Map[Int, ManagerTask]() //key delegateId
+      val result = mutable.Map[Int, ManagerTask]() //key managerId
 
 
       while (resultSet.next()) {
@@ -258,14 +258,14 @@ object ManagerSource {
     }
   }
 
-  private[this] def saveAircraftModelTasks(delegates : List[Manager]) : Unit = {
+  private[this] def saveAircraftModelTasks(managers : List[Manager]) : Unit = {
     val connection = Meta.getConnection()
     val preparedStatement = connection.prepareStatement(s"INSERT INTO $AIRCRAFT_MODEL_DELEGATE_TASK_TABLE (delegate, aircraft_model_id, start_cycle) VALUES(?,?,?)")
     try {
-      delegates.foreach { delegate =>
-        preparedStatement.setInt(1, delegate.id)
-        preparedStatement.setInt(2, delegate.assignedTask.asInstanceOf[AircraftModelManagerTask].modelId)
-        preparedStatement.setInt(3, delegate.assignedTask.getStartCycle)
+      managers.foreach { manager =>
+        preparedStatement.setInt(1, manager.id)
+        preparedStatement.setInt(2, manager.assignedTask.asInstanceOf[AircraftModelManagerTask].modelId)
+        preparedStatement.setInt(3, manager.assignedTask.getStartCycle)
         preparedStatement.executeUpdate()
       }
     } finally {
@@ -313,7 +313,7 @@ object ManagerSource {
     * @param campaigns
     * @return key - delegateId
     */
-  def loadBusyDelegatesByCampaigns(campaigns : List[Campaign]) : Map[Campaign, List[Manager]] = {
+  def loadBusyManagersByCampaigns(campaigns: List[Campaign]) : Map[Campaign, List[Manager]] = {
     if (campaigns.isEmpty) {
       Map.empty
     } else {
@@ -342,16 +342,15 @@ object ManagerSource {
           val delegateResultSet = delegatePreparedStatement.executeQuery()
           val result = mutable.Map[Campaign, ListBuffer[Manager]]()
           while (delegateResultSet.next()) {
-            //val delegateId = resultSet.getInt("delegate")
             val airlineId = delegateResultSet.getInt("airline")
             val delegateId = delegateResultSet.getInt("id")
             val availableCycleObject = delegateResultSet.getObject("available_cycle")
             val availableCycle = if (availableCycleObject == null) None else Some(availableCycleObject.asInstanceOf[Int])
 
             val task = taskByDelegateId(delegateId)
-            val delegate = Manager(AirlineCache.getAirline(airlineId).get, task, availableCycle, delegateId)
+            val manager = Manager(AirlineCache.getAirline(airlineId).get, task, availableCycle, delegateId)
 
-            result.getOrElseUpdate(task.campaign, ListBuffer[Manager]()).append(delegate)
+            result.getOrElseUpdate(task.campaign, ListBuffer[Manager]()).append(manager)
           }
           delegateResultSet.close()
           delegatePreparedStatement.close()
@@ -363,32 +362,14 @@ object ManagerSource {
     }
   }
 
-  def updateBusyDelegateAvailableCycle(delegates : List[Manager]) : Unit = {
-    val connection = Meta.getConnection()
-    val preparedStatement = connection.prepareStatement(s"UPDATE $BUSY_DELEGATE_TABLE SET available_cycle = ? WHERE id = ?")
-    try {
-      delegates.foreach { delegate =>
-        delegate.availableCycle match {
-          case Some(availableCycle) => preparedStatement.setInt(1, availableCycle)
-          case None => preparedStatement.setNull(1, Types.INTEGER)
-        }
-        preparedStatement.setInt(2, delegate.id)
-        preparedStatement.executeUpdate()
-      }
-    } finally {
-      preparedStatement.close()
-      connection.close()
-    }
-  }
-
-  def saveBusyDelegates(delegates : List[Manager]) : Unit = {
+  def saveBusyManagers(managers: List[Manager]) : Unit = {
     val connection = Meta.getConnection()
     val preparedStatement = connection.prepareStatement("INSERT INTO " + BUSY_DELEGATE_TABLE + "(airline, task_type, available_cycle) VALUES(?,?,?)", Statement.RETURN_GENERATED_KEYS)
     try {
-      delegates.foreach { delegate =>
-        preparedStatement.setInt(1, delegate.airline.id)
-        preparedStatement.setInt(2, delegate.assignedTask.getTaskType.id)
-        delegate.availableCycle match {
+      managers.foreach { manager =>
+        preparedStatement.setInt(1, manager.airline.id)
+        preparedStatement.setInt(2, manager.assignedTask.getTaskType.id)
+        manager.availableCycle match {
           case Some(availableCycle) => preparedStatement.setInt(3, availableCycle)
           case None => preparedStatement.setNull(3, Types.INTEGER)
         }
@@ -398,14 +379,13 @@ object ManagerSource {
           val generatedKeys = preparedStatement.getGeneratedKeys
           if (generatedKeys.next()) {
             val generatedId = generatedKeys.getInt(1)
-            //  println("Id is " + generatedId)
             //try to save assigned airplanes if any
-            delegate.id = generatedId
+            manager.id = generatedId
 
           }
         }
       }
-      saveDelegateTasks(delegates)
+      saveDelegateTasks(managers)
     } finally {
       preparedStatement.close()
       connection.close()
@@ -413,14 +393,14 @@ object ManagerSource {
   }
 
 
-  def deleteBusyDelegates(delegates : List[Manager]) : Unit = {
-    delegates.foreach { delegate =>
-      deleteBusyDelegateByCriteria(List(("id", "=", delegate.id)))
+  def deleteBusyManagers(managers: List[Manager]) : Unit = {
+    managers.foreach { manager =>
+      deleteBusyDelegateByCriteria(List(("id", "=", manager.id)))
     }
   }
 
-  private[this] def saveDelegateTasks(delegates : List[Manager]) = {
-    delegates.groupBy(_.assignedTask.getTaskType).foreach {
+  private[this] def saveDelegateTasks(managers: List[Manager]) = {
+    managers.groupBy(_.assignedTask.getTaskType).foreach {
       case (taskType, delegatesOfThisTaskType) => {
         taskType match {
           case ManagerTaskType.COUNTRY =>
@@ -436,14 +416,14 @@ object ManagerSource {
     }
   }
 
-  private[this] def saveCountryTasks(delegates : List[Manager]) = {
+  private[this] def saveCountryTasks(managers: List[Manager]) = {
     val connection = Meta.getConnection()
     val preparedStatement = connection.prepareStatement("INSERT INTO " + COUNTRY_DELEGATE_TASK_TABLE + "(delegate, country_code, start_cycle) VALUES(?,?,?)")
     try {
-      delegates.foreach { delegate =>
-        preparedStatement.setInt(1, delegate.id)
-        preparedStatement.setString(2, delegate.assignedTask.asInstanceOf[CountryManagerTask].country.countryCode)
-        preparedStatement.setInt(3, delegate.assignedTask.getStartCycle)
+      managers.foreach { manager =>
+        preparedStatement.setInt(1, manager.id)
+        preparedStatement.setString(2, manager.assignedTask.asInstanceOf[CountryManagerTask].country.countryCode)
+        preparedStatement.setInt(3, manager.assignedTask.getStartCycle)
 
         preparedStatement.executeUpdate()
       }
@@ -453,14 +433,14 @@ object ManagerSource {
     }
   }
 
-  private[this] def saveCampaignTasks(delegates : List[Manager]) = {
+  private[this] def saveCampaignTasks(managers: List[Manager]) = {
     val connection = Meta.getConnection()
     val preparedStatement = connection.prepareStatement("INSERT INTO " + CAMPAIGN_DELEGATE_TASK_TABLE + "(delegate, campaign, start_cycle) VALUES(?,?,?)")
     try {
-      delegates.foreach { delegate =>
-        preparedStatement.setInt(1, delegate.id)
-        preparedStatement.setInt(2, delegate.assignedTask.asInstanceOf[CampaignManagerTask].campaign.id)
-        preparedStatement.setInt(3, delegate.assignedTask.getStartCycle)
+      managers.foreach { manager =>
+        preparedStatement.setInt(1, manager.id)
+        preparedStatement.setInt(2, manager.assignedTask.asInstanceOf[CampaignManagerTask].campaign.id)
+        preparedStatement.setInt(3, manager.assignedTask.getStartCycle)
 
         preparedStatement.executeUpdate()
       }
@@ -589,7 +569,7 @@ object ManagerSource {
     * @return key - country code
     */
   def loadCountryDelegateByAirline(airlineId : Int) : Map[String, List[Manager]] = {
-    val result = loadBusyDelegatesByCriteria(List(("airline", "=", airlineId), ("task_type", "=", ManagerTaskType.COUNTRY.id)))
+    val result = loadBusyManagersByCriteria(List(("airline", "=", airlineId), ("task_type", "=", ManagerTaskType.COUNTRY.id)))
     result.get(airlineId) match {
       case Some(allCountryDelegates) => allCountryDelegates.groupBy(_.assignedTask.asInstanceOf[CountryManagerTask].country.countryCode)
       case None => Map.empty

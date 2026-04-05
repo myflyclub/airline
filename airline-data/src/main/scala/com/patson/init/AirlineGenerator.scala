@@ -565,10 +565,10 @@ object AirlineGenerator extends App {
             airline = airline,
             assignedTask = ManagerBaseTask(),
             availableCycle = None,
-            id = 0 // will be assigned by saveBusyDelegates()
+            id = 0 // will be assigned by saveBusyManagers()
           )
         }
-        ManagerSource.saveBusyDelegates(newDelegates)
+        ManagerSource.saveBusyManagers(newDelegates)
       } else if (delta < 0) {
         ManagerSource.deleteManagerBaseDelegates(airline.id, -delta)
       }

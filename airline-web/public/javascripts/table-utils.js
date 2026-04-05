@@ -257,8 +257,8 @@ function shouldUseBuckets(column, rows) {
 
 function getUnitLabel(column) {
     const unitMap = {
-        'distance': 'km',
-        'range': 'km',
+        'distance': distanceLabel(),
+        'range': distanceLabel(),
         'runwayRequirement': 'm',
         'capacity': 'pax'
     };

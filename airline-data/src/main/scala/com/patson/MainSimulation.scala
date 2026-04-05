@@ -108,8 +108,7 @@ object MainSimulation extends App {
     OilSimulation.simulate(currentCycle) //simulate at the beginning of a new cycle
     println("Loan simulation")
     LoanInterestRateSimulation.simulate(currentCycle) //simulate at the beginning of a new cycle
-    //refresh delegates
-    println("Manager simulation")
+    println("Add action points")
     ManagerSimulation.simulate(currentCycle)
 
     println("Post cycle link simulation")

@@ -106,7 +106,7 @@ object ModelDiscount {
     val countsByModelId = AirplaneSource.loadAirplaneModelCounts()
     val currentCycle = CycleSource.loadCycle()
 
-    val managersByModelId: Map[Int, List[Manager]] = ManagerSource.loadBusyDelegatesByAirline(airlineId)
+    val managersByModelId: Map[Int, List[Manager]] = ManagerSource.loadBusyManagersByAirline(airlineId)
       .filter(_.assignedTask.getTaskType == ManagerTaskType.MANAGER_AIRCRAFT_MODEL)
       .groupBy(_.assignedTask.asInstanceOf[AircraftModelManagerTask].modelId)
 

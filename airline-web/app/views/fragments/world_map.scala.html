@@ -16,7 +16,7 @@
 						<div class="section">
 							<div id="linkDetails" class="flex-container-width-half">
 								<div id="linkCurrentDetails">
-									<h4 class="section-title">Flight <span id="linkAirlineCode"></span> <input type="number" id="linkFlightNumber" class="price-input" min="1" max="9999" style="width:50px; display:inline-block;"/></h4>
+									<h4 class="section-title">Flight <span id="linkAirlineCode"></span> <input type="number" id="linkFlightNumber" class="price-input" min="1" max="9999" style="width:34px; display:inline-block;"/></h4>
 									<div class="pb-5" style="display:flex;">
 										<div class="link-decoration">
 											<div class="link-decoration-circle"></div>
@@ -673,7 +673,7 @@
                             <!-- shared for route and research-->
                             <div class="searchFieldContainer mt-4">
                                 <div class="flex-row gap-4 px-8"> <!--from and to box-->
-                                    <div class="relative">
+                                    <div class="relative w-half">
                                         <div class="searchInput" data-search-type="airport">
                                             <input type="text" tabindex="101" class="fromAirport" placeholder="From"
                                                 data-search-group="fromDestination" oninput="searchChange($(this))"
@@ -684,7 +684,7 @@
                                         </div>
                                         <div class="searchResult"></div>
                                     </div>
-                                    <div class="relative">
+                                    <div class="relative w-half">
                                         <div class="searchInput" data-search-type="airport">
                                             <input type="text" tabindex="102" class="toAirport" placeholder="To"
                                                 data-search-group="toDestination" oninput="searchChange($(this))"
@@ -838,7 +838,7 @@
                     
                             <div class="research searchContainer vertical-group flex-grow">
                                 <div id="researchSearchResult" class="overflow-y-auto flex-grow p-4">
-                                    <div class="flex-row gap-8 py-4 mx-auto" style="width: 600px; max-width:100%;">
+                                    <div class="flex-row gap-8 py-4 mx-auto" style="width: fit-content; max-width:100%;">
                                         <div class="fromAirport vertical-group items-center">
                                             <img class="fromAirport roundImage" style="height: 150px; width:150px; max-height: 30vw; max-width: 30vw;">
                                             <a class="fromAirportText clickable mt-2 font-bold block"></a>

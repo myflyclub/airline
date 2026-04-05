@@ -276,7 +276,7 @@ const Rivals = (() => {
         const airlineLinksTable = $("#rivalDetailsModal #rivalLinksTable");
         airlineLinksTable.children("div.table-row").remove();
 
-        const getUrl = "/airlines/" + airlineId + "/links";
+        const getUrl = "/airlines/" + airlineId + "/links-summary";
         loadedLinks = undefined;
         $.ajax({
             type: 'GET',
@@ -284,11 +284,7 @@ const Rivals = (() => {
             contentType: 'application/json; charset=utf-8',
             dataType: 'json',
             success: function(data) {
-                if (data.type === 'FeatureCollection' && data.features) {
-                    loadedLinks = data.features.map(f => f.properties);
-                } else {
-                    loadedLinks = data;
-                }
+                loadedLinks = data;
                 renderLinksTable();
             },
             error: function(jqXHR, textStatus, errorThrown) {
@@ -302,15 +298,18 @@ const Rivals = (() => {
         const rivalLinksTable = $("#rivalDetailsModal #rivalLinksTable");
         rivalLinksTable.children("div.table-row").remove();
 
-        loadedLinks.sort(sortByProperty(sortProperty || 'distance', sortOrder == "ascending"));
+        loadedLinks.sort(sortByProperty(sortProperty || 'frequency', sortOrder == "ascending"));
 
         const rowsHtml = [];
         loadedLinks.forEach(function(link) {
+            const pricePercent = link.price && link.basePrice ? toLinkPercentOfBasePrices(link.price, link.basePrice) : '-';
             rowsHtml.push(
                 `<div class='table-row'>` +
                 `<div class='cell'>${getCountryFlagImg(link.fromCountryCode)}${getAirportText(link.fromAirportCity, link.fromAirportCode)}</div>` +
                 `<div class='cell'>${getCountryFlagImg(link.toCountryCode)}${getAirportText(link.toAirportCity, link.toAirportCode)}</div>` +
-                `<div class='cell' align='right'>${link.distance}km</div>` +
+                `<div class='cell'>${link.modelName || '-'}</div>` +
+                `<div class='cell' align='right'>${link.computedQuality}</div>` +
+                `<div class='cell' align='right'>${pricePercent}</div>` +
                 `<div class='cell' align='right'>${link.frequency}</div>` +
                 `</div>`
             );
