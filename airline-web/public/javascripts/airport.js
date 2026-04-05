@@ -847,7 +847,7 @@ function updateFacilityList(statistics) {
         row.append("<div class='cell' style='text-align: right;'>" + linkCount + "</div>")
         row.append("<div class='cell' style='text-align: right;'>" + commaSeparateNumber(passengers) + "</div>")
         row.append("<div class='cell' style='text-align: right;'>" + avgFreq + "</div>")
-        row.append("<div class='cell' style='text-align: right;'>" + avgDistance + " km</div>")
+        row.append("<div class='cell' style='text-align: right;'>" + Math.round(convertDistance(avgDistance)) + " " + distanceLabel() + "</div>")
 
         if (base.headquarter) {
             $('#airportDetailsHeadquarterList').append(row)
@@ -1184,7 +1184,7 @@ function showGenericTransitModal() {
         $row = $('<div class="table-row" style="width: 100%"></div>')
         $row.append($('<div class="cell">' + transit.toAirportText + '</div>'))
         $row.append($('<div class="cell" align="right">' + commaSeparateNumber(transit.toAirportPopulation) + '</div>'))
-        $row.append($('<div class="cell" align="right">' + commaSeparateNumber(transit.distance) + 'km</div>'))
+        $row.append($('<div class="cell" align="right">' + commaSeparateNumber(Math.round(convertDistance(transit.distance))) + distanceLabel() + '</div>'))
         $row.append($('<div class="cell capacity" align="right">' + commaSeparateNumber(transit.capacity) + '</div>'))
         $row.append($('<div class="cell" align="right">' + commaSeparateNumber(transit.passenger) + '</div>'))
 
