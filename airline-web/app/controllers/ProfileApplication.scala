@@ -262,7 +262,6 @@ class ProfileApplication @Inject()(cc: ControllerComponents) extends AbstractCon
           AirlineSource.updateAirlineType(airlineId, airline.airlineType.id)
           AirlineSource.saveAirlineBase(base)
           Prestige.updatePrestigeCharmForAirport(airportId)
-          AirlineSource.saveLedgerEntry(AirlineLedgerEntry(airlineId, currentCycle, LedgerType.LOAN_DISBURSEMENT, profile.cash, Some(s"Starting capital")))
           airline.setCountryCode(airport.countryCode)
           airline.setReputation(profile.reputation)
           airline.setCurrentServiceQuality(profile.quality)
@@ -270,6 +269,7 @@ class ProfileApplication @Inject()(cc: ControllerComponents) extends AbstractCon
           airline.setSharesOutstanding(250_000_000)
           val startingActionPoints = Math.min(100, 30 + (cycle.toDouble / 48).toInt)
           airline.setActionPoints(startingActionPoints)
+          airline.setBalance(0)
 
           profile.airplanes.foreach(_.assignDefaultConfiguration())
           AirplaneSource.saveAirplanes(profile.airplanes)
@@ -279,7 +279,8 @@ class ProfileApplication @Inject()(cc: ControllerComponents) extends AbstractCon
           AirlineSource.saveFoundedCycle(airlineId, cycle)
 
           airline.setInitialized(true)
-          AirlineSource.saveAirlineInfo(airline)
+          AirlineSource.saveAirlineInfo(airline, updateBalance = true)
+          AirlineSource.saveLedgerEntry(AirlineLedgerEntry(airlineId, cycle, LedgerType.LOAN_DISBURSEMENT, profile.cash, Some(s"Starting capital")))
 
           NotificationSource.markCategoryRead(airlineId, NotificationCategory.TUTORIAL)
           if (!airline.isSkipTutorial) {
