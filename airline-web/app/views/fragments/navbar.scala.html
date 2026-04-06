@@ -52,10 +52,9 @@
 		</div>
   		<div class="flex-align-center">
 			<span  style="padding: 0 4px;"><img style="width: 22px;" class="img-button svg svg-hover-blue svg-monochrome" src='@routes.Assets.versioned("images/icons/options.svg")' onclick="toggleSettings()" title="Settings"></span>
-			<div style="display: none;" id="logoutDiv" class="topBarItem">
+			<div style="display: none;" id="logoutDiv" class="topBarItem flex-row gap-0">
 				<span id="currentUserName" class="label desktopOnly"></span>
-				<div id="airlineSwitcherBtn" class="button desktopOnly" style="display:none; width:90px">Switch</div>
-				<div id="airlineSwitcherBtnMobile" class="mobileOnly" style="display:none;"><img src='@routes.Assets.versioned("images/icons/24px/arrow-circle-double.png")' title="Switch Airline" style="width:20px;"></div>
+				<div id="airlineSwitcherBtn" class="button" style="display:none; width:90px">Switch</div>
 				<div id="airlineSwitcherDropdown" class="airline-switcher-dropdown" popover="manual">
 					<div class="drawer-header">Switch Airline</div>
 					<div id="airlineSwitcherList"></div>

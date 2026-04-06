@@ -23,9 +23,9 @@ case class AirlineBase(airline : Airline, airport : Airport, countryCode : Strin
     } else {
       val baseCost = airport.rating.overallDifficulty * 400_000
       val (plateau, steepness, midpoint, mod) = (airlineType, headquarter) match {
-        case (MegaHqAirline, true)  => (160.0, 0.78, 10.5, 0)
-        case (MegaHqAirline, false) => (275.0, 0.65, 8.5, 2000000)
-        case _                      => (250.0, 0.65, 9.0, 0)
+        case (MegaHqAirline, true)  => (150.0, 0.78, 11.0, 0)
+        case (MegaHqAirline, false) => (275.0, 0.65, 8.0, 2000000)
+        case _                      => (235.0, 0.65, 9.0, 0)
       }
 
       val curveMultiplier = computeScaleMultiplier(scale, plateau, steepness, midpoint)
