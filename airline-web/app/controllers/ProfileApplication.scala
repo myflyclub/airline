@@ -267,6 +267,9 @@ class ProfileApplication @Inject()(cc: ControllerComponents) extends AbstractCon
           airline.setCurrentServiceQuality(profile.quality)
           airline.setTargetServiceQuality(targetQuality)
           airline.setSharesOutstanding(250_000_000)
+          if (profile.airlineType.stockRepPerLevel > 0) {
+            airline.setStockPrice(1.0)
+          }
           val startingActionPoints = Math.min(100, 30 + (cycle.toDouble / 48).toInt)
           airline.setActionPoints(startingActionPoints)
           airline.setBalance(0)
