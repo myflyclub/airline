@@ -98,6 +98,10 @@ object Meta {
     statement.execute()
     statement.close()
 
+    statement = connection.prepareStatement("DROP TABLE IF EXISTS " + AIRPLANE_MODEL_META_TABLE)
+    statement.execute()
+    statement.close()
+
     statement = connection.prepareStatement("DROP TABLE IF EXISTS " + AIRPLANE_MODEL_TABLE)
     statement.execute()
     statement.close()
@@ -244,6 +248,7 @@ object Meta {
     createWorldStatistics(connection)
     createRankingLeaderboard(connection)
     createPrestige(connection)
+    createNotification(connection)
 
     statement = connection.prepareStatement("CREATE TABLE " + AIRPORT_CITY_SHARE_TABLE + "(" +
       "airport INTEGER," +
