@@ -443,14 +443,13 @@ object Airport {
   def travelRateAdjusted(fromPax: Int, baselineDemand: Int, airportSize: Int) : Double = {
     val percentDemandMet = (0.9 * fromPax + 0.1 * baselineDemand) / baselineDemand //need to blend so randomizer doesn't create peaks that perpetuate
     val baseTravelRate = airportSize match {
-      case 7 => 0.2
-      case 6 => 0.3
-      case 5 => 0.4
-      case 4 => 0.5
-      case 3 => 0.6
-      case 2 => 0.7
-      case 1 => 0.8
-      case _ => 0.15
+      case 6 => 0.25
+      case 5 => 0.35
+      case 4 => 0.45
+      case 3 => 0.55
+      case 2 => 0.65
+      case 1 => 0.75
+      case _ => 0.2
     }
     val modified = if (percentDemandMet < 0.7) {
       baseTravelRate + percentDemandMet
