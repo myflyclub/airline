@@ -678,8 +678,10 @@ function populateAirportDetails(airport) {
     updateAirportDestinations(airport)
     loadAirportDemand(airport.id)
 
-    if (christmasFlag) {
+    if (holidayEvent === "christmas") {
         initSantaClaus()
+    } else if (holidayEvent === "easter") {
+        initEasterBunny()
     }
 }
 
@@ -1056,7 +1058,6 @@ function showAppealBreakdown($icon, bonusDetails) {
     $('#appealBonusDetailsTooltip .table .table-row').remove()
     $.each(bonusDetails, function (index, entry) {
         var $row = $('<div class="table-row"><div class="cell" style="width: 70%;">' + entry.description + '</div><div class="cell" style="width: 30%; text-align: right;">+' + entry.value + '</div></div>')
-        $row.css('color', 'white')
         $('#appealBonusDetailsTooltip .table').append($row)
     })
     showMarkupTooltip($icon[0], document.getElementById('appealBonusDetailsTooltip'))

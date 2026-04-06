@@ -1,4 +1,4 @@
-var christmasFlag = false
+var holidayEvent = "christmas"  // "christmas" | "easter" | null
 var santaFound = false
 
 function initSantaClaus() {
@@ -10,7 +10,6 @@ function initSantaClaus() {
 }
 
 function closeSantaClausModal() {
-
     closeModal($('#santaClausModal'))
     removeSnowflakes($('#santaClausModal'))
     removeConfetti($('#santaClausModal'))
@@ -177,47 +176,12 @@ function guessSantaClaus() {
 	});
 }
 
-
-
-// var christmasMarker = false
-// var snowflakeCount = 50
-// function toggleChristmasMarker() {
-// 	if (!christmasMarker) {
-// 		currentAnimationStatus = true
-// 		christmasMarker = true
-// 		document.getElementById('christmasMusic').play()
-// 		$("body").addClass('christmas')
-
-//         putSnowflakes($("#main"), snowflakeCount)
-// 	} else {
-// 		christmasMarker = false
-// 		document.getElementById('christmasMusic').pause()
-// 		$.each(flightMarkers, function(index, markersByLinkId) {
-// 			$.each(markersByLinkId.markers, function(index2, marker) {
-// 				marker.icon = {
-// 			        url: "/assets/images/markers/dot.png",
-// 			        origin: new google.maps.Point(0, 0),
-// 			        anchor: new google.maps.Point(6, 6),
-// 			    };
-// 			})
-// 		})
-// 		$("body").removeClass('christmas')
-// 		$("#main").children(".snowflake").remove()
-// 	}
-// }
-
-//.snowflake:nth-of-type(1){left:10%;-webkit-animation-delay:1s,1s;animation-delay:1s,1s}
-//.snowflake:nth-of-type(2){left:20%;-webkit-animation-delay:6s,.5s;animation-delay:6s,.5s}
-
-
 function putSnowflakes(container ,snowflakeCount) {
     removeSnowflakes(container)
     for (i = 0 ; i < snowflakeCount; i++) {
         var snowflake = $("<div class='snowflake'>❅</div>").appendTo(container)
 
-        //snowflake.css("{left:" + i * 10 + "'%; animation-delay:" + i + "s, " + i + "s}")
-
-        //snowflake.css("animation-name", "snowflakes-fall,snowflakes-shake-0")
+        snowflake.css("animation-name", "snowflakes-fall,snowflakes-shake-0")
 
         var depth = Math.floor(Math.random() * 5) + 1 //1-5
         snowflake.css("animation-name", "snowflakes-fall,snowflakes-shake-" + depth + ", snowflakes-shimmer")
@@ -233,8 +197,6 @@ function putSnowflakes(container ,snowflakeCount) {
 function removeSnowflakes(container) {
     container.children(".snowflake").remove()
 }
-
-
 
 var flightMarkerImageWeight = {
 	"/assets/images/markers/dot.png" : 2000,
@@ -266,24 +228,3 @@ function randomFlightMarker() {
 	})
 	return pickedImage
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

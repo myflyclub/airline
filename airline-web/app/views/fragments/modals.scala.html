@@ -477,6 +477,79 @@
 		</div>
 	</div>
 
+	<!-- Easter Bunny modal -->
+	<div id="easterBunnyModal" class="modal easter-event" aria-hidden="true">
+		<div class="modal-content"  style="width : 500px;">
+			<div style="margin-bottom: 30px"><h2>🐰 Where's the Easter Bunny's Basket? 🥚</h2></div>
+			<span class="close" onclick="closeEasterBunnyModal()">&times;</span>
+			<h4 style="margin-bottom: 10px;">Difficulty</h4>
+			<div class="difficultyOptions">
+				<div style="margin-bottom: 15px; display: block;">Difficulty is locked in on your first egg hunt attempt!</div>
+				<div><input type="radio" name="easterDifficulty" value="normal" class="easterDifficulty" onchange="$('#easterBunnyAttemptsLeft').text('10')" checked>Normal (10 attempts)</div>
+				<div><input type="radio" name="easterDifficulty" value="hard" class="easterDifficulty" onchange="$('#easterBunnyAttemptsLeft').text('5')">Hard (5 attempts, double reward)</div>
+			</div>
+			<div class="difficultyPick">
+				<span class="difficultyLabel"></span>
+			</div>
+			<h4 style="margin-top: 10px; margin-bottom: 10px;">Egg Hunt Trail</h4>
+			<div style="width: 100%;">
+				<div style="width: 100%; overflow: auto; float: left;">
+					<div class="table data"style="width: 100%">
+						<div class="table-header">
+							<div class="cell" style="width: 50%; border-bottom: none">Airport Searched</div>
+							<div class="cell" style="width: 50%;  border-bottom: none">How Hot? 🌡️</div>
+						</div>
+					</div>
+					<div class="table data" id="easterBunnyGuessTable" style="max-height: 100%; width: 100%">
+						<div class="table-header">
+							<div class="cell" style="width: 50%"></div>
+							<div class="cell" style="width: 50%"></div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div style="margin-bottom: 15px; display: block;">
+				Pick an airport to search — each guess gets you a hot/cold clue!
+			</div>
+			<div class="warning" style="margin-bottom: 15px;">
+				<span>Guesses Left: </span><span id="easterBunnyAttemptsLeft"></span>
+			</div>
+			<div class="button guessButton glow" onclick="guessEasterBunny()">Hunt for eggs here! 🥚</div>
+			<div id="easterBunnyExhausted" style="display: none;">
+				<div style="float:left"><img src='@routes.Assets.versioned("/images/icons/balloon-smiley-sad.png")'></div>
+				<div style="float:left"><h4>The Easter Bunny has hopped away! All your guesses are gone. Better luck next week! 🐰💨</h4></div>
+				<div style="clear:both; margin-bottom: 15px"></div>
+			</div>
+
+			<div id="easterBunnyRewardOptions" style="display: none;">
+				<div style="float:left"><img src='@routes.Assets.versioned("/images/icons/rubber-balloons.png")'></div>
+				<div style="float:left"> <h4>🎉 You cracked it! You found the Easter Bunny's basket! 🧺</h4></div>
+				<div style="float:left"><img src='@routes.Assets.versioned("/images/icons/rubber-balloons.png")'></div>
+				<div style="clear:both; margin-bottom: 15px"></div>
+
+				<h4>Pick your prize from the basket — but choose wisely, you can only pick once!</h4>
+
+				<div class="warning">The cash is yours to keep. All the other bonuses are temporary and will fade back to normal over time.</div>
+				<div class="table data" id="easterBunnyRewardOptionsTable" style="height: 300px; width: 100%">
+					<div class="table-header">
+						<div class="cell" style="width: 10%"></div>
+						<div class="cell" style="width: 90%"></div>
+					</div>
+				</div>
+			</div>
+			<div id="easterBunnyPickedReward" style="display: none;">
+				<div style="float:left"> <h4>You already claimed your reward from the basket 🧺</h4></div>
+				<div style="clear:both; margin-bottom: 15px"></div>
+				<div class="table data" style="width: 100%">
+					<div class="table-row">
+						<div class="cell label" style="width: 100%"><span id="easterBunnyPickedRewardText" class="text"></span></div>
+					</div>
+				</div>
+
+			</div>
+		</div>
+	</div>
+
 	<!-- airport passenger quality expectation model -->
 	<div id="expectedQualityModal" class="modal">
 		<div class="modal-content"  style="width : 500px;">

@@ -22,16 +22,22 @@ abstract class SantaClausAward(santaClausInfo: SantaClausInfo) {
   val integerFormatter = java.text.NumberFormat.getIntegerInstance
 }
 
-
-
 class CashAward(santaClausInfo: SantaClausInfo) extends SantaClausAward(santaClausInfo) {
   override val getType: SantaClausAwardType.Value = SantaClausAwardType.CASH
   val CASH_AMOUNT = 20000000 * difficultyMultiplier //rich santa claus wow, 20M!
   override def applyAward(): Unit = {
     AirlineSource.saveLedgerEntry(AirlineLedgerEntry(santaClausInfo.airline.id, CycleSource.loadCycle(), LedgerType.PRIZE, CASH_AMOUNT))
   }
-
   override val description: String = s"Santa Claus is feeling generous! He is giving you $$${integerFormatter.format(CASH_AMOUNT)} cash!"
+}
+
+class ActionPointAward(santaClausInfo: SantaClausInfo) extends SantaClausAward(santaClausInfo) {
+  override val getType: SantaClausAwardType.Value = SantaClausAwardType.ACTION_POINT
+  val actionPoints = 50 * difficultyMultiplier
+  override def applyAward(): Unit = {
+    AirlineSource.adjustAirlineActionPoints(santaClausInfo.airline, actionPoints.toDouble)
+  }
+  override val description: String = s"Santa Claus is feeling generous! He is giving you $$${integerFormatter.format(actionPoints)} action points!"
 }
 
 class ServiceQualityAward(santaClausInfo: SantaClausInfo) extends SantaClausAward(santaClausInfo) {
@@ -43,12 +49,12 @@ class ServiceQualityAward(santaClausInfo: SantaClausInfo) extends SantaClausAwar
     santaClausInfo.airline.setCurrentServiceQuality(newQuality)
     AirlineSource.saveAirlineInfo(santaClausInfo.airline)
   }
-  override val description: String = "Santa Claus offers you his pro tips on making your flights magical! Overall Airline Service Quality bonus +" + BONUS + " ! (not permanent, level will eventually return to normal level)"
+  override val description: String = "Santa Claus makes your flights magical with his magic touch! Overall Airline Service Quality bonus +" + BONUS + " ! (not permanent, level will eventually return to normal level)"
 }
 
 class HqLoyaltyAward(santaClausInfo: SantaClausInfo) extends SantaClausAward(santaClausInfo) {
   override val getType: SantaClausAwardType.Value = SantaClausAwardType.HQ_LOYALTY
-  val BONUS = 5 * difficultyMultiplier
+  val BONUS = 10 * difficultyMultiplier
   override def applyAward(): Unit = {
     AirlineCache.getAirline(santaClausInfo.airline.id, fullLoad = true).foreach { airline =>
       airline.getHeadQuarter().foreach { hq =>
@@ -61,7 +67,6 @@ class HqLoyaltyAward(santaClausInfo: SantaClausInfo) extends SantaClausAward(san
 
   override val description: String = {
     val hq = AirlineCache.getAirline(santaClausInfo.airline.id, fullLoad = true).get.getHeadQuarter().get.airport
-
     s"Santa Claus agrees to travel to your HQ and ho-ho-ho for ${Period.yearLength} weeks in ${hq.displayText} Loyalty bonus ${BONUS} in your HQ airport!"
   }
 }
@@ -92,7 +97,7 @@ class ReputationAward(santaClausInfo: SantaClausInfo) extends SantaClausAward(sa
 }
 
 object SantaClausAwardType extends Enumeration {
-  val CASH, SERVICE_QUALITY, HQ_LOYALTY, AIRPORT_LOYALTY, REPUTATION = Value
+  val CASH, ACTION_POINT, SERVICE_QUALITY, HQ_LOYALTY, AIRPORT_LOYALTY, REPUTATION = Value
 }
 
 object SantaClausAward {
@@ -105,6 +110,7 @@ object SantaClausAward {
   def getRewardByType(info : SantaClausInfo, rewardType : SantaClausAwardType.Value) = {
     rewardType match {
       case SantaClausAwardType.CASH => new CashAward(info)
+      case SantaClausAwardType.ACTION_POINT => new ActionPointAward(info)
       case SantaClausAwardType.SERVICE_QUALITY => new ServiceQualityAward(info)
       case SantaClausAwardType.HQ_LOYALTY => new HqLoyaltyAward(info)
       case SantaClausAwardType.AIRPORT_LOYALTY => new AirportLoyaltyAward(info)

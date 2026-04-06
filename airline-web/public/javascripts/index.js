@@ -32,7 +32,7 @@ const SESSION_SCRIPTS = [
 // Scripts loaded after successful login (game features)
 const POST_LOGIN_SCRIPTS = [
     'plot-chartjs.js', 'airport.js', 'airplane.js', 'model-config/index.js',
-    'manager.js', 'country.js', 'office.js', 'ranking.js', 'christmas.js',
+    'manager.js', 'country.js', 'office.js', 'ranking.js', 'christmas.js', 'easter.js',
     'bank.js', 'admin.js', 'oil.js', 'rivals.js', 'alliance.js', 'event.js',
     'search.js', 'profile.js', 'pending-action.js', 'table-utils.js',
 ].map(asset);

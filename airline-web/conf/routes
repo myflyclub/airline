@@ -203,6 +203,11 @@ GET		 /santa-claus/attempt-status/:airportId/:airlineId  controllers.ChristmasAp
 GET		 /santa-claus/award-options/:airlineId  controllers.ChristmasApplication.getAwardOptions(airlineId : Int)
 POST      /santa-claus/pick-award/:airlineId/:optionId   controllers.ChristmasApplication.pickAwardOption(airlineId : Int, optionId : Int)
 
+POST		 /easter-bunny/guess/:airportId/:airlineId/:difficulty   controllers.EasterApplication.makeGuess(airportId : Int, airlineId : Int, difficulty : String)
+GET		 /easter-bunny/attempt-status/:airportId/:airlineId  controllers.EasterApplication.getAttemptStatus(airportId : Int, airlineId : Int)
+GET		 /easter-bunny/award-options/:airlineId  controllers.EasterApplication.getAwardOptions(airlineId : Int)
+POST      /easter-bunny/pick-award/:airlineId/:optionId   controllers.EasterApplication.pickAwardOption(airlineId : Int, optionId : Int)
+
 GET     /search-route/:fromAirportId/:toAirportId controllers.SearchApplication.searchRoute(fromAirportId : Int, toAirportId : Int)
 POST    /search-link-history    controllers.ChangeHistoryApplication.searchLinkHistory()
 GET     /research-link/:fromAirportId/:toAirportId  controllers.SearchApplication.researchLink(fromAirportId : Int, toAirportId : Int)
