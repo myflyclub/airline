@@ -1023,6 +1023,9 @@ a:focus, button:focus {
 .button.selected {
     background: var(--button-active-background);
 }
+.button + .button {
+    margin-left: 0 !important;
+}
 
 a.selected, span.selected, .clickable:hover:not(.cell), .clickable.selected:not(.cell) {
     background: var(--button-active-background);
@@ -2075,7 +2078,7 @@ input.price-input {
     border-bottom: 1px solid var(--placeholder-color);
     color: inherit;
     font: inherit;
-    padding: 0 0 0 10px;
+    padding: 0px;
     width: calc(100% - 10px);
     outline: none;
     text-align: right;
