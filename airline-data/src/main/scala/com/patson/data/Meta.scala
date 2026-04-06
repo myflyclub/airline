@@ -535,7 +535,7 @@ object Meta {
       "preference_type TINYINT NOT NULL," +
       "preferred_link_class CHAR(1) NOT NULL," +
       "passenger_count INT NOT NULL," +
-      "PRIMARY KEY (from_airport)" +
+      "PRIMARY KEY (from_airport, to_airport, passenger_type, preference_type, preferred_link_class)" +
       ")")
 
     statement.execute()

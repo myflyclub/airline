@@ -1,6 +1,6 @@
 name := "airline-web"
 
-version := "4.1-SNAPSHOT"
+version := "5.1"
 
 lazy val root = (project in file(".")).enablePlugins(PlayScala, SbtWeb)
 
