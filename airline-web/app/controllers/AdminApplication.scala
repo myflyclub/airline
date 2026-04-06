@@ -391,7 +391,7 @@ class AdminApplication @Inject()(cc: ControllerComponents) extends AbstractContr
 
   def getRequestStats() = Authenticated { implicit request =>
     if (request.user.isAdmin) {
-      val topUsers = RequestStats.getTopUsers(20)
+      val topUsers = RequestStats.getTopUsers(50)
       val total = RequestStats.totalRequests.get()
 
       import scala.jdk.CollectionConverters._
@@ -401,7 +401,7 @@ class AdminApplication @Inject()(cc: ControllerComponents) extends AbstractContr
           Json.obj("userId" -> userId, "requests" -> count)
         },
         "anonEndpoints" -> Json.toJson(
-          RequestStats.anonStats.asScala.map { case (ep, count) => ep -> count.sum() }.toMap
+          RequestStats.anonStats.asScala.map { case (ep, count) => ep -> count.sum() }.toSeq.sortBy(-_._2).map { case (ep, count) => Json.obj("endpoint" -> ep, "requests" -> count) }
         )
       ))
     } else {
