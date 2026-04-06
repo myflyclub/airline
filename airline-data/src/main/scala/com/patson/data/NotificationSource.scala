@@ -259,6 +259,23 @@ object NotificationSource {
     }
   }
 
+  def deleteAllExceptGameOver(airlineId: Int): Unit = {
+    val connection = Meta.getConnection()
+    try {
+      val statement = connection.prepareStatement(
+        s"DELETE FROM $NOTIFICATION_TABLE WHERE airline = ? AND category != '${NotificationCategory.GAME_OVER}'"
+      )
+      try {
+        statement.setInt(1, airlineId)
+        statement.executeUpdate()
+      } finally {
+        statement.close()
+      }
+    } finally {
+      connection.close()
+    }
+  }
+
   def deleteNotification(airlineId: Int, notifId: Int): Unit = {
     val connection = Meta.getConnection()
     try {
