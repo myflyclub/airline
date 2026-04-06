@@ -352,12 +352,10 @@ object LinkSimulation {
 
     val depreciation = inServiceAssignedAirplanes.map {
       case (airplane, _) =>
-        val depreciableBase = airplane.model.price - airplane.model.price * Airplane.SALVAGE_VALUE_PERCENT
-        val standardRate = depreciableBase / airplane.model.lifespan.toDouble
-        (standardRate * assignmentWeights(airplane)).toInt
+        (Airplane.standardDepreciationRate(airplane.model) * assignmentWeights(airplane)).toInt
     }.sum
 
-    val targetQualityCost = Math.pow(link.airline.getTargetServiceQuality().toDouble / 22, CREW_EQ_EXPONENT)
+    val targetQualityCost = crewQualityCostFactor(link.airline.getTargetServiceQuality())
     var crewCost = CREW_BASE_COST
     var inflightCost, revenue = 0
     val crewUnitCost = if (link.airline.airlineType == DiscountAirline || link.airline.airlineType == NonPlayerAirline) CREW_UNIT_COST * DiscountAirline.crewRatio else CREW_UNIT_COST
@@ -422,22 +420,25 @@ object LinkSimulation {
 
   //"service supplies"
   val computeInflightCost = (classMultiplier : Double, link : Link, soldSeats : Int) => {
-    val durationCostPerHour: Double =
-      if (link.rawQuality <= 20) {
-        -5 //selling food & credit cards :)
-      } else if (link.rawQuality <= 40) {
-        -1
-      } else if (link.rawQuality <= 60) {
-        4
-      } else if (link.rawQuality <= 80) {
-        9
-      } else {
-        15
-      }
-
+    val durationCostPerHour = inflightDurationCostPerHour(link.rawQuality)
     val costPerPassenger = classMultiplier * durationCostPerHour * link.duration.toDouble / 60
     (costPerPassenger * soldSeats).toInt
   }
+
+  /** Per-hour inflight cost rate for the given rawQuality.
+   *  Negative values mean the airline earns revenue (food/card sales). */
+  def inflightDurationCostPerHour(rawQuality: Int): Double =
+    if (rawQuality <= 20)      -5.0  // selling food & credit cards :)
+    else if (rawQuality <= 40) -1.0
+    else if (rawQuality <= 60)  4.0
+    else if (rawQuality <= 80)  9.0
+    else                       15.0
+
+  val CREW_QUALITY_DIVISOR = 22.0
+
+  /** Multiplier applied to per-seat crew cost based on target service quality */
+  def crewQualityCostFactor(targetSQ: Double): Double =
+    Math.pow(targetSQ / CREW_QUALITY_DIVISOR, CREW_EQ_EXPONENT)
 
   val LOAD_FACTOR_ALERT_LINK_COUNT_THRESHOLD = 2 //how many airlines before load factor is checked
   val LOAD_FACTOR_ALERT_THRESHOLD = 0.4 //LF threshold

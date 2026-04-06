@@ -300,7 +300,7 @@ case class Airport(iata: String, icao: String, name: String, latitude: Double, l
   //airport income = up to 30
   //GOOD_QUALITY_DELTA seeks up to another 20
   val expectedQuality = (distance: Int, linkClass: LinkClass) => {
-    val classBaseline = LinkClassValues.getInstance(10, 20, 35, -10)
+    val classBaseline = LinkClassValues.getInstance(15, 25, 40, -5)
     val distanceMod = Math.min(10.0, distance / 1000.0) * LinkClassValues.getInstance(2, 3, 3, 2)(linkClass)
     val incomeBaseline = Math.min((baseIncome.toDouble / Airport.HIGH_INCOME * 30).toInt, 30)
 
@@ -376,13 +376,14 @@ case class AirlineBonus(bonusType : BonusType.Value, bonus : AirlineAppeal, expi
 
 object BonusType extends Enumeration {
   type BonusType = Value
-  val NATIONAL_AIRLINE, PARTNERED_AIRLINE, OLYMPICS_VOTE, OLYMPICS_PASSENGER, SANTA_CLAUS, CAMPAIGN, NEGOTIATION_BONUS, BASE_SPECIALIZATION_BONUS, BANNER, NO_BONUS, LUXURY = Value
+  val NATIONAL_AIRLINE, PARTNERED_AIRLINE, OLYMPICS_VOTE, OLYMPICS_PASSENGER, SANTA_CLAUS, CAMPAIGN, NEGOTIATION_BONUS, BASE_SPECIALIZATION_BONUS, BANNER, NO_BONUS, LUXURY, EASTER_BUNNY = Value
   val description : BonusType.Value => String = {
     case NATIONAL_AIRLINE => "National Airline"
     case PARTNERED_AIRLINE => "Partnered Airline"
     case OLYMPICS_VOTE => "Olympics Vote Reward"
     case OLYMPICS_PASSENGER => "Olympics Goal Reward"
     case SANTA_CLAUS => "Santa Claus Reward"
+    case EASTER_BUNNY => "Easter Bunny Reward"
     case CAMPAIGN => "Campaign"
     case NEGOTIATION_BONUS => "Negotiation Great Success"
     case BASE_SPECIALIZATION_BONUS => "Base Specialization Bonus"

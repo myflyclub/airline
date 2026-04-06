@@ -65,19 +65,18 @@ case class Link(from : Airport, to : Airport, airline: Airline, price : LinkClas
 
   override def computedQuality() : Int= {
     if (!hasComputedQuality) {
-
       if (inServiceAirplanes.isEmpty) {
         0
       } else {
         val airplaneConditionQuality = inServiceAirplanes.toList.map {
           case ((airplane, assignmentPerAirplane)) => 20 * airplane.condition / Airplane.MAX_CONDITION * assignmentPerAirplane.frequency
         }.sum / frequency
-        val airplaneTypeQuality = getAssignedModel() match {
-          case Some(model) => Math.pow(model.quality + 1, 1.7) - 6
+        val airplaneTypeQuality: Int = getAssignedModel() match {
+          case Some(model) => Link.airplaneTypeQualityPts(model.quality)
           case None => 0
         }
-        val serviceQuality = 30 * (rawQuality.toDouble - 20) / (Link.MAX_QUALITY - 20)
-        val laborQuality = 30 * (airline.airlineInfo.currentServiceQuality / Airline.EQ_MAX)
+        val serviceQuality = Link.serviceQualityPts(rawQuality)
+        val laborQuality = Link.laborQualityPts(airline.airlineInfo.currentServiceQuality)
         computedQualityStore = (airplaneTypeQuality + serviceQuality + laborQuality + airplaneConditionQuality).toInt
         hasComputedQuality = true
         computedQualityStore
@@ -188,6 +187,29 @@ case class Link(from : Airport, to : Airport, airline: Airline, price : LinkClas
 object Link {
   val MAX_QUALITY = 100
   val HIGH_FREQUENCY_THRESHOLD = 21
+
+  /** Maps model.quality (0–10) to quality points contributed in computedQuality */
+  def airplaneTypeQualityPts(modelQuality: Int): Int = modelQuality match {
+    case 10 => 48
+    case 9  => 39
+    case 8  => 31
+    case 7  => 24
+    case 6  => 18
+    case 5  => 13
+    case 4  =>  9
+    case 3  =>  6
+    case 2  =>  3
+    case 1  =>  0
+    case _  => -3
+  }
+
+  /** Quality points contributed by rawQuality (service quality) in computedQuality */
+  def serviceQualityPts(rawQuality: Int): Double =
+    30.0 * (rawQuality - 20) / (MAX_QUALITY - 20)
+
+  /** Quality points contributed by currentServiceQuality (labor quality) in computedQuality */
+  def laborQualityPts(currentSQ: Double): Double =
+    30.0 * currentSQ / Airline.EQ_MAX
   val LINK_NEGOTIATION_COOL_DOWN = 6
   val DELAY_MINOR_ONTIME = 1.0
   val DELAY_MAJOR_ONTIME = 1.5

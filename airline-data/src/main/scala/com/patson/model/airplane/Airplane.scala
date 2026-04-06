@@ -70,4 +70,8 @@ object Airplane {
   val MAX_DEALER_WEEKS = 72
   val MAX_FLIGHT_MINUTES : Int = (24 * 60 * 4.5).toInt
   val SALVAGE_VALUE_PERCENT = 0.1
+
+  /** Weekly straight-line depreciation for a model (depreciable base / lifespan) */
+  def standardDepreciationRate(model: Model): Double =
+    model.price * (1.0 - SALVAGE_VALUE_PERCENT) / model.lifespan
 }
