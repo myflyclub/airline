@@ -295,20 +295,9 @@ sealed case class PrestigeFeature(baseStrength : Int, boosts : List[AirportBoost
   val featureType = AirportFeatureType.PRESTIGE_CHARM
 
   override def demandAdjustment(rawDemand: Double, passengerType: PassengerType.Value, airportId: Int, fromAirport: Airport, toAirport: Airport, affinity: Int, distance: Int) : Int = {
-    if (fromAirport.hasFeature(AirportFeatureType.PRESTIGE_CHARM) && toAirport.hasFeature(AirportFeatureType.PRESTIGE_CHARM) ) { //extra demand if both airports are gateway
-      val distanceMultiplier = {
-        if (distance <= 1250) {
-          0.2
-        } else if (distance <= 2500) {
-          0.4
-        } else if (distance <= 5000) {
-          0.6
-        } else {
-          0.8
-        }
-      }
+    if (passengerType == PassengerType.BUSINESS && fromAirport.hasFeature(AirportFeatureType.PRESTIGE_CHARM) && toAirport.hasFeature(AirportFeatureType.PRESTIGE_CHARM) ) {
       val affinityMultiplier = (affinity.toDouble + 1.0) / 4.0 + 0.5
-      (Math.log(strength) * distanceMultiplier * affinityMultiplier).toInt
+      (5 + Math.log(strength) * affinityMultiplier).toInt
     } else {
       0
     }

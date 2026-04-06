@@ -1,4708 +1,4840 @@
-AAE,|FR|Algerian x2
-AAE,Mediterranean marine
-AAL,Jutland capital journeys
-AAL,Wind energy
+BLR,|AE|Kannada
+IXE,|AE|Kannada
 AAN,|AE|Malayali
-AAN,Urdu|
-AAR,Dairy
-AAR,Jutland capital journeys
-AAR,Wind energy
-AAT,Sheep
-ABA,Aluminum
-ABA,Coal RU
-ABD,NIOC
-ABI,Cryptocurrency
-ABJ,|UK|Nigerian
-ABJ,Chocolate
-ABJ,Lebanese|
-ABJ,Logistics MEA
-ABJ,Offshore oil
-ABJ,Rubber
-ABJ,Sapeur Network
-ABK,Somali|
-ABQ,Academia
-ABQ,Hispanic|
-ABQ,Renewables
-ABQ,TV / movies
-ABQ,UFOs
+AUH,|AE|Malayali
+CCJ,|AE|Malayali
+CNN,|AE|Malayali
+COK,|AE|Malayali
+DWC,|AE|Malayali
+DXB,|AE|Malayali
+FJR,|AE|Malayali
+RKT,|AE|Malayali
+SHJ,|AE|Malayali
+TRV,|AE|Malayali
 ABV,|AE|Nigerian
-ABV,|US|Nigerian
-ABV,Bureaucracy
-ABY,Cotton
-ABY,Peanuts
-ABZ,Atlantic Fishing
-ABZ,Equinor
-ABZ,Offshore oil
-ABZ,Whiskey
-ABZ,Wind energy
-ACA,|US|Guerrero & Oaxaca
-ACC,|NL|Ghanaian
-ACC,Agriculture
-ACC,Chocolate
-ACC,Humanitarian NGO
-ACE,Atlantic Fishing
-ACH,Fine cheese
-ACH,Loves Alps|
-ACK,Wind energy
-ACT,Ranching
-ACV,|US|Guerrero & Oaxaca
-ACV,Drug trafficking
-ACV,Forestry
-ACY,Casinos
-ADA,|DK|Turkish
-ADA,|NL|Turkish
-ADA,Agriculture
-ADB,|DK|Turkish
-ADB,|NL|Turkish
-ADB,Anglophone|
-ADB,Dutch|
-ADB,German|
-ADB,Tobacco
-ADB,Wind energy
-ADD,|IE|Ethiopian
-ADD,|US|Ethiopian
-ADD,|ZA|Ethiopian
-ADD,Apparel
-ADD,Belt & Road|
-ADD,Bureaucracy
-ADD,Coffee
-ADD,Humanitarian NGO
-ADD,Logistics MEA
-ADF,Apparel
-ADK,Arctic fishing
+AUH,|AE|Nigerian
+DXB,|AE|Nigerian
+LOS,|AE|Nigerian
+SHJ,|AE|Nigerian
+AUH,|AE|Pakistani
+DWC,|AE|Pakistani
+DXB,|AE|Pakistani
+KHI,|AE|Pakistani
+LHE,|AE|Pakistani
+TIF,|AE|Pakistani
+AUH,|AE|Russian
+DME,|AE|Russian
+DWC,|AE|Russian
+DXB,|AE|Russian
+KZN,|AE|Russian
+LED,|AE|Russian
+MRV,|AE|Russian
+OVB,|AE|Russian
+SHJ,|AE|Russian
+SVO,|AE|Russian
+SVX,|AE|Russian
+UFA,|AE|Russian
+VKO,|AE|Russian
+CJB,|AE|Tamil
+IXM,|AE|Tamil
+MAA,|AE|Tamil
+TCR,|AE|Tamil
+TRZ,|AE|Tamil
+CBB,|AR|Bolivian
+EZE,|AR|Bolivian
+LPB,|AR|Bolivian
+NRT,|AR|Nikkei
+BNE,|AU|Chinese
+CKG,|AU|Chinese
+FOC,|AU|Chinese
+HGH,|AU|Chinese
+KMG,|AU|Chinese
+MEL,|AU|Chinese
+NKG,|AU|Chinese
+PEK,|AU|Chinese
+PER,|AU|Chinese
+PKX,|AU|Chinese
+PVG,|AU|Chinese
+SHA,|AU|Chinese
+SYD,|AU|Chinese
+TAO,|AU|Chinese
+TFU,|AU|Chinese
+WUH,|AU|Chinese
+XMN,|AU|Chinese
+ATH,|AU|Greek
+MEL,|AU|Greek
+SYD,|AU|Greek
 ADL,|AU|Indian
-ADL,LNG
-ADL,Viticulture
-ADL,Water
-ADQ,Arctic fishing
-ADZ,Coffee
-AEB,Manganese
-AEP,|US|Jewish
-AEP,Agribusiness
-AEP,Dairy
-AEP,Loves Florianopolis x2|
-AES,Atlantic Fishing
-AES,Equinor
-AEY,Geothermal
-AGA,Horticulture
-AGA,Mediterranean Ag
-AGP,|ES|Ecuadorian
-AGP,Water
-AGR,Footwear
-AGR,Potato
-AGS,Golf
-AGT,Dark economy
-AGT,German|
-AGT,Soybeans
-AGU,|US|Durango & Zacatecas
-AGU,Autos
-AHB,|SA|Egyptian
-AHB,|SA|Pakistani
-AHB,Petrochemicals
-AIP,|CA|Punjabi
-AIT,Polynesia
-AJF,Oil
-AKJ,Paper & furniture
-AKL,|NZ|Indian
-AKL,|NZ|Samoan
-AKL,Dairy
-AKL,Logistics APAC
-AKL,Polynesia
-AKL,TV / movies
-AKN,Arctic fishing
-AKU,Cotton
-AKU,Sunni|
-ALA,Belt & Road|
-ALA,Cryptocurrency
-ALA,Gazprom
-ALA,LNG
-ALA,Logistics CIS
-ALA,Oil
-ALA,Sinopec
-ALB,Dairy
-ALB,Semiconductors
-ALB,Wind energy
-ALC,British Sunny Vacay x2|
-ALC,Ceramics
-ALC,Mediterranean Ag
-ALC,Water
-ALF,Boreal
-ALF,Finnish|
-ALG,|CA|Algerian x2
-ALG,|FR|Algerian x2
-ALG,Logistics EU Med
-ALG,Oil
-ALG,Petrochemicals
-ALO,Wind energy
+AVV,|AU|Indian
+BNE,|AU|Indian
+CNS,|AU|Indian
+PER,|AU|Indian
+SYD,|AU|Indian
+AVV,|AU|Italian
+CTA,|AU|Italian
+FCO,|AU|Italian
+MEL,|AU|Italian
+MXP,|AU|Italian
+PMO,|AU|Italian
+PPG,|AU|Samoan
+SYD,|AU|Samoan
+BNE,|AU|Vietnamese
+DAD,|AU|Vietnamese
+HAN,|AU|Vietnamese
+MEL,|AU|Vietnamese
+SGN,|AU|Vietnamese
+SYD,|AU|Vietnamese
+BAH,|BA|Malayali
+CCJ,|BA|Malayali
+CNN,|BA|Malayali
+COK,|BA|Malayali
+FJR,|BA|Malayali
+TRV,|BA|Malayali
+CBB,|BR|Bolivian
+GRU,|BR|Bolivian
+LPB,|BR|Bolivian
+VVI,|BR|Bolivian
+CTA,|BR|Italian
+FCO,|BR|Italian
+GRU,|BR|Italian
+MXP,|BR|Italian
+NAP,|BR|Italian
+PMO,|BR|Italian
+BEL,|BR|Nikkei
+CGR,|BR|Nikkei
+CMG,|BR|Nikkei
+CWB,|BR|Nikkei
+GRU,|BR|Nikkei
+HND,|BR|Nikkei
+IGU,|BR|Nikkei
+KIX,|BR|Nikkei
+NGO,|BR|Nikkei
+NRT,|BR|Nikkei
+CWB,|BR|Polish
+GRU,|BR|Polish
+PET,|BR|Polish
+POA,|BR|Polish
 ALP,|BR|Syrian
-ALP,|NL|Syrian
-ALS,UFOs
-AMA,Ranching
-AMA,UFOs
-AMA,Wind energy
+DAM,|BR|Syrian
+GRU,|BR|Syrian
+ALG,|CA|Algerian x2
+ORN,|CA|Algerian x2
+YUL,|CA|Algerian x2
+CCU,|CA|Bengali
+YVR,|CA|Bengali
+YYZ,|CA|Bengali
+CGO,|CA|Chinese
+CKG,|CA|Chinese
+FOC,|CA|Chinese
+HGH,|CA|Chinese
+KMG,|CA|Chinese
+NKG,|CA|Chinese
+PEK,|CA|Chinese
+PKX,|CA|Chinese
+PVG,|CA|Chinese
+SHA,|CA|Chinese
+TAO,|CA|Chinese
+TFU,|CA|Chinese
+WUH,|CA|Chinese
+XMN,|CA|Chinese
+YHM,|CA|Chinese
+YVR,|CA|Chinese
+YYC,|CA|Chinese
+YYZ,|CA|Chinese
+CEB,|CA|Filipino
+CRK,|CA|Filipino
+DVO,|CA|Filipino
+ILO,|CA|Filipino
+MNL,|CA|Filipino
+MPH,|CA|Filipino
+YOW,|CA|Filipino
+YVR,|CA|Filipino
+YYC,|CA|Filipino
+YYZ,|CA|Filipino
+PAP,|CA|Haitian
+YUL,|CA|Haitian
+CMN,|CA|Moroccan
+YUL,|CA|Moroccan
+AIP,|CA|Punjabi
+ATQ,|CA|Punjabi
+IXC,|CA|Punjabi
+YVR,|CA|Punjabi
+YYC,|CA|Punjabi
+YYZ,|CA|Punjabi
+HYD,|CA|Telugu
+TIR,|CA|Telugu
+VGA,|CA|Telugu
+VTZ,|CA|Telugu
+YYZ,|CA|Telugu
+BRU,|CD|Congolese
+FBM,|CD|Congolese
+FIH,|CD|Congolese
+BAQ,|CL|Colombian
+BOG,|CL|Colombian
+CLO,|CL|Colombian
+MDE,|CL|Colombian
+SLC,|CL|Colombian
+PAP,|CL|Haitian
+SCL,|CL|Haitian
+SLC,|CL|Samoan
+ANF,|CL|Venezuelan
+CCP,|CL|Venezuelan
+SLC,|CL|Venezuelan
+FLL,|CU|Cuban x2
+MCO,|CU|Cuban x2
+MIA,|CU|Cuban x2
+PBI,|CU|Cuban x2
+HAM,|DE|Afghan
+KBL,|DE|Afghan
+MZR,|DE|Afghan
+BER,|DE|Iranian
+HAM,|DE|Iranian
+IFN,|DE|Iranian
+IKA,|DE|Iranian
+TBZ,|DE|Iranian
+THR,|DE|Iranian
+BRE,|DE|Polish
+CGN,|DE|Polish
+HHN,|DE|Polish
+LBC,|DE|Polish
+MHG,|DE|Polish
+RLG,|DE|Polish
+BEG,|DE|Serbian
+BER,|DE|Serbian
+DTM,|DE|Serbian
+DUS,|DE|Serbian
+FRA,|DE|Serbian
+MUC,|DE|Serbian
+STR,|DE|Serbian
+BER,|DE|Turkish
+CGN,|DE|Turkish
+DUS,|DE|Turkish
+FRA,|DE|Turkish
+HAM,|DE|Turkish
+MUC,|DE|Turkish
+ADB,|DK|Turkish
+AYT,|DK|Turkish
+COV,|DK|Turkish
+CPH,|DK|Turkish
+ESB,|DK|Turkish
+IST,|DK|Turkish
+SAW,|DK|Turkish
+AGP,|ES|Ecuadorian
+BCN,|ES|Ecuadorian
+GYE,|ES|Ecuadorian
+MAD,|ES|Ecuadorian
+UIO,|ES|Ecuadorian
+MAD,|ES|Peruvian
+MEX,|ES|Peruvian
+BBU,|ES|Romanian
+BCN,|ES|Romanian
+CDT,|ES|Romanian
+CLJ,|ES|Romanian
+GRO,|ES|Romanian
+IAS,|ES|Romanian
+ILD,|ES|Romanian
+MAD,|ES|Romanian
+OTP,|ES|Romanian
+REU,|ES|Romanian
+SBZ,|ES|Romanian
+SCV,|ES|Romanian
+TSR,|ES|Romanian
+VLC,|ES|Romanian
+ZAZ,|ES|Romanian
+AAE,|FR|Algerian x2
+ALG,|FR|Algerian x2
+BJA,|FR|Algerian x2
+BLJ,|FR|Algerian x2
+BOD,|FR|Algerian x2
+BVA,|FR|Algerian x2
+CDG,|FR|Algerian x2
+CZL,|FR|Algerian x2
+GJL,|FR|Algerian x2
+GNB,|FR|Algerian x2
+LYS,|FR|Algerian x2
+MPL,|FR|Algerian x2
+MRS,|FR|Algerian x2
+NCE,|FR|Algerian x2
+ORN,|FR|Algerian x2
+ORY,|FR|Algerian x2
+TLN,|FR|Algerian x2
+TLS,|FR|Algerian x2
+EVN,|FR|Armenian
+LYS,|FR|Armenian
+ORY,|FR|Armenian
+CDG,|FR|Jewish
+TLV,|FR|Jewish
+BVA,|FR|Moroccan
+CDG,|FR|Moroccan
+CMN,|FR|Moroccan
+FEZ,|FR|Moroccan
+GNB,|FR|Moroccan
+LYS,|FR|Moroccan
+MPL,|FR|Moroccan
+MRS,|FR|Moroccan
+NCE,|FR|Moroccan
+ORY,|FR|Moroccan
+RAK,|FR|Moroccan
+RBA,|FR|Moroccan
+TLS,|FR|Moroccan
+BVA,|FR|Polish
+CDG,|FR|Polish
+LIL,|FR|Polish
+ORY,|FR|Polish
+SXB,|FR|Polish
+BEG,|FR|Serbian
+BVA,|FR|Serbian
+GNB,|FR|Serbian
+LYS,|FR|Serbian
+NCE,|FR|Serbian
+ORY,|FR|Serbian
+SXB,|FR|Serbian
+BVA,|FR|Tunisian x2
+LYS,|FR|Tunisian x2
+MRS,|FR|Tunisian x2
+NBE,|FR|Tunisian x2
+ORY,|FR|Tunisian x2
+TUN,|FR|Tunisian x2
+BHX,|GB|Indian
+LBA,|GB|Indian
+LGW,|GB|Indian
+LHR,|GB|Indian
+LPL,|GB|Indian
+LTN,|GB|Indian
+MAN,|GB|Indian
+STN,|GB|Indian
+DVO,|GU|Filipino
+GUM,|GU|Filipino
+MNL,|GU|Filipino
+CGK,|ID|Chinese
+CKG,|ID|Chinese
+DPS,|ID|Chinese
+FOC,|ID|Chinese
+HGH,|ID|Chinese
+KMG,|ID|Chinese
+NKG,|ID|Chinese
+PEK,|ID|Chinese
+PKX,|ID|Chinese
+PNK,|ID|Chinese
+PVG,|ID|Chinese
+SHA,|ID|Chinese
+SRG,|ID|Chinese
+SUB,|ID|Chinese
+TAO,|ID|Chinese
+TFU,|ID|Chinese
+UPG,|ID|Chinese
+WUH,|ID|Chinese
+XMN,|ID|Chinese
+CGK,|ID|Tamil
+CJB,|ID|Tamil
+DPS,|ID|Tamil
+IXM,|ID|Tamil
+MAA,|ID|Tamil
+SUB,|ID|Tamil
+TCR,|ID|Tamil
+TRZ,|ID|Tamil
+ADD,|IE|Ethiopian
+TLV,|IE|Ethiopian
+CEB,|IE|Filipino
+CRK,|IE|Filipino
+DVO,|IE|Filipino
+ILO,|IE|Filipino
+MNL,|IE|Filipino
+MPH,|IE|Filipino
+TLV,|IE|Filipino
+DUB,|IE|Polish
+GDN,|IE|Polish
+KRK,|IE|Polish
+WAW,|IE|Polish
+TLV,|IL|Russian
+CEB,|IT|Filipino
+CRK,|IT|Filipino
+DVO,|IT|Filipino
+FCO,|IT|Filipino
+ILO,|IT|Filipino
+MNL,|IT|Filipino
+MPH,|IT|Filipino
+MXP,|IT|Filipino
+BBU,|IT|Romanian
+BGY,|IT|Romanian
+CIA,|IT|Romanian
+CLJ,|IT|Romanian
+IAS,|IT|Romanian
+LIN,|IT|Romanian
+OTP,|IT|Romanian
+PSA,|IT|Romanian
+SBZ,|IT|Romanian
+SCV,|IT|Romanian
+TRN,|IT|Romanian
+TSF,|IT|Romanian
+TSR,|IT|Romanian
+FUK,|JP|Korean
+GMP,|JP|Korean
+HND,|JP|Korean
+ICN,|JP|Korean
+ITM,|JP|Korean
+KIX,|JP|Korean
+NRT,|JP|Korean
+PUS,|JP|Korean
+DAD,|JP|Vietnamese
+FUK,|JP|Vietnamese
+HAN,|JP|Vietnamese
+HND,|JP|Vietnamese
+HPH,|JP|Vietnamese
+ITM,|JP|Vietnamese
+KIX,|JP|Vietnamese
+NRT,|JP|Vietnamese
+SGN,|JP|Vietnamese
 AMD,|KE|Gujarati
-AMD,Auto parts
-AMD,Ceramics
-AMD,Dairy
-AMD,Fabrics
-AMD,Heavy industry
-AMD,Pharma
-AMD,Regional banking APAC
-AMD,Textiles
-AMH,|US|Ethiopian
-AMH,|ZA|Ethiopian
-AMM,Humanitarian NGO
-AMM,Islamic finance
-AMM,Pharma
-AMQ,Tropical fishing
+BHJ,|KE|Gujarati
+NBO,|KE|Gujarati
+STV,|KE|Gujarati
+CGK,|KH|Indonesian
+DPS,|KH|Indonesian
+KOS,|KH|Indonesian
+KTI,|KH|Indonesian
+SUB,|KH|Indonesian
+CCJ,|KW|Malayali
+CNN,|KW|Malayali
+COK,|KW|Malayali
+GIZ,|KW|Malayali
+KWI,|KW|Malayali
+TRV,|KW|Malayali
+HND,|MP|Nikkei
+KIX,|MP|Nikkei
+NGO,|MP|Nikkei
+NRT,|MP|Nikkei
+CUN,|MX|Bolivian
+MEX,|MX|Bolivian
+MTY,|MX|Bolivian
+VVI,|MX|Bolivian
+BAQ,|MX|Colombian
+BOG,|MX|Colombian
+CLO,|MX|Colombian
+MDE,|MX|Colombian
+MEX,|MX|Colombian
+CCJ,|MY|Malayali
+CNN,|MY|Malayali
+COK,|MY|Malayali
+JHB,|MY|Malayali
+KUL,|MY|Malayali
+PEN,|MY|Malayali
+SZB,|MY|Malayali
+TRV,|MY|Malayali
+KUL,|MY|Nepalese
+PEN,|MY|Nepalese
+SZB,|MY|Nepalese
+CJB,|MY|Tamil
+IXM,|MY|Tamil
+KUL,|MY|Tamil
+LGK,|MY|Tamil
+MAA,|MY|Tamil
+PEN,|MY|Tamil
+TCR,|MY|Tamil
+TRZ,|MY|Tamil
+ACC,|NL|Ghanaian
 AMS,|NL|Ghanaian
 AMS,|NL|Indonesian
-AMS,|NL|Moroccan
-AMS,|NL|Surinamese
-AMS,|NL|Turkish
-AMS,Beer
-AMS,Diamonds
-AMS,Drug trafficking
-AMS,Dutch holiday
-AMS,Eurozone banking
-AMS,Horticulture
-AMS,Offshore finance
-AMS,Oil
-AMS,Semiconductors
-AMV,Gazprom
-ANC,|US|Samoan
-ANC,Alaska Milk Run
-ANC,Arctic fishing
-ANC,Arctic oil
-ANC,LNG
-ANF,|CL|Venezuelan
-ANF,Copper
-ANF,Science megastructure
-ANR,Chocolate
-ANR,Diamonds
-ANR,Drug trafficking
-ANR,Global logistics
-ANR,Logistics EU Med
-ANR,Loves Tiroler Unterlan x2|
-ANR,Petrochemicals
-ANR,Telco
-AOG,Steel
-AOG,Tea
-AOI,Footwear
-AOJ,Forestry
-AOJ,Horticulture
-AOJ,Uranium
-AOR,Monsoon Ag
-AOR,Rubber
-APL,Agriculture
-APL,Cotton
-APN,Maple syrup
-APW,Polynesia
-AQG,Copper
-AQP,Copper
-AQP,Spirits
-ARH,Arctic fishing
-ARH,Rosneft
-ARH,Taiga
-ARI,Water
-ARK,Conservation
-ARK,Nordic|
-ARM,Ranching
-ARN,|NL|Syrian
-ARN,|SE|Iraqi
-ARN,Anglophone|
-ARN,Life sciences
-ARN,Software
-ARN,Telco
-ARU,Latifundia Legacy
-ASB,LNG
-ASB,Oil
-ASF,Gazprom
-ASI,Commonwealth ties
-ASP,Cryptids
-ASP,Spirituality
-ASR,CPG & Retail
-ASU,Soybeans
-ASV,Conservation
-ATH,|AU|Greek
-ATH,Marine
-ATH,Mediterranean Ag
-ATL,|US|Colombian
-ATL,|US|Korean
-ATL,|US|Nigerian
-ATL,Back office
-ATL,CPG & Retail
-ATL,Healthcare admin
-ATL,Logistics NAC
-ATL,Professional services
-ATL,Regional banking US
-ATL,TV / movies
-ATQ,|CA|Punjabi
-ATQ,Cotton
-ATQ,Potato
-ATW,Nordic|
-AUA,Dutch holiday
-AUH,|AE|Malayali
-AUH,|AE|Nigerian
-AUH,|AE|Pakistani
-AUH,|AE|Russian
-AUH,Aluminum
-AUH,Asset management
-AUH,Islamic finance
-AUH,Marine
-AUH,Oil refining
-AUH,Water
-AUS,|US|Durango & Zacatecas
-AUS,|US|Pakistani
-AUS,Academia
-AUS,Computers
-AUS,Cryptocurrency
-AUS,Life sciences
-AUS,Renewables
-AUS,Semiconductors
-AUS,Software
-AVA,Potato
-AVA,Rice
-AVL,Academia
-AVL,Beer
-AVL,Paper & furniture
-AVL,Spirituality
-AVV,|AU|Indian
-AVV,|AU|Italian
-AVV,Petrochemicals
-AWZ,NIOC
-AWZ,Steel
-AXD,Mediterranean marine
-AXM,Poultry
-AYT,|DK|Turkish
-AYT,|NL|Turkish
-AYT,|TR|Afghan
-AYT,Anglophone|
-AYT,Dutch|
-AYT,German|
-AYT,Nordic|
-AYT,Polish|
-AYT,Russian Vacay x2|
-AYT,Russian|
-AZD,Ceramics
-AZS,Sugar
-BAG,Evangelicalism
-BAH,|BA|Malayali
-BAH,Aluminum
-BAH,Islamic finance
-BAH,LNG
-BAQ,|CL|Colombian
-BAQ,|MX|Colombian
-BAQ,|US|Colombian
-BAQ,Lebanese|
-BAR,Monsoon Ag
-BAV,Aluminum
-BAV,Coal CN
-BAV,Rare earths
-BBI,Back office
-BBI,Steel
-BBK,Conservation
-BBK,Gemstones
-BCD,Agriculture
-BCN,|ES|Ecuadorian
-BCN,|ES|Romanian
-BCN,Apparel
-BCN,Logistics EU Med
-BCN,Mediterranean marine
-BCU,Sunni|
-BDA,Offshore finance
-BDA,Spirits
-BDB,Sugar
-BDH,NIOC
-BDJ,Coal CN
-BDJ,Diamonds
-BDL,|US|Irish American
-BDL,|US|Polish
-BDL,|US|Stateside Puerto Ricans
-BDL,Academia
-BDL,Healthcare admin
-BDO,Electronics
-BDO,Fabrics
-BDO,Tea
-BDQ,Dairy
-BDQ,Textiles
-BDS,Mediterranean marine
-BEG,|DE|Serbian
-BEG,|FR|Serbian
-BEG,Copper
-BEG,Gazprom
-BEG,Logistics EU Med
-BEG,Machinery
-BEL,|BR|Nikkei
-BEL,Agribusiness
-BEL,Amazonia
-BER,|DE|Iranian
-BER,|DE|Serbian
-BER,|DE|Turkish
-BER,Advertising & media
-BER,Renewables
-BER,Telco
-BES,Marine
-BET,Arctic oil
-BEY,Humanitarian NGO
-BEY,Lebanese|
-BFI,Academia
-BFI,Aerospace
-BFI,Northwest Passage
-BFL,Hispanic|
-BFL,Logistics NAC
-BFL,Mediterranean Ag
-BFS,Textiles
-BGA,Latifundia Legacy
-BGF,Peacekeeping
-BGF,Sapeur Network
-BGI,Rum
-BGO,Equinor
-BGO,Loves Spain|
-BGO,Marine
-BGO,Offshore oil
-BGO,Titanium
-BGO,Wind energy
-BGW,|SE|Iraqi
-BGW,|TR|Iraqi
-BGW,PetroChina
-BGW,Shia|
-BGY,|IT|Romanian
-BGY,Footwear
-BGY,Machinery
-BGY,Textiles
-BHE,Viticulture
-BHI,Petrochemicals
-BHI,Sheep
-BHJ,|KE|Gujarati
-BHM,Academia
-BHM,Heavy industry
-BHO,Soybeans
-BHQ,Copper FIFO
-BHQ,Zinc
-BHX,|GB|Indian
-BHX,Loves Alps|
-BHX,Machinery
-BHX,Sunni|
-BHY,Logistics APAC
-BHY,Marine
-BIL,Big Sky
-BIL,Coal
-BIL,Forestry
-BIL,Oil fracking
-BIO,Atlantic Fishing
-BIO,Fine cheese
-BIO,Steel
-BIO,Wind energy
-BIQ,Surfing
-BIS,Big Sky
-BIS,Nordic|
-BJA,|FR|Algerian x2
-BJL,Anglophone|
-BJL,Dutch|
-BJL,Peanuts
-BJR,|ZA|Ethiopian
-BJV,Anglophone|
-BJV,Dutch|
-BJV,Francophonie|
-BJV,Polish|
-BJX,Apparel
-BJX,Footwear
-BKI,Chinese tourism|
-BKI,Indian Ocean fishing
-BKI,Korean Vacay x2|
-BKI,Offshore oil
-BKI,Spices / Tropical Ag
-BKI,Textiles
-BKK,|TH|Chinese
-BKK,Belt & Road|
-BKK,CPG & Retail
-BKK,Electronics
-BKK,Humanitarian NGO
-BKK,Poultry
-BKK,Regional banking APAC
-BKO,Gold
-BKS,Geothermal
-BLA,PDVSA
-BLJ,|FR|Algerian x2
-BLL,Dairy
-BLL,Jutland capital journeys
-BLL,Toys
-BLQ,Ceramics
-BLQ,CPG & Retail
-BLQ,Machinery
-BLR,|OM|Kannada
-BLR,Back office
-BLR,Life sciences
-BLR,Software
-BLR,Sunni|
-BLR,Telco
-BLZ,Tea
-BMA,Anglophone|
-BMI,Academia
-BMO,Rare earths
-BNA,Auto parts
-BNA,Evangelicalism
-BNA,Healthcare admin
-BNA,Regional banking US
-BNA,TV / movies
-BND,Aluminum
-BND,Logistics MEA
-BNE,|AU|Chinese
-BNE,|AU|Indian
-BNE,|AU|Vietnamese
-BNE,Golden Triangle x2
-BNE,LNG
-BNE,Logistics APAC
-BNE,Renewables
-BNE,Surfing
-BNK,Spirituality
-BOB,Polynesia
-BOD,|FR|Algerian x2
-BOD,Viticulture
-BOG,|CL|Colombian
-BOG,|MX|Colombian
-BOG,|US|Colombian
-BOG,Back office
-BOG,Coffee
-BOG,Colonial ties bind
-BOG,Horticulture
-BOG,Puente Aéreo x2
-BOI,Forestry
-BOI,Healthcare admin
-BOI,Paper & furniture
-BOI,Potato
-BOI,Semiconductors
-BOJ,Agriculture
-BOJ,Anglophone|
-BOJ,Czech|
-BOJ,Mediterranean marine
-BOJ,Nordic|
-BOJ,Polish|
-BOJ,Russian|
-BOM,|SG|Marathi
-BOM,Bollywood 2 Bureaucracy x2
-BOM,Diamonds
-BOM,Islamic finance
-BOM,Pharma
-BOM,Professional services
-BOM,Regional banking APAC
-BOM,Sunni|
-BOM,Telco
-BOM,TV / movies
-BON,Dutch holiday
-BOO,Arctic fishing
-BOO,Equinor
-BOS,|US|Brazilian
-BOS,|US|Irish American
-BOS,Academia
-BOS,Asset management
-BOS,Life sciences
-BOS,Professional services
-BOS,Regional banking US
-BOS,Software
-BPE,Marine
-BPN,Heavy industry
-BPN,Nickel
-BPN,Oil
-BPT,Equinor
-BPT,Oil refining
-BPX,Baijiu
-BQN,Rum
-BQS,Defense RU
-BRC,Lusophone|
-BRD,Paper & furniture
-BRE,|DE|Polish
-BRE,Agribusiness
-BRE,Loves Arctic|
-BRE,Nordic|
-BRE,Wind energy
-BRI,Mediterranean Ag
-BRI,Viticulture
-BRN,Fine cheese
-BRO,Aerospace
-BRO,Hispanic|
-BRS,Aerospace
-BRS,Fine cheese
-BRS,Loves Alps|
-BRS,Tobacco
-BRU,|CD|Congolese
-BRU,Beer
-BRU,Bureaucracy
-BRU,CPG & Retail
-BRU,Eurozone banking
-BRU,Pharma
-BRU,Professional services
-BRW,Arctic oil
-BRW,LNG
-BRX,Sugar
-BSB,Agribusiness
-BSB,Bureaucracy
-BSB,Coffee
-BSB,Petrobras
-BSD,Tobacco
-BSL,Cryptocurrency
-BSL,Loves Alps|
-BSL,Pharma
-BSL,Semiconductors
-BSR,|SE|Iraqi
-BSR,|TR|Iraqi
-BSR,Oil
-BSR,Shia|
-BSZ,Agriculture
-BTH,Electronics
-BTH,Shipbuilding
-BTJ,Indian Ocean fishing
-BTJ,Surfing
-BTR,Academia
-BTR,ExxonMobil
-BTR,LNG
-BTR,Oil refining
-BTS,Autos
-BTS,Machinery
-BTU,LNG
-BTU,Manganese
-BTV,Academia
-BTV,Fine cheese
-BTV,Maple syrup
-BUD,Autos
-BUD,Back office
-BUD,Eurozone banking
-BUD,New energy
-BUD,TV / movies
-BUF,Agribusiness
-BUF,Machinery
-BUF,Oil fracking
-BUF,Regional banking US
-BUQ,Logistics MEA
-BUQ,Zim Connect
-BUR,Aerospace
-BUR,Hispanic|
-BUR,Luxury goods
-BUR,SoCal NoCal
-BUR,TV / movies
-BUZ,Logistics MEA
-BUZ,Mediterranean marine
-BUZ,NIOC
-BUZ,Petrochemicals
-BVA,|FR|Algerian x2
-BVA,|FR|Moroccan
-BVA,|FR|Polish
-BVA,|FR|Serbian
-BVA,|FR|Tunisian x2
-BVA,Aerospace
-BVA,L'Hexagone Hop
-BVA,Software
-BVB,Petrobras
-BVC,Dutch|
-BVE,Offshore oil
-BVJ,Gazprom
-BWI,|US|Guatemalan
-BWI,|US|Nigerian
-BWI,|US|Salvadoran
-BWI,Healthcare admin
-BWI,Logistics NAC
-BWI,US Defense
-BWN,LNG
-BWN,Offshore oil
-BWN,Sinophone|
-BWN,Spices / Tropical Ag
-BXH,Zinc Eurasia
-BZL,Rice
-BZN,Big Sky
-BZN,Mountaineering
-BZO,German|
-BZO,Loves Alps|
-BZV,Zinc
-CAB,Francophonie|
-CAB,Offshore oil
-CAE,Academia
-CAG,Fine cheese
-CAG,Mediterranean Ag
-CAH,Tropical fishing
-CAI,Bureaucracy
-CAI,Logistics MEA
-CAK,Logistics NAC
-CAK,Rubber
-CAN,Apparel
-CAN,Auto parts
-CAN,Autos
-CAN,Belt & Road|
-CAN,Cantonese|
-CAN,Chinese tourism|
-CAN,Electronics
-CAN,Footwear
-CAN,Global logistics
-CAN,Logistics APAC
-CAN,Machinery
-CAN,Sinopec
-CAN,Software
-CAY,CC|
-CAY,L'Hexagone Hop
-CAY,Loves French Antilles|
-CAY,Space
-CAZ,Copper FIFO
-CBB,|AR|Bolivian
-CBB,|BR|Bolivian
-CBR,Aussie Outliers
-CBR,Bureaucracy
-CBR,US Defense
-CCJ,|AE|Malayali
-CCJ,|BA|Malayali
-CCJ,|MY|Malayali
-CCJ,|OM|Malayali
-CCJ,|SA|Malayali
-CCJ,Spices / Tropical Ag
-CCJ,Sunni|
-CCK,Aussie Outliers
-CCK,Malay|
-CCP,|CL|Venezuelan
-CCP,Heavy industry
-CCP,Paper & furniture
-CCP,Seafood
-CCP,Viticulture
-CCS,|PE|Venezuelan
-CCS,|US|Venezuelan
-CCS,Oil
-CCS,PDVSA
-CCU,|CA|Bengali
-CCU,|US|Bengali
-CCU,Bengali|
-CCU,Logistics APAC
-CCU,Sunni|
-CCU,Tea
-CDG,|FR|Algerian x2
-CDG,|FR|Jewish
-CDG,|FR|Moroccan
-CDG,|FR|Polish
-CDG,Advertising & media
-CDG,Autos
-CDG,Eurozone banking
-CDG,Investment banking
-CDG,L'Hexagone Hop
-CDG,Luxury goods
-CDG,Nuclear energy
-CDG,Professional services
-CDG,Software
-CDT,|ES|Romanian
-CEB,|CA|Filipino
-CEB,|IE|Filipino
-CEB,|IT|Filipino
-CEB,|SA|Filipino
-CEB,|US|Filipino
-CEB,Appliances
-CEB,Back office
-CEB,Chinese tourism|
-CEB,Electronics
-CEB,Rum
-CEB,Tropical fishing
-CEC,Forestry
-CEE,Gazprom
-CEE,Paper & furniture
-CEE,Steel
-CEI,Forestry
-CEI,Tea
-CEK,Heavy industry
-CEN,Copper
-CFB,Petrobras
-CFR,Nuclear energy
-CFU,Anglophone|
-CFU,German|
-CFU,Italian|
-CGB,Ranching
-CGB,Soybeans
-CGB,Sugar
-CGH,|US|Brazilian
-CGH,Agribusiness
-CGH,Evangelicalism
-CGH,Logistics LATAM
-CGH,Pharma
-CGH,Ponte Aérea x2
-CGI,Zinc
-CGK,|ID|Chinese
-CGK,|ID|Tamil
-CGK,|KH|Indonesian
 CGK,|NL|Indonesian
-CGK,|SR|Indonesian
-CGK,Autos
-CGK,Coffee
-CGK,CPG & Retail
-CGK,Islamic finance
-CGK,Steel
-CGK,Tea
-CGN,|DE|Polish
-CGN,|DE|Turkish
-CGN,Advertising & media
-CGN,Aerospace
-CGN,Auto parts
-CGN,Eurozone banking
-CGN,Loves Arctic|
-CGO,|CA|Chinese
-CGO,Agribusiness
-CGO,Chinese tourism|
-CGO,Computers
-CGO,Cotton
-CGO,Cryptocurrency
-CGO,Titanium
-CGP,Apparel
-CGP,Fabrics
-CGP,Heavy industry
-CGP,Tea
-CGQ,Autos
-CGQ,Fabrics
-CGQ,Nickel
-CGQ,Zinc Eurasia
-CGR,|BR|Nikkei
-CGR,Agribusiness
-CGY,Horticulture
-CGY,Logistics APAC
-CHA,Whiskey
-CHC,|NZ|Indian
-CHC,|NZ|Samoan
-CHC,Agribusiness
-CHC,Dairy
-CHC,Logistics APAC
-CHC,Polar research
-CHG,Autos
-CHO,Academia
-CHQ,Anglophone|
-CHQ,German|
-CHQ,Nordic|
-CHQ,Polish|
-CHS,Aerospace
-CHS,Logistics NAC
-CIA,|IT|Romanian
-CIA,Telco
-CID,Soybeans
-CIF,Coal CN
-CIT,PetroChina
-CIT,Sheep
-CIU,Forestry
-CIX,Poultry
-CJB,|AE|Tamil
-CJB,|ID|Tamil
-CJB,|MY|Tamil
-CJB,Pharma
-CJB,Tea
-CJB,Textiles
-CJB,Titanium
-CJC,Copper
-CJC,Gemstones
-CJC,Science megastructure
-CJC,Water
-CJJ,Computers
-CJJ,Electronics
-CJS,Electronics
-CJS,Logistics NAC
-CKG,|AU|Chinese
-CKG,|CA|Chinese
-CKG,|ID|Chinese
-CKG,|TH|Chinese
-CKG,|US|Chinese
-CKG,Autos
-CKG,Bauxite
-CKG,Chinese tourism|
-CKG,Electronics
-CKG,Logistics APAC
-CKS,Iron ore
-CKW,Iron ore
-CKY,Agriculture
-CKY,Bauxite
-CKZ,Mediterranean marine
-CLE,|US|Stateside Puerto Ricans
-CLE,Appliances
-CLE,Healthcare admin
-CLE,Life sciences
-CLE,Regional banking US
-CLJ,|ES|Romanian
-CLJ,|IT|Romanian
-CLJ,Back office
-CLJ,Vampiric
-CLL,Evangelicalism
-CLO,|CL|Colombian
-CLO,|MX|Colombian
-CLO,|US|Colombian
-CLO,Agribusiness
-CLO,Drug trafficking
-CLO,Puente Aéreo x2
-CLQ,|US|Jalisco & Michoacán
-CLT,Logistics NAC
-CLT,Nuclear energy
-CLT,Regional banking US
-CLV,Ranching
-CMB,Apparel
-CMB,Gemstones
-CMB,German|
-CMB,Indian Ocean fishing
-CMB,Tea
-CME,Pemex
-CMG,|BR|Nikkei
-CMG,Manganese
-CMH,|US|Jalisco & Michoacán
-CMH,|US|Somali
-CMH,Academia
-CMH,Regional banking US
-CMI,Academia
-CMI,Coal
-CMN,|CA|Moroccan
-CMN,|FR|Moroccan
-CMN,|NL|Moroccan
-CMN,Apparel
-CMN,Francophonie|
-CMN,Logistics EU Med
-CMN,Logistics MEA
-CMN,Peacekeeping
-CND,Mediterranean marine
-CND,Polish|
-CNF,Agribusiness
-CNF,Autos
-CNF,Bauxite
-CNF,Coffee
-CNF,Dairy
-CNF,Drug trafficking
-CNF,Steel
-CNJ,Gold FIFO
-CNN,|AE|Malayali
-CNN,|BA|Malayali
-CNN,|MY|Malayali
-CNN,|OM|Malayali
-CNN,|SA|Malayali
-CNS,|AU|Indian
-CNS,Cryptids
-CNS,Sugar
-CNS,Tropical fishing
-CNX,Chinese tourism|
-CNX,Spices / Tropical Ag
-CNX,Sugar
-COD,Coal seam gas
-COD,Oil fracking
-COK,|AE|Malayali
-COK,|BA|Malayali
-COK,|MY|Malayali
-COK,|OM|Malayali
-COK,|SA|Malayali
-COK,Back office
-COK,Indian Ocean fishing
-COK,Rare earths
-COK,Rubber
-COK,Spices / Tropical Ag
-COR,Autos
-COR,Loves Florianopolis x2|
-COR,Peanuts
-COR,Ranching
-COS,Evangelicalism
-COS,US Defense
-COU,Soybeans
-COV,Logistics EU Med
-COV,Mediterranean Ag
-CPC,Polar research
-CPD,Oil fracking
-CPE,Pemex
-CPH,|DK|Turkish
-CPH,Asset management
-CPH,Beer
-CPH,Jutland capital journeys
-CPH,Marine
-CPH,Pharma
-CPH,Renewables
-CPO,Copper
-CPR,Coal
-CPT,Back office
-CPT,Logistics MEA
-CPT,Mediterranean Ag
-CPT,Viticulture
-CPT,Water
-CRK,|CA|Filipino
-CRK,|IE|Filipino
-CRK,|IT|Filipino
-CRK,|SA|Filipino
-CRK,|US|Filipino
-CRK,Back office
-CRK,CPG & Retail
-CRK,Dark economy
-CRK,Electronics
-CRP,Hispanic|
-CRP,Offshore oil
-CRP,Ranching
-CRP,Wind energy
-CRW,Coal
-CRZ,Oil
-CSX,Agribusiness
-CSX,Chinese tourism|
-CSX,Electronics
-CSX,Heavy industry
-CSX,Machinery
-CSX,Red tourism
-CTA,|AU|Italian
-CTA,|BR|Italian
-CTA,|US|Italian
-CTA,Mediterranean Ag
-CTG,Anglophone|
-CTG,Coffee
-CTG,Lebanese|
-CTG,Petrochemicals
-CTL,Coal seam gas
-CTM,Pemex
-CTS,Arctic fishing
-CTS,Beer
-CTS,Whiskey
-CTU,Agribusiness
-CTU,Autos
-CTU,Computers
-CTU,Electronics
-CTU,New energy
-CTU,Spirituality
-CUK,Anglophone|
-CUL,Drug trafficking
-CUL,Latifundia Legacy
-CUM,PDVSA
-CUN,|MX|Bolivian
-CUN,Anglophone|
-CUN,Casinos
-CUN,Dark economy
-CUN,Loves Cancun x2|
-CUR,Dutch holiday
-CUU,Appliances
-CUU,Autos
-CUU,Logistics NAC
-CUZ,Colonial ties bind
-CUZ,Logistics LATAM
-CUZ,Mountaineering
-CUZ,Potato
-CUZ,Spirituality
-CVG,CPG & Retail
-CVG,Logistics NAC
-CVG,Regional banking US
-CVQ,Sheep
-CWA,Maple syrup
-CWB,|BR|Nikkei
-CWB,|BR|Polish
-CWB,Appliances
-CWB,Paper & furniture
-CWB,UFOs
-CXH,Northwest Passage
-CXI,Polynesia
-CXR,Chinese tourism|
-CXR,Korean Vacay x2|
-CXR,Rice
-CXR,Russian Vacay x2|
-CXR,Tropical fishing
-CYI,Oil refining
-CYS,Big Sky
-CZL,|FR|Algerian x2
-CZM,Anglophone|
-CZM,Loves Cancun x2|
-CZX,Autos
-CZX,Machinery
-CZX,New energy
-DAC,Apparel
-DAC,Fabrics
-DAC,Monsoon Ag
-DAC,Peacekeeping
-DAC,Tea
-DAC,Textiles
-DAD,|AU|Vietnamese
-DAD,|JP|Vietnamese
-DAD,|US|Vietnamese
-DAD,Appliances
-DAD,Drug trafficking
-DAD,Fabrics
-DAD,Korean Vacay x2|
-DAD,Rubber
-DAD,Tropical fishing
-DAL,Aerospace
-DAL,Arctic oil
-DAL,Oil
-DAL,Oil fracking
-DAL,Ranching
-DAM,|BR|Syrian
-DAM,|NL|Syrian
-DAM,Shia|
-DAR,Logistics MEA
-DAR,Spices / Tropical Ag
-DAY,Healthcare admin
-DBO,Rare earths
-DBO,Sheep
-DBV,Mediterranean Ag
-DCA,Asset management
-DCA,Bureaucracy
-DCA,Healthcare admin
-DCA,NA Capitols|
-DCA,Professional services
-DCA,Space
-DCA,US Defense
-DCA,US military
-DDC,Grain Belt
-DEC,Soybeans
-DED,Spirituality
-DEL,Bollywood 2 Bureaucracy x2
-DEL,Bureaucracy
-DEL,CPG & Retail
-DEL,Regional banking APAC
-DEL,Sunni|
-DEN,|US|Ethiopian
-DEN,Aerospace
-DEN,Asset management
-DEN,Cryptocurrency
-DEN,Gold
-DEN,Logistics NAC
-DEN,Mountaineering
-DEN,Regional banking US
-DEN,Renewables
-DEN,Software
-DEN,Telco
-DEN,US Defense
-DFW,|US|Chinese
-DFW,|US|Durango & Zacatecas
-DFW,|US|Indian
-DFW,|US|Jalisco & Michoacán
-DFW,Oil
-DFW,Professional services
-DFW,Regional banking US
-DFW,Semiconductors
-DFW,Telco
-DFW,US Defense
-DGO,|US|Durango & Zacatecas
-DGT,Geothermal
-DHN,Peanuts
-DIB,Oil
-DIK,Oil fracking
-DIL,Offshore oil
-DIR,Somali|
-DIY,Agriculture
-DKA,Sunni|
-DLA,Chocolate
-DLA,Logistics MEA
-DLA,Offshore oil
-DLC,Poultry
-DLC,Shipbuilding
-DLC,Sinopec
-DLC,Software
-DLE,Fine cheese
-DLG,Arctic oil
-DLH,Nordic|
-DLI,Coffee
-DLI,Korean Vacay x2|
-DLM,Anglophone|
-DLM,Dutch|
-DLM,German|
-DLM,Nordic|
-DLZ,Coal CN
-DLZ,Copper
-DME,|AE|Russian
-DME,|RU|Armenian
-DME,|US|Russian
-DME,Cryptocurrency
-DME,Defense RU
-DME,Nickel
-DME,Nuclear energy
-DME,PDVSA
-DME,Regional banking APAC
-DME,Russian Vacay x2|
-DMK,|TH|Chinese
-DMK,Appliances
-DMK,Autos
-DMK,Chinese tourism|
-DMK,Rice
-DMM,|SA|Bangladeshi
-DMM,|SA|Egyptian
-DMM,|SA|Filipino
-DMM,|SA|Indonesian
-DMM,|SA|Malayali
-DMM,|SA|Pakistani
-DMM,Offshore oil
-DMM,Oil
-DMM,Petrochemicals
-DMM,Water
-DND,Equinor
-DNK,Grain Belt
-DNK,Manganese
-DNZ,Geothermal
-DNZ,Textiles
-DOH,Belt & Road|
-DOH,LNG
-DOH,Logistics MEA
-DOH,NIOC
-DOH,Offshore oil
-DOL,Fine cheese
-DOL,Logistics EU Med
-DOY,Sinopec
-DPS,|ID|Chinese
-DPS,|ID|Tamil
-DPS,|KH|Indonesian
 DPS,|NL|Indonesian
-DPS,|SR|Indonesian
-DPS,Chinese tourism|
-DPS,Dutch|
-DPS,Loves Bali x2|
-DPS,Offshore oil
-DPS,Surfing
-DPS,Tropical fishing
-DQA,PetroChina
-DQM,Oil refining
-DRO,Oil fracking
-DRP,Geothermal
-DRS,Pharma
-DRS,Semiconductors
-DRW,Offshore oil
-DRW,Titanium
-DRW,US military
-DSM,|US|Jalisco & Michoacán
-DSM,Agribusiness
-DSM,Grain Belt
-DSN,Coal CN
-DSN,PetroChina
-DSS,Agriculture
-DSS,Logistics MEA
-DSS,Oil refining
-DSS,Peacekeeping
-DSS,Sapeur Network
-DTM,|DE|Serbian
-DTM,Logistics EU Med
-DTM,Loves Arctic|
-DTM,Petrochemicals
-DTW,Auto parts
-DTW,Autos
-DTW,Regional banking US
-DUB,|IE|Polish
-DUB,|US|Irish American
-DUB,Asset management
-DUB,Beer
-DUB,Golf
-DUB,Investment banking
-DUB,Offshore finance
-DUB,Pharma
-DUB,Professional services
-DUB,Whiskey
-DUD,Academia
-DUD,Fine cheese
-DUE,Diamonds
-DUR,|ZA|Ethiopian
-DUR,Agribusiness
-DUR,Logistics MEA
-DUS,|DE|Serbian
-DUS,|DE|Turkish
-DUS,Eurozone banking
-DUS,Loves Arctic|
-DUS,Steel
-DUT,Arctic fishing
-DVL,Grain Belt
-DVO,|CA|Filipino
-DVO,|GU|Filipino
-DVO,|IE|Filipino
-DVO,|IT|Filipino
-DVO,|SA|Filipino
-DVO,|US|Filipino
-DVO,Chocolate
-DVO,Spices / Tropical Ag
-DVO,Tropical fishing
-DWC,|AE|Malayali
-DWC,|AE|Pakistani
-DWC,|AE|Russian
-DWC,Aluminum
-DWD,Renewables
-DXB,|AE|Malayali
-DXB,|AE|Nigerian
-DXB,|AE|Pakistani
-DXB,|AE|Russian
-DXB,Asset management
-DXB,Belt & Road|
-DXB,Cryptocurrency
-DXB,Global logistics
-DXB,Islamic finance
-DXB,Luxury goods
-DXB,Oil
-DXB,Professional services
-DYG,Rice
-DYU,Logistics CIS
-DYU,Oil
-DZA,L'Hexagone Hop
-EAT,Horticulture
-EAU,|US|Somali
-EAU,Nordic|
-EAU,Paper & furniture
-EBB,Coffee
-EBB,Evangelicalism
-EBD,Peanuts
-EBJ,Equinor
-EBL,|SE|Iraqi
-EBL,Oil
-ECN,Sunni|
-ECN,Turkish|
-ECP,US military
-EDI,|UK|Polish
-EDI,Academia
-EDI,Asset management
-EDI,Commonwealth ties
-EDI,Golf
-EDI,Life sciences
-EDI,Loves Alps|
-EDI,Whiskey
-EG1,Polar research
-EG9,Polar research
-EGA,Anglophone|
-EGA,Polar research
-EGO,Iron ore
-EGR,Anglophone|
-EGR,Polar research
-EH1,Equinor
-EIN,CPG & Retail
-EIN,Dairy
-EIN,Dutch holiday
-EIN,Pharma
-EIN,Semiconductors
-EIS,Offshore finance
-EJA,Coal
-EKO,Gold FIFO
-ELP,Hispanic|
-ELP,Horticulture
-ELP,Logistics NAC
-ELP,Oil
-ELP,US military
-ELP,Water
-ELS,Auto parts
-ELS,Platinum
-EMA,Aerospace
-EMA,Fine cheese
-EMA,Logistics EU Med
-EMD,Coal
-EMD,Coal seam gas
-ENA,LNG
-END,Equinor
-ENO,Grain Belt
-ENQ,Equinor
-ENX,Equinor
-ENY,Red tourism
-ESB,|DK|Turkish
-ESB,|NL|Turkish
-ESB,|TR|Afghan
-ESB,|TR|Iranian
-ESB,|TR|Iraqi
-ESB,Bureaucracy
-ESM,Latifundia Legacy
-EUG,Academia
-EUG,Cryptids
-EUG,Footwear
-EUG,Spirituality
-EUX,Dutch holiday
-EVE,Loves Arctic|
-EVN,|FR|Armenian
-EVN,|RU|Armenian
-EVN,Logistics CIS
-EWR,|US|Brazilian
-EWR,|US|Chinese
-EWR,|US|Indian
-EWR,|US|Jewish
-EWR,|US|Nigerian
-EWR,|US|Pakistani
-EWR,Apparel
-EWR,Global logistics
-EWR,Logistics NAC
-EWR,Pharma
-EWR,Professional services
-EWR,Software
-EXT,Wind energy
-EZE,|AR|Bolivian
-EZE,|US|Jewish
-EZE,Advertising & media
-EZE,Cryptocurrency
-EZE,Logistics LATAM
-EZE,Loves Florianopolis x2|
-FAE,Arctic fishing
-FAE,Sheep
-FAI,Arctic oil
-FAI,Boreal
-FAI,Loves Arctic|
-FAI,Santa
-FAO,Atlantic Fishing
-FAO,Mediterranean Ag
-FAR,Grain Belt
-FAR,Nordic|
-FAT,|US|Guerrero & Oaxaca
-FAT,Agriculture
-FAT,Horticulture
-FBM,|CD|Congolese
-FBM,Copper
-FBM,Copperbelt
-FBM,Rare earths
-FBM,Sapeur Network
-FBM,Uranium
-FCO,|AU|Italian
-FCO,|BR|Italian
-FCO,|IT|Filipino
-FCO,|US|Italian
-FCO,Apparel
-FCO,Eurozone banking
-FCO,Logistics EU Med
-FCO,Luxury goods
-FCO,Oil
-FDF,L'Hexagone Hop
-FDF,Loves French Antilles|
-FDF,Rum
-FEZ,|FR|Moroccan
+RTM,|NL|Indonesian
+SUB,|NL|Indonesian
+AMS,|NL|Moroccan
+CMN,|NL|Moroccan
 FEZ,|NL|Moroccan
-FEZ,Mediterranean Ag
-FIH,|CD|Congolese
-FIH,Gemstones
-FIH,Peacekeeping
-FIH,Sapeur Network
-FJR,|AE|Malayali
-FJR,|BA|Malayali
-FKB,Paper & furniture
-FKI,Diamonds
-FKI,Sapeur Network
-FLG,Spirituality
-FLL,|CU|Cuban x2
-FLL,|US|Colombian
-FLL,|US|Jewish
-FLL,|US|Venezuelan
-FLL,CC|
-FLL,Hispanic|
-FLL,Horticulture
-FLL,Logistics LATAM
-FLN,Hispanic|
-FLN,Loves Florianopolis x2|
-FLN,Surfing
-FLR,Viticulture
-FMM,Loves Arctic|
-FMO,Paper & furniture
-FNA,Diamonds
-FNA,Titanium
-FNJ,Dark economy
-FNT,Auto parts
-FOC,|AU|Chinese
-FOC,|CA|Chinese
-FOC,|ID|Chinese
-FOC,|TH|Chinese
-FOC,|US|Chinese
-FOC,Chinese tourism|
-FOC,Electronics
-FOC,Fabrics
-FOC,Footwear
-FOC,Logistics APAC
-FOC,Tea
-FOR,Apparel
-FOR,Petrobras
-FPO,Casinos
-FRA,|DE|Serbian
-FRA,|DE|Turkish
-FRA,Eurozone banking
-FRA,Global logistics
-FRA,Investment banking
-FRA,Loves Arctic|
-FRA,New energy
-FRA,Pharma
-FRA,Professional services
-FRA,Telco
-FRD,Northwest Passage
-FRW,Diamonds
-FSD,Nordic|
-FSD,Regional banking US
-FSD,Soybeans
-FSM,Cotton
-FSP,Atlantic Fishing
-FSP,L'Hexagone Hop
-FSP,Loves French Antilles|
-FSZ,Appliances
-FSZ,Machinery
-FTE,Mountaineering
-FUG,Steel
-FUK,|JP|Korean
-FUK,|JP|Vietnamese
-FUK,Electronics
-FUK,Heavy industry
-FUK,Software
-FUN,Polynesia
-FUO,Appliances
-FUO,Auto parts
-FUO,Ceramics
-FUO,Electronics
-FWA,Academia
-FWA,Soybeans
-GAU,Agriculture
-GAU,Sunni|
-GAU,Tea
-GAY,Spirituality
-GBB,Agriculture
-GBB,Cotton
-GBE,Diamonds
-GBJ,Loves French Antilles|
-GCH,NIOC
-GCI,Offshore finance
-GCK,Wind energy
-GCM,Offshore finance
-GDE,Somali|
-GDL,|US|Jalisco & Michoacán
-GDL,Apparel
-GDL,CPG & Retail
-GDL,Software
-GDL,Spirits
-GDN,|IE|Polish
-GDN,|US|Polish
-GDN,Marine
-GDN,Vodka
-GDN,Wind energy
-GDV,Big Sky
-GDX,Gazprom
-GDX,Gold
-GEA,Melanesia
-GEG,Forestry
-GEG,Grain Belt
-GEO,Oil
-GEO,Rum
-GFK,Nordic|
-GGW,Big Sky
-GHV,Vampiric
-GIB,Casinos
-GIB,Logistics EU Med
-GIB,Offshore finance
-GIG,|US|Brazilian
-GIG,Advertising & media
-GIG,Offshore oil
-GIG,Oil
-GIG,Petrobras
-GIL,Mountaineering
-GIZ,|SA|Bangladeshi
-GIZ,|SA|Egyptian
-GIZ,|SA|Malayali
-GIZ,|SA|Pakistani
-GIZ,Horticulture
-GIZ,Oil refining
-GJA,Soybeans
-GJL,|FR|Algerian x2
-GLA,Loves Alps|
-GLA,Machinery
-GLA,Marine
-GLA,US Defense
-GLA,Whiskey
-GLH,Rice
-GLT,Coal
-GLT,Coal seam gas
-GLT,LNG
-GMO,|US|Nigerian
-GMO,Dark economy
-GMO,Sunni|
-GMP,|JP|Korean
-GMP,|US|Korean
-GMP,Appliances
-GMP,Auto parts
-GMP,CPG & Retail
-GMP,Electronics
-GMP,Evangelicalism
-GNB,|FR|Algerian x2
-GNB,|FR|Moroccan
-GNB,|FR|Serbian
-GNJ,Oil
-GNV,Academia
-GNY,Footwear
-GOA,Logistics APAC
-GOA,Shipbuilding
-GOA,Spirituality
-GOH,Anglophone|
-GOH,Arctic fishing
-GOH,Loves Arctic|
-GOI,Anglophone|
-GOI,Russian|
-GOJ,Heavy industry
-GOJ,Nuclear energy
-GOM,EAC|
-GOM,Rare earths
-GOM,Rwanda Rundi|
-GOT,Anglophone|
-GOT,Autos
-GOT,Life sciences
-GOT,Marine
-GOU,Chocolate
-GOV,Bauxite
-GPT,Aerospace
-GPT,Casinos
-GPT,ExxonMobil
-GRB,Dairy
-GRB,Maple syrup
-GRK,Ranching
-GRO,|ES|Romanian
-GRO,Mediterranean Ag
-GRQ,Potato
-GRR,Evangelicalism
-GRR,Paper & furniture
-GRU,|BR|Bolivian
-GRU,|BR|Italian
-GRU,|BR|Nikkei
-GRU,|BR|Polish
-GRU,|BR|Syrian
-GRU,|US|Brazilian
-GRU,Aerospace
-GRU,Asset management
-GRU,Beer
-GRU,Ceramics
-GRU,Lebanese|
-GRU,Telco
-GRV,Defense RU
-GRV,Sunni|
-GRX,Mediterranean Ag
-GSO,Paper & furniture
-GSO,Tobacco
-GSP,Appliances
-GSP,Autos
-GTE,Bauxite
-GTE,Manganese
-GTF,Cryptocurrency
-GUA,|US|Guatemalan
-GUA,Apparel
-GUA,Evangelicalism
-GUA,Latifundia Legacy
-GUB,Seafood
-GUM,|GU|Filipino
-GUM,Japanese|
-GUM,Korean|
-GUM,Micronesia
-GUM,US military
-GUR,Seafood
-GUW,Gazprom
-GUW,Oil
-GUW,Uranium
-GVA,Asset management
-GVA,Bureaucracy
-GVA,CPG & Retail
-GVA,Francophonie|
-GVA,Humanitarian NGO
-GVA,Loves Alps|
-GVA,Luxury goods
-GVA,Offshore finance
-GVA,Pharma
-GVA,Science megastructure
-GVR,Gemstones
-GWD,|OM|Baloch
-GWD,Belt & Road|
-GXG,Coffee
-GYA,Drug trafficking
-GYD,Horticulture
-GYD,LNG
-GYD,Offshore oil
-GYE,|ES|Ecuadorian
-GYE,|US|Ecuadorian
-GYE,Chocolate
-GYE,Coffee
-GYE,Gold
-GYE,Latifundia Legacy
-GYE,Logistics LATAM
-GYN,Ranching
-GYN,Sugar
-GZO,Seafood
-HAJ,Autos
-HAJ,Loves Arctic|
-HAJ,Machinery
-HAJ,Nordic|
-HAJ,Potato
-HAK,Luxury goods
-HAK,Rice
-HAK,Spices / Tropical Ag
-HAK,Tropical fishing
-HAL,Conservation
-HAM,|DE|Afghan
-HAM,|DE|Iranian
-HAM,|DE|Turkish
-HAM,Aerospace
-HAM,Copper
-HAM,Heavy industry
-HAM,Logistics EU Med
-HAM,Loves Arctic|
-HAM,Marine
-HAM,Renewables
-HAM,Wind energy
-HAN,|AU|Vietnamese
-HAN,|JP|Vietnamese
-HAN,|US|Hmong
-HAN,|US|Vietnamese
-HAN,Apparel
-HAN,CPG & Retail
-HAN,Electronics
-HAN,Fabrics
-HAN,Tea
-HAU,Equinor
-HAU,Manganese
-HAV,Rum
-HAV,Sugar
-HBA,Seafood
-HBE,Logistics EU Med
-HBX,Agriculture
-HDG,Coal CN
-HDG,Steel
-HDS,Conservation
-HDY,Logistics APAC
-HDY,Rubber
-HEH,Dark economy
-HEK,Soybeans
-HEL,Anglophone|
-HEL,Asset management
-HEL,Nuclear energy
-HEL,Shipbuilding
-HEL,Telco
-HER,Anglophone|
-HER,Dutch|
-HER,Francophonie|
-HER,German|
-HER,Nordic|
-HER,Water
-HET,Dairy
-HET,Heavy industry
-HFA,Logistics EU Med
-HFE,Appliances
-HFE,Autos
-HFE,Coal CN
-HFE,CPG & Retail
-HFE,Machinery
-HFE,New energy
-HGA,|NO|Somali
-HGA,|US|Somali
-HGH,|AU|Chinese
-HGH,|CA|Chinese
-HGH,|ID|Chinese
-HGH,|TH|Chinese
-HGH,|US|Chinese
-HGH,Academia
-HGH,Chinese tourism|
-HGH,CPG & Retail
-HGH,Fabrics
-HGH,New energy
-HGH,Shipbuilding
-HGH,Software
-HGU,Gold FIFO
-HHN,|DE|Polish
-HHN,Loves Arctic|
-HHN,Wind energy
-HHP,Investment banking
-HIA,Electronics
-HIB,Iron ore
-HIJ,Auto parts
-HIJ,Steel
-HIR,Melanesia
-HJJ,Zinc Eurasia
-HKG,Advertising & media
-HKG,Cantonese|
-HKG,Computers
-HKG,CPG & Retail
-HKG,Global logistics
-HKG,HK Taiwan Kinship x2|
-HKG,Investment banking
-HKG,Logistics APAC
-HKG,Luxury goods
-HKG,Offshore finance
-HKG,Professional services
-HKG,Telco
-HKG,Toys
-HKT,Chinese tourism|
-HKT,Drug trafficking
-HKT,German|
-HKT,Indian Ocean fishing
-HKT,Loves Phuket x2|
-HKT,Nordic|
-HKT,Rubber
-HKT,Russian Vacay x2|
-HLD,Coal CN
-HLD,Ranching
-HLD,Rare earths
-HLE,Commonwealth ties
-HLN,Big Sky
-HLN,Forestry
-HLZ,Agribusiness
-HLZ,Dairy
-HLZ,Viticulture
-HMI,Coal CN
-HMI,Steel
-HMO,Autos
-HMO,Drug trafficking
-HND,|BR|Nikkei
-HND,|JP|Korean
-HND,|JP|Vietnamese
-HND,|MP|Nikkei
-HND,|PE|Nikkei
-HND,|US|Nikkei
-HND,Advertising & media
-HND,Autos
-HND,Electronics
-HND,New energy
-HND,Telco
-HNL,|US|Filipino
-HNL,|US|Nikkei
-HNL,|US|Samoan
-HNL,Micronesia
-HNL,PIF|
-HNL,Polynesia
-HNL,Surfing
-HNL,US military
-HNM,PIF|
-HNY,Manganese
-HOB,Oil fracking
-HOG,Nickel
-HOM,Arctic fishing
-HOU,|US|Durango & Zacatecas
-HOU,Healthcare admin
-HOU,LNG
-HOU,Offshore oil
-HOU,Oil
-HOU,Oil fracking
-HOU,Oil refining
-HOU,Space
-HPH,|JP|Vietnamese
-HPH,Fabrics
-HPN,|US|Ecuadorian
-HPN,|US|Guatemalan
-HPN,|US|Irish American
-HPN,Hispanic|
-HRB,Agribusiness
-HRB,Chinese tourism|
-HRB,Cryptocurrency
-HRB,Pharma
-HRB,Titanium
-HRE,Platinum
-HRE,Rare earths
-HRE,Tobacco
-HRE,Zim Connect
-HRG,Czech|
-HRG,Dutch|
-HRG,German|
-HRG,Hungarian|
-HRG,Nordic|
-HRG,Polish|
-HRG,Russian Vacay x2|
-HRG,Shia|
-HRL,Hispanic|
-HSA,Uranium
-HSC,Zinc Eurasia
-HSG,Spirituality
-HSN,Seafood
-HSR,Auto parts
-HSR,Heavy industry
-HSR,Peanuts
-HSV,Academia
-HSV,Space
-HSV,US Defense
-HTA,Coal RU
-HTA,Rosneft
-HTA,Taiga
-HTN,Cotton
-HTN,Jade
-HTN,Sunni|
-HTS,Coal
-HTS,Gemstones
-HTY,Mediterranean marine
-HUI,Monsoon Ag
-HUI,Surfing
-HUX,Surfing
-HUY,Wind energy
-HUZ,Electronics
-HUZ,New energy
-HUZ,Nuclear energy
-HUZ,Petrochemicals
-HVD,Throat Singing Circuit
-HVG,Aluminum
-HVN,|US|Stateside Puerto Ricans
-HVN,Academia
-HVR,Big Sky
-HVR,Zinc
-HYA,Atlantic Fishing
-HYD,|CA|Telugu
-HYD,Back office
-HYD,Pharma
-HYD,Shia|
-HYD,Software
-HYN,Appliances
-HYN,Fabrics
-HYN,Rice
-HYN,Tea
-HZH,Tobacco
-IAD,|US|Ethiopian
-IAD,|US|Guatemalan
-IAD,|US|Indian
-IAD,|US|Jewish
-IAD,|US|Korean
-IAD,Bureaucracy
-IAD,NA Capitols|
-IAD,Software
-IAD,US military
-IAH,|US|Chinese
-IAH,|US|Indian
-IAH,|US|Nigerian
-IAH,|US|Pakistani
-IAH,|US|Vietnamese
-IAH,Equinor
-IAH,ExxonMobil
-IAH,Hispanic|
-IAH,Oil
-IAH,Petrochemicals
-IAH,Professional services
-IAH,Software
-IAO,Surfing
-IAS,|ES|Romanian
-IAS,|IT|Romanian
-IAS,Back office
-IAS,Viticulture
-IBR,Space
-ICN,|JP|Korean
-ICN,|US|Korean
-ICN,Autos
-ICN,Computers
-ICN,Investment banking
-ICN,Pharma
-ICN,Renewables
-ICN,Semiconductors
-ICN,TV / movies
-ICN,US military
-ICT,|US|Jalisco & Michoacán
-ICT,Aerospace
-ICT,Grain Belt
-ICT,Machinery
-ICT,US Defense
-IDA,Gemstones
-IDA,Nuclear energy
-IDR,Agriculture
-IEV,Grain Belt
-IFJ,Atlantic Fishing
-IFJ,Geothermal
-IFN,|DE|Iranian
-IFN,|TR|Iranian
-IFN,|US|Iranian x2
-IFN,Steel
-IGS,Auto parts
-IGT,Sunni|
-IGU,|BR|Nikkei
-IGU,Soybeans
-IGU,UFOs
-IKA,|DE|Iranian
-IKA,|TR|Iranian
-IKA,|US|Iranian x2
-IKA,Autos
-IKA,NIOC
-IKA,Oil
-IKT,Gold
-IKT,Manganese
-IKT,Rosneft
-IKT,Taiga
-ILD,|ES|Romanian
-ILG,Regional banking US
-ILM,Forestry
-ILO,|CA|Filipino
-ILO,|IE|Filipino
-ILO,|IT|Filipino
-ILO,|SA|Filipino
-ILO,|US|Filipino
-ILO,Monsoon Ag
-ILO,Spices / Tropical Ag
-ILR,|US|Nigerian
-ILY,Whiskey
-IMP,Latifundia Legacy
-IMT,Maple syrup
-INC,Coal CN
-INC,Sunni|
-IND,|US|Jalisco & Michoacán
-IND,Academia
-IND,Logistics NAC
-IND,Machinery
-IND,Oil fracking
-IND,Pharma
-INN,Loves Alps|
-INN,Loves Tiroler Unterlan x2|
-INN,Mountaineering
-INU,Melanesia
-INV,Cryptids
-INV,Whiskey
-INW,UFOs
-IOM,Offshore finance
-IOS,Petrobras
-IPN,Heavy industry
-IPT,Oil fracking
-IQM,Gold
-IQQ,Copper
-IQQ,Water
-IQQ,Zinc
-IQT,Amazonia
-IQT,Forestry
-ISA,Copper FIFO
-ISA,Copper FIFO
-ISA,Zinc
-ISB,|US|Pakistani
-ISB,Belt & Road|
-ISK,Horticulture
-ISP,|US|Salvadoran
-IST,|DK|Turkish
-IST,|NL|Turkish
-IST,|TR|Afghan
-IST,|TR|Iranian
-IST,|TR|Iraqi
-IST,Humanitarian NGO
-IST,Islamic finance
-IST,Logistics CIS
-IST,Logistics EU Med
-ISU,|SE|Iraqi
-ISU,|TR|Iraqi
-ISU,Shia|
-ITH,Academia
-ITH,Dairy
-ITM,|JP|Korean
-ITM,|JP|Vietnamese
-ITM,Electronics
-ITM,Robotics
-ITM,Whiskey
-ITO,PIF|
-ITO,Science megastructure
-IUE,Polynesia
-IVC,Sheep
-IWD,Maple syrup
-IWK,Petrochemicals
-IWK,US military
-IXA,Paper & furniture
-IXB,Cryptids
-IXB,Potato
-IXB,Tea
-IXC,|CA|Punjabi
-IXC,Fabrics
-IXC,Software
-IXE,|AE|Kannada
-IXE,|OM|Kannada
-IXE,Marine
-IXG,Sugar
-IXM,|AE|Tamil
-IXM,|ID|Tamil
-IXM,|MY|Tamil
-IXM,Pharma
-IXR,Monsoon Ag
-IXR,Paper & furniture
-IXR,Steel
-IXR,Textiles
-IXS,Sunni|
-IXS,Tea
-IXU,|SG|Marathi
-IXU,Gemstones
-IXU,Sugar
-IXY,Red tourism
-IXZ,Indian Ocean fishing
-IZO,Agriculture
-IZO,Seafood
-JAC,Mountaineering
-JAI,Agriculture
-JAI,Gemstones
-JAN,Heavy industry
-JAN,Machinery
-JAN,Poultry
-JAU,Copper
-JAV,Arctic fishing
-JAX,|US|Filipino
-JAX,Logistics NAC
-JAX,Regional banking US
-JAX,US military
-JBK,Coal CN
-JBK,Grain Belt
-JBQ,Sugar
-JBR,Rice
-JDZ,Ceramics
-JED,|SA|Bangladeshi
-JED,|SA|Egyptian
-JED,|SA|Filipino
-JED,|SA|Indonesian
-JED,|SA|Malayali
-JED,|SA|Pakistani
-JED,Islamic finance
-JED,Logistics MEA
-JED,Petrochemicals
-JER,Offshore finance
-JFK,|US|Jewish
-JFK,|US|Russian
-JFK,|US|Ukrainian
-JFK,Advertising & media
-JFK,Asset management
-JFK,Cantonese|
-JFK,CC|
-JFK,Humanitarian NGO
-JFK,Investment banking
-JFK,Luxury goods
-JFK,Professional services
-JFK,TV / movies
-JGA,Oil refining
-JGA,Petrochemicals
-JGD,Gemstones
-JGD,Gold
-JGD,Soybeans
-JGN,Space
-JGN,Steel
-JGS,Red tourism
-JGS,Rice
-JHB,|MY|Malayali
-JHB,Electronics
-JHB,Logistics APAC
-JHB,Rubber
-JHG,Sinopec
-JIB,Belt & Road|
-JIB,Logistics MEA
-JIC,Copper
-JIJ,Somali|
-JIU,Horticulture
-JJN,Ceramics
-JJN,Footwear
-JLR,Sugar
-JMK,Anglophone|
-JMK,Francophonie|
-JMK,Italian|
-JNB,|ZA|Ethiopian
-JNB,Agriculture
-JNB,Copperbelt
-JNB,Diamonds
-JNB,Gold
-JNB,Logistics MEA
-JNB,Platinum
-JNB,Rare earths
-JNB,Telco
-JNB,Uranium
-JNG,Machinery
-JNU,Alaska Milk Run
-JNU,Arctic fishing
-JNZ,Horticulture
-JNZ,Textiles
-JOG,Apparel
-JOG,Spices / Tropical Ag
-JOI,Autos
-JRA,Investment banking
-JRA,Offshore finance
-JRB,Investment banking
-JRG,Aluminum
-JRG,Coal
-JRO,Coffee
-JRO,Conservation
-JRO,Mountaineering
-JRO,Ranching
-JSR,Monsoon Ag
-JTC,Latifundia Legacy
-JTR,Anglophone|
-JTR,Francophonie|
-JTR,Italian|
-JUB,Peacekeeping
-JUJ,Latifundia Legacy
-JUL,Potato
-JUZ,Agriculture
-JXA,Gemstones
-JZH,Aluminum
-JZH,Iron ore
-KAN,Peanuts
-KAN,Sunni|
-KBL,|DE|Afghan
-KBL,|PK|Afghan
-KBL,|TR|Afghan
-KBL,Drug trafficking
-KBL,Pashto|
-KBP,Grain Belt
-KBV,Nordic|
-KBV,Spices / Tropical Ag
-KBV,Tropical fishing
-KCH,Forestry
-KCH,LNG
-KCH,Oil refining
-KCT,Surfing
-KCZ,Forestry
-KCZ,Rice
-KCZ,Seafood
-KDH,Drug trafficking
-KDH,Pashto|
-KDU,Mountaineering
-KEF,Aluminum
-KEF,Atlantic Fishing
-KEF,Geothermal
-KEJ,Coal RU
-KEJ,Vodka
-KER,Zinc Eurasia
-KGA,Diamonds
-KGD,Defense RU
-KGD,Logistics CIS
-KGF,Zinc Eurasia
-KGI,Gold FIFO
-KGI,Nickel
-KGI,Rare earths
-KGL,Coffee
-KGL,Peacekeeping
-KGS,Anglophone|
-KGS,Dutch|
-KGS,German|
-KGS,Nordic|
-KHG,Sunni|
-KHG,Zinc Eurasia
-KHH,|TW|Indonesian
-KHH,Computers
-KHH,HK Taiwan Kinship x2|
-KHH,Paper & furniture
-KHH,Seafood
-KHH,Steel
-KHI,|AE|Pakistani
-KHI,|PK|Afghan
-KHI,|SA|Pakistani
-KHI,|UK|Pakistani
-KHI,|US|Pakistani
-KHI,Back office
-KHI,Belt & Road|
-KHI,Islamic finance
-KHI,Textiles
-KHK,NIOC
-KHN,Aerospace
-KHN,Ceramics
-KHN,Copper
-KHN,Cotton
-KHN,Footwear
-KHN,Red tourism
-KHN,Uranium
-KHS,|OM|Baloch
-KHS,Oil
-KHV,Gazprom
-KHV,Machinery
-KHV,Russian Vacay x2|
-KHV,Taiga
-KIJ,Nuclear energy
-KIN,Drug trafficking
-KIN,Rum
-KIT,Copperbelt
-KIX,|BR|Nikkei
-KIX,|JP|Korean
-KIX,|JP|Vietnamese
-KIX,|MP|Nikkei
-KIX,|PE|Nikkei
-KIX,|US|Nikkei
-KIX,Asset management
-KIX,Computers
-KIX,Life sciences
-KIX,Petrochemicals
-KIX,Semiconductors
-KJA,Aerospace
-KJA,Aluminum
-KJA,Coal RU
-KJA,Gold
-KJA,Rosneft
-KJA,Russian Vacay x2|
-KJA,Taiga
-KJT,Tea
-KME,Rare earths
-KMG,|AU|Chinese
-KMG,|CA|Chinese
-KMG,|ID|Chinese
-KMG,|TH|Chinese
-KMG,|US|Chinese
-KMG,Bauxite
-KMG,Chinese tourism|
-KMG,Rare earths
-KMG,Spices / Tropical Ag
-KMI,Agribusiness
-KMI,Spirituality
-KMJ,Semiconductors
-KMQ,Electronics
-KMS,Chocolate
-KNO,Coffee
-KNO,Logistics APAC
-KNO,Spices / Tropical Ag
-KNX,Diamonds
-KOA,Horticulture
-KOA,PIF|
-KOA,Surfing
-KOJ,Geothermal
-KOJ,Seafood
-KOJ,Space
-KOJ,Spirituality
-KOS,|KH|Indonesian
-KOS,Dark economy
-KOS,Indian Ocean fishing
-KOW,Red tourism
-KPO,Steel
-KRK,|IE|Polish
-KRK,|US|Polish
-KRK,Back office
-KRK,Software
-KRL,Cotton
-KRL,PetroChina
-KRN,Finnish|
-KRN,Iron ore
-KRO,Rosneft
-KRR,|RU|Armenian
-KRR,Aluminum
-KRR,Grain Belt
-KRR,Zinc Eurasia
-KRS,Aluminum
-KRS,Equinor
-KRS,Loves Spain|
-KRT,Oil
-KRT,Oil refining
-KRW,LNG
-KRW,Offshore oil
-KRY,PetroChina
-KSA,Micronesia
-KSC,Steel
-KSH,Cotton
-KSU,Equinor
-KTA,Copper FIFO
-KTA,Iron ore
-KTA,LNG
-KTI,|KH|Indonesian
-KTI,Apparel
-KTI,Dark Economy
-KTI,Spices / Tropical Ag
-KTM,Cryptids
-KTM,Mountaineering
-KTM,Peacekeeping
-KTM,Spirituality
-KTN,Alaska Milk Run
-KTN,Arctic fishing
-KTT,Loves Arctic|
-KTW,Autos
-KTW,Machinery
-KTW,Robotics
-KUA,Bauxite
-KUA,Petrochemicals
-KUF,Aerospace
-KUF,Auto parts
-KUF,Gazprom
-KUF,Machinery
-KUF,Russian Vacay x2|
-KUL,|MY|Malayali
-KUL,|MY|Nepalese
-KUL,|MY|Tamil
-KUL,Appliances
-KUL,Islamic finance
-KUL,Rubber
-KUN,Paper & furniture
-KUV,Wind energy
-KVA,Loves Kavala x2|
-KVA,Mediterranean marine
-KWA,US military
-KWE,Bauxite
-KWE,Chinese tourism|
-KWE,CPG & Retail
-KWE,Logistics APAC
-KWI,Oil
-KWI,Oil refining
-KWJ,Machinery
-KWL,Logistics APAC
-KWL,Rice
-KWL,Sugar
-KWZ,Copperbelt
-KXB,Nickel
-KXO,Conservation
-KYZ,Throat Singing Circuit
-KZN,|AE|Russian
-KZN,|US|Russian
-KZN,Aluminum
-KZN,Machinery
-KZN,Russian Vacay x2|
-KZN,Sunni|
-KZO,Oil refining
-KZO,Space
-KZO,Uranium
-LAD,Diamonds
-LAE,Coffee
-LAE,ExxonMobil
-LAE,Gold FIFO
-LAL,Horticulture
-LAN,Academia
-LAP,Anglophone|
-LAS,Casinos
-LAS,CPG & Retail
-LAS,Hispanic|
-LAS,UFOs
-LAU,Logistics MEA
-LAX,|US|Chinese
-LAX,|US|Filipino
-LAX,|US|Iranian x2
-LAX,|US|Korean
-LAX,|US|Vietnamese
-LAX,Advertising & media
-LAX,Drug trafficking
-LAX,Hispanic|
-LAX,Regional banking US
-LAX,SoCal NoCal
-LAX,TV / movies
-LBA,|GB|Indian
-LBA,|UK|Pakistani
-LBA,Oil fracking
-LBB,Ranching
-LBC,|DE|Polish
-LBC,Logistics EU Med
-LBC,Loves Arctic|
-LBC,Nordic|
-LBD,Agriculture
-LBL,Ranching
-LBS,Melanesia
-LBV,Offshore oil
-LCA,EU|
-LCA,Greek|
-LCA,Israeli Vacay x2
-LCA,Marine
-LCA,Nordic|
-LCA,Offshore finance
-LCA,Russian Vacay x2|
-LCA,Russian|
-LCH,Petrochemicals
-LCJ,Appliances
-LCK,|US|Somali
-LCX,Red tourism
-LCX,Zinc Eurasia
-LCY,|UK|Jewish
-LCY,Academia
-LCY,Diamonds
-LCY,Eurozone banking
-LCY,Investment banking
-LCY,Loves Alps|
-LCY,Luxury goods
-LCY,Offshore finance
-LCY,Professional services
-LCY,Spirits
-LDB,Poultry
-LDH,Aussie Outliers
-LEA,Copper FIFO
-LEA,Gemstones
-LED,|AE|Russian
-LED,|RU|Armenian
-LED,|US|Russian
-LED,Defense RU
-LED,Gazprom
-LED,Logistics CIS
-LED,Machinery
-LED,Russian Vacay x2|
-LED,Shipbuilding
-LED,Vodka
-LEH,Spirituality
-LEI,British Sunny Vacay x2|
-LEI,Horticulture
-LEJ,Auto parts
-LEJ,LNG
-LEJ,Logistics EU Med
-LEJ,Loves Arctic|
-LER,Rare earths
-LER,Uranium
-LEX,Academia
-LEX,Coal
-LEX,Whiskey
-LFQ,Baijiu
-LFQ,Steel
-LFT,ExxonMobil
-LFT,Offshore oil
-LGA,|US|Indian
-LGA,|US|Jewish
-LGA,|US|Korean
-LGA,|US|Polish
-LGA,|US|Stateside Puerto Ricans
-LGA,Academia
-LGA,CPG & Retail
-LGA,Regional banking US
-LGA,Software
-LGA,Telco
-LGB,|US|Nikkei
-LGB,|US|Salvadoran
-LGB,|US|Samoan
-LGB,Global logistics
-LGB,Logistics NAC
-LGB,Petrochemicals
-LGB,SoCal NoCal
-LGB,Toys
-LGB,US Defense
-LGK,|MY|Tamil
-LGK,German|
-LGK,Indian Ocean fishing
-LGW,|GB|Indian
-LGW,|UK|Nigerian
-LGW,|UK|Polish
-LGW,Auto parts
-LGW,Commonwealth ties
-LGW,Pharma
-LGW,Tobacco
-LHE,|AE|Pakistani
-LHE,|SA|Pakistani
-LHE,|UK|Pakistani
-LHE,|US|Pakistani
-LHE,Apparel
-LHE,Back office
-LHE,Belt & Road|
-LHE,Dairy
-LHE,Fabrics
-LHE,Footwear
-LHR,|GB|Indian
-LHR,|UK|Nigerian
-LHR,|UK|Pakistani
-LHR,Academia
-LHR,Advertising & media
-LHR,Asset management
-LHR,Bengali|
-LHR,Bureaucracy
-LHR,Commonwealth ties
-LHR,Investment banking
-LHR,Professional services
-LHR,Telco
-LHR,TV / movies
-LHR,US Defense
-LHW,Aluminum
-LHW,PetroChina
-LHW,Potato
-LIH,PIF|
-LIL,|FR|Polish
-LIL,L'Hexagone Hop
-LIM,|PE|Nikkei
-LIM,|PE|Venezuelan
-LIM,Colonial ties bind
-LIM,Steel
-LIM,Zinc
-LIN,|IT|Romanian
-LIN,Advertising & media
-LIN,Fine cheese
-LIN,Machinery
-LIO,Horticulture
-LIR,Anglophone|
-LIR,Latifundia Legacy
-LIS,Eurozone banking
-LIS,Logistics EU Med
-LIS,Marine
-LIS,Mediterranean Ag
-LIT,Poultry
-LJG,Zinc Eurasia
-LJU,Auto parts
-LJU,Petrochemicals
-LJU,Pharma
-LKO,Monsoon Ag
-LKO,Potato
-LKO,Shia|
-LLA,Boreal
-LLF,Rare earths
-LLW,Agriculture
-LLW,Peanuts
-LLW,Tobacco
-LMP,Mediterranean marine
-LNK,Academia
-LNK,Oil fracking
-LNO,Nickel
-LNV,Gold FIFO
-LNY,PIF|
-LOP,Gemstones
-LOS,|AE|Nigerian
-LOS,|UK|Nigerian
-LOS,|US|Nigerian
-LOS,Belt & Road|
-LOS,Logistics MEA
-LOS,Oil
-LOS,Sinopec
-LOS,TV / movies
-LPA,Atlantic Fishing
-LPA,British Sunny Vacay x2|
-LPA,British Sunny Vacay x2|
-LPA,Nordic|
-LPB,|AR|Bolivian
-LPB,|BR|Bolivian
-LPB,Latifundia Legacy
-LPB,Zinc
-LPL,|GB|Indian
-LPL,|UK|Nigerian
-LPL,Loves Alps|
-LPL,Marine
-LPQ,Drug trafficking
-LPQ,Spices / Tropical Ag
-LPQ,Textiles
-LPT,Sugar
-LRD,Hispanic|
-LRD,Oil fracking
-LRH,Spirits
-LRM,Sugar
-LRT,Atlantic Fishing
-LSC,Spirits
-LSC,Viticulture
-LSI,Atlantic Fishing
-LTN,|GB|Indian
-LTN,|UK|Jewish
-LTN,|UK|Nigerian
-LTN,|UK|Pakistani
-LTN,Life sciences
-LTN,Loves Alps|
-LTN,Software
-LUA,Mountaineering
-LUA,Spirituality
-LUG,Italian|
-LUM,Jade
-LUN,Agriculture
-LUN,Anglophone|
-LUN,Copperbelt
-LUX,Asset management
-LUX,Eurozone banking
-LUX,Logistics EU Med
-LUX,Lusophone|
-LUX,Offshore finance
-LVO,Gold FIFO
-LW0,Investment banking
-LW0,Offshore finance
-LWK,Equinor
-LXA,PetroChina
-LXA,Sheep
-LXA,Spirituality
-LYA,Paper & furniture
-LYG,Logistics APAC
-LYG,Nuclear energy
-LYH,Evangelicalism
-LYI,Agriculture
-LYI,Peanuts
-LYP,Cotton
-LYP,Fabrics
-LYR,Loves Arctic|
-LYR,Polar research
-LYS,|FR|Algerian x2
-LYS,|FR|Armenian
-LYS,|FR|Moroccan
-LYS,|FR|Serbian
-LYS,|FR|Tunisian x2
-LYS,CPG & Retail
-LYS,Nuclear energy
-LYS,Pharma
-LYS,Software
-LZH,Autos
-LZO,Baijiu
-LZO,Red tourism
-MAA,|AE|Tamil
-MAA,|ID|Tamil
-MAA,|MY|Tamil
-MAA,Auto parts
-MAA,Footwear
-MAA,Petrochemicals
-MAA,Pharma
-MAA,TV / movies
-MAA,Water
-MAB,Manganese
-MAD,|ES|Ecuadorian
-MAD,|ES|Peruvian
-MAD,|ES|Romanian
-MAD,Colonial ties bind
-MAD,Eurozone banking
-MAD,Logistics EU Med
-MAD,Telco
-MAF,|US|Durango & Zacatecas
-MAF,Cotton
-MAF,Oil fracking
-MAJ,Micronesia
-MAK,Oil
-MAN,|GB|Indian
-MAN,|UK|Nigerian
-MAN,|UK|Pakistani
-MAN,|UK|Polish
-MAN,Back office
-MAN,Bengali|
-MAN,Commonwealth ties
-MAN,Loves Alps|
-MAN,Pharma
-MAO,Amazonia
-MAO,Appliances
-MAO,Drug trafficking
-MAO,Forestry
-MAO,Horticulture
-MAO,Petrobras
-MAO,Rubber
-MAR,|PE|Venezuelan
-MAR,|US|Venezuelan
-MAR,Latifundia Legacy
-MAR,PDVSA
-MB1,Academia
-MBA,Belt & Road|
-MBA,German|
-MBA,Italian|
-MBA,Logistics MEA
-MBD,Platinum
-MBJ,Aluminum
-MCI,|US|Jalisco & Michoacán
-MCI,Agribusiness
-MCI,Grain Belt
-MCI,Telco
-MCM,Casinos
-MCO,|CU|Cuban x2
-MCO,|US|Brazilian
-MCO,|US|Stateside Puerto Ricans
-MCO,Golf
-MCO,Lusophone|
-MCO,US Defense
-MCP,Amazonia
-MCP,Paper & furniture
-MCT,|OM|Baloch
-MCT,|OM|Malayali
-MCT,Offshore oil
-MCT,Oil
-MCV,Zinc
-MCX,Oil refining
-MCX,Sunni|
-MCZ,Petrobras
-MCZ,Sugar
-MDC,Nickel
-MDE,|CL|Colombian
-MDE,|MX|Colombian
-MDE,|US|Colombian
-MDE,Colonial ties bind
-MDE,Drug trafficking
-MDE,Horticulture
-MDE,Logistics LATAM
-MDE,Puente Aéreo x2
-MDE,Textiles
-MDL,Belt & Road|
-MDL,Jade
-MDL,Monsoon Ag
-MDQ,Atlantic Fishing
-MDQ,Seafood
-MDT,Chocolate
-MDT,Healthcare admin
-MDW,|US|Italian
-MDW,|US|Polish
-MDW,|US|Stateside Puerto Ricans
-MDW,Academia
-MDW,CPG & Retail
-MDW,Logistics NAC
-MDW,Regional banking US
-MDZ,Loves Florianopolis x2|
-MDZ,Mountaineering
-MDZ,Oil fracking
-MDZ,Soybeans
-MDZ,Viticulture
-MEA,Petrobras
-MED,|SA|Bangladeshi
-MED,|SA|Egyptian
-MED,|SA|Filipino
-MED,|SA|Indonesian
-MED,|SA|Malayali
-MED,|SA|Pakistani
-MED,Petrochemicals
-MEL,|AU|Chinese
-MEL,|AU|Greek
-MEL,|AU|Italian
-MEL,|AU|Vietnamese
-MEL,Asset management
-MEL,Copper
-MEL,Golden Triangle x2
-MEL,Life sciences
-MEL,Pharma
-MEM,Agribusiness
-MEM,Global logistics
-MEM,Logistics NAC
-MEX,|ES|Peruvian
-MEX,|MX|Bolivian
-MEX,|MX|Colombian
-MEX,Bureaucracy
-MEX,Logistics LATAM
-MEX,Logistics NAC
-MEX,NA Capitols|
-MEX,Pemex
-MEX,Telco
-MEX,TV / movies
-MFA,Conservation
-MFE,Hispanic|
-MFM,Cantonese|
-MFM,Casinos
-MFM,Dark economy
-MFR,|US|Jalisco & Michoacán
-MFR,Forestry
-MFR,Horticulture
-MFR,Viticulture
-MFU,Conservation
-MGA,Apparel
-MGA,Ranching
-MGQ,|NO|Somali
-MGQ,|US|Somali
-MGZ,Gemstones
-MHD,Pilgrimage x2|
-MHG,|DE|Polish
-MHG,Petrochemicals
-MHG,Wind energy
-MHQ,Swedish|
-MHT,|US|Irish American
-MIA,|CU|Cuban x2
-MIA,|US|Jewish
-MIA,|US|Venezuelan
-MIA,Advertising & media
-MIA,CC|
-MIA,Cryptocurrency
-MIA,Drug trafficking
-MIA,Hispanic|
-MIA,Logistics LATAM
-MIA,Lusophone|
-MIA,Luxury goods
-MID,Drug trafficking
-MID,Pemex
-MII,Peanuts
-MIM,Seafood
-MIR,Mediterranean marine
-MIR,Offshore oil
-MIR,Spices / Tropical Ag
-MJI,Oil
-MJM,Diamonds
-MJY,Aluminum
-MJZ,Diamonds
-MJZ,Gemstones
-MKE,|US|Irish American
-MKE,Beer
-MKE,Dairy
-MKE,Machinery
-MKE,Nordic|
-MKE,Regional banking US
-MKE,Water
-MKR,Sheep
-MKY,Coal
-MKY,Sugar
-MLA,Offshore finance
-MLB,Space
-MLB,US Defense
-MLE,Indian Ocean fishing
-MLE,Italian|
-MLE,Russian Vacay x2|
-MLG,Tropical fishing
-MLI,Grain Belt
-MLM,|US|Jalisco & Michoacán
-MLX,Zinc Eurasia
-MME,Vampiric
-MMK,Defense RU
-MMK,Logistics CIS
-MMK,Rosneft
-MMX,Anglophone|
-MMX,CPG & Retail
-MMX,Nuclear energy
-MMX,Vodka
-MNL,|CA|Filipino
-MNL,|GU|Filipino
-MNL,|IE|Filipino
-MNL,|IT|Filipino
-MNL,|SA|Filipino
-MNL,|US|Filipino
-MNL,Appliances
-MNL,Logistics APAC
-MNL,Marine
-MNX,Amazonia
-MOB,Heavy industry
-MOB,Offshore oil
-MOB,Shipbuilding
-MOC,Dairy
-MOG,PetroChina
-MOR,Coal seam gas
-MOT,Oil fracking
-MOV,Coal
-MOZ,Polynesia
-MPH,|CA|Filipino
-MPH,|IE|Filipino
-MPH,|IT|Filipino
-MPH,|SA|Filipino
-MPH,|US|Filipino
-MPH,Korean|
-MPL,|FR|Algerian x2
-MPL,|FR|Moroccan
-MPL,Viticulture
-MPM,Aluminum
-MPM,Logistics MEA
-MPM,Lusophone|
-MPM,Titanium
-MPN,Commonwealth ties
-MQF,Rosneft
-MQL,Coal
-MQL,Viticulture
-MQP,Coal
-MQP,Conservation
-MQT,Paper & furniture
-MQT,Platinum
-MRE,Conservation
-MRS,|FR|Algerian x2
-MRS,|FR|Moroccan
-MRS,|FR|Tunisian x2
-MRS,Logistics EU Med
-MRU,Apparel
-MRU,Back office
-MRU,Francophonie|
-MRU,Regional banking APAC
-MRU,Rum
-MRV,|AE|Russian
-MRV,|US|Russian
-MRV,Grain Belt
-MRV,Russian Vacay x2|
-MRV,Sunni|
-MRX,NIOC
-MRY,Surfing
-MSJ,Arctic fishing
-MSJ,Seafood
-MSJ,US military
-MSN,Academia
-MSN,Dairy
-MSN,Fine cheese
-MSN,Healthcare admin
-MSP,|US|Hmong
-MSP,|US|Somali
-MSP,Academia
-MSP,Agribusiness
-MSP,CPG & Retail
-MSP,Healthcare admin
-MSP,Nordic|
-MSP,Regional banking US
-MSQ,Appliances
-MSQ,Heavy industry
-MSQ,Logistics CIS
-MSS,Maple syrup
-MSU,Diamonds
-MSY,LNG
-MSY,Marine
-MSY,Petrochemicals
-MSY,Vampiric
-MTT,Pemex
-MTY,|MX|Bolivian
-MTY,Autos
-MTY,Ceramics
-MTY,Electronics
-MTY,Logistics NAC
-MUB,Conservation
-MUC,|DE|Serbian
-MUC,|DE|Turkish
-MUC,Advertising & media
-MUC,Aerospace
-MUC,Autos
-MUC,Beer
-MUC,Dairy
-MUC,Professional services
-MUC,Robotics
-MUH,Italian|
-MUN,PDVSA
-MUX,Cotton
-MUX,Fabrics
-MVB,Manganese
-MVD,Latifundia Legacy
-MVD,Logistics LATAM
-MVD,Ranching
-MVP,Drug trafficking
-MWX,Oil refining
-MWZ,Nordic|
-MXL,Geothermal
-MXP,|AU|Italian
-MXP,|BR|Italian
-MXP,|IT|Filipino
-MXP,|US|Italian
-MXP,Apparel
-MXP,CPG & Retail
-MXP,Eurozone banking
-MXP,Luxury goods
-MXP,Robotics
-MXX,Logistics EU Med
-MXX,Paper & furniture
-MXZ,Rare earths
-MYR,Golf
-MYT,Jade
-MYY,Forestry
-MYY,Indian Ocean fishing
-MYY,Offshore oil
-MZG,Drug trafficking
-MZG,Seafood
-MZL,Coffee
-MZR,|DE|Afghan
-MZR,|PK|Afghan
-MZR,|TR|Afghan
-MZR,Drug trafficking
-MZT,Drug trafficking
-MZT,Latifundia Legacy
-MZT,Seafood
-NAA,Coal seam gas
-NAG,|SG|Marathi
-NAG,Ceramics
-NAG,Manganese
-NAG,Soybeans
-NAL,Sunni|
-NAN,Melanesia
-NAN,Surfing
-NAN,Water
-NAO,Red tourism
-NAP,|BR|Italian
-NAP,|US|Italian
-NAP,Agribusiness
-NAP,Mediterranean Ag
-NAS,Commonwealth ties
-NAS,Offshore finance
-NAT,Petrobras
-NBC,Logistics APAC
-NBC,Petrochemicals
-NBC,Sunni|
-NBE,|FR|Tunisian x2
-NBJ,Logistics MEA
-NBJ,Oil
-NBJ,Sinopec
-NBO,|KE|Gujarati
-NBO,Back office
-NBO,Belt & Road|
-NBO,Geothermal
-NBO,Horticulture
-NBO,Humanitarian NGO
-NBO,Logistics MEA
-NBO,Peacekeeping
-NBO,Tea
-NCE,|FR|Algerian x2
-NCE,|FR|Moroccan
-NCE,|FR|Serbian
-NCE,Horticulture
-NCE,TV / movies
-NCE,Viticulture
-NCL,Auto parts
-NCL,Loves Alps|
-NCL,Marine
-NDB,Dark economy
-NDG,PetroChina
-NDJ,Ranching
-NGB,Autos
-NGB,LNG
-NGB,Logistics APAC
-NGB,New energy
-NGB,Petrochemicals
-NGB,Toys
-NGO,|BR|Nikkei
-NGO,|MP|Nikkei
-NGO,|PE|Nikkei
-NGO,|US|Nikkei
-NGO,Aerospace
-NGO,Autos
-NGO,Electronics
-NGO,Rice
-NGO,Wind energy
-NGQ,Science megastructure
-NGS,Heavy industry
-NGS,Robotics
-NGS,Shipbuilding
-NIM,Uranium
-NJF,Pilgrimage x2|
-NJF,Shia|
-NKC,Atlantic fishing
-NKG,|AU|Chinese
-NKG,|CA|Chinese
-NKG,|ID|Chinese
-NKG,|TH|Chinese
-NKG,|US|Chinese
-NKG,Academia
-NKG,Chinese tourism|
-NKG,Sinopec
-NKG,Software
-NKG,Steel
-NLA,Belt & Road|
-NLA,Copper
-NLA,Copperbelt
-NLD,Hispanic|
-NLK,Aussie Outliers
-NLK,Polynesia
-NLT,Zinc Eurasia
-NLU,Beer
-NLU,Bureaucracy
-NLU,NA Capitols|
-NMI,|SG|Marathi
-NMI,Bollywood 2 Bureaucracy x2
-NMI,Sunni|
-NMI,Telco
-NNG,Aluminum
-NNG,Bauxite
-NNG,Gold
-NNG,New energy
-NNG,Sugar
-NNM,Marine
-NNM,Russian Vacay x2|
-NNR,|US|Irish American
-NNY,Tobacco
-NOC,|US|Irish American
-NOC,Sheep
-NOS,Polish|
-NOU,Melanesia
-NOU,Surfing
-NOV,ExxonMobil
-NOZ,Coal RU
-NPE,Sheep
-NPE,Viticulture
-NPL,LNG
-NQN,Oil
-NQN,Oil fracking
-NQY,Atlantic Fishing
-NQY,Surfing
-NQZ,Belt & Road|
-NQZ,Gazprom
-NQZ,PetroChina
-NQZ,Regional banking APAC
-NRT,|AR|Nikkei
-NRT,|BR|Nikkei
-NRT,|JP|Korean
-NRT,|JP|Vietnamese
-NRT,|MP|Nikkei
-NRT,|PE|Nikkei
-NRT,|US|Nikkei
-NRT,Bureaucracy
-NRT,Investment banking
-NRT,Luxury goods
-NRT,Semiconductors
-NRT,Software
-NSI,Forestry
-NSK,Copper
-NSK,Heavy industry
-NSK,Nickel
-NSK,Platinum
-NSK,Rosneft
-NSK,Vodka
-NSK,Zinc Eurasia
-NSN,Seafood
-NSP,Polar research
-NTE,Marine
-NTE,Renewables
-NTE,Shipbuilding
-NTG,Chinese tourism|
-NTG,Fabrics
-NTG,Shipbuilding
-NTG,Textiles
-NTG,Wind energy
-NTL,Coal
-NTL,Surfing
-NTQ,Spirituality
-NTT,Polynesia
-NTY,Casinos
-NUE,Auto parts
-NUE,Robotics
-NUE,Toys
-NUX,Gazprom
-NUX,LNG
-NUX,Taiga
-NVT,Marine
-NWI,Wind energy
-NYM,Rosneft
-NYT,Dark economy
-NZF,Anglophone|
-NZF,Polar research
-NZH,Logistics CIS
-OAK,|US|Filipino
-OAK,|US|Vietnamese
-OAK,Academia
-OAK,Geothermal
-OAK,Hispanic|
-OAK,Logistics NAC
-OAK,Renewables
-OAK,SoCal NoCal
-OAK,Viticulture
-OAX,|US|Guerrero & Oaxaca
-OAX,Spirits
-OBO,Forestry
-ODE,Pharma
-ODS,Grain Belt
-ODS,Mediterranean marine
-ODY,Dark economy
-OGD,Spirituality
-OGG,PIF|
-OGG,Surfing
-OGZ,Defense RU
-OGZ,Gazprom
-OHH,Rosneft
-OHS,|OM|Baloch
-OIT,Copper
-OIT,Geothermal
-OKA,Shipbuilding
-OKA,US military
-OKC,|US|Durango & Zacatecas
-OKC,Academia
-OKC,Grain Belt
-OKC,Oil
-OKI,Seafood
-OKJ,Copper
-OLF,Big Sky
-OLP,Copper
-OLP,Copper FIFO
-OMA,Agribusiness
-OMA,Grain Belt
-OMA,Logistics NAC
-OMA,Ranching
-OMD,Zinc
-OME,Gold
-OMS,Petrochemicals
-OMS,Rosneft
-ONT,|US|Filipino
-ONT,Hispanic|
-ONT,Logistics NAC
-ONT,Mediterranean Ag
-OOL,Surfing
-OPO,Viticulture
-OPS,Latifundia Legacy
-ORB,|SE|Iraqi
-ORD,|US|Chinese
-ORD,|US|Indian
-ORD,|US|Jalisco & Michoacán
-ORD,|US|Jewish
-ORD,|US|Polish
-ORD,Advertising & media
-ORD,Agribusiness
-ORD,Asset management
-ORD,CPG & Retail
-ORD,Professional services
-ORF,|US|Filipino
-ORF,Logistics NAC
-ORF,Marine
-ORF,US military
-ORH,|US|Irish American
-ORH,Software
-ORK,|US|Irish American
-ORK,Pharma
-ORK,Regional banking US
-ORK,Wind energy
-ORN,|CA|Algerian x2
-ORN,|FR|Algerian x2
-ORN,Mediterranean marine
-ORN,Water
-ORY,|FR|Algerian x2
-ORY,|FR|Armenian
-ORY,|FR|Moroccan
-ORY,|FR|Polish
-ORY,|FR|Serbian
-ORY,|FR|Tunisian x2
-ORY,Academia
-ORY,Aerospace
-ORY,Apparel
-ORY,L'Hexagone Hop
-ORY,Luxury goods
-ORY,Spirits
-OSL,|NO|Somali
-OSL,Aluminum
-OSL,Loves Spain|
-OSL,Marine
-OSL,Nordic Ski 2 City x2
-OSL,Renewables
-OST,Logistics EU Med
-OST,Potato
-OST,Wind energy
-OTH,Forestry
-OTP,|ES|Romanian
-OTP,|IT|Romanian
-OTP,Agribusiness
-OTP,Eurozone Banking
-OTP,Oil refining
-OTZ,Zinc
-OUL,Boreal
-OUZ,Iron ore
-OVB,|AE|Russian
-OVB,|US|Russian
-OVB,Heavy industry
-OVB,Software
-OVD,British Sunny Vacay x2|
-OVD,Fine cheese
-OXB,Peanuts
-PAB,Aluminum
-PAE,Academia
-PAE,CPG & Retail
-PAP,|CA|Haitian
-PAP,|CL|Haitian
-PAP,Humanitarian NGO
-PAT,Potato
-PBC,Autos
-PBH,Cryptids
-PBI,|CU|Cuban x2
-PBI,|US|Brazilian
-PBI,|US|Colombian
-PBI,|US|Jewish
-PBI,Golf
-PBI,Hispanic|
+RAK,|NL|Moroccan
+RBA,|NL|Moroccan
+AMS,|NL|Surinamese
 PBM,|NL|Surinamese
-PBM,Bauxite
-PBM,Bauxite
-PBM,Dutch holiday
-PBO,Iron ore
-PBU,Drug trafficking
-PCL,Amazonia
-PDG,Rubber
-PDG,Seafood
-PDG,Textiles
-PDL,Atlantic Fishing
-PDP,Latifundia Legacy
-PDT,Paper & furniture
-PDT,Semiconductors
-PDV,Appliances
-PDV,Heavy industry
-PDX,Footwear
-PDX,Software
-PEE,Rosneft
-PEI,Coffee
-PEK,|AU|Chinese
-PEK,|CA|Chinese
-PEK,|ID|Chinese
-PEK,|TH|Chinese
-PEK,|US|Chinese
-PEK,Academia
-PEK,Aerospace
-PEK,Asset management
-PEK,Belt & Road|
-PEK,Bureaucracy
-PEK,Chinese tourism|
-PEK,Nuclear energy
-PEK,Sinopec
-PEK,Space
-PEM,Amazonia
-PEN,|MY|Malayali
-PEN,|MY|Nepalese
-PEN,|MY|Tamil
-PEN,Back office
-PEN,Electronics
-PEN,Rubber
-PEN,Semiconductors
-PER,|AU|Chinese
-PER,|AU|Indian
-PER,Aussie Outliers
-PER,Bauxite
-PER,Copper FIFO
-PER,Gold
-PER,Gold FIFO
-PER,Heavy industry
-PER,LNG
-PER,Logistics APAC
-PER,Offshore oil
-PER,Uranium
-PER,Water
-PES,Paper & furniture
-PET,|BR|Polish
-PET,Polar research
+ALP,|NL|Syrian
+ARN,|NL|Syrian
+DAM,|NL|Syrian
+ADB,|NL|Turkish
+AMS,|NL|Turkish
+AYT,|NL|Turkish
+COV,|NL|Turkish
+ESB,|NL|Turkish
+IST,|NL|Turkish
+SAW,|NL|Turkish
+OSL,|NO|Somali
+AKL,|NZ|Indian
+CHC,|NZ|Indian
+AKL,|NZ|Samoan
+CHC,|NZ|Samoan
+PPG,|NZ|Samoan
+WLG,|NZ|Samoan
+GWD,|OM|Baloch
+KHS,|OM|Baloch
+MCT,|OM|Baloch
+OHS,|OM|Baloch
+ZBR,|OM|Baloch
+BLR,|OM|Kannada
+IXE,|OM|Kannada
+CCJ,|OM|Malayali
+CNN,|OM|Malayali
+COK,|OM|Malayali
+MCT,|OM|Malayali
+SLL,|OM|Malayali
+TRV,|OM|Malayali
+HND,|PE|Nikkei
+KIX,|PE|Nikkei
+LIM,|PE|Nikkei
+NGO,|PE|Nikkei
+NRT,|PE|Nikkei
+CCS,|PE|Venezuelan
+LIM,|PE|Venezuelan
+MAR,|PE|Venezuelan
+KBL,|PK|Afghan
+KHI,|PK|Afghan
+MZR,|PK|Afghan
 PEW,|PK|Afghan
-PEW,Drug trafficking
-PEW,Pashto|
-PFO,EU|
-PFO,Greek|
-PFO,Nordic|
-PHC,Offshore oil
-PHE,Iron ore
-PHE,Manganese
-PHE,Offshore oil
-PHE,Titanium
-PHF,Aerospace
-PHL,|US|Irish American
-PHL,|US|Italian
-PHL,|US|Jewish
-PHL,|US|Korean
-PHL,|US|Stateside Puerto Ricans
-PHL,Academia
-PHL,Asset management
-PHL,Pharma
-PHL,Regional banking US
-PHO,Copper FIFO
-PHX,|US|Guerrero & Oaxaca
-PHX,|US|Jalisco & Michoacán
-PHX,Aerospace
-PHX,Back office
-PHX,Copper
-PHX,Logistics NAC
-PHX,Renewables
-PHX,Semiconductors
-PHX,US Defense
-PIA,Healthcare admin
-PIA,Machinery
-PIT,Academia
-PIT,Life sciences
-PIT,Software
-PKC,Gazprom
-PKC,Gold
-PKR,Spirituality
-PKU,Oil
-PKU,Rubber
-PKV,Defense RU
-PKX,|AU|Chinese
-PKX,|CA|Chinese
-PKX,|ID|Chinese
-PKX,|TH|Chinese
-PKX,|US|Chinese
-PKX,Belt & Road|
-PKX,Chinese tourism|
-PKX,New energy
-PKX,PetroChina
-PKX,Telco
-PKY,Coal CN
-PKZ,Coffee
-PLM,Coffee
-PLM,Oil
-PLM,Rubber
-PLO,Seafood
-PLQ,Oil refining
-PLZ,Auto parts
-PLZ,Surfing
-PLZ,Titanium
-PLZ,Water
-PMC,Seafood
-PMF,Fine cheese
-PMG,Drug trafficking
-PMI,Loves Mallorca x2|
-PMI,Nordic|
-PMO,|AU|Italian
-PMO,|BR|Italian
-PMO,|US|Italian
-PMO,Mediterranean Ag
-PMR,Dairy
-PMV,PDVSA
-PMW,Gemstones
-PNI,Micronesia
-PNK,|ID|Chinese
-PNK,Monsoon Ag
-PNK,Rubber
+DME,|RU|Armenian
+EVN,|RU|Armenian
+KRR,|RU|Armenian
+LED,|RU|Armenian
+SIP,|RU|Armenian
+SVO,|RU|Armenian
+DMM,|SA|Bangladeshi
+GIZ,|SA|Bangladeshi
+JED,|SA|Bangladeshi
+MED,|SA|Bangladeshi
+RUH,|SA|Bangladeshi
+AHB,|SA|Egyptian
+DMM,|SA|Egyptian
+GIZ,|SA|Egyptian
+JED,|SA|Egyptian
+MED,|SA|Egyptian
+RUH,|SA|Egyptian
+CEB,|SA|Filipino
+CRK,|SA|Filipino
+DMM,|SA|Filipino
+DVO,|SA|Filipino
+ILO,|SA|Filipino
+JED,|SA|Filipino
+MED,|SA|Filipino
+MNL,|SA|Filipino
+MPH,|SA|Filipino
+RUH,|SA|Filipino
+DMM,|SA|Indonesian
+JED,|SA|Indonesian
+MED,|SA|Indonesian
+RUH,|SA|Indonesian
+CCJ,|SA|Malayali
+CNN,|SA|Malayali
+COK,|SA|Malayali
+DMM,|SA|Malayali
+GIZ,|SA|Malayali
+JED,|SA|Malayali
+MED,|SA|Malayali
+RUH,|SA|Malayali
+TRV,|SA|Malayali
+AHB,|SA|Pakistani
+DMM,|SA|Pakistani
+GIZ,|SA|Pakistani
+JED,|SA|Pakistani
+KHI,|SA|Pakistani
+LHE,|SA|Pakistani
+MED,|SA|Pakistani
+RUH,|SA|Pakistani
+TIF,|SA|Pakistani
+ARN,|SE|Iraqi
+BGW,|SE|Iraqi
+BSR,|SE|Iraqi
+EBL,|SE|Iraqi
+ISU,|SE|Iraqi
+ORB,|SE|Iraqi
+ARN,|SE|Somali
+MMX,|SE|Somali
+BOM,|SG|Marathi
+IXU,|SG|Marathi
+NAG,|SG|Marathi
+NMI,|SG|Marathi
 PNQ,|SG|Marathi
-PNQ,Autos
-PNQ,Back office
-PNQ,Machinery
-PNQ,Sugar
-PNR,Offshore oil
-PNS,Cotton
-PNS,Offshore oil
-PNS,Paper & furniture
-PNS,US military
-PNT,Mountaineering
-POA,|BR|Polish
-POA,Footwear
-POA,Latifundia Legacy
-POA,Nordic|
-POA,Poultry
-POA,Tobacco
-POG,Offshore oil
-POM,ExxonMobil
-POM,Melanesia
+SIN,|SG|Marathi
+CGK,|SR|Indonesian
+DPS,|SR|Indonesian
+SUB,|SR|Indonesian
+BKK,|TH|Chinese
+CKG,|TH|Chinese
+DMK,|TH|Chinese
+FOC,|TH|Chinese
+HGH,|TH|Chinese
+KMG,|TH|Chinese
+NKG,|TH|Chinese
+PEK,|TH|Chinese
+PKX,|TH|Chinese
+PVG,|TH|Chinese
+SHA,|TH|Chinese
+TAO,|TH|Chinese
+TFU,|TH|Chinese
+UTP,|TH|Chinese
+WUH,|TH|Chinese
+XMN,|TH|Chinese
+AYT,|TR|Afghan
+ESB,|TR|Afghan
+IST,|TR|Afghan
+KBL,|TR|Afghan
+MZR,|TR|Afghan
+SAW,|TR|Afghan
+ESB,|TR|Iranian
+IFN,|TR|Iranian
+IKA,|TR|Iranian
+IST,|TR|Iranian
+SAW,|TR|Iranian
+TBZ,|TR|Iranian
+THR,|TR|Iranian
+BGW,|TR|Iraqi
+BSR,|TR|Iraqi
+ESB,|TR|Iraqi
+IST,|TR|Iraqi
+ISU,|TR|Iraqi
+SAW,|TR|Iraqi
+KHH,|TW|Indonesian
+RMQ,|TW|Indonesian
+TPE,|TW|Indonesian
+UPG,|TW|Indonesian
+LCY,|UK|Jewish
+LTN,|UK|Jewish
+TLV,|UK|Jewish
+ABJ,|UK|Nigerian
+LGW,|UK|Nigerian
+LHR,|UK|Nigerian
+LOS,|UK|Nigerian
+LPL,|UK|Nigerian
+LTN,|UK|Nigerian
+MAN,|UK|Nigerian
+STN,|UK|Nigerian
+KHI,|UK|Pakistani
+LBA,|UK|Pakistani
+LHE,|UK|Pakistani
+LHR,|UK|Pakistani
+LTN,|UK|Pakistani
+MAN,|UK|Pakistani
+STN,|UK|Pakistani
+TIF,|UK|Pakistani
+EDI,|UK|Polish
+LGW,|UK|Polish
+MAN,|UK|Polish
+CCU,|US|Bengali
+SFO,|US|Bengali
+SJC,|US|Bengali
+BOS,|US|Brazilian
+CGH,|US|Brazilian
+EWR,|US|Brazilian
+GIG,|US|Brazilian
+GRU,|US|Brazilian
+MCO,|US|Brazilian
+PBI,|US|Brazilian
+PVD,|US|Brazilian
+VCP,|US|Brazilian
+CKG,|US|Chinese
+DFW,|US|Chinese
+EWR,|US|Chinese
+FOC,|US|Chinese
+HGH,|US|Chinese
+IAH,|US|Chinese
+KMG,|US|Chinese
+LAX,|US|Chinese
+NKG,|US|Chinese
+ORD,|US|Chinese
+PEK,|US|Chinese
+PKX,|US|Chinese
+PVG,|US|Chinese
+SEA,|US|Chinese
+SFO,|US|Chinese
+SHA,|US|Chinese
+SJC,|US|Chinese
+TAO,|US|Chinese
+TFU,|US|Chinese
+WUH,|US|Chinese
+XMN,|US|Chinese
+ATL,|US|Colombian
+BAQ,|US|Colombian
+BOG,|US|Colombian
+CLO,|US|Colombian
+FLL,|US|Colombian
+MDE,|US|Colombian
+PBI,|US|Colombian
+AGU,|US|Durango & Zacatecas
+AUS,|US|Durango & Zacatecas
+DFW,|US|Durango & Zacatecas
+DGO,|US|Durango & Zacatecas
+HOU,|US|Durango & Zacatecas
+MAF,|US|Durango & Zacatecas
+OKC,|US|Durango & Zacatecas
+ZCL,|US|Durango & Zacatecas
+GYE,|US|Ecuadorian
+HPN,|US|Ecuadorian
+UIO,|US|Ecuadorian
+ADD,|US|Ethiopian
+AMH,|US|Ethiopian
+DEN,|US|Ethiopian
+IAD,|US|Ethiopian
+CEB,|US|Filipino
+CRK,|US|Filipino
+DVO,|US|Filipino
+HNL,|US|Filipino
+ILO,|US|Filipino
+JAX,|US|Filipino
+LAX,|US|Filipino
+MNL,|US|Filipino
+MPH,|US|Filipino
+OAK,|US|Filipino
+ONT,|US|Filipino
+ORF,|US|Filipino
+SAN,|US|Filipino
+SCK,|US|Filipino
+BWI,|US|Guatemalan
+GUA,|US|Guatemalan
+HPN,|US|Guatemalan
+IAD,|US|Guatemalan
+ACA,|US|Guerrero & Oaxaca
+ACV,|US|Guerrero & Oaxaca
+FAT,|US|Guerrero & Oaxaca
+OAX,|US|Guerrero & Oaxaca
+PHX,|US|Guerrero & Oaxaca
+SAN,|US|Guerrero & Oaxaca
+SBD,|US|Guerrero & Oaxaca
+SMF,|US|Guerrero & Oaxaca
+STS,|US|Guerrero & Oaxaca
+ZIH,|US|Guerrero & Oaxaca
+HAN,|US|Hmong
+MSP,|US|Hmong
+DFW,|US|Indian
+EWR,|US|Indian
+IAD,|US|Indian
+IAH,|US|Indian
+LGA,|US|Indian
+ORD,|US|Indian
+SEA,|US|Indian
+SFO,|US|Indian
+SJC,|US|Indian
+SAN,|US|Iranian
+TBZ,|US|Iranian
+IFN,|US|Iranian x2
+IKA,|US|Iranian x2
+LAX,|US|Iranian x2
+SNA,|US|Iranian x2
+THR,|US|Iranian x2
+BDL,|US|Irish American
+BOS,|US|Irish American
+DUB,|US|Irish American
+HPN,|US|Irish American
+MHT,|US|Irish American
+MKE,|US|Irish American
+NNR,|US|Irish American
+NOC,|US|Irish American
+ORH,|US|Irish American
+ORK,|US|Irish American
+PHL,|US|Irish American
+PVD,|US|Irish American
+SNN,|US|Irish American
+CTA,|US|Italian
+FCO,|US|Italian
+MDW,|US|Italian
+MXP,|US|Italian
+NAP,|US|Italian
+PHL,|US|Italian
+PMO,|US|Italian
+CLQ,|US|Jalisco & Michoacán
+CMH,|US|Jalisco & Michoacán
+DFW,|US|Jalisco & Michoacán
+DSM,|US|Jalisco & Michoacán
+GDL,|US|Jalisco & Michoacán
+ICT,|US|Jalisco & Michoacán
+IND,|US|Jalisco & Michoacán
+MCI,|US|Jalisco & Michoacán
+MFR,|US|Jalisco & Michoacán
+MLM,|US|Jalisco & Michoacán
+ORD,|US|Jalisco & Michoacán
+PHX,|US|Jalisco & Michoacán
+UPN,|US|Jalisco & Michoacán
+YKM,|US|Jalisco & Michoacán
+ZLO,|US|Jalisco & Michoacán
+AEP,|US|Jewish
+EWR,|US|Jewish
+EZE,|US|Jewish
+FLL,|US|Jewish
+IAD,|US|Jewish
+JFK,|US|Jewish
+LGA,|US|Jewish
+MIA,|US|Jewish
+ORD,|US|Jewish
+PBI,|US|Jewish
+PHL,|US|Jewish
+SFO,|US|Jewish
+SNA,|US|Jewish
+TLV,|US|Jewish
+ATL,|US|Korean
+GMP,|US|Korean
+IAD,|US|Korean
+ICN,|US|Korean
+LAX,|US|Korean
+LGA,|US|Korean
+PHL,|US|Korean
+PUS,|US|Korean
+ABV,|US|Nigerian
+ATL,|US|Nigerian
+BWI,|US|Nigerian
+EWR,|US|Nigerian
+GMO,|US|Nigerian
+IAH,|US|Nigerian
+ILR,|US|Nigerian
+LOS,|US|Nigerian
+HND,|US|Nikkei
+HNL,|US|Nikkei
+KIX,|US|Nikkei
+LGB,|US|Nikkei
+NGO,|US|Nikkei
+NRT,|US|Nikkei
+AUS,|US|Pakistani
+EWR,|US|Pakistani
+IAH,|US|Pakistani
+ISB,|US|Pakistani
+KHI,|US|Pakistani
+LHE,|US|Pakistani
+TIF,|US|Pakistani
+BDL,|US|Polish
+GDN,|US|Polish
+KRK,|US|Polish
+LGA,|US|Polish
+MDW,|US|Polish
+ORD,|US|Polish
+WAW,|US|Polish
+DME,|US|Russian
+JFK,|US|Russian
+KZN,|US|Russian
+LED,|US|Russian
+MRV,|US|Russian
+OVB,|US|Russian
+SJC,|US|Russian
+SVO,|US|Russian
+SVX,|US|Russian
+UFA,|US|Russian
+VKO,|US|Russian
+BWI,|US|Salvadoran
+ISP,|US|Salvadoran
+LGB,|US|Salvadoran
+SAL,|US|Salvadoran
+ANC,|US|Samoan
+HNL,|US|Samoan
+LGB,|US|Samoan
+PPG,|US|Samoan
+SAN,|US|Samoan
+SEA,|US|Samoan
+SNA,|US|Samoan
+CMH,|US|Somali
+EAU,|US|Somali
+LCK,|US|Somali
+MSP,|US|Somali
+ROC,|US|Somali
+SEA,|US|Somali
+BDL,|US|Stateside Puerto Ricans
+CLE,|US|Stateside Puerto Ricans
+HVN,|US|Stateside Puerto Ricans
+LGA,|US|Stateside Puerto Ricans
+MCO,|US|Stateside Puerto Ricans
+MDW,|US|Stateside Puerto Ricans
+PHL,|US|Stateside Puerto Ricans
+JFK,|US|Ukrainian
+CCS,|US|Venezuelan
+FLL,|US|Venezuelan
+MAR,|US|Venezuelan
+MIA,|US|Venezuelan
+DAD,|US|Vietnamese
+HAN,|US|Vietnamese
+IAH,|US|Vietnamese
+LAX,|US|Vietnamese
+OAK,|US|Vietnamese
+SEA,|US|Vietnamese
+SGN,|US|Vietnamese
+SNA,|US|Vietnamese
+ADD,|ZA|Ethiopian
+AMH,|ZA|Ethiopian
+BJR,|ZA|Ethiopian
+DUR,|ZA|Ethiopian
+JNB,|ZA|Ethiopian
+CJB,|ZA|Tamil
+DUR,|ZA|Tamil
+IXM,|ZA|Tamil
+JNB,|ZA|Tamil
+MAA,|ZA|Tamil
+TCR,|ZA|Tamil
+TRZ,|ZA|Tamil
+ABQ,Academia
+AUS,Academia
+AVL,Academia
+BDL,Academia
+BFI,Academia
+BHM,Academia
+BMI,Academia
+BOS,Academia
+BTR,Academia
+BTV,Academia
+CAE,Academia
+CHO,Academia
+CMH,Academia
+CMI,Academia
+DUD,Academia
+EDI,Academia
+EUG,Academia
+FWA,Academia
+GNV,Academia
+HGH,Academia
+HSV,Academia
+HVN,Academia
+IND,Academia
+ITH,Academia
+LAF,Academia
+LAN,Academia
+LCY,Academia
+LEX,Academia
+LGA,Academia
+LNK,Academia
+MB1,Academia
+MDW,Academia
+MSN,Academia
+MSP,Academia
+NKG,Academia
+OAK,Academia
+OKC,Academia
+ORY,Academia
+PAE,Academia
+PEK,Academia
+PHL,Academia
+PIT,Academia
+PUW,Academia
+PVD,Academia
+QAB,Academia
+RDU,Academia
+SBA,Academia
+SBN,Academia
+SCE,Academia
+SDF,Academia
+SJC,Academia
+SNA,Academia
+STN,Academia
+TLH,Academia
+TTN,Academia
+TYS,Academia
+UME,Academia
+BER,Advertising & media
+CDG,Advertising & media
+CGN,Advertising & media
+EZE,Advertising & media
+GIG,Advertising & media
+HKG,Advertising & media
+HND,Advertising & media
+JFK,Advertising & media
+LAX,Advertising & media
+LHR,Advertising & media
+LIN,Advertising & media
+MIA,Advertising & media
+MUC,Advertising & media
+ORD,Advertising & media
+SYD,Advertising & media
+VCE,Advertising & media
+YYZ,Advertising & media
+BFI,Aerospace
+BRO,Aerospace
+BRS,Aerospace
+BUR,Aerospace
+BVA,Aerospace
+CGN,Aerospace
+CHS,Aerospace
+DAL,Aerospace
+DEN,Aerospace
+EMA,Aerospace
+GPT,Aerospace
+GRU,Aerospace
+HAM,Aerospace
+ICT,Aerospace
+KHN,Aerospace
+KJA,Aerospace
+KUF,Aerospace
+MUC,Aerospace
+NGO,Aerospace
+ORY,Aerospace
+PEK,Aerospace
+PHF,Aerospace
+PHX,Aerospace
+QRO,Aerospace
+SEA,Aerospace
+SHA,Aerospace
+SHE,Aerospace
+TFU,Aerospace
+TLS,Aerospace
+TRN,Aerospace
+TUL,Aerospace
+YUL,Aerospace
+AEP,Agribusiness
+BEL,Agribusiness
+BRE,Agribusiness
+BSB,Agribusiness
+BUF,Agribusiness
+CGH,Agribusiness
+CGO,Agribusiness
+CGR,Agribusiness
+CHC,Agribusiness
+CLO,Agribusiness
+CNF,Agribusiness
+CSX,Agribusiness
+CTU,Agribusiness
+DSM,Agribusiness
+DUR,Agribusiness
+HLZ,Agribusiness
+HRB,Agribusiness
+KMI,Agribusiness
+MCI,Agribusiness
+MEM,Agribusiness
+MSP,Agribusiness
+NAP,Agribusiness
+OMA,Agribusiness
+ORD,Agribusiness
+OTP,Agribusiness
+RES,Agribusiness
+SLZ,Agribusiness
+TFU,Agribusiness
+TUC,Agribusiness
+VRN,Agribusiness
+YWG,Agribusiness
+ACC,Agriculture
+APL,Agriculture
+BCD,Agriculture
+BOJ,Agriculture
+BSZ,Agriculture
+CKY,Agriculture
+DIY,Agriculture
+DSS,Agriculture
+FAT,Agriculture
+GAU,Agriculture
+GBB,Agriculture
+GNY,Agriculture
+HBX,Agriculture
+IDR,Agriculture
+IZO,Agriculture
+JAI,Agriculture
+JNB,Agriculture
+JUZ,Agriculture
+LBD,Agriculture
+LLW,Agriculture
+LUN,Agriculture
+LYI,Agriculture
+SKZ,Agriculture
+TNR,Agriculture
+VXC,Agriculture
+WEF,Agriculture
+YIN,Agriculture
+YNZ,Agriculture
+ANC,Alaska Milk Run
+JNU,Alaska Milk Run
+KTN,Alaska Milk Run
+PSG,Alaska Milk Run
+SEA,Alaska Milk Run
+SIT,Alaska Milk Run
+YAK,Alaska Milk Run
+SKP,Albanian|
+ABA,Aluminum
+AUH,Aluminum
+BAH,Aluminum
+BAV,Aluminum
+BND,Aluminum
+DWC,Aluminum
+HVG,Aluminum
+JRG,Aluminum
+JZH,Aluminum
+KEF,Aluminum
+KJA,Aluminum
+KRR,Aluminum
+KRS,Aluminum
+KZN,Aluminum
+LHW,Aluminum
+MBJ,Aluminum
+MJY,Aluminum
+MPM,Aluminum
+NNG,Aluminum
+OSL,Aluminum
+PAB,Aluminum
+PUS,Aluminum
+PWQ,Aluminum
+REN,Aluminum
+SJW,Aluminum
+SLZ,Aluminum
+WNH,Aluminum
+WNZ,Aluminum
+WXN,Aluminum
+YBC,Aluminum
+YBG,Aluminum
+YNT,Aluminum
+YQB,Aluminum
+YXT,Aluminum
+YZV,Aluminum
+BEL,Amazonia
+IQT,Amazonia
+MAO,Amazonia
+MCP,Amazonia
+MNX,Amazonia
+PCL,Amazonia
+PEM,Amazonia
+PVH,Amazonia
+STM,Amazonia
+TBT,Amazonia
+TFF,Amazonia
+TMT,Amazonia
+TPP,Amazonia
+TUR,Amazonia
+ADB,Anglophone|
+ARN,Anglophone|
+AYT,Anglophone|
+BJL,Anglophone|
+BJV,Anglophone|
+BMA,Anglophone|
+BOJ,Anglophone|
+CFU,Anglophone|
+CHQ,Anglophone|
+CTG,Anglophone|
+CUK,Anglophone|
+CUN,Anglophone|
+CZM,Anglophone|
+DLM,Anglophone|
+EGA,Anglophone|
+EGR,Anglophone|
+GOH,Anglophone|
+GOI,Anglophone|
+GOT,Anglophone|
+HEL,Anglophone|
+HER,Anglophone|
+JMK,Anglophone|
+JTR,Anglophone|
+KGS,Anglophone|
+LAP,Anglophone|
+LIR,Anglophone|
+LUN,Anglophone|
+MMX,Anglophone|
+NZF,Anglophone|
 POM,Anglophone|
 POP,Anglophone|
-POS,Forestry
-POS,Oil refining
-POS,Tea
-POZ,Back office
-POZ,Logistics EU Med
-POZ,Potato
-POZ,Poultry
-PPB,Sugar
-PPG,|AU|Samoan
-PPG,|NZ|Samoan
-PPG,|US|Samoan
-PPG,Polynesia
-PPG,US military
-PPP,Spices / Tropical Ag
-PPP,Sugar
-PPT,Polynesia
-PQC,Spices / Tropical Ag
-PQI,Francophonie|
-PRC,Golf
-PRG,Auto parts
-PRG,Back office
-PRG,Beer
-PRG,Eurozone banking
-PRG,TV / movies
-PRN,Mediterranean Ag
-PSA,|IT|Romanian
-PSA,Viticulture
-PSC,Potato
-PSC,Science megastructure
-PSG,Alaska Milk Run
-PSG,Seafood
-PSP,Golf
-PSP,Renewables
-PSR,Mediterranean Ag
-PTF,Surfing
-PTG,Copperbelt
-PTG,Diamonds
-PTP,L'Hexagone Hop
-PTP,Loves French Antilles|
-PTU,Platinum
-PTY,Copper
-PTY,Global logistics
-PTY,Humanitarian NGO
-PTY,Logistics NAC
-PTY,Marine
-PTY,Offshore finance
-PUB,Hispanic|
 PUJ,Anglophone|
-PUJ,Drug trafficking
-PUJ,Francophonie|
-PUJ,German|
-PUJ,Polish|
-PUQ,Mountaineering
-PUQ,Polar research
-PUQ,Sheep
-PUQ,Viticulture
-PUS,|JP|Korean
-PUS,|US|Korean
-PUS,Aluminum
-PUS,Electronics
-PUS,Nuclear energy
-PUS,Regional banking APAC
-PUS,Seafood
-PUS,Shipbuilding
-PUS,Wind energy
-PUW,Academia
-PVD,|US|Brazilian
-PVD,|US|Irish American
-PVD,Academia
-PVD,Atlantic Fishing
-PVD,Life sciences
-PVD,Lusophone|
-PVD,Pharma
-PVD,Toys
-PVG,|AU|Chinese
-PVG,|CA|Chinese
-PVG,|ID|Chinese
-PVG,|TH|Chinese
-PVG,|US|Chinese
-PVG,Belt & Road|
-PVG,Chinese tourism|
-PVG,Electronics
-PVG,Global logistics
-PVG,Investment banking
-PVG,Luxury goods
-PVG,Petrochemicals
-PVG,Professional services
-PVG,Robotics
-PVH,Amazonia
-PVH,Petrobras
 PVR,Anglophone|
-PVR,Surfing
-PWM,Atlantic Fishing
-PWQ,Aluminum
-PXH,Copper FIFO
-PXM,Surfing
-PXU,Coffee
-PZI,Potato
-PZU,Gold
-PZU,Logistics MEA
-PZU,Oil refining
-QAB,Academia
-QAB,Hispanic|
-QAO,Polar research
-QAO,Russian|
-QRO,Aerospace
-QRO,Appliances
-QRO,Poultry
-QRW,Oil
-QSZ,Sunni|
-RAB,Melanesia
-RAB,Melanesia
-RAK,|FR|Moroccan
-RAK,|NL|Moroccan
-RAK,Francophonie|
-RAK,Water
-RAO,Bauxite
-RAO,Footwear
-RAP,Big Sky
-RAP,Science megastructure
-RAR,Polynesia
-RAS,Tea
-RBA,|FR|Moroccan
-RBA,|NL|Moroccan
-RBA,Francophonie|
-RBA,Mediterranean Ag
-RDM,Forestry
-RDP,Shia|
-RDU,Academia
-RDU,Pharma
-RDU,Poultry
-RDU,Telco
-RDZ,Fine cheese
-REC,Latifundia Legacy
-REC,Logistics LATAM
-REC,Marine
-REC,Petrobras
-REC,Petrochemicals
-REN,Aluminum
-RES,Agribusiness
-REU,|ES|Romanian
-REU,Petrochemicals
-REX,Pemex
-RFD,Logistics NAC
-RGA,Ranching
-RGL,Sheep
-RGN,Apparel
-RGN,Drug trafficking
-RGN,Monsoon Ag
-RHI,Maple syrup
 RHO,Anglophone|
-RHO,German|
-RHO,Nordic|
-RHO,Polish|
-RHO,Water
-RIC,Regional banking US
-RIC,Tobacco
-RIX,Grain Belt
-RIX,Paper & furniture
-RIZ,Steel
-RJ1,Space
-RJH,Fabrics
-RJK,Mediterranean marine
-RKD,Atlantic Fishing
-RKS,Oil fracking
-RKT,|AE|Malayali
-RKT,Pharma
-RKT,Russian Vacay x2|
-RKV,Geothermal
-RLG,|DE|Polish
-RMA,Coal seam gas
-RMA,LNG
-RMF,Czech|
-RMF,Dutch|
-RMF,German|
-RMO,Mediterranean Ag
-RMO,Viticulture
-RMQ,|TW|Indonesian
-RMQ,Computers
-RMQ,Semiconductors
-RMU,British Sunny Vacay x2|
-RMU,Loves Spain|
-RNO,Casinos
-RNO,Cryptocurrency
-RNO,Gold
-RNO,SoCal NoCal
-ROB,Rubber
-ROC,|US|Somali
-ROC,Beer
-ROC,Healthcare admin
-ROK,Coal
-ROK,Coal seam gas
-ROK,Copper FIFO
-ROK,PetroChina
-ROR,Japanese|
-ROR,Micronesia
-ROS,Latifundia Legacy
-ROS,Loves Florianopolis x2|
-ROS,Ranching
-ROS,Soybeans
-ROV,Defense RU
-ROV,Grain Belt
-ROV,Logistics CIS
-ROW,UFOs
-RPR,Coal
-RPR,Steel
-RQY,Rice
-RSA,Ranching
-RST,Dairy
-RST,Healthcare admin
-RST,Nordic|
-RSU,Steel
-RSW,Hispanic|
 RTB,Anglophone|
-RTB,Offshore oil
-RTM,|NL|Indonesian
-RTM,Dutch holiday
-RTM,Equinor
-RTM,Fine cheese
-RTM,Global logistics
-RTM,Logistics EU Med
-RTM,Petrochemicals
-RTM,Vodka
-RUH,|SA|Bangladeshi
-RUH,|SA|Egyptian
-RUH,|SA|Filipino
-RUH,|SA|Indonesian
-RUH,|SA|Malayali
-RUH,|SA|Pakistani
-RUH,Islamic finance
-RUH,Logistics MEA
-RUH,Water
-RUN,L'Hexagone Hop
-RUN,Sugar
-RUT,Dairy
-RVE,Latifundia Legacy
 RVN,Anglophone|
-RVN,Loves Arctic|
-RVN,Santa
-SAB,Dutch holiday
-SAF,Hispanic|
-SAH,Shia|
-SAI,Chinese tourism|
-SAI,Monsoon Ag
-SAL,|US|Salvadoran
-SAL,Apparel
-SAL,Cryptocurrency
-SAL,Latifundia Legacy
-SAL,Paper & furniture
-SAN,|US|Filipino
-SAN,|US|Guerrero & Oaxaca
-SAN,|US|Iranian
-SAN,|US|Samoan
-SAN,Life sciences
-SAN,SoCal NoCal
-SAN,US Defense
-SAN,US military
-SAP,Chocolate
-SAP,Zinc
-SAT,Healthcare admin
-SAT,Hispanic|
-SAT,Ranching
-SAT,US military
-SAV,Golf
-SAV,Logistics NAC
-SAW,|DK|Turkish
-SAW,|NL|Turkish
-SAW,|TR|Afghan
-SAW,|TR|Iranian
-SAW,|TR|Iraqi
-SAW,Apparel
-SAW,Auto parts
-SAW,Footwear
-SBA,Academia
-SBA,Mediterranean Ag
-SBA,Offshore oil
-SBA,SoCal NoCal
-SBA,US military
-SBD,|US|Guerrero & Oaxaca
-SBD,SoCal NoCal
-SBH,L'Hexagone Hop
-SBH,Loves French Antilles|
-SBN,Academia
-SBT,Gazprom
-SBT,LNG
-SBW,Paper & furniture
-SBY,Poultry
-SBZ,|ES|Romanian
-SBZ,|IT|Romanian
-SCC,Arctic oil
-SCC,LNG
-SCE,Academia
-SCK,|US|Filipino
-SCK,Mediterranean Ag
-SCL,|CL|Haitian
-SCL,Colonial ties bind
-SCL,Copper
-SCL,Logistics LATAM
-SCO,ExxonMobil
-SCO,Gazprom
-SCO,PetroChina
-SCO,Uranium
-SCQ,British Sunny Vacay x2|
 SCR,Anglophone|
-SCU,Sugar
-SCV,|ES|Romanian
-SCV,|IT|Romanian
-SDB,Investment banking
-SDB,Offshore finance
-SDF,Academia
-SDF,Appliances
-SDF,Global logistics
-SDF,Healthcare admin
-SDF,Logistics NAC
-SDF,Spirits
-SDF,Whiskey
-SDJ,Appliances
-SDJ,Nuclear energy
-SDK,Chinese tourism|
-SDQ,Footwear
-SDQ,Logistics LATAM
-SDQ,Spices / Tropical Ag
-SDU,Coffee
-SDU,Equinor
-SDU,Heavy industry
-SDU,Logistics LATAM
-SDU,Ponte Aérea x2
-SDY,Big Sky
-SEA,|US|Chinese
-SEA,|US|Indian
-SEA,|US|Samoan
-SEA,|US|Somali
-SEA,|US|Vietnamese
-SEA,Aerospace
-SEA,Alaska Milk Run
-SEA,Arctic fishing
-SEA,Coffee
-SEA,Life sciences
-SEA,Software
-SEN,Loves Alps|
-SEU,Conservation
-SFA,Water
-SFG,L'Hexagone Hop
-SFG,Loves French Antilles|
-SFJ,Polar research
-SFJ,Santa
-SFN,Grain Belt
-SFO,|US|Bengali
-SFO,|US|Chinese
-SFO,|US|Indian
-SFO,|US|Jewish
-SFO,Cantonese|
-SFO,Investment banking
-SFO,Life sciences
-SFO,Professional services
-SFO,Regional banking US
-SFO,SoCal NoCal
-SFO,Software
-SFO,Telco
-SGF,Poultry
-SGN,|AU|Vietnamese
-SGN,|JP|Vietnamese
-SGN,|US|Vietnamese
-SGN,Apparel
-SGN,CPG & Retail
-SGN,Fabrics
-SGN,Footwear
-SGN,Tropical fishing
-SGY,Northwest Passage
-SHA,|AU|Chinese
-SHA,|CA|Chinese
-SHA,|ID|Chinese
-SHA,|TH|Chinese
-SHA,|US|Chinese
-SHA,Aerospace
-SHA,Belt & Road|
-SHA,Chinese tourism|
-SHA,Heavy industry
-SHA,New energy
-SHA,Pharma
-SHA,Semiconductors
-SHA,Shipbuilding
-SHA,Steel
-SHE,Aerospace
-SHE,Auto parts
-SHE,Chinese tourism|
-SHE,New energy
-SHE,Paper & furniture
-SHJ,|AE|Malayali
-SHJ,|AE|Nigerian
-SHJ,|AE|Russian
-SHJ,Global logistics
-SHJ,Logistics MEA
-SHJ,Water
-SHV,ExxonMobil
-SHV,Petrochemicals
 SID,Anglophone|
-SIN,|SG|Marathi
-SIN,Asset management
-SIN,Electronics
-SIN,Global logistics
-SIN,Investment banking
-SIN,Logistics APAC
-SIN,Pharma
-SIN,Semiconductors
-SIN,Telco
-SIP,|RU|Armenian
-SIP,Defense RU
-SIS,Iron ore
-SIS,Manganese
-SIT,Alaska Milk Run
-SIT,Arctic fishing
-SJC,|US|Bengali
-SJC,|US|Chinese
-SJC,|US|Indian
-SJC,|US|Russian
-SJC,Academia
-SJC,Computers
-SJC,Cryptocurrency
-SJC,Hispanic|
-SJC,Semiconductors
-SJC,SoCal NoCal
-SJC,Software
 SJD,Anglophone|
-SJL,Iron ore
-SJO,Back office
-SJO,Spices / Tropical Ag
-SJT,Cotton
-SJT,Sheep
-SJU,Logistics LATAM
-SJU,Logistics NAC
-SJU,Pharma
-SJU,Rum
-SJW,Aluminum
-SJW,Coal CN
-SJW,New energy
-SJW,Red tourism
-SKD,Cotton
-SKG,Fine cheese
-SKG,German|
-SKG,Heavy industry
-SKG,Marine
-SKG,Mediterranean Ag
-SKO,Sunni|
-SKP,Albanian|
-SKT,Monsoon Ag
-SKT,Toys
-SKZ,Agriculture
-SLA,Soybeans
-SLA,UFOs
-SLA,Uranium
-SLA,Viticulture
-SLC,|CL|Colombian
-SLC,|CL|Samoan
-SLC,|CL|Venezuelan
-SLC,Back office
-SLC,Copper
-SLC,Mountaineering
-SLC,Regional banking US
-SLI,Copperbelt
-SLK,Maple syrup
-SLL,|OM|Malayali
-SLP,Auto parts
-SLW,Autos
-SLY,Russian Vacay x2|
-SLZ,Agribusiness
-SLZ,Aluminum
-SLZ,Petrobras
-SMF,|US|Guerrero & Oaxaca
-SMF,Dairy
-SMF,Mediterranean Ag
-SMF,Rice
-SMF,SoCal NoCal
-SMI,Nordic|
-SMR,Drug trafficking
-SMR,Latifundia Legacy
-SMR,Lebanese|
-SMR,Logistics LATAM
-SNA,|US|Iranian x2
-SNA,|US|Jewish
-SNA,|US|Samoan
-SNA,|US|Vietnamese
-SNA,Academia
-SNA,SoCal NoCal
-SNN,|US|Irish American
-SNN,Cryptids
-SNN,Dairy
-SNP,Arctic fishing
-SOF,Apparel
-SOF,Back office
-SOF,Loves Kavala x2|
-SOF,Software
-SON,Melanesia
-SON,Melanesia
-SON,Seafood
-SOQ,Nickel
-SOU,UFOs
-SPC,German|
 SPC,Anglophone|
-SPC,Science megastructure
-SPI,Grain Belt
-SPN,Korean|
-SPN,Micronesia
 SPR,Anglophone|
-SPS,Ranching
-SPX,UFOs
-SRE,Zinc
-SRG,|ID|Chinese
-SRG,Textiles
-SSA,Latifundia Legacy
-SSA,Offshore oil
-SSA,Petrobras
-SSA,Petrochemicals
-SSG,Oil
 SSH,Anglophone|
-SSH,Italian|
-SSH,Polish|
-SSH,Russian Vacay x2|
-SSH,Water
-STL,Beer
-STL,Healthcare admin
-STL,Regional banking US
-STM,Amazonia
-STM,Spices / Tropical Ag
-STN,|GB|Indian
-STN,|UK|Nigerian
-STN,|UK|Pakistani
-STN,Back office
-STN,Commonwealth ties
-STN,Loves Alps|
-STR,|DE|Serbian
-STR,Autos
-STR,Machinery
-STR,Robotics
-STS,|US|Guerrero & Oaxaca
-STS,Fine cheese
-STS,SoCal NoCal
-STS,Viticulture
-STV,|KE|Gujarati
-STV,Copper
-STV,Dairy
-STV,Diamonds
-STV,Textiles
-STW,Defense RU
-SUB,|ID|Chinese
-SUB,|ID|Tamil
-SUB,|KH|Indonesian
-SUB,|NL|Indonesian
-SUB,|SR|Indonesian
-SUB,Back office
-SUB,Logistics APAC
-SUB,Nickel
-SUB,Oil
-SUB,Tobacco
-SUJ,Appliances
-SUV,Melanesia
-SUV,Seafood
-SVC,Copper FIFO
-SVG,Equinor
-SVG,Loves Spain|
-SVG,Paper & furniture
-SVO,|AE|Russian
-SVO,|RU|Armenian
-SVO,|US|Russian
-SVO,Defense RU
-SVO,LNG
-SVO,Oil
-SVO,Russian Vacay x2|
-SVO,Software
-SVO,Sunni|
-SVQ,Mediterranean Ag
-SVQ,Renewables
-SVX,|AE|Russian
-SVX,|US|Russian
-SVX,Copper
-SVX,Russian Vacay x2|
-SVX,Space
-SVX,Titanium
-SWA,Dark economy
-SWA,Rice
-SWA,Textiles
-SWA,Tropical fishing
-SWX,Conservation
-SXB,|FR|Polish
-SXB,|FR|Serbian
-SXB,German|
-SXB,Life sciences
-SXB,Viticulture
-SXI,NIOC
 SXM,Anglophone|
-SXM,Dutch holiday
-SXR,Sunni|
-SYD,|AU|Chinese
-SYD,|AU|Greek
-SYD,|AU|Indian
-SYD,|AU|Samoan
-SYD,|AU|Vietnamese
-SYD,Advertising & media
-SYD,Asset management
-SYD,Aussie Outliers
-SYD,Aussie Outliers
-SYD,Copper FIFO
-SYD,Golden Triangle x2
-SYD,Life sciences
-SYD,Logistics APAC
-SYD,Professional services
-SYD,Spirits
-SYX,Russian Vacay x2|
-SYX,Sinopec
-SYY,Offshore oil
-SYZ,NIOC
-SYZ,Sheep
-SZA,Offshore oil
-SZB,|MY|Malayali
-SZB,|MY|Nepalese
+YAQ,Anglophone|
+ZTH,Anglophone|
+ADD,Apparel
+ADF,Apparel
+BCN,Apparel
+BJX,Apparel
+CAN,Apparel
+CGP,Apparel
+CMB,Apparel
+CMN,Apparel
+DAC,Apparel
+EWR,Apparel
+FCO,Apparel
+FOR,Apparel
+GDL,Apparel
+GUA,Apparel
+HAN,Apparel
+JOG,Apparel
+KTI,Apparel
+LHE,Apparel
+MGA,Apparel
+MRU,Apparel
+MXP,Apparel
+ORY,Apparel
+RGN,Apparel
+SAL,Apparel
+SAW,Apparel
+SGN,Apparel
+SOF,Apparel
+TNG,Apparel
+UTH,Apparel
+CEB,Appliances
+CLE,Appliances
+CUU,Appliances
+CWB,Appliances
+DAD,Appliances
+DMK,Appliances
+FSZ,Appliances
+FUO,Appliances
+GMP,Appliances
+GSP,Appliances
+HFE,Appliances
+HYN,Appliances
+KUL,Appliances
+LCJ,Appliances
+MAO,Appliances
+MNL,Appliances
+MSQ,Appliances
+PDV,Appliances
+QRO,Appliances
+SDF,Appliances
+SDJ,Appliances
+SUJ,Appliances
 SZX,Appliances
-SZX,Autos
-SZX,Belt & Road|
-SZX,Cantonese|
-SZX,Chinese tourism|
-SZX,Computers
-SZX,Electronics
-SZX,Life sciences
-SZX,New energy
-SZX,Regional banking APAC
-SZX,Robotics
-SZX,Semiconductors
-SZX,Telco
-TAC,Sugar
-TAE,Electronics
-TAE,Machinery
-TAE,Steel
-TAE,Textiles
-TAH,Melanesia
-TAK,Copper
-TAM,Copper
-TAM,Pemex
-TAM,UFOs
-TAO,|AU|Chinese
-TAO,|CA|Chinese
-TAO,|ID|Chinese
-TAO,|TH|Chinese
-TAO,|US|Chinese
 TAO,Appliances
+UTP,Appliances
+XNA,Appliances
+YEI,Appliances
+ZNZ,Arabic|
+ADK,Arctic fishing
+ADQ,Arctic fishing
+AKN,Arctic fishing
+ANC,Arctic fishing
+ARH,Arctic fishing
+BOO,Arctic fishing
+CTS,Arctic fishing
+DUT,Arctic fishing
+FAE,Arctic fishing
+GOH,Arctic fishing
+HOM,Arctic fishing
+JAV,Arctic fishing
+JNU,Arctic fishing
+KTN,Arctic fishing
+MSJ,Arctic fishing
+SEA,Arctic fishing
+SIT,Arctic fishing
+SNP,Arctic fishing
+VDS,Arctic fishing
+VVO,Arctic fishing
+YVR,Arctic fishing
+ANC,Arctic oil
+BET,Arctic oil
+BRW,Arctic oil
+DAL,Arctic oil
+DLG,Arctic oil
+FAI,Arctic oil
+SCC,Arctic oil
+YQR,Arctic oil
+YXE,Arctic oil
+YXJ,Arctic oil
+YYE,Arctic oil
+YYT,Arctic oil
+AUH,Asset management
+BOS,Asset management
+CPH,Asset management
+DCA,Asset management
+DEN,Asset management
+DUB,Asset management
+DXB,Asset management
+EDI,Asset management
+GRU,Asset management
+GVA,Asset management
+HEL,Asset management
+JFK,Asset management
+KIX,Asset management
+LHR,Asset management
+LUX,Asset management
+MEL,Asset management
+ORD,Asset management
+PEK,Asset management
+PHL,Asset management
+SIN,Asset management
+SYD,Asset management
+YTZ,Asset management
+ABZ,Atlantic Fishing
+ACE,Atlantic Fishing
+AES,Atlantic Fishing
+BIO,Atlantic Fishing
+FAO,Atlantic Fishing
+FSP,Atlantic Fishing
+HYA,Atlantic Fishing
+IFJ,Atlantic Fishing
+KEF,Atlantic Fishing
+LPA,Atlantic Fishing
+LRT,Atlantic Fishing
+LSI,Atlantic Fishing
+MDQ,Atlantic Fishing
+NKC,Atlantic fishing
+NQY,Atlantic Fishing
+PDL,Atlantic Fishing
+PVD,Atlantic Fishing
+PWM,Atlantic Fishing
+RKD,Atlantic Fishing
+TOS,Atlantic Fishing
+TRD,Atlantic Fishing
+VGO,Atlantic Fishing
+YHZ,Atlantic Fishing
+YYG,Atlantic Fishing
+YYT,Atlantic Fishing
+CBR,Aussie Outliers
+CCK,Aussie Outliers
+LDH,Aussie Outliers
+NLK,Aussie Outliers
+PER,Aussie Outliers
+SYD,Aussie Outliers
+SYD,Aussie Outliers
+XCH,Aussie Outliers
+AMD,Auto parts
+BNA,Auto parts
+CAN,Auto parts
+CGN,Auto parts
+DTW,Auto parts
+ELS,Auto parts
+FNT,Auto parts
+FUO,Auto parts
+GMP,Auto parts
+HIJ,Auto parts
+HSR,Auto parts
+IGS,Auto parts
+KUF,Auto parts
+LEJ,Auto parts
+LGW,Auto parts
+LJU,Auto parts
+MAA,Auto parts
+NCL,Auto parts
+NUE,Auto parts
+PLZ,Auto parts
+PRG,Auto parts
+SAW,Auto parts
+SHE,Auto parts
+SLP,Auto parts
+TIJ,Auto parts
+TNA,Auto parts
+TRN,Auto parts
+TSN,Auto parts
+TUN,Auto parts
+USN,Auto parts
+UTP,Auto parts
+VIE,Auto parts
+XFN,Auto parts
+YEI,Auto parts
+YNZ,Auto parts
+YQG,Auto parts
+YTY,Auto parts
+YXU,Auto parts
+AGU,Autos
+BTS,Autos
+BUD,Autos
+CAN,Autos
+CDG,Autos
+CGK,Autos
+CGQ,Autos
+CHG,Autos
+CKG,Autos
+CNF,Autos
+COR,Autos
+CTU,Autos
+CUU,Autos
+CZX,Autos
+DMK,Autos
+DTW,Autos
+GOT,Autos
+GSP,Autos
+HAJ,Autos
+HFE,Autos
+HMO,Autos
+HND,Autos
+ICN,Autos
+IKA,Autos
+JOI,Autos
+KTW,Autos
+LZH,Autos
+MTY,Autos
+MUC,Autos
+NGB,Autos
+NGO,Autos
+PBC,Autos
+PNQ,Autos
+SLW,Autos
+STR,Autos
+SZX,Autos
+ULV,Autos
+WUH,Autos
+ATL,Back office
+BBI,Back office
+BLR,Back office
+BOG,Back office
+BUD,Back office
+CEB,Back office
+CLJ,Back office
+COK,Back office
+CPT,Back office
+CRK,Back office
+HYD,Back office
+IAS,Back office
+KHI,Back office
+KRK,Back office
+LHE,Back office
+MAN,Back office
+MRU,Back office
+NBO,Back office
+PEN,Back office
+PHX,Back office
+PNQ,Back office
+POZ,Back office
+PRG,Back office
+SJO,Back office
+SLC,Back office
+SOF,Back office
+STN,Back office
+SUB,Back office
+TPA,Back office
+TRZ,Back office
+BPX,Baijiu
+LFQ,Baijiu
+LZO,Baijiu
+TYN,Baijiu
+WMT,Baijiu
+YBP,Baijiu
+ZYI,Baijiu
+CKG,Bauxite
+CKY,Bauxite
+CNF,Bauxite
+GOV,Bauxite
+GTE,Bauxite
+KMG,Bauxite
+KUA,Bauxite
+KWE,Bauxite
+NNG,Bauxite
+PBM,Bauxite
+PBM,Bauxite
+PER,Bauxite
+RAO,Bauxite
+TNA,Bauxite
+WEI,Bauxite
+WNH,Bauxite
+XIY,Bauxite
+AMS,Beer
+AVL,Beer
+BRU,Beer
+CPH,Beer
+CTS,Beer
+DUB,Beer
+GRU,Beer
+MKE,Beer
+MUC,Beer
+NLU,Beer
+PRG,Beer
+ROC,Beer
+STL,Beer
 TAO,Beer
-TAO,Chinese tourism|
-TAO,Copper
-TAO,CPG & Retail
-TAO,Poultry
-TAO,Regional banking APAC
-TAO,Shipbuilding
-TAS,Logistics CIS
-TAS,Textiles
-TBG,Copper FIFO
-TBG,Gold FIFO
-TBS,Logistics EU Med
-TBS,Russian Vacay x2|
-TBS,Viticulture
-TBT,Amazonia
-TBU,Polynesia
-TBZ,|DE|Iranian
-TBZ,|TR|Iranian
-TBZ,|US|Iranian
-TBZ,Cotton
-TBZ,Machinery
-TCA,Gold FIFO
-TCA,UFOs
-TCO,Drug trafficking
-TCQ,Copper
-TCR,|AE|Tamil
-TCR,|ID|Tamil
-TCR,|MY|Tamil
-TCR,Copper
-TCR,Indian Ocean fishing
-TCZ,Tea
-TET,Logistics MEA
-TFF,Amazonia
+ADD,Belt & Road|
+ALA,Belt & Road|
+BKK,Belt & Road|
+CAN,Belt & Road|
+DOH,Belt & Road|
+DXB,Belt & Road|
+GWD,Belt & Road|
+ISB,Belt & Road|
+JIB,Belt & Road|
+KHI,Belt & Road|
+LHE,Belt & Road|
+LOS,Belt & Road|
+MBA,Belt & Road|
+MDL,Belt & Road|
+NBO,Belt & Road|
+NLA,Belt & Road|
+NQZ,Belt & Road|
+PEK,Belt & Road|
+PKX,Belt & Road|
+PVG,Belt & Road|
+SHA,Belt & Road|
+SZX,Belt & Road|
+TFU,Belt & Road|
+TSN,Belt & Road|
+URC,Belt & Road|
+VTE,Belt & Road|
+CCU,Bengali|
+LHR,Bengali|
+MAN,Bengali|
+BIL,Big Sky
+BIS,Big Sky
+BZN,Big Sky
+CYS,Big Sky
+GDV,Big Sky
+GGW,Big Sky
+HLN,Big Sky
+HVR,Big Sky
+OLF,Big Sky
+RAP,Big Sky
+SDY,Big Sky
+WYS,Big Sky
+XWA,Big Sky
+BOM,Bollywood 2 Bureaucracy x2
+DEL,Bollywood 2 Bureaucracy x2
+NMI,Bollywood 2 Bureaucracy x2
+ALF,Boreal
+FAI,Boreal
+LLA,Boreal
+OUL,Boreal
+TKU,Boreal
+UME,Boreal
+VAA,Boreal
+VST,Boreal
+YBC,Boreal
+YHU,Boreal
+YPY,Boreal
+YXC,Boreal
+YXS,Boreal
+YYB,Boreal
+YYE,Boreal
+YYR,Boreal
+YZP,Boreal
+ALC,British Sunny Vacay x2|
+LEI,British Sunny Vacay x2|
+LPA,British Sunny Vacay x2|
+LPA,British Sunny Vacay x2|
+OVD,British Sunny Vacay x2|
+RMU,British Sunny Vacay x2|
+SCQ,British Sunny Vacay x2|
 TFN,British Sunny Vacay x2|
 TFS,British Sunny Vacay x2|
-TFU,|AU|Chinese
-TFU,|CA|Chinese
-TFU,|ID|Chinese
-TFU,|TH|Chinese
-TFU,|US|Chinese
-TFU,Aerospace
-TFU,Agribusiness
-TFU,Belt & Road|
+ABV,Bureaucracy
+ADD,Bureaucracy
+BRU,Bureaucracy
+BSB,Bureaucracy
+CAI,Bureaucracy
+CBR,Bureaucracy
+DCA,Bureaucracy
+DEL,Bureaucracy
+ESB,Bureaucracy
+GVA,Bureaucracy
+IAD,Bureaucracy
+LHR,Bureaucracy
+MEX,Bureaucracy
+NLU,Bureaucracy
+NRT,Bureaucracy
+PEK,Bureaucracy
+YOW,Bureaucracy
+YCB,Canadian Arctic 
+YEV,Canadian Arctic 
+YFB,Canadian Arctic 
+YLT,Canadian Arctic 
+YOW,Canadian Arctic 
+YRB,Canadian Arctic 
+YRB,Canadian Arctic 
+YXY,Canadian Arctic 
+YZF,Canadian Arctic 
+CAN,Cantonese|
+HKG,Cantonese|
+JFK,Cantonese|
+MFM,Cantonese|
+SFO,Cantonese|
+SZX,Cantonese|
+YVR,Cantonese|
+ACY,Casinos
+CUN,Casinos
+FPO,Casinos
+GIB,Casinos
+GPT,Casinos
+LAS,Casinos
+MCM,Casinos
+MFM,Casinos
+NTY,Casinos
+RNO,Casinos
+VAR,Casinos
+CAY,CC|
+FLL,CC|
+JFK,CC|
+MIA,CC|
+ALC,Ceramics
+AMD,Ceramics
+AZD,Ceramics
+BLQ,Ceramics
+FUO,Ceramics
+GRU,Ceramics
+JDZ,Ceramics
+JJN,Ceramics
+KHN,Ceramics
+MTY,Ceramics
+NAG,Ceramics
+WUX,Ceramics
+BKI,Chinese tourism|
+CAN,Chinese tourism|
+CEB,Chinese tourism|
+CGO,Chinese tourism|
+CKG,Chinese tourism|
+CNX,Chinese tourism|
+CSX,Chinese tourism|
+CXR,Chinese tourism|
+DMK,Chinese tourism|
+DPS,Chinese tourism|
+FOC,Chinese tourism|
+HGH,Chinese tourism|
+HKT,Chinese tourism|
+HRB,Chinese tourism|
+KMG,Chinese tourism|
+KWE,Chinese tourism|
+NKG,Chinese tourism|
+NTG,Chinese tourism|
+PEK,Chinese tourism|
+PKX,Chinese tourism|
+PVG,Chinese tourism|
+SAI,Chinese tourism|
+SDK,Chinese tourism|
+SHA,Chinese tourism|
+SHE,Chinese tourism|
+SZX,Chinese tourism|
+TAO,Chinese tourism|
 TFU,Chinese tourism|
-TFU,Regional banking APAC
-TFU,Semiconductors
-TGM,Vampiric
+TNA,Chinese tourism|
+TWU,Chinese tourism|
+WUH,Chinese tourism|
+WUX,Chinese tourism|
+XIY,Chinese tourism|
+XMN,Chinese tourism|
+ABJ,Chocolate
+ACC,Chocolate
+ANR,Chocolate
+DLA,Chocolate
+DVO,Chocolate
+GOU,Chocolate
+GYE,Chocolate
+KMS,Chocolate
+MDT,Chocolate
+SAP,Chocolate
+ZRH,Chocolate
+BIL,Coal
+CMI,Coal
+CPR,Coal
+CRW,Coal
+EJA,Coal
+EMD,Coal
+GLT,Coal
+HTS,Coal
+JRG,Coal
+LEX,Coal
+MKY,Coal
+MOV,Coal
+MQL,Coal
+MQP,Coal
+NTL,Coal
+ROK,Coal
+RPR,Coal
+WOL,Coal
+BAV,Coal CN
+BDJ,Coal CN
+CIF,Coal CN
+DLZ,Coal CN
+DSN,Coal CN
+HDG,Coal CN
+HFE,Coal CN
+HLD,Coal CN
+HMI,Coal CN
+INC,Coal CN
+JBK,Coal CN
+PKY,Coal CN
+SJW,Coal CN
 TGO,Coal CN
-TGO,Iron ore
+TRK,Coal CN
+TYN,Coal CN
+XIY,Coal CN
+XUZ,Coal CN
+ABA,Coal RU
+HTA,Coal RU
+KEJ,Coal RU
+KJA,Coal RU
+NOZ,Coal RU
+ULK,Coal RU
+COD,Coal seam gas
+CTL,Coal seam gas
+EMD,Coal seam gas
+GLT,Coal seam gas
+MOR,Coal seam gas
+NAA,Coal seam gas
+RMA,Coal seam gas
+ROK,Coal seam gas
+TSV,Coal seam gas
+WGA,Coal seam gas
+WTB,Coal seam gas
+YPR,Coal seam gas
+YQL,Coal seam gas
+YXS,Coal seam gas
+YYC,Coal seam gas
+ADD,Coffee
+ADZ,Coffee
+BOG,Coffee
+BSB,Coffee
+CGK,Coffee
+CNF,Coffee
+CTG,Coffee
+DLI,Coffee
+EBB,Coffee
+GYE,Coffee
+JRO,Coffee
+KGL,Coffee
+KNO,Coffee
+LAE,Coffee
+MZL,Coffee
+PEI,Coffee
+PKZ,Coffee
+PLM,Coffee
+PXU,Coffee
+SDU,Coffee
+SEA,Coffee
+SSY,Coffee
 TGU,Coffee
 TGZ,Coffee
 THD,Coffee
-THL,Drug trafficking
-THR,|DE|Iranian
-THR,|TR|Iranian
-THR,|US|Iranian x2
-THR,Logistics MEA
-THR,NIOC
-THU,US Defense
-TIA,Footwear
-TIF,|AE|Pakistani
-TIF,|SA|Pakistani
-TIF,|UK|Pakistani
-TIF,|US|Pakistani
-TIJ,Auto parts
-TIJ,Drug trafficking
-TIR,|CA|Telugu
-TIR,Spirituality
-TIV,Mediterranean marine
-TJM,Titanium
-TKD,Manganese
-TKD,Offshore oil
-TKG,Geothermal
-TKG,Space
-TKK,Micronesia
-TKU,Boreal
-TKU,Swedish|
-TLE,Indian Ocean fishing
-TLH,Academia
-TLL,Cryptocurrency
-TLL,Telco
-TLN,|FR|Algerian x2
-TLQ,Cotton
-TLS,|FR|Algerian x2
-TLS,|FR|Moroccan
-TLS,Aerospace
-TLS,Life sciences
-TLS,Space
-TLV,|FR|Jewish
-TLV,|IE|Ethiopian
-TLV,|IE|Filipino
-TLV,|IL|Russian
-TLV,|UK|Jewish
-TLV,|US|Jewish
-TLV,Diamonds
-TLV,Horticulture
-TLV,Israeli Vacay x2
-TLV,Semiconductors
-TLV,Software
-TLV,US Defense
-TLV,Water
-TLY,Taiga
-TMC,Nickel
-TMT,Amazonia
-TNA,Auto parts
-TNA,Bauxite
-TNA,Chinese tourism|
-TNA,Fabrics
-TNA,Pharma
-TNE,Aerospace
-TNG,Apparel
-TNG,Dark economy
-TNG,Logistics EU Med
-TNH,Gold
-TNR,Agriculture
-TNR,Peacekeeping
-TOF,Gazprom
-TOS,Atlantic Fishing
-TOS,Equinor
-TOS,Finnish|
-TOS,Polar research
-TOS,Renewables
-TOY,Rice
-TPA,Back office
-TPA,Golf
-TPA,Healthcare admin
-TPA,Logistics NAC
-TPA,Software
-TPE,|TW|Indonesian
-TPE,Electronics
-TPE,HK Taiwan Kinship x2|
-TPE,Regional banking APAC
-TPE,Semiconductors
-TPP,Amazonia
 TPQ,Coffee
-TRD,Atlantic Fishing
-TRD,Loves Spain|
-TRD,Nordic Ski 2 City x2
-TRF,Equinor
-TRF,Loves Spain|
-TRF,Santa
-TRF,Titanium
-TRG,Horticulture
-TRK,Coal CN
-TRN,|IT|Romanian
-TRN,Aerospace
-TRN,Auto parts
-TRS,Mediterranean marine
 TRU,Coffee
-TRU,Copper
-TRV,|AE|Malayali
-TRV,|BA|Malayali
-TRV,|MY|Malayali
-TRV,|OM|Malayali
-TRV,|SA|Malayali
-TRV,Indian Ocean fishing
-TRV,Pharma
-TRV,Rubber
-TRV,Software
-TRW,Micronesia
-TRZ,|AE|Tamil
-TRZ,|ID|Tamil
-TRZ,|MY|Tamil
-TRZ,Back office
-TRZ,Offshore oil
-TRZ,Titanium
-TSA,Semiconductors
-TSF,|IT|Romanian
-TSF,CPG & Retail
-TSN,Auto parts
-TSN,Belt & Road|
-TSN,Logistics APAC
-TSN,Petrochemicals
-TSN,Robotics
-TSN,Semiconductors
-TSN,Steel
-TSN,Wind energy
-TSR,|ES|Romanian
-TSR,|IT|Romanian
-TSV,Coal seam gas
-TSV,Copper
-TSV,Copper FIFO
-TSV,Nickel
-TTK,Micronesia
-TTN,Academia
-TTU,Drug trafficking
-TUC,Agribusiness
-TUF,Fine cheese
-TUL,Aerospace
-TUL,Evangelicalism
-TUL,LNG
-TUL,Oil
-TUL,Oil fracking
-TUN,|FR|Tunisian x2
-TUN,Auto parts
-TUN,Mediterranean Ag
-TUN,Offshore oil
-TUR,Amazonia
-TUS,Gemstones
-TUS,Golf
-TUS,Hispanic|
-TUS,US Defense
-TUS,Water
-TVS,Steel
-TWU,Chinese tourism|
-TXK,Wind energy
-TXN,Spirituality
-TYN,Baijiu
-TYN,Coal CN
-TYN,Red tourism
-TYN,Space
-TYN,Titanium
-TYN,Toys
-TYS,Academia
-TYS,Nuclear energy
-TZX,Horticulture
-TZX,Mediterranean marine
-UBN,Gold
-UCB,Potato
-UCT,Taiga
-UCT,Zinc Eurasia
-UDI,Dairy
-UDI,Logistics LATAM
-UDI,Soybeans
-UDR,Sugar
-UDR,Zinc Eurasia
-UEL,Titanium
-UET,Pashto|
-UFA,|AE|Russian
-UFA,|US|Russian
-UFA,Oil refining
-UFA,Petrochemicals
-UFA,Russian Vacay x2|
-UFA,Sunni|
-UIO,|ES|Ecuadorian
-UIO,|US|Ecuadorian
 UIO,Coffee
-UIO,Horticulture
-UIO,Paper & furniture
-UKB,CPG & Retail
-UKB,Life sciences
-UKB,Machinery
-UKB,Rice
-UKK,Zinc Eurasia
-ULG,Kazakh|
-ULK,Coal RU
-ULO,Throat Singing Circuit
-ULV,Autos
-UME,Academia
-UME,Boreal
-UNG,Copper FIFO
-UPG,|ID|Chinese
-UPG,|TW|Indonesian
-UPG,Marine
-UPG,Nickel
-UPG,Offshore oil
-UPG,Tropical fishing
-UPN,|US|Jalisco & Michoacán
-URA,Oil
-URC,Belt & Road|
-URC,Cotton
-URC,PetroChina
-URC,Sunni|
-URC,Wind energy
-URT,Rubber
-USH,Mountaineering
-USH,Polar research
-USK,Russian Vacay x2|
-USN,Auto parts
-USN,Copper
-USN,Petrochemicals
-USN,Shipbuilding
-UTH,Apparel
-UTH,Spices / Tropical Ag
-UTP,|TH|Chinese
-UTP,Appliances
-UTP,Auto parts
-UTP,Petrochemicals
-UTP,Russian Vacay x2|
-UUA,Sunni|
-UUD,Gold
-UUD,Jade
-UUS,Defense RU
-UUS,Gazprom
-UUS,LNG
-VAA,Boreal
-VAA,Swedish|
-VAN,Sheep
-VAR,Casinos
-VAR,German|
-VAR,Nordic|
-VAR,Polish|
-VAR,Russian|
-VCA,Monsoon Ag
-VCE,Advertising & media
-VCE,Mediterranean marine
-VCP,|US|Brazilian
-VCP,Logistics LATAM
-VCP,Petrochemicals
-VDS,Arctic fishing
-VER,Offshore oil
-VER,Pemex
-VER,Petrochemicals
+BOG,Colonial ties bind
+CUZ,Colonial ties bind
+LIM,Colonial ties bind
+MAD,Colonial ties bind
+MDE,Colonial ties bind
+SCL,Colonial ties bind
+ASI,Commonwealth ties
+BDA,Commonwealth ties
+EDI,Commonwealth ties
+HLE,Commonwealth ties
+LGW,Commonwealth ties
+LHR,Commonwealth ties
+MAN,Commonwealth ties
+MPN,Commonwealth ties
+NAS,Commonwealth ties
+STN,Commonwealth ties
+AUS,Computers
+CGO,Computers
+CJJ,Computers
+CTU,Computers
+HKG,Computers
+ICN,Computers
+KHH,Computers
+KIX,Computers
+RMQ,Computers
+SJC,Computers
+SZX,Computers
+ARK,Conservation
+ASV,Conservation
+BBK,Conservation
+HAL,Conservation
+HDS,Conservation
+JRO,Conservation
+KXO,Conservation
+MFA,Conservation
+MFU,Conservation
+MQP,Conservation
+MRE,Conservation
+MUB,Conservation
+SEU,Conservation
+SWX,Conservation
 VFA,Conservation
-VGA,|CA|Telugu
-VGA,Pharma
-VGA,Tobacco
-VGO,Atlantic Fishing
-VHM,Zinc Eurasia
-VIE,Auto parts
-VIE,Eurozone banking
-VIE,Life sciences
-VIE,Nuclear energy
-VIE,Robotics
-VII,Peanuts
-VII,Tropical fishing
-VIL,Surfing
-VIX,Logistics LATAM
-VIX,Petrobras
-VKO,|AE|Russian
-VKO,|US|Russian
-VKO,Defense RU
-VKO,Gazprom
-VKO,LNG
-VKO,Logistics CIS
-VKO,Rosneft
-VKO,Russian Vacay x2|
-VKT,Russian Vacay x2|
-VLC,|ES|Romanian
-VLC,Logistics EU Med
-VLC,Mediterranean Ag
-VLC,Mediterranean marine
-VLI,Melanesia
-VLY,Sheep
-VNO,Renewables
-VNS,Spirituality
-VOG,Machinery
-VOZ,Nuclear energy
-VPS,Offshore oil
-VPS,Space
-VRA,Drug trafficking
-VRA,German|
-VRA,Russian Vacay x2|
-VRA,Sugar
-VRA,Tobacco
-VRN,Agribusiness
-VRN,Viticulture
-VSA,Pemex
-VST,Boreal
-VTE,Belt & Road|
-VTE,Logistics APAC
-VTZ,|CA|Telugu
-VTZ,Monsoon Ag
-VTZ,Rice
-VTZ,Steel
-VTZ,Textiles
-VUP,Latifundia Legacy
-VVI,|BR|Bolivian
-VVI,|MX|Bolivian
-VVI,LNG
-VVI,Soybeans
-VVO,Arctic fishing
-VVO,Defense RU
-VVO,Gazprom
-VVO,Logistics CIS
-VVO,Taiga
-VXC,Agriculture
-WAG,Horticulture
-WAG,Viticulture
-WAW,|IE|Polish
-WAW,|US|Polish
-WAW,CPG & Retail
-WAW,Eurozone banking
-WAW,Machinery
 WDH,Conservation
-WDH,Diamonds
-WDH,Gold
-WDH,Uranium
-WDH,Water
-WEF,Agriculture
-WEF,Poultry
-WEF,Tobacco
-WEH,Fabrics
-WEH,Seafood
-WEI,Bauxite
-WGA,Coal seam gas
-WGA,Sheep
-WLG,|NZ|Samoan
-WLG,Seafood
-WLG,TV / movies
-WMT,Baijiu
-WNH,Aluminum
-WNH,Bauxite
-WNS,Cotton
-WNZ,Aluminum
-WNZ,Footwear
-WNZ,Toys
-WOL,Coal
-WRE,Geothermal
+ANF,Copper
+AQG,Copper
+AQP,Copper
+BEG,Copper
+CEN,Copper
+CJC,Copper
+CPO,Copper
+DLZ,Copper
+FBM,Copper
+HAM,Copper
+IQQ,Copper
+JAU,Copper
+JIC,Copper
+KHN,Copper
+MEL,Copper
+NLA,Copper
+NSK,Copper
+OIT,Copper
+OKJ,Copper
+OLP,Copper
+PHX,Copper
+PTY,Copper
+SCL,Copper
+SLC,Copper
+STV,Copper
+SVX,Copper
+TAK,Copper
+TAM,Copper
+TAO,Copper
+TCQ,Copper
+TCR,Copper
+TRU,Copper
+TSV,Copper
+USN,Copper
 WRO,Copper
+YVR,Copper
+BHQ,Copper FIFO
+CAZ,Copper FIFO
+ISA,Copper FIFO
+ISA,Copper FIFO
+KTA,Copper FIFO
+LEA,Copper FIFO
+OLP,Copper FIFO
+PER,Copper FIFO
+PHO,Copper FIFO
+PXH,Copper FIFO
+ROK,Copper FIFO
+SVC,Copper FIFO
+SYD,Copper FIFO
+TBG,Copper FIFO
+TSV,Copper FIFO
+UNG,Copper FIFO
+YUY,Copper FIFO
+ZNE,Copper FIFO
+FBM,Copperbelt
+JNB,Copperbelt
+KIT,Copperbelt
+KWZ,Copperbelt
+LUN,Copperbelt
+NLA,Copperbelt
+PTG,Copperbelt
+SLI,Copperbelt
+ABY,Cotton
+AKU,Cotton
+APL,Cotton
+ATQ,Cotton
+CGO,Cotton
+FSM,Cotton
+GBB,Cotton
+HTN,Cotton
+KHN,Cotton
+KRL,Cotton
+KSH,Cotton
+LYP,Cotton
+MAF,Cotton
+MUX,Cotton
+PNS,Cotton
+SJT,Cotton
+SKD,Cotton
+TBZ,Cotton
+TLQ,Cotton
+URC,Cotton
+WNS,Cotton
+ASR,CPG & Retail
+ATL,CPG & Retail
+BKK,CPG & Retail
+BLQ,CPG & Retail
+BRU,CPG & Retail
+CGK,CPG & Retail
+CRK,CPG & Retail
+CVG,CPG & Retail
+DEL,CPG & Retail
+EIN,CPG & Retail
+GDL,CPG & Retail
+GMP,CPG & Retail
+GVA,CPG & Retail
+HAN,CPG & Retail
+HFE,CPG & Retail
+HGH,CPG & Retail
+HKG,CPG & Retail
+KWE,CPG & Retail
+LAS,CPG & Retail
+LGA,CPG & Retail
+LYS,CPG & Retail
+MDW,CPG & Retail
+MMX,CPG & Retail
+MSP,CPG & Retail
+MXP,CPG & Retail
+ORD,CPG & Retail
+PAE,CPG & Retail
+SGN,CPG & Retail
+TAO,CPG & Retail
+TSF,CPG & Retail
+UKB,CPG & Retail
+WAW,CPG & Retail
 WRO,CPG & Retail
-WRO,Electronics
-WTB,Coal seam gas
-WTK,Zinc
-WUH,|AU|Chinese
-WUH,|CA|Chinese
-WUH,|ID|Chinese
-WUH,|TH|Chinese
-WUH,|US|Chinese
-WUH,Autos
-WUH,Chinese tourism|
-WUH,Life sciences
-WUH,Robotics
-WUH,Semiconductors
-WUH,Sinopec
-WUH,Steel
-WUN,Gold FIFO
-WUX,Ceramics
-WUX,Chinese tourism|
-WUX,Electronics
-WUX,Fabrics
-WUX,Machinery
-WUX,New energy
-WUX,Textiles
-WUZ,Spices / Tropical Ag
-WUZ,Titanium
-WVB,Uranium
-WXN,Aluminum
-WYS,Big Sky
-XAP,Paper & furniture
-XAP,Poultry
-XCH,Aussie Outliers
-XFN,Auto parts
-XIC,Rare earths
-XIC,Space
-XIL,Sheep
-XIY,Bauxite
-XIY,Chinese tourism|
-XIY,Coal CN
-XIY,Logistics APAC
-XIY,Semiconductors
-XIY,Software
-XMN,|AU|Chinese
-XMN,|CA|Chinese
-XMN,|ID|Chinese
-XMN,|TH|Chinese
-XMN,|US|Chinese
-XMN,Chinese tourism|
-XMN,Electronics
-XMN,Sugar
-XMN,Titanium
-XMN,Tropical fishing
-XNA,Appliances
 XNA,CPG & Retail
-XNA,Poultry
-XNN,Heavy industry
-XNN,Jade
-XRY,Spirits
-XRY,Viticulture
-XUZ,Coal CN
-XUZ,Machinery
-XWA,Big Sky
-YAK,Alaska Milk Run
-YAM,Machinery
-YAP,Micronesia
-YAP,Seafood
-YAQ,Anglophone|
-YAQ,Polar research
-YBC,Aluminum
-YBC,Boreal
-YBC,Francophonie|
-YBG,Aluminum
-YBG,Francophonie|
-YBG,Francophonie|
-YBG,Maple syrup
-YBP,Baijiu
-YBP,PetroChina
-YBR,Grain Belt
-YBR,Ranching
-YBY,Oil fracking
-YCB,Canadian Arctic 
-YCB,Polar research
-YCD,Northwest Passage
-YCD,Spirituality
-YCG,Horticulture
-YDN,Grain Belt
-YDP,Nickel
-YEG,LNG
-YEG,Loves Cancun x2|
-YEG,Oil fracking
-YEI,Appliances
-YEI,Auto parts
-YEU,Polar research
-YEV,Canadian Arctic 
-YFB,Canadian Arctic 
-YFB,Loves Arctic|
-YFB,Santa
-YGP,Francophonie|
-YHM,|CA|Chinese
-YHM,Logistics NAC
-YHM,Loves Cancun x2|
-YHM,Steel
-YHU,Boreal
-YHU,Francophonie|
-YHU,Logistics NAC
-YHU,Maple syrup
-YHU,UFOs
-YHZ,Atlantic Fishing
-YHZ,Marine
-YHZ,Renewables
-YIA,Tea
-YIH,Logistics APAC
-YIN,Agriculture
-YIN,Zinc Eurasia
-YIW,Toys
+YTZ,CPG & Retail
+ASP,Cryptids
+CNS,Cryptids
+EUG,Cryptids
+INV,Cryptids
+IXB,Cryptids
+KTM,Cryptids
+PBH,Cryptids
+SNN,Cryptids
 YKA,Cryptids
-YKA,Paper & furniture
-YKM,|US|Jalisco & Michoacán
+ABI,Cryptocurrency
+ALA,Cryptocurrency
+AUS,Cryptocurrency
+BSL,Cryptocurrency
+CGO,Cryptocurrency
+DEN,Cryptocurrency
+DME,Cryptocurrency
+DXB,Cryptocurrency
+EZE,Cryptocurrency
+GTF,Cryptocurrency
+HRB,Cryptocurrency
+MIA,Cryptocurrency
+RNO,Cryptocurrency
+SAL,Cryptocurrency
+SJC,Cryptocurrency
+TLL,Cryptocurrency
+YVR,Cryptocurrency
+ZRH,Cryptocurrency
+BOJ,Czech|
+HRG,Czech|
+RMF,Czech|
+AAR,Dairy
+AEP,Dairy
+AKL,Dairy
+ALB,Dairy
+AMD,Dairy
+BDQ,Dairy
+BLL,Dairy
+CHC,Dairy
+CNF,Dairy
+EIN,Dairy
+GRB,Dairy
+HET,Dairy
+HLZ,Dairy
+ITH,Dairy
+LHE,Dairy
+MKE,Dairy
+MOC,Dairy
+MSN,Dairy
+MUC,Dairy
+PMR,Dairy
+RST,Dairy
+RUT,Dairy
+SMF,Dairy
+SNN,Dairy
+STV,Dairy
+UDI,Dairy
+AGT,Dark economy
+CRK,Dark economy
+CUN,Dark economy
+FNJ,Dark economy
+GMO,Dark economy
+HEH,Dark economy
+KOS,Dark economy
+KTI,Dark Economy
+MFM,Dark economy
+NDB,Dark economy
+NYT,Dark economy
+ODY,Dark economy
+SWA,Dark economy
+TNG,Dark economy
+BQS,Defense RU
+DME,Defense RU
+GRV,Defense RU
+KGD,Defense RU
+LED,Defense RU
+MMK,Defense RU
+OGZ,Defense RU
+PKV,Defense RU
+ROV,Defense RU
+SIP,Defense RU
+STW,Defense RU
+SVO,Defense RU
+UUS,Defense RU
+VKO,Defense RU
+VVO,Defense RU
+AMS,Diamonds
+ANR,Diamonds
+BDJ,Diamonds
+BOM,Diamonds
+DUE,Diamonds
+FKI,Diamonds
+FNA,Diamonds
+FRW,Diamonds
+GBE,Diamonds
+JNB,Diamonds
+KGA,Diamonds
+KNX,Diamonds
+LAD,Diamonds
+LCY,Diamonds
+MJM,Diamonds
+MJZ,Diamonds
+MSU,Diamonds
+PTG,Diamonds
+STV,Diamonds
+TLV,Diamonds
+WDH,Diamonds
 YKS,Diamonds
-YKS,Gold
-YLT,Canadian Arctic 
-YLW,Gold
-YLW,Spirituality
-YLW,Viticulture
-YLX,Gemstones
-YMM,Nickel
-YMM,Oil
-YMM,Oil fracking
-YMM,PetroChina
+ACV,Drug trafficking
+AMS,Drug trafficking
+ANR,Drug trafficking
+CLO,Drug trafficking
+CNF,Drug trafficking
+CUL,Drug trafficking
+DAD,Drug trafficking
+GYA,Drug trafficking
+HKT,Drug trafficking
+HMO,Drug trafficking
+KBL,Drug trafficking
+KDH,Drug trafficking
+KIN,Drug trafficking
+LAX,Drug trafficking
+LPQ,Drug trafficking
+MAO,Drug trafficking
+MDE,Drug trafficking
+MIA,Drug trafficking
+MID,Drug trafficking
+MVP,Drug trafficking
+MZG,Drug trafficking
+MZR,Drug trafficking
+MZT,Drug trafficking
+PBU,Drug trafficking
+PEW,Drug trafficking
+PMG,Drug trafficking
+PUJ,Drug trafficking
+RGN,Drug trafficking
+SMR,Drug trafficking
+TCO,Drug trafficking
+THL,Drug trafficking
+TIJ,Drug trafficking
+TTU,Drug trafficking
+VRA,Drug trafficking
+ZAH,Drug trafficking 
+AMS,Dutch holiday
+AUA,Dutch holiday
+BON,Dutch holiday
+CUR,Dutch holiday
+EIN,Dutch holiday
+EUX,Dutch holiday
+PBM,Dutch holiday
+RTM,Dutch holiday
+SAB,Dutch holiday
+SXM,Dutch holiday
+ADB,Dutch|
+AYT,Dutch|
+BJL,Dutch|
+BJV,Dutch|
+BVC,Dutch|
+DLM,Dutch|
+DPS,Dutch|
+HER,Dutch|
+HRG,Dutch|
+KGS,Dutch|
+RMF,Dutch|
+ZTH,Dutch|
+GOM,EAC|
+BDO,Electronics
+BKK,Electronics
+BTH,Electronics
+CAN,Electronics
+CEB,Electronics
+CJJ,Electronics
+CJS,Electronics
+CKG,Electronics
+CRK,Electronics
+CSX,Electronics
+CTU,Electronics
+FOC,Electronics
+FUK,Electronics
+FUO,Electronics
+GMP,Electronics
+HAN,Electronics
+HIA,Electronics
+HND,Electronics
+HUZ,Electronics
+ITM,Electronics
+JHB,Electronics
+KMQ,Electronics
+MTY,Electronics
+NGO,Electronics
+PEN,Electronics
+PUS,Electronics
+PVG,Electronics
+SIN,Electronics
+SZX,Electronics
+TAE,Electronics
+TPE,Electronics
+WRO,Electronics
+WUX,Electronics
+XMN,Electronics
+ABZ,Equinor
+AES,Equinor
+BGO,Equinor
+BOO,Equinor
+BPT,Equinor
+DND,Equinor
+EBJ,Equinor
+EH1,Equinor
+END,Equinor
+ENQ,Equinor
+ENX,Equinor
+HAU,Equinor
+IAH,Equinor
+KRS,Equinor
+KSU,Equinor
+LWK,Equinor
+RTM,Equinor
+SDU,Equinor
+SVG,Equinor
+TOS,Equinor
+TRF,Equinor
+LCA,EU|
+PFO,EU|
+AMS,Eurozone banking
+BRU,Eurozone banking
+BUD,Eurozone banking
+CDG,Eurozone banking
+CGN,Eurozone banking
+DUS,Eurozone banking
+FCO,Eurozone banking
+FRA,Eurozone banking
+LCY,Eurozone banking
+LIS,Eurozone banking
+LUX,Eurozone banking
+MAD,Eurozone banking
+MXP,Eurozone banking
+OTP,Eurozone Banking
+PRG,Eurozone banking
+VIE,Eurozone banking
+WAW,Eurozone banking
+ZRH,Eurozone banking
+BAG,Evangelicalism
+BNA,Evangelicalism
+CGH,Evangelicalism
+CLL,Evangelicalism
+COS,Evangelicalism
+EBB,Evangelicalism
+GMP,Evangelicalism
+GRR,Evangelicalism
+GUA,Evangelicalism
+LYH,Evangelicalism
+TUL,Evangelicalism
+BTR,ExxonMobil
+GPT,ExxonMobil
+IAH,ExxonMobil
+LAE,ExxonMobil
+LFT,ExxonMobil
+NOV,ExxonMobil
+POM,ExxonMobil
+SCO,ExxonMobil
+SHV,ExxonMobil
+AMD,Fabrics
+BDO,Fabrics
+CGP,Fabrics
+CGQ,Fabrics
+DAC,Fabrics
+DAD,Fabrics
+FOC,Fabrics
+HAN,Fabrics
+HGH,Fabrics
+HPH,Fabrics
+HYN,Fabrics
+IXC,Fabrics
+LHE,Fabrics
+LYP,Fabrics
+MUX,Fabrics
+NTG,Fabrics
+RJH,Fabrics
+SGN,Fabrics
+TNA,Fabrics
+WEH,Fabrics
+WUX,Fabrics
+ZYL,Fabrics
+ACH,Fine cheese
+BIO,Fine cheese
+BRN,Fine cheese
+BRS,Fine cheese
+BTV,Fine cheese
+CAG,Fine cheese
+DLE,Fine cheese
+DOL,Fine cheese
+DUD,Fine cheese
+EMA,Fine cheese
+LIN,Fine cheese
+MSN,Fine cheese
+OVD,Fine cheese
+PMF,Fine cheese
+RDZ,Fine cheese
+RTM,Fine cheese
+SKG,Fine cheese
+STS,Fine cheese
+TUF,Fine cheese
+ALF,Finnish|
+KRN,Finnish|
+TOS,Finnish|
+AGR,Footwear
+AOI,Footwear
+BGY,Footwear
+BJX,Footwear
+CAN,Footwear
+EUG,Footwear
+FOC,Footwear
+GNY,Footwear
+JJN,Footwear
+KHN,Footwear
+LHE,Footwear
+MAA,Footwear
+PDX,Footwear
+POA,Footwear
+RAO,Footwear
+SAW,Footwear
+SDQ,Footwear
+SGN,Footwear
+TIA,Footwear
+WNZ,Footwear
+ACV,Forestry
+AOJ,Forestry
+BIL,Forestry
+BOI,Forestry
+CEC,Forestry
+CEI,Forestry
+CIU,Forestry
+GEG,Forestry
+HLN,Forestry
+ILM,Forestry
+IQT,Forestry
+KCH,Forestry
+KCZ,Forestry
+MAO,Forestry
+MFR,Forestry
+MYY,Forestry
+NSI,Forestry
+OBO,Forestry
+OTH,Forestry
+POS,Forestry
+RDM,Forestry
+YVR,Forestry
+BJV,Francophonie|
+CAB,Francophonie|
+CMN,Francophonie|
+GVA,Francophonie|
+HER,Francophonie|
+JMK,Francophonie|
+JTR,Francophonie|
+MRU,Francophonie|
+PQI,Francophonie|
+PUJ,Francophonie|
+RAK,Francophonie|
+RBA,Francophonie|
+RIH,Francophonie|
+YBC,Francophonie|
+YBG,Francophonie|
+YBG,Francophonie|
+YGP,Francophonie|
+YHU,Francophonie|
 YMT,Francophonie|
-YNB,Oil refining
-YNB,Petrochemicals
-YNT,Aluminum
-YNT,Seafood
-YNZ,Agriculture
-YNZ,Auto parts
-YOW,|CA|Filipino
-YOW,Bureaucracy
-YOW,Canadian Arctic 
-YOW,Loves Cancun x2|
-YOW,NA Capitols|
-YOW,US Defense
-YPE,Oil fracking
-YPR,Coal seam gas
-YPR,Northwest Passage
-YPY,Boreal
-YQB,Aluminum
 YQB,Francophonie|
-YQB,Loves Cancun x2|
-YQB,Loves French Antilles|
-YQB,Maple syrup
-YQB,Software
-YQG,Auto parts
-YQL,Coal seam gas
-YQL,Ranching
-YQR,Arctic oil
-YQR,Grain Belt
-YQR,Logistics NAC
-YQR,Ranching
-YQR,Uranium
-YQT,Platinum
-YQU,Oil fracking
-YQX,LNG
-YRB,Canadian Arctic 
-YRB,Canadian Arctic 
+YQM,Francophonie|
 YRJ,Francophonie|
-YRJ,Maple syrup
-YSB,Nickel
-YSB,Platinum
 YTM,Francophonie|
 YTS,Francophonie|
-YTS,Gold FIFO
-YTS,Nickel
-YTY,Auto parts
-YTY,Shipbuilding
-YTY,Toys
-YTZ,Asset management
-YTZ,CPG & Retail
-YTZ,Logistics NAC
-YUL,|CA|Algerian x2
-YUL,|CA|Haitian
-YUL,|CA|Moroccan
-YUL,Aerospace
 YUL,Francophonie|
-YUL,Loves Cancun x2|
-YUL,Loves French Antilles|
-YUL,Software
-YUL,Spirits
-YUM,Hispanic|
-YUM,Horticulture
-YUY,Copper FIFO
 YUY,Francophonie|
 YVO,Francophonie|
-YVO,Gold FIFO
-YVR,|CA|Bengali
-YVR,|CA|Chinese
-YVR,|CA|Filipino
-YVR,|CA|Punjabi
-YVR,Arctic fishing
-YVR,Cantonese|
-YVR,Copper
-YVR,Cryptocurrency
-YVR,Forestry
-YVR,Life sciences
-YVR,Software
-YVR,TV / movies
-YWB,Nickel
-YWB,Platinum
-YWG,Agribusiness
-YWG,Loves Cancun x2|
-YWG,Ranching
-YWG,Soybeans
-YXC,Boreal
-YXC,Gemstones
-YXC,Grain Belt
-YXE,Arctic oil
-YXE,Uranium
-YXH,LNG
-YXJ,Arctic oil
 YXK,Francophonie|
-YXS,Boreal
-YXS,Coal seam gas
-YXT,Aluminum
-YXU,Auto parts
-YXU,Loves Cancun x2|
-YXU,Rare earths
-YXU,Renewables
-YXX,Grain Belt
-YXY,Canadian Arctic 
-YXY,Gold
-YXY,Loves Arctic|
-YXY,Loves Cancun x2|
-YXY,Uranium
-YYB,Boreal
-YYC,|CA|Chinese
-YYC,|CA|Filipino
-YYC,|CA|Punjabi
-YYC,Coal seam gas
-YYC,Loves Cancun x2|
-YYC,Oil
-YYC,Oil fracking
-YYC,Telco
-YYE,Arctic oil
-YYE,Boreal
-YYG,Atlantic Fishing
-YYG,Potato
-YYG,Wind energy
-YYJ,Marine
-YYJ,Northwest Passage
-YYJ,US Defense
-YYR,Boreal
-YYT,Arctic oil
-YYT,Atlantic Fishing
 YYY,Francophonie|
-YYZ,|CA|Bengali
-YYZ,|CA|Chinese
-YYZ,|CA|Filipino
-YYZ,|CA|Punjabi
-YYZ,|CA|Telugu
-YYZ,Advertising & media
-YYZ,Investment banking
-YYZ,Life sciences
-YYZ,Loves Cancun x2|
-YYZ,Nuclear energy
-YYZ,Software
-YZF,Canadian Arctic 
-YZF,Gold FIFO
-YZF,Loves Arctic|
-YZP,Boreal
-YZT,Northwest Passage
-YZV,Aluminum
 YZV,Francophonie|
-ZAG,Logistics EU Med
-ZAG,Vampiric
-ZAH,Drug trafficking 
-ZAM,Tropical fishing
-ZAT,Potato
-ZAZ,|ES|Romanian
-ZAZ,Wind energy
 ZBF,Francophonie|
-ZBR,|OM|Baloch
-ZCL,|US|Durango & Zacatecas
-ZHA,Heavy industry
-ZHA,Logistics APAC
-ZHA,Sinopec
-ZHA,Sugar
-ZIH,|US|Guerrero & Oaxaca
-ZLO,|US|Jalisco & Michoacán
-ZNE,Copper FIFO
-ZNE,Iron ore
-ZNE,Rare earths
-ZNZ,Arabic|
+ALA,Gazprom
+AMV,Gazprom
+ASF,Gazprom
+BEG,Gazprom
+BVJ,Gazprom
+CEE,Gazprom
+GDX,Gazprom
+GUW,Gazprom
+KHV,Gazprom
+KUF,Gazprom
+LED,Gazprom
+NQZ,Gazprom
+NUX,Gazprom
+OGZ,Gazprom
+PKC,Gazprom
+SBT,Gazprom
+SCO,Gazprom
+TOF,Gazprom
+UUS,Gazprom
+VKO,Gazprom
+VVO,Gazprom
+BBK,Gemstones
+CJC,Gemstones
+CMB,Gemstones
+FIH,Gemstones
+GVR,Gemstones
+HTS,Gemstones
+IDA,Gemstones
+IXU,Gemstones
+JAI,Gemstones
+JGD,Gemstones
+JXA,Gemstones
+LEA,Gemstones
+LOP,Gemstones
+MGZ,Gemstones
+MJZ,Gemstones
+PMW,Gemstones
+TUS,Gemstones
+YLX,Gemstones
+YXC,Gemstones
+AEY,Geothermal
+BKS,Geothermal
+DGT,Geothermal
+DNZ,Geothermal
+DRP,Geothermal
+IFJ,Geothermal
+KEF,Geothermal
+KOJ,Geothermal
+MXL,Geothermal
+NBO,Geothermal
+OAK,Geothermal
+OIT,Geothermal
+RKV,Geothermal
+TKG,Geothermal
+WRE,Geothermal
+ADB,German|
+AGT,German|
+AYT,German|
+BZO,German|
+CFU,German|
+CHQ,German|
+CMB,German|
+DLM,German|
+HER,German|
+HKT,German|
+HRG,German|
+KGS,German|
+LGK,German|
+MBA,German|
+PUJ,German|
+RHO,German|
+RMF,German|
+SKG,German|
+SPC,German|
+SXB,German|
+VAR,German|
+VRA,German|
 ZNZ,German|
-ZNZ,Italian|
-ZNZ,Sunni|
-ZOS,Shipbuilding
-ZQN,Viticulture
-ZRH,Chocolate
-ZRH,Cryptocurrency
-ZRH,Eurozone banking
+ANR,Global logistics
+CAN,Global logistics
+DXB,Global logistics
+EWR,Global logistics
+FRA,Global logistics
+HKG,Global logistics
+LGB,Global logistics
+MEM,Global logistics
+PTY,Global logistics
+PVG,Global logistics
+RTM,Global logistics
+SDF,Global logistics
+SHJ,Global logistics
+SIN,Global logistics
+BKO,Gold
+DEN,Gold
+GDX,Gold
+GYE,Gold
+IKT,Gold
+IQM,Gold
+JGD,Gold
+JNB,Gold
+KJA,Gold
+NNG,Gold
+OME,Gold
+PER,Gold
+PKC,Gold
+PZU,Gold
+RNO,Gold
+TNH,Gold
+UBN,Gold
+UUD,Gold
+WDH,Gold
+YKS,Gold
+YLW,Gold
+YXY,Gold
+CNJ,Gold FIFO
+EKO,Gold FIFO
+HGU,Gold FIFO
+KGI,Gold FIFO
+LAE,Gold FIFO
+LNV,Gold FIFO
+LVO,Gold FIFO
+PER,Gold FIFO
+TBG,Gold FIFO
+TCA,Gold FIFO
+WUN,Gold FIFO
+YTS,Gold FIFO
+YVO,Gold FIFO
+YZF,Gold FIFO
+BNE,Golden Triangle x2
+MEL,Golden Triangle x2
+SYD,Golden Triangle x2
+AGS,Golf
+DUB,Golf
+EDI,Golf
+MCO,Golf
+MYR,Golf
+PBI,Golf
+PRC,Golf
+PSP,Golf
+SAV,Golf
+TPA,Golf
+TUS,Golf
+DDC,Grain Belt
+DNK,Grain Belt
+DSM,Grain Belt
+DVL,Grain Belt
+ENO,Grain Belt
+FAR,Grain Belt
+GEG,Grain Belt
+ICT,Grain Belt
+IEV,Grain Belt
+JBK,Grain Belt
+KBP,Grain Belt
+KRR,Grain Belt
+MCI,Grain Belt
+MLI,Grain Belt
+MRV,Grain Belt
+ODS,Grain Belt
+OKC,Grain Belt
+OMA,Grain Belt
+RIX,Grain Belt
+ROV,Grain Belt
+SFN,Grain Belt
+SPI,Grain Belt
+YBR,Grain Belt
+YDN,Grain Belt
+YQR,Grain Belt
+YXC,Grain Belt
+YXX,Grain Belt
+LCA,Greek|
+PFO,Greek|
+ATL,Healthcare admin
+BDL,Healthcare admin
+BNA,Healthcare admin
+BOI,Healthcare admin
+BWI,Healthcare admin
+CLE,Healthcare admin
+DAY,Healthcare admin
+DCA,Healthcare admin
+HOU,Healthcare admin
+MDT,Healthcare admin
+MSN,Healthcare admin
+MSP,Healthcare admin
+PIA,Healthcare admin
+ROC,Healthcare admin
+RST,Healthcare admin
+SAT,Healthcare admin
+SDF,Healthcare admin
+STL,Healthcare admin
+TPA,Healthcare admin
+AMD,Heavy industry
+BHM,Heavy industry
+BPN,Heavy industry
+CCP,Heavy industry
+CEK,Heavy industry
+CGP,Heavy industry
+CSX,Heavy industry
+FUK,Heavy industry
+GOJ,Heavy industry
+HAM,Heavy industry
+HET,Heavy industry
+HSR,Heavy industry
+IPN,Heavy industry
+JAN,Heavy industry
+MOB,Heavy industry
+MSQ,Heavy industry
+NGS,Heavy industry
+NSK,Heavy industry
+OVB,Heavy industry
+PDV,Heavy industry
+PER,Heavy industry
+SDU,Heavy industry
+SHA,Heavy industry
+SKG,Heavy industry
+SKP,Heavy industry
+XNN,Heavy industry
+ZHA,Heavy industry
+AGR,Hindi|
+AHA,Hindi|
+AIP,Hindi|
+AMD,Hindi|
+ATQ,Hindi|
+AYJ,Hindi|
+BDQ,Hindi|
+BEK,Hindi|
+BHJ,Hindi|
+BHO,Hindi|
+BHU,Hindi|
+BOM,Hindi|
+CCU,Hindi|
+DBR,Hindi|
+DED,Hindi|
+DEL,Hindi|
+DGH,Hindi|
+DHM,Hindi|
+DIU,Hindi|
+DUR,Hindi|
+GAY,Hindi|
+GDB,Hindi|
+GOP,Hindi|
+GWL,Hindi|
+HDO,Hindi|
+HGI,Hindi|
+HJR,Hindi|
+HSR,Hindi|
+HSS,Hindi|
+HYD,Hindi|
+IDR,Hindi|
+ISK,Hindi|
+IXB,Hindi|
+IXC,Hindi|
+IXD,Hindi|
+IXJ,Hindi|
+IXK,Hindi|
+IXL,Hindi|
+IXP,Hindi|
+IXR,Hindi|
+IXU,Hindi|
+IXY,Hindi|
+IXZ,Hindi|
+JAI,Hindi|
+JDH,Hindi|
+JGA,Hindi|
+JGB,Hindi|
+JLG,Hindi|
+JLR,Hindi|
+JSA,Hindi|
+KLH,Hindi|
+KNU,Hindi|
+KQH,Hindi|
+KUU,Hindi|
+LKO,Hindi|
+LTU,Hindi|
+MZS,Hindi|
+NAG,Hindi|
+NDC,Hindi|
+NMI,Hindi|
+PAB,Hindi|
+PAT,Hindi|
+PGH,Hindi|
+PNQ,Hindi|
+RDP,Hindi|
+REW,Hindi|
+RPR,Hindi|
+SAG,Hindi|
+SDW,Hindi|
+STV,Hindi|
+SXR,Hindi|
+UDR,Hindi|
+VNS,Hindi|
+VSV,Hindi|
+ABQ,Hispanic|
+BFL,Hispanic|
+BRO,Hispanic|
+BUR,Hispanic|
+CRP,Hispanic|
+ELP,Hispanic|
+FLL,Hispanic|
+FLN,Hispanic|
+HPN,Hispanic|
+HRL,Hispanic|
+IAH,Hispanic|
+LAS,Hispanic|
+LAX,Hispanic|
+LRD,Hispanic|
+MFE,Hispanic|
+MIA,Hispanic|
+NLD,Hispanic|
+OAK,Hispanic|
+ONT,Hispanic|
+PBI,Hispanic|
+PUB,Hispanic|
+QAB,Hispanic|
+RSW,Hispanic|
+SAF,Hispanic|
+SAT,Hispanic|
+SJC,Hispanic|
+TUS,Hispanic|
+YUM,Hispanic|
+HKG,HK Taiwan Kinship x2|
+KHH,HK Taiwan Kinship x2|
+TPE,HK Taiwan Kinship x2|
+AGA,Horticulture
+AMS,Horticulture
+AOJ,Horticulture
+BOG,Horticulture
+CGY,Horticulture
+EAT,Horticulture
+ELP,Horticulture
+FAT,Horticulture
+FLL,Horticulture
+GIZ,Horticulture
+GYD,Horticulture
+ISK,Horticulture
+JIU,Horticulture
+JNZ,Horticulture
+KOA,Horticulture
+LAL,Horticulture
+LEI,Horticulture
+LIO,Horticulture
+MAO,Horticulture
+MDE,Horticulture
+MFR,Horticulture
+NBO,Horticulture
+NCE,Horticulture
+TLV,Horticulture
+TRG,Horticulture
+TZX,Horticulture
+UIO,Horticulture
+WAG,Horticulture
+YCG,Horticulture
+YUM,Horticulture
+ACC,Humanitarian NGO
+ADD,Humanitarian NGO
+AMM,Humanitarian NGO
+BEY,Humanitarian NGO
+BKK,Humanitarian NGO
+GVA,Humanitarian NGO
+IST,Humanitarian NGO
+JFK,Humanitarian NGO
+NBO,Humanitarian NGO
+PAP,Humanitarian NGO
+PTY,Humanitarian NGO
+HRG,Hungarian|
+BKI,Indian Ocean fishing
+BTJ,Indian Ocean fishing
+CMB,Indian Ocean fishing
+COK,Indian Ocean fishing
+HKT,Indian Ocean fishing
+IXZ,Indian Ocean fishing
+KOS,Indian Ocean fishing
+LGK,Indian Ocean fishing
+MLE,Indian Ocean fishing
+MYY,Indian Ocean fishing
+TCR,Indian Ocean fishing
+TLE,Indian Ocean fishing
+TRV,Indian Ocean fishing
+CDG,Investment banking
+DUB,Investment banking
+FRA,Investment banking
+HHP,Investment banking
+HKG,Investment banking
+ICN,Investment banking
+JFK,Investment banking
+JRA,Investment banking
+JRB,Investment banking
+LCY,Investment banking
+LHR,Investment banking
+LW0,Investment banking
+NRT,Investment banking
+PVG,Investment banking
+SDB,Investment banking
+SFO,Investment banking
+SIN,Investment banking
+YYZ,Investment banking
 ZRH,Investment banking
+CKS,Iron ore
+CKW,Iron ore
+EGO,Iron ore
+HIB,Iron ore
+JZH,Iron ore
+KRN,Iron ore
+KTA,Iron ore
+OUZ,Iron ore
+PBO,Iron ore
+PHE,Iron ore
+SIS,Iron ore
+SJL,Iron ore
+TGO,Iron ore
+ZNE,Iron ore
+AMM,Islamic finance
+AUH,Islamic finance
+BAH,Islamic finance
+BOM,Islamic finance
+CGK,Islamic finance
+DXB,Islamic finance
+JED,Islamic finance
+KHI,Islamic finance
+KUL,Islamic finance
+RUH,Islamic finance
+SAW,Islamic finance
+LCA,Israeli Vacay x2
+TLV,Israeli Vacay x2
+CFU,Italian|
+JMK,Italian|
+JTR,Italian|
+LUG,Italian|
+MBA,Italian|
+MLE,Italian|
+MUH,Italian|
+SSH,Italian|
+ZNZ,Italian|
+HTN,Jade
+LUM,Jade
+MDL,Jade
+MYT,Jade
+UUD,Jade
+XNN,Jade
+GUM,Japanese|
+ROR,Japanese|
+AAL,Jutland capital journeys
+AAR,Jutland capital journeys
+BLL,Jutland capital journeys
+CPH,Jutland capital journeys
+ULG,Kazakh|
+BKI,Korean Vacay x2|
+CXR,Korean Vacay x2|
+DAD,Korean Vacay x2|
+DLI,Korean Vacay x2|
+ISG,Korean Vacay x2|
+OKA,Korean Vacay x2|
+SHI,Korean Vacay x2|
+GUM,Korean|
+MPH,Korean|
+SPN,Korean|
+YNJ,Korean|
+BAL,Kurdish|
+BJB,Kurdish|
+DIY,Kurdish|
+EBL,Kurdish|
+ISU,Kurdish|
+KAC,Kurdish|
+KIK,Kurdish|
+NKT,Kurdish|
+OMH,Kurdish|
+OMH,Kurdish|
+VAN,Kurdish|
+YKO,Kurdish|
+BVA,L'Hexagone Hop
+CAY,L'Hexagone Hop
+CDG,L'Hexagone Hop
+DZA,L'Hexagone Hop
+FDF,L'Hexagone Hop
+FSP,L'Hexagone Hop
+LIL,L'Hexagone Hop
+ORY,L'Hexagone Hop
+PTP,L'Hexagone Hop
+RUN,L'Hexagone Hop
+SBH,L'Hexagone Hop
+SFG,L'Hexagone Hop
+ARU,Latifundia Legacy
+BGA,Latifundia Legacy
+CUL,Latifundia Legacy
+ESM,Latifundia Legacy
+GUA,Latifundia Legacy
+GYE,Latifundia Legacy
+IMP,Latifundia Legacy
+JTC,Latifundia Legacy
+JUJ,Latifundia Legacy
+LIR,Latifundia Legacy
+LPB,Latifundia Legacy
+MAR,Latifundia Legacy
+MVD,Latifundia Legacy
+MZT,Latifundia Legacy
+OPS,Latifundia Legacy
+PDP,Latifundia Legacy
+POA,Latifundia Legacy
+REC,Latifundia Legacy
+ROS,Latifundia Legacy
+RVE,Latifundia Legacy
+SAL,Latifundia Legacy
+SMR,Latifundia Legacy
+SSA,Latifundia Legacy
+VUP,Latifundia Legacy
+ABJ,Lebanese|
+BAQ,Lebanese|
+BEY,Lebanese|
+CTG,Lebanese|
+GRU,Lebanese|
+SMR,Lebanese|
+ARN,Life sciences
+AUS,Life sciences
+BLR,Life sciences
+BOS,Life sciences
+CLE,Life sciences
+EDI,Life sciences
+GOT,Life sciences
+KIX,Life sciences
+LTN,Life sciences
+MEL,Life sciences
+PIT,Life sciences
+PVD,Life sciences
+SAN,Life sciences
+SEA,Life sciences
+SFO,Life sciences
+SXB,Life sciences
+SYD,Life sciences
+SZX,Life sciences
+TLS,Life sciences
+UKB,Life sciences
+VIE,Life sciences
+WUH,Life sciences
+YVR,Life sciences
+YYZ,Life sciences
+ADL,LNG
+ALA,LNG
+ANC,LNG
+ASB,LNG
+BAH,LNG
+BNE,LNG
+BRW,LNG
+BTR,LNG
+BTU,LNG
+BWN,LNG
+DOH,LNG
+ENA,LNG
+GLT,LNG
+GYD,LNG
+HOU,LNG
+KCH,LNG
+KRW,LNG
+KTA,LNG
+LEJ,LNG
+MSY,LNG
+NGB,LNG
+NPL,LNG
+NUX,LNG
+PER,LNG
+RMA,LNG
+SBT,LNG
+SCC,LNG
+SVO,LNG
+TUL,LNG
+UUS,LNG
+VKO,LNG
+VVI,LNG
+YEG,LNG
+YQX,LNG
+YXH,LNG
+AKL,Logistics APAC
+BHY,Logistics APAC
+BNE,Logistics APAC
+CAN,Logistics APAC
+CCU,Logistics APAC
+CGY,Logistics APAC
+CHC,Logistics APAC
+CKG,Logistics APAC
+FOC,Logistics APAC
+GOA,Logistics APAC
+HDY,Logistics APAC
+HKG,Logistics APAC
+JHB,Logistics APAC
+KNO,Logistics APAC
+KWE,Logistics APAC
+KWL,Logistics APAC
+LYG,Logistics APAC
+MNL,Logistics APAC
+NBC,Logistics APAC
+NGB,Logistics APAC
+PER,Logistics APAC
+SIN,Logistics APAC
+SUB,Logistics APAC
+SYD,Logistics APAC
+TSN,Logistics APAC
+VTE,Logistics APAC
+XIY,Logistics APAC
+YIH,Logistics APAC
+ZHA,Logistics APAC
+ALA,Logistics CIS
+DYU,Logistics CIS
+EVN,Logistics CIS
+IST,Logistics CIS
+KGD,Logistics CIS
+LED,Logistics CIS
+MMK,Logistics CIS
+MSQ,Logistics CIS
+NZH,Logistics CIS
+ROV,Logistics CIS
+TAS,Logistics CIS
+VKO,Logistics CIS
+VVO,Logistics CIS
+ALG,Logistics EU Med
+ANR,Logistics EU Med
+BCN,Logistics EU Med
+BEG,Logistics EU Med
+CMN,Logistics EU Med
+COV,Logistics EU Med
+DOL,Logistics EU Med
+DTM,Logistics EU Med
+EMA,Logistics EU Med
+FCO,Logistics EU Med
+GIB,Logistics EU Med
+HAM,Logistics EU Med
+HBE,Logistics EU Med
+HFA,Logistics EU Med
+IST,Logistics EU Med
+LBC,Logistics EU Med
+LEJ,Logistics EU Med
+LIS,Logistics EU Med
+LUX,Logistics EU Med
+MAD,Logistics EU Med
+MRS,Logistics EU Med
+MXX,Logistics EU Med
+OST,Logistics EU Med
+POZ,Logistics EU Med
+RTM,Logistics EU Med
+TBS,Logistics EU Med
+TNG,Logistics EU Med
+VLC,Logistics EU Med
+ZAG,Logistics EU Med
+CGH,Logistics LATAM
+CUZ,Logistics LATAM
+EZE,Logistics LATAM
+FLL,Logistics LATAM
+GYE,Logistics LATAM
+MDE,Logistics LATAM
+MEX,Logistics LATAM
+MIA,Logistics LATAM
+MVD,Logistics LATAM
+REC,Logistics LATAM
+SCL,Logistics LATAM
+SDQ,Logistics LATAM
+SDU,Logistics LATAM
+SJU,Logistics LATAM
+SMR,Logistics LATAM
+UDI,Logistics LATAM
+VCP,Logistics LATAM
+VIX,Logistics LATAM
+ABJ,Logistics MEA
+ADD,Logistics MEA
+BND,Logistics MEA
+BUQ,Logistics MEA
+BUZ,Logistics MEA
+CAI,Logistics MEA
+CMN,Logistics MEA
+CPT,Logistics MEA
+DAR,Logistics MEA
+DLA,Logistics MEA
+DOH,Logistics MEA
+DSS,Logistics MEA
+DUR,Logistics MEA
+JED,Logistics MEA
+JIB,Logistics MEA
+JNB,Logistics MEA
+LAU,Logistics MEA
+LOS,Logistics MEA
+MBA,Logistics MEA
+MPM,Logistics MEA
+NBJ,Logistics MEA
+NBO,Logistics MEA
+PZU,Logistics MEA
+RUH,Logistics MEA
+SHJ,Logistics MEA
+TET,Logistics MEA
+THR,Logistics MEA
+ATL,Logistics NAC
+BFL,Logistics NAC
+BWI,Logistics NAC
+CAK,Logistics NAC
+CHS,Logistics NAC
+CJS,Logistics NAC
+CLT,Logistics NAC
+CUU,Logistics NAC
+CVG,Logistics NAC
+DEN,Logistics NAC
+ELP,Logistics NAC
+EWR,Logistics NAC
+IND,Logistics NAC
+JAX,Logistics NAC
+LGB,Logistics NAC
+MDW,Logistics NAC
+MEM,Logistics NAC
+MEX,Logistics NAC
+MTY,Logistics NAC
+OAK,Logistics NAC
+OMA,Logistics NAC
+ONT,Logistics NAC
+ORF,Logistics NAC
+PHX,Logistics NAC
+PTY,Logistics NAC
+RFD,Logistics NAC
+SAV,Logistics NAC
+SDF,Logistics NAC
+SJU,Logistics NAC
+TPA,Logistics NAC
+YHM,Logistics NAC
+YHU,Logistics NAC
+YQR,Logistics NAC
+YTZ,Logistics NAC
+ACH,Loves Alps|
+BHX,Loves Alps|
+BRS,Loves Alps|
+BSL,Loves Alps|
+BZO,Loves Alps|
+EDI,Loves Alps|
+GLA,Loves Alps|
+GVA,Loves Alps|
+INN,Loves Alps|
+LCY,Loves Alps|
+LPL,Loves Alps|
+LTN,Loves Alps|
+MAN,Loves Alps|
+NCL,Loves Alps|
+SEN,Loves Alps|
+STN,Loves Alps|
 ZRH,Loves Alps|
+BRE,Loves Arctic|
+CGN,Loves Arctic|
+DTM,Loves Arctic|
+DUS,Loves Arctic|
+EVE,Loves Arctic|
+FAI,Loves Arctic|
+FMM,Loves Arctic|
+FRA,Loves Arctic|
+GOH,Loves Arctic|
+HAJ,Loves Arctic|
+HAM,Loves Arctic|
+HHN,Loves Arctic|
+KTT,Loves Arctic|
+LBC,Loves Arctic|
+LEJ,Loves Arctic|
+LYR,Loves Arctic|
+RVN,Loves Arctic|
+YFB,Loves Arctic|
+YXY,Loves Arctic|
+YZF,Loves Arctic|
+DPS,Loves Bali x2|
+CUN,Loves Cancun x2|
+CZM,Loves Cancun x2|
+YEG,Loves Cancun x2|
+YHM,Loves Cancun x2|
+YOW,Loves Cancun x2|
+YQB,Loves Cancun x2|
+YUL,Loves Cancun x2|
+YWG,Loves Cancun x2|
+YXU,Loves Cancun x2|
+YXY,Loves Cancun x2|
+YYC,Loves Cancun x2|
+YYZ,Loves Cancun x2|
+AEP,Loves Florianopolis x2|
+COR,Loves Florianopolis x2|
+EZE,Loves Florianopolis x2|
+FLN,Loves Florianopolis x2|
+MDZ,Loves Florianopolis x2|
+ROS,Loves Florianopolis x2|
+CAY,Loves French Antilles|
+FDF,Loves French Antilles|
+FSP,Loves French Antilles|
+GBJ,Loves French Antilles|
+PTP,Loves French Antilles|
+SBH,Loves French Antilles|
+SFG,Loves French Antilles|
+YQB,Loves French Antilles|
+YUL,Loves French Antilles|
+KVA,Loves Kavala x2|
+SOF,Loves Kavala x2|
+PMI,Loves Mallorca x2|
+HKT,Loves Phuket x2|
+BGO,Loves Spain|
+KRS,Loves Spain|
+OSL,Loves Spain|
+RMU,Loves Spain|
+SVG,Loves Spain|
+TRD,Loves Spain|
+TRF,Loves Spain|
+ANR,Loves Tiroler Unterlan x2|
+INN,Loves Tiroler Unterlan x2|
+BRC,Lusophone|
+LUX,Lusophone|
+MCO,Lusophone|
+MIA,Lusophone|
+MPM,Lusophone|
+PVD,Lusophone|
+BUR,Luxury goods
+CDG,Luxury goods
+DXB,Luxury goods
+FCO,Luxury goods
+GVA,Luxury goods
+HAK,Luxury goods
+HKG,Luxury goods
+JFK,Luxury goods
+LCY,Luxury goods
+MIA,Luxury goods
+MXP,Luxury goods
+NRT,Luxury goods
+ORY,Luxury goods
+PVG,Luxury goods
 ZRH,Luxury goods
+BEG,Machinery
+BGY,Machinery
+BHX,Machinery
+BLQ,Machinery
+BTS,Machinery
+BUF,Machinery
+CAN,Machinery
+CSX,Machinery
+CZX,Machinery
+FSZ,Machinery
+GLA,Machinery
+HAJ,Machinery
+HFE,Machinery
+ICT,Machinery
+IND,Machinery
+JAN,Machinery
+JNG,Machinery
+KHV,Machinery
+KTW,Machinery
+KUF,Machinery
+KWJ,Machinery
+KZN,Machinery
+LED,Machinery
+LIN,Machinery
+MKE,Machinery
+PIA,Machinery
+PNQ,Machinery
+STR,Machinery
+TAE,Machinery
+TBZ,Machinery
+UKB,Machinery
+VOG,Machinery
+WAW,Machinery
+WUX,Machinery
+XUZ,Machinery
+YAM,Machinery
+CCK,Malay|
+AEB,Manganese
+BTU,Manganese
+CMG,Manganese
+DNK,Manganese
+GTE,Manganese
+HAU,Manganese
+HNY,Manganese
+IKT,Manganese
+MAB,Manganese
+MVB,Manganese
+NAG,Manganese
+PHE,Manganese
+SIS,Manganese
+TKD,Manganese
+APN,Maple syrup
+BTV,Maple syrup
+CWA,Maple syrup
+GRB,Maple syrup
+IMT,Maple syrup
+IWD,Maple syrup
+MSS,Maple syrup
+RHI,Maple syrup
+SLK,Maple syrup
+YBG,Maple syrup
+YHU,Maple syrup
+YQB,Maple syrup
+YRJ,Maple syrup
+ATH,Marine
+AUH,Marine
+BES,Marine
+BGO,Marine
+BHY,Marine
+BPE,Marine
+CPH,Marine
+GDN,Marine
+GLA,Marine
+GOT,Marine
+HAM,Marine
+IXE,Marine
+LCA,Marine
+LIS,Marine
+LPL,Marine
+MNL,Marine
+MSY,Marine
+NCL,Marine
+NNM,Marine
+NTE,Marine
+NVT,Marine
+ORF,Marine
+OSL,Marine
+PTY,Marine
+REC,Marine
+SKG,Marine
+UPG,Marine
+YHZ,Marine
+YYJ,Marine
+AGA,Mediterranean Ag
+ALC,Mediterranean Ag
+ATH,Mediterranean Ag
+BFL,Mediterranean Ag
+BRI,Mediterranean Ag
+CAG,Mediterranean Ag
+COV,Mediterranean Ag
+CPT,Mediterranean Ag
+CTA,Mediterranean Ag
+DBV,Mediterranean Ag
+EDO,Mediterranean Ag
+FAO,Mediterranean Ag
+FEZ,Mediterranean Ag
+GRO,Mediterranean Ag
+GRX,Mediterranean Ag
+LIS,Mediterranean Ag
+NAP,Mediterranean Ag
+ONT,Mediterranean Ag
+PMO,Mediterranean Ag
+PRN,Mediterranean Ag
+PSR,Mediterranean Ag
+RBA,Mediterranean Ag
+RMO,Mediterranean Ag
+SBA,Mediterranean Ag
+SCK,Mediterranean Ag
+SKG,Mediterranean Ag
+SMF,Mediterranean Ag
+SVQ,Mediterranean Ag
+TUN,Mediterranean Ag
+VLC,Mediterranean Ag
+AAE,Mediterranean marine
+AXD,Mediterranean marine
+BCN,Mediterranean marine
+BDS,Mediterranean marine
+BOJ,Mediterranean marine
+BUZ,Mediterranean marine
+CKZ,Mediterranean marine
+CND,Mediterranean marine
+HTY,Mediterranean marine
+KVA,Mediterranean marine
+LMP,Mediterranean marine
+MIR,Mediterranean marine
+ODS,Mediterranean marine
+ORN,Mediterranean marine
+RJK,Mediterranean marine
+TIV,Mediterranean marine
+TRS,Mediterranean marine
+TZX,Mediterranean marine
+VCE,Mediterranean marine
+VLC,Mediterranean marine
+GEA,Melanesia
+HIR,Melanesia
+INU,Melanesia
+LBS,Melanesia
+NAN,Melanesia
+NOU,Melanesia
+POM,Melanesia
+RAB,Melanesia
+RAB,Melanesia
+SON,Melanesia
+SON,Melanesia
+SUV,Melanesia
+TAH,Melanesia
+VLI,Melanesia
+GUM,Micronesia
+HNL,Micronesia
+KSA,Micronesia
+MAJ,Micronesia
+PNI,Micronesia
+ROR,Micronesia
+SPN,Micronesia
+TKK,Micronesia
+TRW,Micronesia
+TTK,Micronesia
+YAP,Micronesia
+AOR,Monsoon Ag
+BAR,Monsoon Ag
+DAC,Monsoon Ag
+HUI,Monsoon Ag
+ILO,Monsoon Ag
+IXR,Monsoon Ag
+JSR,Monsoon Ag
+LKO,Monsoon Ag
+MDL,Monsoon Ag
+PNK,Monsoon Ag
+RGN,Monsoon Ag
+SAI,Monsoon Ag
+SKT,Monsoon Ag
+VCA,Monsoon Ag
+VTZ,Monsoon Ag
+BZN,Mountaineering
+CUZ,Mountaineering
+DEN,Mountaineering
+FTE,Mountaineering
+GIL,Mountaineering
+INN,Mountaineering
+JAC,Mountaineering
+JRO,Mountaineering
+KDU,Mountaineering
+KTM,Mountaineering
+LUA,Mountaineering
+MDZ,Mountaineering
+PNT,Mountaineering
+PUQ,Mountaineering
+SLC,Mountaineering
+USH,Mountaineering
+DCA,NA Capitols|
+IAD,NA Capitols|
+MEX,NA Capitols|
+NLU,NA Capitols|
+YOW,NA Capitols|
+BUD,New energy
+CTU,New energy
+CZX,New energy
+FRA,New energy
+HFE,New energy
+HGH,New energy
+HND,New energy
+HUZ,New energy
+NGB,New energy
+NNG,New energy
+PKX,New energy
+SHA,New energy
+SHE,New energy
+SJW,New energy
+SZX,New energy
+WUX,New energy
+BPN,Nickel
+CGQ,Nickel
+DME,Nickel
+HOG,Nickel
+KGI,Nickel
+KXB,Nickel
+LNO,Nickel
+MDC,Nickel
+NSK,Nickel
+SOQ,Nickel
+SUB,Nickel
+TMC,Nickel
+TSV,Nickel
+UPG,Nickel
+YDP,Nickel
+YMM,Nickel
+YSB,Nickel
+YTS,Nickel
+YWB,Nickel
+ABD,NIOC
+AWZ,NIOC
+BDH,NIOC
+BUZ,NIOC
+DOH,NIOC
+GCH,NIOC
+IKA,NIOC
+KHK,NIOC
+MRX,NIOC
+SXI,NIOC
+SYZ,NIOC
+THR,NIOC
+OSL,Nordic Ski 2 City x2
+TRD,Nordic Ski 2 City x2
+ARK,Nordic|
+ATW,Nordic|
+AYT,Nordic|
+BIS,Nordic|
+BOJ,Nordic|
+BRE,Nordic|
+CHQ,Nordic|
+DLH,Nordic|
+DLM,Nordic|
+EAU,Nordic|
+FAR,Nordic|
+FSD,Nordic|
+GFK,Nordic|
+HAJ,Nordic|
+HER,Nordic|
+HKT,Nordic|
+HRG,Nordic|
+KBV,Nordic|
+KGS,Nordic|
+LBC,Nordic|
+LCA,Nordic|
+LPA,Nordic|
+MKE,Nordic|
+MSP,Nordic|
+MWZ,Nordic|
+PFO,Nordic|
+PMI,Nordic|
+POA,Nordic|
+RHO,Nordic|
+RST,Nordic|
+SMI,Nordic|
+VAR,Nordic|
+BFI,Northwest Passage
+CXH,Northwest Passage
+FRD,Northwest Passage
+SGY,Northwest Passage
+YCD,Northwest Passage
+YPR,Northwest Passage
+YYJ,Northwest Passage
+YZT,Northwest Passage
+CDG,Nuclear energy
+CFR,Nuclear energy
+CLT,Nuclear energy
+DME,Nuclear energy
+GOJ,Nuclear energy
+HEL,Nuclear energy
+HUZ,Nuclear energy
+IDA,Nuclear energy
+KIJ,Nuclear energy
+LYG,Nuclear energy
+LYS,Nuclear energy
+MMX,Nuclear energy
+PEK,Nuclear energy
+PUS,Nuclear energy
+SDJ,Nuclear energy
+TYS,Nuclear energy
+VIE,Nuclear energy
+VOZ,Nuclear energy
+YYZ,Nuclear energy
+AMS,Offshore finance
+BDA,Offshore finance
+DUB,Offshore finance
+EIS,Offshore finance
+GCI,Offshore finance
+GCM,Offshore finance
+GIB,Offshore finance
+GVA,Offshore finance
+HKG,Offshore finance
+IOM,Offshore finance
+JER,Offshore finance
+JRA,Offshore finance
+LCA,Offshore finance
+LCY,Offshore finance
+LUX,Offshore finance
+LW0,Offshore finance
+MLA,Offshore finance
+NAS,Offshore finance
+PTY,Offshore finance
+SDB,Offshore finance
+ABJ,Offshore oil
+ABZ,Offshore oil
+BGO,Offshore oil
+BKI,Offshore oil
+BVE,Offshore oil
+BWN,Offshore oil
+CAB,Offshore oil
+CRP,Offshore oil
+DIL,Offshore oil
+DLA,Offshore oil
+DMM,Offshore oil
+DOH,Offshore oil
+DPS,Offshore oil
+DRW,Offshore oil
+GIG,Offshore oil
+GYD,Offshore oil
+HOU,Offshore oil
+KRW,Offshore oil
+LBV,Offshore oil
+LFT,Offshore oil
+MCT,Offshore oil
+MIR,Offshore oil
+MOB,Offshore oil
+MYY,Offshore oil
+PER,Offshore oil
+PHC,Offshore oil
+PHE,Offshore oil
+PNR,Offshore oil
+PNS,Offshore oil
+POG,Offshore oil
+RTB,Offshore oil
+SBA,Offshore oil
+SSA,Offshore oil
+SYY,Offshore oil
+SZA,Offshore oil
+TKD,Offshore oil
+TRZ,Offshore oil
+TUN,Offshore oil
+UPG,Offshore oil
+VER,Offshore oil
+VPS,Offshore oil
+AJF,Oil
+ALA,Oil
+ALG,Oil
+AMS,Oil
+ASB,Oil
+BPN,Oil
+BSR,Oil
+CCS,Oil
+CRZ,Oil
+DAL,Oil
+DFW,Oil
+DIB,Oil
+DMM,Oil
+DXB,Oil
+DYU,Oil
+EBL,Oil
+ELP,Oil
+FCO,Oil
+GEO,Oil
+GIG,Oil
+GNJ,Oil
+GUW,Oil
+HOU,Oil
+IAH,Oil
+IKA,Oil
+KHS,Oil
+KRT,Oil
+KWI,Oil
+LOS,Oil
+MAK,Oil
+MCT,Oil
+MJI,Oil
+NBJ,Oil
+NQN,Oil
+OKC,Oil
+PKU,Oil
+PLM,Oil
+QRW,Oil
+SSG,Oil
+SUB,Oil
+SVO,Oil
+TUL,Oil
+URA,Oil
+YMM,Oil
+YYC,Oil
+BIL,Oil fracking
+BUF,Oil fracking
+COD,Oil fracking
+CPD,Oil fracking
+DAL,Oil fracking
+DIK,Oil fracking
+DRO,Oil fracking
+HOB,Oil fracking
+HOU,Oil fracking
+IND,Oil fracking
+IPT,Oil fracking
+LBA,Oil fracking
+LNK,Oil fracking
+LRD,Oil fracking
+MAF,Oil fracking
+MDZ,Oil fracking
+MOT,Oil fracking
+NQN,Oil fracking
+RKS,Oil fracking
+TUL,Oil fracking
+YBY,Oil fracking
+YEG,Oil fracking
+YMM,Oil fracking
+YPE,Oil fracking
+YQU,Oil fracking
+YYC,Oil fracking
+AUH,Oil refining
+BPT,Oil refining
+BTR,Oil refining
+CYI,Oil refining
+DQM,Oil refining
+DSS,Oil refining
+GIZ,Oil refining
+HOU,Oil refining
+JGA,Oil refining
+KCH,Oil refining
+KRT,Oil refining
+KWI,Oil refining
+KZO,Oil refining
+MCX,Oil refining
+MWX,Oil refining
+OTP,Oil refining
+PLQ,Oil refining
+POS,Oil refining
+PZU,Oil refining
+UFA,Oil refining
+YNB,Oil refining
+AKJ,Paper & furniture
+AVL,Paper & furniture
+BOI,Paper & furniture
+BRD,Paper & furniture
+CCP,Paper & furniture
+CEE,Paper & furniture
+CWB,Paper & furniture
+EAU,Paper & furniture
+FKB,Paper & furniture
+FMO,Paper & furniture
+GRR,Paper & furniture
+GSO,Paper & furniture
+IXA,Paper & furniture
+IXR,Paper & furniture
+KHH,Paper & furniture
+KUN,Paper & furniture
+LYA,Paper & furniture
+MCP,Paper & furniture
+MQT,Paper & furniture
+MXX,Paper & furniture
+PDT,Paper & furniture
+PES,Paper & furniture
+PNS,Paper & furniture
+RIX,Paper & furniture
+SAL,Paper & furniture
+SBW,Paper & furniture
+SHE,Paper & furniture
+SVG,Paper & furniture
+UIO,Paper & furniture
+XAP,Paper & furniture
+YKA,Paper & furniture
+KBL,Pashto|
+KDH,Pashto|
+PEW,Pashto|
+UET,Pashto|
+BLA,PDVSA
+CCS,PDVSA
+CUM,PDVSA
+DME,PDVSA
+MAR,PDVSA
+MUN,PDVSA
+PMV,PDVSA
+BGF,Peacekeeping
+CMN,Peacekeeping
+DAC,Peacekeeping
+DSS,Peacekeeping
+FIH,Peacekeeping
+JUB,Peacekeeping
+KGL,Peacekeeping
+KTM,Peacekeeping
+NBO,Peacekeeping
+TNR,Peacekeeping
+ABY,Peanuts
+BJL,Peanuts
+COR,Peanuts
+DHN,Peanuts
+EBD,Peanuts
+HSR,Peanuts
+KAN,Peanuts
+LLW,Peanuts
+LYI,Peanuts
+MII,Peanuts
+OXB,Peanuts
+VII,Peanuts
+CME,Pemex
+CPE,Pemex
+CTM,Pemex
+MEX,Pemex
+MID,Pemex
+MTT,Pemex
+REX,Pemex
+TAM,Pemex
+VER,Pemex
+VSA,Pemex
+BSB,Petrobras
+BVB,Petrobras
+CFB,Petrobras
+FOR,Petrobras
+GIG,Petrobras
+IOS,Petrobras
+MAO,Petrobras
+MCZ,Petrobras
+MEA,Petrobras
+NAT,Petrobras
+PVH,Petrobras
+REC,Petrobras
+SLZ,Petrobras
+SSA,Petrobras
+VIX,Petrobras
+AHB,Petrochemicals
+ALG,Petrochemicals
+ANR,Petrochemicals
+AVV,Petrochemicals
+BHI,Petrochemicals
+BUZ,Petrochemicals
+CTG,Petrochemicals
+DMM,Petrochemicals
+DTM,Petrochemicals
+HUZ,Petrochemicals
+IAH,Petrochemicals
+IWK,Petrochemicals
+JED,Petrochemicals
+JGA,Petrochemicals
+KIX,Petrochemicals
+KUA,Petrochemicals
+LCH,Petrochemicals
+LGB,Petrochemicals
+LJU,Petrochemicals
+MAA,Petrochemicals
+MED,Petrochemicals
+MHG,Petrochemicals
+MSY,Petrochemicals
+NBC,Petrochemicals
+NGB,Petrochemicals
+OMS,Petrochemicals
+PVG,Petrochemicals
+REC,Petrochemicals
+REU,Petrochemicals
+RTM,Petrochemicals
+SHV,Petrochemicals
+SSA,Petrochemicals
+TSN,Petrochemicals
+UFA,Petrochemicals
+USN,Petrochemicals
+UTP,Petrochemicals
+VCP,Petrochemicals
+VER,Petrochemicals
+YNB,Petrochemicals
+BGW,PetroChina
+CIT,PetroChina
+DQA,PetroChina
+DSN,PetroChina
+KRL,PetroChina
+KRY,PetroChina
+LHW,PetroChina
+LXA,PetroChina
+MOG,PetroChina
+NDG,PetroChina
+NQZ,PetroChina
+PKX,PetroChina
+ROK,PetroChina
+SCO,PetroChina
+URC,PetroChina
+YBP,PetroChina
+YMM,PetroChina
+AMD,Pharma
+AMM,Pharma
+BOM,Pharma
+BRU,Pharma
+BSL,Pharma
+CGH,Pharma
+CJB,Pharma
+CPH,Pharma
+DRS,Pharma
+DUB,Pharma
+EIN,Pharma
+EWR,Pharma
+FRA,Pharma
+GVA,Pharma
+HRB,Pharma
+HYD,Pharma
+ICN,Pharma
+IND,Pharma
+IXM,Pharma
+KWE,Pharma
+LGW,Pharma
+LJU,Pharma
+LYS,Pharma
+MAA,Pharma
+MAN,Pharma
+MEL,Pharma
+ODE,Pharma
+ORK,Pharma
+PHL,Pharma
+PVD,Pharma
+RDU,Pharma
+RKT,Pharma
+SHA,Pharma
+SIN,Pharma
+SJU,Pharma
+TNA,Pharma
+TRV,Pharma
+VGA,Pharma
 ZRH,Pharma
-ZRH,Professional services
-ZRH,Robotics
-ZTH,Anglophone|
-ZTH,Dutch|
+HNL,PIF|
+HNM,PIF|
+ITO,PIF|
+KOA,PIF|
+LIH,PIF|
+LNY,PIF|
+OGG,PIF|
+MHD,Pilgrimage x2|
+NJF,Pilgrimage x2|
+ELS,Platinum
+HRE,Platinum
+JNB,Platinum
+MBD,Platinum
+MQT,Platinum
+NSK,Platinum
+PTU,Platinum
+YQT,Platinum
+YSB,Platinum
+YWB,Platinum
+CHC,Polar research
+CPC,Polar research
+EG1,Polar research
+EG9,Polar research
+EGA,Polar research
+EGR,Polar research
+LYR,Polar research
+NSP,Polar research
+NZF,Polar research
+PET,Polar research
+PUQ,Polar research
+QAO,Polar research
+SFJ,Polar research
+TOS,Polar research
+USH,Polar research
+YAQ,Polar research
+YCB,Polar research
+YEU,Polar research
+AYT,Polish|
+BJV,Polish|
+BOJ,Polish|
+CHQ,Polish|
+CND,Polish|
+HRG,Polish|
+NOS,Polish|
+PUJ,Polish|
+RHO,Polish|
+SSH,Polish|
+VAR,Polish|
 ZTH,Polish|
+AIT,Polynesia
+AKL,Polynesia
+APW,Polynesia
+BOB,Polynesia
+CXI,Polynesia
+FUN,Polynesia
+HNL,Polynesia
+IUE,Polynesia
+MOZ,Polynesia
+NLK,Polynesia
+NTT,Polynesia
+PPG,Polynesia
+PPT,Polynesia
+RAR,Polynesia
+TBU,Polynesia
+CGH,Ponte Aérea x2
+SDU,Ponte Aérea x2
+AGR,Potato
+ATQ,Potato
+AVA,Potato
+BOI,Potato
+CUZ,Potato
+GRQ,Potato
+HAJ,Potato
+IXB,Potato
+JUL,Potato
+LHW,Potato
+LKO,Potato
+OST,Potato
+PAT,Potato
+POZ,Potato
+PSC,Potato
+PZI,Potato
+UCB,Potato
+YYG,Potato
+ZAT,Potato
+AXM,Poultry
+BKK,Poultry
+CIX,Poultry
+DLC,Poultry
+JAN,Poultry
+LDB,Poultry
+LIT,Poultry
+POA,Poultry
+POZ,Poultry
+QRO,Poultry
+RDU,Poultry
+SBY,Poultry
+SGF,Poultry
+TAO,Poultry
+WEF,Poultry
+XAP,Poultry
+XNA,Poultry
+ATL,Professional services
+BOM,Professional services
+BOS,Professional services
+BRU,Professional services
+CDG,Professional services
+DCA,Professional services
+DFW,Professional services
+DUB,Professional services
+DXB,Professional services
+EWR,Professional services
+FRA,Professional services
+HKG,Professional services
+IAH,Professional services
+JFK,Professional services
+LCY,Professional services
+LHR,Professional services
+MUC,Professional services
+ORD,Professional services
+PVG,Professional services
+SFO,Professional services
+SYD,Professional services
+ZRH,Professional services
+BOG,Puente Aéreo x2
+CLO,Puente Aéreo x2
+MDE,Puente Aéreo x2
+ACT,Ranching
+AMA,Ranching
+ARM,Ranching
+CGB,Ranching
+CLV,Ranching
+COR,Ranching
+CRP,Ranching
+DAL,Ranching
+GRK,Ranching
+GYN,Ranching
+HLD,Ranching
+JRO,Ranching
+LBB,Ranching
+LBL,Ranching
+MGA,Ranching
+MVD,Ranching
+NDJ,Ranching
+OMA,Ranching
+RGA,Ranching
+ROS,Ranching
+RSA,Ranching
+SAT,Ranching
+SPS,Ranching
+YBR,Ranching
+YQL,Ranching
+YQR,Ranching
+YWG,Ranching
+BAV,Rare earths
+BMO,Rare earths
+COK,Rare earths
+DBO,Rare earths
+FBM,Rare earths
+GOM,Rare earths
+HLD,Rare earths
+HRE,Rare earths
+JNB,Rare earths
+KGI,Rare earths
+KME,Rare earths
+KMG,Rare earths
+LER,Rare earths
+LLF,Rare earths
+MXZ,Rare earths
+XIC,Rare earths
+YXU,Rare earths
+ZNE,Rare earths
 ZUH,Rare earths
-ZUH,Sinopec
-ZUH,Tropical fishing
-ZUH,Wind energy
-ZYI,Baijiu
+CSX,Red tourism
+ENY,Red tourism
+IXY,Red tourism
+JGS,Red tourism
+KHN,Red tourism
+KOW,Red tourism
+LCX,Red tourism
+LZO,Red tourism
+NAO,Red tourism
+SJW,Red tourism
+TYN,Red tourism
 ZYI,Red tourism
-ZYL,Fabrics
+AMD,Regional banking APAC
+BKK,Regional banking APAC
+BOM,Regional banking APAC
+DEL,Regional banking APAC
+DME,Regional banking APAC
+MRU,Regional banking APAC
+NQZ,Regional banking APAC
+PUS,Regional banking APAC
+SZX,Regional banking APAC
+TAO,Regional banking APAC
+TFU,Regional banking APAC
+TPE,Regional banking APAC
+ATL,Regional banking US
+BNA,Regional banking US
+BOS,Regional banking US
+BUF,Regional banking US
+CLE,Regional banking US
+CLT,Regional banking US
+CMH,Regional banking US
+CVG,Regional banking US
+DEN,Regional banking US
+DFW,Regional banking US
+DTW,Regional banking US
+FSD,Regional banking US
+ILG,Regional banking US
+JAX,Regional banking US
+LAX,Regional banking US
+LGA,Regional banking US
+MDW,Regional banking US
+MKE,Regional banking US
+MSP,Regional banking US
+ORK,Regional banking US
+PHL,Regional banking US
+RIC,Regional banking US
+SFO,Regional banking US
+SLC,Regional banking US
+STL,Regional banking US
+ABQ,Renewables
+AUS,Renewables
+BER,Renewables
+BNE,Renewables
+CPH,Renewables
+DEN,Renewables
+DWD,Renewables
+HAM,Renewables
+ICN,Renewables
+NTE,Renewables
+OAK,Renewables
+OSL,Renewables
+PHX,Renewables
+PSP,Renewables
+SVQ,Renewables
+TOS,Renewables
+VNO,Renewables
+YHZ,Renewables
+YXU,Renewables
+AVA,Rice
+BZL,Rice
+CXR,Rice
+DMK,Rice
+DYG,Rice
+GLH,Rice
+HAK,Rice
+HYN,Rice
+JBR,Rice
+JGS,Rice
+KCZ,Rice
+KWL,Rice
+NGO,Rice
+RQY,Rice
+SMF,Rice
+SWA,Rice
+TOY,Rice
+UKB,Rice
+VTZ,Rice
+ITM,Robotics
+KTW,Robotics
+MUC,Robotics
+MXP,Robotics
+NGS,Robotics
+NUE,Robotics
+PVG,Robotics
+STR,Robotics
+SZX,Robotics
+TSN,Robotics
+VIE,Robotics
+WUH,Robotics
+ZRH,Robotics
+ARH,Rosneft
+HTA,Rosneft
+IKT,Rosneft
+KJA,Rosneft
+KRO,Rosneft
+MMK,Rosneft
+MQF,Rosneft
+NSK,Rosneft
+NYM,Rosneft
+OHH,Rosneft
+OMS,Rosneft
+PEE,Rosneft
+VKO,Rosneft
+ABJ,Rubber
+AOR,Rubber
+CAK,Rubber
+COK,Rubber
+DAD,Rubber
+HDY,Rubber
+HKT,Rubber
+JHB,Rubber
+KUL,Rubber
+MAO,Rubber
+PDG,Rubber
+PEN,Rubber
+PKU,Rubber
+PLM,Rubber
+PNK,Rubber
+ROB,Rubber
+TRV,Rubber
+URT,Rubber
+BGI,Rum
+BQN,Rum
+CEB,Rum
+FDF,Rum
+GEO,Rum
+HAV,Rum
+KIN,Rum
+MRU,Rum
+SJU,Rum
+AYT,Russian Vacay x2|
+CXR,Russian Vacay x2|
+DME,Russian Vacay x2|
+HKT,Russian Vacay x2|
+HRG,Russian Vacay x2|
+KHV,Russian Vacay x2|
+KJA,Russian Vacay x2|
+KUF,Russian Vacay x2|
+KZN,Russian Vacay x2|
+LCA,Russian Vacay x2|
+LED,Russian Vacay x2|
+MLE,Russian Vacay x2|
+MRV,Russian Vacay x2|
+NNM,Russian Vacay x2|
+RKT,Russian Vacay x2|
+SLY,Russian Vacay x2|
+SSH,Russian Vacay x2|
+SVO,Russian Vacay x2|
+SVX,Russian Vacay x2|
+SYX,Russian Vacay x2|
+TBS,Russian Vacay x2|
+UFA,Russian Vacay x2|
+USK,Russian Vacay x2|
+UTP,Russian Vacay x2|
+VKO,Russian Vacay x2|
+VKT,Russian Vacay x2|
+VRA,Russian Vacay x2|
+AYT,Russian|
+BOJ,Russian|
+GOI,Russian|
+LCA,Russian|
+QAO,Russian|
+VAR,Russian|
+GOM,Rwanda Rundi|
+FAI,Santa
+RVN,Santa
+SFJ,Santa
+TRF,Santa
+YFB,Santa
+ABJ,Sapeur Network
+BGF,Sapeur Network
+DSS,Sapeur Network
+FBM,Sapeur Network
+FIH,Sapeur Network
+FKI,Sapeur Network
+ANF,Science megastructure
+CJC,Science megastructure
+GVA,Science megastructure
+ITO,Science megastructure
+NGQ,Science megastructure
+PSC,Science megastructure
+RAP,Science megastructure
+SPC,Science megastructure
+CCP,Seafood
+GUB,Seafood
+GUR,Seafood
+GZO,Seafood
+HBA,Seafood
+HSN,Seafood
+IZO,Seafood
+KCZ,Seafood
+KHH,Seafood
+KOJ,Seafood
+MDQ,Seafood
+MIM,Seafood
+MSJ,Seafood
+MZG,Seafood
+MZT,Seafood
+NSN,Seafood
+OKI,Seafood
+PDG,Seafood
+PLO,Seafood
+PMC,Seafood
+PSG,Seafood
+PUS,Seafood
+SON,Seafood
+SUV,Seafood
+WEH,Seafood
+WLG,Seafood
+YAP,Seafood
+YNT,Seafood
+ALB,Semiconductors
+AMS,Semiconductors
+AUS,Semiconductors
+BOI,Semiconductors
+BSL,Semiconductors
+DFW,Semiconductors
+DRS,Semiconductors
+EIN,Semiconductors
+ICN,Semiconductors
+KIX,Semiconductors
+KMJ,Semiconductors
+NRT,Semiconductors
+PDT,Semiconductors
+PEN,Semiconductors
+PHX,Semiconductors
+RMQ,Semiconductors
+SHA,Semiconductors
+SIN,Semiconductors
+SJC,Semiconductors
+SZX,Semiconductors
+TFU,Semiconductors
+TLV,Semiconductors
+TPE,Semiconductors
+TSA,Semiconductors
+TSN,Semiconductors
+WUH,Semiconductors
+XIY,Semiconductors
+AAT,Sheep
+BHI,Sheep
+CIT,Sheep
+CVQ,Sheep
+DBO,Sheep
+FAE,Sheep
+IVC,Sheep
+LXA,Sheep
+MKR,Sheep
+NOC,Sheep
+NPE,Sheep
+PUQ,Sheep
+RGL,Sheep
+SJT,Sheep
+SYZ,Sheep
+VAN,Sheep
+VLY,Sheep
+WGA,Sheep
+XIL,Sheep
+BGW,Shia|
+BSR,Shia|
+DAM,Shia|
+HRG,Shia|
+HYD,Shia|
+ISU,Shia|
+LKO,Shia|
+NJF,Shia|
+RDP,Shia|
+SAH,Shia|
+BTH,Shipbuilding
+DLC,Shipbuilding
+GOA,Shipbuilding
+HEL,Shipbuilding
+HGH,Shipbuilding
+LED,Shipbuilding
+MOB,Shipbuilding
+NGS,Shipbuilding
+NTE,Shipbuilding
+NTG,Shipbuilding
+OKA,Shipbuilding
+PUS,Shipbuilding
+SHA,Shipbuilding
+TAO,Shipbuilding
+USN,Shipbuilding
+YTY,Shipbuilding
+ZOS,Shipbuilding
+ALA,Sinopec
+CAN,Sinopec
+DLC,Sinopec
+DOY,Sinopec
+JHG,Sinopec
+LOS,Sinopec
+NBJ,Sinopec
+NKG,Sinopec
+PEK,Sinopec
+SYX,Sinopec
+WUH,Sinopec
+ZHA,Sinopec
+ZUH,Sinopec
+BWN,Sinophone|
+BUR,SoCal NoCal
+LAX,SoCal NoCal
+LGB,SoCal NoCal
+OAK,SoCal NoCal
+RNO,SoCal NoCal
+SAN,SoCal NoCal
+SBA,SoCal NoCal
+SBD,SoCal NoCal
+SFO,SoCal NoCal
+SJC,SoCal NoCal
+SMF,SoCal NoCal
+SNA,SoCal NoCal
+STS,SoCal NoCal
+ARN,Software
+AUS,Software
+BLR,Software
+BOS,Software
+BVA,Software
+CAN,Software
+CDG,Software
+DEN,Software
+DLC,Software
+EWR,Software
+FUK,Software
+GDL,Software
+HGH,Software
+HYD,Software
+IAD,Software
+IAH,Software
+IXC,Software
+KRK,Software
+LGA,Software
+LTN,Software
+LYS,Software
+NKG,Software
+NRT,Software
+ORH,Software
+OVB,Software
+PDX,Software
+PIT,Software
+SEA,Software
+SFO,Software
+SJC,Software
+SOF,Software
+SVO,Software
+TLV,Software
+TPA,Software
+TRV,Software
+XIY,Software
+YQB,Software
+YUL,Software
+YVR,Software
+YYZ,Software
+DIR,Somali|
+GDE,Somali|
+JIJ,Somali|
+AGT,Soybeans
+ASU,Soybeans
+BHO,Soybeans
+CGB,Soybeans
+CID,Soybeans
+COU,Soybeans
+DEC,Soybeans
+FSD,Soybeans
+FWA,Soybeans
+GJA,Soybeans
+HEK,Soybeans
+IGU,Soybeans
+JGD,Soybeans
+MDZ,Soybeans
+NAG,Soybeans
+ROS,Soybeans
+SLA,Soybeans
+UDI,Soybeans
+VVI,Soybeans
+YWG,Soybeans
+CAY,Space
+DCA,Space
+HOU,Space
+HSV,Space
+IBR,Space
+JGN,Space
+KOJ,Space
+KZO,Space
+MLB,Space
+PEK,Space
+RJ1,Space
+SVX,Space
+TKG,Space
+TLS,Space
+TNE,Space
+TYN,Space
+VPS,Space
+XIC,Space
+BKI,Spices / Tropical Ag
+BWN,Spices / Tropical Ag
+CCJ,Spices / Tropical Ag
+CNX,Spices / Tropical Ag
+COK,Spices / Tropical Ag
+DAR,Spices / Tropical Ag
+DVO,Spices / Tropical Ag
+HAK,Spices / Tropical Ag
+ILO,Spices / Tropical Ag
+JOG,Spices / Tropical Ag
+KBV,Spices / Tropical Ag
+KMG,Spices / Tropical Ag
+KNO,Spices / Tropical Ag
+KTI,Spices / Tropical Ag
+LPQ,Spices / Tropical Ag
+MIR,Spices / Tropical Ag
+PPP,Spices / Tropical Ag
+PQC,Spices / Tropical Ag
+SDQ,Spices / Tropical Ag
+SJO,Spices / Tropical Ag
+STM,Spices / Tropical Ag
+UTH,Spices / Tropical Ag
+WUZ,Spices / Tropical Ag
+AQP,Spirits
+BDA,Spirits
+GDL,Spirits
+LCY,Spirits
+LRH,Spirits
+LSC,Spirits
+OAX,Spirits
+ORY,Spirits
+SDF,Spirits
+SYD,Spirits
+XRY,Spirits
+YUL,Spirits
+ASP,Spirituality
+AVL,Spirituality
+BNK,Spirituality
+CTU,Spirituality
+CUZ,Spirituality
+DED,Spirituality
+EUG,Spirituality
+FLG,Spirituality
+GAY,Spirituality
+GOA,Spirituality
+HSG,Spirituality
+KMI,Spirituality
+KOJ,Spirituality
+KTM,Spirituality
+LEH,Spirituality
+LUA,Spirituality
+LXA,Spirituality
+NTQ,Spirituality
+OGD,Spirituality
+PKR,Spirituality
+TIR,Spirituality
+TXN,Spirituality
+VNS,Spirituality
+YCD,Spirituality
+YLW,Spirituality
+AOG,Steel
+AWZ,Steel
+BBI,Steel
+BIO,Steel
+CEE,Steel
+CGK,Steel
+CNF,Steel
+DUS,Steel
+FUG,Steel
+HDG,Steel
+HIJ,Steel
+HMI,Steel
+IFN,Steel
+IXR,Steel
+JGN,Steel
+KHH,Steel
+KPO,Steel
+KSC,Steel
+LFQ,Steel
+LIM,Steel
+NKG,Steel
+RIZ,Steel
+RPR,Steel
+RSU,Steel
+SHA,Steel
+TAE,Steel
+TSN,Steel
+TVS,Steel
+VTZ,Steel
+WUH,Steel
+YHM,Steel
+AZS,Sugar
+BDB,Sugar
+BRX,Sugar
+CGB,Sugar
+CNS,Sugar
+CNX,Sugar
+GYN,Sugar
+HAV,Sugar
+IXG,Sugar
+IXU,Sugar
+JBQ,Sugar
+JLR,Sugar
+KWL,Sugar
+LPT,Sugar
+LRM,Sugar
+MCZ,Sugar
+MKY,Sugar
+NNG,Sugar
+PNQ,Sugar
+PPB,Sugar
+PPP,Sugar
+RUN,Sugar
+SCU,Sugar
+TAC,Sugar
+UDR,Sugar
+VRA,Sugar
+XMN,Sugar
+ZHA,Sugar
+AGX,Sunni|
+AKU,Sunni|
+BCU,Sunni|
+BEK,Sunni|
+BHO,Sunni|
+BHX,Sunni|
+BLR,Sunni|
+BOM,Sunni|
+CCJ,Sunni|
+CCU,Sunni|
+DEL,Sunni|
+DKA,Sunni|
+ECN,Sunni|
+GAU,Sunni|
+GBI,Sunni|
+GMO,Sunni|
+GRV,Sunni|
+HTN,Sunni|
+HYD,Sunni|
+IGT,Sunni|
+INC,Sunni|
+IXB,Sunni|
+IXJ,Sunni|
+IXL,Sunni|
+IXS,Sunni|
+IXU,Sunni|
+JRH,Sunni|
+JSA,Sunni|
+KAN,Sunni|
+KHG,Sunni|
+KZN,Sunni|
+LKO,Sunni|
+MCX,Sunni|
+MRV,Sunni|
+MZS,Sunni|
+NAL,Sunni|
+NBC,Sunni|
+NDC,Sunni|
+NMI,Sunni|
+QSZ,Sunni|
+SHL,Sunni|
+SKO,Sunni|
+SVO,Sunni|
+SXR,Sunni|
+UFA,Sunni|
+URC,Sunni|
+UUA,Sunni|
+ZNZ,Sunni|
+BIQ,Surfing
+BNE,Surfing
+BTJ,Surfing
+DPS,Surfing
+FLN,Surfing
+HNL,Surfing
+HUI,Surfing
+HUX,Surfing
+IAO,Surfing
+KCT,Surfing
+KOA,Surfing
+MRY,Surfing
+NAN,Surfing
+NOU,Surfing
+NQY,Surfing
+NTL,Surfing
+OGG,Surfing
+OOL,Surfing
+PLZ,Surfing
+PTF,Surfing
+PVR,Surfing
+PXM,Surfing
+VIL,Surfing
+MHQ,Swedish|
+TKU,Swedish|
+VAA,Swedish|
+ARH,Taiga
+HTA,Taiga
+IKT,Taiga
+KHV,Taiga
+KJA,Taiga
+NUX,Taiga
+TLY,Taiga
+UCT,Taiga
+VVO,Taiga
+ISG,Taiwan Vacay x2|
+MMY,Taiwan Vacay x2|
+OKA,Taiwan Vacay x2|
+SHI,Taiwan Vacay x2|
+AOG,Tea
+BDO,Tea
+BLZ,Tea
+CCU,Tea
+CEI,Tea
+CGK,Tea
+CGP,Tea
+CJB,Tea
+CMB,Tea
+DAC,Tea
+FOC,Tea
+GAU,Tea
+HAN,Tea
+HYN,Tea
+IXB,Tea
+IXS,Tea
+KJT,Tea
+NBO,Tea
+POS,Tea
+RAS,Tea
+TCZ,Tea
+YIA,Tea
 ZYL,Tea
+ANR,Telco
+ARN,Telco
+BER,Telco
+BLR,Telco
+BOM,Telco
+CIA,Telco
+DEN,Telco
+DFW,Telco
+FRA,Telco
+GRU,Telco
+HEL,Telco
+HKG,Telco
+HND,Telco
+JNB,Telco
+LGA,Telco
+LHR,Telco
+MAD,Telco
+MCI,Telco
+MEX,Telco
+NMI,Telco
+PKX,Telco
+RDU,Telco
+SFO,Telco
+SIN,Telco
+SZX,Telco
+TLL,Telco
+YYC,Telco
+AMD,Textiles
+BDQ,Textiles
+BFS,Textiles
+BGY,Textiles
+BKI,Textiles
+CJB,Textiles
+DAC,Textiles
+DNZ,Textiles
+IXR,Textiles
+JNZ,Textiles
+KHI,Textiles
+LPQ,Textiles
+MDE,Textiles
+NTG,Textiles
+PDG,Textiles
+SRG,Textiles
+STV,Textiles
+SWA,Textiles
+TAE,Textiles
+TAS,Textiles
+VTZ,Textiles
+WUX,Textiles
+HVD,Throat Singing Circuit
+KYZ,Throat Singing Circuit
+ULO,Throat Singing Circuit
+BGO,Titanium
+CGO,Titanium
+CJB,Titanium
+DRW,Titanium
+FNA,Titanium
+HRB,Titanium
+MPM,Titanium
+PHE,Titanium
+PLZ,Titanium
+SVX,Titanium
+TJM,Titanium
+TRF,Titanium
+TRZ,Titanium
+TYN,Titanium
+UEL,Titanium
+WUZ,Titanium
+XMN,Titanium
+ADB,Tobacco
+BRS,Tobacco
+BSD,Tobacco
+GSO,Tobacco
+HRE,Tobacco
+HZH,Tobacco
+LGW,Tobacco
+LLW,Tobacco
+NNY,Tobacco
+POA,Tobacco
+RIC,Tobacco
+SUB,Tobacco
+VGA,Tobacco
+VRA,Tobacco
+WEF,Tobacco
+BLL,Toys
+HKG,Toys
+LGB,Toys
+NGB,Toys
+NUE,Toys
+PVD,Toys
+SKT,Toys
+TYN,Toys
+WNZ,Toys
+YIW,Toys
+YTY,Toys
+AMQ,Tropical fishing
+CAH,Tropical fishing
+CEB,Tropical fishing
+CNS,Tropical fishing
+CXR,Tropical fishing
+DAD,Tropical fishing
+DPS,Tropical fishing
+DVO,Tropical fishing
+HAK,Tropical fishing
+KBV,Tropical fishing
+MLG,Tropical fishing
+SGN,Tropical fishing
+SWA,Tropical fishing
+UPG,Tropical fishing
+VII,Tropical fishing
+XMN,Tropical fishing
+ZAM,Tropical fishing
+ZUH,Tropical fishing
+ECN,Turkish|
+ABQ,TV / movies
+AKL,TV / movies
+ATL,TV / movies
+BNA,TV / movies
+BOM,TV / movies
+BUD,TV / movies
+BUR,TV / movies
+ICN,TV / movies
+JFK,TV / movies
+LAX,TV / movies
+LHR,TV / movies
+LOS,TV / movies
+MAA,TV / movies
+MEX,TV / movies
+NCE,TV / movies
+PRG,TV / movies
+WLG,TV / movies
+YVR,TV / movies
+ABQ,UFOs
+ALS,UFOs
+AMA,UFOs
+CWB,UFOs
+IGU,UFOs
+INW,UFOs
+LAS,UFOs
+ROW,UFOs
+SLA,UFOs
+SOU,UFOs
+SPX,UFOs
+TAM,UFOs
+TCA,UFOs
+YHU,UFOs
+AOJ,Uranium
+FBM,Uranium
+GUW,Uranium
+HSA,Uranium
+JNB,Uranium
+KHN,Uranium
+KZO,Uranium
+LER,Uranium
+NIM,Uranium
+PER,Uranium
+SCO,Uranium
+SLA,Uranium
+WDH,Uranium
+WVB,Uranium
+YQR,Uranium
+YXE,Uranium
+YXY,Uranium
+AAN,Urdu|
+BWI,US Defense
+CBR,US Defense
+COS,US Defense
+DCA,US Defense
+DEN,US Defense
+DFW,US Defense
+GLA,US Defense
+HSV,US Defense
+ICT,US Defense
+LGB,US Defense
+MCO,US Defense
+MLB,US Defense
+PHX,US Defense
+SAN,US Defense
+THU,US Defense
+TLV,US Defense
+TUS,US Defense
+YOW,US Defense
+YYJ,US Defense
+DCA,US military
+DRW,US military
+ECP,US military
+ELP,US military
+GUM,US military
+HNL,US military
+IAD,US military
+ICN,US military
+IWK,US military
+JAX,US military
+KWA,US military
+MSJ,US military
+OKA,US military
+ORF,US military
+PNS,US military
+PPG,US military
+SAN,US military
+SAT,US military
+SBA,US military
+CLJ,Vampiric
+GHV,Vampiric
+MME,Vampiric
+MSY,Vampiric
+TGM,Vampiric
+ZAG,Vampiric
+ADL,Viticulture
+BHE,Viticulture
+BOD,Viticulture
+BRI,Viticulture
+CCP,Viticulture
+CPT,Viticulture
+FLR,Viticulture
+HLZ,Viticulture
+IAS,Viticulture
+LSC,Viticulture
+MDZ,Viticulture
+MFR,Viticulture
+MPL,Viticulture
+MQL,Viticulture
+NCE,Viticulture
+NPE,Viticulture
+OAK,Viticulture
+OPO,Viticulture
+PSA,Viticulture
+PUQ,Viticulture
+RMO,Viticulture
+SLA,Viticulture
+STS,Viticulture
+SXB,Viticulture
+TBS,Viticulture
+VRN,Viticulture
+WAG,Viticulture
+XRY,Viticulture
+YLW,Viticulture
+ZQN,Viticulture
+GDN,Vodka
+KEJ,Vodka
+LED,Vodka
+MMX,Vodka
+NSK,Vodka
+RTM,Vodka
+ADL,Water
+AGP,Water
+ALC,Water
+ARI,Water
+AUH,Water
+CJC,Water
+CPT,Water
+DMM,Water
+ELP,Water
+HER,Water
+IQQ,Water
+MAA,Water
+MKE,Water
+NAN,Water
+ORN,Water
+PER,Water
+PLZ,Water
+RAK,Water
+RHO,Water
+RUH,Water
+SFA,Water
+SHJ,Water
+SSH,Water
+TLV,Water
+TUS,Water
+WDH,Water
+ABZ,Whiskey
+CHA,Whiskey
+CTS,Whiskey
+DUB,Whiskey
+EDI,Whiskey
+GLA,Whiskey
+ILY,Whiskey
+INV,Whiskey
+ITM,Whiskey
+LEX,Whiskey
+SDF,Whiskey
+AAL,Wind energy
+AAR,Wind energy
+ABZ,Wind energy
+ACK,Wind energy
+ADB,Wind energy
+ALB,Wind energy
+ALO,Wind energy
+AMA,Wind energy
+BGO,Wind energy
+BIO,Wind energy
+BRE,Wind energy
+CRP,Wind energy
+EXT,Wind energy
+GCK,Wind energy
+GDN,Wind energy
+HAM,Wind energy
+HHN,Wind energy
+HUY,Wind energy
+KUV,Wind energy
+MHG,Wind energy
+NGO,Wind energy
+NTG,Wind energy
+NWI,Wind energy
+ORK,Wind energy
+OST,Wind energy
+PUS,Wind energy
+TSN,Wind energy
+TXK,Wind energy
+URC,Wind energy
+YYG,Wind energy
+ZAZ,Wind energy
+ZUH,Wind energy
+BUQ,Zim Connect
+HRE,Zim Connect
+BHQ,Zinc
+BZV,Zinc
+CGI,Zinc
+HVR,Zinc
+IQQ,Zinc
+ISA,Zinc
+LIM,Zinc
+LPB,Zinc
+MCV,Zinc
+OMD,Zinc
+OTZ,Zinc
+SAP,Zinc
+SRE,Zinc
+WTK,Zinc
+BXH,Zinc Eurasia
+CGQ,Zinc Eurasia
+HJJ,Zinc Eurasia
+HSC,Zinc Eurasia
+KER,Zinc Eurasia
+KGF,Zinc Eurasia
+KHG,Zinc Eurasia
+KRR,Zinc Eurasia
+LCX,Zinc Eurasia
+LJG,Zinc Eurasia
+MLX,Zinc Eurasia
+NLT,Zinc Eurasia
+NSK,Zinc Eurasia
+UCT,Zinc Eurasia
+UDR,Zinc Eurasia
+UKK,Zinc Eurasia
+VHM,Zinc Eurasia
+YIN,Zinc Eurasia
+HYD,|QA|Telugu
+TIR,|QA|Telugu
+VGA,|QA|Telugu
+DOH,|QA|Telugu

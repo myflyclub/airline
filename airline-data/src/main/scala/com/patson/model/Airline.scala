@@ -334,6 +334,8 @@ object Airline {
         //reset all campaigns, has to be after manager
         CampaignSource.deleteCampaignsByAirline(airline.id)
 
+        //clear all notifications except GAME_OVER
+        NotificationSource.deleteAllExceptGameOver(airlineId)
 
         //reset notification deduplication state
         AirlineSource.saveNotifiedLevel(airline.id, -1)

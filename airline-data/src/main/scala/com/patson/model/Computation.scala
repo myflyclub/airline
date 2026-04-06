@@ -258,15 +258,13 @@ def constructAffinityText(fromZone : String, toZone : String, fromCountry : Stri
     val amountFromAirplanes = AirplaneSource.loadAirplanesByOwner(airlineId, false).map(Computation.calculateAirplaneSellValue(_).toLong).sum
     val amountFromBases = AirlineSource.loadAirlineBasesByAirline(airlineId).map(_.getValue * 0.2).sum.toLong //only get 20% back
     val amountFromLoans = BankSource.loadLoansByAirline(airlineId).map(_.earlyRepayment(currentCycle) * -1).sum //repay all loans now
-//    val amountFromOilContracts = OilSource.loadOilContractsByAirline(airlineId).map(_.contractTerminationPenalty(currentCycle) * -1).sum //termination penalty
-    val amountFromOilContracts = 0 //removing because not interesting and burdens DB
     val existingBalance = AirlineCache.getAirline(airlineId).get.airlineInfo.balance
-    
-    ResetAmountInfo(amountFromAirplanes, amountFromBases, amountFromLoans, amountFromOilContracts, existingBalance)
+
+    ResetAmountInfo(amountFromAirplanes, amountFromBases, amountFromLoans, existingBalance)
   }
-  
-  case class ResetAmountInfo(airplanes : Long, bases : Long, loans : Long, oilContracts : Long, existingBalance : Long) {
-    val overall = airplanes + bases + loans + oilContracts + existingBalance
+
+  case class ResetAmountInfo(airplanes : Long, bases : Long, loans : Long, existingBalance : Long) {
+    val overall = airplanes + bases + loans + existingBalance
   }
 
   val LINK_COST_TOLERANCE_FACTOR = 1.0

@@ -245,7 +245,12 @@ object Link {
         BASE_FREQ_COST * multiplier
       }
     }
-    val staffPer500Pax = 2.4 * multiplier
+    val capacityModifier = if (airlineType == RegionalAirline) 
+            RegionalAirline.staffCapRatio 
+        else if (airlineType == DiscountAirline) 
+            DiscountAirline.staffCapRatio
+        else 1.0
+    val staffPer500Pax = 2.4 * multiplier * capacityModifier
     StaffSchemeBreakdown(base.toInt, staffPerFrequency, staffPer500Pax)
   }
 }

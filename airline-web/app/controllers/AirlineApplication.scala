@@ -147,7 +147,6 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
         "airplanes" -> JsNumber(info.airplanes),
         "bases" -> JsNumber(info.bases),
         "loans" -> JsNumber(info.loans),
-        "oilContracts" -> JsNumber(info.oilContracts),
         "existingBalance" -> JsNumber(info.existingBalance),
         "overall" -> JsNumber(info.overall)))
     }
@@ -991,7 +990,7 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
     }
   }
 
-  val MIN_DIVIDENDS = 2000000L
+  val MIN_DIVIDENDS = 1000000L
 
   def setDividends(airlineId: Int) = AuthenticatedAirline(airlineId) { request =>
     val cycle = currentCycle

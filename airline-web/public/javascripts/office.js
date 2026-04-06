@@ -1442,9 +1442,7 @@ function updateResetAirlineInfo() {
 
 	    	$('#popover-reset .airplanes').text(commaSeparateNumber(result.airplanes))
 	    	$('#popover-reset .bases').text(commaSeparateNumber(result.bases))
-	    	$('#popover-reset .assets').text(commaSeparateNumber(result.assets))
 	    	$('#popover-reset .loans').text(commaSeparateNumber(result.loans))
-	    	$('#popover-reset .oilContracts').text(commaSeparateNumber(result.oilContracts))
 	    	$('#popover-reset .cash').text(commaSeparateNumber(result.existingBalance))
 	    	$('#popover-reset .overall').text(commaSeparateNumber(result.overall))
 

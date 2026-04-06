@@ -226,8 +226,12 @@ object EventSimulation {
     // Notify airlines that earned Olympics rewards
     val cycle = CycleSource.loadCycle()
     val goals = EventSource.loadOlympicsAirlineGoals(olympics.id)
-    goals.keys.foreach { airline =>
-      NotificationSource.insertNotification(Notification(airline.id, NotificationCategory.OLYMPICS_PRIZE, "Your airline earned an Olympics reward! Claim it in the Events tab.", cycle))
+    val allStats = EventSource.loadOlympicsAirlineStats(olympics.id)
+    goals.foreach { case (airline, goal) =>
+      val totalScore = allStats.getOrElse(airline, List.empty).map(_._2).sum
+      if (totalScore >= goal) {
+        NotificationSource.insertNotification(Notification(airline.id, NotificationCategory.OLYMPICS_PRIZE, "Your airline earned an Olympics reward! Claim it in the Events tab.", cycle))
+      }
     }
   }
   
