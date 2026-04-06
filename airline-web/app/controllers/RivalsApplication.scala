@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit
 import scala.concurrent.ExecutionContext
 
 class RivalsApplication @Inject()(cc: ControllerComponents)(implicit ec: ExecutionContext) extends AbstractController(cc) {
-  val MIN_REPUTATION = 60
+  val MIN_REPUTATION = 25
 
   case class RivalsData(airlines: JsValue, history: JsValue)
 
