@@ -7,16 +7,16 @@ GET		/chat						controllers.ChatApplication.chatSocket
 #Web Socket management
 GET		/wsWithActor						controllers.WebsocketApplication.wsWithActor
 
-GET		 /game/constants			  controllers.Application.getGameRules()
+GET		 /api/:version/game/constants			  controllers.Application.getGameRules(version: String)
 GET		 /game/stock-benchmarks		  controllers.Application.getStockBenchmarks()
-GET		 /game/tooltips			  controllers.Application.getTooltips()
+GET		 /api/:version/game/tooltips			  controllers.Application.getTooltips(version: String)
 
 POST	 /user-login							  controllers.UserApplication.login
 POST	 /user-logout						  controllers.UserApplication.logout
 GET      /current-cycle                   controllers.Application.getCurrentCycle()
 
 GET		 /airports						  controllers.Application.getAirports()
-GET		 /airports-static						  controllers.Application.getAirportsStatic()
+GET		 /api/:version/airports-static						  controllers.Application.getAirportsStatic(version: String)
 #GET		 /airports/:airportId 		  	  controllers.Application.getAirport(airportId : Int, image : Boolean ?= false)
 GET		 /airports/:airportId/images	  	  controllers.Application.getAirportImages(airportId : Int)
 GET	 	 /airports/:airportId/detail	        controllers.Application.getAirportDetail(airportId : Int)
@@ -183,7 +183,7 @@ GET		 /oil-prices	controllers.OilApplication.getOilPrices()
 GET		 /loan-interest-rates	controllers.BankApplication.getLoanInterestRates()
 GET		 /rivals-data	controllers.RivalsApplication.getRivalsData()
 
-GET		 /countries					  controllers.CountryApplication.getAllCountries()
+GET		 /api/:version/countries					  controllers.CountryApplication.getAllCountries(version: String)
 GET		 /countries/:countryCode  		  controllers.CountryApplication.getCountry(countryCode : String)
 #GET		 /countries/:countryCode/airline/:airlineId  		  controllers.CountryApplication.getCountryAirlineDetails(countryCode : String, airlineId: Int)
 GET		 /countries/:countryCode/title-progression  		  controllers.CountryApplication.getCountryAirlineTitleProgression(countryCode : String)
@@ -212,10 +212,10 @@ GET     /search-route/:fromAirportId/:toAirportId controllers.SearchApplication.
 POST    /search-link-history    controllers.ChangeHistoryApplication.searchLinkHistory()
 GET     /research-link/:fromAirportId/:toAirportId  controllers.SearchApplication.researchLink(fromAirportId : Int, toAirportId : Int)
 
-GET		 /airplane-models				  controllers.AirplaneApplication.getAirplaneModels()
+GET		 /api/:version/airplane-models				  controllers.AirplaneApplication.getAirplaneModels(version: String)
 GET		 /airplane-models/:modelId/stats     controllers.AirplaneApplication.getAirplaneModelStats(modelId : Int)
 GET		 /rankings/:airlineId  		      controllers.RankingApplication.getRankingsWithAirline(airlineId : Int)
-GET		 /logos/templates 				  controllers.LogoApplication.getTemplates()
+GET		 /api/:version/logos/templates 				  controllers.LogoApplication.getTemplates(version: String)
 GET		 /logos/templates/:id			  controllers.LogoApplication.getTemplate(id : Int)
 GET		 /logos/preview					  controllers.LogoApplication.getPreview(templateIndex : Int, color1 : String, color2 : String)
 

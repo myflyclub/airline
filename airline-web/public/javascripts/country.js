@@ -9,7 +9,7 @@ async function loadAllCountries(airlineId) {
   try {
     // 1. Fetch static and dynamic models concurrently
     const [staticRes, dynamicRes] = await Promise.all([
-      fetch('/countries'),
+      fetch(`${API_PREFIX}/countries`),
       fetch(`/countries/airline/${airlineId}`)
     ]);
 

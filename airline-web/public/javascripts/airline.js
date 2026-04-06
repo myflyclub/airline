@@ -3263,6 +3263,8 @@ function negotiationAnimation(savedLink, callback, callbackParam) {
                              $('#negotiationAnimation .negotiationBonus').text(savedLink.negotiationBonus.description)
                            } else if (savedLink.nextNegotiationDiscount) {
                              $('#negotiationAnimation .negotiationBonus').text(savedLink.nextNegotiationDiscount)
+                           } else if (savedLink.negotiationFailureRefund > 0) {
+                             $('#negotiationAnimation .negotiationBonus').text('Failure Refund ' + savedLink.negotiationFailureRefund + ' action point(s)')
                            }
 
                            $('#negotiationAnimation .negotiationResult .result').text(result)

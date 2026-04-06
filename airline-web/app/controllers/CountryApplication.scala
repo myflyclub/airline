@@ -16,7 +16,7 @@ class CountryApplication @Inject()(cc: ControllerComponents) extends AbstractCon
   /**
    * Static country data
    */
-  def getAllCountries() = Action {
+  def getAllCountries(version: String) = Action {
     val countries = CountrySource.loadAllCountries().filter(_.airportPopulation > 0)
     val airportsByCountryCode = AirportSource.loadAllAirports().filter(_.popMiddleIncome > 0).groupBy(_.countryCode)
 

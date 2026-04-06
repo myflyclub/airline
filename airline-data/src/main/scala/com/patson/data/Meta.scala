@@ -239,6 +239,7 @@ object Meta {
     createUserUuid(connection)
     createAirlineModifier(connection)
     createAirlineModifierProperty(connection)
+    createAirlineDividendsCoolDown(connection)
     createUserModifier(connection)
     createAllianceLabelColor(connection)
     createAllianceStats(connection)
@@ -1663,6 +1664,22 @@ object Meta {
       "value INTEGER," +
       "PRIMARY KEY(id, name)," +
       "FOREIGN KEY(id) REFERENCES " + AIRLINE_MODIFIER_TABLE + "(id) ON DELETE CASCADE ON UPDATE CASCADE" +
+      ")"
+    )
+    statement.execute()
+    statement.close()
+  }
+
+  def createAirlineDividendsCoolDown(connection : Connection): Unit = {
+    var statement = connection.prepareStatement("DROP TABLE IF EXISTS " + AIRLINE_DIVIDENDS_COOL_DOWN_TABLE)
+    statement.execute()
+    statement.close()
+
+    statement = connection.prepareStatement("CREATE TABLE " + AIRLINE_DIVIDENDS_COOL_DOWN_TABLE + "(" +
+      "airline INT NOT NULL," +
+      "expiration_cycle INT NOT NULL," +
+      "PRIMARY KEY (airline)," +
+      "FOREIGN KEY(airline) REFERENCES " + AIRLINE_INFO_TABLE + "(airline) ON DELETE CASCADE ON UPDATE CASCADE" +
       ")"
     )
     statement.execute()

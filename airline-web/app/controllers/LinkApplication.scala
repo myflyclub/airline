@@ -378,7 +378,6 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
         }
         Some(NegotiationUtil.negotiate(negotiationInfo, actionPoints))
       } else if (negotiationInfo.finalRequirementValue < 0 && negotiationInfo.actionPointRefund.getOrElse(0) > 1) {
-        val cycle = CycleSource.loadCycle()
         AirlineSource.adjustAirlineActionPoints(airline, negotiationInfo.actionPointRefund.getOrElse(0).toDouble)
         None
       } else {
@@ -433,6 +432,14 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
     negotiationResultOption.foreach { negotiationResult =>
       //deduct action points
       AirlineSource.adjustAirlineActionPoints(airline, -actionPoints.toDouble)
+
+      if (!negotiationResult.isSuccessful) {
+        val failureRefund = (actionPoints * 0.2).toInt
+        if (failureRefund > 0) {
+          AirlineSource.adjustAirlineActionPoints(airline, failureRefund.toDouble)
+        }
+        result = result + ("negotiationFailureRefund" -> JsNumber(failureRefund))
+      }
 
       val cycle = CycleSource.loadCycle()
 

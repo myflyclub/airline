@@ -372,7 +372,10 @@ object NegotiationUtil {
     val toRequirementBase = toAirportRequirements.map(_.value).sum
     val fromAirportRequirementValue = fromRequirementBase * (1 - totalFromDiscount)
     val toAirportRequirementValue = toRequirementBase * (1 - totalToDiscount)
-    val finalRequirementValue = fromAirportRequirementValue + toAirportRequirementValue
+    val finalRequirementValue = {
+      val raw = fromAirportRequirementValue + toAirportRequirementValue
+      if (existingLinkOption.isEmpty) Math.max(1.0, raw) else raw
+    }
     val hasActionPointRefund = if (finalRequirementValue < 0.0) {
       Some(actionPointRefund(finalRequirementValue))
     } else {

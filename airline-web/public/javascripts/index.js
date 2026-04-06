@@ -88,7 +88,7 @@ function loadScriptsParallel(scripts) {
  */
 async function loadAirportsData() {
     try {
-        const response = await fetch('/airports-static', { credentials: 'same-origin' });
+        const response = await fetch(`${API_PREFIX}/airports-static`, { credentials: 'same-origin' });
         if (!response.ok) {
             throw new Error(`Network response was not ok: ${response.status} ${response.statusText}`);
         }
@@ -121,7 +121,7 @@ async function loadAirportsData() {
 }
 
 async function loadGameConstants() {
-    const url = "/game/constants";
+    const url = `${API_PREFIX}/game/constants`;
     try {
         const response = await fetch(url);
         if (!response.ok) {

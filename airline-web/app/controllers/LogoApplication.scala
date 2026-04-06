@@ -10,7 +10,7 @@ import scala.jdk.CollectionConverters._
 
 class LogoApplication @Inject()(cc: ControllerComponents) extends AbstractController(cc) {
 
-  def getTemplates() = Action {
+  def getTemplates(version: String) = Action {
      val templateIndices: List[Int] = (0 until LogoGenerator.getTemplateCount()).toList
      Ok(Json.toJson(templateIndices))
        .withHeaders(

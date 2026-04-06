@@ -113,7 +113,7 @@ class AirplaneApplication @Inject()(cc: ControllerComponents) extends AbstractCo
   /**
    * Static airplane data
    */
-  def getAirplaneModels() = Action {
+  def getAirplaneModels(version: String) = Action {
     val jsonData = Json.toJson(allAirplaneModels)
     Ok(jsonData)
       .withHeaders(

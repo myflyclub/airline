@@ -27,7 +27,7 @@ async function loadAirplaneModels(airlineId) {
   try {
     // 1. Fetch static and dynamic models concurrently
     const [staticRes, dynamicRes] = await Promise.all([
-      fetch('/airplane-models'),
+      fetch(`${API_PREFIX}/airplane-models`),
       fetch(`/airlines/${airlineId}/airplane-models`)
     ]);
 
