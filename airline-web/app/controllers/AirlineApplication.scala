@@ -1217,41 +1217,46 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
   }
 
   def getBaseSpecializationInfo(airlineId: Int, airportId: Int) = AuthenticatedAirline(airlineId) { request =>
-    val airport = AirportCache.getAirport(airportId, true).get
-    val base = airport.getAirlineBase(airlineId).get
-    val activeSpecializations: List[AirlineBaseSpecialization] = base.specializations
-    val specializationByScaleRequirement: List[(Int, List[AirlineBaseSpecialization])] = AirlineBaseSpecialization.values.groupBy(_.scaleRequirement).toList.sortBy(_._1)
-    val cooldown =
-      AirportSource.loadAirportBaseSpecializationsLastUpdate(airportId, airlineId) match {
-        case Some(lastUpdate) =>
-          val currentCycle = CycleSource.loadCycle()
-          val baseCooldown = if (AirlineCache.getAirline(airlineId).get.airlineGrade.level > 8) BaseSpecializationType.COOLDOWN else 12
-          if (baseCooldown + lastUpdate <= currentCycle) {
-            0
-          } else {
-            baseCooldown + lastUpdate - currentCycle
-          }
-        case None => 0
-      }
+    AirportCache.getAirport(airportId, true) match {
+      case None => BadRequest(s"Airport $airportId not found")
+      case Some(airport) =>
+        airport.getAirlineBase(airlineId) match {
+          case None => BadRequest(s"No base for airline $airlineId at airport $airportId")
+          case Some(base) =>
+            val activeSpecializations: List[AirlineBaseSpecialization] = base.specializations
+            val specializationByScaleRequirement: List[(Int, List[AirlineBaseSpecialization])] = AirlineBaseSpecialization.values.groupBy(_.scaleRequirement).toList.sortBy(_._1)
+            val cooldown =
+              AirportSource.loadAirportBaseSpecializationsLastUpdate(airportId, airlineId) match {
+                case Some(lastUpdate) =>
+                  val currentCycle = CycleSource.loadCycle()
+                  val baseCooldown = if (AirlineCache.getAirline(airlineId).get.airlineGrade.level > 8) BaseSpecializationType.COOLDOWN else 12
+                  if (baseCooldown + lastUpdate <= currentCycle) {
+                    0
+                  } else {
+                    baseCooldown + lastUpdate - currentCycle
+                  }
+                case None => 0
+              }
 
-    var specializationJson = Json.arr()
-    implicit val specializationWrites = AirlineBaseSpecializationWrites(airport)
+            var specializationJson = Json.arr()
+            implicit val specializationWrites = AirlineBaseSpecializationWrites(airport)
 
-    specializationByScaleRequirement.foreach {
-      case (scaleRequirement, specializations) =>
-        var specializationsJson = Json.arr()
-        specializations.foreach { specialization =>
-          specializationsJson = specializationsJson.append(Json.toJsObject(specialization) +
-            ("active" -> JsBoolean(activeSpecializations.contains(specialization))) +
-            ("available" -> JsBoolean(base.scale >= specialization.scaleRequirement && cooldown == 0)) +
-            ("free" -> JsBoolean(specialization.free))
-          )
+            specializationByScaleRequirement.foreach {
+              case (scaleRequirement, specializations) =>
+                var specializationsJson = Json.arr()
+                specializations.foreach { specialization =>
+                  specializationsJson = specializationsJson.append(Json.toJsObject(specialization) +
+                    ("active" -> JsBoolean(activeSpecializations.contains(specialization))) +
+                    ("available" -> JsBoolean(base.scale >= specialization.scaleRequirement && cooldown == 0)) +
+                    ("free" -> JsBoolean(specialization.free))
+                  )
+                }
+                specializationJson = specializationJson.append(Json.obj("scaleRequirement" -> scaleRequirement, "specializations" -> specializationsJson))
+            }
+
+            Ok(Json.obj("specializations" -> specializationJson, "cooldown" -> cooldown, "defaultCooldown" -> BaseSpecializationType.COOLDOWN))
         }
-        specializationJson = specializationJson.append(Json.obj("scaleRequirement" -> scaleRequirement, "specializations" -> specializationsJson))
     }
-
-    Ok(Json.obj("specializations" -> specializationJson, "cooldown" -> cooldown, "defaultCooldown" -> BaseSpecializationType.COOLDOWN))
-
   }
 
   def setBaseSpecializations(airlineId: Int, airportId: Int) = AuthenticatedAirline(airlineId) { request =>

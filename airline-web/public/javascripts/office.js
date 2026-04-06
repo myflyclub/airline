@@ -1054,7 +1054,7 @@ function loadLogoTemplates() {
 	$('#logoTemplates').empty()
 	$.ajax({
 		type: 'GET',
-		url: "/logos/templates",
+		url: `${API_PREFIX}/logos/templates`,
 	    contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
 	    success: function(templates) {

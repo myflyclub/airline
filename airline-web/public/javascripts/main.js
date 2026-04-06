@@ -249,7 +249,7 @@ async function populateTooltips() {
     /**
      * Populate tooltips from server-side data, looks for id "tooltip_{objKey}"
      */
-    const url = "/game/tooltips";
+    const url = `${API_PREFIX}/game/tooltips`;
     try {
         const response = await fetch(url);
         if (!response.ok) {

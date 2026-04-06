@@ -105,7 +105,7 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
   /**
    * Static airport data
    */
-  def getAirportsStatic() = Action {
+  def getAirportsStatic(version: String) = Action {
     Ok(Json.toJson(AirportCache.getAllAirports())(AirportsGeoJsonWrites))
       .withHeaders(
         CACHE_CONTROL -> "public, max-age=2419200",
@@ -496,7 +496,7 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
    * game tooltips
    * tooltips written next to game logic to ensure consistency
    */
-  def getTooltips() = Action {
+  def getTooltips(version: String) = Action {
 
     val tooltips = Json.obj(
       "satisfaction" -> JsArray(Computation.TOOLTIP_SATISFACTION.map(JsString(_))),
@@ -522,7 +522,7 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
   /**
    * Static game constants / rules
    */
-  def getGameRules() = Action {
+  def getGameRules(version: String) = Action {
     var scaleProgressionResult = Json.arr()
     (1 to 15).foreach { scale =>
       var perScaleResult = Json.obj("scale" -> scale)
