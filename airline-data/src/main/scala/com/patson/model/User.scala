@@ -26,7 +26,7 @@ case class User(userName : String, email : String, creationTime : Calendar, last
   val isBanned = modifiers.contains(UserModifier.BANNED)
   val isPremium = level > 0
 
-  val maxAirlinesAllowed = 4
+  val maxAirlinesAllowed = 10
 }
 
 object User {
