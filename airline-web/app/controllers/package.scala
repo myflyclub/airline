@@ -333,12 +333,12 @@ package object controllers {
         jsObject = jsObject + ("specializations" -> Json.toJson(base.specializations))
       }
 
-      val upkeepByLevel = (1 to 12).map { level =>
+      val upkeepByLevel = (1 to 14).map { level =>
         base.calculateUpkeep(level)
       }
       jsObject = jsObject + ("upkeepByLevel" -> Json.toJson(upkeepByLevel))
 
-      val upgradeCostByLevel = (1 to 12).map { level =>
+      val upgradeCostByLevel = (1 to 14).map { level =>
         base.calculateUpgradeCost(level)
       }
       jsObject = jsObject + ("upgradeCostByLevel" -> Json.toJson(upgradeCostByLevel))
