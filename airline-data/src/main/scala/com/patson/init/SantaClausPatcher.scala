@@ -16,13 +16,6 @@ import scala.util.Random
 object SantaClausPatcher extends App {
   Class.forName(DB_DRIVER)
   val dataSource = new ComboPooledDataSource()
-  //    val properties = new Properties()
-  //    properties.put("user", DATABASE_USER);
-  //    properties.put("password", "admin");
-  //DriverManager.getConnection(DATABASE_CONNECTION, properties);
-  //mysql end
-
-  //dataSource.setProperties(properties)
   dataSource.setUser(DATABASE_USER)
   dataSource.setPassword(DATABASE_PASSWORD)
   dataSource.setJdbcUrl(DATABASE_CONNECTION)
@@ -31,10 +24,33 @@ object SantaClausPatcher extends App {
   createSchema(connection)
   connection.close
 
+  println("Select mode:")
+  println("  1 - Full reset: clear ALL existing data and assign for every airline")
+  println("  2 - Incremental: only assign for airlines that don't have an entry yet")
+  print("Enter choice (1 or 2): ")
+  val choice = scala.io.StdIn.readLine().trim
+
+  if (choice != "1" && choice != "2") {
+    println("Invalid choice — exiting without changes.")
+    System.exit(1)
+  }
+
   //init the data
   val airports = AirportSource.loadAllAirports().filter(_.size > SantaClausInfo.AIRPORT_SIZE_THRESHOLD)
+  val allAirlines = AirlineSource.loadAllAirlines(true)
+
+  val airlinesToProcess = if (choice == "1") {
+    println("Clearing all existing santa claus data...")
+    ChristmasSource.deleteAllSantaClausInfo()
+    allAirlines
+  } else {
+    val existingAirlineIds = ChristmasSource.loadSantaClausInfoByCriteria(List.empty).map(_.airline.id).toSet
+    println(s"Found ${existingAirlineIds.size} airlines already assigned — skipping them.")
+    allAirlines.filterNot(a => existingAirlineIds.contains(a.id))
+  }
+
   val entries = ListBuffer[SantaClausInfo]()
-  AirlineSource.loadAllAirlines(true).foreach { airline =>
+  airlinesToProcess.foreach { airline =>
     val candidateAirports = airline.getHeadQuarter() match {
       case Some(hq) => airports.filterNot( _.id == hq.airport.id) //do not include hq. otherwise bonus is too powerful
       case None => airports
@@ -44,18 +60,13 @@ object SantaClausPatcher extends App {
   }
 
   ChristmasSource.saveSantaClausInfo(entries.toList)
+  println(s"Done — saved ${entries.size} entries.")
 
   def getConnection(enforceForeignKey: Boolean = true) = {
     dataSource.getConnection()
-
   }
 
   def createSchema(connection : Connection) = {
-    //    Meta.createLog(connection)
-    //    Meta.createAlert(connection)
     Meta.createSantaClaus(connection)
   }
-
-
-
 }
