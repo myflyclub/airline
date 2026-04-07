@@ -51,20 +51,27 @@ jobs:
 
       - name: Build java, restart server
         uses: appleboy/ssh-action@v0.1.10
+        env:
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
         with:
           host: ${{ secrets.production_host }}
           username: ${{ secrets.production_user }}
           key: ${{ secrets.production_key }}
           port: 22
+          envs: GOOGLE_API_KEY
           script_stop: true
           script: |
             cd /var/www/myfly/airline-data/
+
+            # Clear stale ivy cache so SNAPSHOT publishLocal always overwrites cleanly
+            rm -rf ~/.ivy2/local/default/airline-data_2.13/
             sbt clean publishLocal
 
             # Kill any existing tmux sessions
             tmux kill-server || true
+            sleep 1
 
-            # Start data simulation (select option 1 from sbt run menu)
+            # Start data simulation
             tmux new-session -d -s data -c /var/www/myfly/airline-data
             tmux send-keys -t data "sbt 'runMain com.patson.MainSimulation'" Enter
 

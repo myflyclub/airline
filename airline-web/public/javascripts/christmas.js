@@ -1,5 +1,6 @@
-var holidayEvent = "christmas"  // "christmas" | "easter" | null
+var holidayEvent = "easter"  // "christmas" | "easter" | null
 var santaFound = false
+var snowflakeCount
 
 function initSantaClaus() {
     $('#santaClausModal').hide()
