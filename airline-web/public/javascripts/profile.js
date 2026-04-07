@@ -123,7 +123,7 @@ function buildHqWithProfile() {
                 closeModal($('#profilesModal'))
                 updateAirlineInfo(activeAirline.id).then(function() {
                     if (activeAirline.headquarterAirport) {
-                        $('#planLinkFromAirportId').val(activeAirline.headquarterAirport.airportId)
+                        planLinkState.fromAirportId = activeAirline.headquarterAirport.airportId
                     }
                     loadAllCountries() //has a home country now, reload country info
                     showWorldMap()

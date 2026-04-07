@@ -447,7 +447,7 @@ function promptBuyNewAirplane(modelId, fromPlanLink, explicitHomeAirportId) {
         var callback
         if (fromPlanLink) {
             callback = function() {
-                planLink($("#planLinkFromAirportId").val(), $("#planLinkToAirportId").val(), true)
+                planLink(planLinkState.fromAirportId, planLinkState.toAirportId, true)
                 $("#planLinkModelSelect").data('explicitId', modelId) //force the plan link to use this value after buying a plane
             }
         }
@@ -1088,7 +1088,7 @@ function toggleCondition(container, checkbox) {
 function showAirplaneBaseFromPlanLink(modelId) {
     showAirplaneBase(modelId)
     $('#airplaneBaseModal').data('closeCallback', function() {
-        planLink($("#planLinkFromAirportId").val(), $("#planLinkToAirportId").val(), true)
+        planLink(planLinkState.fromAirportId, planLinkState.toAirportId, true)
     })
     //console.log("Added " + $('#airplaneBaseModal').data('closeCallback'))
 }
@@ -1253,7 +1253,7 @@ function planeSelect(event, element) {
 
 
 function addAirplaneHangarDivByModel($containerDiv, modelInfo) {
-    var $airplanesDiv = $("<div style='width: 100%; height: 88px; overflow: auto;'></div>")
+    var $airplanesDiv = $("<div style='width: 100%; min-height: 110px; overflow: auto;'></div>")
 
     var allAirplanes = $.merge($.merge($.merge([], modelInfo.assignedAirplanes), modelInfo.availableAirplanes), modelInfo.constructingAirplanes)
     //group by base Id
@@ -1276,14 +1276,13 @@ function addAirplaneHangarDivByModel($containerDiv, modelInfo) {
                 airportIata = baseAirport.airportCode
             }
         })
-        var $airplanesByBaseDiv = $("<div style='width : 100%;'><div style='float: left; width: 35px;'>" + airportIata + ":</div></div>")
+        var $airplanesByBaseDiv = $("<div class='flex-row pb-1 gap-0 items-start items-center ' style='width: 100%;'><div style='width: 35px; font-weight: bold;'>" + airportIata + ":</div></div>")
         $.each(airplanes, function( index, airplane ) {
             var airplaneId = airplane.id
-            var li = $("<div style='float: left;' data-airplaneId='" + airplaneId + "' class='clickable isAirplane' onclick='handleAirplaneClick(event, " + airplaneId + ", $(this))'></div>").appendTo($airplanesByBaseDiv)
+            var li = $("<div data-airplaneId='" + airplaneId + "' class='clickable isAirplane' onclick='handleAirplaneClick(event, " + airplaneId + ", $(this))'></div>").appendTo($airplanesByBaseDiv)
             var airplaneIcon = getAirplaneIcon(airplane, gameConstants.aircraft.conditionBad)
             li.append(airplaneIcon)
         })
-        $airplanesByBaseDiv.append("<div style='clear:both; '></div>")
         $airplanesDiv.append($airplanesByBaseDiv)
 
     });

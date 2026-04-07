@@ -139,7 +139,7 @@ const AircraftConfig = (() => {
                 + '<div class="aisle"></div>'
                 + _renderSeatGroupHtml(view[1], dim, 'bottom');
         }
-        return `<div class="planeDiagram" style="width:${dim.width}px;height:${dim.height}px;${borderStyle}">${inner}</div>`;
+        return `<div class="planeDiagram" style="width:${dim.width}px;${borderStyle}">${inner}</div>`;
     }
 
     function _buildPanelHtml(config) {
@@ -176,7 +176,7 @@ const AircraftConfig = (() => {
         const diagramHtml = _renderDiagramHtml(config, validation, dim, view);
 
         return `<div class="aircraft-config-view" style="display:flex;align-items:center;">
-            <div style="margin-right:16px;">${buttonsHtml}${inputsHtml}</div>
+            <div style="margin-right:16px; padding-top: 8px;">${buttonsHtml}${inputsHtml}</div>
             <div style="margin:auto;">${statsHtml}<div class="ac-diagram">${diagramHtml}</div></div>
         </div>`;
     }
@@ -393,7 +393,7 @@ const AircraftConfig = (() => {
     function showFromPlanLink(modelId) {
         show(modelId);
         $('#modelConfigurationModal').data('closeCallback', function() {
-            planLink($("#planLinkFromAirportId").val(), $("#planLinkToAirportId").val(), true);
+            planLink(planLinkState.fromAirportId, planLinkState.toAirportId, true);
         });
     }
 

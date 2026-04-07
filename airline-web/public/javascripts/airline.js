@@ -34,6 +34,7 @@ function updateAirlineInfo(airlineId) {
 		url: "/airlines/" + airlineId + "?extendedInfo=true",
 	    contentType: 'application/json; charset=utf-8',
 	    dataType: 'json',
+	    cache: false,
 	    success: function(airline) {
 	    	refreshTopBar(airline)
 	    	$(".currentAirline").html(getAirlineLogoImg(airline.id) + airline.name)
@@ -123,7 +124,16 @@ async function switchAirline(airlineId) {
 
     await selectAirline(airlineId)
 
-    loadNotificationBadge()
+    activeAirport = null;
+    activeAirportId = null;
+    activeAirportPopupInfoWindow = null;
+    targetBase = null;
+    airportBaseScale = 0;
+    planLinkState = { fromAirportId: null, toAirportId: null };
+    selectedLink = null;
+
+    loadNotificationBadge();
+    revertOlympicsVotes();
 
     // Update chat tabs for new alliance context
     if (typeof updateChatTabs === 'function') updateChatTabs()
@@ -794,13 +804,13 @@ function fadeOutMarker(marker, animationInterval) {
 
 
 function planToAirport(toAirportId, toAirportName) {
-	$('#planLinkToAirportId').val(toAirportId)
+	planLinkState.toAirportId = toAirportId
 
-	if (!$('#planLinkFromAirportId').val()) { //set the HQ by default for now
-		$('#planLinkFromAirportId').val(activeAirline.headquarterAirport.airportId)
+	if (!planLinkState.fromAirportId) { //set the HQ by default for now
+		planLinkState.fromAirportId = activeAirline.headquarterAirport.airportId
 	}
-	if ($('#planLinkFromAirportId').val() && $('#planLinkToAirportId').val()) {
-		planLink($('#planLinkFromAirportId').val(), $('#planLinkToAirportId').val())
+	if (planLinkState.fromAirportId && planLinkState.toAirportId) {
+		planLink(planLinkState.fromAirportId, planLinkState.toAirportId)
 	}
 }
 
@@ -809,8 +819,8 @@ function planLink(fromAirport, toAirport, isRefresh) {
     checkTutorial("planLink")
 	var airlineId = activeAirline.id
 
-	$("#planLinkFromAirportId").val(fromAirport)
-	$("#planLinkToAirportId").val(toAirport)
+	planLinkState.fromAirportId = parseInt(fromAirport)
+	planLinkState.toAirportId = parseInt(toAirport)
     setActiveDiv($('#planLinkDetails'))
     $('#planLinkDetails .warning').hide()
 
@@ -849,6 +859,7 @@ function planLink(fromAirport, toAirport, isRefresh) {
 
 }
 
+var planLinkState = { fromAirportId: null, toAirportId: null }
 var planLinkInfo = null
 var planLinkInfoByModel = {}
 var existingLink
@@ -867,7 +878,7 @@ function updatePlanLinkInfo(linkInfo, isRefresh) {
 			var airportCode = base.airportCode
 			var option = $("<option></option>").attr("value", airportId).text(getAirportText(cityName, airportCode))
 
-			if ($('#planLinkFromAirportId').val() == airportId) {
+			if (planLinkState.fromAirportId == airportId) {
 				option.prop("selected", true)
 			}
 			option.appendTo($("#planLinkFromAirportSelect"))
@@ -1731,12 +1742,12 @@ function getAssignedAirplaneFrequencies() {
 }
 
 function createLink() {
-	if ($("#planLinkFromAirportId").val() && $("#planLinkToAirportId").val()) {
+	if (planLinkState.fromAirportId && planLinkState.toAirportId) {
 		var airlineId = activeAirline.id
 		var url = "/airlines/" + airlineId + "/links"
 	    var linkData = {
-			"fromAirportId" : parseInt($("#planLinkFromAirportId").val()),
-			"toAirportId" : parseInt($("#planLinkToAirportId").val()),
+			"fromAirportId" : planLinkState.fromAirportId,
+			"toAirportId" : planLinkState.toAirportId,
 			airplanes : getAssignedAirplaneFrequencies(),
 			"airlineId" : airlineId,
 			"price" : { "economy" : parseInt($("#planLinkEconomyPrice").val()), "business" : parseInt($("#planLinkBusinessPrice").val()), "first" : parseInt($("#planLinkFirstPrice").val())},
@@ -1804,8 +1815,8 @@ function getLinkStaffingInfo() {
     var url = "/airlines/" + airlineId + "/link-overtime-compensation"
     //console.log("selected " + $("#planLinkAirplaneSelect").val())
     var linkData = {
-        "fromAirportId" : parseInt($("#planLinkFromAirportId").val()),
-        "toAirportId" : parseInt($("#planLinkToAirportId").val()),
+        "fromAirportId" : planLinkState.fromAirportId,
+        "toAirportId" : planLinkState.toAirportId,
         airplanes : getAssignedAirplaneFrequencies(),
         "airlineId" : airlineId,
         "relationship" : planLinkInfo.mutualRelationship,
@@ -2850,8 +2861,8 @@ function linkConfirmation() {
 	//$('#linkConfirmationModal .modal-content').css("height", 600)
 	$('#linkConfirmationModal div.negotiationInfo').hide()
 
-	var fromAirportId = parseInt($("#planLinkFromAirportId").val())
-    var toAirportId = parseInt($("#planLinkToAirportId").val())
+	var fromAirportId = planLinkState.fromAirportId
+    var toAirportId = planLinkState.toAirportId
     loadAirportImages(fromAirportId, toAirportId)
 
 	if (existingLink) {
@@ -2984,8 +2995,8 @@ function getLinkNegotiation(callback) {
     var url = "/airlines/" + activeAirline.id + "/get-link-negotiation"
 
 	var linkData = {
-    			"fromAirportId" : parseInt($("#planLinkFromAirportId").val()),
-    			"toAirportId" : parseInt($("#planLinkToAirportId").val()),
+    			"fromAirportId" : planLinkState.fromAirportId,
+    			"toAirportId" : planLinkState.toAirportId,
     			//"airplanes" : $("#planLinkAirplaneSelect").val().map(Number),
     			airplanes : getAssignedAirplaneFrequencies(),
     			"airlineId" : airlineId,
