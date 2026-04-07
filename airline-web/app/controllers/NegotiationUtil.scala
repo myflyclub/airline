@@ -34,6 +34,28 @@ object NegotiationUtil {
     clamp01(0.10 + 0.70 * Math.pow(risk, 1.8))
   }
 
+  /**
+   * Returns the startup vigor adjustment (always <= 0, i.e. a discount) to add to the
+   * requirement total, or None if no adjustment applies.
+   *
+   * Full vigor:  rep < STARTUP_MAX_REPUTATION
+   * Fading:      STARTUP_MAX_REPUTATION <= rep < STARTUP_MAX_REPUTATION * 2
+   * None:        rep >= STARTUP_MAX_REPUTATION * 2
+   */
+  def computeStartupVigorAdjustment(reputation: Double, requirementTotal: Double): Option[Double] = {
+    val startupFadeCeiling = STARTUP_MAX_REPUTATION * 2
+    val rawAdjustment = -1 * Math.pow(requirementTotal, 0.5) + 0.5
+    if (reputation < STARTUP_MAX_REPUTATION) {
+      if (rawAdjustment <= 0) Some(rawAdjustment) else None
+    } else if (reputation < startupFadeCeiling) {
+      val strength = 0.1 + 0.9 * (startupFadeCeiling - reputation) / (startupFadeCeiling - STARTUP_MAX_REPUTATION)
+      val fadedAdjustment = rawAdjustment * strength
+      if (fadedAdjustment <= 0) Some(fadedAdjustment) else None
+    } else {
+      None
+    }
+  }
+
   def rollSwingEvent(odds: Double, success: Boolean): Boolean = {
     Math.random() < swingTriggerChance(odds, success)
   }
@@ -178,7 +200,7 @@ object NegotiationUtil {
     if (existingLinkOption.isEmpty) {
       val negotiationLong = if(baseSpecializations.contains(AirlineBaseSpecialization.NEGOTIATION_LONG) && newLink.distance > NegoLong.minDistance) 0.95 - (newLink.distance - NegoLong.minDistance) / NegoLong.minDistance else 1
       val negotiationLongText = if(baseSpecializations.contains(AirlineBaseSpecialization.NEGOTIATION_LONG) && newLink.distance > NegoLong.minDistance) "New Flight – Foreign Mission Negotiator" else "New Flight Negotiation"
-      requirements.append(NegotiationRequirement(NEW_LINK, NEW_LINK_BASE_REQUIREMENT * multiplier * -negotiationLong, negotiationLongText))
+      requirements.append(NegotiationRequirement(NEW_LINK, NEW_LINK_BASE_REQUIREMENT * multiplier * negotiationLong, negotiationLongText))
       val mutualRelationship = CountrySource.getCountryMutualRelationship(newLink.from.countryCode, newLink.to.countryCode)
       if (mutualRelationship < 0) {
         requirements.append(NegotiationRequirement(BAD_MUTUAL_RELATIONSHIP, mutualRelationship * -2, s"Bad relationship between ${newLink.from.countryCode} and ${newLink.to.countryCode}"))
@@ -214,21 +236,16 @@ object NegotiationUtil {
       requirements.append(NegotiationRequirement(SLOT_CONTROLLED, 1.5, "High congestion: Level 3 Coordination, full slot control."))
     }
 
-    val startupFadeCeiling = STARTUP_MAX_REPUTATION * 1.5
     val rep = airline.getReputation()
     val requirementTotal = requirements.foldLeft(0.0)((sum, requirement) => sum + requirement.value)
 
-    if (rep < STARTUP_MAX_REPUTATION) {
-      val adjustment = -1 * Math.pow(requirementTotal, 0.7) + 0.7
-      if (adjustment <= -1) {
-        requirements.append(NegotiationRequirement(STARTUP, adjustment, s"Startup Vigor – superior negotiation skills while under ${STARTUP_MAX_REPUTATION.toInt} rep"))
-      }
-    } else if (rep < startupFadeCeiling) {
-      val strength = 0.2 + 0.8 * (startupFadeCeiling - rep) / (startupFadeCeiling - STARTUP_MAX_REPUTATION)
-      val adjustment = (-1 * Math.pow(requirementTotal, 0.7) + 0.7) * strength
-      if (adjustment <= -1) {
-        requirements.append(NegotiationRequirement(STARTUP, adjustment, s"Startup Vigor – fading enhanced negotiation skills while under ${startupFadeCeiling.toInt} rep"))
-      }
+    computeStartupVigorAdjustment(rep, requirementTotal).foreach { adjustment =>
+      val label =
+        if (rep < STARTUP_MAX_REPUTATION)
+          s"Startup Vigor – superior negotiation skills while under ${STARTUP_MAX_REPUTATION.toInt} rep"
+        else
+          s"Startup Vigor – fading enhanced negotiation skills while under ${(STARTUP_MAX_REPUTATION * 2).toInt} rep"
+      requirements.append(NegotiationRequirement(STARTUP, adjustment, label))
     }
 
     existingLinkOption match {
@@ -374,7 +391,7 @@ object NegotiationUtil {
     val toAirportRequirementValue = toRequirementBase * (1 - totalToDiscount)
     val finalRequirementValue = {
       val raw = fromAirportRequirementValue + toAirportRequirementValue
-      if (existingLinkOption.isEmpty) Math.max(1.0, raw) else raw
+      if (existingLinkOption.isEmpty) Math.max(0.5, raw) else raw
     }
     val hasActionPointRefund = if (finalRequirementValue < 0.0) {
       Some(actionPointRefund(finalRequirementValue))

@@ -145,26 +145,16 @@
 									</div>
 								</div>
 							</div>
-						  <button type="button" class="button ml-0" id="buildHeadquarterButton" style="display: none;"
-								  onclick='selectHeadquarters(activeAirportId)'>Build Headquarters</button>
-						  <button type="button" class="button ml-0" id="buildBaseButton" style="display: none;"
-								  onclick='promptConfirm("Build a base at this airport?", data => buildBase(false))'>Build
-							  Base</button>
-						  <button type="button" class="button ml-0" id="upgradeBaseButton" data-scale=""
-								  style="display: none;"
-								  onclick='promptConfirm("Upgrade this base to scale " + (parseInt(targetBase.scale)) + "?", data => {console.log(data); buildBase(targetBase.headquarter, parseInt(targetBase.scale))})'>Upgrade</button>
-						  <button type="button" class="button" id="downgradeBaseButton" style="display: none;"
-								  onclick='promptConfirm("Downgrade this base?", downgradeBase)'>Downgrade</button>
-						  <button type="button" class="button" id="deleteBaseButton" style="display: none;"
-								  onclick='promptConfirm("Remove this base? All routes from this airport will also be removed. All airplanes assigned to this base will be re-assigned to HQs. All assets of this Airport will be sold.", deleteBase)'>Remove</button>
-					  <button type="button" class="button" id="santaClausButton" style="display: none;"
-								  onclick="showSantaClausAttemptStatus()">Find Santa</button>
-					  <button type="button" class="button" id="easterBunnyButton" style="display: none;"
-								  onclick="showEasterBunnyAttemptStatus()">Hunt for Eggs 🥚</button>
-						  <button type="button" class="button" onclick="showSpecializationModal()">Base
-							  Specializations</button>
-					  </div>
-				  </div>
+                        <button type="button" class="button ml-0" id="buildHeadquarterButton" style="display: none;" onclick='selectHeadquarters(activeAirportId)'>Build Headquarters</button>
+                        <button type="button" class="button ml-0" id="buildBaseButton" style="display: none;" onclick='promptConfirm("Build a base at this airport?", data => buildBase(false))'>Build Base</button>
+                        <button type="button" class="button ml-0" id="upgradeBaseButton" data-scale="" style="display: none;" onclick='promptConfirm("Upgrade this base to scale " + (parseInt(targetBase.scale)) + "?", data => {console.log(data); buildBase(targetBase.headquarter, parseInt(targetBase.scale))})'>Upgrade</button>
+                        <button type="button" class="button" id="downgradeBaseButton" style="display: none;" onclick='promptConfirm("Downgrade this base?", downgradeBase)'>Downgrade</button>
+                        <button type="button" class="button" id="deleteBaseButton" style="display: none;" onclick='promptConfirm("Remove this base? All routes from this airport will also be removed. All airplanes assigned to this base will be re-assigned to HQs. All assets of this Airport will be sold.", deleteBase)'>Remove</button>
+                        <button type="button" class="button" id="santaClausButton" style="display: none;" onclick="showSantaClausAttemptStatus()">Find Santa</button>
+                        <button type="button" class="button" id="easterBunnyButton" style="display: none;" onclick="showEasterBunnyAttemptStatus()">Hunt for Eggs 🥚</button>
+                        <button type="button" class="button" onclick="showSpecializationModal()">Base Specializations</button>
+                    </div>
+                </div>
 
 				<div class="vertical-group" style="flex-basis: 33%; flex-grow: 1; box-sizing:border-box;">
                     <textarea id="airportNotes" class="rounded" style="width: 99%; min-height: 80px;" placeholder="Add your private notes here..."></textarea>

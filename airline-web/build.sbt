@@ -15,7 +15,7 @@ libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % "3.2.19" % Test,
   "org.apache.pekko" %% "pekko-remote" % "1.0.3",
   "org.apache.commons" % "commons-text" % "1.13.0",
-  "default" %% "airline-data" % "4.1-SNAPSHOT",
+  "default" %% "airline-data" % "5.1-SNAPSHOT",
   
   "com.google.api-client" % "google-api-client" % "1.35.0",
   "com.google.oauth-client" % "google-oauth-client-jetty" % "1.34.1",
