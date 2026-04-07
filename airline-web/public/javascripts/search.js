@@ -181,7 +181,7 @@ function showResearchPreloaded(fromAirportId, toAirportId) {
     AirlineMap.removeTempPath();
     document.querySelector('#searchCanvas div.titlesContainer .selected').classList.remove('selected')
     document.querySelector('#searchCanvas div.titlesContainer [data-search-type="research"]').classList.add('selected')
-    const fromId = fromAirportId || ($('#planLinkFromAirportId').val() > 0 ? $('#planLinkFromAirportId').val() : activeAirline.headquarterAirport.airportId);
+    const fromId = fromAirportId || (planLinkState.fromAirportId > 0 ? planLinkState.fromAirportId : activeAirline.headquarterAirport.airportId);
     const toId = toAirportId || $('#airportPopupId').val();
     const from = getAirportByAttribute(fromId);
     const to = getAirportByAttribute(toId);

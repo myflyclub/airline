@@ -338,9 +338,9 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
       return BadRequest("Requested capacity exceed the allowed limit, invalid configuration!")
     }
 
-    // if (incomingLink.from.id == incomingLink.to.id) {
-    //   return BadRequest("Same from and to airport!")
-    // }
+    if (incomingLink.from.id == incomingLink.to.id) {
+      return BadRequest("Same from and to airport!")
+    }
     //validate price
     if (incomingLink.price(ECONOMY) < 0 ||
          incomingLink.price(BUSINESS) < 0 ||
@@ -434,8 +434,8 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
       AirlineSource.adjustAirlineActionPoints(airline, -actionPoints.toDouble)
 
       if (!negotiationResult.isSuccessful) {
-        val failureRefund = (actionPoints * 0.2).toInt
-        if (failureRefund > 0) {
+        val failureRefund = actionPoints * 0.2
+        if (failureRefund > 0.5) {
           AirlineSource.adjustAirlineActionPoints(airline, failureRefund.toDouble)
         }
         result = result + ("negotiationFailureRefund" -> JsNumber(failureRefund))

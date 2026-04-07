@@ -7,6 +7,7 @@ var wsUri = (function() {
 var websocket
 var selectedAirlineId
 var reconnectAttempts = 0
+var reconnectTimer = null
 var cycleDurationMs = 0
 var maxReconnectDelay = 60000
 var connectionOpened = false
@@ -18,6 +19,10 @@ function checkWebSocket(airlineId) {
 }
 
 function connectWebSocket(airlineId) {
+    if (reconnectTimer) {
+        clearTimeout(reconnectTimer)
+        reconnectTimer = null
+    }
     if (websocket) {
         websocket.onclose = null
         if (websocket.readyState !== WebSocket.CLOSED) {
@@ -41,7 +46,10 @@ function connectWebSocket(airlineId) {
         if (selectedAirlineId && connectionOpened) {
             var delay = Math.min(5000 * Math.pow(2, reconnectAttempts), maxReconnectDelay)
             reconnectAttempts++
-            setTimeout(function() { connectWebSocket(selectedAirlineId) }, delay)
+            reconnectTimer = setTimeout(function() {
+                reconnectTimer = null
+                connectWebSocket(selectedAirlineId)
+            }, delay)
         } else if (!connectionOpened) {
             console.warn("websocket rejected (session expired or server restarted) — reload the page to reconnect")
         }
@@ -78,6 +86,7 @@ function connectWebSocket(airlineId) {
 function initWebSocket(airlineId) {
     var changed = selectedAirlineId !== airlineId
     selectedAirlineId = airlineId
+    if (changed) reconnectAttempts = 0
     if (!websocket || websocket.readyState === WebSocket.CLOSED || changed) {
         connectWebSocket(airlineId)
     }
