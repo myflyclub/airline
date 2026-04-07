@@ -434,17 +434,17 @@ function plotSeatConfigurationBar(id, configuration, maxSeats, spaceMultipliers,
 
     const datasets = [
         {
-            label: hideValues ? 'Economy' : `Y : ${configuration.economy}`,
+            label: 'Economy',
             data: [businessPosition],
             backgroundColor: getChartColor('economy', '#2eb918'),
         },
         {
-            label: hideValues ? 'Business' : `J : ${configuration.business}`,
+            label: 'Business',
             data: [firstPosition - businessPosition],
             backgroundColor: getChartColor('business', '#0077CC'),
         },
         {
-            label: hideValues ? 'First' : `F : ${configuration.first}`,
+            label: 'First',
             data: [emptyPosition - firstPosition],
             backgroundColor: getChartColor('first', '#FFE62B'),
         },
@@ -455,6 +455,31 @@ function plotSeatConfigurationBar(id, configuration, maxSeats, spaceMultipliers,
         }
     ];
 
+    const counts = [configuration.economy, configuration.business, configuration.first];
+    const seatLabelsPlugin = hideValues ? null : {
+        id: 'seatLabels_' + id,
+        afterDatasetsDraw(chart) {
+            const ctx = chart.ctx;
+            chart.data.datasets.forEach((dataset, i) => {
+                if (i >= 3 || !counts[i]) return;
+                const meta = chart.getDatasetMeta(i);
+                if (!meta.visible) return;
+                meta.data.forEach((bar) => {
+                    const props = bar.getProps(['x', 'y', 'base', 'height'], true);
+                    const segWidth = props.x - props.base;
+                    if (segWidth < 16) return;
+                    ctx.save();
+                    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+                    ctx.font = 'bold 11px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(counts[i], props.base + segWidth / 2, props.y);
+                    ctx.restore();
+                });
+            });
+        }
+    };
+
     const config = {
         type: 'bar',
         data: {
@@ -464,13 +489,10 @@ function plotSeatConfigurationBar(id, configuration, maxSeats, spaceMultipliers,
         options: {
             indexAxis: 'y',
             maintainAspectRatio: false,
+            events: [],
             plugins: {
                 legend: { display: false },
-                tooltip: {
-                    enabled: !hideValues,
-                    mode: 'index',
-                    intersect: false
-                }
+                tooltip: { enabled: false }
             },
             scales: {
                 x: {
@@ -484,7 +506,8 @@ function plotSeatConfigurationBar(id, configuration, maxSeats, spaceMultipliers,
                     stacked: true
                 }
             }
-        }
+        },
+        plugins: seatLabelsPlugin ? [seatLabelsPlugin] : []
     };
 
     return ChartUtils.createChart(id, config);

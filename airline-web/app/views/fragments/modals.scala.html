@@ -1446,9 +1446,9 @@
 					<p class="button" onclick="toggleAirplaneConfiguration()" title="Pick configuration">Swap configs</p>
 				</div>
 				<p id="configuration-warning"><i>Add more configurations to switch them here</i></p>
-				<div class="configuration-edit flex-row" style="display:none">
-					<img src='@routes.Assets.versioned("/images/icons/arrow-180.png")' class='button' style="vertical-align: middle;" onclick="switchAirplaneConfigurationOption($('#ownedAirplaneDetail'), -1)"/>
-					<div class="configuration-options" style="height: 24px; width: auto; min-width: 80px;"></div>
+				<div class="configuration-edit flex-row items-center" style="display:none">
+					<img src='@routes.Assets.versioned("/images/icons/arrow-180.png")' class='img-button svg' style="vertical-align: middle;" onclick="switchAirplaneConfigurationOption($('#ownedAirplaneDetail'), -1)"/>
+					<div class="configuration-options" style="height: 16px; width: auto; min-width: 120px;"></div>
 					<img src='@routes.Assets.versioned("/images/icons/arrow.png")' class='img-button svg' style="vertical-align: middle;" onclick="switchAirplaneConfigurationOption($('#ownedAirplaneDetail'), 1)"/>
 					<img src='@routes.Assets.versioned("/images/icons/tick.svg")' class='img-button svg' style="vertical-align: middle;" onclick="confirmAirplaneConfigurationOption()"/>
 					<img src='@routes.Assets.versioned("/images/icons/cross.svg")' class='img-button svg' style="vertical-align: middle;" onclick="cancelAirplaneConfigurationOption()"/>

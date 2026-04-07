@@ -2994,6 +2994,7 @@ i, .italic {
 }
 .aircraft-config-view .inputs div { display: flex; align-items: baseline; }
 .aircraft-config-view .inputs input { margin: 4px 0 0; }
+.aircraft-config-view .config-btn-max {rotate: -90deg;}
 .aircraft-config-view .planeDiagram {
     display: flex;
     flex-direction: column;
