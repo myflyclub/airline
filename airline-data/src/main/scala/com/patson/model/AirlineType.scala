@@ -42,7 +42,7 @@ case object DiscountAirline extends AirlineType {
     "You can never add business or first class!",
     "Earn additional rep by managing your finances and increasing your stock price.",
     "Earn reputation by moving lots of traveler and tourist passengers.",
-    s"Need ${(1.0 - staffCapRatio) * 100}% less staff to support capacity.",
+    s"Need ${Math.round((1.0 - staffCapRatio) * 100)}% less staff to support capacity.",
     s"Base crew costs are ${DiscountAirline.crewRatio * 100}% the cost of other airlines."
   )
 }
@@ -56,7 +56,7 @@ case object LuxuryAirline extends AirlineType {
   val description = List[String](
     "You can never add economy class!",
     "Earn reputation by moving lots of elite passengers and by increasing your stock price",
-    s"Need ${(1.0 - staffFreqRatio) * 100}% less staff to support frequency.",
+    s"Need ${Math.round((1.0 - staffFreqRatio) * 100)}% less staff to support frequency.",
     "Advertising campaigns are twice as effective.",
     "Have exclusive access to premium luxury aircraft types.",
   )
@@ -78,7 +78,7 @@ case object RegionalAirline extends AirlineType {
     "Earn reputation by creating high frequency links and capturing airports!",
     "Earn additional rep by managing your finances and increasing your stock price.",
     s"Requires no staff to support frequency on routes under ${staffReductionRange} km (staff reduction fades up to $staffReductionRangeFadeTo km.",
-    s"However capacity support requires ${staffCapRatio * 100}% staff.",
+    s"However capacity support requires ${Math.round(staffCapRatio * 100)}% staff.",
     "May build bases overlapping with alliance mates (one plus per airport)."
   )
 }

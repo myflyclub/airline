@@ -462,7 +462,7 @@ object NegotiationUtil {
     NegotiationBonus.drawNegativeBonus(monetaryBaseValue, delegates, link.to, useHighImpactPool = useBigPool)
   }
 
-  val MAX_NEXT_NEGOTIATION_DISCOUNT = 0.2
+  val MAX_NEXT_NEGOTIATION_DISCOUNT = 0.25
   def getNextNegotiationDiscount(link : Link, negotiationResult: NegotiationResult) = {
     if (!negotiationResult.isSuccessful) {
       val ratio = negotiationResult.result / negotiationResult.threshold

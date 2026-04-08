@@ -461,6 +461,7 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
 
       if (negotiationResult.isSuccessful) { //purge all previous discounts if successful
         NegotiationSource.deleteLinkDiscountsByAirlineAndAirport(airline.id, fromAirport.id, toAirport.id)
+        NotificationSource.deleteNotificationsByTargetId(airline.id, resultLink.id.toString, NotificationCategory.LINK_CANCELLATION)
       }
 
       NegotiationUtil.getNextNegotiationDiscount(resultLink, negotiationResult).foreach { discount =>
@@ -468,7 +469,7 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
           val expiryGameDate = { val ec = cycle + LinkNegotiationDiscount.DURATION; s"${ec % 48}.${ec / 48}" }
           val notificationMessage = s"Negotiation Discount of ${(discount.discount * 100).toInt}% for ${fromAirport.displayText} -> ${toAirport.displayText} | expires $expiryGameDate"
           NotificationSource.insertNotification(Notification(airline.id, NotificationCategory.NEGOTIATION_LOSS, notificationMessage, cycle,
-            expiryCycle = Some(cycle + LinkNegotiationDiscount.DURATION)))
+            targetId = Some(resultLink.id.toString), expiryCycle = Some(cycle + LinkNegotiationDiscount.DURATION)))
           NegotiationSource.saveLinkDiscount(discount)
           result = result + ("nextNegotiationDiscount" -> JsString(s"Some progress: ${(discount.discount * 100).toInt}% Negotiation Discount for the next ${LinkNegotiationDiscount.DURATION} weeks"))
         }
