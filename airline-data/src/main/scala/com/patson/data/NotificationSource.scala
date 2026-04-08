@@ -276,6 +276,25 @@ object NotificationSource {
     }
   }
 
+  def deleteNotificationsByTargetId(airlineId: Int, targetId: String, category: NotificationCategory.Value): Unit = {
+    val connection = Meta.getConnection()
+    try {
+      val statement = connection.prepareStatement(
+        s"DELETE FROM $NOTIFICATION_TABLE WHERE airline = ? AND target_id = ? AND category = ?"
+      )
+      try {
+        statement.setInt(1, airlineId)
+        statement.setString(2, targetId)
+        statement.setString(3, category.toString)
+        statement.executeUpdate()
+      } finally {
+        statement.close()
+      }
+    } finally {
+      connection.close()
+    }
+  }
+
   def deleteNotification(airlineId: Int, notifId: Int): Unit = {
     val connection = Meta.getConnection()
     try {

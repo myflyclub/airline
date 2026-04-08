@@ -36,6 +36,10 @@ function updateAirlineInfo(airlineId) {
 	    dataType: 'json',
 	    cache: false,
 	    success: function(airline) {
+	    	// Guard: if the user switched to a different airline while this request was in
+	    	// flight, discard the stale response. selectedAirlineId is updated synchronously
+	    	// in initWebSocket() before the request fires, so it's the right sentinel.
+	    	if (typeof selectedAirlineId !== 'undefined' && selectedAirlineId !== airlineId) return
 	    	refreshTopBar(airline)
 	    	$(".currentAirline").html(getAirlineLogoImg(airline.id) + airline.name)
 
@@ -114,39 +118,57 @@ function syncAllianceFields(airlineId) {
 }
 
 async function switchAirline(airlineId) {
-    // Remove old airlineType body class
     document.body.className = document.body.className.replace(/\bairlineType-\S+/g, '').trim()
-
-    // Clear existing flight paths
     if (window.AirlineMap) AirlineMap.clearAllPaths()
 
-    syncAllianceFields(airlineId)
+    // ── per-airline state reset ─────────────────────────────────────────────
+    // airline.js
+    loadedLinks = []
+    loadedLinksById = {}
+    linksAverages = null
+    selectedLinkIds = new Set()
+    planLinkState = { fromAirportId: null, toAirportId: null }
+    planLinkInfo = null
+    planLinkInfoByModel = {}
+    existingLink = undefined
+    currentLinkConsumptions = null
+    currentLinkRouteOps = []
+    quickPriceDefaults = {}
+    selectedLink = null
+    // airport.js
+    activeAirport = null
+    activeAirportId = null
+    activeAirportPopupInfoWindow = null
+    targetBase = null
+    airportBaseScale = 0
+    // office.js  (lazy-loaded; resetting prevents stale flash + forces ETag refresh)
+    loadedIncomes = {}
+    loadedLedger = []
+    loadedAirlineOps = {}
+    loadedAirlineStats = {}
+    loadedAirlineReputation = {}
+    _financesEtag = null
+    sheetPages.financial = 0
+    sheetPages.ledger = 0
+    sheetPages.stats = 0
+    // airplane.js
+    loadedModelsOwnerInfo = []
+    selectedModelId = undefined
+    selectedModel = undefined
+    storeSelectedAirplaneIds = []
+    isAirplaneSelectionMode = false
+    // ───────────────────────────────────────────────────────────────────────
 
+    syncAllianceFields(airlineId)
     await selectAirline(airlineId)
 
-    activeAirport = null;
-    activeAirportId = null;
-    activeAirportPopupInfoWindow = null;
-    targetBase = null;
-    airportBaseScale = 0;
-    planLinkState = { fromAirportId: null, toAirportId: null };
-    selectedLink = null;
-
-    loadNotificationBadge();
-    revertOlympicsVotes();
-
-    // Update chat tabs for new alliance context
+    loadNotificationBadge()
+    revertOlympicsVotes()
     if (typeof updateChatTabs === 'function') updateChatTabs()
-
-    // Center map on new HQ
-    if (window.AirlineMap && activeAirline) {
-        AirlineMap.centerOnHQ(activeAirline, 6)
-    }
+    if (window.AirlineMap && activeAirline) AirlineMap.centerOnHQ(activeAirline, 6)
 
     localStorage.setItem('lastAirlineId', airlineId)
-
     populateAirlineSwitcher()
-
     navigateTo('/map/')
 }
 
@@ -381,12 +403,14 @@ function updateLinksInfo() {
     }
 
     if (activeAirline) {
+        var airlineId = activeAirline.id
         $.ajax({
             type: 'GET',
-            url: "/airlines/" + activeAirline.id + "/links-details",
+            url: "/airlines/" + airlineId + "/links-details",
             contentType: 'application/json; charset=utf-8',
             dataType: 'json',
             success: function (data) {
+                if (activeAirline.id !== airlineId) return
                 if (window.AirlineMap) {
                     if (data.type === 'FeatureCollection' && data.features) {
                         AirlineMap.setRoutesFromGeoJSON(data);
@@ -407,12 +431,14 @@ function updateLinksInfo() {
 
 //refresh links without removal/addition
 function refreshLinks(forceRedraw) {
+    var airlineId = activeAirline.id
     $.ajax({
         type: 'GET',
-        url: "/airlines/" + activeAirline.id + "/links-details",
+        url: "/airlines/" + airlineId + "/links-details",
         contentType: 'application/json; charset=utf-8',
         dataType: 'json',
         success: function (data) {
+            if (activeAirline.id !== airlineId) return
             if (data.type === 'FeatureCollection' && data.features) {
                 AirlineMap.setRoutesFromGeoJSON(data);
             } else {
@@ -817,7 +843,6 @@ function planToAirport(toAirportId, toAirportName) {
 //i.e. plan route
 function planLink(fromAirport, toAirport, isRefresh) {
     checkTutorial("planLink")
-	var airlineId = activeAirline.id
 
 	planLinkState.fromAirportId = parseInt(fromAirport)
 	planLinkState.toAirportId = parseInt(toAirport)
@@ -825,6 +850,9 @@ function planLink(fromAirport, toAirport, isRefresh) {
     $('#planLinkDetails .warning').hide()
 
     var loadPlanLink = function() {
+        // Read airlineId here (not at planLink call-time) so a switch during the
+        // fadeOut delay never sends a request for the previous airline.
+        var airlineId = activeAirline.id
         var url = "/airlines/" + airlineId + "/plan-link"
         $.ajax({
             type: 'POST',
@@ -832,6 +860,8 @@ function planLink(fromAirport, toAirport, isRefresh) {
             data: { 'airlineId' : parseInt(airlineId), 'fromAirportId': parseInt(fromAirport), 'toAirportId' : parseInt(toAirport)} ,
             dataType: 'json',
             success: function(linkInfo) {
+                // Guard: ignore response if the airline changed while the request was in flight
+                if (activeAirline.id !== airlineId) return
                 updatePlanLinkInfo(linkInfo, isRefresh)
                 if (!isRefresh) {
                     showMapOverlay($('#sidePanel'));
@@ -1986,20 +2016,22 @@ function loadLinksTable(onComplete, forceRefresh) {
         return;
     }
 
-	$.ajax({
-		type: 'GET',
-		url: "/airlines/" + activeAirline.id + "/links-details",
-	    contentType: 'application/json; charset=utf-8',
-	    dataType: 'json',
-	    success: function(data) {
-	    	updateLoadedLinks(data);
-	    	renderTable();
-	    },
+    var airlineId = activeAirline.id
+    $.ajax({
+        type: 'GET',
+        url: "/airlines/" + airlineId + "/links-details",
+        contentType: 'application/json; charset=utf-8',
+        dataType: 'json',
+        success: function(data) {
+            if (activeAirline.id !== airlineId) return
+            updateLoadedLinks(data);
+            renderTable();
+        },
         error: function(jqXHR, textStatus, errorThrown) {
-	            console.log(JSON.stringify(jqXHR));
-	            console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
-	    }
-	});
+            console.log(JSON.stringify(jqXHR));
+            console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
+        }
+    });
 }
 
 function toggleLinksTableSortOrder(sortHeader) {

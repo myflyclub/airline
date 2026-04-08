@@ -83,16 +83,19 @@ const Alliance = (() => {
     // SECTION: Data Loading
     // =========================================================================
 
-    function prefetch() {
-        if (Object.keys(loadedAlliancesById).length) return;
-        fetch('/alliances').then(r => r.json()).then(alliances => {
+    function _loadAlliances() {
+        return fetch('/alliances').then(r => r.json()).then(alliances => {
             loadedAlliancesById = {};
             alliances.forEach(alliance => {
                 loadedAlliancesById[alliance.id] = alliance;
                 alliance.memberCount = alliance.members.filter(m => m.allianceRole !== 'Applicant').length;
             });
-            resetVisibilityToTop10();
-        }).catch(err => console.error('Alliance prefetch failed:', err));
+        });
+    }
+
+    function prefetch() {
+        if (Object.keys(loadedAlliancesById).length) return;
+        _loadAlliances().then(() => resetVisibilityToTop10()).catch(err => console.error('Alliance prefetch failed:', err));
 
         fetch('/alliances-data').then(r => r.json()).then(data => {
             alliancesData = data;
@@ -129,14 +132,7 @@ const Alliance = (() => {
         }
 
         // /alliances: fast — renders ticker + sidebar immediately
-        fetch('/alliances').then(r => r.json()).then(alliances => {
-            loadedAlliancesById = {};
-            alliances.forEach(alliance => {
-                loadedAlliancesById[alliance.id] = alliance;
-                alliance.memberCount = alliance.members.filter(m => m.allianceRole !== 'Applicant').length;
-            });
-            _render();
-        }).catch(err => {
+        _loadAlliances().then(_render).catch(err => {
             console.error('Failed to load alliances:', err);
             $('body .loadingSpinner').hide();
         });
@@ -840,6 +836,11 @@ const Alliance = (() => {
             .catch(err => console.error('Failed to form alliance:', err));
     }
 
+    function _refreshSidebar() {
+        const id = selectedAllianceId;
+        _loadAlliances().then(() => showSidebar(id)).catch(err => console.error('Failed to refresh alliance sidebar:', err));
+    }
+
     function _removeAllianceMember(removeAirlineId) {
         fetch(`/airlines/${activeAirline.id}/remove-alliance-member/${removeAirlineId}`, {
             method: 'DELETE',
@@ -852,7 +853,7 @@ const Alliance = (() => {
                     activeAirline.allianceName = undefined;
                     updateChatTabs();
                 }
-                show();
+                _refreshSidebar();
             })
             .catch(err => console.error('Failed to remove alliance member:', err));
     }
@@ -862,7 +863,7 @@ const Alliance = (() => {
             method: 'POST',
             headers: { 'Content-Type': 'application/json; charset=utf-8' },
         })
-            .then(() => show())
+            .then(() => _refreshSidebar())
             .catch(err => console.error('Failed to accept alliance member:', err));
     }
 
@@ -871,7 +872,7 @@ const Alliance = (() => {
             method: 'POST',
             headers: { 'Content-Type': 'application/json; charset=utf-8' },
         })
-            .then(() => show())
+            .then(() => _refreshSidebar())
             .catch(err => console.error('Failed to promote alliance member:', err));
     }
 
@@ -880,7 +881,7 @@ const Alliance = (() => {
             method: 'POST',
             headers: { 'Content-Type': 'application/json; charset=utf-8' },
         })
-            .then(() => show())
+            .then(() => _refreshSidebar())
             .catch(err => console.error('Failed to demote alliance member:', err));
     }
 

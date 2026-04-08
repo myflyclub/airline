@@ -20,10 +20,6 @@ object SantaClausPatcher extends App {
   dataSource.setPassword(DATABASE_PASSWORD)
   dataSource.setJdbcUrl(DATABASE_CONNECTION)
   dataSource.setMaxPoolSize(10)
-  val connection = getConnection()
-  createSchema(connection)
-  connection.close
-
   println("Select mode:")
   println("  1 - Full reset: clear ALL existing data and assign for every airline")
   println("  2 - Incremental: only assign for airlines that don't have an entry yet")
@@ -41,7 +37,9 @@ object SantaClausPatcher extends App {
 
   val airlinesToProcess = if (choice == "1") {
     println("Clearing all existing santa claus data...")
-    ChristmasSource.deleteAllSantaClausInfo()
+    val connection = getConnection()
+    createSchema(connection)
+    connection.close()
     allAirlines
   } else {
     val existingAirlineIds = ChristmasSource.loadSantaClausInfoByCriteria(List.empty).map(_.airline.id).toSet
