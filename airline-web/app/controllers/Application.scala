@@ -661,7 +661,8 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
         val json = JsObject(benchmarks.map { case (typeLabel, tb) =>
           typeLabel -> Json.obj(
             "pask"                -> metricJson(tb.pask),
-            "dividends_per_share" -> metricJson(tb.dividendsPerShare)
+            "dividends_per_share" -> metricJson(tb.dividendsPerShare),
+            "codeshares"          -> metricJson(tb.codeshares)
           )
         })
         ResponseCache.benchmarks = (cycle, json)

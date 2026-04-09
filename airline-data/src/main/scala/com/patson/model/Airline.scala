@@ -196,7 +196,7 @@ case class Airline(name: String, var airlineType: AirlineType = LegacyAirline, v
     ManagerInfo(availableCount, busyManagers)
   }
 
-  val BASE_MANAGER_COUNT = 5
+  val BASE_MANAGER_COUNT = 7
   val MANAGER_PER_LEVEL = 3
   lazy val managerCount = BASE_MANAGER_COUNT + airlineGrade.level * MANAGER_PER_LEVEL
 }
@@ -443,9 +443,9 @@ object AirlineGrades extends GradeEvaluator {
 
 object AirlineGradeStockPrice extends GradeEvaluator {
   override val grades: Vector[(Double, String)] = Vector(
-    0.39 -> "Toilet Paper",
-    0.73 -> "Penny Stock",
-    1.36 -> "Floundering",
+    0.32 -> "Toilet Paper",
+    0.61 -> "Penny Stock",
+    1.26 -> "Floundering",
     2.53 -> "Not Bankrupt",
     4.71 -> "Bargain?",
     8.76 -> "Promising",
@@ -483,21 +483,21 @@ object AirlineGradeElites extends GradeEvaluator {
 
 object AirlineGradeTouristsTravelers extends GradeEvaluator {
   override val grades: Vector[(Double, String)] = Vector(
-    4000.0 -> "Discount Disaster",
-    12000.0 -> "Leisure Loser",
-    24000.0 -> "Semi Bargain Bin",
-    48000.0 -> "Holiday Hauler",
-    96000.0 -> "Package Deal Pal",
-    175000.0 -> "Resort Runner",
-    280000.0 -> "Deal Seeker Favorite",
-    390000.0 -> "Bargain Bin Bonanza",
-    470000.0 -> "Detours Delight",
-    560000.0 -> "Cheapo Champion",
-    670000.0 -> "Penny Pitchers' Paradise",
-    800000.0 -> "Mega Mover",
-    880000.0 -> "Mega Mega Mega Mover",
-    970000.0 -> "Budget Behemoth",
-    1070000.0 -> "Low-Cost Leviathan"
+       5000.0 -> "Discount Disaster",
+      20000.0 -> "Leisure Loser",
+      40000.0 -> "Semi Bargain Bin",
+      80000.0 -> "Holiday Hauler",
+     140000.0 -> "Package Deal Pal",
+     240000.0 -> "Resort Runner",
+     340000.0 -> "Deal Seeker Favorite",
+     440000.0 -> "Bargain Bin Bonanza",
+     550000.0 -> "Detours Delight",
+     660000.0 -> "Cheapo Champion",
+     770000.0 -> "Penny Pitchers' Paradise",
+     880000.0 -> "Mega Mover",
+    1000000.0 -> "Mega Mega Mega Mover",
+    1100000.0 -> "Budget Behemoth",
+    1200000.0 -> "Low-Cost Leviathan"
   )
 }
 

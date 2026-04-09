@@ -237,7 +237,7 @@ object AirlineSimulation {
             // Accumulator: (ask, satisfactionSum, loadFactorSum, flights, ontime)
             case ((askAcc, satAcc, lfAcc, flightsAcc, delayAcc), consumption) =>
               val link = consumption.link
-              val ASK = link.capacity.total * link.distance
+              val ASK = link.capacity.totalwithSeatSize * link.distance
               (
                 askAcc + ASK,
                 satAcc + consumption.satisfaction,
@@ -369,6 +369,10 @@ object AirlineSimulation {
               case None => 0.0
             }
             (value, ReputationType.MILESTONE_HIGH_PRICES)
+
+          case "MILESTONE_LARGE_BASE" =>
+            val value = if (airline.bases.isEmpty) 0.0 else airline.bases.map(_.scale).max.toDouble
+            (value, ReputationType.MILESTONE_LARGE_BASE)
         }
 
         val reputation = AirlineMilestones.evaluateMilestone(milestone, milestoneValue.toLong)

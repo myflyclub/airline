@@ -1,7 +1,7 @@
 package com.patson.model
 
 case class StockMetric(value: Int, floor: Double, target: Double)
-case class TypeBenchmark(pask: StockMetric, dividendsPerShare: StockMetric)
+case class TypeBenchmark(pask: StockMetric, dividendsPerShare: StockMetric, codeshares: StockMetric)
 
 object StockModel {
 
@@ -24,14 +24,19 @@ object StockModel {
       else {
         val paskList = typeStats.map(s => s.RASK - s.CASK)
         val divList  = typeStats.map(_.dividendsPerShare)
+        val codeshares  = typeStats.map(_.codeshares.toDouble)
         val benchmark = TypeBenchmark(
           pask = allMetrics("pask").copy(
-            floor  = percentile(paskList, 0.50),
-            target = Math.max(percentile(paskList, 1.0), 0.1)
+            floor  = percentile(paskList, 0.2),
+            target = Math.max(percentile(paskList, 0.8), 0.1)
           ),
           dividendsPerShare = allMetrics("dividends_per_share").copy(
-            floor  = percentile(divList, 0.50),
-            target = Math.max(percentile(divList, 1.0), 0.1)
+            floor  = percentile(divList, 0.2),
+            target = Math.max(percentile(divList, 0.9), 0.1)
+          ),
+          codeshares = allMetrics("codeshares").copy(
+            floor  = percentile(codeshares, 0.2),
+            target = Math.max(percentile(codeshares, 0.8), 0.1)
           )
         )
         Some(airlineType.label -> benchmark)
@@ -58,15 +63,15 @@ object StockModel {
     "Target is a race among airlines of your type to have the highest."
   )
 
+  //currently adds up to 115
   val allMetrics: Map[String, StockMetric] = Map(
-    "eps" ->                  StockMetric(30, 0.1, 4.0),
-    "pask" ->                 StockMetric(20, 0.05, 0.09),
-    "dividends_per_share" ->  StockMetric(20, 0.0, 1.0),
+    "eps" ->                  StockMetric(30, 0.1, 1.0),
+    "pask" ->                 StockMetric(25, 0.05, 0.09),
+    "dividends_per_share" ->  StockMetric(25, 0.0, 1.0),
     "interest" ->             StockMetric(10, 0.26, 0.6), //there's an extra 10 here
     "satisfaction" ->         StockMetric(5, 0.5, 0.9),
     "link_count" ->           StockMetric(5, 50, 400),
-    "on_time" ->              StockMetric(5, 0.7, 0.98),
-    "airport" ->              StockMetric(5, 20, 500),
+    "on_time" ->              StockMetric(5, 0.75, 0.95),
     "codeshares" ->           StockMetric(5, 200, 100000),
     "rep_leaderboards" ->     StockMetric(5, 0, 200),
   )
@@ -92,20 +97,21 @@ object StockModel {
    * Returns 0 - 100 after adding all the metrics
    **/
   def getStockScore(stats: AirlineStat, currentInterestRate: Double, benchmarkOverride: Option[TypeBenchmark] = None): Double = {
-    val sizeAdjust = (stats.eps / 0.6).max(0.001).min(1.0)
+    val sizeAdjust = (stats.eps / 0.5).max(0.01).min(1.0)
     val paskMet = benchmarkOverride.map(_.pask).getOrElse(allMetrics("pask"))
     val divMet  = benchmarkOverride.map(_.dividendsPerShare).getOrElse(allMetrics("dividends_per_share"))
+    val codeshares = benchmarkOverride.map(_.codeshares).getOrElse(allMetrics("codeshares"))
 
     Seq(
-      StockModel.getMetricValue("eps", stats.eps),
+      getMetricValue("eps", stats.eps),
       getMetricValue(paskMet, stats.RASK - stats.CASK),
-      StockModel.getMetricValue("satisfaction", stats.satisfaction),
-      StockModel.getMetricValue("link_count", stats.linkCount),
-      StockModel.getMetricValue("on_time", stats.onTime) * sizeAdjust,
-      StockModel.getMetricValue("codeshares", stats.codeshares),
-      StockModel.getMetricValue("rep_leaderboards", stats.repLeaderboards),
-      StockModel.getMetricValue("interest", currentInterestRate) * sizeAdjust,
-      getMetricValue(divMet, stats.dividendsPerShare)
+      getMetricValue(divMet, stats.dividendsPerShare),
+      getMetricValue("satisfaction", stats.satisfaction),
+      getMetricValue("link_count", stats.linkCount),
+      getMetricValue("on_time", stats.onTime) * sizeAdjust,
+      getMetricValue(codeshares, stats.codeshares),
+      getMetricValue("rep_leaderboards", stats.repLeaderboards),
+      getMetricValue("interest", currentInterestRate) * sizeAdjust
     ).sum
   }
 

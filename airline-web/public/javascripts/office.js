@@ -528,6 +528,7 @@ function updateAirlineDetails() {
 
 
 async function loadSheets() {
+	loadStockBenchmarks()
 	var airlineId = activeAirline.id
 	const periodKeys = ['WEEKLY', 'QUARTER', 'YEAR']
 
@@ -761,7 +762,6 @@ function updateLedgerSheet(weekData) {
 
 function updateAirlineStatSheet(airlineStats) {
     if (!airlineStats) return
-    // updateAllTextNodes(".officeCycleText", getGameDate(airlineStats.cycle, airlineStats.period, true));
     Object.keys(airlineStats).forEach(key => {
         const element = document.querySelector(`#airlineStatsSheet .${key}`)
         if (element) element.textContent = commaSeparateNumber(airlineStats[key])
@@ -770,22 +770,37 @@ function updateAirlineStatSheet(airlineStats) {
 
 function updateAirlineOpSheet(opsData) {
     if (!opsData) return
-    // updateAllTextNodes(".officeCycleText", getGameDate(opsData.cycle, opsData.period, true));
+
+    function fmtVal(key, v) {
+        if (key === 'dividends_per_share') return `$${commaSeparateNumber(v)}`
+        if (key === 'PASK') return `¢${commaSeparateNumber(v < 1 ? v * 100 : v)}`
+        if (key === 'eps') return `$${v}`
+        const n = (v < 1) ? v * 100 : v
+        if (key === 'satisfaction' || key === 'on_time') return `${commaSeparateNumber(n)}%`
+        return commaSeparateNumber(n)
+    }
+
     Object.keys(opsData).forEach(key => {
         const element = document.querySelector(`#opsSheet .${key}`)
         if (!element) return
-        const isPercentField = key !== 'dividends_per_share' && key !== 'eps'
-        element.textContent = (isPercentField && opsData[key] < 1)
-            ? commaSeparateNumber(opsData[key] * 100)
-            : commaSeparateNumber(opsData[key])
+        const rawValue = opsData[key]
         const metric = getEffectiveMetric(key)
+        element.classList.remove('text-success', 'text-middling', 'text-danger', 'text-warning')
         if (metric) {
-            const normalizedValue = (opsData[key] - metric.floor) / (metric.target - metric.floor)
-            element.classList.remove('text-success', 'text-middling', 'text-danger', 'text-warning')
-            if (normalizedValue >= 0.8) element.classList.add('text-success')
-            else if (normalizedValue <= 0.2) element.classList.add('text-danger')
-            else if (normalizedValue <= 0.5) element.classList.add('text-warning')
-            else element.classList.add('text-middling')
+            const normalizedValue = (rawValue - metric.floor) / (metric.target - metric.floor)
+            let colorClass = ''
+            if (normalizedValue >= 0.8) colorClass = 'text-success'
+            else if (normalizedValue <= 0.2) colorClass = 'text-danger'
+            else if (normalizedValue <= 0.5) colorClass = 'text-warning'
+            else colorClass = 'text-middling'
+            element.classList.add('stacked')
+            element.innerHTML = `<span class="text-xs opacity-60">target: ${fmtVal(key, metric.target)}</span><span class="text-base ${colorClass}">${fmtVal(key, rawValue)}</span>`
+        } else {
+            element.classList.remove('stacked')
+            const isPercentField = key !== 'dividends_per_share' && key !== 'eps'
+            element.textContent = (isPercentField && rawValue < 1)
+                ? commaSeparateNumber(rawValue * 100)
+                : commaSeparateNumber(rawValue)
         }
     })
 }
