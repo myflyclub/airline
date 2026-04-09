@@ -288,7 +288,8 @@ object Airline {
         //remove all links
         LinkSource.deleteLinksByAirlineId(airlineId)
         //remove all airplanes
-        AirplaneSource.deleteAirplanesByCriteria(List(("owner", airlineId)));
+        AirplaneSource.deleteAirplanesByCriteria(List(("owner", airlineId)))
+        AirplaneSource.deleteAirplaneConfigurationsByAirline(airlineId)
         //remove all bases
         airline.getBases().foreach(_.delete)
         //remove all loans
