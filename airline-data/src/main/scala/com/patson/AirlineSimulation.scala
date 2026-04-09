@@ -398,22 +398,6 @@ object AirlineSimulation {
         reputationBreakdowns.append(ReputationBreakdown(ReputationType.ELITES, reputationByElites, airline.stats.elites))
       }
 
-      if (airline.airlineType.stockRepPerLevel > 0) {
-        val reputationByStockPrice = airline.airlineType.stockRepPerLevel * airline.airlineGradeStockPrice.level
-        reputationBreakdowns.append(ReputationBreakdown(ReputationType.STOCK_PRICE, reputationByStockPrice, airline.getStockPrice().toLong))
-      }
-
-      //set reputation
-      val finalBreakdowns = ReputationBreakdowns(reputationBreakdowns.toList)
-      AirlineSource.updateReputationBreakdowns(airline.id, finalBreakdowns)
-      var targetReputation = finalBreakdowns.total
-      if (targetReputation > currentReputation && targetReputation - currentReputation > MAX_REPUTATION_DELTA) {
-        targetReputation = currentReputation + MAX_REPUTATION_DELTA //make sure it increases/decreases gradually based on passenger volume
-      } else if (targetReputation < currentReputation && currentReputation - targetReputation > MAX_REPUTATION_DELTA) {
-        targetReputation = currentReputation - MAX_REPUTATION_DELTA
-      }
-      airline.setReputation(targetReputation)
-
       // Create and Add AirlineStat Instance using calculated values and paxStat
       val airlineWeeklyStats = AirlineStat(
         airlineId = airline.id,
@@ -430,11 +414,10 @@ object AirlineSimulation {
         onTime = calculatedOnTime,
         eps = eps,
         linkCount = linkCount,
-        repTotal = finalBreakdowns.total.toInt,
+        repTotal = 0,
         repLeaderboards = reputationBonusFromLeaderboards.toInt,
         dividendsPerShare = dividendsPerShare
       )
-      allAirlineStats += airlineWeeklyStats
       val benchmarkOverride = StockModel.benchmarksByType.get(airline.airlineType.label)
       val stockPrice = if (isBankrupt || airline.airlineType.stockRepPerLevel == 0) {
          0.0
@@ -442,6 +425,22 @@ object AirlineSimulation {
         StockModel.updateStockPrice(airline.getStockPrice(), airlineWeeklyStats, latestQuarterStatsByAirlineId.get(airline.id), currentInterestRate, benchmarkOverride)
       }
       airline.setStockPrice(stockPrice)
+
+      if (airline.airlineType.stockRepPerLevel > 0) {
+        val reputationByStockPrice = airline.airlineType.stockRepPerLevel * airline.airlineGradeStockPrice.level
+        reputationBreakdowns.append(ReputationBreakdown(ReputationType.STOCK_PRICE, reputationByStockPrice, airline.getStockPrice().toLong))
+      }
+
+      //set reputation
+      val finalBreakdowns = ReputationBreakdowns(reputationBreakdowns.toList)
+      AirlineSource.updateReputationBreakdowns(airline.id, finalBreakdowns)
+      var targetReputation = finalBreakdowns.total
+      if (targetReputation > currentReputation && targetReputation - currentReputation > MAX_REPUTATION_DELTA) {
+        targetReputation = currentReputation + MAX_REPUTATION_DELTA //make sure it increases/decreases gradually based on passenger volume
+      } else if (targetReputation < currentReputation && currentReputation - targetReputation > MAX_REPUTATION_DELTA) {
+        targetReputation = currentReputation - MAX_REPUTATION_DELTA
+      }
+      airline.setReputation(targetReputation)
 
       val weeklyDetails = AirlineBalanceDetails(
         airlineId = airline.id,
@@ -472,6 +471,7 @@ object AirlineSimulation {
         stockPrice = stockPrice,
         cycle = currentCycle)
       allBalances += ((weeklyBalance, weeklyDetails))
+      allAirlineStats += airlineWeeklyStats.copy(repTotal = finalBreakdowns.total.toInt)
     } //end each airline
     
     AirlineSource.saveAirlinesInfo(allAirlines)
