@@ -516,25 +516,23 @@ function plotSeatConfigurationBar(id, configuration, maxSeats, spaceMultipliers,
 function plotLinkProfit(linkConsumptions, id, plotUnit = plotUnitEnum.MONTH) {
     const data = [];
     const category = [];
-    const profitByMark = {};
-    const markOrder = [];
+    const profitByCycle = {};
 
     const maxMark = plotUnit.maxWeek;
 
-    linkConsumptions.length > 0 && linkConsumptions.forEach((linkConsumption) => {
-        const mark = getGameDate(linkConsumption.cycle);
-        if (profitByMark[mark] === undefined) {
-            profitByMark[mark] = linkConsumption.profit;
-            markOrder.push(mark);
-        } else {
-            profitByMark[mark] += linkConsumption.profit;
-        }
-    });
+    if (linkConsumptions && linkConsumptions.length > 0) {
+        let maxCycle = 0;
+        linkConsumptions.forEach((lc) => {
+            profitByCycle[lc.cycle] = (profitByCycle[lc.cycle] ?? 0) + lc.profit;
+            if (lc.cycle > maxCycle) maxCycle = lc.cycle;
+        });
 
-    markOrder.slice(0, maxMark).reverse().forEach(mark => {
-        data.push(profitByMark[mark]);
-        category.push(mark.toString());
-    });
+        const startCycle = Math.max(1, maxCycle - maxMark + 1);
+        for (let c = startCycle; c <= maxCycle; c++) {
+            category.push(getGameDate(c));
+            data.push(profitByCycle[c] ?? 0);
+        }
+    }
 
     const config = {
         type: 'bar',
@@ -632,17 +630,25 @@ function plotLinkConsumption(linkConsumptions, ridershipId, revenueId, priceId, 
             emptySeatsData[cls] = [];
         });
 
-        consumptionsArray.reverse().forEach((linkConsumption) => {
-            const mark = getGameDate(linkConsumption.cycle);
-            category.push(mark.toString());
+        // Build lookup by cycle for zero-filling gaps (single pass)
+        let maxCycle = 0;
+        const byCycle = new Map();
+        consumptionsArray.forEach(c => {
+            byCycle.set(c.cycle, c);
+            if (c.cycle > maxCycle) maxCycle = c.cycle;
+        });
+        const startCycle = Math.max(1, maxCycle - maxWeek + 1);
 
-            // Per-class data
+        for (let c = startCycle; c <= maxCycle; c++) {
+            category.push(getGameDate(c));
+
+            const linkConsumption = byCycle.get(c);
             availableClasses.forEach((cls) => {
-                const sold = linkConsumption.soldSeats?.[cls] || 0;
-                const cancelled = linkConsumption.cancelledSeats?.[cls] || 0;
-                const price = linkConsumption.price?.[cls] || 0;
-                const capacity = linkConsumption.capacity?.[cls] || 0;
-                const empty = capacity - sold - cancelled;
+                const sold = linkConsumption?.soldSeats?.[cls] ?? 0;
+                const cancelled = linkConsumption?.cancelledSeats?.[cls] ?? 0;
+                const price = linkConsumption?.price?.[cls] ?? 0;
+                const capacity = linkConsumption?.capacity?.[cls] ?? 0;
+                const empty = Math.max(0, capacity - sold - cancelled);
 
                 cancelledSeatsData[cls].push(cancelled);
                 soldSeatsData[cls].push(sold);
@@ -650,7 +656,7 @@ function plotLinkConsumption(linkConsumptions, ridershipId, revenueId, priceId, 
                 priceByClass[cls].push(price);
                 emptySeatsData[cls].push(empty);
             });
-        });
+        }
 
         // Ridership Chart
         const ridershipDatasets = [];
@@ -842,6 +848,11 @@ function plotLinkConsumption(linkConsumptions, ridershipId, revenueId, priceId, 
         createCustomLinkLegend([ridershipChart, revenueChart]);
 
         ChartUtils.createChart(priceId, priceConfig);
+    } else {
+        const ridershipChart = ChartUtils.createChart(ridershipId, { type: 'line', data: { labels: [], datasets: [] } });
+        const revenueChart = ChartUtils.createChart(revenueId, { type: 'line', data: { labels: [], datasets: [] } });
+        createCustomLinkLegend([ridershipChart, revenueChart]);
+        ChartUtils.createChart(priceId, { type: 'line', data: { labels: [], datasets: [] } });
     }
 }
 

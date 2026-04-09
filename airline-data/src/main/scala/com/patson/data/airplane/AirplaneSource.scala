@@ -354,6 +354,17 @@ object AirplaneSource {
     }
   }
 
+  def deleteAirplaneConfigurationsByAirline(airlineId: Int) = {
+    Using.resource(Meta.getConnection()) { connection =>
+      connection.setAutoCommit(false)
+      Using.resource(connection.prepareStatement("DELETE FROM " + AIRPLANE_CONFIGURATION_TEMPLATE_TABLE + " WHERE airline = ?")) { preparedStatement =>
+        preparedStatement.setInt(1, airlineId)
+        preparedStatement.executeUpdate()
+      }
+      connection.commit()
+    }
+  }
+
   def deleteAirplaneConfiguration(configuration: AirplaneConfiguration) = {
     Using.resource(Meta.getConnection()) { connection =>
       connection.setAutoCommit(false)

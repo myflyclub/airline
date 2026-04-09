@@ -39,7 +39,7 @@ object AirlineMilestones {
         "Passenger KM",
         List(
           MilestoneCondition(500000000, 40),
-          MilestoneCondition(50000, 15)
+          MilestoneCondition(50000, 20)
         )
       ),
       Milestone(
@@ -55,7 +55,15 @@ object AirlineMilestones {
         "Airport Bases",
         List(
           MilestoneCondition(14, 40),
-          MilestoneCondition(6, 15)
+          MilestoneCondition(3, 15)
+        )
+      ),
+      Milestone(
+        "MILESTONE_LARGE_BASE",
+        "Largest Base Scale",
+        List(
+          MilestoneCondition(12, 40),
+          MilestoneCondition(3, 15)
         )
       ),
       Milestone(
@@ -98,7 +106,7 @@ object AirlineMilestones {
         "Airport Bases",
         List(
           MilestoneCondition(15, 40),
-          MilestoneCondition(4, 15)
+          MilestoneCondition(3, 20)
         )
       ),
       Milestone(
@@ -106,7 +114,7 @@ object AirlineMilestones {
         "Passenger KM",
         List(
           MilestoneCondition(250000000, 30),
-          MilestoneCondition(100000, 15)
+          MilestoneCondition(100000, 20)
         )
       ),
       Milestone(
@@ -138,7 +146,7 @@ object AirlineMilestones {
         "Weekly Dividends",
         List(
           MilestoneCondition(7_500_000, 60),
-          MilestoneCondition(500_000, 20)
+          MilestoneCondition(1_000_000, 25)
         )
       ),
       Milestone(
@@ -216,7 +224,7 @@ object AirlineMilestones {
         "Destinations",
         List(
           MilestoneCondition(140, 60),
-          MilestoneCondition(20, 20)
+          MilestoneCondition(20, 15)
         )
       ),
       Milestone(
@@ -244,19 +252,19 @@ object AirlineMilestones {
         )
       ),
       Milestone(
-        "MILESTONE_BUSINESS",
-        "Business Passengers",
-        List(
-          MilestoneCondition(175000, 40),
-          MilestoneCondition(50000, 20)
-        )
-      ),
-      Milestone(
         "MILESTONE_LEADER_POINTS",
         "Leaderboard Points",
         List(
           MilestoneCondition(160, 60),
           MilestoneCondition(24, 20)
+        )
+      ),
+      Milestone(
+        "MILESTONE_LARGE_BASE",
+        "Largest Base Scale",
+        List(
+          MilestoneCondition(20, 40),
+          MilestoneCondition(5, 15)
         )
       )
     ),
@@ -307,7 +315,15 @@ object AirlineMilestones {
         "Weekly Dividends",
         List(
           MilestoneCondition(8_000_000, 60),
-          MilestoneCondition(750_000, 20)
+          MilestoneCondition(1_000_000, 20)
+        )
+      ),
+      Milestone(
+        "MILESTONE_LARGE_BASE",
+        "Largest Base Scale",
+        List(
+          MilestoneCondition(20, 40),
+          MilestoneCondition(4, 15)
         )
       )
     )

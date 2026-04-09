@@ -63,6 +63,10 @@ object ReputationType extends Enumeration {
     override val label = "Milestone High-Priced Tickets Sold"
   }
 
+  val MILESTONE_LARGE_BASE = new AbstractReputationType {
+    override val label = "Milestone Largest Base"
+  }
+
   val AIRPORT_LOYALIST_RANKING = new AbstractReputationType {
     override val label = "Airports"
   }
