@@ -687,6 +687,7 @@ class AirplaneApplication @Inject()(cc: ControllerComponents) extends AbstractCo
    * Uses efficient batch database operations to minimize transaction overhead.
    */
   def swapAirplaneModels(airlineId: Int) = AuthenticatedAirline(airlineId) { request =>
+    this.synchronized {
     val bodyOpt = request.body.asJson
     bodyOpt match {
       case None => BadRequest("Request body must be JSON")
@@ -785,7 +786,7 @@ class AirplaneApplication @Inject()(cc: ControllerComponents) extends AbstractCo
                 } else {
                   // Calculate action point cost: 1 per 400 total capacity or 1 per 5 aircraft, whichever is more rounded down, at least 1
                   val totalCapacity = airplanesToSwap.map(_.model.capacity).sum
-                  val apCost = Math.max(Math.max(totalCapacity / 400, airplanesToSwap.length / 5), 1)
+                  val apCost = Math.max(Math.max(totalCapacity / 200, airplanesToSwap.length / 4), 1)
 
                   // Calculate total sell value
                   val totalSellValue: Long = airplanesToSwap.map(airplane =>
@@ -910,17 +911,22 @@ class AirplaneApplication @Inject()(cc: ControllerComponents) extends AbstractCo
                     }
 
                     // Update airplanes that are being sold to dealer
-                    if (airplanesToSellToDealer.nonEmpty) {
+                    val soldCount = if (airplanesToSellToDealer.nonEmpty) {
                       AirplaneSource.updateAirplanes(airplanesToSellToDealer.toList, versionCheck = true)
+                    } else {
+                      0
                     }
 
+                    if (soldCount != airplanesToSellToDealer.length) {
+                      BadRequest("Swap operation failed: one or more airplanes were already sold")
+                    } else {
                     // Perform batch swap: delete old airplanes and insert new ones
                     val (deleteCount, insertCount) = AirplaneSource.swapAirplanesBatch(
-                      airplanesToDelete.toList, 
+                      airplanesToDelete.toList,
                       newAirplanesToCreate.toList
                     )
 
-                    if ((deleteCount + airplanesToSellToDealer.length) != airplanesToSwap.length || insertCount != airplanesToSwap.length) {
+                    if ((deleteCount + soldCount) != airplanesToSwap.length || insertCount != airplanesToSwap.length) {
                       BadRequest("Swap operation failed: mismatch in affected row counts")
                     } else {
                       // Update financials
@@ -977,6 +983,7 @@ class AirplaneApplication @Inject()(cc: ControllerComponents) extends AbstractCo
                         "newAirplanes" -> Json.toJson(newAirplanesToCreate.toList)
                       ))
                     }
+                    } // end soldCount check
                   }
                 }
               }
@@ -984,6 +991,7 @@ class AirplaneApplication @Inject()(cc: ControllerComponents) extends AbstractCo
           }
         }
     }
+    } // end synchronized
   }
 
   def updateAirplaneHome(airlineId: Int, airplaneId: Int, airportId: Int) = AuthenticatedAirline(airlineId) { request =>
