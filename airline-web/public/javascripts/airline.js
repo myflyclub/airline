@@ -885,8 +885,6 @@ function planLink(fromAirport, toAirport, isRefresh) {
     } else {
         loadPlanLink()
     }
-
-
 }
 
 var planLinkState = { fromAirportId: null, toAirportId: null }
@@ -1791,6 +1789,7 @@ function createLink() {
 		    contentType: 'application/json; charset=utf-8',
 		    dataType: 'json',
 		    success: function(savedLink) {
+		    	if (activeAirline.id !== airlineId) return
 		    	var isSuccessful
 		    	closeModal($('#linkConfirmationModal'))
                 if (savedLink.negotiationResult) {
@@ -3348,8 +3347,13 @@ function negotiationAnimation(savedLink, callback, callbackParam) {
 
 function addAirlineTooltip($target, airlineId, slogan, airlineName) {
     var $airlineTooltip = $('<div style="min-width: 150px;"></div>')
-    var $liveryImg = $('<img style="max-height: 100px; max-width: 250px; display: none; margin: auto;" loading="lazy">').appendTo($airlineTooltip)
-    $liveryImg.attr('src', 'airlines/' + airlineId + "/livery")
+    var $liveryImg = $('<img style="max-height: 100px; max-width: 250px; display: none; margin: auto;">').appendTo($airlineTooltip)
+    $liveryImg.on('load', function() {
+        if (this.naturalWidth > 1) {
+            $liveryImg.show()
+        }
+    })
+    $liveryImg.attr('src', '/airlines/' + airlineId + "/livery")
     var $sloganDiv =$("<h5></h5>").appendTo($airlineTooltip)
     if (slogan) {
         $sloganDiv.text(slogan)
@@ -3357,9 +3361,6 @@ function addAirlineTooltip($target, airlineId, slogan, airlineName) {
         $sloganDiv.text(airlineName)
     }
     addTooltipHtml($target, $airlineTooltip, {'top' : '100%'})
-    $target.on('mouseenter', function() {
-        $liveryImg.show()
-    })
 }
 
 function loadAndWatchAirlineNotes(airlineId) {

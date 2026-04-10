@@ -27,6 +27,27 @@ object FileSource {
     }
   }
 
+  def getWebPDimensions(bytes: Array[Byte]): Option[(Int, Int)] = {
+    if (bytes.length < 30) return None
+    if (bytes(0) != 'R' || bytes(1) != 'I' || bytes(2) != 'F' || bytes(3) != 'F') return None
+    if (bytes(8) != 'W' || bytes(9) != 'E' || bytes(10) != 'B' || bytes(11) != 'P') return None
+    val chunkType = new String(bytes, 12, 4)
+    chunkType match {
+      case "VP8 " =>
+        val w = ((bytes(26) & 0xFF) | ((bytes(27) & 0x3F) << 8)) & 0x3FFF
+        val h = ((bytes(28) & 0xFF) | ((bytes(29) & 0x3F) << 8)) & 0x3FFF
+        Some((w, h))
+      case "VP8L" if bytes.length >= 25 =>
+        val bits = (bytes(21) & 0xFF) | ((bytes(22) & 0xFF) << 8) | ((bytes(23) & 0xFF) << 16) | ((bytes(24) & 0xFF) << 24)
+        Some(((bits & 0x3FFF) + 1, ((bits >> 14) & 0x3FFF) + 1))
+      case "VP8X" =>
+        val w = ((bytes(24) & 0xFF) | ((bytes(25) & 0xFF) << 8) | ((bytes(26) & 0xFF) << 16)) + 1
+        val h = ((bytes(27) & 0xFF) | ((bytes(28) & 0xFF) << 8) | ((bytes(29) & 0xFF) << 16)) + 1
+        Some((w, h))
+      case _ => None
+    }
+  }
+
   private def ensureDirectory(path: String): Unit = {
     val dir = new File(path)
     if (!dir.exists()) {
@@ -54,13 +75,13 @@ object FileSource {
       throw new IllegalArgumentException(s"Invalid image format: $contentType. Allowed: ${allowedContentTypes.mkString(", ")}")
     }
 
-    val image = ImageIO.read(new ByteArrayInputStream(data))
-    if (image == null) {
-      throw new IllegalArgumentException("Invalid or corrupted image file")
+    val (width, height) = if (contentType == CONTENT_TYPE_WEBP) {
+      getWebPDimensions(data).getOrElse(throw new IllegalArgumentException("Cannot parse WebP image dimensions"))
+    } else {
+      val image = ImageIO.read(new ByteArrayInputStream(data))
+      if (image == null) throw new IllegalArgumentException("Invalid or corrupted image file")
+      (image.getWidth, image.getHeight)
     }
-
-    val width = image.getWidth
-    val height = image.getHeight
 
     if (exactWidth > 0 && exactHeight > 0 && (width != exactWidth || height != exactHeight)) {
       throw new IllegalArgumentException(s"Image must be exactly ${exactWidth}x${exactHeight}. Provided: ${width}x${height}")
