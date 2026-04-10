@@ -183,8 +183,14 @@ const lightTheme = createTheme('light');
  * Initialize styles from localStorage or default.
  */
 export function initStyles() {
-    const theme = localStorage.getItem("themeMode");
-    state.currentStyles = theme === 'dark' ? 'dark' : 'dark';
+    const themeMode = localStorage.getItem("themeMode") || "device";
+    let theme;
+    if (themeMode === "device") {
+        theme = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+    } else {
+        theme = themeMode;
+    }
+    state.currentStyles = theme;
 }
 
 /**
