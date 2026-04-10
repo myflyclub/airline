@@ -530,17 +530,24 @@ object Meta {
     statement.close()
 
     statement = connection.prepareStatement("CREATE TABLE " + PASSENGER_MISSED_DEMAND_TABLE + "(" +
-      "from_airport INT NOT NULL," +
-      "to_airport INT NOT NULL," +
-      "passenger_type TINYINT NOT NULL," +
-      "preference_type TINYINT NOT NULL," +
-      "preferred_link_class CHAR(1) NOT NULL," +
-      "passenger_count INT NOT NULL," +
+      "from_airport INT NOT NULL, " +
+      "to_airport INT NOT NULL, " +
+      "passenger_type TINYINT NOT NULL, " +
+      "preference_type TINYINT NOT NULL, " +
+      "preferred_link_class CHAR(1) NOT NULL, " +
+      "passenger_count INT NOT NULL, " +
       "PRIMARY KEY (from_airport, to_airport, passenger_type, preference_type, preferred_link_class)" +
-      ")")
+      ")"
+    )
 
     statement.execute()
     statement.close()
+
+    val idxStmt = connection.prepareStatement(
+      "CREATE INDEX idx_missed_from ON " + PASSENGER_MISSED_DEMAND_TABLE + "(from_airport)"
+    )
+    idxStmt.execute()
+    idxStmt.close()
   }
 
   def createLinkStats(connection: Connection): Unit = {
@@ -1952,32 +1959,6 @@ object Meta {
 
     statement.execute()
     statement.close()
-  }
-
-  def createMissedDemandTableIfNotExists(): Unit = {
-    val connection = getConnection()
-    try {
-      val stmt = connection.prepareStatement(
-        "CREATE TABLE IF NOT EXISTS " + PASSENGER_MISSED_DEMAND_TABLE + " (" +
-          "from_airport INT NOT NULL, " +
-          "to_airport INT NOT NULL, " +
-          "passenger_type TINYINT NOT NULL, " +
-          "preference_type TINYINT NOT NULL, " +
-          "preferred_link_class CHAR(1) NOT NULL, " +
-          "passenger_count INT NOT NULL, " +
-          "PRIMARY KEY (from_airport, to_airport, passenger_type, preference_type, preferred_link_class)" +
-          ")"
-      )
-      stmt.execute()
-      stmt.close()
-      val idxStmt = connection.prepareStatement(
-        "CREATE INDEX IF NOT EXISTS idx_missed_from ON " + PASSENGER_MISSED_DEMAND_TABLE + "(from_airport)"
-      )
-      idxStmt.execute()
-      idxStmt.close()
-    } finally {
-      connection.close()
-    }
   }
 
   def isTableExist(connection : Connection, tableName : String): Boolean = {
