@@ -58,12 +58,17 @@ object LiveryUtil {
         return Some(s"Livery must be JPG or WebP format (got $contentType)")
       }
 
-      val image = ImageIO.read(imageFile)
-      if (image == null) {
-        return Some("Cannot read image file")
+      val (imgWidth, imgHeight) = if (contentType == FileSource.CONTENT_TYPE_WEBP) {
+        FileSource.getWebPDimensions(bytes).getOrElse {
+          return Some("Cannot parse WebP image dimensions")
+        }
+      } else {
+        val image = ImageIO.read(imageFile)
+        if (image == null) return Some("Cannot read image file")
+        (image.getWidth, image.getHeight)
       }
-      if (image.getWidth > MAX_WIDTH || image.getHeight > MAX_HEIGHT) {
-        return Some(s"Livery must be at most ${MAX_WIDTH}x${MAX_HEIGHT} pixels (got ${image.getWidth}x${image.getHeight})")
+      if (imgWidth > MAX_WIDTH || imgHeight > MAX_HEIGHT) {
+        return Some(s"Livery must be at most ${MAX_WIDTH}x${MAX_HEIGHT} pixels (got ${imgWidth}x${imgHeight})")
       }
 
       None

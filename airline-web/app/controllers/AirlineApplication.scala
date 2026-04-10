@@ -940,6 +940,7 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
   }
 
   def doStockOp(airlineId: Int, operation: String) = AuthenticatedAirline(airlineId) { request =>
+    this.synchronized {
     request.body match {
       case json: AnyContentAsJson =>
         Try(json.json.\("sharesOutstanding").as[Int]) match {
@@ -988,6 +989,7 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
       case _ =>
         BadRequest("Cannot parse request body")
     }
+    } // end synchronized
   }
 
   val MIN_DIVIDENDS = 1000000L
