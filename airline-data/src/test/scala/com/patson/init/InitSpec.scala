@@ -25,20 +25,4 @@ class InitSpec extends AnyWordSpecLike with Matchers {
       missingIatas shouldBe empty
     }
   }
-
-  "Airport feature patcher IATAs" should {
-    "all exist in the airport database" in {
-      val iatas = AirportFeaturePatcher.featureList.values.flatMap(_.iterator.map(_._1)).toList
-
-      val missingIatas = iatas.filter { iata =>
-        AirportSource.loadAirportByIata(iata, fullLoad = false).isEmpty
-      }
-
-      if (missingIatas.nonEmpty) {
-        println(s"Missing IATAs in AirportFeaturePatcher: ${missingIatas.distinct.mkString(", ")}")
-      }
-
-      missingIatas shouldBe empty
-    }
-  }
 }

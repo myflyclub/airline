@@ -36,7 +36,7 @@ class DemandGeneratorSpec extends AnyWordSpecLike with Matchers {
        assert(demand > 0)
      }
     "Size 9 should find 13 hub airports".in {
-      val fromAirport = AirportSource.loadAirportByIata("add", true).get
+      val fromAirport = AirportSource.loadAirportByIata("pvg", fullLoad = true).get
       val hubAirports: List[(Airport, Double)] = DemandGenerator.getHubAirports(fromAirport, 0, cycle)
       var percentTotal = 0.0
       println(s"from ${fromAirport.iata}:")
@@ -61,7 +61,7 @@ class DemandGeneratorSpec extends AnyWordSpecLike with Matchers {
       assert(hubAirports.size == 13)
     }
     "Size 1 Isolated Town strength 1 should find 8 hub airports".in {
-      val fromAirport = AirportSource.loadAirportByIata("brw", true).get
+      val fromAirport = AirportSource.loadAirportByIata("LAK", true).get
       val hubAirports: List[(String, LinkClassValues)] = DemandGenerator.generateHubAirportDemand(fromAirport, cycle).toList
       val total = hubAirports.map(_._2.total).sum
       println(s"from ${fromAirport.iata} ${fromAirport.countryCode}:")

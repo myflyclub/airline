@@ -1341,25 +1341,30 @@ function showBaseDetailsModal() {
     $('#baseDetailsModal').fadeIn(500)
 }
 
-var _demandEtag = null
+const _demandEtagByAirport = {}
 
 async function loadAirportDemand(airportId) {
     const container = document.getElementById('airportDemandCards')
     if (!container) return
-    container.innerHTML = '<div class="table-row"><div class="cell">Loading...</div></div>'
+
+    const cachedEtag = _demandEtagByAirport[airportId]
+    if (!cachedEtag) {
+        container.innerHTML = '<div class="table-row"><div class="cell">Loading...</div></div>'
+    }
 
     try {
         const headers = {}
-        if (_demandEtag) headers['If-None-Match'] = _demandEtag
+        if (cachedEtag) headers['If-None-Match'] = cachedEtag
 
         const response = await fetch('/airports/' + airportId + '/demand', { headers })
-        if (response.status === 304) return  // cached, container unchanged from last render
+        if (response.status === 304) return  // cached, leave existing cards intact
 
         if (!response.ok) {
             container.innerHTML = '<div class="table-row"><div class="cell">-</div></div>'
             return
         }
-        _demandEtag = response.headers.get('ETag')
+        const etag = response.headers.get('ETag')
+        if (etag) _demandEtagByAirport[airportId] = etag
         const demands = await response.json()
         renderDemandCards(demands)
     } catch (e) {

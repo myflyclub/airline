@@ -9,7 +9,7 @@ case class ReputationBreakdown(reputationType: ReputationType.Value, value: Doub
 
 object ReputationType extends Enumeration {
   type ReputationType = Value
-  implicit def valueToReputationType(x: Value) = x.asInstanceOf[AbstractReputationType]
+  implicit def valueToReputationType(x: Value): AbstractReputationType = x.asInstanceOf[AbstractReputationType]
 
   abstract class AbstractReputationType() extends super.Val {
     val label: String

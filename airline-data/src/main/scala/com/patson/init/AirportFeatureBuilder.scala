@@ -6,7 +6,7 @@ import com.patson.data.{AirportSource, DestinationSource, GameConstants}
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
-object AirportFeaturePatcher extends App {
+object AirportFeatureBuilder extends App {
 
   import AirportFeatureType._
 

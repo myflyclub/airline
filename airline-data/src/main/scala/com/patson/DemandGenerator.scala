@@ -40,7 +40,7 @@ object DemandGenerator {
 
   def demandRandomizerByType(passengerType: PassengerType.Value, demand: Int, cycle: Int, cyclePhaseLength: Int): Int = {
     val randomizedDemand = if (passengerType == PassengerType.TOURIST) {
-      demandRandomizer(demand, cycle, cyclePhaseLength, 2, 24)
+      demandRandomizer(demand, cycle, cyclePhaseLength, 1.5, 24)
     } else if (passengerType == PassengerType.BUSINESS) {
       demandRandomizer(demand, cycle, cyclePhaseLength, 1, 12)
     } else { //traveler, elite
@@ -49,8 +49,8 @@ object DemandGenerator {
     randomizedDemand
   }
 
-  def demandRandomizer(demand: Int, cycle: Int, frequency: Int, amplitudeRatio: Int = 1, offset: Int = 0): Int = {
-    val baseSeasonalPct = 0.07  // The wave naturally swings +/- 8%
+  def demandRandomizer(demand: Int, cycle: Int, frequency: Int, amplitudeRatio: Double = 1, offset: Int = 0): Int = {
+    val baseSeasonalPct = 0.08  // The wave naturally swings +/- 8%
     val noisePct = 0.03
     val rng = ThreadLocalRandom.current()
 
@@ -118,7 +118,7 @@ object DemandGenerator {
         val variability = (airport.id + cycle + 2) % 4 / 4.0
         val weightedScore = if (DemandConstants.doesPairExist(fromAirport.iata, airport.iata, DemandConstants.railLookupSet)) {
           0
-        } else Math.max(0, 0.7 * distancePercent + 0.2 * popPercent + 0.0 * variability * isIsolatedMultiplier) //todo: turn on
+        } else Math.max(0, 0.7 * distancePercent + 0.2 * popPercent + 0.1 * variability)
         (airport, weightedScore)
       }.sortBy(_._2).takeRight(numberDestinations)
 
@@ -430,7 +430,7 @@ object DemandGenerator {
     }
     val buffLowIncomeAirports = if (fromAirport.income <= 10000 && toAirport.income <= 10000 && distance <= 3000 && affinity >= 2 && (toAirport.size >= 4 || fromAirport.size >= 4)) addToVeryLowIncome(fromAirport.population, fromAirport.income) else 0
   
-    val baseDemand: Double = Math.max(0, airportAffinityMultiplier * fromAirport.popMiddleIncome * toPopIncomeAdjusted / 225_000 / 225_000) + buffLowIncomeAirports
+    val baseDemand: Double = Math.max(0, airportAffinityMultiplier * fromAirport.popMiddleIncome * toPopIncomeAdjusted / 215_000 / 215_000) + buffLowIncomeAirports
     Math.pow(baseDemand, distanceReducerExponent).toInt
   }
 
