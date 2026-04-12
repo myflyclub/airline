@@ -231,7 +231,7 @@ export function updateMapStyle(theme) {
         });
     }
 
-    if (typeof refreshLinks === 'function') refreshLinks(false);
+    refreshLinks(false);
 }
 
 /**

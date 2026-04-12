@@ -11,7 +11,8 @@
 						data-domestic-airport-marker='@routes.Assets.versioned("images/markers/airport-domestic.svg")'
 						data-disabled-airport-marker='@routes.Assets.versioned("images/markers/airport-transparent.svg")'>
 					</div>
-					<div id="sidePanel" class="sidePanel mapOverlayPanel" style="display:none;">
+					<div id="sidePanel" class="sidePanel mapOverlayPanel" style="display:none; position: relative;">
+						<span class="close" onclick="$('#sidePanel').fadeOut(200)">&times;</span>
 
 						<div class="section">
 							<div id="linkDetails" class="flex-container-width-half">
@@ -519,7 +520,7 @@
 								</div>
 								<div class="warningList">
 								</div>
-								<div class="overtimeCompensation warning" style="display: flex; align-items: center;">
+								<div class="overtimeCompensation warning">
 									<img src='/assets/images/icons/exclamation-red-frame.png'>&nbsp;
 									Exceeding operation capacity of current base. Extra overtime compensation of&nbsp;
 									$<span class="amount"></span>&nbsp;

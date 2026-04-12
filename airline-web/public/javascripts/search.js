@@ -725,6 +725,28 @@ function confirmSelection(input) {
             $input.closest('.searchCriterion').siblings('.searchCriterion').find(`input.${otherEntity}`).val('');
         }
     }
+
+    // Draw temp path when both from/to airports are selected in route/research search
+    if (searchType === 'airport' && input.closest('.searchFieldContainer').length > 0) {
+        const $fc = input.closest('.searchFieldContainer');
+        const fromId = parseInt($fc.find('input.fromAirport').data('selectedId')) || null;
+        const toId = parseInt($fc.find('input.toAirport').data('selectedId')) || null;
+        AirlineMap.removeTempPath();
+        tempPath = undefined;
+        if (fromId && toId) {
+            const fromAirport = getAirportByAttribute(fromId);
+            const toAirport = getAirportByAttribute(toId);
+            if (fromAirport && toAirport) {
+                const tempLink = {
+                    fromLatitude: fromAirport.latitude, fromLongitude: fromAirport.longitude,
+                    toLatitude: toAirport.latitude, toLongitude: toAirport.longitude
+                };
+                tempPath = AirlineMap.drawFlightPath(tempLink, '#3b94e6');
+                AirlineMap.highlightPath(tempPath.path, false);
+            }
+        }
+    }
+
     resultContainer.hide();
 }
 

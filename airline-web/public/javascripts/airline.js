@@ -1709,6 +1709,11 @@ function updateTotalValues() {
     getLinkStaffingInfo()
 
     getLinkNegotiation(function(result) {
+        if (result.rejection) {
+            disableButton($("#planLinkDetails .modifyLink"), result.rejection)
+        } else if (result.negotiationInfo.finalRequirementValue > 0 && result.actionPoints < result.negotiationInfo.finalRequirementValue) {
+            disableButton($("#planLinkDetails .modifyLink"), "Not enough action points to negotiate this route")
+        }
         if (result.negotiationInfo.finalRequirementValue > 0) {
             $('#planLinkEstimatedDifficultyRow').show()
             difficultyLookup = result.negotiationInfo.finalRequirementValue.toFixed(2)
@@ -1905,8 +1910,7 @@ function cancelEditLink() {
 
 function removeTempPath() {
 	if (tempPath) {
-		AirlineMap.unhighlightPath(tempPath.path)
-		AirlineMap.clearPathEntry(tempPath)
+		AirlineMap.removeTempPath()
 		tempPath = undefined
 	}
 }
@@ -3328,7 +3332,8 @@ function negotiationAnimation(savedLink, callback, callbackParam) {
 	}, 200)
 
 
-	if (callback) {
+	$('#negotiationAnimation .close, #negotiationAnimation .result').off("click.custom")
+    if (callback) {
 		$('#negotiationAnimation .close, #negotiationAnimation .result').on("click.custom", function() {
 		    if (negotiationResult.isGreatSuccess) {
                 $('#negotiationAnimation').removeClass('transparentBackground')
@@ -3338,8 +3343,6 @@ function negotiationAnimation(savedLink, callback, callbackParam) {
             }
             callback(callbackParam)
 		})
-    } else {
-        $('#negotiationAnimation .close, #negotiationAnimation .result').off("click.custom")
     }
 
 	$('#negotiationAnimation').show()

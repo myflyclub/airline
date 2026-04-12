@@ -1,7 +1,7 @@
 package controllers
 
-import com.patson.data.NotificationSource
-import com.patson.model.Notification
+import com.patson.data.{CycleSource, NotificationSource}
+import com.patson.model.{Notification, NotificationCategory}
 import controllers.AuthenticationObject.AuthenticatedAirline
 import javax.inject.Inject
 import play.api.libs.json._
@@ -22,6 +22,7 @@ class NotificationApplication @Inject()(cc: ControllerComponents) extends Abstra
   }
 
   def getNotifications(airlineId: Int) = AuthenticatedAirline(airlineId) { _ =>
+    NotificationSource.purgeExpiredByCategory(airlineId, NotificationCategory.NEGOTIATION_LOSS, CycleSource.loadCycle())
     Ok(Json.toJson(NotificationSource.loadNotificationsByAirline(airlineId)))
   }
 

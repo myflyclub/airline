@@ -63,12 +63,12 @@ object StockModel {
     "Target is a race among airlines of your type to have the highest."
   )
 
-  //currently adds up to 115
+  //currently adds up to 110
   val allMetrics: Map[String, StockMetric] = Map(
     "eps" ->                  StockMetric(30, 0.1, 1.0),
     "pask" ->                 StockMetric(25, 0.05, 0.09),
     "dividends_per_share" ->  StockMetric(25, 0.0, 1.0),
-    "interest" ->             StockMetric(10, 0.26, 0.6), //there's an extra 10 here
+    "interest" ->             StockMetric(5, 0.26, 0.6), //there's an extra 5 here
     "satisfaction" ->         StockMetric(5, 0.5, 0.9),
     "link_count" ->           StockMetric(5, 50, 400),
     "on_time" ->              StockMetric(5, 0.75, 0.95),

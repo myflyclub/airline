@@ -416,7 +416,7 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
               val sizeDelta = Math.max(0.0, newModelSize - oldModelSize)
               if (sizeDelta > 0) {
                 val upgradeCost = Computation.getLinkCreationCost(incomingLink.from, incomingLink.to, sizeDelta)
-                AirlineSource.saveLedgerEntry(AirlineLedgerEntry(request.user.id, currentCycle, LedgerType.CREATE_LINK, upgradeCost * -1, Some(s"${incomingLink.from.iata} \u2013 ${incomingLink.to.iata} (upgrade)")))
+                AirlineSource.saveLedgerEntry(AirlineLedgerEntry(request.user.id, currentCycle, LedgerType.CREATE_LINK, upgradeCost * -1, Some(s"${incomingLink.from.iata} \u2013 ${incomingLink.to.iata} (gate size increase)")))
               }
               incomingLink
             case _ =>
@@ -461,15 +461,18 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
 
       if (negotiationResult.isSuccessful) { //purge all previous discounts if successful
         NegotiationSource.deleteLinkDiscountsByAirlineAndAirport(airline.id, fromAirport.id, toAirport.id)
-        NotificationSource.deleteNotificationsByTargetId(airline.id, resultLink.id.toString, NotificationCategory.LINK_CANCELLATION)
+        NotificationSource.deleteNotificationsByTargetId(
+          airline.id,
+          s"${resultLink.from.id}-${resultLink.to.id}",
+          NotificationCategory.NEGOTIATION_LOSS
+        )
       }
 
       NegotiationUtil.getNextNegotiationDiscount(resultLink, negotiationResult).foreach { discount =>
         if (discount.discount > 0) {
           val expiryGameDate = { val ec = cycle + LinkNegotiationDiscount.DURATION; s"${ec % 48}.${ec / 48}" }
           val notificationMessage = s"Negotiation Discount of ${(discount.discount * 100).toInt}% for ${fromAirport.displayText} -> ${toAirport.displayText} | expires $expiryGameDate"
-          NotificationSource.insertNotification(Notification(airline.id, NotificationCategory.NEGOTIATION_LOSS, notificationMessage, cycle,
-            targetId = Some(resultLink.id.toString), expiryCycle = Some(cycle + LinkNegotiationDiscount.DURATION)))
+          NotificationSource.insertNotification(Notification(airline.id, NotificationCategory.NEGOTIATION_LOSS, notificationMessage, cycle, targetId = Some(s"${resultLink.from.id}-${resultLink.to.id}"), expiryCycle = Some(cycle + LinkNegotiationDiscount.DURATION)))
           NegotiationSource.saveLinkDiscount(discount)
           result = result + ("nextNegotiationDiscount" -> JsString(s"Some progress: ${(discount.discount * 100).toInt}% Negotiation Discount for the next ${LinkNegotiationDiscount.DURATION} weeks"))
         }
@@ -1006,7 +1009,7 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
           }
         }
         if (!fromAirport.isGateway() && fromAirport.size <= 2 && flightCategory == FlightCategory.INTERNATIONAL) {
-          val currentTitle = CountryAirlineTitle.getTitle(toAirport.countryCode, airline)
+          val currentTitle = CountryAirlineTitle.getTitle(fromAirport.countryCode, airline)
           val requiredTitle = Title.ESTABLISHED_AIRLINE
           val ok = currentTitle.title.id <= requiredTitle.id //smaller value means higher title
           if (!ok) {

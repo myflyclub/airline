@@ -50,6 +50,8 @@ function registerEscape() {
             var $topModal = $(".modal:visible").last()
             if ($topModal.length > 0) {
                 closeModal($topModal)
+            } else if ($('#sidePanel').is(':visible')) {
+                $('#sidePanel').fadeOut(200)
             } else {
                 AirlineMap.closeAirportInfoPopup()
             }
@@ -216,6 +218,7 @@ document.addEventListener('visibilitychange', function () {
 
 function showWorldMap() {
     hideMapOverlays();
+    removeTempPath();
 	setActiveDiv($('#worldMapCanvas'));
 	$('#sidePanel').appendTo($('#worldMapCanvas'))
 	if (selectedLink) {

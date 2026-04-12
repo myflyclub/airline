@@ -109,7 +109,11 @@ function loadNotifications() {
                                 markNotificationRead(notifId, $row)
                             }
                             closeNotificationDrawer()
-                            if (/^\d+$/.test(targetId)) {
+                            if (/^\d+-\d+$/.test(targetId)) {
+                                var parts = targetId.split('-')
+                                planLink(parseInt(parts[0]), parseInt(parts[1]))
+                            } else if (/^\d+$/.test(targetId)) {
+                                resetTableFilters('links')
                                 navigateTo('/flights/' + targetId)
                             } else {
                                 navigateTo(targetId)
@@ -145,6 +149,7 @@ function getCategoryIcon(category) {
         case 'GAME_OVER': return '!'
         case 'OLYMPICS_PRIZE': return '🏅'
         case 'TUTORIAL': return '→'
+        case 'NEGOTIATION_LOSS':
         case 'LINK_CANCELLATION': return '⚠'
         default: return '•'
     }

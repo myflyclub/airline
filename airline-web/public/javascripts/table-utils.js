@@ -430,6 +430,23 @@ function applyInitialSelectedState(selectElement, column, tableName) {
 }
 
 /**
+ * Resets all active filters for a table, clearing state and resetting dropdowns to "Show All".
+ * Call this before navigating to a specific row so it isn't hidden by an active filter.
+ * @param {string} tableName - 'links' or 'aircraft'
+ */
+function resetTableFilters(tableName) {
+    var state = tableFilterState.getTableState(tableName)
+    state.selectedColumnFilter = {}
+    state.filterOptionValues = {}
+    state.currentFilterOptionValues = {}
+    var headerId = tableName === 'links' ? '#linksTableFilterHeader' : '#aircraftTableFilterHeader'
+    $(headerId).find('select').each(function() {
+        $(this).find('option').prop('selected', false).removeClass('selected')
+        $(this).find('option[value=""]').prop('selected', true).addClass('selected')
+    })
+}
+
+/**
  * Adds a summary row to a table displaying aggregate statistics for numeric columns
  * @param {string} tableSelector - jQuery selector for the table element
  * @param {Array} dataArray - Array of data objects to calculate from
