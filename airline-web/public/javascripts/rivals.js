@@ -317,18 +317,7 @@ const Rivals = (() => {
         rivalLinksTable.append(rowsHtml.join(''));
     }
 
-    function toggleLinksSortOrder(sortHeader) {
-        if (sortHeader.data("sort-order") == "ascending") {
-            sortHeader.data("sort-order", "descending");
-        } else {
-            sortHeader.data("sort-order", "ascending");
-        }
-
-        sortHeader.siblings().removeClass("selected");
-        sortHeader.addClass("selected");
-
-        renderLinksTable(sortHeader.data("sort-property"), sortHeader.data("sort-order"));
-    }
+    function toggleLinksSortOrder(sortHeader) { toggleSimpleSortOrder(sortHeader, renderLinksTable) }
 
 
     // =========================================================================
@@ -731,18 +720,7 @@ const Rivals = (() => {
     }
 
     // SECTION: Ticker
-    function toggleTickerSortOrder(sortHeader) {
-        if (sortHeader.data('sort-order') == 'ascending') {
-            sortHeader.data('sort-order', 'descending');
-        } else {
-            sortHeader.data('sort-order', 'ascending');
-        }
-
-        sortHeader.siblings().removeClass('selected');
-        sortHeader.addClass('selected');
-
-        renderTicker(sortHeader.data('sort-property'), sortHeader.data('sort-order'));
-    }
+    function toggleTickerSortOrder(sortHeader) { toggleSimpleSortOrder(sortHeader, renderTicker) }
 
     function renderTicker(sortProperty, sortOrder) {
         if (!rivalsData) return;

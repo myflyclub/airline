@@ -446,6 +446,15 @@ function resetTableFilters(tableName) {
     })
 }
 
+function toggleSimpleSortOrder(sortHeader, renderFn, ...extraArgs) {
+    sortHeader.data('sort-order') === 'ascending'
+        ? sortHeader.data('sort-order', 'descending')
+        : sortHeader.data('sort-order', 'ascending')
+    sortHeader.siblings().removeClass('selected')
+    sortHeader.addClass('selected')
+    renderFn(...extraArgs, sortHeader.data('sort-property'), sortHeader.data('sort-order'))
+}
+
 /**
  * Adds a summary row to a table displaying aggregate statistics for numeric columns
  * @param {string} tableSelector - jQuery selector for the table element

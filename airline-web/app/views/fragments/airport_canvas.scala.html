@@ -214,25 +214,25 @@
 					  <div id="airportDetailsHeadquarterList" style="width: 100%; margin-bottom: 15px;"
 						   class="table data">
 						  <div class="table-header">
-							  <div class="cell" style="width: 30%">Airline</div>
-							  <div class="cell" style="width: 10%; text-align: right;">Home Country</div>
-							  <div class="cell" style="width: 10%; text-align: right;">Base Scale</div>
-							  <div class="cell" style="width: 13%; text-align: right;">Flight Routes</div>
-							  <div class="cell" style="width: 13%; text-align: right;">Weekly Passengers</div>
-							  <div class="cell" style="width: 13%; text-align: right;">Average Frequency</div>
-							  <div class="cell" style="width: 13%; text-align: right;">Average Distance</div>
+							  <div class="cell clickable" style="width: 30%" data-sort-property="airlineName" data-sort-order="ascending" onclick="toggleAirportBaseSortOrder($(this), '#airportDetailsHeadquarterList')">Airline</div>
+							  <div class="cell clickable" style="width: 10%; text-align: right;" data-sort-property="airlineCountryCode" data-sort-order="ascending" onclick="toggleAirportBaseSortOrder($(this), '#airportDetailsHeadquarterList')">Home Country</div>
+							  <div class="cell clickable" style="width: 10%; text-align: right;" data-sort-property="scale" data-sort-order="descending" onclick="toggleAirportBaseSortOrder($(this), '#airportDetailsHeadquarterList')">Base Scale</div>
+							  <div class="cell clickable" style="width: 13%; text-align: right;" data-sort-property="linkCount" data-sort-order="descending" onclick="toggleAirportBaseSortOrder($(this), '#airportDetailsHeadquarterList')">Flight Routes</div>
+							  <div class="cell clickable selected" style="width: 13%; text-align: right;" data-sort-property="passengers" data-sort-order="descending" onclick="toggleAirportBaseSortOrder($(this), '#airportDetailsHeadquarterList')">Weekly Passengers</div>
+							  <div class="cell clickable" style="width: 13%; text-align: right;" data-sort-property="avgFreq" data-sort-order="descending" onclick="toggleAirportBaseSortOrder($(this), '#airportDetailsHeadquarterList')">Average Frequency</div>
+							  <div class="cell clickable" style="width: 13%; text-align: right;" data-sort-property="avgDistance" data-sort-order="descending" onclick="toggleAirportBaseSortOrder($(this), '#airportDetailsHeadquarterList')">Average Distance</div>
 						  </div>
 					  </div>
 					  <h4 class="inline-icons pt-4"><img src='@routes.Assets.versioned("/images/icons/building-low.png")'>Airline Bases</h4>
 					  <div id="airportDetailsBaseList" style="width: 100%; margin-bottom: 15px;" class="table data">
 						  <div class="table-header">
-							  <div class="cell" style="width: 30%">Airline</div>
-							  <div class="cell" style="width: 10%; text-align: right;">Home Country</div>
-							  <div class="cell" style="width: 10%; text-align: right;">Base Scale</div>
-							  <div class="cell" style="width: 13%; text-align: right;">Flight Routes</div>
-							  <div class="cell" style="width: 13%; text-align: right;">Weekly Passengers</div>
-							  <div class="cell" style="width: 13%; text-align: right;">Average Frequency</div>
-							  <div class="cell" style="width: 13%; text-align: right;">Average Distance</div>
+							  <div class="cell clickable" style="width: 30%" data-sort-property="airlineName" data-sort-order="ascending" onclick="toggleAirportBaseSortOrder($(this), '#airportDetailsBaseList')">Airline</div>
+							  <div class="cell clickable" style="width: 10%; text-align: right;" data-sort-property="airlineCountryCode" data-sort-order="ascending" onclick="toggleAirportBaseSortOrder($(this), '#airportDetailsBaseList')">Home Country</div>
+							  <div class="cell clickable" style="width: 10%; text-align: right;" data-sort-property="scale" data-sort-order="descending" onclick="toggleAirportBaseSortOrder($(this), '#airportDetailsBaseList')">Base Scale</div>
+							  <div class="cell clickable" style="width: 13%; text-align: right;" data-sort-property="linkCount" data-sort-order="descending" onclick="toggleAirportBaseSortOrder($(this), '#airportDetailsBaseList')">Flight Routes</div>
+							  <div class="cell clickable selected" style="width: 13%; text-align: right;" data-sort-property="passengers" data-sort-order="descending" onclick="toggleAirportBaseSortOrder($(this), '#airportDetailsBaseList')">Weekly Passengers</div>
+							  <div class="cell clickable" style="width: 13%; text-align: right;" data-sort-property="avgFreq" data-sort-order="descending" onclick="toggleAirportBaseSortOrder($(this), '#airportDetailsBaseList')">Average Frequency</div>
+							  <div class="cell clickable" style="width: 13%; text-align: right;" data-sort-property="avgDistance" data-sort-order="descending" onclick="toggleAirportBaseSortOrder($(this), '#airportDetailsBaseList')">Average Distance</div>
 						  </div>
 					  </div>
 					  <h4 class="inline-icons pt-4"><img src='@routes.Assets.versioned("/images/icons/sofa.png")'> Airline Lounges<span class="tooltip">

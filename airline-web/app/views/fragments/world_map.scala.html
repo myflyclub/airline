@@ -288,12 +288,12 @@
 
 								<div class="table data py-2" id="planLinkCompetitors" style="width: 100%">
 									<div class='table-header'>
-										<div class="cell" style="width: 24%;"><p>Airline</p></div>
-										<div class="cell" style="width: 24%;"><p>Price</p></div>
-										<div class="cell" style="width: 24%;"><p>Capacity</p></div>
-										<div class="cell" style="width: 9%;"><p title="Frequency">Freq.</p></div>
-										<div class="cell" style="width: 9%;"><p title="Quality">Q.</p></div>
-										<div class="cell" style="width: 9%;"><p title="Load factor">L.F.</p></div>
+										<div class="cell clickable" style="width: 24%;" data-sort-property="airlineName" data-sort-order="ascending" onclick="togglePlanCompetitorsSortOrder($(this))"><p>Airline</p></div>
+										<div class="cell clickable" style="width: 24%;" data-sort-property="price.economy" data-sort-order="ascending" onclick="togglePlanCompetitorsSortOrder($(this))"><p>Price</p></div>
+										<div class="cell clickable selected" style="width: 24%;" data-sort-property="capacity.total" data-sort-order="descending" onclick="togglePlanCompetitorsSortOrder($(this))"><p>Capacity</p></div>
+										<div class="cell clickable" style="width: 9%;" data-sort-property="frequency" data-sort-order="descending" onclick="togglePlanCompetitorsSortOrder($(this))"><p title="Frequency">Freq.</p></div>
+										<div class="cell clickable" style="width: 9%;" data-sort-property="quality" data-sort-order="descending" onclick="togglePlanCompetitorsSortOrder($(this))"><p title="Quality">Q.</p></div>
+										<div class="cell clickable" style="width: 9%;" data-sort-property="loadFactor" data-sort-order="descending" onclick="togglePlanCompetitorsSortOrder($(this))"><p title="Load factor">L.F.</p></div>
 									</div>
 								</div>
 								<div class="flex-container-width-quarter pt-2">
@@ -901,24 +901,24 @@
                                     </div>
                     
                                     <h4 class="mt-8">Existing Flights</h4>
-                                    <div class="table data links w-full">
+                                    <div class="table data links w-full" id="existingFlightsTable">
                                         <div class='table-header'>
-                                            <div class="cell" style="width: 31%;">
+                                            <div class="cell clickable" style="width: 31%;" data-sort-property="airlineName" data-sort-order="ascending" onclick="toggleExistingFlightsSortOrder($(this))">
                                                 <p>Airline</p>
                                             </div>
-                                            <div class="cell" style="width: 21%;">
+                                            <div class="cell clickable" style="width: 21%;" data-sort-property="price.economy" data-sort-order="ascending" onclick="toggleExistingFlightsSortOrder($(this))">
                                                 <p>Percent of Price</p>
                                             </div>
-                                            <div class="cell" style="width: 21%;">
+                                            <div class="cell clickable selected" style="width: 21%;" data-sort-property="capacity.total" data-sort-order="descending" onclick="toggleExistingFlightsSortOrder($(this))">
                                                 <p>Capacity</p>
                                             </div>
-                                            <div class="cell" style="width: 9%;">
+                                            <div class="cell clickable" style="width: 9%;" data-sort-property="frequency" data-sort-order="descending" onclick="toggleExistingFlightsSortOrder($(this))">
                                                 <p>Freq.</p>
                                             </div>
-                                            <div class="cell" style="width: 9%;">
+                                            <div class="cell clickable" style="width: 9%;" data-sort-property="computedQuality" data-sort-order="descending" onclick="toggleExistingFlightsSortOrder($(this))">
                                                 <p>Quality</p>
                                             </div>
-                                            <div class="cell" style="width: 9%;">
+                                            <div class="cell clickable" style="width: 9%;" data-sort-property="loadFactor" data-sort-order="descending" onclick="toggleExistingFlightsSortOrder($(this))">
                                                 <p>L.F.</p>
                                             </div>
                                         </div>
