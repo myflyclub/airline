@@ -3,8 +3,8 @@
    ======================================== */
 
 html {
-    --text-color: #222;
-    --text-color-heading: #333;
+    --text-color: #333;
+    --text-color-heading: #262c3d;
     --background-1: #fffe;
     --background-2: #e8eaed;
     --background-3: #ccc8;
@@ -2968,6 +2968,20 @@ i, .italic {
 }
 .smDropdownCheckItem:hover {
     background: var(--background-2);
+}
+.smDropdownOnly {
+    margin-left: auto;
+    font-size: 10px;
+    color: #666;
+    cursor: pointer;
+    padding: 0 2px;
+    flex-shrink: 0;
+}
+.smDropdownCheckItem:hover .smDropdownOnly {
+    color: #aaa;
+}
+.smDropdownOnly:hover {
+    color: #fff !important;
 }
 
 .chart-container.svelte-16dxm5m{height:100%;display:flex;flex-direction:column}.empty-chart.svelte-16dxm5m{display:flex;justify-content:center;align-items:center;height:180px;border-radius:4px;color:#333}
