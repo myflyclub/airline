@@ -896,27 +896,23 @@ var _planCompetitorsData = { otherLinks: [], otherViaLocalTransitLinks: [] }
 function renderPlanCompetitorsTable(sortProperty, sortOrder) {
 	$("#planLinkCompetitors .data-row").remove()
 	const ascending = sortOrder === 'ascending'
-	const sorted = [..._planCompetitorsData.otherLinks].sort(sortByProperty(sortProperty, ascending))
-	const rowsHtml = sorted.map(lc =>
-		"<div class='table-row data-row'><div style='display: table-cell;'>" + getAirlineLogoImg(lc.airlineId) + getAirlineLabelSpan(lc.airlineId, lc.airlineName)
-		+ "</div><div style='display: table-cell;'>" + toLinkClassValueString(lc.price, "$")
-		+ "</div><div style='display: table-cell; text-align:right;'>" + toLinkClassValueString(lc.capacity)
-		+ "</div><div style='display: table-cell; text-align:right;'>" + lc.frequency
-		+ "</div><div style='display: table-cell; text-align:right;'>" + lc.quality
-		+ "</div><div style='display: table-cell; text-align:right;'>" + lc.loadFactor + "</div></div>"
-	)
-	if (sorted.length < 6) {
-		const sortedVia = [..._planCompetitorsData.otherViaLocalTransitLinks].sort(sortByProperty(sortProperty, ascending))
-		sortedVia.forEach(function(lc) {
-			const title = [lc.altFrom ? 'Depart from ' + lc.altFrom : '', lc.altTo ? 'Arrive at ' + lc.altTo : ''].filter(Boolean).join('; ')
-			rowsHtml.push("<div class='table-row data-row' style='opacity: 60%'" + (title ? ` title="${title}"` : '') + "><div style='display: table-cell;'>" + getAirlineSpan(lc.airlineId, lc.airlineName)
-				+ "</div><div style='display: table-cell;'>" + toLinkClassValueString(lc.price, "$")
-				+ "</div><div style='display: table-cell; text-align:right;'>" + toLinkClassValueString(lc.capacity)
-				+ "</div><div style='display: table-cell; text-align:right;'>" + lc.frequency
-				+ "</div><div style='display: table-cell; text-align:right;'>" + lc.quality
-				+ "</div><div style='display: table-cell; text-align:right;'>" + lc.loadFactor + "</div></div>")
-		})
-	}
+	const sorted = [
+		..._planCompetitorsData.otherLinks,
+		..._planCompetitorsData.otherViaLocalTransitLinks
+	].sort(sortByProperty(sortProperty, ascending))
+	
+	const rowsHtml = sorted.map(lc => {
+		const title = [lc.altFrom ? 'Depart from ' + lc.altFrom : '', lc.altTo ? 'Arrive at ' + lc.altTo : ''].filter(Boolean).join('; ')
+		const style = (lc.altFrom || lc.altTo) ? " style='opacity: 60%'" : ''
+		const titleAttr = title ? ` title="${title}"` : ''
+		const airlineSpan = (lc.altFrom || lc.altTo) ? getAirlineSpan(lc.airlineId, lc.airlineName) : getAirlineLogoImg(lc.airlineId) + getAirlineLabelSpan(lc.airlineId, lc.airlineName)
+		return "<div class='table-row data-row'" + style + titleAttr + "><div style='display: table-cell;'>" + airlineSpan
+			+ "</div><div style='display: table-cell;'>" + toLinkClassValueString(lc.price, "$")
+			+ "</div><div style='display: table-cell; text-align:right;'>" + toLinkClassValueString(lc.capacity)
+			+ "</div><div style='display: table-cell; text-align:right;'>" + lc.frequency
+			+ "</div><div style='display: table-cell; text-align:right;'>" + lc.quality
+			+ "</div><div style='display: table-cell; text-align:right;'>" + lc.loadFactor + "</div></div>"
+	})
 	if (rowsHtml.length === 0) {
 		rowsHtml.push("<div class='table-row data-row'><div style='display: table-cell;'>-</div><div style='display: table-cell;'>-</div><div style='display: table-cell;'>-</div><div style='display: table-cell;'>-</div><div style='display: table-cell;'>-</div></div>")
 	}
@@ -3342,24 +3338,6 @@ function negotiationAnimation(savedLink, callback, callbackParam) {
     }
 
 	$('#negotiationAnimation').show()
-}
-
-function addAirlineTooltip($target, airlineId, slogan, airlineName) {
-    var $airlineTooltip = $('<div style="min-width: 150px;"></div>')
-    var $liveryImg = $('<img style="max-height: 100px; max-width: 250px; display: none; margin: auto;">').appendTo($airlineTooltip)
-    $liveryImg.on('load', function() {
-        if (this.naturalWidth > 1) {
-            $liveryImg.show()
-        }
-    })
-    $liveryImg.attr('src', '/airlines/' + airlineId + "/livery")
-    var $sloganDiv =$("<h5></h5>").appendTo($airlineTooltip)
-    if (slogan) {
-        $sloganDiv.text(slogan)
-    } else {
-        $sloganDiv.text(airlineName)
-    }
-    addTooltipHtml($target, $airlineTooltip, {'top' : '100%'})
 }
 
 function loadAndWatchAirlineNotes(airlineId) {

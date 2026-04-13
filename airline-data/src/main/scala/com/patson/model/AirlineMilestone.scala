@@ -153,8 +153,8 @@ object AirlineMilestones {
         "MILESTONE_HIGH_PRICES",
         "Tickets Sold Above 120%",
         List(
-          MilestoneCondition(75000, 50),
-          MilestoneCondition(5000, 15)
+          MilestoneCondition(75000, 60),
+          MilestoneCondition(5000, 25)
         )
       )
     ),
@@ -212,8 +212,8 @@ object AirlineMilestones {
         "MILESTONE_HIGH_PRICES",
         "Tickets Sold Above 120%",
         List(
-          MilestoneCondition(200000, 40),
-          MilestoneCondition(10000, 15)
+          MilestoneCondition(100000, 40),
+          MilestoneCondition(5000, 15)
         )
       )
     ),
@@ -283,7 +283,7 @@ object AirlineMilestones {
         "Destinations",
         List(
           MilestoneCondition(140, 90),
-          MilestoneCondition(40, 30)
+          MilestoneCondition(60, 30)
         )
       ),
       Milestone(
@@ -298,8 +298,8 @@ object AirlineMilestones {
         "MILESTONE_LEADER_POINTS",
         "Leaderboard Points",
         List(
-          MilestoneCondition(124, 90),
-          MilestoneCondition(40, 30)
+          MilestoneCondition(120, 40),
+          MilestoneCondition(40, 15)
         )
       ),
       Milestone(

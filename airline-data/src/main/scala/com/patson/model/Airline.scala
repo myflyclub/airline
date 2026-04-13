@@ -485,19 +485,19 @@ object AirlineGradeTouristsTravelers extends GradeEvaluator {
   override val grades: Vector[(Double, String)] = Vector(
        5000.0 -> "Discount Disaster",
       20000.0 -> "Leisure Loser",
-      40000.0 -> "Semi Bargain Bin",
-      80000.0 -> "Holiday Hauler",
-     140000.0 -> "Package Deal Pal",
-     240000.0 -> "Resort Runner",
-     340000.0 -> "Deal Seeker Favorite",
-     440000.0 -> "Bargain Bin Bonanza",
-     550000.0 -> "Detours Delight",
-     660000.0 -> "Cheapo Champion",
-     770000.0 -> "Penny Pitchers' Paradise",
-     880000.0 -> "Mega Mover",
-    1000000.0 -> "Mega Mega Mega Mover",
-    1100000.0 -> "Budget Behemoth",
-    1200000.0 -> "Low-Cost Leviathan"
+      50000.0 -> "Semi Bargain Bin",
+     100000.0 -> "Holiday Hauler",
+     180000.0 -> "Package Deal Pal",
+     270000.0 -> "Resort Runner",
+     360000.0 -> "Deal Seeker Favorite",
+     460000.0 -> "Bargain Bin Bonanza",
+     560000.0 -> "Detours Delight",
+     670000.0 -> "Cheapo Champion",
+     790000.0 -> "Penny Pitchers' Paradise",
+     920000.0 -> "Mega Mover",
+    1060000.0 -> "Mega Mega Mega Mover",
+    1200000.0 -> "Budget Behemoth",
+    1300000.0 -> "Low-Cost Leviathan"
   )
 }
 
