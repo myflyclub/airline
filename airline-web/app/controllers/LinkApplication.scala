@@ -354,11 +354,19 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
       return BadRequest("Link is rejected: " + rejectionReason.get);
     }
 
-    //if assign more action points then available.
-    //However assigning no action points should be allowed even if negative balance
+    //assigning no action points should be allowed
     if (actionPoints > 0 && actionPoints > airline.getActionPoints()) {
       return BadRequest(s"Assigning $actionPoints action points but only ${airline.getActionPoints()} available")
     }
+
+    val newModelSize = incomingLink.getAssignedModel().map(_.airplaneTypeSize).getOrElse(0.0)
+    val oldModelSize = existingLink.flatMap(_.getAssignedModel()).map(_.airplaneTypeSize).getOrElse(0.0)
+    val sizeDelta = Math.max(0.0, newModelSize - oldModelSize)
+    val gateCost = if (newModelSize > 0) Computation.getLinkCreationCost(incomingLink.from, incomingLink.to, newModelSize) else 0
+    if (gateCost > 0 && gateCost > airline.getBalance()) {
+      return BadRequest(s"Gate cost $gateCost exceeds available balance ${airline.getBalance()}")
+    }
+
 
     if (existingLink.isEmpty) {
       incomingLink.flightNumber = LinkApplication.getNextAvailableFlightNumber(request.user)
@@ -395,8 +403,7 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
           LinkSource.saveLink(incomingLink) match {
             case Some(link) => {
               val newModelSize = incomingLink.getAssignedModel().map(_.airplaneTypeSize).getOrElse(0.0)
-              val cost = if (newModelSize > 0) Computation.getLinkCreationCost(incomingLink.from, incomingLink.to, newModelSize) else 0
-              AirlineSource.saveLedgerEntry(AirlineLedgerEntry(request.user.id, currentCycle, LedgerType.CREATE_LINK, cost * -1, Some(s"${incomingLink.from.iata} \u2013 ${incomingLink.to.iata}")))
+              AirlineSource.saveLedgerEntry(AirlineLedgerEntry(request.user.id, currentCycle, LedgerType.CREATE_LINK, gateCost * -1, Some(s"${incomingLink.from.iata} \u2013 ${incomingLink.to.iata}")))
               if (isFirstLink) {
                 NotificationSource.markCategoryRead(airline.id, NotificationCategory.TUTORIAL)
                 NotificationSource.insertNotification(Notification(airline.id, NotificationCategory.TUTORIAL, s"First route set! Next week your aircraft will be flying!", currentCycle))
@@ -411,9 +418,6 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
             case 1 =>
               //update assignments
               LinkSource.updateAssignedPlanes(incomingLink.id, incomingLink.getAssignedAirplanes())
-              val newModelSize = incomingLink.getAssignedModel().map(_.airplaneTypeSize).getOrElse(0.0)
-              val oldModelSize = existingLink.flatMap(_.getAssignedModel()).map(_.airplaneTypeSize).getOrElse(0.0)
-              val sizeDelta = Math.max(0.0, newModelSize - oldModelSize)
               if (sizeDelta > 0) {
                 val upgradeCost = Computation.getLinkCreationCost(incomingLink.from, incomingLink.to, sizeDelta)
                 AirlineSource.saveLedgerEntry(AirlineLedgerEntry(request.user.id, currentCycle, LedgerType.CREATE_LINK, upgradeCost * -1, Some(s"${incomingLink.from.iata} \u2013 ${incomingLink.to.iata} (gate size increase)")))
@@ -630,17 +634,6 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
     Ok(JsObject(stats.map { case (k, v) => k.toString -> v }.toSeq))
   }
 
-  private def deleteLinkLogic(link : Link, airlineId : Int) : Int = {
-    val count = LinkSource.deleteLink(link.id)
-    if (count == 1) { //update airplane available minutes too
-      link.getAssignedAirplanes()
-    }
-    val emptyLink = Link(link.from, link.to, link.airline, LinkClassValues(0,0,0), link.distance, LinkClassValues(0,0,0), link.rawQuality, link.duration, 0, link.flightNumber, link.id)
-    val actionPoints = NegotiationUtil.getLinkNegotiationInfo(link.airline, emptyLink, Some(link)).deleteLinkRefund.getOrElse(0)
-    AirlineSource.adjustAirlineActionPoints(airlineId, actionPoints.toDouble)
-    actionPoints
-  }
-
   def deleteLink(airlineId : Int, linkId: Int) = AuthenticatedAirline(airlineId) { request =>
     //verify the airline indeed has that link
     LinkSource.loadFlightLinkById(linkId) match {
@@ -648,7 +641,7 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
         if (link.airline.id != request.user.id) {
           Forbidden
         } else {
-          val actionPoints = deleteLinkLogic(link, airlineId)
+          val actionPoints = LinkApplication.deleteLink(link, airlineId)
           Ok(Json.obj("count" -> 1, "actionPointRefund" -> JsNumber(actionPoints)))
         }
       case None =>
@@ -664,7 +657,7 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
     linkIds.foreach { linkId =>
       LinkSource.loadFlightLinkById(linkId).foreach { link =>
         if (link.airline.id == airlineId) {
-          totalRefund += deleteLinkLogic(link, airlineId)
+          totalRefund += LinkApplication.deleteLink(link, airlineId)
           totalCount += 1
         }
       }
@@ -1648,6 +1641,17 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
 }
 
 object LinkApplication {
+
+    def deleteLink(link: Link, airlineId: Int): Int = {
+        val count = LinkSource.deleteLink(link.id)
+        if (count == 1) { //update airplane available minutes too
+            link.getAssignedAirplanes()
+        }
+        val emptyLink = Link(link.from, link.to, link.airline, LinkClassValues(0,0,0), link.distance, LinkClassValues(0,0,0), link.rawQuality, link.duration, 0, link.flightNumber, link.id)
+        val actionPoints = NegotiationUtil.getLinkNegotiationInfo(link.airline, emptyLink, Some(link)).deleteLinkRefund.getOrElse(0)
+        AirlineSource.adjustAirlineActionPoints(airlineId, actionPoints.toDouble)
+        actionPoints
+    }
 
   def getNextAvailableFlightNumber(airline : Airline) : Int = {
     val flightNumbers = LinkSource.loadFlightNumbers(airline.id)
