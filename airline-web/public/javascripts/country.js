@@ -61,54 +61,37 @@ function updateCountryTable(sortProperty, sortOrder, selectedCountry) {
     if (!selectedCountry) {
         selectedCountry = $("#countryCanvas #countryTable div.table-row.selected").data('country-code')
     }
-	var countryTable = $("#countryCanvas #countryTable")
-	
-	countryTable.children("div.table-row").remove()
-	
-	const countries = Object.values(loadedCountriesByCode)
-	//sort the list
-	countries.sort(sortByProperty(sortProperty, sortOrder == "ascending"))
+    const countryTable = $("#countryCanvas #countryTable")
+    countryTable.children("div.table-row").remove()
 
-	var selectedRow
-	$.each(countries, function(index, country) {
-		var row = $("<div class='table-row clickable' data-country-code='" + country.countryCode + "' onclick=\"selectCountry('" + country.countryCode + "', false)\"></div>")
-        row.append($("<div class='cell'>").append(
-            getCountryFlagImg(country.countryCode, "16px"), " " + country.name
-        ));
-        row.append("<div class='cell' align='right'>" + country.airportPopulation.toLocaleString() + "</div>")
-		row.append("<div class='cell' align='right'>$" + country.income.toLocaleString() + "</div>")
-		row.append("<div class='cell' align='right'>" + country.openness + "</div>")
-		row.append("<div class='cell' align='right'>" + country.gini + "</div>")
-        var countryRelationship = country.countryRelationship ? "<div class='cell' align='right'>" + country.CountryTitle.description + ", " + country.countryRelationship.total + "</div>" : "<div class='cell' align='right'>" + "-" + "</div>"
-        row.append(countryRelationship)
-        var managersCount = country.managersCount ? country.managersCount : "-"
-        row.append("<div class='cell' align='right'>" + managersCount + "</div>")
-		
-		if (selectedCountry == country.countryCode) {
-		    row.addClass("selected")
-		    selectedRow = row
-		}
-		
-		countryTable.append(row)
-	});
+    const countries = Object.values(loadedCountriesByCode)
+    countries.sort(sortByProperty(sortProperty, sortOrder == "ascending"))
 
-	if (selectedRow) {
+    let foundSelected = false
+    const rowsHtml = countries.map(country => {
+        const isSelected = selectedCountry == country.countryCode
+        if (isSelected) foundSelected = true
+        const relationship = country.countryRelationship
+            ? `<div class='cell' align='right'>${country.CountryTitle.description}, ${country.countryRelationship.total}</div>`
+            : `<div class='cell' align='right'>-</div>`
+        return `<div class='table-row clickable${isSelected ? ' selected' : ''}' data-country-code='${country.countryCode}' onclick="selectCountry('${country.countryCode}', false)">` +
+            `<div class='cell'>${getCountryFlagImg(country.countryCode, "16px")} ${country.name}</div>` +
+            `<div class='cell' align='right'>${country.airportPopulation.toLocaleString()}</div>` +
+            `<div class='cell' align='right'>$${country.income.toLocaleString()}</div>` +
+            `<div class='cell' align='right'>${country.openness}</div>` +
+            `<div class='cell' align='right'>${country.gini}</div>` +
+            relationship +
+            `<div class='cell' align='right'>${country.managersCount || '-'}</div>` +
+            `</div>`
+    })
+    countryTable.append(rowsHtml.join(''))
+
+    if (foundSelected) {
         loadCountryDetails(selectedCountry)
-	}
+    }
 }
 
-function toggleCountryTableSortOrder(sortHeader) {
-	if (sortHeader.data("sort-order") == "ascending") {
-		sortHeader.data("sort-order", "descending")
-	} else {
-		sortHeader.data("sort-order", "ascending")
-	}
-	
-	sortHeader.siblings().removeClass("selected")
-	sortHeader.addClass("selected")
-	
-	updateCountryTable(sortHeader.data("sort-property"), sortHeader.data("sort-order"))
-}
+function toggleCountryTableSortOrder(sortHeader) { toggleSimpleSortOrder(sortHeader, updateCountryTable) }
 
 function selectCountry(countryCode) {
     $("#countryCanvas #countryTable div.selected").removeClass("selected")

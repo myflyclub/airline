@@ -66,7 +66,7 @@ case object RegionalAirline extends AirlineType {
   val id = 4
   val label = "Regional Partner"
   override val airportRepRatio = 1
-  override val stockRepPerLevel = 50
+  override val stockRepPerLevel = 75
   val extraSharedBaseLimit = 1
   val modelMaxSize = 0.13 //used in web app to set allowed planes
   val staffFreqRatio = 0.0

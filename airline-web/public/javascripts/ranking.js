@@ -153,7 +153,7 @@ function getRankingRow(ranking, rankingType) {
     row.append("<div class='cell'>" + ranking.rank + "</div>")
     row.append("<div class='cell'>" + getMovementLabel(ranking.movement) + "</div>")
     if (ranking.airlineId) {
-        var entry = getAirlineSpan(ranking.airlineId, ranking.airlineName)
+        var entry = getAirlineSpan(ranking.airlineId, ranking.airlineName, buildAirlineTooltipContent(ranking.airlineId, ranking.airlineSlogan))
         if (ranking.rankInfo) {
             if (ranking.rankInfo.from && ranking.rankInfo.to) {
                 entry += ' : ' + "<span style='vertical-align:bottom'>" + getAirportSpan(ranking.rankInfo.from) + "<img style='vertical-align:bottom; margin:0 3px;' src='/assets/images/icons/12px/arrow-double.png'/>" + getAirportSpan(ranking.rankInfo.to) + "</span>"
@@ -161,8 +161,7 @@ function getRankingRow(ranking, rankingType) {
                 entry += ' : ' + ranking.rankInfo
             }
         }
-        var $airlineDiv = $("<div class='cell'>" + entry + "</div>").appendTo(row)
-        addAirlineTooltip($airlineDiv, ranking.airlineId, ranking.airlineSlogan, ranking.airlineName)
+        row.append("<div class='cell'>" + entry + "</div>")
     } else if (ranking.airportId) {
         var entry = getCountryFlagImg(ranking.countryCode) + ranking.iata + " : " + ranking.airportName
         row.append("<div class='cell'>" + entry + "</div>")

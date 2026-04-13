@@ -10,11 +10,11 @@
 						</div>
 					</div>
 					<div class="smDropdown" id="rivalsMetricDropdown">
-						<button class="button smDropdownToggle" onclick="Rivals.toggleDropdown(this)"><span class="smDropdownLabel">Stock Price</span> &#9662;</button>
+						<button class="button smDropdownToggle" onclick="Rivals.toggleDropdown(this)"><span class="smDropdownLabel">Reputation</span> &#9662;</button>
 						<div class="smDropdownMenu">
-							<div class="smDropdownItem active" data-value="price" onclick="Rivals.selectMetric('price', this)">Stock Price</div>
+							<div class="smDropdownItem active" data-value="reputation" onclick="Rivals.selectMetric('reputation', this)">Reputation</div>
 							<div class="smDropdownItem" data-value="totalValue" onclick="Rivals.selectMetric('totalValue', this)">Total Value</div>
-							<div class="smDropdownItem" data-value="reputation" onclick="Rivals.selectMetric('reputation', this)">Reputation</div>
+							<div class="smDropdownItem" data-value="price" onclick="Rivals.selectMetric('price', this)">Stock Price</div>
 						</div>
 					</div>
 					<div class="smDropdown" id="rivalsTypeDropdown">
@@ -27,13 +27,13 @@
 					<div class="table data tight" id="rivalsTicker">
 						<div class="table-header">
 							<div class="cell" style="width: 3%;"><img src="/assets/images/icons/magnifier.png" data-tooltip="View a rival"></div>
-							<div class="cell" style="width: 3%;"><input type="checkbox" checked onclick="Rivals.toggleAll(this.checked)" data-tooltip="Select / deselect all" style="display: block; margin: auto;"></div>
+							<div class="cell" style="width: 3%;"><span class="clickable" onclick="Rivals.toggleTopTwelve()" data-tooltip="Reset chart to top 12" style="font-size: 11px;">T12</span></div>
 							<div class="cell clickable" style="width: 21%;" data-sort-property="name" data-sort-order="ascending" onclick="Rivals.toggleTickerSortOrder($(this))">Airline</div>
 							<div class="cell clickable" style="width: 12%;" data-sort-property="airlineType" data-sort-order="ascending" onclick="Rivals.toggleTickerSortOrder($(this))">Type</div>
 							<div class="cell clickable" style="width: 14%;" data-sort-property="alliance" data-sort-order="ascending" onclick="Rivals.toggleTickerSortOrder($(this))">Alliance</div>
-							<div class="cell clickable selected" style="width: 13%;" align="right" data-sort-property="currentPrice" data-sort-order="descending" onclick="Rivals.toggleTickerSortOrder($(this))">Price</div>
+							<div class="cell clickable" style="width: 13%;" align="right" data-sort-property="currentPrice" data-sort-order="descending" onclick="Rivals.toggleTickerSortOrder($(this))">Price</div>
 							<div class="cell clickable" style="width: 16%;" align="right" data-sort-property="totalValue" data-sort-order="descending" onclick="Rivals.toggleTickerSortOrder($(this))">Total Value</div>
-							<div class="cell clickable" style="width: 13%;" align="right" data-sort-property="reputation" data-sort-order="descending" onclick="Rivals.toggleTickerSortOrder($(this))">Reputation</div>
+							<div class="cell clickable selected" style="width: 13%;" align="right" data-sort-property="reputation" data-sort-order="descending" onclick="Rivals.toggleTickerSortOrder($(this))">Reputation</div>
 							<div class="cell clickable" style="width: 13%;" align="right" data-sort-property="prestigePoints" data-sort-order="descending" onclick="Rivals.toggleTickerSortOrder($(this))">Prestige</div>
 						</div>
 					</div>

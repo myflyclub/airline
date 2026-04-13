@@ -292,10 +292,9 @@ function getAirlineSpan(airlineId, airlineName, tooltip = null) {
 	$airlineSpan.append(getAirlineLogoImg(airlineId))
 	$airlineSpan.append(getAirlineLabelSpan(airlineId, airlineName))
 	if (tooltip) {
-		$airlineSpan.append(`<div class="tooltiptext below" style="min-width: 140px; padding: 12px">${tooltip}</div>`)
+		$airlineSpan.append(`<div class="tooltiptext below" style="min-width: 150px; padding: 12px">${tooltip}</div>`)
         $airlineSpan.addClass('tooltip')
 	}
-
 	return $airlineSpan[0].outerHTML
 }
 
@@ -304,6 +303,14 @@ function getAirlineLogoSpan(airlineId, airlineName) {
 	$airlineLogoSpan.append(getAirlineLogoImg(airlineId))
 	$airlineLogoSpan.attr("title", airlineName)
     return $airlineLogoSpan
+}
+
+function buildAirlineTooltipContent(airlineId, slogan) {
+    const sloganHtml = slogan ? `<h5 style="margin: 6px 0 0;">${htmlEncode(slogan)}</h5>` : '';
+    return `<div style="min-width: 150px; text-align: center;">` +
+        `<img src="/airlines/${airlineId}/livery" style="max-height: 100px; max-width: 250px; display: block; margin: auto;" onerror="this.style.display='none'">` +
+        sloganHtml +
+        `</div>`;
 }
 
 function getUserLevelImg(level) {

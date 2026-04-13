@@ -891,6 +891,35 @@ var planLinkState = { fromAirportId: null, toAirportId: null }
 var planLinkInfo = null
 var planLinkInfoByModel = {}
 var existingLink
+var _planCompetitorsData = { otherLinks: [], otherViaLocalTransitLinks: [] }
+
+function renderPlanCompetitorsTable(sortProperty, sortOrder) {
+	$("#planLinkCompetitors .data-row").remove()
+	const ascending = sortOrder === 'ascending'
+	const sorted = [
+		..._planCompetitorsData.otherLinks,
+		..._planCompetitorsData.otherViaLocalTransitLinks
+	].sort(sortByProperty(sortProperty, ascending))
+	
+	const rowsHtml = sorted.map(lc => {
+		const title = [lc.altFrom ? 'Depart from ' + lc.altFrom : '', lc.altTo ? 'Arrive at ' + lc.altTo : ''].filter(Boolean).join('; ')
+		const style = (lc.altFrom || lc.altTo) ? " style='opacity: 60%'" : ''
+		const titleAttr = title ? ` title="${title}"` : ''
+		const airlineSpan = (lc.altFrom || lc.altTo) ? getAirlineSpan(lc.airlineId, lc.airlineName) : getAirlineLogoImg(lc.airlineId) + getAirlineLabelSpan(lc.airlineId, lc.airlineName)
+		return "<div class='table-row data-row'" + style + titleAttr + "><div style='display: table-cell;'>" + airlineSpan
+			+ "</div><div style='display: table-cell;'>" + toLinkClassValueString(lc.price, "$")
+			+ "</div><div style='display: table-cell; text-align:right;'>" + toLinkClassValueString(lc.capacity)
+			+ "</div><div style='display: table-cell; text-align:right;'>" + lc.frequency
+			+ "</div><div style='display: table-cell; text-align:right;'>" + lc.quality
+			+ "</div><div style='display: table-cell; text-align:right;'>" + lc.loadFactor + "</div></div>"
+	})
+	if (rowsHtml.length === 0) {
+		rowsHtml.push("<div class='table-row data-row'><div style='display: table-cell;'>-</div><div style='display: table-cell;'>-</div><div style='display: table-cell;'>-</div><div style='display: table-cell;'>-</div><div style='display: table-cell;'>-</div></div>")
+	}
+	$("#planLinkCompetitors").append(rowsHtml.join(''))
+}
+
+function togglePlanCompetitorsSortOrder(sortHeader) { toggleSimpleSortOrder(sortHeader, renderPlanCompetitorsTable) }
 
 function updatePlanLinkInfo(linkInfo, isRefresh) {
 	$('#planLinkFromAirportName').attr("href", `/airport/${linkInfo.fromAirportCode}`).html(getCountryFlagImg(linkInfo.fromCountryCode) + linkInfo.fromAirportCity + "<i class='pl-2 iata'>" + linkInfo.fromAirportCode + "</i>")
@@ -965,44 +994,11 @@ function updatePlanLinkInfo(linkInfo, isRefresh) {
     $breakdown.find(".toAirport .touristDemand").text(toLinkClassValueString(toTouristTotal))
 
 
-	$("#planLinkCompetitors .data-row").remove()
-
-	linkInfo.otherLinks.sort(function(a, b) {
-        return b.capacity.total - a.capacity.total;
-    });
-	$.each(linkInfo.otherLinks, function(index, linkConsumption) {
-        let loadFactorPercentage = Math.round(linkConsumption.soldSeats * 100 / linkConsumption.capacity.total)
-        $("#planLinkCompetitors").append("<div class='table-row data-row'><div style='display: table-cell;'>" + getAirlineLogoImg(linkConsumption.airlineId) + getAirlineLabelSpan(linkConsumption.airlineId, linkConsumption.airlineName)
-                                       + "</div><div style='display: table-cell;'>" + toLinkClassValueString(linkConsumption.price, "$")
-                                       + "</div><div style='display: table-cell; text-align:right;'>" + toLinkClassValueString(linkConsumption.capacity)
-                                       + "</div><div style='display: table-cell; text-align:right;'>" + linkConsumption.frequency
-                                       + "</div><div style='display: table-cell; text-align:right;'>" + linkConsumption.quality
-                                       + "</div><div style='display: table-cell; text-align:right;'>" + loadFactorPercentage + "</div></div>")
-	})
-
-	if ($("#planLinkCompetitors .data-row").length < 6) { //then additional info
-	    linkInfo.otherViaLocalTransitLinks.sort(function(a, b) {
-            return b.capacity.total - a.capacity.total;
-        });
-	    $.each(linkInfo.otherViaLocalTransitLinks, function(index, linkConsumption) { //reachable by 1 local transit
-            let loadFactorPercentage = Math.round(linkConsumption.soldSeats * 100 / linkConsumption.capacity.total)
-            var $row = $("<div class='table-row data-row' style='opacity: 60%'><div style='display: table-cell;'>" + getAirlineSpan(linkConsumption.airlineId, linkConsumption.airlineName)
-                            + "</div><div style='display: table-cell;'>" + toLinkClassValueString(linkConsumption.price, "$")
-                                       + "</div><div style='display: table-cell; text-align:right;'>" + toLinkClassValueString(linkConsumption.capacity)
-                                       + "</div><div style='display: table-cell; text-align:right;'>" + linkConsumption.frequency
-                                       + "</div><div style='display: table-cell; text-align:right;'>" + linkConsumption.quality
-                                       + "</div><div style='display: table-cell; text-align:right;'>" + loadFactorPercentage + "</div></div>")
-            let phrases = []
-            if (linkConsumption.altFrom) {
-                phrases.push("Depart from " + linkConsumption.altFrom)
-            }
-            if (linkConsumption.altTo) {
-                phrases.push("Arrive at " + linkConsumption.altTo)
-            }
-            $row.attr('title', phrases.join('; '))
-            $("#planLinkCompetitors").append($row)
-		})
-	}
+	linkInfo.otherLinks.forEach(lc => { lc.loadFactor = lc.capacity.total > 0 ? Math.round(lc.soldSeats * 100 / lc.capacity.total) : 0 })
+	linkInfo.otherViaLocalTransitLinks.forEach(lc => { lc.loadFactor = lc.capacity.total > 0 ? Math.round(lc.soldSeats * 100 / lc.capacity.total) : 0 })
+	_planCompetitorsData = { otherLinks: linkInfo.otherLinks, otherViaLocalTransitLinks: linkInfo.otherViaLocalTransitLinks }
+	var $selectedPlanHeader = $('#planLinkCompetitors .table-header .cell.selected')
+	renderPlanCompetitorsTable($selectedPlanHeader.data('sort-property'), $selectedPlanHeader.data('sort-order'))
 
 	let averageLoadFactor = {economy: "-", business: "-", first: "-"}
     if(currentLinkConsumptions !== null){
@@ -1023,10 +1019,6 @@ function updatePlanLinkInfo(linkInfo, isRefresh) {
     $("#planLFEconomy").text(averageLoadFactor.economy+"%")
     $("#planLFBusiness").text(averageLoadFactor.business+"%")
     $("#planLFFirst").text(averageLoadFactor.first+"%")
-
-	if ($("#planLinkCompetitors .data-row").length == 0) {
-		$("#planLinkCompetitors").append("<div class='table-row data-row'><div style='display: table-cell;'>-</div><div style='display: table-cell;'>-</div><div style='display: table-cell;'>-</div><div style='display: table-cell;'>-</div><div style='display: table-cell;'>-</div></div>")
-	}
 
     document.querySelector("#planLinkQuality").innerHTML = getGradeStarsImgs(Math.min(10, Math.round(linkInfo.quality / 10)), 12)
 
@@ -1709,6 +1701,11 @@ function updateTotalValues() {
     getLinkStaffingInfo()
 
     getLinkNegotiation(function(result) {
+        if (result.rejection) {
+            disableButton($("#planLinkDetails .modifyLink"), result.rejection)
+        } else if (result.negotiationInfo.finalRequirementValue > 0 && result.actionPoints < result.negotiationInfo.finalRequirementValue) {
+            disableButton($("#planLinkDetails .modifyLink"), "Not enough action points to negotiate this route")
+        }
         if (result.negotiationInfo.finalRequirementValue > 0) {
             $('#planLinkEstimatedDifficultyRow').show()
             difficultyLookup = result.negotiationInfo.finalRequirementValue.toFixed(2)
@@ -1905,8 +1902,7 @@ function cancelEditLink() {
 
 function removeTempPath() {
 	if (tempPath) {
-		AirlineMap.unhighlightPath(tempPath.path)
-		AirlineMap.clearPathEntry(tempPath)
+		AirlineMap.removeTempPath()
 		tempPath = undefined
 	}
 }
@@ -3328,7 +3324,8 @@ function negotiationAnimation(savedLink, callback, callbackParam) {
 	}, 200)
 
 
-	if (callback) {
+	$('#negotiationAnimation .close, #negotiationAnimation .result').off("click.custom")
+    if (callback) {
 		$('#negotiationAnimation .close, #negotiationAnimation .result').on("click.custom", function() {
 		    if (negotiationResult.isGreatSuccess) {
                 $('#negotiationAnimation').removeClass('transparentBackground')
@@ -3338,29 +3335,9 @@ function negotiationAnimation(savedLink, callback, callbackParam) {
             }
             callback(callbackParam)
 		})
-    } else {
-        $('#negotiationAnimation .close, #negotiationAnimation .result').off("click.custom")
     }
 
 	$('#negotiationAnimation').show()
-}
-
-function addAirlineTooltip($target, airlineId, slogan, airlineName) {
-    var $airlineTooltip = $('<div style="min-width: 150px;"></div>')
-    var $liveryImg = $('<img style="max-height: 100px; max-width: 250px; display: none; margin: auto;">').appendTo($airlineTooltip)
-    $liveryImg.on('load', function() {
-        if (this.naturalWidth > 1) {
-            $liveryImg.show()
-        }
-    })
-    $liveryImg.attr('src', '/airlines/' + airlineId + "/livery")
-    var $sloganDiv =$("<h5></h5>").appendTo($airlineTooltip)
-    if (slogan) {
-        $sloganDiv.text(slogan)
-    } else {
-        $sloganDiv.text(airlineName)
-    }
-    addTooltipHtml($target, $airlineTooltip, {'top' : '100%'})
 }
 
 function loadAndWatchAirlineNotes(airlineId) {

@@ -424,6 +424,12 @@ function initializeMapSearch() {
 
     // Show results when focusing if there's text
     input.addEventListener('focus', function() {
+        if (this.dataset.airportSelected === 'true') {
+            this.value = '';
+            delete this.dataset.airportSelected;
+            resultsDiv.style.display = 'none';
+            return;
+        }
         if (this.value.trim().length >= 2 && resultsDiv.children.length > 0) {
             resultsDiv.style.display = 'block';
         }
@@ -453,6 +459,7 @@ function initializeMapSearch() {
  */
 function selectMapSearchResult(airport, input, resultsDiv) {
     input.value = getAirportShortText(airport);
+    input.dataset.airportSelected = 'true';
     resultsDiv.style.display = 'none';
 
     // Get airport coordinates - airportsById has coords added during load

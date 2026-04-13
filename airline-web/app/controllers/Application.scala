@@ -506,6 +506,7 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
       "stock_eps" -> JsArray(StockModel.TOOLTIP_STOCK_EPS.map(JsString(_))),
       "stock_pask" -> JsArray(StockModel.TOOLTIP_STOCK_PASK.map(JsString(_))),
       "stock_dividends" -> JsArray(StockModel.TOOLTIP_STOCK_DIVIDENDS.map(JsString(_))),
+      "ledger_bankruptcy" -> JsArray(GameConstants.TOOLTIP_BANKRUPTCY.map(JsString(_))),
       "manager" -> JsArray(Manager.TOOLTIP.map(JsString(_))),
       "model_discount" -> JsArray(ModelDiscount.TOOLTIP.map(JsString(_))),
     )

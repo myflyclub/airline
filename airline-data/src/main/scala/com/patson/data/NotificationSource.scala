@@ -295,6 +295,21 @@ object NotificationSource {
     }
   }
 
+  def purgeExpiredByCategory(airlineId: Int, category: NotificationCategory.Value, currentCycle: Int): Unit = {
+    val connection = Meta.getConnection()
+    try {
+      val statement = connection.prepareStatement(
+        s"DELETE FROM $NOTIFICATION_TABLE WHERE airline = ? AND category = ? AND expiry_cycle IS NOT NULL AND expiry_cycle <= ?"
+      )
+      try {
+        statement.setInt(1, airlineId)
+        statement.setString(2, category.toString)
+        statement.setInt(3, currentCycle)
+        statement.executeUpdate()
+      } finally { statement.close() }
+    } finally { connection.close() }
+  }
+
   def deleteNotification(airlineId: Int, notifId: Int): Unit = {
     val connection = Meta.getConnection()
     try {

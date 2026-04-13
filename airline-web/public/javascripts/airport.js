@@ -8,6 +8,62 @@ var targetBase
 var airportBaseScale
 var _toggleState_AllianceBaseMapView = false
 const _etagStore = {}
+var _facilityStatistics = null
+
+function _buildBaseRows(statistics) {
+    return statistics.bases.map(base => {
+        let linkCount = 0, avgFreq = 0, avgDistance = 0, airlineTooltip = ''
+        for (const entry of statistics.linkCountByAirline) {
+            if (entry.airlineId === base.airlineId) {
+                let airlineType = entry.airlineType
+                let airlineSlogan = entry.airlineSlogan || "We don't have a slogan"
+                linkCount = entry.linkCount
+                avgFreq = entry.avgFrequency
+                avgDistance = entry.avgDistance
+                airlineTooltip = `<p style="margin-bottom: 0.5rem;">${base.airlineName} <i>${airlineType} Airline</i></p><p>&ldquo;${airlineSlogan}&rdquo;</p>`
+                break
+            }
+        }
+        let passengers = 0
+        for (const entry of statistics.airlinePax) {
+            if (entry.airlineId == base.airlineId) { passengers += entry.passengers; break }
+        }
+        return { ...base, linkCount, avgFreq, avgDistance, passengers, airlineTooltip }
+    })
+}
+
+$(document).on('click', '#airportDetailsHeadquarterList .table-row, #airportDetailsBaseList .table-row', function() {
+    const airlineId = $(this).data('airlineId')
+    if (airlineId) Rivals.show(airlineId)
+})
+
+function renderAirportBaseTable(tableId, sortProperty, sortOrder) {
+    const $table = $(tableId)
+    $table.children('.table-row').remove()
+    if (!_facilityStatistics) return
+    const isHQ = tableId === '#airportDetailsHeadquarterList'
+    const rows = _buildBaseRows(_facilityStatistics).filter(r => r.headquarter === isHQ)
+    if (rows.length === 0) {
+        const cells = Array(7).fill("<div class='cell' style='text-align: right;'>-</div>").join('')
+        $table.append(`<div class='table-row'>${cells}</div>`)
+        return
+    }
+    rows.sort(sortByProperty(sortProperty, sortOrder === 'ascending'))
+    const rowsHtml = rows.map(data =>
+        `<div class='table-row clickable' data-airline-id='${data.airlineId}'>` +
+        `<div class='cell'>${getAirlineSpan(data.airlineId, data.airlineName, data.airlineTooltip)}</div>` +
+        `<div class='cell' style='text-align: right;'>${getCountryFlagImg(data.airlineCountryCode)}</div>` +
+        `<div class='cell' style='text-align: right;'>${data.scale}</div>` +
+        `<div class='cell' style='text-align: right;'>${data.linkCount}</div>` +
+        `<div class='cell' style='text-align: right;'>${commaSeparateNumber(data.passengers)}</div>` +
+        `<div class='cell' style='text-align: right;'>${data.avgFreq}</div>` +
+        `<div class='cell' style='text-align: right;'>${Math.round(convertDistance(data.avgDistance))} ${distanceLabel()}</div>` +
+        `</div>`
+    )
+    $table.append(rowsHtml.join(''))
+}
+
+function toggleAirportBaseSortOrder(sortHeader, tableId) { toggleSimpleSortOrder(sortHeader, renderAirportBaseTable, tableId) }
 const DYNAMIC_FEATURE_TYPES = new Set([
     'INTERNATIONAL_HUB', 'VACATION_HUB', 'FINANCIAL_HUB', 'ELITE_CHARM', 'OLYMPICS_PREPARATIONS', 'OLYMPICS_IN_PROGRESS', 'PRESTIGE_CHARM'
 ])
@@ -809,57 +865,15 @@ function getRatingSpan(rating, inverse) {
 }
 
 function updateFacilityList(statistics) {
-    $('#airportDetailsHeadquarterList').children('.table-row').remove()
-    $('#airportDetailsBaseList').children('.table-row').remove()
     $('#airportDetailsLoungeList').children('.table-row').remove()
 
+    _facilityStatistics = statistics
+    var $selectedHQ = $('#airportDetailsHeadquarterList .table-header .cell.selected')
+    var $selectedBase = $('#airportDetailsBaseList .table-header .cell.selected')
+    renderAirportBaseTable('#airportDetailsHeadquarterList', $selectedHQ.data('sort-property'), $selectedHQ.data('sort-order'))
+    renderAirportBaseTable('#airportDetailsBaseList', $selectedBase.data('sort-property'), $selectedBase.data('sort-order'))
 
-    var hasHeadquarters = false
-    var hasBases = false
     var hasLounges = false
-    $.each(statistics.bases, function (index, base) {
-        var row = $(`<div class='table-row clickable' onClick='navigateTo("/rivals/${base.airlineId}")'></div>`)
-        let airlineTooltip = "";
-        let linkCount = 0;
-        let avgFreq = 0;
-        let avgDistance = 0;
-
-        for (const entry of statistics.linkCountByAirline) {
-            if (entry.airlineId === base.airlineId) {
-                ({ airlineType, airlineSlogan, linkCount, avgFrequency: avgFreq, avgDistance } = entry);
-                airlineSlogan = airlineSlogan || "We don't have a slogan";
-                airlineTooltip = `<p style="margin-bottom: 0.5rem;">${base.airlineName} <i>${airlineType} Airline</i></p><p>&ldquo;${airlineSlogan}&rdquo;</p>`
-                break;
-            }
-        }
-        var passengers = 0
-        $.each(statistics.airlinePax, function (index, entry) {
-            if (entry.airlineId == base.airlineId) {
-                passengers += entry.passengers;
-                return false; //break
-            }
-        });
-
-        row.append("<div class='cell'>" + getAirlineSpan(base.airlineId, base.airlineName, airlineTooltip) + "</div>")
-        row.append("<div class='cell' style='text-align: right;'>" + getCountryFlagImg(base.airlineCountryCode) + "</div>")
-        row.append("<div class='cell' style='text-align: right;'>" + base.scale + "</div>")
-        row.click(function () {
-            Rivals.show(base.airlineId)
-        })
-        row.append("<div class='cell' style='text-align: right;'>" + linkCount + "</div>")
-        row.append("<div class='cell' style='text-align: right;'>" + commaSeparateNumber(passengers) + "</div>")
-        row.append("<div class='cell' style='text-align: right;'>" + avgFreq + "</div>")
-        row.append("<div class='cell' style='text-align: right;'>" + Math.round(convertDistance(avgDistance)) + " " + distanceLabel() + "</div>")
-
-        if (base.headquarter) {
-            $('#airportDetailsHeadquarterList').append(row)
-            hasHeadquarters = true
-        } else {
-            $('#airportDetailsBaseList').append(row)
-            hasBases = true
-        }
-    })
-
     $.each(statistics.lounges, function (index, loungeStats) {
         var lounge = loungeStats.lounge
         var row = $(`<div class='table-row clickable' onClick='navigateTo("/rivals/${lounge.airlineId}")'></div>`)
@@ -884,21 +898,6 @@ function updateFacilityList(statistics) {
         hasLounges = true
     })
 
-    var emptyBaseRow = $("<div class='table-row'></div>")
-    emptyBaseRow.append("<div class='cell'>-</div>")
-    emptyBaseRow.append("<div class='cell' style='text-align: right;'>-</div>")
-    emptyBaseRow.append("<div class='cell' style='text-align: right;'>-</div>")
-    emptyBaseRow.append("<div class='cell' style='text-align: right;'>-</div>")
-    emptyBaseRow.append("<div class='cell' style='text-align: right;'>-</div>")
-    emptyBaseRow.append("<div class='cell' style='text-align: right;'>-</div>")
-    emptyBaseRow.append("<div class='cell' style='text-align: right;'>-</div>")
-
-    if (!hasHeadquarters) {
-        $('#airportDetailsHeadquarterList').append(emptyBaseRow)
-    }
-    if (!hasBases) {
-        $('#airportDetailsBaseList').append(emptyBaseRow)
-    }
     if (!hasLounges) {
         var emptyRow = $("<div class='table-row'></div>")
         emptyRow.append("<div class='cell'>-</div>")

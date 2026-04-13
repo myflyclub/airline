@@ -2,6 +2,28 @@
 const _searchEtagStore = {}
 const _searchRouteData = {}
 const _researchData = {}
+let _researchLinksData = { links: [], basePrice: {} }
+
+function renderExistingFlightsTable(sortProperty, sortOrder) {
+    const $table = $('#existingFlightsTable')
+    $table.find('.table-row').remove()
+    const { links, basePrice } = _researchLinksData
+    const sorted = [...links].sort(sortByProperty(sortProperty, sortOrder === 'ascending'))
+    const rowsHtml = sorted.map(link => `<div class='table-row'>
+            <div class='cell'>${getAirlineLogoImg(link.airlineId)} ${link.airlineName}</div>
+            <div class='cell'>${toLinkPercentOfBasePrices(link.price, basePrice)}</div>
+            <div class='cell'>${toLinkClassValueString(link.capacity)}</div>
+            <div class='cell'>${link.frequency}</div>
+            <div class='cell'>${link.computedQuality}</div>
+            <div class='cell'>${link.loadFactor}%</div>
+        </div>`)
+    if (rowsHtml.length === 0) {
+        rowsHtml.push("<div class='table-row'><div class='cell'>-</div><div class='cell'>-</div><div class='cell'>-</div><div class='cell'>-</div><div class='cell'>-</div><div class='cell'>-</div></div>")
+    }
+    $table.append(rowsHtml.join(''))
+}
+
+function toggleExistingFlightsSortOrder(sortHeader) { toggleSimpleSortOrder(sortHeader, renderExistingFlightsTable) }
 let historySearchState = {};
 const resetHistorySearchState = () => {
     historySearchState = {
@@ -725,6 +747,28 @@ function confirmSelection(input) {
             $input.closest('.searchCriterion').siblings('.searchCriterion').find(`input.${otherEntity}`).val('');
         }
     }
+
+    // Draw temp path when both from/to airports are selected in route/research search
+    if (searchType === 'airport' && input.closest('.searchFieldContainer').length > 0) {
+        const $fc = input.closest('.searchFieldContainer');
+        const fromId = parseInt($fc.find('input.fromAirport').data('selectedId')) || null;
+        const toId = parseInt($fc.find('input.toAirport').data('selectedId')) || null;
+        AirlineMap.removeTempPath();
+        tempPath = undefined;
+        if (fromId && toId) {
+            const fromAirport = getAirportByAttribute(fromId);
+            const toAirport = getAirportByAttribute(toId);
+            if (fromAirport && toAirport) {
+                const tempLink = {
+                    fromLatitude: fromAirport.latitude, fromLongitude: fromAirport.longitude,
+                    toLatitude: toAirport.latitude, toLongitude: toAirport.longitude
+                };
+                tempPath = AirlineMap.drawFlightPath(tempLink, '#3b94e6');
+                AirlineMap.highlightPath(tempPath.path, false);
+            }
+        }
+    }
+
     resultContainer.hide();
 }
 
@@ -1099,37 +1143,12 @@ function populateResearchHeader(result) {
 }
 
 function populateResearchLinksTable(links, consumptions, basePrice) {
-    const linksTable = $('#researchSearchResult .table.links');
-    linksTable.find(".table-row").remove(); // Clear existing rows
-
-    if (links.length === 0) {
-        const emptyRow = `
-            <div class='table-row'>
-                <div class='cell'>-</div>
-                <div class='cell'>-</div>
-                <div class='cell'>-</div>
-                <div class='cell'>-</div>
-                <div class='cell'>-</div>
-                <div class='cell'>-</div>
-            </div>`;
-        linksTable.append(emptyRow);
-        return;
-    }
-
     links.forEach((link, index) => {
-        const consumption = consumptions[index];
-        const loadFactor = link.capacity.total > 0 ? Math.round(consumption.soldSeats * 100 / link.capacity.total) : 0;
-        const rowHtml = `
-            <div class='table-row'>
-                <div class='cell'>${getAirlineLogoImg(link.airlineId)} ${link.airlineName}</div>
-                <div class='cell'>${toLinkPercentOfBasePrices(link.price, basePrice)}</div>
-                <div class='cell'>${toLinkClassValueString(link.capacity)}</div>
-                <div class='cell'>${link.frequency}</div>
-                <div class='cell'>${link.computedQuality}</div>
-                <div class='cell'>${loadFactor}%</div>
-            </div>`;
-        linksTable.append(rowHtml);
-    });
+        link.loadFactor = link.capacity.total > 0 ? Math.round(consumptions[index].soldSeats * 100 / link.capacity.total) : 0
+    })
+    _researchLinksData = { links, basePrice }
+    const $selectedHeader = $('#existingFlightsTable .table-header .cell.selected')
+    renderExistingFlightsTable($selectedHeader.data('sort-property'), $selectedHeader.data('sort-order'))
 }
 
 function populateResearchDemandTables(result) {

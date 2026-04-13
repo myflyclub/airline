@@ -19,9 +19,7 @@ object AirlineSimulation {
   val MAX_SERVICE_QUALITY_INCREMENT : Double = 0.5
   val MAX_SERVICE_QUALITY_DECREMENT : Double = 10
   val MAX_REPUTATION_DELTA = 1
-  val BANKRUPTCY_ASSETS_THRESHOLD = -50000000 //-50M
-  val BANKRUPTCY_CASH_THRESHOLD = -10000000 //-10M
-  val BOOKKEEPING_ENTRIES_COUNT = 25
+  val BOOKKEEPING_ENTRIES_COUNT = 50
 
   private def latestStatsByPeriod(
     statsByAirlineId: immutable.Map[Int, List[AirlineStat]],
@@ -75,7 +73,7 @@ object AirlineSimulation {
       val airlineValue = Computation.getResetAmount(airline.id)
 
       //income statement
-      val isBankrupt = if (airlineValue.overall < BANKRUPTCY_ASSETS_THRESHOLD && airlineValue.existingBalance < BANKRUPTCY_CASH_THRESHOLD) {
+      val isBankrupt = if (airlineValue.overall < GameConstants.BANKRUPTCY_ASSETS_THRESHOLD && airlineValue.existingBalance < GameConstants.BANKRUPTCY_CASH_THRESHOLD) {
         true
       } else {
         false
@@ -516,7 +514,7 @@ object AirlineSimulation {
 
   def computeAndSaveAccumulation(cycle: Int, allAirlines: List[Airline], period: Period.Value): Unit = {
     val periodWeeks = Period.numberWeeks(period)
-    val startCycle = cycle - (cycle % periodWeeks) + 1
+    val startCycle = cycle - periodWeeks + 1
     val endCycle = cycle
 
     val weeklyByAirline = IncomeSource.loadWeeklyBalancesByCycleRange(startCycle, endCycle).groupBy(_._1.airlineId)
@@ -558,7 +556,7 @@ object AirlineSimulation {
   
   def computeAndSaveStats(cycle: Int, allAirlines: List[Airline], period: Period.Value): Unit = {
     val periodWeeks = Period.numberWeeks(period)
-    val startCycle = cycle - (cycle % periodWeeks) + 1
+    val startCycle = cycle - periodWeeks + 1
     val endCycle = cycle
     
     // Batch load all weekly stats for all airlines in this period

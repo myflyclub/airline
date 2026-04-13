@@ -520,9 +520,9 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
           case Some(rejection) => BadRequest(rejection)
           case None =>
             //remove all links from that base
-            val linksFromThisAirport = LinkSource.loadLinksByCriteria(List(("airline", airlineId))).filter(_.from.id == airportId)
+            val linksFromThisAirport = LinkSource.loadFlightLinksByFromAirportAndAirlineId(airportId, airlineId, LinkSource.FULL_LOAD)
             linksFromThisAirport.foreach { link =>
-              LinkSource.deleteLink(link.id)
+              LinkApplication.deleteLink(link.asInstanceOf[Link], airlineId)
             }
 
             //assign all airplanes on this base to HQ
