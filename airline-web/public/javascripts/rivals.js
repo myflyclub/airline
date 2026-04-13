@@ -6,7 +6,7 @@ const Rivals = (() => {
     let rivalsData = null;
     let _rivalsEtag = null;
     let period = 'WEEKLY';
-    let metric = 'price';
+    let metric = 'reputation';
     let hiddenAirlines = {};
     let selectedTypes = {};
 
@@ -422,7 +422,7 @@ const Rivals = (() => {
             if (etag) _rivalsEtag = etag
             rivalsData = await res.json()
             buildTypeFilter()
-            resetVisibilityToTop20()
+            resetVisibilityToTop12()
         } catch (e) {
             console.error('Rivals prefetch failed:', e)
         }
@@ -431,7 +431,7 @@ const Rivals = (() => {
     async function loadData() {
         if (rivalsData) {
             buildTypeFilter();
-            resetVisibilityToTop20();
+            resetVisibilityToTop12();
             renderChart();
             renderTicker();
             return;
@@ -453,7 +453,7 @@ const Rivals = (() => {
                 if (a.foundedCycle != null) foundedCycleById[a.id] = a.foundedCycle;
             });
             buildTypeFilter()
-            resetVisibilityToTop20()
+            resetVisibilityToTop12()
             renderChart()
             renderTicker()
         } catch (e) {
@@ -461,39 +461,31 @@ const Rivals = (() => {
         }
     }
 
-    function resetVisibilityToTop20() {
+    function resetVisibilityToTop12() {
         if (!rivalsData) return;
         const airlines = rivalsData.airlines;
         const history = rivalsData.history;
 
-        // Helper to get current value for sorting
         const getMetricValue = (airline) => {
              if (metric === 'price') return airline.currentPrice;
              const airlineHistory = history[airline.id] || [];
              const filtered = airlineHistory.filter(h => h.period === period);
              if (filtered.length === 0) return -1;
-             // Sort to ensure we get the latest
              filtered.sort((a, b) => a.cycle - b.cycle);
              return filtered[filtered.length - 1][metric];
         };
 
-        // 1. Sort by current metric descending
-        // Clone array to avoid mutating original order if that matters elsewhere
         const sortedAirlines = [...airlines].sort((a, b) => getMetricValue(b) - getMetricValue(a));
 
-        // 2. Select Top 20 IDs
-        const top20Ids = new Set(sortedAirlines.slice(0, 20).map(a => a.id));
+        const top12Ids = new Set(sortedAirlines.slice(0, 12).map(a => a.id));
 
-        // 3. Ensure Active Airline is included (if it exists)
         if (typeof activeAirline !== 'undefined' && activeAirline) {
-            top20Ids.add(activeAirline.id);
+            top12Ids.add(activeAirline.id);
         }
 
-        // 4. Update hiddenAirlines
-        // If it's NOT in the top 20 set, we hide it.
         hiddenAirlines = {};
         airlines.forEach(function(airline) {
-            if (!top20Ids.has(airline.id)) {
+            if (!top12Ids.has(airline.id)) {
                 hiddenAirlines[airline.id] = true;
             }
         });
@@ -538,7 +530,7 @@ const Rivals = (() => {
         $(item).addClass('active');
         $dropdown.find('.smDropdownLabel').text($(item).text());
         $dropdown.removeClass('open');
-        resetVisibilityToTop20();
+        resetVisibilityToTop12();
         renderChart();
     }
 
@@ -566,6 +558,7 @@ const Rivals = (() => {
                 '<label class="smDropdownCheckItem">' +
                 '<input type="checkbox" ' + checked + ' onchange="Rivals.toggleTypeFilter(\'' + safeType + '\', this.checked)">' +
                 '<span>' + type + '</span>' +
+                '<span class="smDropdownOnly" onclick="event.stopPropagation();Rivals.onlyTypeFilter(\'' + safeType + '\')">only</span>' +
                 '</label>'
             );
         });
@@ -576,6 +569,15 @@ const Rivals = (() => {
     function toggleTypeFilter(type, checked) {
         selectedTypes[type] = checked;
         updateTypeDropdownLabel();
+        renderChart();
+        renderTicker();
+    }
+
+    function onlyTypeFilter(type) {
+        Object.keys(selectedTypes).forEach(function(t) {
+            selectedTypes[t] = (t === type);
+        });
+        buildTypeFilter();
         renderChart();
         renderTicker();
     }
@@ -601,15 +603,6 @@ const Rivals = (() => {
     }
 
     // SECTION: Chart
-    function getMetricLabel() {
-        switch (metric) {
-            case 'price': return 'Stock Price';
-            case 'totalValue': return 'Total Value';
-            case 'reputation': return 'Reputation';
-            default: return metric;
-        }
-    }
-
     function formatMetricValue(value) {
         switch (metric) {
             case 'price': return '$' + value.toFixed(2);
@@ -656,7 +649,6 @@ const Rivals = (() => {
         });
         const labels = Object.keys(allCycles).map(Number).sort(function(a, b) { return a - b; });
 
-        const metricLabel = getMetricLabel();
         const isMonetary = metric === 'price' || metric === 'totalValue';
 
         const config = {
@@ -719,7 +711,6 @@ const Rivals = (() => {
         ChartUtils.createChart('rivalsChartContainer', config);
     }
 
-    // SECTION: Ticker
     function toggleTickerSortOrder(sortHeader) { toggleSimpleSortOrder(sortHeader, renderTicker) }
 
     function renderTicker(sortProperty, sortOrder) {
@@ -749,7 +740,7 @@ const Rivals = (() => {
 
         if (!sortProperty) {
             const selectedSortHeader = $('#rivalsTicker .table-header .cell.selected');
-            sortProperty = selectedSortHeader.data('sort-property') || 'currentPrice';
+            sortProperty = selectedSortHeader.data('sort-property') || 'reputation';
             sortOrder = selectedSortHeader.data('sort-order') || 'descending';
         }
         displayRows.sort(sortByProperty(sortProperty, sortOrder == 'ascending'));
@@ -759,7 +750,6 @@ const Rivals = (() => {
 
         const rowsHtml = [];
         displayRows.forEach(function(entry) {
-            const color = colorFromString(entry.name);
             const isHidden = hiddenAirlines[entry.id];
             const opacity = isHidden ? '0.4' : '1';
 
@@ -767,13 +757,13 @@ const Rivals = (() => {
                 `<div class="table-row clickable" data-airline-id="${entry.id}" style="opacity:${opacity};">` +
                 `<div class="cell js-show-details" style="width:3%;"><img src="/assets/images/icons/magnifier.png" style="width:14px;height:14px;cursor:pointer;opacity:0.7;" data-tooltip="View details"></div>` +
                 `<div class="cell js-toggle-airline" style="width:3%;"><input type="checkbox" ${isHidden ? '' : 'checked'} style="cursor:pointer;"></div>` +
-                `<div class="cell" style="width:21%;"><span style="display:inline-block;width:10px;height:10px;margin-right:4px;border-radius:2px;background:${color};vertical-align:middle;"></span>${entry.name}</div>` +
-                `<div class="cell" style="width:12%;">${entry.airlineType}</div>` +
+                `<div class="cell" style="width:24%;">${getAirlineSpan(entry.id, entry.name, buildAirlineTooltipContent(entry.id))}</div>` +
+                `<div class="cell" style="width:10%;">${entry.airlineType}</div>` +
                 `<div class="cell" style="width:14%;">${entry.alliance || '-'}</div>` +
-                `<div class="cell" style="width:13%;" align="right">$${entry.currentPrice.toFixed(2)}</div>` +
+                `<div class="cell" style="width:15%;" align="right">$${entry.currentPrice.toFixed(2)}</div>` +
                 `<div class="cell" style="width:16%;" align="right">$${commaSeparateNumber(entry.totalValue)}</div>` +
                 `<div class="cell js-toggle-airline" style="width:13%;" align="right">${entry.reputation}</div>` +
-                `<div class="cell" style="width:13%;" align="right">${entry.prestigePoints}</div>` +
+                `<div class="cell" style="width:10%;" align="right">${entry.prestigePoints}</div>` +
                 `</div>`
             );
         });
@@ -786,11 +776,42 @@ const Rivals = (() => {
         renderTicker();
     }
 
-    function toggleAll(checked) {
+    function toggleTopTwelve() {
         if (!rivalsData) return;
+        const history = rivalsData.history;
+
+        const displayRows = [];
         rivalsData.airlines.forEach(function(airline) {
-            hiddenAirlines[airline.id] = !checked;
+            if (!isAirlineTypeVisible(airline)) return;
+            const airlineHistory = (history[airline.id] || []).filter(function(h) { return h.period === period; });
+            airlineHistory.sort(function(a, b) { return a.cycle - b.cycle; });
+            const latestEntry = airlineHistory.length > 0 ? airlineHistory[airlineHistory.length - 1] : null;
+            displayRows.push({
+                id: airline.id,
+                name: airline.name,
+                airlineType: airline.airlineType,
+                alliance: airline.alliance || '',
+                currentPrice: airline.currentPrice,
+                totalValue: latestEntry ? latestEntry.totalValue : 0,
+                reputation: latestEntry ? latestEntry.reputation : 0,
+                prestigePoints: airline.prestigePoints
+            });
         });
+
+        const selectedSortHeader = $('#rivalsTicker .table-header .cell.selected');
+        const sortProperty = selectedSortHeader.data('sort-property') || 'reputation';
+        const sortOrder = selectedSortHeader.data('sort-order') || 'descending';
+        displayRows.sort(sortByProperty(sortProperty, sortOrder === 'ascending'));
+
+        const top12Ids = new Set(displayRows.slice(0, 12).map(function(r) { return r.id; }));
+
+        hiddenAirlines = {};
+        rivalsData.airlines.forEach(function(airline) {
+            if (!top12Ids.has(airline.id)) {
+                hiddenAirlines[airline.id] = true;
+            }
+        });
+
         renderChart();
         renderTicker();
     }
@@ -834,11 +855,12 @@ const Rivals = (() => {
 
         // Type filter
         toggleTypeFilter,
+        onlyTypeFilter,
 
         // Ticker
         toggleTickerSortOrder,
         toggleAirline,
-        toggleAll,
+        toggleTopTwelve,
     };
 })();
 
