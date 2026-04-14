@@ -28,22 +28,22 @@ object StockModel {
         val benchmark = TypeBenchmark(
           pask = allMetrics("pask").copy(
             floor  = percentile(paskList, 0.2),
-            target = Math.max(percentile(paskList, 0.8), 0.1)
+            target = Math.max(percentile(paskList, 0.8), allMetrics("pask").target)
           ),
           dividendsPerShare = allMetrics("dividends_per_share").copy(
             floor  = percentile(divList, 0.2),
-            target = Math.max(percentile(divList, 0.9), 0.1)
+            target = Math.max(percentile(divList, 0.9), allMetrics("dividends_per_share").target)
           ),
           codeshares = allMetrics("codeshares").copy(
             floor  = percentile(codeshares, 0.2),
-            target = Math.max(percentile(codeshares, 0.8), 0.1)
+            target = Math.max(percentile(codeshares, 0.8), allMetrics("codeshares").target)
           )
         )
         Some(airlineType.label -> benchmark)
       }
     }.toMap
   }
-  val STOCK_BROKER_FEE = 0.06
+  val STOCK_BROKER_FEE = 0.05
   val STOCK_BROKER_FEE_BASE = 250_000
   val STOCK_BUYBACK_MIN_CHANGE = 0.03
   val STOCK_BUYBACK_MAX_CHANGE = 0.1
@@ -66,13 +66,13 @@ object StockModel {
   //currently adds up to 110
   val allMetrics: Map[String, StockMetric] = Map(
     "eps" ->                  StockMetric(30, 0.1, 1.0),
-    "pask" ->                 StockMetric(25, 0.05, 0.09),
-    "dividends_per_share" ->  StockMetric(25, 0.0, 1.0),
+    "pask" ->                 StockMetric(25, 0.05, 0.08),
+    "dividends_per_share" ->  StockMetric(25, 0.0, 0.005),
     "interest" ->             StockMetric(5, 0.26, 0.6), //there's an extra 5 here
     "satisfaction" ->         StockMetric(5, 0.5, 0.9),
     "link_count" ->           StockMetric(5, 50, 400),
     "on_time" ->              StockMetric(5, 0.75, 0.95),
-    "codeshares" ->           StockMetric(5, 200, 100000),
+    "codeshares" ->           StockMetric(5, 200, 5000),
     "rep_leaderboards" ->     StockMetric(5, 0, 200),
   )
 

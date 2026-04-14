@@ -49,10 +49,10 @@ function closeNotificationDrawer() {
 }
 
 function loadNotificationBadge() {
-    if (!activeAirline) return
+    if (!selectedAirlineId) return
     $.ajax({
         type: 'GET',
-        url: '/airlines/' + activeAirline.id + '/notifications/unread',
+        url: '/airlines/' + selectedAirlineId + '/notifications/unread',
         dataType: 'json',
         success: function(data) {
             var count = data.count

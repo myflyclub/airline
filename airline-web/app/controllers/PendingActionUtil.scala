@@ -1,6 +1,6 @@
 package controllers
 
-import com.patson.data.{CycleSource, EventSource, NotificationSource}
+import com.patson.data.{EventSource, NotificationSource}
 import com.patson.model.{Airline, AllianceRole, NotificationCategory}
 import com.patson.model.event.{EventType, Olympics, OlympicsStatus}
 import com.patson.util.AllianceCache
@@ -21,7 +21,7 @@ object PendingActionUtil {
     if (Olympics.getVoteWeight(airline) > 0) {
       EventSource.loadEvents().filter(_.eventType == EventType.OLYMPICS).map(_.asInstanceOf[Olympics]).sortBy(_.startCycle).lastOption match {
         case Some(latestOlympics) =>
-          val currentCycle = CycleSource.loadCycle()
+          val currentCycle = cachedCurrentCycle
           if (latestOlympics.status(currentCycle) == OlympicsStatus.VOTING) {
             if (EventSource.loadOlympicsAirlineVotes(latestOlympics.id, airline.id).isEmpty) {
               List(PendingAction(airline, PendingActionCategory.OLYMPICS_VOTE))

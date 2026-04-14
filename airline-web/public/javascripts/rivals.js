@@ -20,12 +20,51 @@ const Rivals = (() => {
     // Exposed externally via window property (heatmap.js compatibility)
     let mapAirlineId;
 
+    // =========================================================================
+    // SECTION: Settings Persistence
+    // =========================================================================
+
+    const RIVALS_STORAGE_KEY = 'rivals_settings';
+
+    function saveSettings() {
+        try {
+            localStorage.setItem(RIVALS_STORAGE_KEY, JSON.stringify({ period, metric, selectedTypes }));
+        } catch(e) {}
+    }
+
+    function loadSettings() {
+        try {
+            const val = localStorage.getItem(RIVALS_STORAGE_KEY);
+            if (!val) return;
+            const saved = JSON.parse(val);
+            if (saved.period) period = saved.period;
+            if (saved.metric) metric = saved.metric;
+            if (saved.selectedTypes) Object.assign(selectedTypes, saved.selectedTypes);
+        } catch(e) {}
+    }
+
+    function syncDropdownUi() {
+        $('#rivalsPeriodDropdown .smDropdownItem').each(function() {
+            const isActive = $(this).data('value') === period;
+            $(this).toggleClass('active', isActive);
+            if (isActive) $('#rivalsPeriodDropdown .smDropdownLabel').text($(this).text());
+        });
+        $('#rivalsMetricDropdown .smDropdownItem').each(function() {
+            const isActive = $(this).data('value') === metric;
+            $(this).toggleClass('active', isActive);
+            if (isActive) $('#rivalsMetricDropdown .smDropdownLabel').text($(this).text());
+        });
+    }
+
+    loadSettings();
+
 
     // =========================================================================
     // SECTION: Canvas / Entry Point
     // =========================================================================
 
     function show(selectedAirline) {
+        syncDropdownUi();
         setActiveDiv($('#rivalsCanvas'), () => loadData());
         $('#rivalDetailsModal').hide();
 
@@ -520,6 +559,7 @@ const Rivals = (() => {
         $(item).addClass('active');
         $dropdown.find('.smDropdownLabel').text($(item).text());
         $dropdown.removeClass('open');
+        saveSettings();
         renderChart();
     }
 
@@ -530,6 +570,7 @@ const Rivals = (() => {
         $(item).addClass('active');
         $dropdown.find('.smDropdownLabel').text($(item).text());
         $dropdown.removeClass('open');
+        saveSettings();
         resetVisibilityToTop12();
         renderChart();
     }
@@ -569,6 +610,7 @@ const Rivals = (() => {
     function toggleTypeFilter(type, checked) {
         selectedTypes[type] = checked;
         updateTypeDropdownLabel();
+        saveSettings();
         renderChart();
         renderTicker();
     }
@@ -578,6 +620,7 @@ const Rivals = (() => {
             selectedTypes[t] = (t === type);
         });
         buildTypeFilter();
+        saveSettings();
         renderChart();
         renderTicker();
     }

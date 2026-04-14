@@ -105,6 +105,8 @@ function showAdminActions(airline) {
     } else {
         $("#rivalDetailsModal .adminActions .airlineModifiers").text('-')
     }
+    $("#rivalDetailsModal .adminActions .currentBalance").text("$" + airline.balance.toLocaleString())
+    $("#rivalDetailsModal .adminActions .currentAp").text(airline.actionPoints != null ? airline.actionPoints.toFixed(1) : "-")
     $("#rivalDetailsModal .adminActions .ips").empty()
     $("#rivalDetailsModal .adminActions .uuids").empty()
     $.ajax({
@@ -281,6 +283,24 @@ function invalidateCustomization() {
                 console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
         }
     });
+}
+
+function injectMoney() {
+    var amount = parseInt($("#rivalDetailsModal .injectMoneyAmount").val())
+    if (isNaN(amount)) return
+    adminActionWithData("inject-money", $("#rivalDetailsModal .adminActions").data("userId"), {
+        "amount" : amount,
+        "airlineId" : parseInt($("#rivalDetailsModal .adminActions").data("airlineId"))
+    })
+}
+
+function injectAp() {
+    var amount = parseFloat($("#rivalDetailsModal .injectApAmount").val())
+    if (isNaN(amount)) return
+    adminActionWithData("inject-ap", $("#rivalDetailsModal .adminActions").data("userId"), {
+        "amount" : amount,
+        "airlineId" : parseInt($("#rivalDetailsModal .adminActions").data("airlineId"))
+    })
 }
 
 function switchUser() {

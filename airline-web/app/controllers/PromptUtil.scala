@@ -1,6 +1,6 @@
 package controllers
 
-import com.patson.data.{AirlineSource, CycleSource, LinkSource, LoyalistSource, NotificationSource, TutorialSource}
+import com.patson.data.{AirlineSource, LinkSource, LoyalistSource, NotificationSource, TutorialSource}
 import com.patson.model.{Airline, Notification, NotificationCategory}
 import com.patson.model.tutorial.Tutorial
 
@@ -17,7 +17,7 @@ case class AirlineTutorial(airline: Airline, tutorial: Tutorial)
 object PromptUtil {
 
   def getPrompts(airline: Airline): Prompts = {
-    val currentCycle = CycleSource.loadCycle()
+    val currentCycle = cachedCurrentCycle
     val result = Prompts(ListBuffer(), ListBuffer())
     result.notices.appendAll(getLevelUpNotifications(airline, currentCycle))
     result.notices.appendAll(getLoyalistNotifications(airline, currentCycle))

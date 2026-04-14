@@ -36,7 +36,6 @@ sealed class LocalActor(out : ActorRef, airlineId : Int) extends Actor {
       case CycleCompleted(cycle, cycleEndTime) =>
         println(s"${self.path} Received cycle completed: $cycle")
         out ! Json.obj("messageType" -> "cycleCompleted", "cycle" -> cycle) //if a CycleCompleted is published to the stream, notify the out(websocket) of the cycle
-        Broadcaster.checkPrompts(airlineId)
       case CycleInfo(cycle, fraction, cycleDurationEstimation) =>
         println(s"${self.path} Received cycle info on cycle: " + cycle)
         out ! Json.obj("messageType" -> "cycleInfo", "cycle" -> cycle, "fraction" -> fraction, "cycleDurationEstimation" -> cycleDurationEstimation)
@@ -93,10 +92,6 @@ class ResetTask(localActor : ActorRef, remoteActor : ActorSelection) extends Tim
 //only 1 locally, fan out message to all local actors to reduce connections required
 //also manage the broadcast actor
 sealed class LocalMainActor(remoteActor : ActorSelection) extends Actor {
-  //also create BroadcastActor
-//  val broadcastActor = context.actorOf(Props(classOf[BroadcastActor]).withDispatcher("my-pinned-dispatcher"), "broadcast-actor")
-//  context.watch(broadcastActor)
-
   val pingInterval = 60000 //how often do we check
   val resetTimeout = 10000
   var pendingResetTask : Option[ResetTask] = None
@@ -124,7 +119,10 @@ sealed class LocalMainActor(remoteActor : ActorSelection) extends Actor {
               println("Banner is enabled. Refreshing banner on cycle complete")
               GooglePhotoUtil.refreshBanners()
             }
-            println(s"${self.path} cache refreshed")
+            println(s"${self.path} airport cache refreshed")
+          }(scala.concurrent.ExecutionContext.global)
+          Future {
+            Broadcaster.checkAllPrompts()
           }(scala.concurrent.ExecutionContext.global)
           println(s"${self.path} invalidated cache, async refresh started")
       }

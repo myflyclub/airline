@@ -266,7 +266,7 @@ class ProfileApplication @Inject()(cc: ControllerComponents) extends AbstractCon
           airline.setReputation(profile.reputation)
           airline.setCurrentServiceQuality(profile.quality)
           airline.setTargetServiceQuality(targetQuality)
-          airline.setSharesOutstanding(250_000_000)
+          airline.setSharesOutstanding(200_000_000)
           if (profile.airlineType.stockRepPerLevel > 0) {
             airline.setStockPrice(1.0)
           }

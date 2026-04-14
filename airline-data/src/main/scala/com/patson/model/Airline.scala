@@ -238,7 +238,8 @@ object LedgerType extends Enumeration {
       OIL_CONTRACT,
       PRIZE,
       BUY_BACK,
-      CREATE_LINK = Value
+      CREATE_LINK,
+      ADMIN_INJECT = Value
 }
 
 case class AirlineLedgerEntry(airlineId : Int, cycle : Int, entryType : LedgerType.Value, amount : Long, description : Option[String] = None, id : Int = 0)
