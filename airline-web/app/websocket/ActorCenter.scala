@@ -13,6 +13,7 @@ import websocket.chat.TriggerPing
 
 import java.util.{Date, Timer, TimerTask}
 import scala.collection.mutable
+import scala.concurrent.Future
 
 //Instead of maintaining a new actor connection whenever someone logs in, we will only maintain one connection between sim and web app, once sim finishes a cycle, it will send one message the the web app actor, and the web app actor will relay the message in an event stream, which is subscribed by each login section.
 //
@@ -106,6 +107,7 @@ sealed class LocalMainActor(remoteActor : ActorSelection) extends Actor {
   override def receive = {
     case (topic: SimulationEvent, payload: Any) =>
       println(s"Local main actor received topic $topic, re-publishing to ${actorSystem}")
+      actorSystem.eventStream.publish(topic, payload) //relay to local event stream first so clients are notified immediately
       Some(topic).collect {
         case CycleCompleted(cycle, cycleEndTime) =>
           println(s"${self.path} invalidating cache")
@@ -116,15 +118,16 @@ sealed class LocalMainActor(remoteActor : ActorSelection) extends Actor {
           AirportStatisticsCache.invalidateAll()
           AirplaneOwnershipCache.invalidateAll()
           ResponseCache.invalidateAll()
-          AirportUtil.refreshAirports()
-          if (bannerEnabled) {
-            println("Banner is enabled. Refreshing banner on cycle complete")
-            GooglePhotoUtil.refreshBanners()
-          }
-          println(s"${self.path} invalidated cache")
+          Future {
+            AirportUtil.refreshAirports()
+            if (bannerEnabled) {
+              println("Banner is enabled. Refreshing banner on cycle complete")
+              GooglePhotoUtil.refreshBanners()
+            }
+            println(s"${self.path} cache refreshed")
+          }(scala.concurrent.ExecutionContext.global)
+          println(s"${self.path} invalidated cache, async refresh started")
       }
-
-      actorSystem.eventStream.publish(topic, payload) //relay to local event stream... since i don't know if I can subscribe to remote event stream...
     case Resubscribe(remoteActor) =>
       println(self.path.toString +  " Attempting to resubscribe")
       remoteActor ! "subscribe"

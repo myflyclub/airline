@@ -87,7 +87,15 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
   // path parameter is captured but ignored - page.js handles routing
   def index(path: String = "") = Action { implicit request =>
     implicit lazy val config = configuration
-    Ok(views.html.index())
+    request.headers.get(IF_NONE_MATCH) match {
+      case Some(etag) if etag == s""""$currentApiVersion"""" =>
+        NotModified
+      case _ =>
+        Ok(views.html.index()).withHeaders(
+          CACHE_CONTROL -> "no-cache",
+          ETAG -> s""""$currentApiVersion""""
+        )
+    }
   }
   
   def getCurrentCycle() = Action { request =>
