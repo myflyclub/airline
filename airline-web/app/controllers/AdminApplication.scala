@@ -4,7 +4,7 @@ import com.patson.data.{AdminSource, AirlineSource, CycleSource, IpSource, UserS
 import com.patson.stream.CycleCompleted
 import websocket.ActorCenter
 import com.patson.model.UserStatus.UserStatus
-import com.patson.model.{Airline, AirlineModifier, AirlineModifierType, BannerLoyaltyAirlineModifier, User, UserModifier, UserStatus}
+import com.patson.model.{Airline, AirlineLedgerEntry, AirlineModifier, AirlineModifierType, BannerLoyaltyAirlineModifier, LedgerType, User, UserModifier, UserStatus}
 import com.patson.util.{AirlineCache, AirplaneOwnershipCache, AirportCache, AirportStatisticsCache, AllianceCache, CountryCache, UserCache}
 import controllers.AuthenticationObject.Authenticated
 import controllers.GoogleImageUtil.{AirportKey, CityKey}
@@ -78,8 +78,6 @@ class AdminApplication @Inject()(cc: ControllerComponents) extends AbstractContr
                 setUserModifier(UserModifier.CHAT_BANNED, targetUser)
                 Right(Ok(Json.obj("action" -> action)))
               case "nerf" =>
-                //changeUserStatus(UserStatus.NERFED, targetUser)
-                //changeAirlineStatus(AirlineStatus.NERFED,
                 addAirlineModifier(AirlineModifierType.NERFED, targetUser.getAccessibleAirlines())
                 Right(Ok(Json.obj("action" -> action)))
               case "ban-reset" =>
@@ -97,7 +95,6 @@ class AdminApplication @Inject()(cc: ControllerComponents) extends AbstractContr
               case "restore" =>
                 clearUserModifiers(targetUser)
                 removeAirlineModifier(AirlineModifierType.NERFED, targetUser.getAccessibleAirlines())
-                //unbanUserIp(targetUserId)
                 Right(Ok(Json.obj("action" -> action)))
               case "set-user-level" =>
                 if (!adminUser.isSuperAdmin) {
@@ -136,6 +133,19 @@ class AdminApplication @Inject()(cc: ControllerComponents) extends AbstractContr
                 } else {
                   Left(Forbidden("Not a super admin user"))
                 }
+              case "inject-money" =>
+                val inputJson = request.body.asJson.get.asInstanceOf[JsObject]
+                val airlineId = inputJson("airlineId").as[Int]
+                val amount = inputJson("amount").as[Long]
+                val cycle = CycleSource.loadCycle()
+                AirlineSource.saveLedgerEntry(AirlineLedgerEntry(airlineId, cycle, LedgerType.ADMIN_INJECT, amount, Some(s"Admin inject by ${adminUser.userName}")))
+                Right(Ok(Json.obj("action" -> action)))
+              case "inject-ap" =>
+                val inputJson = request.body.asJson.get.asInstanceOf[JsObject]
+                val airlineId = inputJson("airlineId").as[Int]
+                val amount = inputJson("amount").as[Double]
+                AirlineSource.adjustAirlineActionPoints(airlineId, amount)
+                Right(Ok(Json.obj("action" -> action)))
               case _ =>
                 println(s"unknown admin action $action")
                 Left(BadRequest(Json.obj("action" -> action)))
@@ -150,13 +160,6 @@ class AdminApplication @Inject()(cc: ControllerComponents) extends AbstractContr
     }
   }
 
-//  def banUserIp(userId : Int) = {
-//    IpSource.saveBannedIps(userId)
-//  }
-//
-//  def unbanUserIp(userId : Int) = {
-//    IpSource.deleteBannedIps(userId)
-//  }
   def getUserIps(userId : Int) = Authenticated { implicit request =>
     if (request.user.isAdmin) {
       val cutoff = Calendar.getInstance()

@@ -100,6 +100,18 @@
 								<div class="clickable" onclick="promptConfirm('Confirm to ban and reset this user? This cannot be undo!', banAndReset)">Ban and reset</div>
 								<div class="clickable" onclick="restore()">Restore</div>
 								<div class="clickable" onclick="promptAirlineMessage()">Send Direct Message</div>
+								<div style="margin-top: 8px;">
+									<span>Money ($):</span>
+									<input type="number" class="injectMoneyAmount" style="width: 90px;" placeholder="amount">
+									<div class="button" onclick="injectMoney()">Inject Money</div>
+									<div style="font-size: 11px; color: #aaa;">Current: <span class="currentBalance">-</span></div>
+								</div>
+								<div>
+									<span>Action Points:</span>
+									<input type="number" class="injectApAmount" step="0.1" style="width: 90px;" placeholder="amount">
+									<div class="button" onclick="injectAp()">Inject AP</div>
+									<div style="font-size: 11px; color: #aaa;">Current: <span class="currentAp">-</span></div>
+								</div>
 							</div>
 							<div class="superAdminActions py-2" style="display: none;">
 								<h4>Super Admin Action</h4>
