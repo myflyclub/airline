@@ -1,15 +1,11 @@
 
 	<div style="display: none;" class="extendedTopBarDetails flex-row items-center gap-1">
         <p class="tooltip-attr tooltip-attr-bottom" data-tooltip="An estimate of how long until next week."><img src='@routes.Assets.versioned("/images/icons/clock-moon-phase.png")' style="vertical-align: middle;"><span class="nextTickEstimation label" style="font-weight: bold;">Estimating...</span></p>
-        <div style="display: none; margin-right: auto;" id="logoutDiv">
-            <span id="currentUserName" class="label"></span>
-            <a id="airlineSwitcherBtn">
+        <div style="display: none; margin-right: auto;" id="logoutDivMobile">
+            <span id="currentUserNameMobile" class="label"></span>
+            <a id="airlineSwitcherBtnMobile">
                 <img src='@routes.Assets.versioned("/images/icons/reset.svg")' style="height: 24px" alt="switch airlines"> Switch
             </a>
-            <div id="airlineSwitcherDropdown" class="airline-switcher-dropdown" popover="manual">
-                <div class="drawer-header">Switch Airline</div>
-                <div id="airlineSwitcherList"></div>
-            </div>
         </div>
         <span style="padding: 0 4px;"><img style="width: 22px;" class="img-button svg svg-hover-blue svg-monochrome" src='@routes.Assets.versioned("images/icons/options.svg")' onclick="toggleSettings()" title="Settings"></span>
         <div onclick="logout()"><img src='@routes.Assets.versioned("images/icons/24px/logout.png")' title="Login"></div>
@@ -22,10 +18,8 @@
 	</div>
   	<div id="topBar" class="menubar">
         <div class="topBarDetails">
-            <div class="desktopOnly">
-                <p class="currentTime label tooltip-attr tooltip-attr-bottom" data-tooltip="One week lasts ~ 30min and one year is 48 weeks or 24 hours in realtime. "></p>
-                <p class="tooltip-attr tooltip-attr-bottom" data-tooltip="An estimate of how long until next week."><img src='@routes.Assets.versioned("/images/icons/clock-moon-phase.png")' style="vertical-align: middle;"><span class="nextTickEstimation label" style="font-weight: bold;">Estimating...</span></p>
-            </div>
+            <p class="currentTime label tooltip-attr tooltip-attr-bottom desktopOnly" data-tooltip="One week lasts ~ 30min and one year is 48 weeks or 24 hours in realtime. "></p>
+            <p class="tooltip-attr tooltip-attr-bottom desktopOnly" data-tooltip="An estimate of how long until next week."><img src='@routes.Assets.versioned("/images/icons/clock-moon-phase.png")' style="vertical-align: middle;"><span class="nextTickEstimation label" style="font-weight: bold;">Estimating...</span></p>
             <p class="tooltip-attr tooltip-attr-bottom" data-tooltip="Cash money">$<span class="balance"></span></p>
             <p class="tooltip-attr tooltip-attr-bottom actionPoints" data-tooltip="Action Points"></p>
             <div id="notificationBell" class="clickable relative pr-4" title="Notifications">
@@ -52,10 +46,6 @@
 			<div style="display: none;" id="logoutDiv" class="topBarItem flex-row gap-0">
 				<span id="currentUserName" class="label"></span>
 				<div id="airlineSwitcherBtn" class="button" style="display:none; width:90px">Switch</div>
-				<div id="airlineSwitcherDropdown" class="airline-switcher-dropdown" popover="manual">
-					<div class="drawer-header">Switch Airline</div>
-					<div id="airlineSwitcherList"></div>
-				</div>
 				<div class="button" onclick="logout()" style="width:90px">Logout</div>
 			</div>
 			<div class="topBarItem no-highlight" id="discordDiv">
@@ -68,6 +58,10 @@
 					<img src='@routes.Assets.versioned("/images/buttons/become_a_patron_button.png")' loading="lazy" style="max-height: 30px; vertical-align: middle;" title="Become a Patreon to support this project!">
 				</a>
 			</div>
+		</div>
+		<div id="airlineSwitcherDropdown" class="airline-switcher-dropdown" popover="manual">
+			<div class="drawer-header">Switch Airline</div>
+			<div id="airlineSwitcherList"></div>
 		</div>
 	</div>
 	<div id="moreTopBarTab" class="mobileOnly" onclick="showExtendedTopBarDetails()">

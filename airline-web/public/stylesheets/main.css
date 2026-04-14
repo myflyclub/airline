@@ -633,6 +633,7 @@ li.row, div.table-row {
     border: none;
     position: fixed !important;
     z-index: 2;
+    align-items: stretch;
 }
 #topBar > div {
     background: var(--background-1);
@@ -643,7 +644,7 @@ li.row, div.table-row {
 #topBar > div {
     box-shadow: var(--shadow-1);
 }
-#topBar > :first-child { 
+/* #topBar > :first-child { 
     position: absolute;
     top: -1px;
     left: -1px;
@@ -655,7 +656,7 @@ li.row, div.table-row {
     top: -1px;
     right: -1px;
     border-radius: 0 0 0 8px;
-}
+} */
 #topBar .logo {
     width: 44px !important;
     margin-bottom: -8px;
@@ -665,8 +666,9 @@ li.row, div.table-row {
 }
 #topBar .topBarDetails {
     display: flex;
+    padding: 4px 8px;
     justify-content: space-between;
-    align-items: end;
+    align-items: center;
     box-sizing: border-box;
     gap: 0 1rem;
 }
