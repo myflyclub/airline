@@ -362,7 +362,7 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
     val newModelSize = incomingLink.getAssignedModel().map(_.airplaneTypeSize).getOrElse(0.0)
     val oldModelSize = existingLink.flatMap(_.getAssignedModel()).map(_.airplaneTypeSize).getOrElse(0.0)
     val sizeDelta = Math.max(0.0, newModelSize - oldModelSize)
-    val gateCost = if (newModelSize > 0) Computation.getLinkCreationCost(incomingLink.from, incomingLink.to, newModelSize) else 0
+    val gateCost = if (newModelSize > 0) Computation.getLinkCreationCost(incomingLink.from, incomingLink.to, sizeDelta) else 0
     if (gateCost > 0 && gateCost > airline.getBalance()) {
       return BadRequest(s"Gate cost $gateCost exceeds available balance ${airline.getBalance()}")
     }

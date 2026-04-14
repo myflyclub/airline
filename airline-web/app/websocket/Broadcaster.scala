@@ -22,10 +22,6 @@ case class BroadcastSubscribe(subscriber : ActorRef, airline : Airline, remoteAd
   val creationTime = Calendar.getInstance().getTime
 }
 
-//case class BroadcastWrapper(message : Any) {
-//  val classType = message.getClass.getName
-//}
-
 class BroadcastEventBus extends EventBus with LookupClassification {
   type Event = BroadcastMessage
   type Classifier = String
@@ -72,9 +68,9 @@ class AirlineEventBus extends EventBus with LookupClassification {
   // determines the initial size of the index data structure
   // used internally (i.e. the expected number of different classifiers)
   override protected def mapSize(): Int = 128
+
+  def subscribedAirlineIds: Iterable[Int] = subscribers.keys
 }
-
-
 
 object Broadcaster {
   val broadcastEventBus = new BroadcastEventBus()
@@ -94,15 +90,16 @@ object Broadcaster {
   }
 
   def checkPrompts(airlineId : Int) = {
-
     val airline = AirlineCache.getAirline(airlineId).get
     if (airline.airlineType != NonPlayerAirline) {
       val prompts = PromptUtil.getPrompts(airline)
-  //    prompts.notices.foreach(localMainActor ! BroadcastWrapper(_))
-  //    prompts.tutorials.foreach(localMainActor ! BroadcastWrapper(_))
       airlineEventBus.publish(AirlinePrompts(airline, prompts))
       airlineEventBus.publish(AirlinePendingActions(airline, PendingActionUtil.getPendingActions(airline))) //should send empty list if none, so front end can clear
     }
+  }
+
+  def checkAllPrompts(): Unit = {
+    airlineEventBus.subscribedAirlineIds.foreach(checkPrompts)
   }
 
   def unsubscribeFromBroadcaster(subscribe: ActorRef) = {
@@ -110,51 +107,3 @@ object Broadcaster {
     airlineEventBus.unsubscribe(subscribe)
   }
 }
-
-
-//class Broadcaster() extends Actor {
-//  def tag = "[ACTOR] " + Thread.currentThread().toString
-//
-//  override def receive = {
-//    case message : BroadcastMessage => {
-//      println(s"$tag Broadcasting message $message")
-//      airlineActors.map(_._1).foreach( actor => actor ! message)
-//      println(s"$tag Finished Broadcasting message $message")
-//    }
-//    case message : AirlineMessage => {
-//      println(s"$tag Sending airline message $message")
-//      airlineActors.find(_._2.id == message.airline.id).foreach( actor => actor._1 ! message)
-//      println(s"$tag Sent airline message $message")
-//    }
-//    case notice : AirlineNotice => {
-//      println(s"$tag Sending airline notice $notice")
-//      airlineActors.find(_._2.id == notice.airline.id).foreach( actor => actor._1 ! notice)
-//      println(s"$tag Sent airline notice $notice")
-//    }
-//    case tutorial : AirlineTutorial => {
-//      println(s"$tag Sending airline tutorial $tutorial")
-//      airlineActors.find(_._2.id == tutorial.airline.id).foreach( actor => actor._1 ! tutorial)
-//      println(s"$tag Sent airline tutorial $tutorial")
-//    }
-//    case airlinePendingActions : AirlinePendingActions => {
-//      println(s"$tag Sending airline pendingActions $airlinePendingActions")
-//      airlineActors.find(_._2.id == airlinePendingActions.airline.id).foreach( actor => actor._1 ! airlinePendingActions)
-//      println(s"$tag Sent airline pendingActions $airlinePendingActions")
-//    }
-//    case message : BroadcastSubscribe => {
-//      println(s"$tag Adding subscriber to broadcast actor $message")
-//      airlineActors.add((message.subscriber, message.airline))
-//      context.watch(message.subscriber)
-//      println(s"$tag ${Calendar.getInstance().getTime} : Joining $message. Active broadcast subscribers ${airlineActors.size} of remote address ${message.remoteAddress} message creation time ${message.creationTime}" )
-//    }
-//
-//    case Terminated(clientActor) => {
-//      println(s"$tag Unwatching $clientActor")
-//      context.unwatch(clientActor)
-//      airlineActors.find(_._1 == clientActor).foreach(airlineActors.remove(_))
-//      println(s"$tag Unwatched $clientActor")
-//    }
-//
-//  }
-//}
-

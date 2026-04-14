@@ -38,8 +38,13 @@ function connectWebSocket(airlineId) {
         wsSend(airlineId)
         console.log("websocket open for airline " + airlineId)
         if (isReconnect && selectedAirlineId) {
+            var capturedId = selectedAirlineId
             var jitter = Math.floor(Math.random() * 3000)
-            setTimeout(function() { updateAirlineInfo(selectedAirlineId); loadAirportsDynamic() }, jitter)
+            setTimeout(function() {
+                updateAirlineInfo(capturedId)
+                loadAirportsDynamic()
+                loadNotificationBadge()
+            }, jitter)
         }
     }
     websocket.onclose = function() {
@@ -62,10 +67,14 @@ function connectWebSocket(airlineId) {
             updateTime(json.cycle, json.fraction, json.cycleDurationEstimation)
         } else if (json.messageType == "cycleCompleted") {
             if (selectedAirlineId) {
-                var jitter = Math.floor(Math.random() * 8000)
-                setTimeout(function() { updateAirlineInfo(selectedAirlineId); loadAirportsDynamic() }, jitter)
+                var capturedId = selectedAirlineId
+                var jitter = Math.floor(Math.random() * 15000)
+                setTimeout(function() {
+                    updateAirlineInfo(capturedId)
+                    loadAirportsDynamic()
+                    loadNotificationBadge()
+                }, jitter)
             }
-            loadNotificationBadge()
         } else if (json.messageType == "broadcastMessage") {
             queuePrompt("broadcastMessagePopup", json.message)
         } else if (json.messageType == "airlineMessage") {
