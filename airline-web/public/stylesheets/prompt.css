@@ -12,14 +12,14 @@
     position: absolute;
 }
 
-.tutorial-pulse {
-    animation: tutorialPulse 1.5s ease-in-out infinite;
+.pulse {
+    animation: pulse 3s ease-in-out infinite;
     position: relative;
     z-index: 10;
 }
 
-@keyframes tutorialPulse {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(255, 200, 50, 0.7); }
+@keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(50, 159, 255, 0.7); }
     50% { box-shadow: 0 0 0 8px rgba(255, 200, 50, 0); }
 }
 

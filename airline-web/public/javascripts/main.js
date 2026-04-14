@@ -64,7 +64,7 @@ function mobileCheck() {
         $("#navPrimaryToggle").show();
 		currentAnimationStatus = false //turn off animation by default
         registernavPrimaryToggle()
-        registerMobileGestures()
+        // registerMobileGestures()
 	} else {
         $("#navPrimaryToggle").hide()
     }
@@ -94,31 +94,30 @@ function registernavPrimaryToggle() {
 }
 
 function registerMobileGestures() {
-    let touchstartX = 0;
-    let touchstartXPercent = 0;
+    let touchStartY = 0;
+    const gestureThreshold = window.innerHeight * 0.3; 
 
-    document.addEventListener('touchstart', function(event) {
-        touchstartX = event.changedTouches[0].clientX;
-        touchstartXPercent = touchstartX / window.innerWidth;
+    document.addEventListener('touchstart', function(e) {
+        touchStartY = e.touches[0].screenY;
     }, { passive: true });
 
-    document.addEventListener('touchend', function(event) {
-        const touchendX = event.changedTouches[0].clientX;
-        const deltaX = touchendX - touchstartX;
-        const threshold = 50; // minimum distance for swipe
+    document.addEventListener('touchmove', function(e) {
+        const touchCurrentY = e.touches[0].screenY;
+        const gestureDistance = Math.abs(touchCurrentY - touchStartY);
 
-        if (Math.abs(deltaX) > threshold) {
-            if (deltaX > 0) { // Swipe right
-                setNavPrimaryState(true);
-            } else if (touchstartXPercent < 0.2) { // Swipe left starting from left 20%
+        if (gestureDistance > gestureThreshold) {
+            const $nav = $('#navPrimary');
+            if ($nav.hasClass('active')) {
                 setNavPrimaryState(false);
+                // Reset start to prevent multiple triggers during one long swipe
+                touchStartY = touchCurrentY; 
             }
         }
     }, { passive: true });
 }
 
 function isMobileDevice() {
-    return window.innerWidth < 800
+    return window.innerWidth < 1000
 }
 
 
