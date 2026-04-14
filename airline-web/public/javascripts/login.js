@@ -1,14 +1,14 @@
 function showLoginPage(options = {}) {
     $('#loginPageOverlay').show();
     showLoginForm();
-    $("#logoutDiv").hide();
+    $('#logoutDiv, #logoutDivMobile').hide();
     // Store callback for login success
     window.onLoginSuccessCallback = options.onLoginSuccess || null;
 }
 
 function hideLoginPage() {
     $('#loginPageOverlay').hide();
-    $("#logoutDiv").show();
+    $('#logoutDiv, #logoutDivMobile').show();
 }
 
 /**
