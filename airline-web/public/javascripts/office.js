@@ -936,8 +936,8 @@ function updateDividendsDetails() {
         note: 'Min $2,000,000 · Changes lock for 2 years',
         onConfirm: (val) => {
             const amount = parseInt(val) || 0
-            if (amount > 0 && amount < 2000000) {
-                document.querySelector('.dividendCoolDownInfo').textContent = 'Minimum dividends are $2,000,000 (or $0 to disable)'
+            if (amount > 0 && amount < 1000000) {
+                document.querySelector('.dividendCoolDownInfo').textContent = 'Minimum dividends are $1,000,000 (or $0 to disable)'
                 return
             }
             setDividends(amount)

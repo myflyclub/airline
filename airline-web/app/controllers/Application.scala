@@ -678,7 +678,7 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
         json
     }
     Ok(benchmarksJson).withHeaders(
-      CACHE_CONTROL -> "public, max-age=1800",
+      CACHE_CONTROL -> "no-cache",
       ETAG -> s""""$currentCycle""""
     )
   }
