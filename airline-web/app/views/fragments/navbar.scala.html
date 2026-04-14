@@ -1,66 +1,62 @@
 
-	<div style="display: none;" class="extendedTopBarDetails flex-row items-center">
-        <p><span class="currentTime label"></span><span class="tooltip-attr" style="margin: 0px 10px" data-tooltip="An estimation of how long until next cycle/week"><img src='@routes.Assets.versioned("/images/icons/clock-moon-phase.png")' style="vertical-align: middle;"><span class="nextTickEstimation label" style="font-weight: bold;">-</span></span></p>
-        <p>Reputation: <span class="reputation label"></span><span class="reputationLevel label"></span></p>
-        <div style="margin-left:auto">
-            <a class="no-highlight px-2" href="https://discord.gg/e6VgGswVep"  target="_blank">
-                <img src='@routes.Assets.versioned("/images/buttons/Discord-Logo-Color.png")' loading="lazy" style="height: 24px" title="Official Discord">
+	<div style="display: none;" class="extendedTopBarDetails flex-row items-center gap-1">
+        <p class="tooltip-attr tooltip-attr-bottom" data-tooltip="An estimate of how long until next week."><img src='@routes.Assets.versioned("/images/icons/clock-moon-phase.png")' style="vertical-align: middle;"><span class="nextTickEstimation label" style="font-weight: bold;">Estimating...</span></p>
+        <div style="display: none; margin-right: auto;" id="logoutDiv">
+            <span id="currentUserName" class="label"></span>
+            <a id="airlineSwitcherBtn">
+                <img src='@routes.Assets.versioned("/images/icons/reset.svg")' style="height: 24px" alt="switch airlines"> Switch
             </a>
-            <a class="no-highlight px-2" href="https://www.patreon.com/myflyclub/"  target="_blank">
-                <img class="" src='@routes.Assets.versioned("/images/buttons/patreon_mark_coral.jpg")' loading="lazy" style="height: 24px" title="Become a Patreon to support this project!">
-            </a>
+            <div id="airlineSwitcherDropdown" class="airline-switcher-dropdown" popover="manual">
+                <div class="drawer-header">Switch Airline</div>
+                <div id="airlineSwitcherList"></div>
+            </div>
         </div>
+        <span style="padding: 0 4px;"><img style="width: 22px;" class="img-button svg svg-hover-blue svg-monochrome" src='@routes.Assets.versioned("images/icons/options.svg")' onclick="toggleSettings()" title="Settings"></span>
+        <div onclick="logout()"><img src='@routes.Assets.versioned("images/icons/24px/logout.png")' title="Login"></div>
+        <a class="no-highlight px-2" href="https://discord.gg/e6VgGswVep"  target="_blank">
+            <img src='@routes.Assets.versioned("/images/buttons/Discord-Logo-Color.png")' loading="lazy" style="height: 24px" title="Official Discord">
+        </a>
+        <a class="no-highlight px-2" href="https://www.patreon.com/myflyclub/"  target="_blank">
+            <img class="" src='@routes.Assets.versioned("/images/buttons/patreon_mark_coral.jpg")' loading="lazy" style="height: 24px" title="Become a Patreon to support this project!">
+        </a>
 	</div>
-  	<div id="topBar" data-scroll="false" class="menubar">
-  		<div class="desktopOnly hide-empty">
-  			<div class="topBarDetails" style="display: none;">
+  	<div id="topBar" class="menubar">
+        <div class="topBarDetails">
+            <div class="desktopOnly">
                 <p class="currentTime label tooltip-attr tooltip-attr-bottom" data-tooltip="One week lasts ~ 30min and one year is 48 weeks or 24 hours in realtime. "></p>
                 <p class="tooltip-attr tooltip-attr-bottom" data-tooltip="An estimate of how long until next week."><img src='@routes.Assets.versioned("/images/icons/clock-moon-phase.png")' style="vertical-align: middle;"><span class="nextTickEstimation label" style="font-weight: bold;">Estimating...</span></p>
-                <p class="tooltip-attr tooltip-attr-bottom" data-tooltip="Cash money">$<span class="balance"></span></p>
-                <p class="tooltip-attr tooltip-attr-bottom actionPoints" data-tooltip="Action Points"></p>
-                
-                <div id="notificationBell" class="clickable relative pr-4" title="Notifications">
-                    <p style="font-size: 13px;" class="currentAirline label font-display"></p>
-                    <span class="notify-bubble" id="notificationBadge" style="display:none;"></span>
-                    <div id="notificationDrawer" class="notification-drawer" popover="manual">
-                        <div class="drawer-header">
-                            Notifications
-                            <span class="mark-read-link ml-auto pr-1">Mark all read</span>
-                            <span class="opacity-30">/</span>
-                            <span class="delete-read-link pl-1">Delete all read</span>
-                        </div>
-                        <div id="notificationList"></div>
+            </div>
+            <p class="tooltip-attr tooltip-attr-bottom" data-tooltip="Cash money">$<span class="balance"></span></p>
+            <p class="tooltip-attr tooltip-attr-bottom actionPoints" data-tooltip="Action Points"></p>
+            <div id="notificationBell" class="clickable relative pr-4" title="Notifications">
+                <p class="currentAirline label font-display"></p>
+                <span class="notify-bubble" id="notificationBadge" style="display:none;"></span>
+                <div id="notificationDrawer" class="notification-drawer" popover="manual">
+                    <div class="drawer-header">
+                        Notifications
+                        <span class="mark-read-link ml-auto pr-1">Mark all read</span>
+                        <span class="opacity-30">/</span>
+                        <span class="delete-read-link pl-1">Delete all read</span>
                     </div>
+                    <div id="notificationList"></div>
                 </div>
-                <div class="reputationStars" id="topReputationStars"></div>
-                <div title="Latest Oil Price" class="latestOilPriceShortCut clickable" onclick="showOilCanvas()">
-                    <img src='@routes.Assets.versioned("/images/icons/oil-barrel.png")'>
-                    <span class="oilprice label"></span>
-				</div>
-  			</div>
-  		</div>
-		<div class="mobileOnly">
-			<div class=" flex-row">
-				<b class="currentAirline label"></b>
-				<span>$<span class="balance label"></span></span>
-                <span class="actionPoints label tooltip-attr tooltip-attr-bottom"></span>
-                <span id="notificationBellMobile" class="clickable" style="position:relative; margin-left: 4px;" title="Notifications">
-                    <img src='@routes.Assets.versioned("/images/icons/book-open-text.png")' style="width: 18px; vertical-align: middle;">
-                    <span class="notify-bubble notify-bubble-mobile" style="display:none;"></span>
-                </span>
-			</div>
-		</div>
-  		<div class="flex-align-center">
+            </div>
+            <div class="reputationStars desktopOnly" id="topReputationStars"></div>
+            <div title="Latest Oil Price" class="latestOilPriceShortCut clickable" onclick="showOilCanvas()">
+                <img src='@routes.Assets.versioned("/images/icons/oil-barrel.png")'>
+                <span class="oilprice label"></span>
+            </div>
+        </div>
+  		<div class="flex-align-center desktopOnly">
 			<span  style="padding: 0 4px;"><img style="width: 22px;" class="img-button svg svg-hover-blue svg-monochrome" src='@routes.Assets.versioned("images/icons/options.svg")' onclick="toggleSettings()" title="Settings"></span>
 			<div style="display: none;" id="logoutDiv" class="topBarItem flex-row gap-0">
-				<span id="currentUserName" class="label desktopOnly"></span>
+				<span id="currentUserName" class="label"></span>
 				<div id="airlineSwitcherBtn" class="button" style="display:none; width:90px">Switch</div>
 				<div id="airlineSwitcherDropdown" class="airline-switcher-dropdown" popover="manual">
 					<div class="drawer-header">Switch Airline</div>
 					<div id="airlineSwitcherList"></div>
 				</div>
-				<div class="button desktopOnly" onclick="logout()" style="width:90px">Logout</div>
-				<div class="mobileOnly" onclick="logout()"><img src='@routes.Assets.versioned("images/icons/24px/logout.png")' title="Login"></div>
+				<div class="button" onclick="logout()" style="width:90px">Logout</div>
 			</div>
 			<div class="topBarItem no-highlight" id="discordDiv">
 				<a href="https://discord.gg/e6VgGswVep"  target="_blank">
@@ -69,11 +65,9 @@
 			</div>
 			<div class="topBarItem" id="patreonDiv">
 				<a href="https://www.patreon.com/myflyclub/"  target="_blank">
-					<img class="desktopOnly" src='@routes.Assets.versioned("/images/buttons/become_a_patron_button.png")' loading="lazy" style="max-height: 30px; vertical-align: middle;" title="Become a Patreon to support this project!">
-					<img class="mobileOnly" src='@routes.Assets.versioned("/images/buttons/patreon_mark_coral.jpg")' loading="lazy" style="max-height: 30px; vertical-align: middle;" title="Become a Patreon to support this project!">
+					<img src='@routes.Assets.versioned("/images/buttons/become_a_patron_button.png")' loading="lazy" style="max-height: 30px; vertical-align: middle;" title="Become a Patreon to support this project!">
 				</a>
 			</div>
-
 		</div>
 	</div>
 	<div id="moreTopBarTab" class="mobileOnly" onclick="showExtendedTopBarDetails()">

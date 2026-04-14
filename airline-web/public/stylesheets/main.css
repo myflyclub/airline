@@ -401,6 +401,17 @@ li.row, div.table-row {
     right: 0;
 }
 
+#worldMapCanvas .sidePanel .close {
+    right: 55px;
+    top: 0;
+    z-index: 999;
+}
+#linksCanvas .sidePanel .close {
+    right: 8px;
+    top: 8px;
+    z-index: 999;
+}
+
 #airportDetails>.verticalGroup, .officeCanvasLeftGroup .verticalGroup, #rankingCanvas .verticalGroup, .campaignDetails .verticalGroup, #allianceCanvas .verticalGroup {
     width: 50%;
     gap: 8px;
@@ -649,10 +660,14 @@ li.row, div.table-row {
     width: 44px !important;
     margin-bottom: -8px;
 }
+#topBar .currentAirline {
+    font-size: 14px;
+}
 #topBar .topBarDetails {
     display: flex;
     justify-content: space-between;
     align-items: end;
+    box-sizing: border-box;
     gap: 0 1rem;
 }
 #topBar .topBarDetails > * {
@@ -991,11 +1006,22 @@ a:focus, button:focus {
     height: 20px;
     width: 20px;
 }
-.button.primary {
+.button.primary, button.primary {
     font-weight: 600;
     font-size: 120%;
 }
-.button.secondary {
+.button.secondary, button.secondary {
+    opacity: 0.6;
+    transition: opacity 0.3s;
+}
+.button.secondary:hover, button.secondary:hover {
+    opacity: 1.0;
+}
+.button.thin, button.thin {
+    padding: 3px 8px;
+    border-radius: 4px;
+}
+.button.text, button.text {
     margin: 0;
     border-color: transparent;
     background-color: transparent;

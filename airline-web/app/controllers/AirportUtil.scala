@@ -22,9 +22,10 @@ object AirportUtil {
     val loyalistByAirportId : Map[Int, List[AirportChampionInfo]] = ChampionUtil.loadAirportChampionInfo().groupBy(_.loyalist.airport.id)
 
     val allAirports = AirportCache.getAllAirports(fullLoad = true)
-    
+    val allStats = AirportStatisticsSource.loadAllAirportStats().map(s => s.airportId -> s).toMap
+
     allAirports.sortBy(_.popMiddleIncome).map { airport =>
-      val stats = AirportStatisticsSource.loadAirportStatsById(airport.id).getOrElse(AirportStatistics(0,0,0,0,0,0))
+      val stats = allStats.getOrElse(airport.id, AirportStatistics(0,0,0,0,0,0))
       val travelRate = (stats.travelRate * 100).toInt
       val congestion = if (stats.congestion < 0.2) None else Some((stats.congestion * 100).toInt)
       loyalistByAirportId.get(airport.id) match {

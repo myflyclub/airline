@@ -509,6 +509,34 @@ function saveCurrentLinkPrice() {
     })
 }
 
+function saveCurrentLinkPricePlan() {
+    var airlineId = activeAirline.id
+    var linkId = $('#actionLinkId').val()
+    var prices = {
+        economy: parseInt($('#planLinkEconomyPrice').val()),
+        business: parseInt($('#planLinkBusinessPrice').val()),
+        first: parseInt($('#planLinkFirstPrice').val())
+    }
+
+    $.ajax({
+        type: 'PATCH',
+        url: '/airlines/' + airlineId + '/links/' + linkId + '/price',
+        data: JSON.stringify(prices),
+        contentType: 'application/json; charset=utf-8',
+        dataType: 'json',
+        success: function(result) {
+            var $btn = $('#saveCurrentLinkPricePlan')
+            $btn.removeClass('pulse').text('Prices updated')
+            setTimeout(function() {
+                $('#sidePanel').fadeOut(200)
+            }, 2000)
+        },
+        error: function() {
+            $('#saveCurrentLinkPricePlan').removeClass('pulse').text('Error saving prices')
+        }
+    })
+}
+
 function refreshLinkDetails(linkId) {
 	var airlineId = activeAirline.id
 
@@ -1078,6 +1106,7 @@ function updatePlanLinkInfo(linkInfo, isRefresh) {
 		$('#addLinkButton').show()
 		$('#deleteLinkButton').hide()
 		$('#updateLinkButton').hide()
+		$('#saveCurrentLinkPricePlan').hide()
 	} else {
 	    initialPrice.economy = linkInfo.existingLink.price.economy
         initialPrice.business = linkInfo.existingLink.price.business
@@ -1087,7 +1116,6 @@ function updatePlanLinkInfo(linkInfo, isRefresh) {
 			$('#deleteLinkButton').hide()
 		} else {
 			$('#deleteLinkButton').show()
-			// console.log(linkInfo)
 			if (linkInfo.deleteLinkRefund && linkInfo.deleteLinkRefund > 0) {
 			    $('#deleteLinkButton').attr('onclick',`promptConfirm("Delete this route? You will receive ${linkInfo.deleteLinkRefund} action points.", deleteLink)`)
 			} else {
@@ -1095,6 +1123,7 @@ function updatePlanLinkInfo(linkInfo, isRefresh) {
 			}
 		}
 		$('#updateLinkButton').show()
+		$('#saveCurrentLinkPricePlan').toggle(linkInfo.existingLink.frequency > 0)
 	}
     const PRICE_INPUT_SELECTOR = '#planLinkEconomyPrice, #planLinkBusinessPrice, #planLinkFirstPrice';
     const INPUT_IDLE_MS = 400;
@@ -1147,6 +1176,7 @@ function updatePlanLinkInfo(linkInfo, isRefresh) {
         .on('input.priceChange', function () {
             const $input = $(this);
             clearTimeout(inputIdleTimer);
+            $('#saveCurrentLinkPricePlan').addClass('pulse').text('Quick price update');
 
             inputIdleTimer = setTimeout(() => {
                 normalizePriceInput($input);
@@ -1350,6 +1380,7 @@ function increasePrice(classType = "all") {
     } else {
         changeClassPrice(classType, 0.05);
     }
+    $('#saveCurrentLinkPricePlan').addClass('pulse').text('Quick price update');
 }
 
 function decreasePrice(classType = "all") {
@@ -1360,6 +1391,7 @@ function decreasePrice(classType = "all") {
     } else {
         changeClassPrice(classType, -0.05);
     }
+    $('#saveCurrentLinkPricePlan').addClass('pulse').text('Quick price update');
 }
 
 function changeClassPrice(paxClass, percent) {
@@ -1701,7 +1733,7 @@ function updateTotalValues() {
     getLinkStaffingInfo()
 
     getLinkNegotiation(function(result) {
-        if (result.rejection) {
+        if (result.negotiationInfo.finalRequirementValue > 0 && result.rejection) {
             disableButton($("#planLinkDetails .modifyLink"), result.rejection)
         } else if (result.negotiationInfo.finalRequirementValue > 0 && result.actionPoints < result.negotiationInfo.finalRequirementValue) {
             disableButton($("#planLinkDetails .modifyLink"), "Not enough action points to negotiate this route")

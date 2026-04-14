@@ -324,8 +324,17 @@ async function initializeApp() {
             initializeRoutes();
         }
         console.log('✓ Application initialized');
+        sessionStorage.removeItem('scriptLoadReload');
     } catch (error) {
         console.error('Application initialization failed:', error);
+        if (error.message && error.message.startsWith('Failed to load script:')) {
+            // Stale HTML is referencing an old content-hashed asset that no longer exists.
+            // Reload once to pick up fresh HTML with current asset URLs.
+            if (!sessionStorage.getItem('scriptLoadReload')) {
+                sessionStorage.setItem('scriptLoadReload', '1');
+                window.location.reload(true);
+            }
+        }
     }
 }
 

@@ -11,7 +11,7 @@
 						data-domestic-airport-marker='@routes.Assets.versioned("images/markers/airport-domestic.svg")'
 						data-disabled-airport-marker='@routes.Assets.versioned("images/markers/airport-transparent.svg")'>
 					</div>
-					<div id="sidePanel" class="sidePanel mapOverlayPanel" style="display:none; position: relative;">
+					<div id="sidePanel" class="sidePanel mapOverlayPanel" style="display:none;">
 						<span class="close" onclick="$('#sidePanel').fadeOut(200)">&times;</span>
 
 						<div class="section">
@@ -61,7 +61,7 @@
 									<input type="hidden" id="actionLinkId">
 									<input type="hidden" id="linkFromAirportId">
 									<input type="hidden" id="linkToAirportId">
-									<button type="button" class="button ml-0" id="editLinkButton" onclick="">Edit</button>
+									<button type="button" class="button ml-0" id="editLinkButton" style="width:60px">Edit</button>
 									<button type="button" class="button" onclick="cancelEditLink()">Cancel</button>
 
 									<div class="divider"></div>
@@ -350,6 +350,7 @@
 									<div></div>
 									<div></div>
 								</div>
+                                <button class="secondary" id="saveCurrentLinkPricePlan" onclick="saveCurrentLinkPricePlan()" style="display:none">Quick price update</button>
 								<hr>
 
 								<div class="flex-container-width-third">
