@@ -77,23 +77,6 @@ object AirlineCountryRelationship {
         val home_country_bonus = if (relationship >= 5) CountryAirlineTitle.PRIVILEGED_AIRLINE_RELATIONSHIP_THRESHOLD else 0
           factors.put(HOME_COUNTRY(countryMap(homeCountryCode), targetCountry, relationship), relationship * multiplier + home_country_bonus)
 
-
-        val allTitles = CountryAirlineTitle.getTopTitlesByCountry(countryCode)
-
-        //alliance member get bonus if other alliance member has national
-        airline.getAllianceId().foreach { allianceId =>
-          val partnerAirlinesOfThisCountry = allTitles.filter { airline =>
-            airline.title == Title.NATIONAL_AIRLINE || airline.title == Title.PARTNERED_AIRLINE
-          }
-          val allianceMemberAirlineIds : List[Int] = AllianceSource.loadAllianceById(allianceId).get.members.filter(_.airline.id != airline.id).map(_.airline.id) //make sure it's not the current airline
-
-          //use find, so it only returns the first match - no double bonus if 2 airlines are national
-          partnerAirlinesOfThisCountry.find(nationalAirline => allianceMemberAirlineIds.contains(nationalAirline.airline.id)).foreach { allianceMemberNationalAirline =>
-            val partnerBonus = 10
-            factors.put(ALLIANCE_MEMBER_TITLE(allianceMemberNationalAirline), partnerBonus)
-          }
-        }
-
         //market share
         CountrySource.loadMarketSharesByCountryCode(countryCode).foreach {
           marketShares => {
@@ -106,11 +89,40 @@ object AirlineCountryRelationship {
             }
           }
         }
+
+        //manager
         val currentCycle = CycleSource.loadCycle()
         val totalLevel : Int = ManagerSource.loadCountryDelegateByAirlineAndCountry(airline.id, countryCode).map(_.assignedTask.asInstanceOf[CountryManagerTask].level(currentCycle)).sum
-
         val levelMultiplier = getDelegateBonusMultiplier(targetCountry)
         factors.put(MANAGER(totalLevel), Math.round(totalLevel * levelMultiplier).toInt)
+
+        //alliance member get at least a title if other alliance member has status
+        val allTitles = CountryAirlineTitle.getTopTitlesByCountry(countryCode)
+        airline.getAllianceId().foreach { allianceId =>
+          val allianceMemberAirlineIds : List[Int] = AllianceSource.loadAllianceById(allianceId).get.members.filter(_.airline.id != airline.id).map(_.airline.id) //make sure it's not the current airline
+
+
+          val allianceMemberNational = allTitles.find { t =>
+            t.title == Title.NATIONAL_AIRLINE && allianceMemberAirlineIds.contains(t.airline.id)
+          }
+          val currentRelationship = factors.values.sum
+          allianceMemberNational match {
+            case Some(nationalTitle) =>
+              val nationalPartnerBonus = Math.max(0, CountryAirlineTitle.PRIVILEGED_AIRLINE_RELATIONSHIP_THRESHOLD - currentRelationship)
+              if (nationalPartnerBonus > 0) {
+                factors.put(ALLIANCE_MEMBER_TITLE(nationalTitle), nationalPartnerBonus)
+              }
+            case None =>
+              allTitles.find { t =>
+                t.title == Title.PARTNERED_AIRLINE && allianceMemberAirlineIds.contains(t.airline.id)
+              }.foreach { partneredTitle =>
+                val privilegedPartnerBonus = Math.max(0, 5 + CountryAirlineTitle.ESTABLISHED_AIRLINE_RELATIONSHIP_THRESHOLD - currentRelationship)
+                if (privilegedPartnerBonus > 0) {
+                  factors.put(ALLIANCE_MEMBER_TITLE(partneredTitle), privilegedPartnerBonus)
+                }
+              }
+          }
+        }
 
       case None =>
     }
@@ -134,8 +146,8 @@ object AirlineCountryRelationship {
   val getDelegateBonusMultiplier = (country : Country) => {
     val ratioToModelPower = Computation.MODEL_COUNTRY_POWER / (country.airportPopulation * country.income.toDouble).toLong
     val logRatio = Math.max(0.1, Math.log10(ratioToModelPower * 100) / 2) //0.1 to 1
-    val levelMultiplier = 1.5 / logRatio
-    Math.min(1.5, BigDecimal(levelMultiplier).setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble)
+    val levelMultiplier = CountryManagerTask.MAX_MANAGER_POWER / logRatio
+    Math.min(CountryManagerTask.MAX_MANAGER_POWER, BigDecimal(levelMultiplier).setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble)
   }
 }
 
