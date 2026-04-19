@@ -933,7 +933,7 @@ function updateDividendsDetails() {
         displayText: '$' + commaSeparateNumber(currentDividends),
         $input,
         disabledReason,
-        note: 'Min $2,000,000 · Changes lock for 2 years',
+        note: 'Min $1,000,000 · Changes lock for 2 years',
         onConfirm: (val) => {
             const amount = parseInt(val) || 0
             if (amount > 0 && amount < 1000000) {
