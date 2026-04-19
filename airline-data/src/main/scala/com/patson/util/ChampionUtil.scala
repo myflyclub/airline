@@ -49,39 +49,35 @@ object ChampionUtil {
     result.toList
   }
 
-  val reputationBoostTop10 : Map[Int, Double] = Map(
-    1 -> 1,
-    2 -> 0.5,
-    3 -> 0.3,
-    4 -> 0.2,
-    5 -> 0.1,
-    6 -> 0.08,
-    7 -> 0.06,
-    8 -> 0.04,
-    9 -> 0.03,
-    10 -> 0.02
-  )
+  def computeAirportChampionInfo(loyalists: List[Loyalist]): List[AirportChampionInfo] = {
+    val allAirportReps = AirportStatisticsSource.loadAllAirportStats()
+      .map(stats => stats.airportId -> stats.reputation)
+      .toMap
 
-  def computeAirportChampionInfo(loyalists: List[Loyalist]) = {
-    val result = ListBuffer[AirportChampionInfo]()
-    val allAirportReps = AirportStatisticsSource.loadAllAirportStats().map(stats => stats.airportId -> stats.reputation).toMap
+    loyalists.groupBy(_.airport.id).toList.flatMap { case (airportId, airportLoyalists) =>
+      AirportCache.getAirport(airportId) match {
+        case None => Nil
 
-    loyalists.groupBy(_.airport.id).foreach {
-      case (airportId, loyalists) =>
-        val airport = AirportCache.getAirport(airportId).get
-        val championCount = airport.size
-        val loyalistToPopRatio = Math.min(1, loyalists.map(_.amount).sum.toDouble / airport.popMiddleIncome) //just in case the loyalist is out of wack, ie > pop
-        val topAirlineWithSortedIndex : List[(Loyalist, Int)] = loyalists.sortBy(_.amount)(Ordering.Int.reverse).take(championCount).zipWithIndex
+        case Some(airport) =>
+          val airportSize = airport.size + 1
+          val totalLoyalistAmount = airportLoyalists.iterator.map(_.amount).sum
+          val loyalistToPopRatio = math.min(1.0, totalLoyalistAmount.toDouble / airport.popMiddleIncome)
+          val baseReputation = allAirportReps.getOrElse(airportId, 0.0)
 
-        val championInfoForThisAirport = topAirlineWithSortedIndex.map {
-          case(loyalist, index) =>
-            val ranking = index + 1
-            val reputationBoost = Math.min(499.99, allAirportReps.getOrElse(airport.id, 0.0) * loyalistToPopRatio * reputationBoostTop10(ranking))
-            Some(AirportChampionInfo(loyalist, ranking, reputationBoost))
-        }
-        result ++= championInfoForThisAirport.flatten
+          airportLoyalists
+            .sortBy(-_.amount)
+            .take(airportSize)
+            .zipWithIndex
+            .map { case (loyalist, index) =>
+              val ranking = index + 1
+
+              val rankingScoreRatio = math.exp(-2.6 * (ranking - 1).toDouble / airportSize)
+              val reputationBoost = math.min(500.0, baseReputation * loyalistToPopRatio * rankingScoreRatio)
+
+              AirportChampionInfo(loyalist, ranking, reputationBoost)
+            }
+      }
     }
-    result.toList
   }
 
   def loadAirportChampionInfo() = {
