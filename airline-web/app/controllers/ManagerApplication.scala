@@ -178,12 +178,9 @@ class LevelingManagerWrites(
           ("costPerManager"  -> JsNumber(costPerManager))
 
       case task: AircraftModelManagerTask =>
-        val discounts = discountsByModelId.getOrElse(task.modelId, Nil)
-          .filter(_.discountReason == DiscountReason.LOW_DEMAND)
-        val pricePct = discounts.find(_.discountType == DiscountType.PRICE)
-          .map(d => (d.discount * 100).round.toInt).getOrElse(0)
-        val timePct  = discounts.find(_.discountType == DiscountType.CONSTRUCTION_TIME)
-          .map(d => (d.discount * 100).round.toInt).getOrElse(0)
+        val discounts = discountsByModelId.getOrElse(task.modelId, Nil).filter(_.discountReason == DiscountReason.LOW_DEMAND)
+        val pricePct = discounts.find(_.discountType == DiscountType.PRICE).map(d => (d.discount * 100).round.toInt).getOrElse(0)
+        val timePct  = discounts.find(_.discountType == DiscountType.CONSTRUCTION_TIME).map(d => (d.discount * 100).round.toInt).getOrElse(0)
         base +
           ("modelId"                    -> JsNumber(task.modelId)) +
           ("modelName"                  -> JsString(task.modelName)) +

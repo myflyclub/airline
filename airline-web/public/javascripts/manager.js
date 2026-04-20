@@ -13,7 +13,7 @@ function computeApTooltip(currentAP, managersInfo) {
     }
     const perCycle = rate * available
     const per48 = perCycle * 48
-    return "Action Points! Generating " + perCycle.toFixed(1) + " ⚡ per week · " + per48.toFixed(0) + " ⚡ in " + formatCycleCountTime(48)
+    return "Action Points! Generating " + perCycle.toFixed(1) + " ⚡ per week · " + per48.toFixed(0) + " ⚡ " + formatCycleCountTime(48)
 }
 
 function changeTaskManagerCount($managerSection, delta, callback) {
@@ -66,23 +66,27 @@ function createManagerIcon(color, tooltip) {
     return $wrapper
 }
 
-// Colors by task type; completed always orange
 function _managerColor(m) {
-    if (m.completed) return '#e88d2b'
     const MAP = { COUNTRY: '#7ec8a0', CAMPAIGN: '#e879a0', MANAGER_AIRCRAFT_MODEL: '#4a9eed', MANAGER_BASE: '#a08060' }
     return MAP[m.taskType] || '#4a9eed'
 }
 
-// Tooltip: "Novice · Public Affairs - France · next level in 4h 0m"
+// Tooltip: "Novice · Public Affairs - France · next level in 4h 0m · +1.20 pts · ×1.50/level"
 function _managerTooltip(m) {
     var parts = []
-    if (m.completed) {
-        parts.push(m.coolDown + 'w cooldown — ' + (m.taskDescription || 'Task complete'))
-    } else {
-        parts.push(m.levelDescription ? m.levelDescription + ' · ' + (m.taskDescription || '') : (m.taskDescription || ''))
-    }
-    if (m.nextLevelCycleCount != null) parts.push('next level in ' + formatCycleCountTime(m.nextLevelCycleCount))
-    else if (m.levelDescription != null && !m.completed) parts.push('max level')
+    parts.push(m.levelDescription ? m.levelDescription + ' · ' + (m.taskDescription || '') : (m.taskDescription || ''))
+    if (m.nextLevelCycleCount != null)
+        parts.push('next level in ' + formatCycleCountTime(m.nextLevelCycleCount))
+    else if (m.levelDescription != null)
+        parts.push('max level')
+
+    if (m.taskType === 'COUNTRY' && m.contribution != null)
+        parts.push(`+${m.contribution} pts · ×${m.bonusMultiplier}/level`)
+    else if (m.taskType === 'CAMPAIGN' && m.loyaltyBonus != null)
+        parts.push(`+${m.loyaltyBonus} loyalty/wk`)
+    else if (m.taskType === 'MANAGER_AIRCRAFT_MODEL' && (m.currentPriceDiscountPct || m.currentTimeDiscountPct))
+        parts.push(`${m.currentPriceDiscountPct}% price · ${m.currentTimeDiscountPct}% delivery`)
+
     return parts.join(' · ') || 'Week 0 Onboarding'
 }
 
@@ -102,7 +106,7 @@ function _managerTooltip(m) {
 function renderManagerAssignment(options) {
     const { container, managers, count, color = '#4a9eed', availableCount = 0,
             maxManagers, onAdd, onRemove, extraInfo, emptyText = 'None', headerText,
-            defaultTooltip = null } = options
+            defaultTooltip = null, compactThreshold = null } = options
     const $container = $(container)
     $container.empty()
 
@@ -114,7 +118,12 @@ function renderManagerAssignment(options) {
     const $row = $('<div>').addClass("flex-align-center")
     const $icons = $('<div>').addClass("flex-align-center flex-wrap")
 
-    if (Array.isArray(managers) && managers.length > 0) {
+    const useCompact = compactThreshold != null && assignedLen > compactThreshold
+    if (useCompact) {
+        const compactColor = (Array.isArray(managers) && managers.length > 0) ? _managerColor(managers[0]) : color
+        $icons.append(createManagerIcon(compactColor, defaultTooltip))
+        $icons.append($('<span>').css({ fontSize: '0.85em', 'font-weight': 'bold', 'margin-left': '2px', 'vertical-align': 'middle' }).text(`×${assignedLen}`))
+    } else if (Array.isArray(managers) && managers.length > 0) {
         managers.forEach(m => $icons.append(createManagerIcon(_managerColor(m), _managerTooltip(m))))
     } else if (assignedLen > 0) {
         for (let i = 0; i < assignedLen; i++) $icons.append(createManagerIcon(color, defaultTooltip))
@@ -193,17 +202,22 @@ function refreshAirlineManagerStatus($container, managersInfo) {
         const $managerRow = $('<div></div>').addClass('flex-align-center flex-scroll-x-hidden')
 
         if (floor.type === '_AVAILABLE') {
+            const currentAP = (typeof activeAirline !== 'undefined' && activeAirline.actionPoints != null) ? activeAirline.actionPoints : 0
             renderManagerAssignment({
                 container: $managerRow,
                 count: managersInfo.availableCount,
                 color: '#5cb85c',
                 emptyText: '—',
+                compactThreshold: 5,
+                defaultTooltip: computeApTooltip(currentAP, managersInfo),
             })
         } else {
+            const isLeveling = ['COUNTRY', 'CAMPAIGN', 'MANAGER_AIRCRAFT_MODEL'].includes(floor.type)
             renderManagerAssignment({
                 container: $managerRow,
                 managers: grouped[floor.type] || [],
                 emptyText: '—',
+                compactThreshold: isLeveling ? null : 5,
             })
         }
 
@@ -258,9 +272,7 @@ function showManagerModal() {
                     $iconCell.prepend(createManagerIcon(_managerColor(m)))
 
                     let promoText
-                    if (m.completed)
-                        promoText = `Cooldown: ${m.coolDown}w`
-                    else if (m.nextLevelCycleCount != null)
+                    if (m.nextLevelCycleCount != null)
                         promoText = `${m.nextLevelCycleCount}w`
                     else
                         promoText = 'Max level'
@@ -274,18 +286,14 @@ function showManagerModal() {
                         desc = `Combined: ${m.currentPriceDiscountPct}% price · ${m.currentTimeDiscountPct}% delivery`
                     }
 
-                    const costText = (m.taskType === 'CAMPAIGN' && !m.completed)
-                        ? `$${commaSeparateNumber(m.costPerManager)}`
-                        : '—'
+                    const costText = (m.taskType === 'CAMPAIGN') ? `$${commaSeparateNumber(m.costPerManager)}` : '—'
 
                     const $removeCell = $('<div class="cell" style="width:5%"></div>')
-                    if (!m.completed) {
-                        const $btn = $('<img class="img-button svg svg-monochrome svg-hover-red" src="/assets/images/icons/minus.svg">')
-                            .css({ width: '16px', height: '16px', cursor: 'pointer' })
-                            .attr('title', 'Remove manager')
-                            .on('click', () => removeManagerFromModal(m.id))
-                        $removeCell.append($btn)
-                    }
+                    const $btn = $('<img class="img-button svg svg-monochrome svg-hover-red" src="/assets/images/icons/minus.svg">')
+                        .css({ width: '16px', height: '16px', cursor: 'pointer' })
+                        .attr('title', 'Remove manager')
+                        .on('click', () => removeManagerFromModal(m.id))
+                    $removeCell.append($btn)
 
                     $row
                         .append($iconCell)
@@ -321,21 +329,32 @@ function removeManagerFromModal(managerId) {
 function updateAirlineManagerStatus($managerStatusDiv, successFunction) {
     $managerStatusDiv.empty()
 
-	$.ajax({
-		type: 'GET',
-		url: "/managers/airline/" + activeAirline.id,
-		contentType: 'application/json; charset=utf-8',
-		dataType: 'json',
-	    success: function(managersInfo) {
-	        refreshAirlineManagerStatus($managerStatusDiv, managersInfo)
+    const mainReq = $.ajax({
+        type: 'GET',
+        url: `/managers/airline/${activeAirline.id}`,
+        contentType: 'application/json; charset=utf-8',
+        dataType: 'json',
+    })
+    const levelingReq = $.ajax({
+        type: 'GET',
+        url: `/managers/airline/${activeAirline.id}/leveling`,
+        dataType: 'json',
+    })
 
-            if (successFunction) {
-                successFunction(managersInfo)
-            }
-	    },
-        error: function(jqXHR, textStatus, errorThrown) {
-	            console.log(JSON.stringify(jqXHR));
-	            console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
-	    }
-	});
+    mainReq.done(function(managersInfo) {
+        levelingReq.done(function(levelingManagers) {
+            const levelingById = {}
+            levelingManagers.forEach(lm => { levelingById[lm.id] = lm })
+            managersInfo.busyManagers = managersInfo.busyManagers.map(m => {
+                const lm = levelingById[m.id]
+                return lm ? Object.assign({}, m, lm) : m
+            })
+        }).always(function() {
+            refreshAirlineManagerStatus($managerStatusDiv, managersInfo)
+            if (successFunction) successFunction(managersInfo)
+        })
+    }).fail(function(jqXHR, textStatus, errorThrown) {
+        console.log(JSON.stringify(jqXHR))
+        console.log('AJAX error: ' + textStatus + ' : ' + errorThrown)
+    })
 }

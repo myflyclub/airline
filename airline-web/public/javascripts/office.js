@@ -1489,16 +1489,5 @@ function resetAirline(keepAssets) {
 }
 
 function updateManagerStatus() {
-    $.ajax({
-        type: 'GET',
-        url: '/managers/airline/' + activeAirline.id,
-        contentType: 'application/json; charset=utf-8',
-        dataType: 'json',
-        success: function(managersInfo) {
-            refreshAirlineManagerStatus($('#managerStatus .managerGroups'), managersInfo)
-        },
-        error: function(jqXHR, textStatus, errorThrown) {
-            console.log('AJAX error: ' + textStatus + ' : ' + errorThrown)
-        }
-    })
+    updateAirlineManagerStatus($('#managerStatus .managerGroups'))
 }

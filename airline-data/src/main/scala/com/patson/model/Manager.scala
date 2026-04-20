@@ -32,6 +32,7 @@ case class CountryManagerTask(startCycle : Int, country: Country) extends Leveli
 
 object CountryManagerTask {
   val MAX_MANAGERS_PER_COUNTRY = 6
+  val MAX_MANAGER_POWER = 2.0
 }
 
 case class CampaignManagerTask(startCycle : Int, campaign : Campaign) extends LevelingManagerTask(startCycle, ManagerTaskType.CAMPAIGN) {
