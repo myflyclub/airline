@@ -6,8 +6,6 @@
 import { state, setMap } from './state.js';
 import { initStyles, getMapStyle } from './styles.js';
 
-const MAX_ZOOM = 12;
-
 function toProjectionType(userProjection) {
     return userProjection === 'flat' ? 'mercator' : 'globe';
 }
@@ -32,15 +30,19 @@ export function initMap() {
         return null;
     }
 
+    const savedProjection = localStorage.getItem('mapProjection') || 'globe';
+
     let mapInstance;
     try {
         mapInstance = new maplibregl.Map({
             container: 'map',
             style: getMapStyle(),
             center: [50.57,79.12],
-            zoom: 2,
-            maxZoom: MAX_ZOOM,
-            renderWorldCopies: true
+            zoom: 5,
+            maxZoom: 11.5,
+            minZoom: 3,
+            renderWorldCopies: savedProjection === 'flat',
+            maxTileCacheSize: 250
         });
     } catch (e) {
         console.warn('Map initialization failed (WebGL unavailable?):', e.message);
@@ -76,10 +78,6 @@ export function initMap() {
         console.warn('MapLibre GL error:', e.error);
     });
 
-    // mapInstance.on('sourcedataabort', (e) => {
-    //     console.warn('Tile request aborted:', e.sourceId, e.tile);
-    // });
-
     return mapInstance;
 }
 
@@ -89,14 +87,6 @@ export function initMap() {
  */
 export function getMap() {
     return state.map;
-}
-
-/**
- * Get the current zoom level.
- * @returns {number} Current zoom level
- */
-export function getZoom() {
-    return state.map ? state.map.getZoom() : 2;
 }
 
 /**
