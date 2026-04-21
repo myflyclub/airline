@@ -20,7 +20,7 @@ package object controllers {
   implicit val ec: ExecutionContext = ExecutionContext.global
   implicit val actorSystem: ActorSystem = ActorSystem("patson-web-app-system")
   implicit val order: Double.IeeeOrdering.type = Ordering.Double.IeeeOrdering
-  val currentApiVersion = "v5.1.1" // Update this when schema changes
+  val currentApiVersion = "v5.1.2" // Update this when schema changes
   @volatile var cachedCurrentCycle: Int = CycleSource.loadCycle()
   def currentCycle: Int = cachedCurrentCycle
 

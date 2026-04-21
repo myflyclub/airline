@@ -164,7 +164,7 @@ async function switchAirline(airlineId) {
 
     loadNotificationBadge()
     revertOlympicsVotes()
-    if (typeof updateChatTabs === 'function') updateChatTabs()
+    if (typeof resetChatForAirlineSwitch === 'function') resetChatForAirlineSwitch()
     if (window.AirlineMap && activeAirline) AirlineMap.centerOnHQ(activeAirline, 6)
 
     localStorage.setItem('lastAirlineId', airlineId)
@@ -1826,7 +1826,18 @@ function createLink() {
                     if (isSuccessful) {
                         negotiationAnimation(savedLink, refreshSavedLink, savedLink)
                     } else {
-                        negotiationAnimation(savedLink, updateAirlineInfo, activeAirline.id)
+                        negotiationAnimation(savedLink, function(airlineId) {
+                        removeTempPath()
+                        $.ajax({
+                            type: 'GET',
+                            url: "/airlines/" + airlineId,
+                            dataType: 'json',
+                            success: function(airline) {
+                                Object.keys(airline).forEach(function(key) { activeAirline[key] = airline[key] })
+                                refreshTopBar(activeAirline)
+                            }
+                        })
+                    }, activeAirline.id)
                     }
                 } else {
                     refreshSavedLink(savedLink)
@@ -3262,9 +3273,6 @@ function refreshSavedLink(savedLink) {
         }
     })
 
-    if ($("#linkDetails").is(":visible")) {
-        refreshLinkDetails(savedLink.id)
-    }
     if ($('#linksCanvas').is(':visible')) {
         loadLinksTable(null, true)
     }
@@ -3372,118 +3380,96 @@ function negotiationAnimation(savedLink, callback, callbackParam) {
 	$('#negotiationAnimation').show()
 }
 
+var _notesAbort = null;
+var _notesDecoder = document.createElement('div');
+
+function decodeNoteHtml(encoded) {
+    _notesDecoder.innerHTML = encoded;
+    return _notesDecoder.textContent;
+}
+
 function loadAndWatchAirlineNotes(airlineId) {
     airlineId = airlineId || activeAirline.id;
-    const notesOffice = document.getElementById('airlineNotes');
-    const notesLink = document.getElementById('linkNotes');
-    const notesAirport = document.getElementById('airportNotes');
 
-    // Load the current note
-    fetch(`/airlines/${airlineId}/notes`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`Failed to fetch notes: ${response.statusText}`);
-            }
+    // Tear down previous listeners and pending debounce
+    if (_notesAbort) _notesAbort.abort();
+    _notesAbort = new AbortController();
+    var signal = _notesAbort.signal;
+
+    var notesOffice = document.getElementById('airlineNotes');
+    var notesLink = document.getElementById('linkNotes');
+    var notesAirport = document.getElementById('airportNotes');
+
+    // Clear stale values
+    notesOffice.value = '';
+    notesLink.value = '';
+    notesAirport.value = '';
+    notes = { airlineNotes: [], airportNotes: [], linkNotes: [] };
+
+    // Load the current notes
+    fetch('/airlines/' + airlineId + '/notes')
+        .then(function(response) {
+            if (!response.ok) throw new Error('Failed to fetch notes: ' + response.statusText);
             return response.json();
         })
-        .then(data => {
-            notes = data || {}; // Initialize notes if not present
-            notesOffice.value = data?.airlineNotes[0] || ''; // Populate office textarea with the note
+        .then(function(data) {
+            if (signal.aborted) return;
+            notes = data || { airlineNotes: [], airportNotes: [], linkNotes: [] };
+            // Decode HTML entities from server-side escapeHtml4
+            notes.airlineNotes = notes.airlineNotes.map(decodeNoteHtml);
+            notes.airportNotes.forEach(function(n) { n.note = decodeNoteHtml(n.note); });
+            notes.linkNotes.forEach(function(n) { n.note = decodeNoteHtml(n.note); });
+            notesOffice.value = notes.airlineNotes[0] || '';
         })
-        .catch(error => {
+        .catch(function(error) {
             console.error('Error loading notes:', error);
         });
 
-    let debounceTimeout;
-    const debounceDelay = 1000;
+    var debounceTimeout;
+    var debounceDelay = 1000;
 
-    notesOffice.addEventListener('input', () => {
+    function saveNote(url, text) {
+        fetch(url, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json; charset=utf-8' },
+            body: JSON.stringify({ note: text }),
+        }).then(function(response) {
+            if (!response.ok) throw new Error('Failed to save note: ' + response.statusText);
+        }).catch(function(error) {
+            console.error('Error saving note:', error);
+        });
+    }
+
+    notesOffice.addEventListener('input', function() {
         clearTimeout(debounceTimeout);
-        debounceTimeout = setTimeout(() => {
-            const sanitizedNote = notesOffice.value.replace(/</g, "&lt;").replace(/>/g, "&gt;"); // Basic sanitization
-
-            fetch(`/airlines/${airlineId}/notes`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ note: sanitizedNote }),
-            })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`Failed to save note: ${response.statusText}`);
-                    }
-                    console.log('Note saved successfully');
-                })
-                .catch(error => {
-                    console.error('Error saving note:', error);
-                });
+        debounceTimeout = setTimeout(function() {
+            saveNote('/airlines/' + airlineId + '/notes', notesOffice.value);
         }, debounceDelay);
-    });
+    }, { signal: signal });
 
-    notesLink.addEventListener('input', () => {
+    notesLink.addEventListener('input', function() {
         clearTimeout(debounceTimeout);
-        debounceTimeout = setTimeout(() => {
-			if (!selectedLink) return;
-
-			const sanitizedNote = linkNotes.value.replace(/</g, "&lt;").replace(/>/g, "&gt;"); // Basic sanitization
-			const existsingNote = notes.linkNotes.find(note => note.id === Number(selectedLink));
-			if (existsingNote) {
-				existsingNote.note = sanitizedNote;
-			} else {
-				notes.linkNotes.push({id: Number(selectedLink), note: sanitizedNote});
-			}
-
-            fetch(`/airlines/${airlineId}/notes/link/${selectedLink}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json; charset=utf-8',
-                },
-                body: JSON.stringify({ note: sanitizedNote }),
-            })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`Failed to save note: ${response.statusText}`);
-                    }
-                    console.log('Note saved successfully');
-                })
-                .catch(error => {
-                    console.error('Error saving note:', error);
-                });
+        debounceTimeout = setTimeout(function() {
+            if (!selectedLink) return;
+            var text = notesLink.value;
+            var existing = notes.linkNotes.find(function(n) { return n.id === Number(selectedLink); });
+            if (existing) { existing.note = text; }
+            else { notes.linkNotes.push({ id: Number(selectedLink), note: text }); }
+            saveNote('/airlines/' + airlineId + '/notes/link/' + selectedLink, text);
         }, debounceDelay);
-    });
+    }, { signal: signal });
 
-    notesAirport.addEventListener('input', () => {
+    notesAirport.addEventListener('input', function() {
         clearTimeout(debounceTimeout);
-        debounceTimeout = setTimeout(() => {
-			if (!activeAirportId) return;
-
-			const sanitizedNote = notesAirport.value.replace(/</g, "&lt;").replace(/>/g, "&gt;"); // Basic sanitization
-			const existsingNote = notes.airportNotes.find(note => note.id === Number(activeAirportId));
-			if (existsingNote) {
-				existsingNote.note = sanitizedNote;
-			} else {
-				notes.airportNotes.push({id: Number(activeAirportId), note: sanitizedNote});
-			}
-
-            fetch(`/airlines/${airlineId}/notes/airport/${activeAirportId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json; charset=utf-8',
-                },
-                body: JSON.stringify({ note: sanitizedNote }),
-            })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`Failed to save note: ${response.statusText}`);
-                    }
-                    console.log('Note saved successfully');
-                })
-                .catch(error => {
-                    console.error('Error saving note:', error);
-                });
+        debounceTimeout = setTimeout(function() {
+            if (!activeAirportId) return;
+            var text = notesAirport.value;
+            var existing = notes.airportNotes.find(function(n) { return n.id === Number(activeAirportId); });
+            if (existing) { existing.note = text; }
+            else { notes.airportNotes.push({ id: Number(activeAirportId), note: text }); }
+            saveNote('/airlines/' + airlineId + '/notes/airport/' + activeAirportId, text);
         }, debounceDelay);
-    });
+    }, { signal: signal });
 }
 
 function toggleAllLinks(source) {
