@@ -167,7 +167,7 @@ object Constants {
   println("!!!!!!!!!!!!!!!DB HOST IS " + DB_HOST)
   val SCHEMA_NAME = if (configFactory.hasPath("mysqldb.schema")) configFactory.getString("mysqldb.schema") else sys.env.get("DB_NAME").getOrElse("airline")
 
-  val DATABASE_CONNECTION = "jdbc:mysql://" + DB_HOST + "/" + SCHEMA_NAME +"?rewriteBatchedStatements=true&sslMode=DISABLED&useUnicode=true&characterEncoding=utf-8&allowPublicKeyRetrieval=true&socketTimeout=300000&connectTimeout=10000" + dbParams
+  val DATABASE_CONNECTION = "jdbc:mysql://" + DB_HOST + "/" + SCHEMA_NAME +"?rewriteBatchedStatements=true&sslMode=DISABLED&useUnicode=true&characterEncoding=utf-8&allowPublicKeyRetrieval=true&socketTimeout=60000&connectTimeout=10000" + dbParams
   val DB_DRIVER = "com.mysql.cj.jdbc.Driver"
   val DATABASE_USER = if (configFactory.hasPath("mysqldb.user")) configFactory.getString("mysqldb.user") else sys.env.get("DB_USER").getOrElse("mfc01")
   val DATABASE_PASSWORD = if (configFactory.hasPath("mysqldb.password")) configFactory.getString("mysqldb.password") else sys.env.get("DB_PASSWORD").getOrElse("ghEtmwBdnXYBQH4")

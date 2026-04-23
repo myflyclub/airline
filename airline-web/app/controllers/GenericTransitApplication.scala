@@ -43,7 +43,7 @@ class GenericTransitApplication @Inject()(cc: ControllerComponents) extends Abst
         }
         Ok(json)
           .withHeaders(
-            CACHE_CONTROL -> "no-cache",
+            CACHE_CONTROL -> CYCLE_CACHE_CONTROL,
             ETAG -> s""""$currentCycle""""
           )
     }

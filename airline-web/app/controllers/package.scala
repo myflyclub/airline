@@ -1,6 +1,6 @@
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.ActorMaterializer
-import com.patson.Util
+import com.patson.{MainSimulation, Util}
 import com.patson.data._
 import com.patson.data.airplane._
 import com.patson.model.{AirlineBalance, AirlineBalanceDetails, AirlineBaseSpecialization, Computation, _}
@@ -23,6 +23,10 @@ package object controllers {
   val currentApiVersion = "v5.1.2" // Update this when schema changes
   @volatile var cachedCurrentCycle: Int = CycleSource.loadCycle()
   def currentCycle: Int = cachedCurrentCycle
+
+  val CYCLE_DURATION_SECONDS: Int = MainSimulation.CYCLE_DURATION
+  /** Cache-Control header for public cycle-keyed responses: cacheable for most of the cycle, stale-while-revalidate covers the flip. */
+  val CYCLE_CACHE_CONTROL: String = s"public, max-age=${CYCLE_DURATION_SECONDS - 60}, stale-while-revalidate=120"
 
   implicit object AirlineFormat extends Format[Airline] {
     def reads(json: JsValue): JsResult[Airline] = {

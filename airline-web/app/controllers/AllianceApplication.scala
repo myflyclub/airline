@@ -101,7 +101,7 @@ class AllianceApplication @Inject()(cc: ControllerComponents) extends AbstractCo
         NotModified
       case _ =>
         Ok(alliancesDataCache.get(currentCycle)).withHeaders(
-          CACHE_CONTROL -> "no-cache",
+          CACHE_CONTROL -> CYCLE_CACHE_CONTROL,
           ETAG -> s""""$currentCycle""""
         )
     }
@@ -372,7 +372,7 @@ class AllianceApplication @Inject()(cc: ControllerComponents) extends AbstractCo
             Ok(Json.obj("links" -> Json.toJson(links)(SimpleLinkWrites),
               "members" -> Json.toJson(alliance.members.map(member => (member.airline, member.role)))(AllianceAirlinesWrites)
             )).withHeaders(
-              CACHE_CONTROL -> "no-cache",
+              CACHE_CONTROL -> CYCLE_CACHE_CONTROL,
               ETAG -> s""""$currentCycle""""
             )
         }
