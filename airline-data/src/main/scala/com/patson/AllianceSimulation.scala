@@ -14,7 +14,7 @@ object AllianceSimulation {
     println("Tallying alliance stats...")
     val allActiveAlliances = AllianceSource.loadAllAlliancesEstablished(true)
     val airportRepByAirlineId: Map[Int, Int] = airportChampionInfo.groupBy(_.loyalist.airline.id).mapValues(_.map(_.reputationBoost).sum.toInt).toMap
-    val loungePaxByAirlineId: Map[Int, Int] = loungeResult.map(info => info.lounge.airline.id -> info.allianceVisitors).toMap
+    val loungePaxByAirlineId: Map[Int, Long] = loungeResult.groupBy(_.lounge.airline.id).view.mapValues(_.map(info => (info.selfVisitors + info.allianceVisitors).toLong).sum).toMap
     val flightProfitsByAirlineId: Map[Int, Int] = flightLinkResult.map(linkConsumption => linkConsumption.link.airline.id -> linkConsumption.profit).toMap
 
     val allianceStatsList: List[AllianceStats] = allActiveAlliances.map { alliance =>
@@ -26,7 +26,7 @@ object AllianceSimulation {
           val traveler = paxStats.total - (paxStats.business + paxStats.tourists + paxStats.elites)
           val airportRep = airportRepByAirlineId.getOrElse(airlineId, 0).toInt
           val marketCap: Long = (allianceMember.airline.getSharesOutstanding().toLong * allianceMember.airline.getStockPrice()).toLong
-          val loungePax = loungePaxByAirlineId.getOrElse(airlineId, 0)
+          val loungePax = loungePaxByAirlineId.getOrElse(airlineId, 0L)
           val flightProfit = flightProfitsByAirlineId.getOrElse(airlineId, 0)
 
           (

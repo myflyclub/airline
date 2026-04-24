@@ -93,7 +93,7 @@ class CountryApplication @Inject()(cc: ControllerComponents) extends AbstractCon
 
             Ok(result)
               .withHeaders(
-                CACHE_CONTROL -> "no-cache",
+                CACHE_CONTROL -> CYCLE_CACHE_CONTROL,
                 ETAG -> s""""$currentCycle""""
               )
         }
@@ -114,7 +114,7 @@ class CountryApplication @Inject()(cc: ControllerComponents) extends AbstractCon
           fresh
         }
         json match {
-          case Some(j) => Ok(j).withHeaders(CACHE_CONTROL -> "no-cache", ETAG -> s""""$currentCycle"""")
+          case Some(j) => Ok(j).withHeaders(CACHE_CONTROL -> CYCLE_CACHE_CONTROL, ETAG -> s""""$currentCycle"""")
           case None => NotFound
         }
     }
@@ -140,7 +140,7 @@ class CountryApplication @Inject()(cc: ControllerComponents) extends AbstractCon
           }
         }
         json match {
-          case Some(j) => Ok(j).withHeaders(CACHE_CONTROL -> "no-cache", ETAG -> s""""$currentCycle"""")
+          case Some(j) => Ok(j).withHeaders(CACHE_CONTROL -> CYCLE_CACHE_CONTROL, ETAG -> s""""$currentCycle"""")
           case None => NotFound
         }
     }

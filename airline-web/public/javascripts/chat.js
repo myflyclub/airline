@@ -2,6 +2,10 @@ var lastMessageId = -1
 var firstAllianceMessageId = -1
 var firstGeneralMessageId = -1
 
+var ws
+var _msgCount = 0
+var _msgCountResetAt = 0
+
 function updateChatTabs() {
 	if (activeUser && activeUser.allianceName && activeUser.allianceRole != 'APPLICANT') {
 		$("#allianceChatTab").text(activeUser.allianceName)
@@ -9,12 +13,32 @@ function updateChatTabs() {
 		$("#allianceChatTab").show()
 	} else {
 		$("#allianceChatTab").hide()
+		// If the alliance tab was active, switch back to general
+		if ($('#allianceChatTab').hasClass('current')) {
+			$('#allianceChatTab').removeClass('current')
+			$('#chatBox-2').removeClass('current')
+			$('#generalChatTab').addClass('current')
+			$('#chatBox-1').addClass('current')
+		}
 	}
 }
 
-var ws
-var _msgCount = 0
-var _msgCountResetAt = 0
+/**
+ * Reset alliance-specific chat state on airline switch.
+ * General chat persists since it's shared across airlines.
+ */
+function resetChatForAirlineSwitch() {
+    // Clear alliance messages and history state
+    firstAllianceMessageId = -1
+    $('#chat-box #chatBox-2 ul li.message').remove()
+    $('#chat-box #chatBox-2').removeData('historyExhausted')
+
+    // Reset rate limiter so the new airline can send immediately
+    _msgCount = 0
+    _msgCountResetAt = 0
+
+    updateChatTabs()
+}
 
 function sendChatMessage() {
     var msg = $('#chattext').val().trim()
@@ -125,7 +149,6 @@ function buildPrefix(r_msg) {
 
 function prependMessage(r_msg) {
     var box = r_msg.allianceRoomId ? '#chatBox-2' : '#chatBox-1'
-    var tracker = r_msg.allianceRoomId ? 'firstAllianceMessageId' : 'firstGeneralMessageId'
     var first = r_msg.allianceRoomId ? firstAllianceMessageId : firstGeneralMessageId
     if (first != -1 && r_msg.id >= first) return
     $('#chat-box ' + box + ' ul').prepend('<li class="message">' + buildPrefix(r_msg) + htmlEncode(r_msg.text) + '</li>')

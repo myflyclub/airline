@@ -450,30 +450,37 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
     //check whether it fulfills ranking requirement
     val linkStatisticsFromThisAirport: Map[Airline, List[LinkStatistics]] = LinkStatisticsSource.loadLinkStatisticsByFromAirport(airport.id).groupBy(_.key.airline)
     val linkStatisticsToThisAirport: Map[Airline, List[LinkStatistics]] = LinkStatisticsSource.loadLinkStatisticsByToAirport(airport.id).groupBy(_.key.airline)
-    val passengersOnThisAirport: Map[Airline, Long] = (linkStatisticsFromThisAirport.toList ++ linkStatisticsToThisAirport.toList).groupBy(_._1) //this gives Map[Airline, List[(Airline, List[LinkStatistics])]]
-      .view.mapValues(_.flatMap(_._2)) //this gives Map[Airline, List[LinkStatistics]]
-      .mapValues(_.map(_.premiumPax.toLong).sum).toMap
+    val premiumPaxByAirline: Map[Airline, Int] = (linkStatisticsFromThisAirport.toList ++ linkStatisticsToThisAirport.toList).groupBy(_._1)
+      .view.mapValues(_.flatMap(_._2).map(_.premiumPax).sum).toMap
 
     val airlineIdsWithBase = airport.getAirlineBases().keys.toList
-    val sortedPassengersOnThisAirport: List[(Airline, Long)] = passengersOnThisAirport.toList.filter {
-      case (airline, _) => airlineIdsWithBase.contains(airline.id) //only count airlines that has a base here
-    }.sortBy(_._2)
-    val eligibleAirlines: List[(Airline, Long)] = sortedPassengersOnThisAirport.takeRight(newLounge.getActiveRankingThreshold)
+    val filteredAirlines: List[(Airline, Int)] = premiumPaxByAirline.toList.filter {
+      case (a, _) => airlineIdsWithBase.contains(a.id)
+    }
+
+    val allianceMemberByAirline = AllianceSource.loadAllianceMemberByAirlines(filteredAirlines.map(_._1))
+    val allianceIdByAirlineId: Map[Int, Int] = allianceMemberByAirline.collect {
+      case (a, member) if member.role != AllianceRole.APPLICANT => (a.id, member.allianceId)
+    }.toMap
+
+    val alliancePaxEntries = filteredAirlines.map { case (a, pax) => (allianceIdByAirlineId.get(a.id), pax) }
+    val alliancePaxMap: Map[Int, Int] = Lounge.groupPaxByAlliance(alliancePaxEntries)
+    val sortedByAlliance: List[(Int, Int)] = alliancePaxMap.toList.sortBy(_._2)
+    val eligibleAllianceIds: Set[Int] = sortedByAlliance.takeRight(newLounge.getActiveRankingThreshold).map(_._1).toSet
 
     if (levelChange > 0) { //upgrade - has to consider ranking
-      eligibleAirlines.find(_._1.id == airline.id) match {
-        case Some((airline, passengers)) => //ok
+      airline.getAllianceId() match {
+        case Some(allianceId) if eligibleAllianceIds.contains(allianceId) =>
           return Consideration(cost, newLounge)
-        case None => //does not make the cut
-          var currentRank = 1
-          sortedPassengersOnThisAirport.reverse.foreach {
-            case (rankedAirline, passengers) =>
-              if (rankedAirline.id == airline.id) {
-                return Consideration(cost, newLounge, Some("Your premium passenger volume of " + passengers + " is ranked as number " + currentRank + " (of airlines with base here). Has to be top " + newLounge.getActiveRankingThreshold + " to build lounge in this airport"))
-              }
-              currentRank += 1
-          }
-          return Consideration(cost, newLounge, Some("Your have no passengers here. Has to be top " + newLounge.getActiveRankingThreshold + " to build lounge in this airport"))
+        case Some(allianceId) =>
+          val alliancePax = alliancePaxMap.getOrElse(allianceId, 0)
+          val rank = sortedByAlliance.reverse.indexWhere(_._1 == allianceId) + 1
+          return Consideration(cost, newLounge, Some(
+            s"Your alliance's premium passenger volume of $alliancePax is ranked $rank " +
+            s"(of alliances with a base here). Has to be top ${newLounge.getActiveRankingThreshold} to build lounge in this airport"
+          ))
+        case None =>
+          return Consideration(cost, newLounge, Some("Must be in an alliance to build/upgrade lounge"))
       }
     } else {
       return Consideration(cost, newLounge)
@@ -945,7 +952,7 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
       case json: AnyContentAsJson =>
         Try(json.json.\("sharesOutstanding").as[Int]) match {
           case Success(sharesOutstanding) =>
-            if (sharesOutstanding <= 10_000_000) {
+            if (sharesOutstanding <= 10_000_000 && operation != "sell") {
               BadRequest("Cannot have less than 10m shares")
             } else if (sharesOutstanding >= 2_000_000_000) {
               BadRequest(s"Cannot have more than 2b shares")

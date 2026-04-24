@@ -425,43 +425,14 @@ export function highlightPath(linkId, refocus = false) {
 function startHighlightAnimation(linkId) {
     if (highlightAnimation) {
         cancelAnimationFrame(highlightAnimation);
+        highlightAnimation = null;
     }
 
     const pathEntry = state.flightPaths[linkId];
     if (!pathEntry) return;
 
-    const originalColor = pathEntry.color;
-    const startTime = performance.now();
-    const duration = 2000; // 2 second cycle
-
-    function animate(currentTime) {
-        if (highlightedLinkId != linkId) return;
-
-        const elapsed = (currentTime - startTime) % duration;
-        const progress = elapsed / duration;
-
-        // Pulse from original color to white and back
-        const pulseValue = Math.sin(progress * Math.PI * 2) * 0.5 + 0.5;
-
-        // Parse original color
-        const r = parseInt(originalColor.slice(1, 3), 16);
-        const g = parseInt(originalColor.slice(3, 5), 16);
-        const b = parseInt(originalColor.slice(5, 7), 16);
-
-        // Interpolate to white
-        const newR = Math.round(r + (255 - r) * pulseValue);
-        const newG = Math.round(g + (255 - g) * pulseValue);
-        const newB = Math.round(b + (255 - b) * pulseValue);
-
-        const animatedColor = `#${newR.toString(16).padStart(2, '0')}${newG.toString(16).padStart(2, '0')}${newB.toString(16).padStart(2, '0')}`;
-
-        pathEntry.color = animatedColor;
-        refreshRoutesGeoJSON();
-
-        highlightAnimation = requestAnimationFrame(animate);
-    }
-
-    highlightAnimation = requestAnimationFrame(animate);
+    pathEntry.color = '#ffffff';
+    refreshRoutesGeoJSON();
 }
 
 /**

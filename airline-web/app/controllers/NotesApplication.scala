@@ -54,9 +54,8 @@ class NotesApplication @Inject()(cc: ControllerComponents) extends AbstractContr
     */
   def saveNoteToAirline(airlineId: Int) = AuthenticatedAirline(airlineId) { request =>
     val note = request.body.asInstanceOf[AnyContentAsJson].json.\("note").as[String]
-    val sanitizedNote = StringEscapeUtils.escapeEcmaScript(note)
     Try {
-      NotesSource.saveNoteToAirlineTable(airlineId, sanitizedNote)
+      NotesSource.saveNoteToAirlineTable(airlineId, note)
       Ok(Json.obj("success" -> true))
     } match {
       case Success(result) => result
@@ -74,9 +73,8 @@ class NotesApplication @Inject()(cc: ControllerComponents) extends AbstractContr
     */
   def saveNoteToAirport(airlineId: Int, airportId: Int) = AuthenticatedAirline(airlineId) { request =>
     val note = request.body.asInstanceOf[AnyContentAsJson].json.\("note").as[String]
-    val sanitizedNote = StringEscapeUtils.escapeEcmaScript(note)
     Try {
-      NotesSource.saveNoteToAirportTable(airportId, airlineId, sanitizedNote)
+      NotesSource.saveNoteToAirportTable(airportId, airlineId, note)
       Ok(Json.obj("success" -> true))
     } match {
       case Success(result) => result
@@ -94,9 +92,8 @@ class NotesApplication @Inject()(cc: ControllerComponents) extends AbstractContr
     */
   def saveNoteToLink(airlineId: Int, linkId: Int) = AuthenticatedAirline(airlineId) { request =>
     val note = request.body.asInstanceOf[AnyContentAsJson].json.\("note").as[String]
-    val sanitizedNote = StringEscapeUtils.escapeEcmaScript(note)
     Try {
-      NotesSource.saveNoteToLinkTable(linkId, airlineId, sanitizedNote)
+      NotesSource.saveNoteToLinkTable(linkId, airlineId, note)
       Ok(Json.obj("success" -> true))
     } match {
       case Success(result) => result

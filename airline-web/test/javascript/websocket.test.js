@@ -37,8 +37,17 @@ function createContext() {
   MockWebSocket.CLOSED = 3
   MockWebSocket.instances = wsInstances
 
+  const visibilityListeners = []
+  const mockDocument = {
+    hidden: false,
+    addEventListener: jest.fn().mockImplementation((event, fn) => {
+      if (event === 'visibilitychange') visibilityListeners.push(fn)
+    }),
+  }
+
   const ctx = {
     WebSocket: MockWebSocket,
+    document: mockDocument,
     window: {
       location: { protocol: 'http:', port: '9000', hostname: 'localhost' },
     },
@@ -61,6 +70,7 @@ function createContext() {
     isNaN,
   }
   ctx._timeoutQueue = timeoutQueue
+  ctx._visibilityListeners = visibilityListeners
   vm.createContext(ctx)
   vm.runInContext(WS_CODE, ctx)
   return ctx
@@ -216,6 +226,29 @@ describe('onmessage: cycleCompleted', () => {
     ws.onmessage({ data: JSON.stringify({ messageType: 'cycleCompleted', cycle: 42 }) })
 
     expect(ctx.updateAirlineInfo).not.toHaveBeenCalled()
+  })
+
+  test('defers refresh when tab is hidden on cycleCompleted', () => {
+    const ctx = createContext()
+    ctx.selectedAirlineId = 7
+    ctx.document.hidden = true
+
+    ctx.connectWebSocket(7)
+    const ws = ctx.WebSocket.instances[0]
+    ws.onmessage({ data: JSON.stringify({ messageType: 'cycleCompleted', cycle: 42 }) })
+
+    // No setTimeout scheduled — refresh was deferred
+    const timeoutsBeforeVisibility = ctx._timeoutQueue.length
+    expect(ctx.missedCycleRefresh).toBe(true)
+
+    // Simulate tab becoming visible
+    ctx.document.hidden = false
+    ctx._visibilityListeners.forEach((fn) => fn())
+    ctx._timeoutQueue.slice(timeoutsBeforeVisibility).forEach((fn) => fn())
+
+    expect(ctx.updateAirlineInfo).toHaveBeenCalledWith(7)
+    expect(ctx.loadAirportsDynamic).toHaveBeenCalled()
+    expect(ctx.missedCycleRefresh).toBe(false)
   })
 
   test('calls updateTime when cycleInfo arrives', () => {

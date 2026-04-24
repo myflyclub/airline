@@ -48,6 +48,7 @@ object AirportStatisticsSource {
           travelRate = resultSet.getDouble("travel_rate")
         )
       }
+      preparedStatement.setQueryTimeout(20)
       
       stats.toList
     } finally {

@@ -933,7 +933,7 @@ function updateDividendsDetails() {
         displayText: '$' + commaSeparateNumber(currentDividends),
         $input,
         disabledReason,
-        note: 'Min $2,000,000 · Changes lock for 2 years',
+        note: 'Min $1,000,000 · Changes lock for 2 years',
         onConfirm: (val) => {
             const amount = parseInt(val) || 0
             if (amount > 0 && amount < 1000000) {
@@ -1489,16 +1489,5 @@ function resetAirline(keepAssets) {
 }
 
 function updateManagerStatus() {
-    $.ajax({
-        type: 'GET',
-        url: '/managers/airline/' + activeAirline.id,
-        contentType: 'application/json; charset=utf-8',
-        dataType: 'json',
-        success: function(managersInfo) {
-            refreshAirlineManagerStatus($('#managerStatus .managerGroups'), managersInfo)
-        },
-        error: function(jqXHR, textStatus, errorThrown) {
-            console.log('AJAX error: ' + textStatus + ' : ' + errorThrown)
-        }
-    })
+    updateAirlineManagerStatus($('#managerStatus .managerGroups'))
 }

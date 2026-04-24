@@ -52,7 +52,7 @@ public class GoogleImageUtil {
 	}
 
 	private static class ResourceCacheLoader<KeyType extends Key> implements CacheLoader<KeyType, Optional<ImageResult>> {
-		private static final int DEFAULT_MAX_AGE = 24 * 60 * 60; //in sec
+		private static final long DEFAULT_MAX_AGE_MS = 60L * 24 * 60 * 60 * 1000; //60 days in ms
 		private final LoadFunction<KeyType, ImageResult> loadFunction;
 		private final int resourceTypeValue;
 
@@ -81,7 +81,8 @@ public class GoogleImageUtil {
 				} else { //max deadline expired, try and see if the url still works
 					Optional<Long> newDeadline = isUrlValid(googleResource.url());
 					if (newDeadline != null) {
-						GoogleResourceSource.insertResource().apply(GoogleResource.apply(googleResource.resourceId(), googleResource.resourceType(), googleResource.url(), newDeadline.isPresent() ? Option.apply(newDeadline.get()) : Option.empty(), googleResource.caption()));
+						long refreshedDeadline = newDeadline.isPresent() ? newDeadline.get() : System.currentTimeMillis() + DEFAULT_MAX_AGE_MS;
+					GoogleResourceSource.insertResource().apply(GoogleResource.apply(googleResource.resourceId(), googleResource.resourceType(), googleResource.url(), Option.apply(refreshedDeadline), googleResource.caption()));
 						try {
 							return Optional.of(new ImageResult(new URL(googleResource.url()), googleResource.caption(), null));
 						} catch (MalformedURLException e) {
@@ -98,7 +99,7 @@ public class GoogleImageUtil {
 				ImageResult result = loadFunction.apply(key);
 				logger.info("loaded " + ResourceType.apply(resourceTypeValue) + " image for  " + key + " " + result);
 				if (result != null) {
-					long deadline = System.currentTimeMillis() + (result.maxAge != null ? result.maxAge * 1000 : DEFAULT_MAX_AGE * 1000);
+					long deadline = System.currentTimeMillis() + (result.maxAge != null ? result.maxAge * 1000 : DEFAULT_MAX_AGE_MS);
 					GoogleResourceSource.insertResource().apply(GoogleResource.apply(key.getId(), ResourceType.apply(resourceTypeValue), result.url.toString(), Option.apply(deadline), result.placeName));
 
 					return Optional.of(result);
@@ -161,6 +162,21 @@ public class GoogleImageUtil {
 		}
 
 
+	}
+
+	private static Long fetchMaxAge(String urlString) {
+		HttpURLConnection conn = null;
+		try {
+			conn = (HttpURLConnection) new URL(urlString).openConnection();
+			conn.setRequestMethod("HEAD");
+			conn.connect();
+			return getMaxAge(conn);
+		} catch (IOException e) {
+			logger.debug("Failed to fetch max-age from CDN URL: {}", e.getMessage());
+			return null;
+		} finally {
+			if (conn != null) conn.disconnect();
+		}
 	}
 
 	private static Long getMaxAge(HttpURLConnection conn) {
@@ -415,7 +431,7 @@ public class GoogleImageUtil {
 		if (responseCode >= 300 && responseCode < 400) { // Handle redirects
 			String location = conn.getHeaderField("Location");
 			if (location != null) {
-				result = new ImageResult(new URL(location), null, getMaxAge(conn));
+				result = new ImageResult(new URL(location), null, fetchMaxAge(location));
 			}
 		} else {
 			try (BufferedReader br = new BufferedReader(new InputStreamReader(conn.getErrorStream(), StandardCharsets.UTF_8))) {

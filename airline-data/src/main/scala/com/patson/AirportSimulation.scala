@@ -21,7 +21,7 @@ object AirportSimulation {
 
     //update the loyalist on airports based on link consumption
     println("Adjust loyalist by link consumptions")
-    val championInfo = simulateLoyalists(allAirports, linkRidershipDetails, cycle)
+    val championInfo = simulateLoyalists(linkRidershipDetails, cycle)
 
     //check whether lounge is still active
     updateLoungeStatus(allAirports, linkRidershipDetails)
@@ -34,48 +34,22 @@ object AirportSimulation {
   val LOYALIST_HISTORY_SAVE_INTERVAL = 10 //every 10 cycles
   val LOYALIST_HISTORY_ENTRY_MAX = 50
 
+  /**
+   * Used on frontend
+   *
+   * @param lastCompletedCycle
+   * @param delta
+   * @return
+   */
   def getHistoryCycle(lastCompletedCycle : Int, delta : Int): Int = {
     val baseCycle = lastCompletedCycle - lastCompletedCycle % LOYALIST_HISTORY_SAVE_INTERVAL
     baseCycle + delta * LOYALIST_HISTORY_SAVE_INTERVAL
   }
 
-//   def processChampionInfoChanges(previousInfo : List[AirportChampionInfo], newInfo : List[AirportChampionInfo], currentCycle : Int) = {
-//     val previousInfoByAirlineId : Predef.Map[Int, List[AirportChampionInfo]] = previousInfo.filter(_.loyalist.airline.airlineType != NonPlayerAirline).groupBy(_.loyalist.airline.id)
-//     val newInfoByAirlineId : Predef.Map[Int, List[AirportChampionInfo]] = newInfo.filter(_.loyalist.airline.airlineType != NonPlayerAirline).groupBy(_.loyalist.airline.id)
-
-//     val airlineIds = (previousInfoByAirlineId.keySet ++ newInfoByAirlineId.keySet)
-//     var rankChangeCount = 0
-
-//     airlineIds.foreach { airlineId =>
-//       val changes = ListBuffer[ChampionInfoChange]()
-//       previousInfoByAirlineId.get(airlineId) match {
-//         case Some(previousRanks) =>
-//           newInfoByAirlineId.get(airlineId) match {
-//             case Some(newRanks) => //go from airport to airport
-//               val previousInfoByAirport = previousRanks.groupBy(_.loyalist.airport).view.mapValues(_(0)) //should be exactly one entry
-//               val newInfoByAirport = newRanks.groupBy(_.loyalist.airport).view.mapValues(_(0)) //should be exactly one entry
-//               val airportIds = previousInfoByAirport.keySet ++ newInfoByAirport.keySet
-//               airportIds.foreach { airportId =>
-//                 if (previousInfoByAirport.get(airportId).map(_.ranking).getOrElse(0) != newInfoByAirport.get(airportId).map(_.ranking).getOrElse(0) && newInfoByAirport.get(airportId).map(_.reputationBoost).exists(_ > 0.5)) {
-//                   changes.append(ChampionInfoChange(previousInfoByAirport.get(airportId), newInfoByAirport.get(airportId)))
-//                 }
-//               }
-//             case None => changes.appendAll(previousRanks.map(info => ChampionInfoChange(Some(info), None))) //lost all ranks
-//           }
-//         case None => changes.appendAll(newInfoByAirlineId(airlineId).map(info => ChampionInfoChange(None, Some(info)))) //all ranks are new
-//       }
-//       rankChangeCount += changes.size
-//     }
-//     println(s"Ranking changes count : $rankChangeCount")
-//  }
-
-  case class ChampionInfoChange(previousRank : Option[AirportChampionInfo], newRank : Option[AirportChampionInfo])
-
-
-  def simulateLoyalists(allAirports : List[Airport], linkRidershipDetails : immutable.Map[(PassengerGroup, Airport, Route), Int], cycle : Int) = {
+  def simulateLoyalists(linkRidershipDetails : immutable.Map[(PassengerGroup, Airport, Route), Int], cycle : Int) = {
     var existingLoyalistByAirportId : immutable.Map[Int, List[Loyalist]] = LoyalistSource.loadLoyalistsByCriteria(List.empty).groupBy(_.airport.id)
 
-    existingLoyalistByAirportId = decayLoyalists(allAirports, existingLoyalistByAirportId)
+    existingLoyalistByAirportId = decayLoyalists(existingLoyalistByAirportId)
 
     val (updatingLoyalists, deletingLoyalists, allAirportPaxCounts) = computeLoyalists(linkRidershipDetails, existingLoyalistByAirportId)
     println(s"Updating ${updatingLoyalists.length} loyalists entries")
@@ -88,9 +62,7 @@ object AirportSimulation {
     println(s"Computing loyalist info with ${allLoyalists.length} entries")
 
     //compute champion info
-    val previousInfo = ChampionUtil.loadAirportChampionInfo()
     val newInfo = ChampionUtil.computeAirportChampionInfo(allLoyalists)
-    // processChampionInfoChanges(previousInfo, newInfo, cycle)
     AirportSource.updateChampionInfo(newInfo)
 
     println("Done computing champions")
@@ -109,7 +81,7 @@ object AirportSimulation {
   }
 
   val DECAY_RATE = 0.0008 //1 loyalist disappears per 1250 per week
-  private[patson] def decayLoyalists(allAirports : List[Airport], existingLoyalistByAirportId : immutable.Map[Int, List[Loyalist]]) : immutable.Map[Int, List[Loyalist]] = {
+  private[patson] def decayLoyalists(existingLoyalistByAirportId : immutable.Map[Int, List[Loyalist]]) : immutable.Map[Int, List[Loyalist]] = {
     val updatingLoyalists, deletingLoyalists = ListBuffer[Loyalist]()
     val r = new Random()
     val result : immutable.Map[Int, List[Loyalist]] = existingLoyalistByAirportId.view.mapValues { loyalists =>
@@ -163,9 +135,9 @@ object AirportSimulation {
 
     linkRidershipDetails.groupBy(_._1._1.fromAirport).foreach {
       case ((fromAirport, passengersFromThisAirport)) =>
-        val loyalistIncrementOfAirlines = Map[Int, Int]() //airlineId, delta
+        val loyalistIncrementOfAirlines = mutable.Map[Int, Int]() //airlineId, delta
         passengersFromThisAirport.toList.foreach {
-          case ((passengerGroup, toAirport, route), paxCount) =>
+          case ((passengerGroup, _, route), paxCount) =>
             val totalDistance = route.links.map(_.link.distance).sum
             val flightLinks = route.links.filter(_.link.transportType == TransportType.FLIGHT) //only flights would generate loyalist
             flightLinks.foreach { linkConsideration =>
@@ -299,17 +271,17 @@ object AirportSimulation {
       if (!airport.getLounges().isEmpty) {
         val airlineIdsWithBase = airport.getAirlineBases().keys.toList
         //println(s"AIRPORT $airport : ${passengersByAirport.get(airport).map(_.toList)}")
-        val airlinesByPassengers : List[(Airline, Int)] = passengersByAirport.get(airport).map(_.toList).getOrElse(List.empty).filter {
-          case (airline, _) => airlineIdsWithBase.contains(airline.id) //only count airlines that has a base here
-        }.groupBy(_._1.getAllianceId())
-         .collect { case (Some(_), airlines) => airlines.maxBy(_._2) }
-         .toList
-         .sortBy(_._2)
+        val alliancePaxEntries = passengersByAirport.get(airport).map(_.toList).getOrElse(List.empty).filter {
+          case (airline, _) => airlineIdsWithBase.contains(airline.id)
+        }.map { case (airline, pax) => (airline.getAllianceId(), pax) }
 
-        val eligibleAirlines = airlinesByPassengers.takeRight(airport.getLounges().head.getActiveRankingThreshold).map(_._1)
+        val eligibleAllianceIds =
+          Lounge.groupPaxByAlliance(alliancePaxEntries).toList.sortBy(_._2)
+            .takeRight(airport.getLounges().head.getActiveRankingThreshold).map(_._1).toSet
+
         airport.getLounges().foreach { lounge =>
           val newStatus =
-            if (eligibleAirlines.contains(lounge.airline)) {
+            if (lounge.allianceId.exists(eligibleAllianceIds.contains)) {
               LoungeStatus.ACTIVE
             } else {
               LoungeStatus.INACTIVE

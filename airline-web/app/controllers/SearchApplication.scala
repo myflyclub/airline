@@ -28,7 +28,7 @@ class SearchApplication @Inject()(cc: ControllerComponents) extends AbstractCont
           ResponseCache.searchRouteCache.put(cacheKey, (currentCycle, fresh))
           fresh
         }
-        Ok(json).withHeaders(CACHE_CONTROL -> "no-cache", ETAG -> s""""$currentCycle"""")
+        Ok(json).withHeaders(CACHE_CONTROL -> CYCLE_CACHE_CONTROL, ETAG -> s""""$currentCycle"""")
     }
   }
 
@@ -309,7 +309,7 @@ class SearchApplication @Inject()(cc: ControllerComponents) extends AbstractCont
           ResponseCache.researchLinkCache.put(cacheKey, (currentCycle, fresh))
           fresh
         }
-        Ok(json).withHeaders(CACHE_CONTROL -> "no-cache", ETAG -> s""""$currentCycle"""")
+        Ok(json).withHeaders(CACHE_CONTROL -> CYCLE_CACHE_CONTROL, ETAG -> s""""$currentCycle"""")
     }
   }
 

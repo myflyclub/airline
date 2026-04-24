@@ -123,11 +123,18 @@ class RankingApplication @Inject()(cc: ControllerComponents)(implicit ec: Execut
             val rankingJson = topJson.foldLeft(Json.obj()) {
               case (acc, (rankingType, topArr)) =>
                 val allRankings = rankings.getOrElse(rankingType, Nil)
-                val extraKey: Option[RankingKey] = rankingType match {
-                  case RankingType.AIRPORT => hqAirportId.map(RankingKey.AirportKey)
-                  case _                   => Some(airlineKey)
+                val airlineRankingOpt: Option[Ranking] = rankingType match {
+                  case RankingType.AIRPORT | RankingType.MOST_CONGESTED_AIRPORT =>
+                    hqAirportId.flatMap(id => allRankings.find(_.key == RankingKey.AirportKey(id)))
+                  case RankingType.LOUNGE =>
+                    allRankings.find(_.key match {
+                      case RankingKey.AirlineAirportKey(aid, _) => aid == airlineId
+                      case _ => false
+                    })
+                  case _ =>
+                    allRankings.find(_.key == airlineKey)
                 }
-                val airlineExtra = extraKey.flatMap(k => allRankings.find(_.key == k)).filter(_.ranking > MAX_ENTRY)
+                val airlineExtra = airlineRankingOpt.filter(_.ranking > MAX_ENTRY)
                 val arr: JsValue = airlineExtra.fold(topArr: JsValue)(r => topArr :+ Json.toJson(r))
                 acc + (rankingType.toString -> arr)
             }

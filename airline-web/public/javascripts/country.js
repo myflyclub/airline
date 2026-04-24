@@ -1,6 +1,7 @@
 var loadedCountriesByCode = {}
 const _countryEtagStore = {}
 const _titleProgressionData = {}
+const _countryDetailsCache = {}
 
 async function loadAllCountries(airlineId) {
   if (!airlineId) {
@@ -125,96 +126,99 @@ function updateAirlineTitle(title, $icon, $description) {
     $description.text(title.description)
 }
 
+function renderCountryDetails(countryCode, country) {
+    $("#countryDetailsName").text(country.name)
+    $("#countryDetailsIncomeLevel").text("$" + commaSeparateNumber(country.income))
+    $("#countryDetailsOpenness").html(getOpennessSpan(country.openness))
+
+    $("#countryDetailsLargeAirportCount").text(loadedCountriesByCode[countryCode].largeAirportCount)
+    $("#countryDetailsMediumAirportCount").text(loadedCountriesByCode[countryCode].mediumAirportCount)
+    $("#countryDetailsSmallAirportCount").text(loadedCountriesByCode[countryCode].smallAirportCount)
+
+    var countryRelationship = loadedCountriesByCode[countryCode].countryRelationship
+    $("#countryDetails div.relationship span.total").empty()
+    $("#countryDetails div.relationship span.total").append(countryRelationship.total)
+
+    var title = loadedCountriesByCode[countryCode].CountryTitle
+    var $relationshipDetailsIcon = $("#countryDetails div.relationship .detailsIcon")
+    $relationshipDetailsIcon.data("countryCode", countryCode)
+    $relationshipDetailsIcon.show()
+
+    $("#countryDetails img.airlineTitleIcon").hide()
+    $("#countryDetails span.airlineTitle").empty()
+    updateAirlineTitle(title, $("#countryDetails img.airlineTitleIcon"), $("#countryDetails span.airlineTitle"))
+
+    $("#countryDetailsAirlineHeadquarters").text(country.headquartersCount)
+    $("#countryDetailsAirlineBases").text(country.basesCount)
+
+    function renderTitleAirlineTable(selector, airlines, iconHtml, detailsFn, bonusSelector, bonusFn) {
+        $("#countryCanvas " + selector).empty()
+        if (airlines && airlines.length > 0) {
+            if (bonusSelector) $(bonusSelector).text(bonusFn(airlines[0]))
+            $.each(airlines, function(index, airline) {
+                var row = $("<div class='table-row clickable' data-link='rival'><div class='cell'>" + iconHtml + getAirlineLogoImg(airline.airlineId) + "<span style='font-weight: bold;'>" + getAirlineLabelSpan(airline.airlineId, airline.airlineName) + "</span> " + detailsFn(airline) + "</div></div>")
+                row.click(function() { Rivals.show(airline.airlineId) })
+                $("#countryCanvas " + selector).append(row)
+            })
+        } else {
+            $("#countryCanvas " + selector).append($("<div class='table-row'><div class='cell'>-</div></div>"))
+        }
+    }
+
+    renderTitleAirlineTable(".nationalAirlines", country.nationalAirlines,
+        "<img class='px-1 svg' src='/assets/images/icons/star-full.svg'>",
+        function(a) { return a.relationship + " relationship" },
+        ".national-title-bonus", function(a) { return `receive a ${a.loyaltyBonus} loyalty bonus` })
+
+    renderTitleAirlineTable(".partneredAirlines", country.partneredAirlines,
+        "<img class='px-1' src='/assets/images/icons/hand-shake.png' style='vertical-align:middle;'>",
+        function(a) { return a.relationship + " relationship" },
+        ".partnered-title-bonus", function(a) { return `receive a ${a.loyaltyBonus} loyalty bonus` })
+
+    renderTitleAirlineTable(".favoredAirlines", country.favoredAirlines,
+        "<img class='px-1' src='/assets/images/icons/medal-silver-premium.png' style='vertical-align:middle;'>",
+        function(a) { return a.relationship + " relationship" },
+        null, null)
+
+    $("#countryCanvas .countryDetailsChampion").empty()
+    if (country.champions) {
+        $.each(country.champions, function(index, champion) {
+            var championRow = $("<div class='table-row clickable' data-link='rival'><div class='cell'>" + getRankingImg(champion.ranking) + getAirlineLogoImg(champion.airlineId) + "<span style='font-weight: bold;'>" + getAirlineLabelSpan(champion.airlineId, champion.airlineName) + "</span> " + champion.passengerCount + " passengers</div></div>")
+            championRow.click(function() { Rivals.show(champion.airlineId) })
+            $("#countryCanvas .countryDetailsChampion").append(championRow)
+        })
+    } else {
+        $("#countryCanvas .countryDetailsChampion").append($("<div class='table-row'><div class='cell'>-</div></div>"))
+    }
+
+    $("#countryDetailsSharesChart").show()
+    assignAirlineColors(country.marketShares, "airlineId")
+    plotPie(country.marketShares, activeAirline ? activeAirline.name : null, "countryDetailsSharesChart", "airlineName", "passengerCount")
+
+    $("#countryCanvas .sidePanel").fadeIn(200)
+}
+
 async function loadCountryDetails(countryCode) {
-	$("#countryDetailsSharesChart").hide()
-	var url = "/countries/" + countryCode
-	const key = 'country-' + countryCode
-	const headers = {}
-	if (_countryEtagStore[key]) headers['If-None-Match'] = _countryEtagStore[key]
-	try {
-		const res = await fetch(url, { headers })
-		if (res.status === 304) {
-			$("#countryCanvas .sidePanel").fadeIn(200)
-			return
-		}
-		if (!res.ok) { console.log('AJAX error: ' + res.status); return }
-		const etag = res.headers.get('ETag')
-		if (etag) _countryEtagStore[key] = etag
-		const country = await res.json()
-		$("#countryDetailsName").text(country.name)
-	    	$("#countryDetailsIncomeLevel").text("$" + commaSeparateNumber(country.income))
-	    	$("#countryDetailsOpenness").html(getOpennessSpan(country.openness))
-
-	    	$("#countryDetailsLargeAirportCount").text(loadedCountriesByCode[countryCode].largeAirportCount)
-	    	$("#countryDetailsMediumAirportCount").text(loadedCountriesByCode[countryCode].mediumAirportCount)
-	    	$("#countryDetailsSmallAirportCount").text(loadedCountriesByCode[countryCode].smallAirportCount)
-
-            var countryRelationship = loadedCountriesByCode[countryCode].countryRelationship
-            $("#countryDetails div.relationship span.total").empty()
-            $("#countryDetails div.relationship span.total").append(countryRelationship.total)
-
-            var title = loadedCountriesByCode[countryCode].CountryTitle
-            var $relationshipDetailsIcon = $("#countryDetails div.relationship .detailsIcon")
-            $relationshipDetailsIcon.data("countryCode", countryCode)
-            $relationshipDetailsIcon.show()
-
-            $("#countryDetails img.airlineTitleIcon").hide()
-            $("#countryDetails span.airlineTitle").empty()
-            updateAirlineTitle(title, $("#countryDetails img.airlineTitleIcon"), $("#countryDetails span.airlineTitle"))
-
-    		$("#countryDetailsAirlineHeadquarters").text(country.headquartersCount)
-    		$("#countryDetailsAirlineBases").text(country.basesCount)
-
-            function renderTitleAirlineTable(selector, airlines, iconHtml, detailsFn, bonusSelector, bonusFn) {
-                $("#countryCanvas " + selector).empty()
-                if (airlines && airlines.length > 0) {
-                    if (bonusSelector) $(bonusSelector).text(bonusFn(airlines[0]))
-                    $.each(airlines, function(index, airline) {
-                        var row = $("<div class='table-row clickable' data-link='rival'><div class='cell'>" + iconHtml + getAirlineLogoImg(airline.airlineId) + "<span style='font-weight: bold;'>" + getAirlineLabelSpan(airline.airlineId, airline.airlineName) + "</span> " + detailsFn(airline) + "</div></div>")
-                        row.click(function() { Rivals.show(airline.airlineId) })
-                        $("#countryCanvas " + selector).append(row)
-                    })
-                } else {
-                    $("#countryCanvas " + selector).append($("<div class='table-row'><div class='cell'>-</div></div>"))
-                }
-            }
-
-            renderTitleAirlineTable(".nationalAirlines", country.nationalAirlines,
-                "<img class='px-1 svg' src='/assets/images/icons/star-full.svg'>",
-                function(a) { return a.relationship + " relationship" },
-                ".national-title-bonus", function(a) { return `receive a ${a.loyaltyBonus} loyalty bonus` })
-
-            renderTitleAirlineTable(".partneredAirlines", country.partneredAirlines,
-                "<img class='px-1' src='/assets/images/icons/hand-shake.png' style='vertical-align:middle;'>",
-                function(a) { return a.relationship + " relationship" },
-                ".partnered-title-bonus", function(a) { return `receive a ${a.loyaltyBonus} loyalty bonus` })
-
-            renderTitleAirlineTable(".favoredAirlines", country.favoredAirlines,
-                "<img class='px-1' src='/assets/images/icons/medal-silver-premium.png' style='vertical-align:middle;'>",
-                function(a) { return a.relationship + " relationship" },
-                null, null)
-
-            $("#countryCanvas .countryDetailsChampion").empty()
-	    	if (country.champions) {
-	    		$.each(country.champions, function(index, champion) {
-	    		    var championRow = $("<div class='table-row clickable' data-link='rival'><div class='cell'>" + getRankingImg(champion.ranking) + getAirlineLogoImg(champion.airlineId) + "<span style='font-weight: bold;'>" + getAirlineLabelSpan(champion.airlineId, champion.airlineName) + "</span> " + champion.passengerCount + " passengers</div></div>")
-	    		    championRow.click(function() {
-                        Rivals.show(champion.airlineId)
-                    })
-    				$("#countryCanvas .countryDetailsChampion").append(championRow)
-    			})
-	    	} else {
-	    		$("#countryCanvas .countryDetailsChampion").append($("<div class='table-row'><div class='cell'>-</div></div>"))
-	    	}
-
-	    	$("#countryDetailsSharesChart").show()
-	    	assignAirlineColors(country.marketShares, "airlineId")
-	    	plotPie(country.marketShares, activeAirline ? activeAirline.name : null , "countryDetailsSharesChart", "airlineName", "passengerCount")
-
-	    	$("#countryCanvas .sidePanel").fadeIn(200);
-	} catch (e) {
-		console.error('Failed to load country details:', e)
-	}
+    $("#countryDetailsSharesChart").hide()
+    var url = "/countries/" + countryCode
+    const key = 'country-' + countryCode
+    const headers = {}
+    if (_countryEtagStore[key]) headers['If-None-Match'] = _countryEtagStore[key]
+    try {
+        const res = await fetch(url, { headers })
+        if (res.status === 304 && _countryDetailsCache[countryCode]) {
+            renderCountryDetails(countryCode, _countryDetailsCache[countryCode])
+            return
+        }
+        if (!res.ok) { console.log('AJAX error: ' + res.status); return }
+        const etag = res.headers.get('ETag')
+        if (etag) _countryEtagStore[key] = etag
+        const country = await res.json()
+        _countryDetailsCache[countryCode] = country
+        renderCountryDetails(countryCode, country)
+    } catch (e) {
+        console.error('Failed to load country details:', e)
+    }
 }
 
 function getCountryRelationshipDescription(value) {
@@ -403,7 +407,7 @@ function renderCountryManagers(assignedCount) {
     // Use rich objects for already-fetched managers; synthesise a level-0 entry for each new addition
     var managers = original.slice(0, assignedCount)
     while (managers.length < assignedCount) {
-        managers.push({ taskType: 'COUNTRY', levelDescription: 'Trainee', taskDescription: 'New assignment · pending confirmation', completed: false, nextLevelCycleCount: 4 })
+        managers.push({ taskType: 'COUNTRY', levelDescription: 'Trainee', taskDescription: 'New assignment · pending confirmation', nextLevelCycleCount: 4 })
     }
 
     renderManagerAssignment({

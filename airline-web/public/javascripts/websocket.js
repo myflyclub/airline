@@ -11,6 +11,24 @@ var reconnectTimer = null
 var cycleDurationMs = 0
 var maxReconnectDelay = 60000
 var connectionOpened = false
+var missedCycleRefresh = false
+
+function scheduleRefresh(minDelay, maxJitter) {
+    var capturedId = selectedAirlineId
+    var jitter = Math.floor(Math.random() * maxJitter) + minDelay
+    setTimeout(function() {
+        updateAirlineInfo(capturedId)
+        loadAirportsDynamic()
+        loadNotificationBadge()
+    }, jitter)
+}
+
+document.addEventListener('visibilitychange', function() {
+    if (!document.hidden && missedCycleRefresh && selectedAirlineId) {
+        missedCycleRefresh = false
+        scheduleRefresh(500, 4000)
+    }
+})
 
 function checkWebSocket(airlineId) {
     if (!websocket || websocket.readyState === WebSocket.CLOSED) {
@@ -38,13 +56,7 @@ function connectWebSocket(airlineId) {
         wsSend(airlineId)
         console.log("websocket open for airline " + airlineId)
         if (isReconnect && selectedAirlineId) {
-            var capturedId = selectedAirlineId
-            var jitter = Math.floor(Math.random() * 3000)
-            setTimeout(function() {
-                updateAirlineInfo(capturedId)
-                loadAirportsDynamic()
-                loadNotificationBadge()
-            }, jitter)
+            scheduleRefresh(500, 4000)
         }
     }
     websocket.onclose = function() {
@@ -67,13 +79,11 @@ function connectWebSocket(airlineId) {
             updateTime(json.cycle, json.fraction, json.cycleDurationEstimation)
         } else if (json.messageType == "cycleCompleted") {
             if (selectedAirlineId) {
-                var capturedId = selectedAirlineId
-                var jitter = Math.floor(Math.random() * 15000)
-                setTimeout(function() {
-                    updateAirlineInfo(capturedId)
-                    loadAirportsDynamic()
-                    loadNotificationBadge()
-                }, jitter)
+                if (document.hidden) {
+                    missedCycleRefresh = true
+                } else {
+                    scheduleRefresh(5000, 25000)
+                }
             }
         } else if (json.messageType == "broadcastMessage") {
             queuePrompt("broadcastMessagePopup", json.message)

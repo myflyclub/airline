@@ -17,6 +17,56 @@ import scala.collection.mutable.{ListBuffer, Set}
 import scala.math.BigDecimal.RoundingMode
 
 
+object Application {
+  private val airportsJsonLock = new Object()
+  private var airportsJsonCycle: Int = -1 // guarded by airportsJsonLock
+  private var airportsJson: JsValue = Json.obj() // guarded by airportsJsonLock
+
+  private def buildAirportsJson(airportData: List[models.AirportWithChampionAndStats]): JsValue = {
+    val championsObject = JsObject(
+      airportData.filter(_.champion.isDefined).map { a =>
+        var obj = Json.toJson(a)(AirportWithChampionWrites).asInstanceOf[JsObject] +
+          ("travelRate" -> JsNumber(a.travelRate)) +
+          ("reputation" -> JsNumber(a.reputation))
+        a.congestion.foreach { c => obj = obj + ("congestion" -> JsNumber(c)) }
+        a.airport.id.toString -> obj
+      }.toMap
+    )
+    val boostsObject = JsObject(
+      airportData.filter { a =>
+        AirportBoostType.values.exists(a.airport.boostFactorsByType.get(_).nonEmpty)
+      }.map { a =>
+        a.airport.id.toString -> Json.toJson(a)(AirportBoostOnlyWrites)
+      }.toMap
+    )
+    val dynamicFeaturesObject = JsObject(
+      airportData.flatMap { a =>
+        val dynFeatures = a.airport.getFeatures().filter(_.isDynamic)
+        if (dynFeatures.nonEmpty) {
+          Some(a.airport.id.toString -> JsArray(dynFeatures.sortBy(_.featureType.id).map { f =>
+            Json.obj("type" -> f.featureType.toString, "strength" -> f.strength, "title" -> f.getDescription)
+          }))
+        } else None
+      }.toMap
+    )
+    Json.obj("champions" -> championsObject, "boosts" -> boostsObject, "dynamicFeatures" -> dynamicFeaturesObject)
+  }
+
+  def rebuildAirportsCache(): Unit = airportsJsonLock.synchronized {
+    airportsJson = buildAirportsJson(AirportUtil.cachedAirportChampions)
+    airportsJsonCycle = currentCycle
+  }
+
+  def getAirportsJson: JsValue = airportsJsonLock.synchronized {
+    val cycle = currentCycle
+    if (airportsJsonCycle != cycle) {
+      airportsJson = buildAirportsJson(AirportUtil.cachedAirportChampions)
+      airportsJsonCycle = cycle
+    }
+    airportsJson
+  }
+}
+
 class Application @Inject()(cc: ControllerComponents, val configuration: play.api.Configuration) extends AbstractController(cc) {
 
   implicit object AirportShareWrites extends Writes[(Airport, Double)] {
@@ -130,51 +180,14 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
    * - linkCount
    *
    */
-  @volatile private var airportsJsonCycle: Int = -1
-  @volatile private var airportsJson: JsValue = Json.obj()
-
-  private def buildAirportsJson(airportData: List[models.AirportWithChampionAndStats]): JsValue = {
-    val championsObject = JsObject(
-      airportData.filter(_.champion.isDefined).map { a =>
-        var obj = Json.toJson(a)(AirportWithChampionWrites).asInstanceOf[JsObject] +
-          ("travelRate" -> JsNumber(a.travelRate)) +
-          ("reputation" -> JsNumber(a.reputation))
-        a.congestion.foreach { c => obj = obj + ("congestion" -> JsNumber(c)) }
-        a.airport.id.toString -> obj
-      }.toMap
-    )
-    val boostsObject = JsObject(
-      airportData.filter { a =>
-        AirportBoostType.values.exists(a.airport.boostFactorsByType.get(_).nonEmpty)
-      }.map { a =>
-        a.airport.id.toString -> Json.toJson(a)(AirportBoostOnlyWrites)
-      }.toMap
-    )
-    val dynamicFeaturesObject = JsObject(
-      airportData.flatMap { a =>
-        val dynFeatures = a.airport.getFeatures().filter(_.isDynamic)
-        if (dynFeatures.nonEmpty) {
-          Some(a.airport.id.toString -> JsArray(dynFeatures.sortBy(_.featureType.id).map { f =>
-            Json.obj("type" -> f.featureType.toString, "strength" -> f.strength, "title" -> f.getDescription)
-          }))
-        } else None
-      }.toMap
-    )
-    Json.obj("champions" -> championsObject, "boosts" -> boostsObject, "dynamicFeatures" -> dynamicFeaturesObject)
-  }
-
   def getAirports() = Action { request =>
     request.headers.get(IF_NONE_MATCH) match {
       case Some(etag) if etag == s""""$currentCycle"""" =>
         NotModified
       case _ =>
-        if (airportsJsonCycle != currentCycle) {
-          airportsJson = buildAirportsJson(AirportUtil.cachedAirportChampions)
-          airportsJsonCycle = currentCycle
-        }
-        Ok(airportsJson)
+        Ok(Application.getAirportsJson)
           .withHeaders(
-            CACHE_CONTROL -> "no-cache",
+            CACHE_CONTROL -> CYCLE_CACHE_CONTROL,
             ETAG -> s""""$currentCycle""""
           )
     }
@@ -220,7 +233,7 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
         val runways: List[Runway] = AirportSource.loadAirportRunways(airportId)
         val dummyLounge: Lounge = Lounge(Airline("airline 1"), None, airport, "", 1, LoungeStatus.INACTIVE, 0)
         val tooltip_lounge = List(
-          s"To get lounge approval, your alliance must be in the top ${dummyLounge.getActiveRankingThreshold} by premium passenger count and you must have the most premium passengers in your alliance.",
+          s"To get lounge approval, your alliance must be in the top ${dummyLounge.getActiveRankingThreshold} by premium passenger count. ",
           "Premium passengers will pay higher ticket prices if you have a lounge",
           "Lounges can be upgraded to level 5; base levels 2, 4, 6, 8, and 10 required"
         )
@@ -262,7 +275,7 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
           computeAirportDetailJson(airportId).map { j => ResponseCache.airportDetailCache.put(airportId, (currentCycle, j)); j }
         }
         json match {
-          case Some(j) => Ok(j).withHeaders(CACHE_CONTROL -> "no-cache", ETAG -> s""""$currentCycle"""")
+          case Some(j) => Ok(j).withHeaders(CACHE_CONTROL -> CYCLE_CACHE_CONTROL, ETAG -> s""""$currentCycle"""")
           case None => NotFound
         }
     }
@@ -306,11 +319,32 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
         //            (airline, totalPassengersOfThisAirline) :: foldList
         //        }.sortBy(_._2).reverse
 
-        val statisticsPremiumPaxByAirline: List[(Airline, Int)] = (originPaxGroups ++ destinationPaxGroups ++ connectionPaxGroups).groupBy(_.key.airline).foldRight(List[(Airline, Int)]()) {
-          case ((airline, statistics), foldList) =>
-            val totalPassengersOfThisAirline = statistics.foldLeft(0)(_ + _.premiumPax)
-            (airline, totalPassengersOfThisAirline) :: foldList
-        }.sortBy(_._2).reverse
+        val premiumPaxByAirline: List[(Airline, Int)] = (originPaxGroups ++ destinationPaxGroups ++ connectionPaxGroups)
+          .groupBy(_.key.airline).map { case (airline, stats) => (airline, stats.map(_.premiumPax).sum) }.toList
+
+        val allianceIdByAirlineId: Map[Int, Int] = AllianceSource.loadAllianceMemberByAirlines(premiumPaxByAirline.map(_._1)).collect {
+          case (a, m) if m.role != AllianceRole.APPLICANT => (a.id, m.allianceId)
+        }.toMap
+        val allianceNameById: Map[Int, String] = {
+          val ids = allianceIdByAirlineId.values.toList.distinct
+          if (ids.isEmpty) Map.empty
+          else AllianceSource.loadAlliancesByIds(ids).map(a => (a.id, a.name)).toMap
+        }
+        val alliancePaxTotals: Map[Int, Int] = Lounge.groupPaxByAlliance(
+          premiumPaxByAirline.map { case (a, pax) => (allianceIdByAirlineId.get(a.id), pax) }
+        )
+        val airlinePremiumPaxJson: List[JsObject] = premiumPaxByAirline
+          .sortBy { case (airline, pax) =>
+            val allianceTotal = allianceIdByAirlineId.get(airline.id).flatMap(alliancePaxTotals.get).getOrElse(0)
+            (-allianceTotal, -pax)
+          }
+          .map { case (airline, pax) =>
+            val base = Json.obj("airlineName" -> airline.name, "airlineId" -> airline.id, "passengers" -> pax)
+            allianceIdByAirlineId.get(airline.id) match {
+              case Some(allianceId) => base ++ Json.obj("allianceId" -> Json.toJson(allianceId), "allianceName" -> Json.toJson(allianceNameById.getOrElse(allianceId, "")))
+              case None => base
+            }
+          }
 
         val localPaxByAirport: Map[Airport, Int] =
           flightsFromThisAirport.filter(_.key.airline.id == 0).groupBy(_.key.toAirport).view.mapValues(_.map(_.passengers).sum).toMap ++
@@ -390,7 +424,7 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
               "transitPassengers" -> transitPassengers,
               "localPaxByAirport" -> Json.toJson(localPaxByAirport),
               "airlinePax" -> statisticsTotalByAirline,
-              "airlinePremiumPax" -> statisticsPremiumPaxByAirline,
+              "airlinePremiumPax" -> Json.toJson(airlinePremiumPaxJson),
               "airlineOrigin" -> statisticsOriginPaxByAirline,
               //          "airlineDestination" -> statisticsDestinationPaxByAirline,
               "aircraftStats" -> aircraftStats,
@@ -412,7 +446,7 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
           LinkSource.loadLinkConsumptionsByLinkId(link.id, 1)
         }
         Ok(Json.toJson(competitorLinkConsumptions.filter(_.link.capacity.total > 0).map { linkConsumption => Json.toJson(linkConsumption)(SimpleLinkConsumptionWrite) }.toSeq)).withHeaders(
-          CACHE_CONTROL -> "no-cache",
+          CACHE_CONTROL -> CYCLE_CACHE_CONTROL,
           ETAG -> s""""$currentCycle""""
         )
     }
@@ -441,7 +475,7 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
           }))
     }))
       .withHeaders(
-        CACHE_CONTROL -> "no-cache",
+        CACHE_CONTROL -> CYCLE_CACHE_CONTROL,
         ETAG -> s""""$currentCycle""""
       )
   }
@@ -494,7 +528,7 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
           }
 
         Ok(result).withHeaders(
-          CACHE_CONTROL -> "no-cache",
+          CACHE_CONTROL -> CYCLE_CACHE_CONTROL,
           ETAG -> s""""$currentCycle""""
         )
     }
@@ -678,7 +712,7 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
         json
     }
     Ok(benchmarksJson).withHeaders(
-      CACHE_CONTROL -> "no-cache",
+      CACHE_CONTROL -> CYCLE_CACHE_CONTROL,
       ETAG -> s""""$currentCycle""""
     )
   }
@@ -710,7 +744,7 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
           }
         }
         Ok(result).withHeaders(
-          CACHE_CONTROL -> "no-cache",
+          CACHE_CONTROL -> CYCLE_CACHE_CONTROL,
           ETAG -> s""""$currentCycle""""
         )
     }
@@ -727,7 +761,7 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
           ResponseCache.demandCache.put(airportId, (currentCycle, result))
           result
         }
-        Ok(json).withHeaders(CACHE_CONTROL -> "no-cache", ETAG -> s""""$currentCycle"""")
+        Ok(json).withHeaders(CACHE_CONTROL -> CYCLE_CACHE_CONTROL, ETAG -> s""""$currentCycle"""")
     }
   }
 

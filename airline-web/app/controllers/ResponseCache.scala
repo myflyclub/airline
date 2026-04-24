@@ -15,13 +15,10 @@ import java.util.concurrent.TimeUnit
  *   - ActorCenter.LocalMainActor on CycleCompleted
  *   - Application.clearCache() for manual resets
  *
- * expireAfterWrite matches MainSimulation.CYCLE_DURATION (5 min) so entries
+ * expireAfterWrite matches CYCLE_DURATION_SECONDS so entries
  * are naturally evicted after one cycle even if invalidateAll() is not called.
  */
 object ResponseCache {
-
-  /** Mirrors MainSimulation.CYCLE_DURATION = 60 sec * 30 min but cleared via ActorCenter */
-  private val CYCLE_DURATION_SECONDS = 60 * 30
 
   /** Per-airport generic transit data — keyed by airportId */
   val transitCache: Cache[Int, (Int, JsValue)] =
