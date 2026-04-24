@@ -421,6 +421,21 @@ class AdminApplication @Inject()(cc: ControllerComponents) extends AbstractContr
     }
   }
 
+  def getAirlineFinancials(airlineId: Int) = Authenticated { implicit request =>
+    if (request.user.isAdmin) {
+      AirlineSource.loadAirlineById(airlineId, fullLoad = true) match {
+        case Some(airline) =>
+          Ok(Json.obj(
+            "balance" -> airline.airlineInfo.balance,
+            "actionPoints" -> airline.getActionPoints()
+          ))
+        case None => NotFound("Airline not found")
+      }
+    } else {
+      Forbidden("Not an admin user")
+    }
+  }
+
   def clearCache() = Authenticated { implicit request =>
     if (request.user.isAdmin) {
       AirlineCache.invalidateAll()

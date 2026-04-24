@@ -242,6 +242,7 @@ PUT		 /admin/send-broadcast-message		            controllers.AdminApplication.se
 POST     /admin/trigger-cycle-completed               controllers.AdminApplication.triggerCycleCompleted()
 POST      /admin/invalidate-image/:airportId/:imageType  controllers.AdminApplication.invalidateImage(imageType : String, airportId : Int)
 POST      /admin/invalidate-customization/:airlineId  controllers.AdminApplication.invalidateCustomization(airlineId : Int)
+GET      /admin/airline-financials/:airlineId   controllers.AdminApplication.getAirlineFinancials(airlineId : Int)
 GET      /admin/user-ips/:userId   controllers.AdminApplication.getUserIps(userId : Int)
 GET      /admin/user-uuids/:userId   controllers.AdminApplication.getUserUuids(userId : Int)
 GET      /admin/ip-airlines/:ip    controllers.AdminApplication.getAirlinesByIp(ip : String)

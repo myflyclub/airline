@@ -105,8 +105,18 @@ function showAdminActions(airline) {
     } else {
         $("#rivalDetailsModal .adminActions .airlineModifiers").text('-')
     }
-    $("#rivalDetailsModal .adminActions .currentBalance").text("$" + airline.balance.toLocaleString())
-    $("#rivalDetailsModal .adminActions .currentAp").text(airline.actionPoints != null ? airline.actionPoints.toFixed(1) : "-")
+    $("#rivalDetailsModal .adminActions .currentBalance").text("…")
+    $("#rivalDetailsModal .adminActions .currentAp").text("…")
+    $.ajax({
+        type: 'GET',
+        url: "/admin/airline-financials/" + airline.id,
+        contentType: 'application/json; charset=utf-8',
+        dataType: 'json',
+        success: function(data) {
+            $("#rivalDetailsModal .adminActions .currentBalance").text("$" + data.balance.toLocaleString())
+            $("#rivalDetailsModal .adminActions .currentAp").text(data.actionPoints != null ? data.actionPoints.toFixed(1) : "-")
+        }
+    })
     $("#rivalDetailsModal .adminActions .ips").empty()
     $("#rivalDetailsModal .adminActions .uuids").empty()
     $.ajax({
