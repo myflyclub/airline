@@ -51,7 +51,6 @@ function updateAirlineInfo(airlineId) {
 	    	activeAirline = airline
             const airlineType = airline.type.replace(" ", "") || 'standard'
             document.body.classList.add(`airlineType-${airlineType}`);
-	    	updateAirlineLogo()
             if (window.AirlineMap) {
                 updateLinksInfo();
                 AirlineMap.updateAirportMarkers(airline);
