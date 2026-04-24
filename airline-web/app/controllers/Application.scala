@@ -233,7 +233,7 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
         val runways: List[Runway] = AirportSource.loadAirportRunways(airportId)
         val dummyLounge: Lounge = Lounge(Airline("airline 1"), None, airport, "", 1, LoungeStatus.INACTIVE, 0)
         val tooltip_lounge = List(
-          s"To get lounge approval, your alliance must be in the top ${dummyLounge.getActiveRankingThreshold} by premium passenger count and you must have the most premium passengers in your alliance.",
+          s"To get lounge approval, your alliance must be in the top ${dummyLounge.getActiveRankingThreshold} by premium passenger count. ",
           "Premium passengers will pay higher ticket prices if you have a lounge",
           "Lounges can be upgraded to level 5; base levels 2, 4, 6, 8, and 10 required"
         )
@@ -319,11 +319,32 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
         //            (airline, totalPassengersOfThisAirline) :: foldList
         //        }.sortBy(_._2).reverse
 
-        val statisticsPremiumPaxByAirline: List[(Airline, Int)] = (originPaxGroups ++ destinationPaxGroups ++ connectionPaxGroups).groupBy(_.key.airline).foldRight(List[(Airline, Int)]()) {
-          case ((airline, statistics), foldList) =>
-            val totalPassengersOfThisAirline = statistics.foldLeft(0)(_ + _.premiumPax)
-            (airline, totalPassengersOfThisAirline) :: foldList
-        }.sortBy(_._2).reverse
+        val premiumPaxByAirline: List[(Airline, Int)] = (originPaxGroups ++ destinationPaxGroups ++ connectionPaxGroups)
+          .groupBy(_.key.airline).map { case (airline, stats) => (airline, stats.map(_.premiumPax).sum) }.toList
+
+        val allianceIdByAirlineId: Map[Int, Int] = AllianceSource.loadAllianceMemberByAirlines(premiumPaxByAirline.map(_._1)).collect {
+          case (a, m) if m.role != AllianceRole.APPLICANT => (a.id, m.allianceId)
+        }.toMap
+        val allianceNameById: Map[Int, String] = {
+          val ids = allianceIdByAirlineId.values.toList.distinct
+          if (ids.isEmpty) Map.empty
+          else AllianceSource.loadAlliancesByIds(ids).map(a => (a.id, a.name)).toMap
+        }
+        val alliancePaxTotals: Map[Int, Int] = Lounge.groupPaxByAlliance(
+          premiumPaxByAirline.map { case (a, pax) => (allianceIdByAirlineId.get(a.id), pax) }
+        )
+        val airlinePremiumPaxJson: List[JsObject] = premiumPaxByAirline
+          .sortBy { case (airline, pax) =>
+            val allianceTotal = allianceIdByAirlineId.get(airline.id).flatMap(alliancePaxTotals.get).getOrElse(0)
+            (-allianceTotal, -pax)
+          }
+          .map { case (airline, pax) =>
+            val base = Json.obj("airlineName" -> airline.name, "airlineId" -> airline.id, "passengers" -> pax)
+            allianceIdByAirlineId.get(airline.id) match {
+              case Some(allianceId) => base ++ Json.obj("allianceId" -> Json.toJson(allianceId), "allianceName" -> Json.toJson(allianceNameById.getOrElse(allianceId, "")))
+              case None => base
+            }
+          }
 
         val localPaxByAirport: Map[Airport, Int] =
           flightsFromThisAirport.filter(_.key.airline.id == 0).groupBy(_.key.toAirport).view.mapValues(_.map(_.passengers).sum).toMap ++
@@ -403,7 +424,7 @@ class Application @Inject()(cc: ControllerComponents, val configuration: play.ap
               "transitPassengers" -> transitPassengers,
               "localPaxByAirport" -> Json.toJson(localPaxByAirport),
               "airlinePax" -> statisticsTotalByAirline,
-              "airlinePremiumPax" -> statisticsPremiumPaxByAirline,
+              "airlinePremiumPax" -> Json.toJson(airlinePremiumPaxJson),
               "airlineOrigin" -> statisticsOriginPaxByAirline,
               //          "airlineDestination" -> statisticsDestinationPaxByAirline,
               "aircraftStats" -> aircraftStats,

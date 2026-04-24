@@ -31,6 +31,14 @@ object Lounge {
     Math.max(1, cost * (1 + ratio) - discrete)
   }
 
+  /** Groups premium pax by alliance, summing all entries. Drops entries where allianceId is None. */
+  def groupPaxByAlliance(entries: Iterable[(Option[Int], Int)]): Map[Int, Int] =
+    entries
+      .collect { case (Some(allianceId), pax) => (allianceId, pax) }
+      .groupBy(_._1)
+      .view.mapValues(_.map(_._2).sum)
+      .toMap
+
   def getBaseScaleRequirement(loungeLevel : Int): Int = {
     if (loungeLevel == 5) {
       10

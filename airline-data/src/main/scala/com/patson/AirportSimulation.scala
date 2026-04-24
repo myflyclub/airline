@@ -271,17 +271,17 @@ object AirportSimulation {
       if (!airport.getLounges().isEmpty) {
         val airlineIdsWithBase = airport.getAirlineBases().keys.toList
         //println(s"AIRPORT $airport : ${passengersByAirport.get(airport).map(_.toList)}")
-        val airlinesByPassengers : List[(Airline, Int)] = passengersByAirport.get(airport).map(_.toList).getOrElse(List.empty).filter {
-          case (airline, _) => airlineIdsWithBase.contains(airline.id) //only count airlines that has a base here
-        }.groupBy(_._1.getAllianceId())
-         .collect { case (Some(_), airlines) => airlines.maxBy(_._2) }
-         .toList
-         .sortBy(_._2)
+        val alliancePaxEntries = passengersByAirport.get(airport).map(_.toList).getOrElse(List.empty).filter {
+          case (airline, _) => airlineIdsWithBase.contains(airline.id)
+        }.map { case (airline, pax) => (airline.getAllianceId(), pax) }
 
-        val eligibleAirlines = airlinesByPassengers.takeRight(airport.getLounges().head.getActiveRankingThreshold).map(_._1)
+        val eligibleAllianceIds =
+          Lounge.groupPaxByAlliance(alliancePaxEntries).toList.sortBy(_._2)
+            .takeRight(airport.getLounges().head.getActiveRankingThreshold).map(_._1).toSet
+
         airport.getLounges().foreach { lounge =>
           val newStatus =
-            if (eligibleAirlines.contains(lounge.airline)) {
+            if (lounge.allianceId.exists(eligibleAllianceIds.contains)) {
               LoungeStatus.ACTIVE
             } else {
               LoungeStatus.INACTIVE

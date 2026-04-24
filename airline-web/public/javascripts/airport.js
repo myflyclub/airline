@@ -10,6 +10,27 @@ var _toggleState_AllianceBaseMapView = false
 const _etagStore = {}
 var _facilityStatistics = null
 
+function _allianceHslColor(allianceId) {
+    const hue = Math.floor((allianceId * 137.508) % 360)
+    return `hsl(${hue}, 62%, 52%)`
+}
+
+function assignAlliancePremiumColors(dataSet) {
+    const allianceColorMap = {}
+    dataSet.forEach(entry => {
+        const aid = entry.allianceId
+        if (aid != null) {
+            if (!allianceColorMap[aid]) {
+                allianceColorMap[aid] = airlineColors[entry.airlineId] || _allianceHslColor(aid)
+            }
+            entry.color = allianceColorMap[aid]
+        } else {
+            const c = airlineColors[entry.airlineId]
+            if (c) entry.color = c
+        }
+    })
+}
+
 function _buildBaseRows(statistics) {
     return statistics.bases.map(base => {
         let linkCount = 0, avgFreq = 0, avgDistance = 0, airlineTooltip = ''
@@ -20,7 +41,7 @@ function _buildBaseRows(statistics) {
                 linkCount = entry.linkCount
                 avgFreq = entry.avgFrequency
                 avgDistance = entry.avgDistance
-                airlineTooltip = `<p style="margin-bottom: 0.5rem;">${base.airlineName} <i>${airlineType} Airline</i></p><p>&ldquo;${airlineSlogan}&rdquo;</p>`
+                airlineTooltip = `<p style="margin-bottom: 0.5rem;">${htmlEncode(base.airlineName)} <i>${htmlEncode(airlineType)} Airline</i></p><p>&ldquo;${htmlEncode(airlineSlogan)}&rdquo;</p>`
                 break
             }
         }
@@ -103,7 +124,7 @@ function getAirportByAttribute(key, attribute = 'id') {
  */
 async function loadAirportsDynamic() {
     try {
-        const response = await fetch('/airports');
+        const response = await fetch('/airports', { cache: 'no-cache' });
         const data = await response.json();
         airportsLatestData = data;
 
@@ -754,7 +775,7 @@ function loadAirportStatistics(airportStatistics) {
     plotPie(transitTypeData, "", "transitTypePie", "transitType", "passengers")
 
     assignAirlineColors(airportStatistics.airlinePax, "airlineId")
-    assignAirlineColors(airportStatistics.airlinePremiumPax, "airlineId")
+    assignAlliancePremiumColors(airportStatistics.airlinePremiumPax)
     assignAirlineColors(airportStatistics.airlineOrigin, "airlineId")
 
     plotPie(airportStatistics.airlinePax, activeAirline ? activeAirline.name : "", "airlineTotalPie", "airlineName", "passengers")
