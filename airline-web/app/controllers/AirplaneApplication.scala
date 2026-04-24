@@ -273,7 +273,7 @@ class AirplaneApplication @Inject()(cc: ControllerComponents) extends AbstractCo
 
     if (!ownedModelFamilies.contains(model.family) && ownedModelFamilies.size >= airline.airlineGrade.getModelFamilyLimit) {
       val familyToken = if (ownedModelFamilies.size <= 1) "family" else "families"
-      return Some("Can only own up to " + airline.airlineGrade.getModelFamilyLimit + " different airplane " + familyToken + " at current airline grade")
+      return Some(s"Can only own up to ${airline.airlineGrade.getModelFamilyLimit} different airplane $familyToken at current airline grade (level ${airline.airlineGrade.level}, same as the limit)")
     }
 
     if (checkBalance) {

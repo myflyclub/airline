@@ -194,7 +194,7 @@ function colorFromString(s) {
  * @param {number} thresholdFraction - fraction under which slices are aggregated (default 0.02)
  * @returns {{labels: string[], data: number[], backgroundColors: string[]}}
  */
-function preparePieData(dataSource, keyName = null, valueName = null, thresholdFraction = 0.02) {
+function preparePieData(dataSource, keyName = null, valueName = null, thresholdFraction = 0.02, preserveOrder = false) {
     const labels = [];
     const data = [];
     const backgroundColors = [];
@@ -235,8 +235,7 @@ function preparePieData(dataSource, keyName = null, valueName = null, thresholdF
         normalEntries.push({ label: prettyLabel(keyLabel), value: dataValue, color: bgColor });
     });
 
-    // Sort normal entries by value descending (largest first)
-    normalEntries.sort((a, b) => b.value - a.value);
+    if (!preserveOrder) normalEntries.sort((a, b) => b.value - a.value);
 
     // Fill arrays from sorted normal entries
     normalEntries.forEach(entry => {
@@ -1019,8 +1018,8 @@ function toggleLinkEventBar(chart, cycle, on) {
  * @param {string|null} valueName - The property name for values in data entries
  * @param {boolean} hasLegend - Whether to display the legend
  */
-function plotPie(dataSource, currentKey = null, container, keyName = null, valueName = null, hasLegend = false) {
-    const { labels, data, backgroundColors } = preparePieData(dataSource, keyName, valueName, 0.01);
+function plotPie(dataSource, currentKey = null, container, keyName = null, valueName = null, hasLegend = false, preserveOrder = false) {
+    const { labels, data, backgroundColors } = preparePieData(dataSource, keyName, valueName, 0.01, preserveOrder);
 
     const total = data.reduce((sum, value) => sum + value, 0);
 

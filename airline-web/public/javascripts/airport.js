@@ -780,7 +780,7 @@ function loadAirportStatistics(airportStatistics) {
 
     plotPie(airportStatistics.airlinePax, activeAirline ? activeAirline.name : "", "airlineTotalPie", "airlineName", "passengers")
     plotPie(airportStatistics.airlineOrigin, activeAirline ? activeAirline.name : "", "airlineOriginPie", "airlineName", "passengers")
-    plotPie(airportStatistics.airlinePremiumPax, activeAirline ? activeAirline.name : "", "airlinePremiumPie", "airlineName", "passengers")
+    plotPie(airportStatistics.airlinePremiumPax, activeAirline ? activeAirline.name : "", "airlinePremiumPie", "airlineName", "passengers", false, true)
     plotPie(airportStatistics.aircraftStats, "", "airportModelPie")
 
 
