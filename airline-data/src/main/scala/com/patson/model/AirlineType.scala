@@ -90,7 +90,7 @@ case object MegaHqAirline extends AirlineType {
   override val elitesRepPerLevel = 50
   override val touristTravelerRepPerLevel = 50
   val description = List[String](
-    "Build a giant mega-base!",
+    "Build a giant mega-base! Your HQ has a special capability to always allow international transfers.",
     "Earn reputation by moving lots of elite passengers AND tourist and traveler passengers.",
     "Additionally earn rep from winning airports, but none from stock price.",
     "Upgrading & upkeep any additional bases is extremely expensive.",

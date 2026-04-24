@@ -41,7 +41,7 @@ case class AirlineBase(airline : Airline, airport : Airport, countryCode : Strin
     val baseUpkeep = 15000 + airport.rating.overallDifficulty * 1600
 
     val (plateau, steepness, mod) = (airlineType, headquarter) match {
-      case (MegaHqAirline, true)  => (70.0, 0.135, -5_000)
+      case (MegaHqAirline, true)  => (70.0, 0.137, -5_000)
       case (MegaHqAirline, false) => (95.0, 0.175, 5_000)
       case _                      => (79.0, 0.155, 0)
     }

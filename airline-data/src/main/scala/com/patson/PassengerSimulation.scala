@@ -22,6 +22,13 @@ object PassengerSimulation {
       .collect { case (airline, airport, spec: TransferSpecialization) => ((airport.id, airline.id), spec) }
       .toMap
   }
+
+  val megaHqHeadquarterAirports: scala.collection.immutable.Set[(Int, Int)] = {
+    AirlineSource.loadAirlineBasesByCriteria(List(("headquarter", true)))
+      .filter(_.airline.airlineType == MegaHqAirline)
+      .map(base => (base.airline.id, base.airport.id))
+      .toSet
+  }
   
   case class PassengerConsumptionResult(consumptionByRoutes: Map[(PassengerGroup, Airport, Route), Int], missedDemand: Map[(PassengerGroup, Airport), Int], worldStats: WorldStatistics)
 
@@ -389,6 +396,8 @@ object PassengerSimulation {
     } else if (linkConsideration.from.countryCode == originatingAirport.countryCode) { //always ok if link flying out from same country as the originate airport
       true
     } else if (airportSize >= 7) { //large airports can handle transfers
+      true
+    } else if (megaHqHeadquarterAirports.contains((linkConsideration.link.airline.id, linkConsideration.from.id))) {
       true
     } else { //international to international, decide base on openness
       countryOpenness(linkConsideration.from.countryCode) >= Country.SIXTH_FREEDOM_MIN_OPENNESS
