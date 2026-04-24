@@ -19,11 +19,11 @@
                                 <div class="cell" style="width: 9%" align="right">Prize</div>
                             </div>
                         </div>
-                        <div class="table data section tight rankingTable" id="allianceTouristsRank">
+                        <div class="table data section tight rankingTable" id="allianceCodesharesRank">
                             <div class="table-header">
                                 <div class="cell" style="width: 7%">Rank</div>
                                 <div class="cell" style="width: 9%">Change</div>
-                                <div class="cell" style="width: 54%">Alliance Tourist Passengers</div>
+                                <div class="cell" style="width: 54%">Alliance Codeshare Passengers</div>
                                 <div class="cell" style="width: 22%" align="right">Total</div>
                                 <div class="cell" style="width: 9%" align="right">Prize</div>
                             </div>
@@ -130,6 +130,15 @@
 								<div class="cell" style="width: 9%" align="right">Prize</div>
 							</div>
 						</div>
+						<div class="table data section tight rankingTable" id="onTimeRank">
+							<div class="table-header">
+								<div class="cell" style="width: 7%">Rank</div>
+								<div class="cell" style="width: 9%">Change</div>
+								<div class="cell" style="width: 54%">Best On-Time Performance</div>
+								<div class="cell" style="width: 22%" align="right">On-Time %</div>
+								<div class="cell" style="width: 9%" align="right">Prize</div>
+							</div>
+						</div>
 						<div class="table data section tight rankingTable" id="loungeRank">
 							<div class="table-header">
 								<div class="cell" style="width: 7%">Rank</div>
@@ -155,24 +164,6 @@
 								<div class="cell" style="width: 50%">Most Profitable Route</div>
 								<div class="cell" style="width: 27%" align="right">Weekly Profit</div>
 								<div class="cell" style="width: 9%" align="right">Prize</div>
-							</div>
-						</div>
-						<div class="table data section tight rankingTable" id="linkLossRank">
-							<div class="table-header">
-								<div class="cell" style="width: 7%">Rank</div>
-								<div class="cell" style="width: 9%">Change</div>
-								<div class="cell" style="width: 48%">Least Profitable Route</div>
-								<div class="cell" style="width: 27%" align="right">Weekly Profit</div>
-								<div class="cell" style="width: 10%" align="right">Prize</div>
-							</div>
-						</div>
-						<div class="table data section tight rankingTable" id="linksLossCountRank">
-							<div class="table-header">
-								<div class="cell" style="width: 7%">Rank</div>
-								<div class="cell" style="width: 9%">Change</div>
-								<div class="cell" style="width: 48%">Most Money Losing Links</div>
-								<div class="cell" style="width: 27%" align="right">Count</div>
-								<div class="cell" style="width: 10%" align="right">Prize</div>
 							</div>
 						</div>
 						<div class="table data section tight rankingTable" id="linkFrequency">
@@ -238,13 +229,34 @@
 								<div class="cell" style="width: 9%" align="right">Prize</div>
 							</div>
 						</div>
-						<div class="table data section tight rankingTable" id="repPerStaffRank">
+					</div>
+					<div class="section" style="width: 100%;height: min-content;flex-shrink: 0;"><p><i>Shame board — negative prizes penalize reputation.</i></p></div>
+					<div class="two-up-grid">
+						<div class="table data section tight rankingTable" id="dissatisfactionRank">
 							<div class="table-header">
 								<div class="cell" style="width: 7%">Rank</div>
 								<div class="cell" style="width: 9%">Change</div>
-								<div class="cell" style="width: 58%">Most Reputation Earned Per Staff</div>
-								<div class="cell" style="width: 25%" align="right">Ratio</div>
+								<div class="cell" style="width: 54%">Unhappiest Customers</div>
+								<div class="cell" style="width: 22%" align="right">Average SF</div>
 								<div class="cell" style="width: 9%" align="right">Prize</div>
+							</div>
+						</div>
+						<div class="table data section tight rankingTable" id="linkLossRank">
+							<div class="table-header">
+								<div class="cell" style="width: 7%">Rank</div>
+								<div class="cell" style="width: 9%">Change</div>
+								<div class="cell" style="width: 48%">Least Profitable Route</div>
+								<div class="cell" style="width: 27%" align="right">Weekly Profit</div>
+								<div class="cell" style="width: 10%" align="right">Prize</div>
+							</div>
+						</div>
+						<div class="table data section tight rankingTable" id="linksLossCountRank">
+							<div class="table-header">
+								<div class="cell" style="width: 7%">Rank</div>
+								<div class="cell" style="width: 9%">Change</div>
+								<div class="cell" style="width: 48%">Most Money Losing Links</div>
+								<div class="cell" style="width: 27%" align="right">Count</div>
+								<div class="cell" style="width: 10%" align="right">Prize</div>
 							</div>
 						</div>
 					</div>
@@ -258,12 +270,28 @@
 								<div class="cell" style="width: 34%" align="right">Weekly Enplanements</div>
 							</div>
 						</div>
+						<div class="table data section tight rankingTable" id="mostCongestedAirportRank">
+							<div class="table-header">
+								<div class="cell" style="width: 7%">Rank</div>
+								<div class="cell" style="width: 9%">Change</div>
+								<div class="cell" style="width: 50%">Most Congested Airport</div>
+								<div class="cell" style="width: 34%" align="right">Congestion %</div>
+							</div>
+						</div>
 						<div class="table data section tight rankingTable" id="passengerMileRank">
 							<div class="table-header">
 								<div class="cell" style="width: 10%">Rank</div>
 								<div class="cell" style="width: 10%">Change</div>
 								<div class="cell" style="width: 54%">Largest by Passenger Mile</div>
 								<div class="cell" style="width: 25%" align="right">Pax miles</div>
+							</div>
+						</div>
+						<div class="table data section tight rankingTable" id="largestFleetRank">
+							<div class="table-header">
+								<div class="cell" style="width: 10%">Rank</div>
+								<div class="cell" style="width: 10%">Change</div>
+								<div class="cell" style="width: 54%">Largest Fleet</div>
+								<div class="cell" style="width: 25%" align="right">Aircraft</div>
 							</div>
 						</div>
 						<div class="table data section tight rankingTable" id="linkProfitTotalRank">

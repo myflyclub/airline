@@ -30,7 +30,7 @@ function loadRanking() {
 }
 
 var CURRENCY_TYPES = new Set(["STOCK_PRICE", "LINK_PROFIT", "LINK_PROFIT_ALL", "LINK_LOSS", "AIRLINE_VALUE"])
-var PERCENTAGE_TYPES = new Set(["PASSENGER_SATISFACTION"])
+var PERCENTAGE_TYPES = new Set(["PASSENGER_SATISFACTION", "PASSENGER_DISSATISFACTION", "ON_TIME", "MOST_CONGESTED_AIRPORT"])
 
 function updateRankingTable(rankingType, rankings) {
     //locate which table
@@ -63,8 +63,10 @@ function updateRankingTable(rankingType, rankings) {
         rankingTable = $('#reputationRank')
     } else if (rankingType == "AIRLINE_PROFIT_MARGIN") {
         rankingTable = $('#airlineProfitMarginRank')
-    } else if (rankingType == "STAFF_REPUTATION") {
-        rankingTable = $('#repPerStaffRank')
+    } else if (rankingType == "ON_TIME") {
+        rankingTable = $('#onTimeRank')
+    } else if (rankingType == "PASSENGER_DISSATISFACTION") {
+        rankingTable = $('#dissatisfactionRank')
     } else if (rankingType == "SERVICE_QUALITY") {
         rankingTable = $('#serviceQualityRank')
     } else if (rankingType == "LINK_COUNT") {
@@ -95,6 +97,10 @@ function updateRankingTable(rankingType, rankings) {
         rankingTable = $('#airlineValueRank')
     } else if (rankingType == "AIRLINE_PRESTIGE") {
         rankingTable = $('#airlinePrestigeRank')
+    } else if (rankingType == "MOST_CONGESTED_AIRPORT") {
+        rankingTable = $('#mostCongestedAirportRank')
+    } else if (rankingType == "LARGEST_FLEET") {
+        rankingTable = $('#largestFleetRank')
     } else if (rankingType == "AIRPORT") {
         rankingTable = $('#airportRank')
     } else if (rankingType == "INTERNATIONAL_PAX") {
@@ -103,8 +109,8 @@ function updateRankingTable(rankingType, rankings) {
         rankingTable = $('#domesticPaxRank')
     } else if (rankingType == "ALLIANCE_TRAVELERS") {
         rankingTable = $('#allianceTravelersRank')
-    } else if (rankingType == "ALLIANCE_TOURISTS") {
-        rankingTable = $('#allianceTouristsRank')
+    } else if (rankingType == "ALLIANCE_CODESHARES") {
+        rankingTable = $('#allianceCodesharesRank')
     } else if (rankingType == "ALLIANCE_ELITE") {
         rankingTable = $('#allianceElitesRank')
     } else if (rankingType == "ALLIANCE_AIRPORT_REP") {
@@ -129,7 +135,7 @@ function updateRankingTable(rankingType, rankings) {
             if (rankingType != "LINK_PROFIT_ALL" && activeAirline && !currentAirlineRanking) {
                 if (ranking.airlineId == activeAirline.id) {
                     currentAirlineRanking = ranking
-                } else if (rankingType == "AIRPORT" && ranking.airportId &&
+                } else if ((rankingType == "AIRPORT" || rankingType == "MOST_CONGESTED_AIRPORT") && ranking.airportId &&
                            activeAirline.headquarterAirport &&
                            ranking.airportId == activeAirline.headquarterAirport.airportId) {
                     currentAirlineRanking = ranking
