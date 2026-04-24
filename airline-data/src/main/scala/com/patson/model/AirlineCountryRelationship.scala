@@ -74,7 +74,7 @@ object AirlineCountryRelationship {
         //home country vs target country
         val relationship = countryRelationships.getOrElse((homeCountryCode, countryCode), 0)
         val multiplier = if (relationship >= 0) HOME_COUNTRY_POSITIVE_RELATIONSHIP_MULTIPLIER else HOME_COUNTRY_NEGATIVE_RELATIONSHIP_MULTIPLIER
-        val home_country_bonus = if (relationship >= 5) CountryAirlineTitle.PRIVILEGED_AIRLINE_RELATIONSHIP_THRESHOLD else 0
+        val home_country_bonus = if (relationship >= 5) 15 else 0 //privileged = 35, so want 15 as relationship * multiplier = 20
           factors.put(HOME_COUNTRY(countryMap(homeCountryCode), targetCountry, relationship), relationship * multiplier + home_country_bonus)
 
         //market share
@@ -100,8 +100,6 @@ object AirlineCountryRelationship {
         val allTitles = CountryAirlineTitle.getTopTitlesByCountry(countryCode)
         airline.getAllianceId().foreach { allianceId =>
           val allianceMemberAirlineIds : List[Int] = AllianceSource.loadAllianceById(allianceId).get.members.filter(_.airline.id != airline.id).map(_.airline.id) //make sure it's not the current airline
-
-
           val allianceMemberNational = allTitles.find { t =>
             t.title == Title.NATIONAL_AIRLINE && allianceMemberAirlineIds.contains(t.airline.id)
           }
