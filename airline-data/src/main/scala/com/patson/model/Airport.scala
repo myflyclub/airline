@@ -410,7 +410,7 @@ object Airport {
     s"Congestion increases likelihood of delays, especially when it's over $CONGESTION_HIGH%",
     s"Negotiations become more difficult when congestion is over $CONGESTION_MODERATE% and much harder when over $CONGESTION_HIGH% as slots have to be coordinated."
   )
-  val GLOBAL_AIRPORT_REPUTATION_POOL = 11000
+  val GLOBAL_AIRPORT_REPUTATION_POOL = 10000
   val SLOT_FEES_AIRPORT_SIZE: Map[Int, Int] = Map(
     1 -> 2,
     2 -> 4,
