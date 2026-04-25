@@ -12,8 +12,8 @@ object ManagerSimulation {
       val currentAP = airline.getActionPoints()
 
       val rate =
-        if (available == 0 || currentAP > ManagerBaseTask.MAX_CYCLES_STORED_THRESHOLD * available) 0.0
-        else if (currentAP > ManagerBaseTask.INEFFICIENT_CYCLE_THRESHOLD * available) 0.08
+        if (available == 0 || currentAP > ManagerBaseTask.MAX_CYCLES_STORED_THRESHOLD * available * ManagerBaseTask.GENERATION_RATE) 0.0
+        else if (currentAP > ManagerBaseTask.INEFFICIENT_CYCLE_THRESHOLD * available * ManagerBaseTask.GENERATION_RATE) 0.07
         else ManagerBaseTask.GENERATION_RATE
 
       val gained = rate * available

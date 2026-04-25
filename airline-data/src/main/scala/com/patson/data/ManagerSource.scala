@@ -84,8 +84,14 @@ object ManagerSource {
               case ManagerLoadInfo(delegateId, taskType, _) => (delegateId, taskType)
             }.toMap)
 
-            val delegates : List[Manager] = delegateInfoEntries.toList.map {
-              case (ManagerLoadInfo(delegateId, _, availableCycle)) => Manager(airline, managerTaskByDelegateId(delegateId), availableCycle, delegateId)
+            val delegates : List[Manager] = delegateInfoEntries.toList.flatMap {
+              case (ManagerLoadInfo(delegateId, _, availableCycle)) =>
+                managerTaskByDelegateId.get(delegateId) match {
+                  case Some(task) => Some(Manager(airline, task, availableCycle, delegateId))
+                  case None =>
+                    println(s"Warning: delegate $delegateId (airline $airlineId) has no task record, skipping")
+                    None
+                }
             }
 
             (airlineId, delegates)

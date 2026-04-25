@@ -86,7 +86,7 @@ case class ManagerBaseTask() extends ManagerTask(0, ManagerTaskType.MANAGER_BASE
 object ManagerBaseTask {
   val GENERATION_RATE = 0.1
   val INEFFICIENT_CYCLE_THRESHOLD = 8 * 2
-  val MAX_CYCLES_STORED_THRESHOLD = 24 * 2
+  val MAX_CYCLES_STORED_THRESHOLD = 24 * 4
 }
 
 case class AircraftModelManagerTask(startCycle : Int, modelId : Int, modelName : String) extends LevelingManagerTask(startCycle, ManagerTaskType.MANAGER_AIRCRAFT_MODEL) {
