@@ -1,6 +1,5 @@
 package com.patson.patch
 
-import com.mchange.v2.c3p0.ComboPooledDataSource
 import com.patson.data.Constants._
 import com.patson.data.{AirlineSource, AirplaneSource, LinkSource, Meta, Patchers}
 import com.patson.init.{AirportGeoPatcher, AirportStatsInit, actorSystem}
@@ -37,15 +36,9 @@ object Version4_1Patcher extends App {
   }
 
   def createSchema() = {
-    Class.forName(DB_DRIVER)
-    val dataSource = new ComboPooledDataSource()
-    dataSource.setUser(DATABASE_USER)
-    dataSource.setPassword(DATABASE_PASSWORD)
-    dataSource.setJdbcUrl(DATABASE_CONNECTION)
-    dataSource.setMaxPoolSize(100)
     var connection: Connection = null
     try {
-      connection = dataSource.getConnection
+      connection = Meta.getConnection()
 
       Meta.createPassengerHistoryTables(connection)
       Meta.createAirportStatistics(connection)
@@ -166,14 +159,8 @@ object Version4_1Patcher extends App {
   def patchAirlineShares() = {
     println("Assigning 400,000 shares to each airline")
     
-    Class.forName(DB_DRIVER)
-    val dataSource = new ComboPooledDataSource()
-    dataSource.setUser(DATABASE_USER)
-    dataSource.setPassword(DATABASE_PASSWORD)
-    dataSource.setJdbcUrl(DATABASE_CONNECTION)
-    dataSource.setMaxPoolSize(100)
-    val connection = dataSource.getConnection
-    
+    val connection = Meta.getConnection()
+
     try {
       if (columnExists(connection, "airline_info", "weekly_dividends")) {
         println("Renaming weekly_dividends column to shares_outstanding")
@@ -226,14 +213,8 @@ object Version4_1Patcher extends App {
   def swap_q400_model() = {
     println("Updating De Havilland Q400 airplanes to Q400 NextGen")
     
-    Class.forName(DB_DRIVER)
-    val dataSource = new ComboPooledDataSource()
-    dataSource.setUser(DATABASE_USER)
-    dataSource.setPassword(DATABASE_PASSWORD)
-    dataSource.setJdbcUrl(DATABASE_CONNECTION)
-    dataSource.setMaxPoolSize(100)
-    val connection = dataSource.getConnection
-    
+    val connection = Meta.getConnection()
+
     try {
       // Get model IDs from the airplane_model table
       val modelQuery = connection.prepareStatement("SELECT id, name FROM " + AIRPLANE_MODEL_TABLE + " WHERE name IN (?, ?)")
@@ -347,14 +328,8 @@ object Version4_1Patcher extends App {
   def removeObsoleteBaseSpecializations() = {
     println("Removing obsolete airline base specializations")
     
-    Class.forName(DB_DRIVER)
-    val dataSource = new ComboPooledDataSource()
-    dataSource.setUser(DATABASE_USER)
-    dataSource.setPassword(DATABASE_PASSWORD)
-    dataSource.setJdbcUrl(DATABASE_CONNECTION)
-    dataSource.setMaxPoolSize(100)
-    val connection = dataSource.getConnection
-    
+    val connection = Meta.getConnection()
+
     try {
       // List of specialization IDs to remove
       val specializationsToRemove = List(
@@ -422,14 +397,8 @@ object Version4_1Patcher extends App {
   def raisePrices() = {
     println("Raising link prices")
     
-    Class.forName(DB_DRIVER)
-    val dataSource = new ComboPooledDataSource()
-    dataSource.setUser(DATABASE_USER)
-    dataSource.setPassword(DATABASE_PASSWORD)
-    dataSource.setJdbcUrl(DATABASE_CONNECTION)
-    dataSource.setMaxPoolSize(100)
-    val connection = dataSource.getConnection
-    
+    val connection = Meta.getConnection()
+
     try {
       // Update price_economy by +20
       val updateEconomyStatement = connection.prepareStatement(s"UPDATE $LINK_TABLE SET price_economy = price_economy + 20")

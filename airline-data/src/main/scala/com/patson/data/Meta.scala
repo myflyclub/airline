@@ -1,32 +1,30 @@
 package com.patson.data
 
 import java.sql.Connection
-import java.sql.DriverManager
 import java.sql.PreparedStatement
 import com.patson.data.Constants._
-import java.util.Properties
-import com.mchange.v2.c3p0.ComboPooledDataSource
+import com.zaxxer.hikari.{HikariConfig, HikariDataSource}
 
 object Meta {
-  Class.forName(DB_DRIVER)
-  val dataSource = new ComboPooledDataSource()
-
-  dataSource.setUser(DATABASE_USER)
-  dataSource.setPassword(DATABASE_PASSWORD)
-  dataSource.setJdbcUrl(DATABASE_CONNECTION)
-  dataSource.setMaxPoolSize(
-    if (Constants.configFactory.hasPath("c3p0.maxPoolSize"))
-      Constants.configFactory.getInt("c3p0.maxPoolSize")
-    else 25
+  private val hikariConfig = new HikariConfig()
+  hikariConfig.setJdbcUrl(DATABASE_CONNECTION)
+  hikariConfig.setUsername(DATABASE_USER)
+  hikariConfig.setPassword(DATABASE_PASSWORD)
+  hikariConfig.setMaximumPoolSize(
+    if (Constants.configFactory.hasPath("hikari.maxPoolSize"))
+      Constants.configFactory.getInt("hikari.maxPoolSize")
+    else 20
   )
-  dataSource.setIdleConnectionTestPeriod(60)
-  dataSource.setMaxIdleTime(300)
-  dataSource.setMaxConnectionAge(3600)
-  dataSource.setUnreturnedConnectionTimeout(180) // Forcibly reclaim leaked connections after 180s
-  dataSource.setDebugUnreturnedConnectionStackTraces(true) // Logs EXACTLY where the leak happened
-  dataSource.setTestConnectionOnCheckout(true)
-  dataSource.setPreferredTestQuery("SELECT 1")
-  dataSource.setCheckoutTimeout(10000)
+  hikariConfig.setIdleTimeout(300_000)
+  hikariConfig.setMaxLifetime(3_600_000)
+  hikariConfig.setConnectionTimeout(
+    if (Constants.configFactory.hasPath("hikari.connectionTimeout"))
+      Constants.configFactory.getLong("hikari.connectionTimeout")
+    else 10_000
+  )
+  hikariConfig.setLeakDetectionThreshold(30000)
+
+  val dataSource = new HikariDataSource(hikariConfig)
 
   def getConnection(): java.sql.Connection = {
     dataSource.getConnection()
@@ -79,6 +77,10 @@ object Meta {
     statement.close()
 
     statement = connection.prepareStatement("DROP TABLE IF EXISTS " + AIRPORT_TABLE)
+    statement.execute()
+    statement.close()
+
+    statement = connection.prepareStatement("DROP TABLE IF EXISTS " + TRANSIT_CONSUMPTION_TABLE)
     statement.execute()
     statement.close()
 
@@ -201,6 +203,7 @@ object Meta {
       statement.close()
 
     createLinkStats(connection)
+    createTransitConsumption(connection)
     createPassengerHistoryTables(connection)
     createAirlineLedger(connection)
     createIncome(connection)
@@ -348,7 +351,6 @@ object Meta {
       "distance INTEGER, " +
       "frequency SMALLINT, " +
       "duration SMALLINT, " +
-      "transport_type TINYINT, " +
       "flight_number SMALLINT, " +
       "airplane_model SMALLINT, " +
       "raw_quality SMALLINT, " +
@@ -359,15 +361,7 @@ object Meta {
     statement.execute()
     statement.close()
 
-    statement = connection.prepareStatement("CREATE INDEX " + LINK_CONSUMPTION_INDEX_1 + " ON " + LINK_CONSUMPTION_TABLE + "(link)")
-    statement.execute()
-    statement.close()
-
-    statement = connection.prepareStatement("CREATE INDEX " + LINK_CONSUMPTION_INDEX_2 + " ON " + LINK_CONSUMPTION_TABLE + "(airline)")
-    statement.execute()
-    statement.close()
-
-    statement = connection.prepareStatement("CREATE INDEX " + LINK_CONSUMPTION_INDEX_3 + " ON " + LINK_CONSUMPTION_TABLE + "(cycle DESC)")
+    statement = connection.prepareStatement("CREATE INDEX " + LINK_CONSUMPTION_INDEX_2 + " ON " + LINK_CONSUMPTION_TABLE + "(airline, cycle)")
     statement.execute()
     statement.close()
 
@@ -580,6 +574,28 @@ object Meta {
     statement.close()
 
     statement = connection.prepareStatement("CREATE INDEX " + LINK_STATISTICS_INDEX_4 + " ON " + LINK_STATISTICS_TABLE + "(cycle)")
+    statement.execute()
+    statement.close()
+  }
+
+  def createTransitConsumption(connection: Connection): Unit = {
+    var statement = connection.prepareStatement("DROP TABLE IF EXISTS " + TRANSIT_CONSUMPTION_TABLE)
+    statement.execute()
+    statement.close()
+
+    statement = connection.prepareStatement("CREATE TABLE " + TRANSIT_CONSUMPTION_TABLE + "(" +
+      "link INTEGER, " +
+      "sold_seats_economy INTEGER, " +
+      "cycle INTEGER, " +
+      "PRIMARY KEY (cycle, link))")
+    statement.execute()
+    statement.close()
+
+    statement = connection.prepareStatement("CREATE INDEX transit_consumption_index_1 ON " + TRANSIT_CONSUMPTION_TABLE + "(link)")
+    statement.execute()
+    statement.close()
+
+    statement = connection.prepareStatement("CREATE INDEX transit_consumption_index_2 ON " + TRANSIT_CONSUMPTION_TABLE + "(cycle DESC)")
     statement.execute()
     statement.close()
   }

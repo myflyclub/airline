@@ -2,9 +2,6 @@ package com.patson.patch
 
 import java.sql.Connection
 
-import com.mchange.v2.c3p0.ComboPooledDataSource
-
-import com.patson.data.Constants.{DATABASE_CONNECTION, DATABASE_PASSWORD, DATABASE_USER, DB_DRIVER}
 import com.patson.data.{AirlineSource, AirplaneSource, LinkSource, Meta}
 import com.patson.init.actorSystem
 import com.patson.model._
@@ -34,20 +31,7 @@ object Version1_1Patcher extends App {
   }
 
   def createSchema() = {
-    Class.forName(DB_DRIVER)
-    val dataSource = new ComboPooledDataSource()
-    //    val properties = new Properties()
-    //    properties.put("user", DATABASE_USER);
-    //    properties.put("password", "admin");
-    //DriverManager.getConnection(DATABASE_CONNECTION, properties);
-    //mysql end
-
-    //dataSource.setProperties(properties)
-    dataSource.setUser(DATABASE_USER)
-    dataSource.setPassword(DATABASE_PASSWORD)
-    dataSource.setJdbcUrl(DATABASE_CONNECTION)
-    dataSource.setMaxPoolSize(100)
-    val connection = dataSource.getConnection
+    val connection = Meta.getConnection()
     Meta.createAirplaneConfiguration(connection)
     Meta.createCountryAirlineTitle(connection)
     connection.close

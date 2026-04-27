@@ -379,13 +379,14 @@ class AdminApplication @Inject()(cc: ControllerComponents) extends AbstractContr
   def getPoolStats() = Authenticated { implicit request =>
     if (request.user.isAdmin) {
       val ds = com.patson.data.Meta.dataSource
+      val pool = ds.getHikariPoolMXBean()
       Ok(Json.obj(
-        "numConnections" -> ds.getNumConnections(),
-        "numBusyConnections" -> ds.getNumBusyConnections(),
-        "numIdleConnections" -> ds.getNumIdleConnections(),
-        "maxPoolSize" -> ds.getMaxPoolSize(),
-        "numFailedCheckouts" -> ds.getNumFailedCheckoutsDefaultUser(),
-        "threadPoolNumActiveThreads" -> ds.getThreadPoolNumActiveThreads()
+        "numConnections" -> pool.getTotalConnections(),
+        "numBusyConnections" -> pool.getActiveConnections(),
+        "numIdleConnections" -> pool.getIdleConnections(),
+        "maxPoolSize" -> ds.getMaximumPoolSize(),
+        "numFailedCheckouts" -> pool.getThreadsAwaitingConnection(),
+        "threadPoolNumActiveThreads" -> pool.getActiveConnections()
       ))
     } else {
       Forbidden("Not an admin user")
