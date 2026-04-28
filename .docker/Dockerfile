@@ -2,7 +2,7 @@ FROM ubuntu:22.04 AS base
 
 RUN apt-get update \
     && apt-get upgrade --yes \
-    && apt-get install --yes openjdk-11-jdk \
+    && apt-get install --yes openjdk-21-jdk \
         curl \
         screen \
         nano \

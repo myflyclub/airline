@@ -13,7 +13,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 
 object MainSimulation extends App {
-  val CYCLE_DURATION : Int = 60 * 29
+  val CYCLE_DURATION : Int = 60 * 4
   val SCHEDULE_BUFFER_SECS : Int = 30
   val SCHEDULE_OVERHEAD_FACTOR : Double = 1.1
   var currentWeek: Int = 0
@@ -30,7 +30,7 @@ object MainSimulation extends App {
     val startTime = System.currentTimeMillis()
     AirportCache.getAllAirports(true)
     val endTime = System.currentTimeMillis()
-    println(s"Cache initialization completed in ${endTime - startTime}ms")
+    println(s"Airport cache initialization completed in ${endTime - startTime}ms")
   }
 
   def invalidateCaches() = {

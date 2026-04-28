@@ -1,15 +1,13 @@
 package websocket
 
-import org.apache.pekko.actor.{Actor, ActorRef, ActorSelection, ActorSystem, Cancellable, Props, Terminated}
-import org.apache.pekko.pattern.after
-import org.apache.pekko.remote.{AssociatedEvent, DisassociatedEvent, RemotingLifecycleEvent}
+import org.apache.pekko.actor.{Actor, ActorRef, ActorSelection, ActorSystem, Cancellable, Props}
 import com.patson.model.{Airline, NotificationCategory}
-import com.patson.stream.{CycleCompleted, CycleInfo, KeepAlivePing, KeepAlivePong, ReconnectPing, SimulationEvent}
+import com.patson.stream.{CycleCompleted, CycleInfo, KeepAlivePing, KeepAlivePong, SimulationEvent}
 import com.patson.util.{AirlineCache, AirplaneOwnershipCache, AirportCache, AirportStatisticsCache}
 import com.typesafe.config.ConfigFactory
 import controllers.{AirlineTutorial, AirportUtil, Application, GooglePhotoUtil, ResponseCache}
 import models.PendingAction
-import play.api.libs.json.{JsNumber, JsString, Json}
+import play.api.libs.json.{JsString, Json}
 import websocket.chat.TriggerPing
 
 import scala.collection.mutable
@@ -87,34 +85,68 @@ sealed class LocalMainActor(remoteActor: ActorSelection) extends Actor {
   implicit val ec = context.dispatcher
   val blockingEc = scala.concurrent.ExecutionContext.global
 
-  val pingInterval = 60.seconds
-  val resetTimeout = 10.seconds
-  val prewarmTimeout = 10.seconds
+  private val pingInterval             = 60.seconds
+  private val pongTimeout              = 10.seconds
+  private val initialReconnectInterval = 5.seconds
+  private val maxReconnectInterval     = 10.minutes
 
-  var pendingResetTask: Option[Cancellable] = None
-  var periodicPingTask: Option[Cancellable] = None
+  private var connected         = true
+  private var reconnectInterval = initialReconnectInterval
+  private var tickTask:         Option[Cancellable] = None
+  private var pongTimeoutTask:  Option[Cancellable] = None
 
   val configFactory = ConfigFactory.load()
   val bannerEnabled = if (configFactory.hasPath("bannerEnabled")) configFactory.getBoolean("bannerEnabled") else false
 
-  case object ConnectionTimeout
+  private case object Tick
+  private case object PongTimeout
 
   override def preStart(): Unit = {
     super.preStart()
     remoteActor ! "subscribe"
-
-    periodicPingTask = Some(
-      context.system.scheduler.scheduleWithFixedDelay(Duration.Zero, pingInterval, self, KeepAlivePing)
-    )
+    scheduleNextTick(pingInterval)
   }
 
   override def postStop(): Unit = {
     println(self.path.toString + " local main actor stopped (post stop)")
-    periodicPingTask.foreach(_.cancel())
-    pendingResetTask.foreach(_.cancel())
+    tickTask.foreach(_.cancel())
+    pongTimeoutTask.foreach(_.cancel())
+  }
+
+  private def scheduleNextTick(delay: FiniteDuration): Unit = {
+    tickTask.foreach(_.cancel())
+    tickTask = Some(context.system.scheduler.scheduleOnce(delay, self, Tick))
   }
 
   override def receive: Receive = {
+    case Tick =>
+      remoteActor ! KeepAlivePing
+      pongTimeoutTask.foreach(_.cancel())
+      pongTimeoutTask = Some(context.system.scheduler.scheduleOnce(pongTimeout, self, PongTimeout))
+
+    case KeepAlivePong =>
+      pongTimeoutTask.foreach(_.cancel())
+      pongTimeoutTask = None
+      if (!connected) {
+        println(s"${self.path} Sim reconnected — resubscribing")
+        connected = true
+        reconnectInterval = initialReconnectInterval
+        remoteActor ! "subscribe"
+      } else {
+        println("Connection to sim is healthy!")
+      }
+      scheduleNextTick(pingInterval)
+
+    case PongTimeout =>
+      pongTimeoutTask = None
+      if (connected) {
+        println(s"${self.path} CRITICAL: Sim connection lost. Starting reconnect.")
+        connected = false
+      }
+      println(s"${self.path} Retrying in $reconnectInterval...")
+      scheduleNextTick(reconnectInterval)
+      reconnectInterval = (reconnectInterval * 2).min(maxReconnectInterval)
+
     case (topic: SimulationEvent, payload: Any) =>
       topic match {
         case CycleCompleted(cycle, _) =>
@@ -157,82 +189,8 @@ sealed class LocalMainActor(remoteActor: ActorSelection) extends Actor {
           context.system.eventStream.publish((topic, payload))
       }
 
-    case Resubscribe(remote) =>
-      println(s"${self.path} Attempting to resubscribe")
-      remote ! "subscribe"
-
-    case Terminated(actor) =>
-      println(s"$actor is terminated!!")
-
-    case KeepAlivePing =>
-      remoteActor ! KeepAlivePing
-      pendingResetTask.foreach(_.cancel())
-      pendingResetTask = Some(context.system.scheduler.scheduleOnce(resetTimeout, self, ConnectionTimeout))
-
-    case KeepAlivePong =>
-      println("Connection to sim is healthy!")
-      pendingResetTask.foreach(_.cancel())
-      pendingResetTask = None
-
-    case ConnectionTimeout =>
-      println("CRITICAL: Sim connection timeout exceeded. Initiating reset logic...")
-      remoteActor ! "subscribe" // Implicit reset task
-
     case unknown =>
       println(s"Unknown message for local main actor : $unknown")
-  }
-}
-
-// Internal message for ReconnectActor exponential backoff
-private case class ExecutePing(currentDelay: FiniteDuration)
-
-sealed class ReconnectActor(remoteActor: ActorSelection) extends Actor {
-  implicit val ec = context.dispatcher
-  var disconnected = false
-  var pingTask: Option[Cancellable] = None
-
-  val INITIAL_SLEEP_TIME = 5.seconds
-  val MAX_SLEEP_TIME = 10.minutes
-
-  override def preStart(): Unit = {
-    super.preStart()
-    context.system.eventStream.subscribe(self, classOf[RemotingLifecycleEvent])
-    remoteActor ! KeepAlivePing
-  }
-
-  override def postStop(): Unit = {
-    pingTask.foreach(_.cancel())
-  }
-
-  override def receive: Receive = {
-    case _: DisassociatedEvent =>
-      if (!disconnected) {
-        println(s"Disassociated. Start pinging the remote actor! from reconnect actor $this")
-        disconnected = true
-        self ! ExecutePing(INITIAL_SLEEP_TIME)
-      }
-
-    case _: AssociatedEvent =>
-      if (disconnected) {
-        println("Reconnected! stop pinging")
-        pingTask.foreach(_.cancel())
-        pingTask = None
-        disconnected = false
-
-        val localMainActor = context.system.actorSelection("/user/local-main-actor")
-        localMainActor ! Resubscribe(remoteActor)
-      }
-
-    case ExecutePing(delay) =>
-      if (disconnected) {
-        remoteActor ! ReconnectPing()
-
-        // Calculate exponential backoff for next ping
-        val nextDelay = if ((delay * 2) > MAX_SLEEP_TIME) MAX_SLEEP_TIME else delay * 2
-
-        // Schedule next ping instead of Thread.sleep()
-        pingTask = Some(context.system.scheduler.scheduleOnce(delay, self, ExecutePing(nextDelay)))
-      }
   }
 }
 
@@ -249,7 +207,6 @@ object ActorCenter {
   val subscribers = mutable.HashSet[ActorRef]()
   val remoteMainActor = remoteSystem.actorSelection("pekko://" + REMOTE_SYSTEM_NAME + "@" + actorHost + "/user/" + BRIDGE_ACTOR_NAME)
   val localMainActor = remoteSystem.actorOf(Props(classOf[LocalMainActor], remoteMainActor), "local-main-actor")
-  val reconnectActor = remoteSystem.actorOf(Props(classOf[ReconnectActor], remoteMainActor), "reconnect-actor")
 
   def getLocalSubscriberName(subscriberId: String): String = {
     "local-subscriber-" + subscriberId
@@ -257,4 +214,3 @@ object ActorCenter {
 }
 
 case class RemoteActor(remoteActor: ActorSelection)
-case class Resubscribe(remoteActor: ActorSelection)

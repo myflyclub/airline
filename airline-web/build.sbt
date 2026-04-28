@@ -1,10 +1,20 @@
 name := "airline-web"
 
-version := "5.1"
+version := "5.2"
 
 lazy val root = (project in file(".")).enablePlugins(PlayScala, SbtWeb)
 
 scalaVersion := "2.13.18"
+
+// Force SBT to run the Play app in a separate JVM
+fork := true
+
+// Configure the forked JVM for a stateless web profile
+javaOptions ++= Seq(
+  "-Xms2G", 
+  "-Xmx2G", 
+  "-XX:+UseG1GC"
+)
 
 libraryDependencies ++= Seq(
   jdbc,
@@ -15,7 +25,7 @@ libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % "3.2.19" % Test,
   "org.apache.pekko" %% "pekko-remote" % "1.0.3",
   "org.apache.commons" % "commons-text" % "1.15.0",
-  "default" %% "airline-data" % "5.1-SNAPSHOT",
+  "default" %% "airline-data" % "5.2-SNAPSHOT",
 
   "com.google.api-client" % "google-api-client" % "1.35.0",
   "com.google.oauth-client" % "google-oauth-client-jetty" % "1.39.0",
