@@ -4,7 +4,7 @@ Forked from https://www.airline-club.com/
 Live at https://myfly.club/
 
 ## Dependencies
-- Java openjdk 17
+- Java openjdk 21
 - MySQL 8
 - Sbt
 

@@ -1,10 +1,20 @@
 name := "airline-web"
 
-version := "5.1"
+version := "5.2"
 
 lazy val root = (project in file(".")).enablePlugins(PlayScala, SbtWeb)
 
 scalaVersion := "2.13.18"
+
+// Force SBT to run the Play app in a separate JVM
+fork := true
+
+// Configure the forked JVM for a stateless web profile
+javaOptions ++= Seq(
+  "-Xms2G", 
+  "-Xmx2G", 
+  "-XX:+UseG1GC"
+)
 
 libraryDependencies ++= Seq(
   jdbc,

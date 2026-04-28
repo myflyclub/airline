@@ -6,50 +6,61 @@ on:
       - master
 
 jobs:
-  build:
+  build-and-deploy:
     name: Release and Deploy
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Generate New Secret and Update application.conf
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21' # Ensure this matches your target JVM
+          distribution: 'temurin'
+          cache: 'sbt'
+
+      - name: Inject Secrets
         shell: bash
         env:
-          DB_USER: ${{ secrets.production_user }}
+          DB_USER: ${{ secrets.production_user }} # Assuming this was intentional in your original script
           DB_PASSWORD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
         run: |
-          # Generate a new secret
           CRYPTO_SECRET=$(uuidgen)
           HTTP_SECRET=$(uuidgen)
-          echo "Generated secret for deployment: $CRYPTO_SECRET and $HTTP_SECRET"
-
-          # Update play secrets in airline-web/conf/application.conf
+          
+          # Update application.conf files as before
           sed -i.bak "s/\(play\.crypto\.secret *= *\"\)changeme\(\".*\)/\1${CRYPTO_SECRET}\2/" airline-web/conf/application.conf
           sed -i.bak "s/\(play\.http\.secret\.key *= *\"\)changeme\(\".*\)/\1${HTTP_SECRET}\2/" airline-web/conf/application.conf
-
-          # Update mysqldb credentials in airline-web/conf/application.conf
           sed -i.bak "s/\(user *= *\"\)root\(\"\)/\1${DB_USER}\2/" airline-web/conf/application.conf
           sed -i.bak "s/\(password *= *\"\)\(\"\)/\1${DB_PASSWORD}\2/" airline-web/conf/application.conf
-
-          # Update mysqldb credentials in airline-data/src/main/resources/application.conf
           sed -i.bak "s/\(user *= *\"\)root\(\"\)/\1${DB_USER}\2/" airline-data/src/main/resources/application.conf
           sed -i.bak "s/\(password *= *\"\)\(\"\)/\1${DB_PASSWORD}\2/" airline-data/src/main/resources/application.conf
 
-          grep 'play.crypto.secret' airline-web/conf/application.conf
+      - name: Compile and Package
+        run: |
+          # 1. Publish data app locally so the web app can resolve the dependency
+          # 2. Build the Fat JAR for the simulation
+          cd airline-data
+          sbt clean publishLocal assembly
 
-      - name: SCP to Server
+          # 3. Build the universal ZIP distribution for Play
+          cd ../airline-web
+          sbt clean dist
+
+      - name: SCP Artifacts to Server
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.production_host }}
           username: ${{ secrets.production_user }}
           key: ${{ secrets.production_key }}
           port: 22
-          source: "."
+          # Transfer ONLY the compiled artifacts
+          source: "airline-data/target/scala-2.13/*-assembly-*.jar,airline-web/target/universal/*.zip"
           strip_components: 0
-          target: "/var/www/myfly/"
+          target: "/var/www/myfly/releases"
 
-      - name: Build java, restart server
+      - name: Execute JVM 
         uses: appleboy/ssh-action@v0.1.10
         env:
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
@@ -61,20 +72,27 @@ jobs:
           envs: GOOGLE_API_KEY
           script_stop: true
           script: |
-            cd /var/www/myfly/airline-data/
+            # Setup deployment directories
+            mkdir -p /var/www/myfly/prod-web
+            mkdir -p /var/www/myfly/prod-data
+            
+            # Extract Web App
+            cd /var/www/myfly/prod-web
+            rm -rf airline-web-* # Clean old version
+            unzip -q /var/www/myfly/releases/airline-web/target/universal/*.zip
+            WEB_DIR=$(ls -d airline-web-*/ | head -n 1)
+            
+            # Move Data App JAR
+            cp /var/www/myfly/releases/airline-data/target/scala-2.13/*-assembly-*.jar /var/www/myfly/prod-data/airline-data.jar
 
-            # Clear stale ivy cache so SNAPSHOT publishLocal always overwrites cleanly
-            rm -rf ~/.ivy2/local/default/airline-data_2.13/
-            sbt clean publishLocal
-
-            # Kill any existing tmux sessions
+            # Kill existing processes
             tmux kill-server || true
             sleep 1
 
-            # Start data simulation
-            tmux new-session -d -s data -c /var/www/myfly/airline-data
-            tmux send-keys -t data "sbt 'runMain com.patson.MainSimulation'" Enter
+            # Start Data Simulation using raw JVM
+            tmux new-session -d -s data -c /var/www/myfly/prod-data
+            tmux send-keys -t data "java -Xms12G -Xmx12G -XX:+UseG1GC -XX:G1HeapRegionSize=32M -XX:G1ReservePercent=25 -XX:InitiatingHeapOccupancyPercent=35 -jar airline-data.jar" Enter
 
-            # Start web app
-            tmux new-session -d -s web -c /var/www/myfly/airline-web
-            tmux send-keys -t web "sbt run" Enter
+            # Start Web App using compiled Play script
+            tmux new-session -d -s web -c /var/www/myfly/prod-web/${WEB_DIR}
+            tmux send-keys -t web "bin/airline-web -J-Xms2G -J-Xmx2G -J-XX:+UseG1GC" Enter

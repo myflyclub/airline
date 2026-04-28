@@ -50,11 +50,3 @@ services:
       - "mysql-data:/var/lib/mysql"
     networks:
       - airline
-
-  airline-search:
-    image: elasticsearch:7.17.21
-    container_name: airline-search
-    environment:
-      discovery.type: single-node
-    networks:
-      - airline
