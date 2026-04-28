@@ -34,10 +34,12 @@ object AirlineSimulation {
     val allLinks = LinkSource.loadAllLinks(LinkSource.FULL_LOAD)
     val allFlightLinksByAirlineId = allLinks.filter(_.transportType == TransportType.FLIGHT).map(_.asInstanceOf[Link]).groupBy(_.airline.id)
     val currentInterestRate = BankSource.loadLoanInterestRateByCycle(cycle).getOrElse(LoanInterestRateSimulation.MAX_RATE.toDouble)
+    println(s"Loaded ${allLinks.length} links")
     //purge old ledger entries
     AirlineSource.deleteLedgerEntries(cycle - BOOKKEEPING_ENTRIES_COUNT)
 
     val flightLinkResultByAirline = flightLinkResult.groupBy(_.link.airline.id)
+    println(s"Loaded ${flightLinkResultByAirline.size} airline lists of flight consumptions")
 
     val airplanesByAirline = airplanes.groupBy(_.owner.id)
 
@@ -47,29 +49,29 @@ object AirlineSimulation {
     val allLedgerEntries = ListBuffer[AirlineLedgerEntry]()
     val allAirlineStats = ListBuffer[AirlineStat]()
 
-    val currentCycle = MainSimulation.currentWeek
     val airportChampionsByAirlineId : immutable.Map[Int, List[AirportChampionInfo]] = ChampionUtil.loadAirportChampionInfo().groupBy(_.loyalist.airline.id)
     val advertisementCostByAirlineId = ManagerSource.loadCampaignCostsByAirlineId()
 
+    var startTime = System.currentTimeMillis()
     val allAirlineStatsByAirlineId: immutable.Map[Int, List[AirlineStat]] = AirlineStatisticsSource.loadAirlineStatsForAirlineIds(allAirlines.map(_.id)).groupBy(_.airlineId) //used for stock price
-    val latestQuarterStatsByAirlineId: immutable.Map[Int, AirlineStat] =
-      latestStatsByPeriod(allAirlineStatsByAirlineId, Period.QUARTER)
-    val latestWeeklyStatsByAirlineId: immutable.Map[Int, AirlineStat] =
-      latestStatsByPeriod(allAirlineStatsByAirlineId, Period.WEEKLY)
+    val latestQuarterStatsByAirlineId: immutable.Map[Int, AirlineStat] = latestStatsByPeriod(allAirlineStatsByAirlineId, Period.QUARTER)
+    val latestWeeklyStatsByAirlineId: immutable.Map[Int, AirlineStat] = latestStatsByPeriod(allAirlineStatsByAirlineId, Period.WEEKLY)
+    println(s"Rankings done: ${Util.outputTimeDiff(startTime, "Took")}")
 
     // Compute per-type dynamic benchmarks (floor=50th pct, target=90th pct)
     StockModel.benchmarksByType = StockModel.computeBenchmarks(allAirlines, latestWeeklyStatsByAirlineId)
-
+    
     var startTime = System.currentTimeMillis()
     val leaderboardsByAirlineId = RankingSimulation.process(cycle, allAirlines.filter(_.getReputation() > 60), flightLinkResult, loungeResult, paxStats)
-    Util.outputTimeDiff(startTime, "Generating rankings took")
+    println(s"Rankings done: ${Util.outputTimeDiff(startTime, "Generating rankings took")}")
 
     val fuelContractsByAirlineId = OilSource.loadAllOilContracts().groupBy(contract => contract.airline.id)
     val fuelInventoryPolicyByAirlineId = OilSource.loadAllOilInventoryPolicies.map(policy => (policy.airline.id, policy)).toMap
     val currentFuelPrice = OilSource.loadOilPriceByCycle(cycle).get.price
     val oilConsumptionEntries = ListBuffer[OilConsumptionHistory]()
 
-    allAirlines.foreach { airline =>
+    allAirlines.zipWithIndex.foreach { case (airline, idx) =>
+      if (idx % 50 == 0) println(s"Airline loop: $idx/${allAirlines.size} (airline ${airline.id})")
       val airlineValue = Computation.getResetAmount(airline.id)
 
       //income statement
@@ -128,7 +130,7 @@ object AirlineSimulation {
       val actualFuelCost = fuelContractsByAirlineId.get(airline.id) match {
         case Some(contracts) =>
           val totalPaymentFromContract = contracts.map { contract =>
-            oilConsumptionEntries += OilConsumptionHistory(airline, contract.contractPrice, contract.volume, OilConsumptionType.CONTRACT, currentCycle)
+            oilConsumptionEntries += OilConsumptionHistory(airline, contract.contractPrice, contract.volume, OilConsumptionType.CONTRACT, cycle)
             contract.contractPrice * contract.volume
           }.sum
 
@@ -140,13 +142,13 @@ object AirlineSimulation {
             val volumeFromInventory = barrelsUsed - totalVolumeFromContract
             val consumptionType = if (inventoryPolicy.factor == 0) OilConsumptionType.MARKET else OilConsumptionType.INVENTORY
             if (volumeFromInventory > 0) {
-              oilConsumptionEntries += OilConsumptionHistory(airline, inventoryPrice, volumeFromInventory, consumptionType, currentCycle)
+              oilConsumptionEntries += OilConsumptionHistory(airline, inventoryPrice, volumeFromInventory, consumptionType, cycle)
             }
             totalPaymentFromContract + volumeFromInventory * inventoryPrice
           } else { //excessive
             val sellPrice = currentFuelPrice * 0.7
             val excessBarrels = totalVolumeFromContract - barrelsUsed
-            oilConsumptionEntries += OilConsumptionHistory(airline, sellPrice, excessBarrels * -1, OilConsumptionType.EXCESS, currentCycle)
+            oilConsumptionEntries += OilConsumptionHistory(airline, sellPrice, excessBarrels * -1, OilConsumptionType.EXCESS, cycle)
             totalPaymentFromContract - excessBarrels * sellPrice
           }
         case None =>
@@ -154,7 +156,7 @@ object AirlineSimulation {
           val inventoryPrice = inventoryPolicy.inventoryPrice(currentFuelPrice)
           val consumptionType = if (inventoryPolicy.factor == 0) OilConsumptionType.MARKET else OilConsumptionType.INVENTORY
           if (barrelsUsed > 0) {
-            oilConsumptionEntries += OilConsumptionHistory(airline, inventoryPrice, barrelsUsed, consumptionType, currentCycle)
+            oilConsumptionEntries += OilConsumptionHistory(airline, inventoryPrice, barrelsUsed, consumptionType, cycle)
           }
           barrelsUsed * inventoryPrice
       }
@@ -169,7 +171,7 @@ object AirlineSimulation {
       } else {
         0L
       }
-      val (loanPayment, interestPayment) = updateLoans(airline, currentCycle + 1) //have to plus one cycle, as this is supposed to be done postcycle, but accounting is here
+      val (loanPayment, interestPayment) = updateLoans(airline, cycle + 1) //have to plus one cycle, as this is supposed to be done postcycle, but accounting is here
       val loanInterestEntry = -interestPayment + negativeCashInterest // negative or zero
 
       val dividendsPaid: Long = if (airline.getDividends() > 0) {
@@ -192,24 +194,24 @@ object AirlineSimulation {
       // Record weekly ledger entries
       if (!isBankrupt) {
         val weeklyLedger = List(
-            AirlineLedgerEntry(airline.id, currentCycle, LedgerType.FLIGHT_REVENUE, linksRevenue),
-            AirlineLedgerEntry(airline.id, currentCycle, LedgerType.FLIGHT_CREW, -linksCrewCost),
-            AirlineLedgerEntry(airline.id, currentCycle, LedgerType.AIRPORT_RENTALS, -linksAirportFee),
-            AirlineLedgerEntry(airline.id, currentCycle, LedgerType.INFLIGHT_SERVICE, -linksInflightCost),
-            AirlineLedgerEntry(airline.id, currentCycle, LedgerType.MAINTENANCE, -linksMaintenanceCost),
-            AirlineLedgerEntry(airline.id, currentCycle, LedgerType.PASSENGER_LOUNGE_COSTS, -linksLoungeCost),
-            AirlineLedgerEntry(airline.id, currentCycle, LedgerType.DELAY_COMPENSATION, -linksDelayCompensation),
+            AirlineLedgerEntry(airline.id, cycle, LedgerType.FLIGHT_REVENUE, linksRevenue),
+            AirlineLedgerEntry(airline.id, cycle, LedgerType.FLIGHT_CREW, -linksCrewCost),
+            AirlineLedgerEntry(airline.id, cycle, LedgerType.AIRPORT_RENTALS, -linksAirportFee),
+            AirlineLedgerEntry(airline.id, cycle, LedgerType.INFLIGHT_SERVICE, -linksInflightCost),
+            AirlineLedgerEntry(airline.id, cycle, LedgerType.MAINTENANCE, -linksMaintenanceCost),
+            AirlineLedgerEntry(airline.id, cycle, LedgerType.PASSENGER_LOUNGE_COSTS, -linksLoungeCost),
+            AirlineLedgerEntry(airline.id, cycle, LedgerType.DELAY_COMPENSATION, -linksDelayCompensation),
             //don't record fuel or deprecation here as they're purchased outside links
-            AirlineLedgerEntry(airline.id, currentCycle, LedgerType.BASE_UPKEEP, -staffCost),
-            AirlineLedgerEntry(airline.id, currentCycle, LedgerType.OVERTIME_COMPENSATION, -staffOvertimeCost.toLong),
-            AirlineLedgerEntry(airline.id, currentCycle, LedgerType.LOUNGE_COST, loungeCost),
-            AirlineLedgerEntry(airline.id, currentCycle, LedgerType.LOUNGE_INCOME, loungeRevenue),
-            AirlineLedgerEntry(airline.id, currentCycle, LedgerType.ADVERTISING, advertisementEntry),
-            AirlineLedgerEntry(airline.id, currentCycle, LedgerType.FUEL_COST, -actualFuelCost.toLong, Some(fuelCostDescription)),
-            AirlineLedgerEntry(airline.id, currentCycle, LedgerType.CARBON_TAX, -linksFuelTax, Some(carbonTaxDescription)),
-            AirlineLedgerEntry(airline.id, currentCycle, LedgerType.LOAN_PAYMENT, -loanPayment),
-            AirlineLedgerEntry(airline.id, currentCycle, LedgerType.NEGATIVE_BALANCE_LOAN_INTEREST, -negativeCashInterest),
-            AirlineLedgerEntry(airline.id, currentCycle, LedgerType.DIVIDEND_PAYMENT, -dividendsPaid)
+            AirlineLedgerEntry(airline.id, cycle, LedgerType.BASE_UPKEEP, -staffCost),
+            AirlineLedgerEntry(airline.id, cycle, LedgerType.OVERTIME_COMPENSATION, -staffOvertimeCost.toLong),
+            AirlineLedgerEntry(airline.id, cycle, LedgerType.LOUNGE_COST, loungeCost),
+            AirlineLedgerEntry(airline.id, cycle, LedgerType.LOUNGE_INCOME, loungeRevenue),
+            AirlineLedgerEntry(airline.id, cycle, LedgerType.ADVERTISING, advertisementEntry),
+            AirlineLedgerEntry(airline.id, cycle, LedgerType.FUEL_COST, -actualFuelCost.toLong, Some(fuelCostDescription)),
+            AirlineLedgerEntry(airline.id, cycle, LedgerType.CARBON_TAX, -linksFuelTax, Some(carbonTaxDescription)),
+            AirlineLedgerEntry(airline.id, cycle, LedgerType.LOAN_PAYMENT, -loanPayment),
+            AirlineLedgerEntry(airline.id, cycle, LedgerType.NEGATIVE_BALANCE_LOAN_INTEREST, -negativeCashInterest),
+            AirlineLedgerEntry(airline.id, cycle, LedgerType.DIVIDEND_PAYMENT, -dividendsPaid)
         )
 
         allLedgerEntries ++= weeklyLedger
@@ -458,7 +460,7 @@ object AirlineSimulation {
         advertising = advertisementEntry,
         loanInterest = loanInterestEntry,
         dividends = -dividendsPaid,
-        cycle = currentCycle)
+        cycle = cycle)
       val weeklyBalance = AirlineBalance(
         airlineId = airline.id,
         income = airlineProfit.toLong,
@@ -466,26 +468,27 @@ object AirlineSimulation {
         cashOnHand = airlineValue.existingBalance,
         totalValue = airlineValue.overall,
         stockPrice = stockPrice,
-        cycle = currentCycle)
+        cycle = cycle)
       allBalances += ((weeklyBalance, weeklyDetails))
       allAirlineStats += airlineWeeklyStats.copy(repTotal = finalBreakdowns.total.toInt)
     } //end each airline
-    
+    println("Airline loop complete. Saving airline info")
+
     AirlineSource.saveAirlinesInfo(allAirlines)
 
     AirlineStatisticsSource.saveAirlineStats(allAirlineStats.toList)
     
     // Batch compute and save accumulated stats at period boundaries
-    if ((currentCycle + 1) % Period.numberWeeks(Period.QUARTER) == 0) {
-      computeAndSaveStats(currentCycle, allAirlines, Period.QUARTER)
+    if ((cycle + 1) % Period.numberWeeks(Period.QUARTER) == 0) {
+      computeAndSaveStats(cycle, allAirlines, Period.QUARTER)
     }
-    if ((currentCycle + 1) % Period.numberWeeks(Period.YEAR) == 0) {
-      computeAndSaveStats(currentCycle, allAirlines, Period.YEAR)
+    if ((cycle + 1) % Period.numberWeeks(Period.YEAR) == 0) {
+      computeAndSaveStats(cycle, allAirlines, Period.YEAR)
     }
 
-    AirlineStatisticsSource.deleteStatsBefore(currentCycle - BOOKKEEPING_ENTRIES_COUNT, Period.WEEKLY)
-    AirlineStatisticsSource.deleteStatsBefore(currentCycle - BOOKKEEPING_ENTRIES_COUNT * Period.numberWeeks(Period.QUARTER), Period.QUARTER)
-    AirlineStatisticsSource.deleteStatsBefore(currentCycle - BOOKKEEPING_ENTRIES_COUNT * Period.numberWeeks(Period.YEAR), Period.YEAR)
+    AirlineStatisticsSource.deleteStatsBefore(cycle - BOOKKEEPING_ENTRIES_COUNT, Period.WEEKLY)
+    AirlineStatisticsSource.deleteStatsBefore(cycle - BOOKKEEPING_ENTRIES_COUNT * Period.numberWeeks(Period.QUARTER), Period.QUARTER)
+    AirlineStatisticsSource.deleteStatsBefore(cycle - BOOKKEEPING_ENTRIES_COUNT * Period.numberWeeks(Period.YEAR), Period.YEAR)
 
 
     // Save weekly data first
@@ -493,22 +496,22 @@ object AirlineSimulation {
     AirlineSource.saveLedgerEntries(allLedgerEntries.toList)
 
     // Batch compute and save accumulated data at period boundaries
-    if ((currentCycle + 1) % Period.numberWeeks(Period.QUARTER) == 0) {
-      computeAndSaveAccumulation(currentCycle, allAirlines, Period.QUARTER)
+    if ((cycle + 1) % Period.numberWeeks(Period.QUARTER) == 0) {
+      computeAndSaveAccumulation(cycle, allAirlines, Period.QUARTER)
     }
-    if ((currentCycle + 1) % Period.numberWeeks(Period.YEAR) == 0) {
-      computeAndSaveAccumulation(currentCycle, allAirlines, Period.YEAR)
+    if ((cycle + 1) % Period.numberWeeks(Period.YEAR) == 0) {
+      computeAndSaveAccumulation(cycle, allAirlines, Period.YEAR)
     }
 
     //purge old entries
-    IncomeSource.deleteBalancesBefore(currentCycle - BOOKKEEPING_ENTRIES_COUNT, Period.WEEKLY)
-    IncomeSource.deleteBalancesBefore(currentCycle - BOOKKEEPING_ENTRIES_COUNT * Period.numberWeeks(Period.QUARTER), Period.QUARTER)
-    IncomeSource.deleteBalancesBefore(currentCycle - BOOKKEEPING_ENTRIES_COUNT * Period.numberWeeks(Period.YEAR), Period.YEAR)
+    IncomeSource.deleteBalancesBefore(cycle - BOOKKEEPING_ENTRIES_COUNT, Period.WEEKLY)
+    IncomeSource.deleteBalancesBefore(cycle - BOOKKEEPING_ENTRIES_COUNT * Period.numberWeeks(Period.QUARTER), Period.QUARTER)
+    IncomeSource.deleteBalancesBefore(cycle - BOOKKEEPING_ENTRIES_COUNT * Period.numberWeeks(Period.YEAR), Period.YEAR)
     
     //update Oil consumption history
     println(s"Saving ${oilConsumptionEntries.size} oil consumption entries")
     OilSource.saveOilConsumptionHistory(oilConsumptionEntries.toList)
-    OilSource.deleteOilConsumptionHistoryBeforeCycle(currentCycle - 10)
+    OilSource.deleteOilConsumptionHistoryBeforeCycle(cycle - 10)
   }
 
   def computeAndSaveAccumulation(cycle: Int, allAirlines: List[Airline], period: Period.Value): Unit = {

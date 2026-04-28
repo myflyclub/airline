@@ -725,8 +725,6 @@ object LinkSource {
       toAirport = toAirport,
       fromCountry = Country.fromCode(fromAirport.countryCode),
       toCountry = Country.fromCode(toAirport.countryCode),
-//      fromZone = fromAirport.zone,
-//      toZone = toAirport.zone,
       airline = airline,
       alliance = airline.getAllianceId().map(Alliance.fromId(_)),
       frequency = newLinkOption.map(_.frequency).getOrElse(0),
@@ -739,10 +737,12 @@ object LinkSource {
   }
   
   def saveLinkConsumptions(linkConsumptions: List[LinkConsumptionDetails]) = {
+    val (flightConsumptions, transitConsumptions) = linkConsumptions.partition(_.link.transportType == TransportType.FLIGHT)
+
     Using.resource(Meta.getConnection()) { connection =>
-      Using.resource(connection.prepareStatement("REPLACE INTO " + LINK_CONSUMPTION_TABLE + "(link, price_economy, price_business, price_first, capacity_economy, capacity_business, capacity_first, sold_seats_economy, sold_seats_business, sold_seats_first, quality, fuel_cost, fuel_tax, crew_cost, airport_fees, inflight_cost, delay_compensation, maintenance_cost, lounge_cost, depreciation, revenue, profit, minor_delay_count, major_delay_count, cancellation_count, from_airport, to_airport, airline, distance, frequency, duration, transport_type, flight_number, airplane_model, satisfaction, cycle) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")) { preparedStatement =>
-        connection.setAutoCommit(false)
-        linkConsumptions.foreach { linkConsumption =>
+      connection.setAutoCommit(false)
+      Using.resource(connection.prepareStatement("REPLACE INTO " + LINK_CONSUMPTION_TABLE + "(link, price_economy, price_business, price_first, capacity_economy, capacity_business, capacity_first, sold_seats_economy, sold_seats_business, sold_seats_first, quality, fuel_cost, fuel_tax, crew_cost, airport_fees, inflight_cost, delay_compensation, maintenance_cost, lounge_cost, depreciation, revenue, profit, minor_delay_count, major_delay_count, cancellation_count, from_airport, to_airport, airline, distance, frequency, duration, flight_number, airplane_model, satisfaction, cycle) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")) { preparedStatement =>
+        flightConsumptions.foreach { linkConsumption =>
           preparedStatement.setInt(1, linkConsumption.link.id)
           preparedStatement.setInt(2, linkConsumption.link.price(ECONOMY))
           preparedStatement.setInt(3, linkConsumption.link.price(BUSINESS))
@@ -774,35 +774,38 @@ object LinkSource {
           preparedStatement.setInt(29, linkConsumption.link.distance)
           preparedStatement.setInt(30, linkConsumption.link.frequency)
           preparedStatement.setInt(31, linkConsumption.link.duration)
-          preparedStatement.setInt(32, linkConsumption.link.transportType.id)
-          if (linkConsumption.link.isInstanceOf[Link]) {
-            preparedStatement.setInt(33, linkConsumption.link.asInstanceOf[Link].flightNumber)
-            preparedStatement.setInt(34, linkConsumption.link.asInstanceOf[Link].getAssignedModel().map(_.id).getOrElse(0))
-          } else {
-            preparedStatement.setNull(33, Types.INTEGER)
-            preparedStatement.setNull(34, Types.INTEGER)
-          }
-          preparedStatement.setDouble(35, linkConsumption.satisfaction)
-          preparedStatement.setInt(36, linkConsumption.cycle)
-          preparedStatement.executeUpdate()
+          preparedStatement.setInt(32, linkConsumption.link.asInstanceOf[Link].flightNumber)
+          preparedStatement.setInt(33, linkConsumption.link.asInstanceOf[Link].getAssignedModel().map(_.id).getOrElse(0))
+          preparedStatement.setDouble(34, linkConsumption.satisfaction)
+          preparedStatement.setInt(35, linkConsumption.cycle)
+          preparedStatement.addBatch()
         }
+        preparedStatement.executeBatch()
+      }
+      Using.resource(connection.prepareStatement("REPLACE INTO " + TRANSIT_CONSUMPTION_TABLE + "(link, sold_seats_economy, cycle) VALUES(?,?,?)")) { preparedStatement =>
+        transitConsumptions.foreach { linkConsumption =>
+          preparedStatement.setInt(1, linkConsumption.link.id)
+          preparedStatement.setInt(2, linkConsumption.link.soldSeats(ECONOMY))
+          preparedStatement.setInt(3, linkConsumption.cycle)
+          preparedStatement.addBatch()
+        }
+        preparedStatement.executeBatch()
       }
       connection.commit()
     }
   }
   def deleteLinkConsumptionsByCycle(cyclesFromLatest : Int) = {
-     //open the hsqldb
     val connection = Meta.getConnection()
     try {
-      val latestCycle = Using.resource(connection.prepareStatement("SELECT MAX(cycle) FROM " + LINK_CONSUMPTION_TABLE)) { latestCycleStatement =>
-        Using.resource(latestCycleStatement.executeQuery()) { resultSet =>
-          if (resultSet.next()) resultSet.getInt(1) else 0
-        }
-      }
+      val latestCycle = getLatestCycle(connection, LINK_CONSUMPTION_TABLE)
 
       val deleteFrom = if (latestCycle - cyclesFromLatest < 0) 0 else latestCycle - cyclesFromLatest
 
       Using.resource(connection.prepareStatement("DELETE FROM " + LINK_CONSUMPTION_TABLE + " WHERE cycle <= ?")) { deleteStatement =>
+        deleteStatement.setInt(1, deleteFrom)
+        deleteStatement.executeUpdate()
+      }
+      Using.resource(connection.prepareStatement("DELETE FROM " + TRANSIT_CONSUMPTION_TABLE + " WHERE cycle <= ?")) { deleteStatement =>
         deleteStatement.setInt(1, deleteFrom)
         deleteStatement.executeUpdate()
       }
@@ -820,17 +823,52 @@ object LinkSource {
   }
   
   def loadLinkConsumptionsByLinksId(linkIds : List[Int], cycleCount : Int = 1) = {
-    
     if (linkIds.isEmpty) {
       List.empty
     } else {
-      val queryString = new StringBuilder("SELECT * FROM link_consumption WHERE cycle > ? AND link IN (");
-      for (i <- 0 until linkIds.size - 1) {
-            queryString.append("?,")
+      val placeholders = linkIds.map(_ => "?").mkString(",")
+      val flightQuery = s"SELECT * FROM $LINK_CONSUMPTION_TABLE WHERE cycle > ? AND link IN ($placeholders)"
+      val flightResults = loadLinkConsumptionsByQuery(flightQuery, linkIds, cycleCount)
+
+      val transitQuery =
+        s"SELECT tc.link, tc.sold_seats_economy, tc.cycle, l.from_airport, l.to_airport, l.distance, l.capacity_economy " +
+        s"FROM $TRANSIT_CONSUMPTION_TABLE tc JOIN $LINK_TABLE l ON tc.link = l.id WHERE tc.cycle > ? AND tc.link IN ($placeholders)"
+      val transitResults = loadTransitConsumptionsByQuery(transitQuery, linkIds, cycleCount)
+
+      flightResults ++ transitResults
+    }
+  }
+
+  private def getLatestCycle(connection: java.sql.Connection, table: String): Int =
+    Using.resource(connection.prepareStatement(s"SELECT MAX(cycle) FROM $table")) { stmt =>
+      Using.resource(stmt.executeQuery()) { rs => if (rs.next()) rs.getInt(1) else 0 }
+    }
+
+  private def loadTransitConsumptionsByQuery(queryString: String, linkIds: List[Int], cycleCount: Int): List[LinkConsumptionDetails] = {
+    Using.resource(Meta.getConnection()) { connection =>
+      val latestCycle = getLatestCycle(connection, TRANSIT_CONSUMPTION_TABLE)
+      Using.resource(connection.prepareStatement(queryString)) { preparedStatement =>
+        preparedStatement.setInt(1, latestCycle - cycleCount)
+        for (i <- 0 until linkIds.size) {
+          preparedStatement.setObject(i + 2, linkIds(i))
+        }
+        Using.resource(preparedStatement.executeQuery()) { resultSet =>
+          val results = new ListBuffer[LinkConsumptionDetails]()
+          while (resultSet.next()) {
+            val fromAirport = AirportCache.getAirport(resultSet.getInt("from_airport")).getOrElse(Airport.fromId(resultSet.getInt("from_airport")))
+            val toAirport   = AirportCache.getAirport(resultSet.getInt("to_airport")).getOrElse(Airport.fromId(resultSet.getInt("to_airport")))
+            val distance    = resultSet.getInt("distance")
+            val capacity    = LinkClassValues.getInstance(resultSet.getInt("capacity_economy"))
+            val linkId      = resultSet.getInt("link")
+            val transit     = GenericTransit(fromAirport, toAirport, distance, capacity, linkId)
+            transit.addSoldSeats(LinkClassValues.getInstance(resultSet.getInt("sold_seats_economy")))
+            results += LinkConsumptionDetails(link = transit, fuelCost = 0, fuelTax = 0, crewCost = 0, airportFees = 0,
+              inflightCost = 0, delayCompensation = 0, maintenanceCost = 0, depreciation = 0, loungeCost = 0,
+              revenue = 0, profit = 0, satisfaction = 0, cycle = resultSet.getInt("cycle"))
+          }
+          results.toList
+        }
       }
-      
-      queryString.append("?)")
-      loadLinkConsumptionsByQuery(queryString.toString(), linkIds, cycleCount)
     }
   }
   
@@ -855,11 +893,7 @@ object LinkSource {
   
   def loadLinkConsumptionsByQuery(queryString: String, parameters : List[Any], cycleCount : Int) = {
     Using.resource(Meta.getConnection()) { connection =>
-      val latestCycle = Using.resource(connection.prepareStatement("SELECT MAX(cycle) FROM " + LINK_CONSUMPTION_TABLE)) { latestCycleStatement =>
-        Using.resource(latestCycleStatement.executeQuery()) { latestCycleResultSet =>
-          if (latestCycleResultSet.next()) latestCycleResultSet.getInt(1) else 0
-        }
-      }
+      val latestCycle = getLatestCycle(connection, LINK_CONSUMPTION_TABLE)
 
       Using.resource(connection.prepareStatement(queryString)) { preparedStatement =>
         preparedStatement.setInt(1, latestCycle - cycleCount)
@@ -883,23 +917,9 @@ object LinkSource {
         val duration = resultSet.getInt("duration")
         val flightNumber = resultSet.getInt("flight_number")
         val modelId = resultSet.getInt("airplane_model")
-        val transportType = resultSet.getInt("transport_type")
-        val link =
-          if (transportType == TransportType.FLIGHT.id) {
-            Link(fromAirport, toAirport, airline, price, distance, capacity, 0, duration, frequency, flightNumber, linkId)
-          } else if (transportType == TransportType.GENERIC_TRANSIT.id) {
-            GenericTransit(fromAirport, toAirport, distance, capacity, linkId)
-          } else {
-            println("Unknown transport type for link consumption : " + resultSet.getInt("transport_type"))
-            Link(fromAirport, toAirport, airline, price, distance, capacity, 0, duration, frequency, flightNumber, linkId)
-          }
-
-        link match {
-          case flight : Link =>
-            flight.setQuality(quality)
-            flight.setAssignedModel(AirplaneModelCache.getModel(modelId).getOrElse(Model.fromId(modelId)))
-          case _ => //ok
-        }
+        val link = Link(fromAirport, toAirport, airline, price, distance, capacity, 0, duration, frequency, flightNumber, linkId)
+        link.setQuality(quality)
+        link.setAssignedModel(AirplaneModelCache.getModel(modelId).getOrElse(Model.fromId(modelId)))
 
         link.addSoldSeats(LinkClassValues.getInstance(resultSet.getInt("sold_seats_economy"), resultSet.getInt("sold_seats_business"), resultSet.getInt("sold_seats_first")))
         link.minorDelayCount = resultSet.getInt("minor_delay_count")

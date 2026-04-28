@@ -6,7 +6,6 @@ import com.patson.model.airplane._
 import java.sql.PreparedStatement
 
 import com.patson.data.Constants._
-import com.mchange.v2.c3p0.ComboPooledDataSource
 import com.patson.LinkSimulation
 
 import scala.collection.mutable.ListBuffer
@@ -76,20 +75,7 @@ object Patchers extends App {
   }
 
   def patchDelaySchema() = {
-    Class.forName(DB_DRIVER)
-    val dataSource = new ComboPooledDataSource()
-    //    val properties = new Properties()
-    //    properties.put("user", DATABASE_USER);
-    //    properties.put("password", "admin");
-    //DriverManager.getConnection(DATABASE_CONNECTION, properties);
-    //mysql end
-
-    //dataSource.setProperties(properties)
-    dataSource.setUser(DATABASE_USER)
-    dataSource.setPassword(DATABASE_PASSWORD)
-    dataSource.setJdbcUrl(DATABASE_CONNECTION)
-    dataSource.setMaxPoolSize(100)
-    val connection = dataSource.getConnection()
+    val connection = Meta.getConnection()
     
     var statement: PreparedStatement = null
 

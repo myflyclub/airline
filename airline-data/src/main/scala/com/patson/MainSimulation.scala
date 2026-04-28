@@ -1,5 +1,3 @@
-
-
 package com.patson
 
 import java.util.concurrent.TimeUnit
@@ -12,7 +10,7 @@ import com.patson.util.{AirlineCache, AirplaneOwnershipCache, AirportCache, Airp
 
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration.{Duration, FiniteDuration}
+import scala.concurrent.duration.Duration
 
 object MainSimulation extends App {
   val CYCLE_DURATION : Int = 60 * 29
@@ -26,7 +24,6 @@ object MainSimulation extends App {
     val actor = actorSystem.actorOf(Props[MainSimulationActor])
     Await.result(actorSystem.whenTerminated, Duration.Inf)
   }
-
 
   def initializeCaches() = {
     println("Initializing caches...")
@@ -105,18 +102,21 @@ object MainSimulation extends App {
     */
   def postCycle(currentCycle : Int) = {
     println("Oil simulation")
-    OilSimulation.simulate(currentCycle) //simulate at the beginning of a new cycle
+    OilSimulation.simulate(currentCycle)
     println("Loan simulation")
-    LoanInterestRateSimulation.simulate(currentCycle) //simulate at the beginning of a new cycle
+    LoanInterestRateSimulation.simulate(currentCycle)
     println("Add action points")
     ManagerSimulation.simulate(currentCycle)
-
     println("Post cycle link simulation")
     LinkSimulation.simulatePostCycle(currentCycle)
 
     println(s"Post cycle done $currentCycle")
   }
 
+  // Actor Messages
+  case object ExecuteProcessing
+  case object BroadcastAndAdvance
+  case object ScheduleNext
 
   /**
     * The simulation can be seen like this:
@@ -126,59 +126,75 @@ object MainSimulation extends App {
     *
     */
   class MainSimulationActor extends Actor {
-    currentWeek = CycleSource.loadCycle()
-    private var lastExecutionMs: Long = 0L  // in-memory only; 0 means start immediately
+    val CYCLE_INTERVAL_MS = CYCLE_DURATION * 1000L
+    val DB_REST_BUFFER_MS = SCHEDULE_BUFFER_SECS * 1000L
 
-    private def calculateDelay(): FiniteDuration = {
-      if (lastExecutionMs == 0L) {
-        Duration.Zero
-      } else {
-        val anticipatedMs = (lastExecutionMs * SCHEDULE_OVERHEAD_FACTOR).toLong + SCHEDULE_BUFFER_SECS * 1000L
-        val delayMs = Math.max(0L, CYCLE_DURATION * 1000L - anticipatedMs)
-        println(s"Next cycle delay: ${delayMs / 1000}s (anticipated: ${anticipatedMs / 1000}s, last execution: ${lastExecutionMs / 1000}s)")
-        Duration(delayMs, TimeUnit.MILLISECONDS)
-      }
-    }
+    var currentWeek = CycleSource.loadCycle()
+    var lastExecutionMs: Long = 0L
+    var targetDeadline: Long = 0L // In-memory dynamic deadline
 
     override def preStart(): Unit = {
-      context.system.scheduler.scheduleOnce(Duration.Zero, self, Start)
+      // First run executes immediately to update users ASAP
+      context.system.scheduler.scheduleOnce(Duration.Zero, self, ExecuteProcessing)
     }
 
     def receive = {
-      case Start =>
+      case ScheduleNext =>
+        status = SimulationStatus.WAITING_CYCLE_START
+        val estimatedExecution = (lastExecutionMs * SCHEDULE_OVERHEAD_FACTOR).toLong
+        val leadTime = estimatedExecution + DB_REST_BUFFER_MS
+
+        val wakeUpTime = targetDeadline - leadTime
+        val delayUntilWakeUp = Math.max(0L, wakeUpTime - System.currentTimeMillis())
+
+        println(s"Next cycle will wake up in ${delayUntilWakeUp / 1000}s (estimated exec: ${estimatedExecution / 1000}s)")
+        context.system.scheduler.scheduleOnce(Duration(delayUntilWakeUp, TimeUnit.MILLISECONDS), self, ExecuteProcessing)
+
+      case ExecuteProcessing =>
         status = SimulationStatus.IN_PROGRESS
-        val cycleStartTime = System.currentTimeMillis()
+        val startMs = System.currentTimeMillis()
+
         try {
-          val endTime = startCycle(currentWeek)
+          startCycle(currentWeek)
+          postCycle(currentWeek + 1)
 
-          lastExecutionMs = endTime - cycleStartTime
-          currentWeek += 1
-          CycleSource.setCycle(currentWeek)
-          status = SimulationStatus.WAITING_CYCLE_START
-          postCycle(currentWeek) //post cycle do some quick updates, no long simulation
+          lastExecutionMs = System.currentTimeMillis() - startMs
 
-          //notify the websockets via EventStream
-          println("Publish Cycle Complete message")
-          SimulationEventStream.publish(CycleCompleted(currentWeek - 1, endTime), None)
+          // Determine DB rest. If first run (targetDeadline is 0), just take the minimum buffer.
+          // Otherwise, sync to the target deadline, enforcing the minimum buffer.
+          val delayUntilBroadcast = if (targetDeadline == 0L) {
+            DB_REST_BUFFER_MS
+          } else {
+            val timeToDeadline = targetDeadline - System.currentTimeMillis()
+            Math.max(timeToDeadline, DB_REST_BUFFER_MS)
+          }
+
+          context.system.scheduler.scheduleOnce(Duration(delayUntilBroadcast, TimeUnit.MILLISECONDS), self, BroadcastAndAdvance)
+
         } catch {
           case e : Exception =>
-            println(s"!!!!!!! Cycle $currentWeek failed with exception: ${e.getClass.getSimpleName}: ${e.getMessage}. Will retry next tick.")
-            lastExecutionMs = 0L  // reset so retry fires immediately
+            println(s"!!!!!!! Cycle $currentWeek failed with exception: ${e.getClass.getSimpleName}: ${e.getMessage}. Retrying in 60s.")
             status = SimulationStatus.WAITING_CYCLE_START
-        } finally {
-          context.system.scheduler.scheduleOnce(calculateDelay(), self, Start)
+            context.system.scheduler.scheduleOnce(Duration(60, TimeUnit.SECONDS), self, ExecuteProcessing)
         }
+
+      case BroadcastAndAdvance =>
+        val endTime = System.currentTimeMillis()
+        println("Publish Cycle Complete message")
+        SimulationEventStream.publish(CycleCompleted(currentWeek, endTime), None)
+
+        currentWeek += 1
+        CycleSource.setCycle(currentWeek)
+
+        targetDeadline = System.currentTimeMillis() + CYCLE_INTERVAL_MS
+        self ! ScheduleNext
     }
   }
-
-
-  case class Start()
 
   var status : SimulationStatus.Value = SimulationStatus.WAITING_CYCLE_START
   object SimulationStatus extends Enumeration {
     type ManagerTaskType = Value
     val IN_PROGRESS, WAITING_CYCLE_START = Value
   }
-
 
 }

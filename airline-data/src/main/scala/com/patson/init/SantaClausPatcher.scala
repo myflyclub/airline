@@ -2,8 +2,6 @@ package com.patson.init
 
 import java.sql.Connection
 
-import com.mchange.v2.c3p0.ComboPooledDataSource
-import com.patson.data.Constants.{DATABASE_CONNECTION, DATABASE_PASSWORD, DATABASE_USER, DB_DRIVER}
 import com.patson.data.{AirlineSource, AirportSource, ChristmasSource, LinkSource, Meta}
 import com.patson.model.christmas.SantaClausInfo
 import com.patson.model.{ECONOMY, Link, LinkClassValues}
@@ -14,12 +12,6 @@ import scala.concurrent.duration.Duration
 import scala.util.Random
 
 object SantaClausPatcher extends App {
-  Class.forName(DB_DRIVER)
-  val dataSource = new ComboPooledDataSource()
-  dataSource.setUser(DATABASE_USER)
-  dataSource.setPassword(DATABASE_PASSWORD)
-  dataSource.setJdbcUrl(DATABASE_CONNECTION)
-  dataSource.setMaxPoolSize(10)
   println("Select mode:")
   println("  1 - Full reset: clear ALL existing data and assign for every airline")
   println("  2 - Incremental: only assign for airlines that don't have an entry yet")
@@ -37,7 +29,7 @@ object SantaClausPatcher extends App {
 
   val airlinesToProcess = if (choice == "1") {
     println("Clearing all existing santa claus data...")
-    val connection = getConnection()
+    val connection = Meta.getConnection()
     createSchema(connection)
     connection.close()
     allAirlines
@@ -59,10 +51,6 @@ object SantaClausPatcher extends App {
 
   ChristmasSource.saveSantaClausInfo(entries.toList)
   println(s"Done — saved ${entries.size} entries.")
-
-  def getConnection(enforceForeignKey: Boolean = true) = {
-    dataSource.getConnection()
-  }
 
   def createSchema(connection : Connection) = {
     Meta.createSantaClaus(connection)

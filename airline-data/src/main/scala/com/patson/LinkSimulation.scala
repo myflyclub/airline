@@ -159,7 +159,7 @@ object LinkSimulation {
     purgeAlerts()
     checkLoadFactor(flightLinks, cycle)
 
-    LinkSource.deleteLinkConsumptionsByCycle(300)
+    LinkSource.deleteLinkConsumptionsByCycle(145)
     LinkSource.saveLinkConsumptions(linkConsumptionDetails.toList)
 
     println("Calculating Lounge usage")
