@@ -26,11 +26,16 @@ object Meta {
 
   val dataSource = new HikariDataSource(hikariConfig)
 
+  // Attempt to close the pool gracefully on JVM exit
+  sys.addShutdownHook {
+    if (!dataSource.isClosed) {
+        dataSource.close()
+    }
+  }
+
   def getConnection(): java.sql.Connection = {
     dataSource.getConnection()
   }
-
-
 
   def createSchema() {
     val connection = getConnection()

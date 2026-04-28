@@ -725,8 +725,6 @@ object LinkSource {
       toAirport = toAirport,
       fromCountry = Country.fromCode(fromAirport.countryCode),
       toCountry = Country.fromCode(toAirport.countryCode),
-//      fromZone = fromAirport.zone,
-//      toZone = toAirport.zone,
       airline = airline,
       alliance = airline.getAllianceId().map(Alliance.fromId(_)),
       frequency = newLinkOption.map(_.frequency).getOrElse(0),
