@@ -61,7 +61,7 @@ object AirlineSimulation {
     // Compute per-type dynamic benchmarks (floor=50th pct, target=90th pct)
     StockModel.benchmarksByType = StockModel.computeBenchmarks(allAirlines, latestWeeklyStatsByAirlineId)
     
-    var startTime = System.currentTimeMillis()
+    startTime = System.currentTimeMillis()
     val leaderboardsByAirlineId = RankingSimulation.process(cycle, allAirlines.filter(_.getReputation() > 60), flightLinkResult, loungeResult, paxStats)
     println(s"Rankings done: ${Util.outputTimeDiff(startTime, "Generating rankings took")}")
 
