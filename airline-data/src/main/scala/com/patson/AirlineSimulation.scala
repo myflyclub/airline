@@ -30,6 +30,7 @@ object AirlineSimulation {
     }
 
   def airlineSimulation(cycle: Int, flightLinkResult: List[LinkConsumptionDetails], loungeResult: List[LoungeConsumptionDetails], airplanes: List[Airplane], paxStats: immutable.Map[Int, AirlinePaxStat]) = {
+    var startTime = System.currentTimeMillis()
     val allAirlines = AirlineSource.loadAllAirlines(true).filter(_.getHeadQuarter().isDefined)
     val allLinks = LinkSource.loadAllLinks(LinkSource.FULL_LOAD)
     val allFlightLinksByAirlineId = allLinks.filter(_.transportType == TransportType.FLIGHT).map(_.asInstanceOf[Link]).groupBy(_.airline.id)
@@ -52,11 +53,10 @@ object AirlineSimulation {
     val airportChampionsByAirlineId : immutable.Map[Int, List[AirportChampionInfo]] = ChampionUtil.loadAirportChampionInfo().groupBy(_.loyalist.airline.id)
     val advertisementCostByAirlineId = ManagerSource.loadCampaignCostsByAirlineId()
 
-    var startTime = System.currentTimeMillis()
     val allAirlineStatsByAirlineId: immutable.Map[Int, List[AirlineStat]] = AirlineStatisticsSource.loadAirlineStatsForAirlineIds(allAirlines.map(_.id)).groupBy(_.airlineId) //used for stock price
     val latestQuarterStatsByAirlineId: immutable.Map[Int, AirlineStat] = latestStatsByPeriod(allAirlineStatsByAirlineId, Period.QUARTER)
     val latestWeeklyStatsByAirlineId: immutable.Map[Int, AirlineStat] = latestStatsByPeriod(allAirlineStatsByAirlineId, Period.WEEKLY)
-    println(s"Rankings done: ${Util.outputTimeDiff(startTime, "Took")}")
+    println(s"Loading done: ${Util.outputTimeDiff(startTime, "Took")}")
 
     // Compute per-type dynamic benchmarks (floor=50th pct, target=90th pct)
     StockModel.benchmarksByType = StockModel.computeBenchmarks(allAirlines, latestWeeklyStatsByAirlineId)

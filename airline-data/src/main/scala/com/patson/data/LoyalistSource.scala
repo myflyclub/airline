@@ -4,270 +4,167 @@ import com.patson.data.Constants._
 import com.patson.model._
 import com.patson.util.{AirlineCache, AirportCache}
 
-import scala.collection.mutable.{ListBuffer}
-
+import java.sql.ResultSet
+import scala.collection.mutable.ListBuffer
+import scala.util.Using
 
 object LoyalistSource {
-  val updateLoyalists = (loyalistEntries : List[Loyalist]) => {
-    val connection = Meta.getConnection()
-    try {
+
+  private def whereClause(criteria: List[(String, Any)]): String =
+    if (criteria.nonEmpty) " WHERE " + criteria.map(_._1 + " = ?").mkString(" AND ") else ""
+
+  private def readLoyalistHistory(rs: ResultSet): LoyalistHistory = {
+    val airport = AirportCache.getAirport(rs.getInt("airport")).get
+    val airline = AirlineCache.getAirline(rs.getInt("airline")).get
+    LoyalistHistory(Loyalist(airport, airline, rs.getInt("amount")), rs.getInt("cycle"))
+  }
+
+  def updateLoyalists(loyalistEntries: List[Loyalist]): Unit =
+    Using.Manager { use =>
+      val connection = use(Meta.getConnection())
       connection.setAutoCommit(false)
-      val statement = connection.prepareStatement("REPLACE INTO " + LOYALIST_TABLE + "(airport, airline, amount) VALUES(?,?,?)")
-      try {
-        loyalistEntries.foreach {
-          case Loyalist(airport : Airport, airline : Airline, amount : Int) => {
-            statement.setInt(1, airport.id)
-            statement.setInt(2, airline.id)
-            statement.setInt(3, amount)
-            statement.addBatch()
-          }
-        }
-        statement.executeBatch()
-        connection.commit()
-      } finally {
-        statement.close()
+      val statement = use(connection.prepareStatement(
+        s"REPLACE INTO $LOYALIST_TABLE(airport, airline, amount) VALUES(?,?,?)"
+      ))
+      loyalistEntries.foreach { case Loyalist(airport, airline, amount) =>
+        statement.setInt(1, airport.id)
+        statement.setInt(2, airline.id)
+        statement.setInt(3, amount)
+        statement.addBatch()
       }
-    } finally {
-      connection.close()
-    }
-  }
+      statement.executeBatch()
+      connection.commit()
+    }.get
 
-  def loadLoyalistsByCriteria(criteria : List[(String, Any)]) = {
-    var queryString = "SELECT * FROM " + LOYALIST_TABLE
+  def loadLoyalistsByCriteria(criteria: List[(String, Any)]): List[Loyalist] =
+    loadLoyalistsByQueryString(s"SELECT * FROM $LOYALIST_TABLE${whereClause(criteria)}", criteria.map(_._2))
 
-    if (!criteria.isEmpty) {
-      queryString += " WHERE "
-      for (i <- 0 until criteria.size - 1) {
-        queryString += criteria(i)._1 + " = ? AND "
-      }
-      queryString += criteria.last._1 + " = ?"
-    }
-    loadLoyalistsByQueryString(queryString, criteria.map(_._2))
-  }
-
-
-  def loadLoyalistsByAirportId(airportId : Int) = {
+  def loadLoyalistsByAirportId(airportId: Int): List[Loyalist] =
     loadLoyalistsByCriteria(List(("airport", airportId)))
-  }
 
-  private def loadLoyalistsByQueryString(queryString : String, parameters : List[Any]) : List[Loyalist] = {
-    val connection = Meta.getConnection()
-    try {
-      val preparedStatement = connection.prepareStatement(queryString)
-
-      for (i <- 0 until parameters.size) {
-        preparedStatement.setObject(i + 1, parameters(i))
-      }
-
-
-      val resultSet = preparedStatement.executeQuery()
-
+  private def loadLoyalistsByQueryString(queryString: String, parameters: List[Any]): List[Loyalist] =
+    Using.Manager { use =>
+      val connection = use(Meta.getConnection())
+      val stmt = use(connection.prepareStatement(queryString))
+      parameters.zipWithIndex.foreach { case (value, i) => stmt.setObject(i + 1, value) }
+      val rs = use(stmt.executeQuery())
       val entries = ListBuffer[Loyalist]()
-
-      while (resultSet.next()) {
-        val airportId = resultSet.getInt("airport")
-        val airlineId = resultSet.getInt("airline")
-        val airport = AirportCache.getAirport(airportId).get
-        val airline = AirlineCache.getAirline(airlineId).get
-        val amount = resultSet.getInt("amount")
-        entries += Loyalist(airport, airline, amount)
+      while (rs.next()) {
+        val airport = AirportCache.getAirport(rs.getInt("airport")).get
+        val airline = AirlineCache.getAirline(rs.getInt("airline")).get
+        entries += Loyalist(airport, airline, rs.getInt("amount"))
       }
-
-      resultSet.close()
-      preparedStatement.close()
-
       entries.toList
-    } finally {
-      connection.close()
-    }
-  }
-  def deleteLoyalistsByAirline(airlineId : Int) = {
-    val connection = Meta.getConnection()
-    val statement = connection.prepareStatement("DELETE FROM " + LOYALIST_TABLE + " WHERE airline = ?")
+    }.get
 
-    try {
+  def deleteLoyalistsByAirline(airlineId: Int): Unit =
+    Using.Manager { use =>
+      val connection = use(Meta.getConnection())
+      val statement = use(connection.prepareStatement(s"DELETE FROM $LOYALIST_TABLE WHERE airline = ?"))
       statement.setInt(1, airlineId)
       statement.executeUpdate()
-    } finally {
-      statement.close()
-      connection.close()
-    }
-  }
+    }.get
 
-  val deleteLoyalists = (loyalistEntries : List[Loyalist]) => {
-    val connection = Meta.getConnection()
-    try {
+  def deleteLoyalists(loyalistEntries: List[Loyalist]): Unit =
+    Using.Manager { use =>
+      val connection = use(Meta.getConnection())
       connection.setAutoCommit(false)
-      val statement = connection.prepareStatement("DELETE FROM " + LOYALIST_TABLE + " WHERE airport = ? AND airline = ?")
-      try {
-        loyalistEntries.foreach {
-          case Loyalist(airport : Airport, airline : Airline, amount : Int) => {
-            statement.setInt(1, airport.id)
-            statement.setInt(2, airline.id)
-            statement.addBatch()
-          }
-        }
-        statement.executeBatch()
-        connection.commit()
-      } finally {
-        statement.close()
+      val statement = use(connection.prepareStatement(
+        s"DELETE FROM $LOYALIST_TABLE WHERE airport = ? AND airline = ?"
+      ))
+      loyalistEntries.foreach { case Loyalist(airport, airline, _) =>
+        statement.setInt(1, airport.id)
+        statement.setInt(2, airline.id)
+        statement.addBatch()
       }
-    } finally {
-      connection.close()
-    }
-  }
+      statement.executeBatch()
+      connection.commit()
+    }.get
 
-  def deleteLoyalist(airportId : Int, airlineId : Int) = {
-    //open the hsqldb
-    val connection = Meta.getConnection()
-    try {
-      var queryString = "DELETE FROM " + LOYALIST_TABLE + " WHERE airport = ? AND airline = ?"
+  def deleteLoyalist(airportId: Int, airlineId: Int): Int =
+    Using.Manager { use =>
+      val connection = use(Meta.getConnection())
+      val stmt = use(connection.prepareStatement(
+        s"DELETE FROM $LOYALIST_TABLE WHERE airport = ? AND airline = ?"
+      ))
+      stmt.setInt(1, airportId)
+      stmt.setInt(2, airlineId)
+      stmt.executeUpdate()
+    }.get
 
-      val preparedStatement = connection.prepareStatement(queryString)
-
-      preparedStatement.setInt(1, airportId)
-      preparedStatement.setInt(1, airlineId)
-      val deletedCount = preparedStatement.executeUpdate()
-
-      preparedStatement.close()
-      deletedCount
-    } finally {
-      connection.close()
-    }
-  }
-
-  val updateLoyalistHistory = (entries : List[LoyalistHistory]) => {
+  def updateLoyalistHistory(entries: List[LoyalistHistory]): Unit = {
     val BATCH_SIZE = 10000
-    val connection = Meta.getConnection()
-    try {
+    Using.Manager { use =>
+      val connection = use(Meta.getConnection())
       connection.setAutoCommit(false)
-      val statement = connection.prepareStatement("REPLACE INTO " + LOYALIST_HISTORY_TABLE + "(airport, airline, amount, cycle) VALUES(?,?,?,?)")
-      try {
-        var count = 0
-        for (entry <- entries) {
-          entry match {
-            case LoyalistHistory(Loyalist(airport: Airport, airline: Airline, amount: Int), cycle) =>
-              statement.setInt(1, airport.id)
-              statement.setInt(2, airline.id)
-              statement.setInt(3, amount)
-              statement.setInt(4, cycle)
-              statement.addBatch()
-              count += 1
-              if (count % BATCH_SIZE == 0) {
-                statement.executeBatch()
-                connection.commit()
-              }
-          }
-        }
-        // Execute remaining batch
-        if (count % BATCH_SIZE != 0) {
+      val statement = use(connection.prepareStatement(
+        s"REPLACE INTO $LOYALIST_HISTORY_TABLE(airport, airline, amount, cycle) VALUES(?,?,?,?)"
+      ))
+      entries.zipWithIndex.foreach { case (LoyalistHistory(Loyalist(airport, airline, amount), cycle), i) =>
+        statement.setInt(1, airport.id)
+        statement.setInt(2, airline.id)
+        statement.setInt(3, amount)
+        statement.setInt(4, cycle)
+        statement.addBatch()
+        if ((i + 1) % BATCH_SIZE == 0) {
           statement.executeBatch()
           connection.commit()
         }
-      } finally {
-        statement.close()
       }
-    } finally {
-      connection.close()
-    }
+      if (entries.size % BATCH_SIZE != 0) {
+        statement.executeBatch()
+        connection.commit()
+      }
+    }.get
   }
 
-  def loadLoyalistsHistoryByAirportId(airportId : Int) : Map[Int, List[LoyalistHistory]] = { //returns key cycle
-    val connection = Meta.getConnection()
-    try {
-      val preparedStatement = connection.prepareStatement("SELECT * FROM " + LOYALIST_HISTORY_TABLE + " WHERE airport = ?")
-
-      preparedStatement.setInt(1, airportId)
-
-      val resultSet = preparedStatement.executeQuery()
-
+  def loadLoyalistsHistoryByAirportId(airportId: Int): Map[Int, List[LoyalistHistory]] =
+    Using.Manager { use =>
+      val connection = use(Meta.getConnection())
+      val stmt = use(connection.prepareStatement(
+        s"SELECT airport, airline, amount, cycle FROM $LOYALIST_HISTORY_TABLE WHERE airport = ?"
+      ))
+      stmt.setInt(1, airportId)
+      val rs = use(stmt.executeQuery())
       val entries = ListBuffer[LoyalistHistory]()
-
-      while (resultSet.next()) {
-        val airportId = resultSet.getInt("airport")
-        val airlineId = resultSet.getInt("airline")
-        val airport = AirportCache.getAirport(airportId).get
-        val airline = AirlineCache.getAirline(airlineId).get
-        val amount = resultSet.getInt("amount")
-        val cycle =  resultSet.getInt("cycle")
-        entries += LoyalistHistory(Loyalist(airport, airline, amount), cycle)
-      }
-
-      resultSet.close()
-      preparedStatement.close()
-
+      while (rs.next()) entries += readLoyalistHistory(rs)
       entries.toList.groupBy(_.cycle)
-    } finally {
-      connection.close()
-    }
-  }
+    }.get
 
-  def loadLoyalistHistoryByCriteria(criteria : List[(String, Any)]) : List[LoyalistHistory] = {
-    var queryString = "SELECT * FROM " + LOYALIST_HISTORY_TABLE
-
-    if (!criteria.isEmpty) {
-      queryString += " WHERE "
-      for (i <- 0 until criteria.size - 1) {
-        queryString += criteria(i)._1 + " = ? AND "
-      }
-      queryString += criteria.last._1 + " = ?"
-    }
-
-    val connection = Meta.getConnection()
-    try {
-      val preparedStatement = connection.prepareStatement(queryString)
-
-      for (i <- 0 until criteria.size) {
-        preparedStatement.setObject(i + 1, criteria(i)._2)
-      }
-
-
-      val resultSet = preparedStatement.executeQuery()
-
+  def loadLoyalistHistoryByCriteria(criteria: List[(String, Any)]): List[LoyalistHistory] =
+    Using.Manager { use =>
+      val connection = use(Meta.getConnection())
+      val stmt = use(connection.prepareStatement(
+        s"SELECT airport, airline, amount, cycle FROM $LOYALIST_HISTORY_TABLE${whereClause(criteria)}"
+      ))
+      criteria.zipWithIndex.foreach { case ((_, value), i) => stmt.setObject(i + 1, value) }
+      val rs = use(stmt.executeQuery())
       val entries = ListBuffer[LoyalistHistory]()
-
-      while (resultSet.next()) {
-        val airportId = resultSet.getInt("airport")
-        val airlineId = resultSet.getInt("airline")
-        val airport = AirportCache.getAirport(airportId).get
-        val airline = AirlineCache.getAirline(airlineId).get
-        val amount = resultSet.getInt("amount")
-        val cycle =  resultSet.getInt("cycle")
-        entries += LoyalistHistory(Loyalist(airport, airline, amount), cycle)
-      }
-
-      resultSet.close()
-      preparedStatement.close()
-
+      while (rs.next()) entries += readLoyalistHistory(rs)
       entries.toList
-    } finally {
-      connection.close()
-    }
-  }
+    }.get
 
-  def loadLoyalistHistoryByCycleAndAirline(cycle : Int, airlineId : Int) : List[LoyalistHistory] = {
+  def loadLoyalistHistoryByCycleAndAirline(cycle: Int, airlineId: Int): List[LoyalistHistory] =
     loadLoyalistHistoryByCriteria(List(("cycle", cycle), ("airline", airlineId)))
-  }
-  def loadLoyalistHistoryByCycle(cycle : Int) : List[LoyalistHistory] = {
+
+  def loadLoyalistHistoryByCycle(cycle: Int): List[LoyalistHistory] =
     loadLoyalistHistoryByCriteria(List(("cycle", cycle)))
-  }
 
-
-  def deleteLoyalistHistoryBeforeCycle(cutoff : Int) = {
-    //open the hsqldb
-    val connection = Meta.getConnection()
-    try {
-      var queryString = "DELETE FROM " + LOYALIST_HISTORY_TABLE + " WHERE cycle < ?"
-
-      val preparedStatement = connection.prepareStatement(queryString)
-
-      preparedStatement.setInt(1, cutoff)
-      val deletedCount = preparedStatement.executeUpdate()
-
-      preparedStatement.close()
-      deletedCount
-    } finally {
-      connection.close()
-    }
+  def deleteLoyalistHistoryBeforeCycle(cutoff: Int): Int = {
+    val BATCH_SIZE = 10000
+    Using.Manager { use =>
+      val connection = use(Meta.getConnection())
+      val stmt = use(connection.prepareStatement(
+        s"DELETE FROM $LOYALIST_HISTORY_TABLE WHERE cycle < ? LIMIT $BATCH_SIZE"
+      ))
+      stmt.setInt(1, cutoff)
+      var totalDeleted = 0
+      var deleted = 0
+      do {
+        deleted = stmt.executeUpdate()
+        totalDeleted += deleted
+      } while (deleted == BATCH_SIZE)
+      totalDeleted
+    }.get
   }
 }
