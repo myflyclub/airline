@@ -11,12 +11,18 @@ var reconnectTimer = null
 var cycleDurationMs = 0
 var maxReconnectDelay = 60000
 var connectionOpened = false
-var missedCycleRefresh = false
+// 'idle'    — no refresh needed or scheduled
+// 'needed'  — cycleCompleted fired while tab hidden; refresh on next focus
+// 'pending' — refresh is queued via setTimeout
+var refreshState = 'idle'
 
 function scheduleRefresh(minDelay, maxJitter) {
+    if (refreshState === 'pending') return
+    refreshState = 'pending'
     var capturedId = selectedAirlineId
     var jitter = Math.floor(Math.random() * maxJitter) + minDelay
     setTimeout(function() {
+        refreshState = 'idle'
         updateAirlineInfo(capturedId)
         loadAirportsDynamic()
         loadNotificationBadge()
@@ -24,8 +30,12 @@ function scheduleRefresh(minDelay, maxJitter) {
 }
 
 document.addEventListener('visibilitychange', function() {
-    if (!document.hidden && missedCycleRefresh && selectedAirlineId) {
-        missedCycleRefresh = false
+    clearInterval(currentTickTimer)
+    if (!document.hidden && tickTimerCreator) {
+        console.log("Recreating tick timer!")
+        currentTickTimer = tickTimerCreator()
+    }
+    if (!document.hidden && refreshState === 'needed' && selectedAirlineId) {
         scheduleRefresh(500, 4000)
     }
 })
@@ -55,7 +65,7 @@ function connectWebSocket(airlineId) {
         reconnectAttempts = 0
         wsSend(airlineId)
         console.log("websocket open for airline " + airlineId)
-        if (isReconnect && selectedAirlineId) {
+        if (isReconnect && selectedAirlineId && !document.hidden) {
             scheduleRefresh(500, 4000)
         }
     }
@@ -80,7 +90,7 @@ function connectWebSocket(airlineId) {
         } else if (json.messageType == "cycleCompleted") {
             if (selectedAirlineId) {
                 if (document.hidden) {
-                    missedCycleRefresh = true
+                    if (refreshState !== 'pending') refreshState = 'needed'
                 } else {
                     scheduleRefresh(5000, 25000)
                 }

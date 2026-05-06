@@ -161,7 +161,6 @@ var tickTimerCreator
 
 function updateTime(cycle, fraction, cycleDurationEstimation) {
 	$(".currentTime").attr("data-tooltip", "Week " + cycle % 48 + " & Year " + Math.floor(cycle / 48) + " | One week lasts ~ 30min and one year is 48 weeks or 24 hours in realtime.")
-	gameTimeStart = (cycle + fraction) * totalmillisecPerWeek
 
     var initialDurationTillNextTick
 	if (cycleDurationEstimation > 0) { //update incrementPerInterval
@@ -203,16 +202,6 @@ function updateTime(cycle, fraction, cycleDurationEstimation) {
 
 	currentTickTimer = tickTimerCreator()
 }
-
-
-// Handle browser tab visibility change
-document.addEventListener('visibilitychange', function () {
-    clearInterval(currentTickTimer);
-    if (!document.hidden && tickTimerCreator) {
-        console.log("Recreating tick timer!")
-        currentTickTimer = tickTimerCreator()
-    }
-});
 
 
 function showWorldMap() {
