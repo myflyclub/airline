@@ -232,6 +232,31 @@ object AirportSource {
 
 
   def loadAirportsByQueryString(queryString: String, parameters: List[Any], fullLoad: Boolean = false, loadFeatures: Boolean = false) = {
+    // Fetch all ancillary data before acquiring the main connection to avoid holding it open during nested DB calls
+    val currentCycle = CycleSource.loadCycle()
+
+    val airlineGlobalBonuses: Map[Int, List[AirlineBonus]] = //key is airline ID
+      if (fullLoad) {
+        getAirlineGlobalBonuses()
+      } else {
+        Map.empty
+      }
+
+    // Pre-compute feature maps for batch loading — all must be cache-free DB queries
+    val (prestigeByAirportId, olympicsFeatureByAirportId, eliteCountByAirportId): (Map[Int, Int], Map[Int, AirportFeature], Map[Int, Int]) =
+      if (fullLoad || loadFeatures) {
+        val prestigeFromTable = PrestigeSource.sumPrestigePointsAllAirports()
+        val prestigeFromAirlines = AirlineSource.sumPrestigePointsByHeadquarterAirportAll()
+        val prestigeCombined = (prestigeFromTable.keySet ++ prestigeFromAirlines.keySet).map { airportId =>
+          airportId -> (prestigeFromTable.getOrElse(airportId, 0) + prestigeFromAirlines.getOrElse(airportId, 0))
+        }.toMap
+        val olympicsMap = EventSource.loadActiveOlympicsAffectedAirportFeatures(currentCycle)
+        val eliteMap = DestinationSource.countDestinationsByAirport()
+        (prestigeCombined, olympicsMap, eliteMap)
+      } else {
+        (Map.empty, Map.empty, Map.empty)
+      }
+
     val connection = Meta.getConnection()
     try {
       val preparedStatement = connection.prepareStatement(queryString)
@@ -243,30 +268,6 @@ object AirportSource {
       val resultSet = preparedStatement.executeQuery()
 
       val airportData = new ListBuffer[Airport]()
-
-      val currentCycle = CycleSource.loadCycle()
-
-      val airlineGlobalBonuses: Map[Int, List[AirlineBonus]] = //key is airline ID
-        if (fullLoad) {
-          getAirlineGlobalBonuses()
-        } else {
-          Map.empty
-        }
-
-      // Pre-compute feature maps for batch loading — all must be cache-free DB queries
-      val (prestigeByAirportId, olympicsFeatureByAirportId, eliteCountByAirportId): (Map[Int, Int], Map[Int, AirportFeature], Map[Int, Int]) =
-        if (fullLoad || loadFeatures) {
-          val prestigeFromTable = PrestigeSource.sumPrestigePointsAllAirports()
-          val prestigeFromAirlines = AirlineSource.sumPrestigePointsByHeadquarterAirportAll()
-          val prestigeCombined = (prestigeFromTable.keySet ++ prestigeFromAirlines.keySet).map { airportId =>
-            airportId -> (prestigeFromTable.getOrElse(airportId, 0) + prestigeFromAirlines.getOrElse(airportId, 0))
-          }.toMap
-          val olympicsMap = EventSource.loadActiveOlympicsAffectedAirportFeatures(CycleSource.loadCycle())
-          val eliteMap = DestinationSource.countDestinationsByAirport()
-          (prestigeCombined, olympicsMap, eliteMap)
-        } else {
-          (Map.empty, Map.empty, Map.empty)
-        }
 
       while (resultSet.next()) {
         val airport = Airport(
