@@ -173,7 +173,8 @@ object MainSimulation extends App {
 
         } catch {
           case e : Exception =>
-            println(s"!!!!!!! Cycle $currentWeek failed with exception: ${e.getClass.getSimpleName}: ${e.getMessage}. Retrying in 60s.")
+            println(s"!!!!!!! Cycle $currentWeek failed with exception: ${e.getClass.getName}: ${e.getMessage}. Retrying in 60s.")
+            e.printStackTrace()
             status = SimulationStatus.WAITING_CYCLE_START
             context.system.scheduler.scheduleOnce(Duration(60, TimeUnit.SECONDS), self, ExecuteProcessing)
         }
