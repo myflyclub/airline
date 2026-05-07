@@ -156,7 +156,13 @@ object MainSimulation extends App {
 
         try {
           startCycle(currentWeek)
-          postCycle(currentWeek + 1)
+
+          // Advance the cycle before postCycle so refreshLinksPostCycle sees newly-delivered
+          // airplanes as isReady, keeping DB capacity in sync with the upcoming cycle's view.
+          currentWeek += 1
+          CycleSource.setCycle(currentWeek)
+
+          postCycle(currentWeek)
 
           lastExecutionMs = System.currentTimeMillis() - startMs
 
@@ -182,10 +188,7 @@ object MainSimulation extends App {
       case BroadcastAndAdvance =>
         val endTime = System.currentTimeMillis()
         println("Publish Cycle Complete message")
-        SimulationEventStream.publish(CycleCompleted(currentWeek, endTime), None)
-
-        currentWeek += 1
-        CycleSource.setCycle(currentWeek)
+        SimulationEventStream.publish(CycleCompleted(currentWeek - 1, endTime), None)
 
         targetDeadline = System.currentTimeMillis() + CYCLE_INTERVAL_MS
         self ! ScheduleNext
