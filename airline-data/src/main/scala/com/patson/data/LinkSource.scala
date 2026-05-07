@@ -304,6 +304,20 @@ object LinkSource {
     loadFlightLinksByCriteria(List(("from_airport", fromAirportId), ("to_airport", toAirportId)), loadDetails)
   }
 
+  def loadFlightLinksByAirportSets(fromAirportIds : List[Int], toAirportIds : List[Int], loadDetails : Map[DetailType.Value, Boolean] = SIMPLE_LOAD) : List[Link] = {
+    if (fromAirportIds.isEmpty || toAirportIds.isEmpty) {
+      List.empty
+    } else {
+      val fromPh = fromAirportIds.map(_ => "?").mkString(",")
+      val toPh   = toAirportIds.map(_ => "?").mkString(",")
+      val q = BASE_QUERY +
+        s" WHERE from_airport IN ($fromPh)" +
+        s" AND to_airport IN ($toPh)" +
+        s" AND transport_type = ${TransportType.FLIGHT.id}"
+      loadLinksByQueryString(q, fromAirportIds ++ toAirportIds, loadDetails).map(_.asInstanceOf[Link])
+    }
+  }
+
   def loadAllLinks(loadDetails : Map[DetailType.Value, Boolean] = SIMPLE_LOAD) = {
       loadLinksByCriteria(List.empty, loadDetails)
   }
