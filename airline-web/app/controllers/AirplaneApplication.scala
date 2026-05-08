@@ -431,9 +431,28 @@ class AirplaneApplication @Inject()(cc: ControllerComponents) extends AbstractCo
     AirplaneSource.loadAirplaneById(airplaneId) match {
       case Some(airplane) =>
         if (airplane.owner.id == airlineId) {
-          //load link assignments
-          val airplaneWithLinkAssignments: (Airplane, LinkAssignments) = (airplane, AirplaneSource.loadAirplaneLinkAssignmentsByAirplaneId(airplane.id))
-          Ok(Json.toJson(airplaneWithLinkAssignments))
+          val linkAssignments = AirplaneSource.loadAirplaneLinkAssignmentsByAirplaneId(airplane.id)
+          val configurations = AirplaneSource.loadAirplaneConfigurationsByCriteria(List(("airline", airlineId), ("model", airplane.model.id)))
+          val configurationsJson = configurations.foldLeft(Json.arr()) { (acc, c) =>
+            acc.append(Json.obj(
+              "id" -> c.id,
+              "airlineId" -> c.airline.id,
+              "economy" -> c.economyVal,
+              "business" -> c.businessVal,
+              "first" -> c.firstVal,
+              "isDefault" -> c.isDefault
+            ))
+          }
+          val spaceMultipliers = Json.obj(
+            "economy" -> ECONOMY.spaceMultiplier,
+            "business" -> BUSINESS.spaceMultiplier,
+            "first" -> FIRST.spaceMultiplier
+          )
+          val payload = Json.toJson((airplane, linkAssignments)).as[JsObject] +
+            ("configurations" -> configurationsJson) +
+            ("spaceMultipliers" -> spaceMultipliers) +
+            ("currentCycle" -> JsNumber(CycleSource.loadCycle()))
+          Ok(payload)
         } else {
           Forbidden
         }
