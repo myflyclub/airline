@@ -9,7 +9,7 @@ import { initMap, getMap, centerOnHQ, flyTo, drawCircle, removeCircle, applyMapP
 import { initStyles, getMapStyle, getCurrentStyle, toggleMapLight, updateMapStyle, getPathOpacity } from './styles.js';
 import { initMarkers, addMarkers, removeMarkers, updateAirportBaseMarkers, updateAirportMarkers, toggleChampionMap } from './markers.js';
 import { initRoutes, drawFlightPath, refreshFlightPath, getLinkColor, highlightPath, unhighlightPath, highlightLink, unhighlightLink, clearAllPaths, clearPathEntry, drawTempPath, removeTempPath, drawAirportLinkPath, clearAirportLinkPaths, drawAllianceLink, drawLinkHistoryPath, showLinkHistory, clearHistoryPaths, setRoutesFromGeoJSON, getHistoryRoutesClickLayerId, ensureHistoryRoutesLayers, setRouteSelectable } from './routes.js';
-import { showAirportPopup, closeAirportPopup, closeAirportInfoPopup, showLinkPopup, showAirportLinkPopup, showAllianceBasePopup, showLinkHistoryPopup, closePopup, closeAlliancePopups, closeAllianceLinkPopup } from './popups.js';
+import { showAirportPopup, closeAirportPopup, closeAirportInfoPopup, showAllianceBasePopup, showLinkHistoryPopup, closePopup, closeAlliancePopups, closeAllianceLinkPopup } from './popups.js';
 import { addMapControls, addExitButton, removeExitButton, createMapButton, clearTopCenterControls } from './controls.js';
 import { updateHeatmap, clearHeatmap, toggleHeatmap, showHeatmap, closeHeatmap, updateHeatmapArrows, initHeatmapControls } from './heatmap.js';
 
@@ -125,8 +125,6 @@ const AirlineMap = {
     showAirportPopup,
     closeAirportPopup,
     closeAirportInfoPopup,
-    showLinkPopup,
-    showAirportLinkPopup,
     showAllianceBasePopup,
     showLinkHistoryPopup,
     closePopup,

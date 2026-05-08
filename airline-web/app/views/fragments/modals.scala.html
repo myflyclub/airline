@@ -79,28 +79,6 @@
         </div>
     </div>
 
-    <div style="display: none; width: 350px;" id="airportLinkPopup" class="mapPopup">
-    	<input type="hidden" id="airportLinkPopupId">
-    	<div class="table" style="width: 100%">
-   			<div class="table-row">
-   				<div class="label" style="width:30%"><h5>From :</h5></div>
-   				<div class="value" style="width:70%" id="airportLinkPopupFrom"></div>
-   			</div>
-   			<div class="table-row">
-   				<div class="label" style="width:30%"><h5>To:</h5></div>
-   				<div class="value" style="width:70%" id="airportLinkPopupTo"></div>
-   			</div>
-   			<div class="table-row">
-   				<div class="label" style="width:30%"><h5>Cap(Freq):</h5></div>
-   				<div class="value" style="width:70%" id="airportLinkPopupCapacity"></div>
-   			</div>
-			<div class="table-row">
-				<div class="label" style="width:30%"><h5>Operators:</h5></div>
-				<div class="value" style="width:70%" id="airportLinkOperators"></div>
-			</div>
-		</div>
-    </div>
-
 	  <div style="display: none; width: 100%;" id="olympicAirportPopup" class="mapPopup">
 		  <h5 class="airportName"></h5>
 	  </div>
@@ -110,28 +88,6 @@
 	  </div>
 
 
-
-    <div style="display: none; width: 100%;" id="linkPopup" class="mapPopup">
-    	<input type="hidden" id="airportLinkPopupId">
-    	<div class="table" style="width: 100%">
-   			<div class="table-row">
-   				<div class="label">From :</div>
-   				<div class="value" id="linkPopupFrom"></div>
-   			</div>
-   			<div class="table-row">
-   				<div class="label">To:</div>
-   				<div class="value" id="linkPopupTo"></div>
-   			</div>
-            <div class="table-row">
-                <div class="label">Capacity:</div>
-                <div class="value" id="linkPopupCapacity"></div>
-            </div>
-   			<div class="table-row">
-   				<div class="label">Airline:</div>
-   				<div class="value" id="linkPopupAirline"></div>
-   			</div>
-		</div>
-    </div>
 
 	  <div style="display: none; width: 100%;" id="allianceBasePopup" class="mapPopup pr-2 py-2">
 		  <div class="table" style="width: 100%">
@@ -1414,7 +1370,7 @@
   <!-- popup of owned airplane details and control -->
 	<div id="ownedAirplaneDetailModal" class="modal">
 		<div class="modal-content py-4 px-6" style="max-width: 560px;">
-			<h3 class="pb-4">Aircraft Details</h3>
+			<h3 id="ownedAirplaneHeading" class="py-2">Aircraft Details</h3>
 			<span class="close" onclick="closeModal($('#ownedAirplaneDetailModal'))">&times;</span>
 			<div id="ownedAirplaneDetail" style="width: 100%;">
 				<div class="modelIllustration pb-4" style="width:100%; position: relative; max-width: 500px;">
@@ -1435,7 +1391,6 @@
 					<img src='@routes.Assets.versioned("/images/icons/cross.svg")' class='img-button svg' style="vertical-align: middle;" onclick="cancelAirplaneHome()"/>
 				</div>
 				<p><i id="airplaneDetailsAge"></i></p>
-				<p id="airplaneDetailsDelivery" style="font-weight: bold;"></p>
 				<p class="m-0 pt-4">Assigned route(s):</p>
 				<div id="airplaneDetailsLink"></div>
 				<p class="pb-6 opacity-70"><i class="availableFlightMinutes"></i></p>

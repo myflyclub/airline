@@ -7,12 +7,15 @@ import { state } from './state.js';
 import { hasSource, hasLayer, addSource, addLayer, removeLayer, removeSource, setSourceData, on, off, setCursor } from './core.js';
 import { createGreatCircleGeometry } from './geodesic.js';
 import { getCurrentStyle, getPathOpacity } from './styles.js';
+import { showLinkHoverPopup, hideLinkHoverPopup } from './popups.js';
 
 let tempPathData = null;
 let highlightedLinkId = null;
 let highlightAnimation = null;
 let hoveredRouteId = null;
 let routeSelectable = true;
+let airportLinksHandlersBound = false;
+let hoveredAirportLinkKey = null;
 
 /**
  * Generic route layer factory - creates source, layers, and refresh function.
@@ -292,6 +295,11 @@ function setupRouteInteractions() {
                 hoveredRouteId = featureId;
                 state.map.setFeatureState({ source: flightRoutes.sourceId, id: hoveredRouteId }, { hover: true });
                 highlightPath(linkId, false);
+
+                const link = state.flightPaths[linkId]?.link;
+                if (link) {
+                    showLinkHoverPopup(linkToNormalized(link), e.lngLat, `link-${linkId}`);
+                }
             }
         }
     });
@@ -303,6 +311,7 @@ function setupRouteInteractions() {
             hoveredRouteId = null;
         }
         if (highlightedLinkId && !state.selectedLink) unhighlightPath(highlightedLinkId);
+        hideLinkHoverPopup();
     });
 
     on('click', flightRoutes.clickLayerId, (e) => {
@@ -316,6 +325,61 @@ function setupRouteInteractions() {
             const linkId = e.features[0].properties.id;
             if (typeof selectLinkFromMap === 'function') selectLinkFromMap(linkId, false);
         }
+    });
+}
+
+/**
+ * Normalize a single-airline link into the shape expected by showLinkHoverPopup.
+ */
+function linkToNormalized(link) {
+    const isOwnLink = window.activeAirline && link.airlineId === window.activeAirline.id;
+    return {
+        fromAirport: { iata: link.fromAirportCode, city: link.fromAirportCity, countryCode: link.fromCountryCode },
+        toAirport: { iata: link.toAirportCode, city: link.toAirportCity, countryCode: link.toCountryCode },
+        operators: [{
+            airlineId: link.airlineId,
+            airlineName: link.airlineName,
+            capacity: link.capacity,
+            frequency: link.frequency
+        }],
+        totalProfit: (isOwnLink && typeof link.profit === 'number') ? link.profit : undefined
+    };
+}
+
+/**
+ * Normalize an airport-link path entry (multi-operator) into the hover-popup shape.
+ */
+function airportLinkPathToNormalized(pathData) {
+    return {
+        fromAirport: pathData.localAirport,
+        toAirport: pathData.remoteAirport,
+        operators: (pathData.details && pathData.details.operators) || []
+    };
+}
+
+/**
+ * Bind hover handlers for the airport-links layer. Idempotent.
+ */
+function setupAirportLinksInteractions() {
+    if (!state.map || airportLinksHandlersBound) return;
+    airportLinksHandlersBound = true;
+
+    on('mousemove', airportLinks.clickLayerId, (e) => {
+        setCursor('pointer');
+        if (e.features.length === 0) return;
+        const pathKey = e.features[0].properties.id;
+        const pathData = state.airportLinkPaths[pathKey];
+        if (!pathData) return;
+        if (hoveredAirportLinkKey !== pathKey) {
+            hoveredAirportLinkKey = pathKey;
+        }
+        showLinkHoverPopup(airportLinkPathToNormalized(pathData), e.lngLat, `airport-link-${pathKey}`);
+    });
+
+    on('mouseleave', airportLinks.clickLayerId, () => {
+        setCursor('');
+        hoveredAirportLinkKey = null;
+        hideLinkHoverPopup();
     });
 }
 
@@ -547,6 +611,10 @@ export function removeTempPath() {
  */
 export function drawAirportLinkPath(localAirport, details) {
     if (!state.map) return;
+
+    const wasNew = !hasSource(airportLinks.sourceId);
+    airportLinks.ensure();
+    if (wasNew) setupAirportLinksInteractions();
 
     const remoteAirport = details.remoteAirport;
     const pathKey = remoteAirport.id;
