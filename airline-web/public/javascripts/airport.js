@@ -259,7 +259,6 @@ function updateAirportDetails(airport) {
         const bonus = airport.bonusList && airport.bonusList[activeAirline.id]
         if (bonus && bonus.loyalty > 0) {
             $(".airportLoyaltyBonus").text(`(+${bonus.loyalty})`).show()
-            $('#airportDetailsLoyalty').data('loyaltyBreakdown', bonus.loyaltyBreakdown)
             $('.airportLoyaltyBonusTrigger').show()
         } else {
             $(".airportLoyaltyBonus").hide()

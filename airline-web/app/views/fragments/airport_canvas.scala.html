@@ -127,7 +127,7 @@
 									<div class="i-label">Airport Loyalty
 									    <img src='@routes.Assets.versioned("/images/icons/information.svg")'
 											class="svg info clickable airportLoyaltyBonusTrigger" style="vertical-align:text-bottom"
-											onmouseover="showAppealBreakdown($(this), $('#appealBonusDetailsTooltip').data('loyaltyBreakdown'))"
+											onmouseover="showAppealBreakdown($(this), activeAirport?.bonusList?.[activeAirline.id]?.loyaltyBreakdown)"
 											onmouseout="hideAppealBreakdown()"/>
 									</div>
 									<div class="i-value airportLoyalty">
