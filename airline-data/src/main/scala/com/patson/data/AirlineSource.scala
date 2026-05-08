@@ -569,6 +569,32 @@ object AirlineSource {
     loadLoungesByCriteria(List(("airport", airport.id)), Map(airport.id -> airport))
   }
 
+  def loadLoungesByAirportIds(airportIds: List[Int], airports: List[Airport] = List.empty): immutable.Map[Int, List[Lounge]] = {
+    if (airportIds.isEmpty) return immutable.Map.empty
+    val airportById: Map[Int, Airport] = Map(airports.map(a => (a.id, a)): _*)
+    Using.resource(Meta.getConnection()) { connection =>
+      Using.resource(connection.prepareStatement(s"SELECT * FROM $LOUNGE_TABLE WHERE airport IN (${airportIds.mkString(",")})")) { preparedStatement =>
+        Using.resource(preparedStatement.executeQuery()) { resultSet =>
+          val lounges = new ListBuffer[Lounge]()
+          val airlinesCache: Map[Int, Airline] = Map()
+          while (resultSet.next()) {
+            val airlineId = resultSet.getInt("airline")
+            val airline = airlinesCache.getOrElseUpdate(airlineId, AirlineCache.getAirline(airlineId, false).getOrElse(Airline.fromId(airlineId)))
+            AllianceSource.loadAllianceMemberByAirline(airline).foreach { member =>
+              if (member.role != AllianceRole.APPLICANT) {
+                airline.setAllianceId(member.allianceId)
+              }
+            }
+            val airportId = resultSet.getInt("airport")
+            val airport = airportById.getOrElse(airportId, AirportCache.getAirport(airportId, true).get)
+            lounges += Lounge(airline, airline.getAllianceId(), airport, resultSet.getString("name"), resultSet.getInt("level"), LoungeStatus.withName(resultSet.getString("status")), resultSet.getInt("founded_cycle"))
+          }
+          lounges.toList.groupBy(_.airport.id)
+        }
+      }
+    }
+  }
+
   def loadLoungesByAirline(airlineId : Int) : List[Lounge] = {
     loadLoungesByCriteria(List(("airline", airlineId)))
   }

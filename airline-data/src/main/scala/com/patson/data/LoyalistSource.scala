@@ -42,6 +42,12 @@ object LoyalistSource {
   def loadLoyalistsByAirportId(airportId: Int): List[Loyalist] =
     loadLoyalistsByCriteria(List(("airport", airportId)))
 
+  def loadLoyalistsByAirportIds(airportIds: List[Int]): Map[Int, List[Loyalist]] = {
+    if (airportIds.isEmpty) return Map.empty
+    loadLoyalistsByQueryString(s"SELECT * FROM $LOYALIST_TABLE WHERE airport IN (${airportIds.mkString(",")})", List.empty)
+      .groupBy(_.airport.id)
+  }
+
   private def loadLoyalistsByQueryString(queryString: String, parameters: List[Any]): List[Loyalist] =
     Using.Manager { use =>
       val connection = use(Meta.getConnection())

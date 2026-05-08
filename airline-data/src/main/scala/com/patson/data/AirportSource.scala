@@ -231,6 +231,53 @@ object AirportSource {
 
 
 
+  private def loadAirlineBasesByAirports(airports: Map[Int, Airport]): Map[Int, List[AirlineBase]] = {
+    if (airports.isEmpty) return Map.empty
+    val connection = Meta.getConnection()
+    try {
+      val stmt = connection.prepareStatement(s"SELECT * FROM $AIRLINE_BASE_TABLE WHERE airport IN (${airports.keys.mkString(",")})")
+      val rs = stmt.executeQuery()
+      val result = mutable.Map[Int, ListBuffer[AirlineBase]]()
+      while (rs.next()) {
+        val airportId = rs.getInt("airport")
+        val airport = airports(airportId)
+        val airlineId = rs.getInt("airline")
+        val airline = AirlineCache.getAirline(airlineId).getOrElse(Airline.fromId(airlineId))
+        result.getOrElseUpdate(airportId, ListBuffer()) +=
+          AirlineBase(airline, airport, rs.getString("country"), rs.getInt("scale"), rs.getInt("founded_cycle"), rs.getBoolean("headquarter"))
+      }
+      stmt.close()
+      result.view.mapValues(_.toList).toMap
+    } finally {
+      connection.close()
+    }
+  }
+
+  private def loadAirlineAppealBonusesByAirports(airportIds: List[Int]): Map[Int, Map[Airline, List[AirlineBonus]]] = {
+    if (airportIds.isEmpty) return Map.empty
+    val connection = Meta.getConnection()
+    try {
+      val stmt = connection.prepareStatement(s"SELECT * FROM $AIRPORT_AIRLINE_APPEAL_BONUS_TABLE WHERE airport IN (${airportIds.mkString(",")})")
+      val rs = stmt.executeQuery()
+      val result = mutable.Map[Int, mutable.Map[Airline, ListBuffer[AirlineBonus]]]()
+      while (rs.next()) {
+        val airportId = rs.getInt("airport")
+        val airlineId = rs.getInt("airline")
+        val airline = AirlineCache.getAirline(airlineId).getOrElse(Airline.fromId(airlineId))
+        val expirationCycle = rs.getObject("expiration_cycle")
+        result.getOrElseUpdate(airportId, mutable.Map()).getOrElseUpdate(airline, ListBuffer()) +=
+          AirlineBonus(
+            bonusType = BonusType(rs.getInt("bonus_type")),
+            bonus = AirlineAppeal(loyalty = rs.getDouble("loyalty_bonus")),
+            expirationCycle = if (expirationCycle == null) None else Some(expirationCycle.asInstanceOf[Int]))
+      }
+      stmt.close()
+      result.view.mapValues(airlineMap => airlineMap.view.mapValues(_.toList).toMap).toMap
+    } finally {
+      connection.close()
+    }
+  }
+
   def loadAirportsByQueryString(queryString: String, parameters: List[Any], fullLoad: Boolean = false, loadFeatures: Boolean = false) = {
     // Fetch all ancillary data before acquiring the main connection to avoid holding it open during nested DB calls
     val currentCycle = CycleSource.loadCycle()
@@ -257,94 +304,104 @@ object AirportSource {
         (Map.empty, Map.empty, Map.empty)
       }
 
-    val connection = Meta.getConnection()
-    try {
-      val preparedStatement = connection.prepareStatement(queryString)
-
-      for (i <- 0 until parameters.size) {
-        preparedStatement.setObject(i + 1, parameters(i))
-      }
-
-      val resultSet = preparedStatement.executeQuery()
-
-      val airportData = new ListBuffer[Airport]()
-
-      while (resultSet.next()) {
-        val airport = Airport(
-          resultSet.getString("iata"),
-          resultSet.getString("icao"),
-          resultSet.getString("name"),
-          resultSet.getDouble("latitude"),
-          resultSet.getDouble("longitude"),
-          resultSet.getString("country_code"),
-          resultSet.getString("city"),
-          resultSet.getString("zone"),
-          resultSet.getInt("airport_size"),
-          resultSet.getInt("income"),
-          resultSet.getInt("population"),
-          resultSet.getInt("pop_middle_income"),
-          resultSet.getInt("pop_elite"),
-          resultSet.getInt("runway_length"))
-        airport.id = resultSet.getInt("id")
-        airportData += airport
-
-        if (fullLoad || loadFeatures) {
-          //load features first, as it might affect income level and pop, which both might affect later loading
-          val staticFeatures = AirportFeatureRegistry(airport.iata)
-
-          val totalPrestige = prestigeByAirportId.getOrElse(airport.id, 0)
-          val prestigeFeature = if (totalPrestige > 0) List(PrestigeFeature(totalPrestige)) else List.empty
-
-          val olympicsFeature = olympicsFeatureByAirportId.get(airport.id).toList
-
-          val eliteFeature = eliteCountByAirportId.get(airport.id).map(EliteFeature(_)).toList
-
-          airport.initFeatures(staticFeatures ++ prestigeFeature ++ olympicsFeature ++ eliteFeature)
+    // Phase 1: read airport rows and release the connection immediately
+    val airportData: List[Airport] = {
+      val connection = Meta.getConnection()
+      try {
+        val preparedStatement = connection.prepareStatement(queryString)
+        for (i <- 0 until parameters.size) {
+          preparedStatement.setObject(i + 1, parameters(i))
         }
-
-        if (fullLoad) {
-          val airlineBaseStatement = connection.prepareStatement("SELECT * FROM " + AIRLINE_BASE_TABLE + " WHERE airport = ?")
-          airlineBaseStatement.setInt(1, airport.id)
-
-          val airlineBaseResultSet = airlineBaseStatement.executeQuery()
-          val airlineBases = ListBuffer[AirlineBase]()
-          while (airlineBaseResultSet.next()) {
-            val airlineId = airlineBaseResultSet.getInt("airline")
-            val airline = AirlineCache.getAirline(airlineId).getOrElse(Airline.fromId(airlineId))
-            val scale = airlineBaseResultSet.getInt("scale")
-            val foundedCycle = airlineBaseResultSet.getInt("founded_cycle")
-            val headquarter = airlineBaseResultSet.getBoolean("headquarter")
-            val countryCode = airlineBaseResultSet.getString("country")
-
-            airlineBases += AirlineBase(airline, airport, countryCode, scale, foundedCycle, headquarter)
+        val resultSet = preparedStatement.executeQuery()
+        val buf = new ListBuffer[Airport]()
+        while (resultSet.next()) {
+          val airport = Airport(
+            resultSet.getString("iata"),
+            resultSet.getString("icao"),
+            resultSet.getString("name"),
+            resultSet.getDouble("latitude"),
+            resultSet.getDouble("longitude"),
+            resultSet.getString("country_code"),
+            resultSet.getString("city"),
+            resultSet.getString("zone"),
+            resultSet.getInt("airport_size"),
+            resultSet.getInt("income"),
+            resultSet.getInt("population"),
+            resultSet.getInt("pop_middle_income"),
+            resultSet.getInt("pop_elite"),
+            resultSet.getInt("runway_length"))
+          airport.id = resultSet.getInt("id")
+          buf += airport
+          if (fullLoad || loadFeatures) {
+            //load features first, as it might affect income level and pop, which both might affect later loading
+            val staticFeatures = AirportFeatureRegistry(airport.iata)
+            val totalPrestige = prestigeByAirportId.getOrElse(airport.id, 0)
+            val prestigeFeature = if (totalPrestige > 0) List(PrestigeFeature(totalPrestige)) else List.empty
+            val olympicsFeature = olympicsFeatureByAirportId.get(airport.id).toList
+            val eliteFeature = eliteCountByAirportId.get(airport.id).map(EliteFeature(_)).toList
+            airport.initFeatures(staticFeatures ++ prestigeFeature ++ olympicsFeature ++ eliteFeature)
           }
-          airlineBaseStatement.close()
-          airport.initAirlineBases(airlineBases.toList)
-
-          val titleBonuses = getAirlineTitleBonuses(airport)
-          val campaignBonuses = getCampaignBonuses(airport, currentCycle)
-          val airlineBonusesMutable = mutable.Map[Int, ListBuffer[AirlineBonus]]()
-          (titleBonuses.toList ++ campaignBonuses.toList ++ airlineGlobalBonuses.toList).foreach {
-            case((airlineId, bonuses)) =>
-              val existingBonusesOfThisAirline = airlineBonusesMutable.getOrElseUpdate(airlineId, ListBuffer[AirlineBonus]())
-              existingBonusesOfThisAirline.appendAll(bonuses)
-          }
-          val airlineBonuses = airlineBonusesMutable.view.mapValues(_.toList).toMap
-
-          airport.initAirlineAppealsComputeLoyalty(airlineBonuses, LoyalistSource.loadLoyalistsByAirportId(airport.id))
-
-          val lounges = AirlineSource.loadLoungesByAirport(airport)
-          airport.initLounges(lounges)
         }
+        resultSet.close()
+        preparedStatement.close()
+        buf.toList
+      } finally {
+        connection.close()
       }
-      
-      resultSet.close()
-      preparedStatement.close()
-      airportData.toList
-    } finally {
-      connection.close()
     }
 
+    // Phase 2: per-airport enrichment using batch queries — O(K) queries for K data types, not O(N*K)
+    if (fullLoad) {
+      val airportMap = airportData.map(a => a.id -> a).toMap
+      val airportIds = airportMap.keys.toList
+
+      val allAirlineBases  = loadAirlineBasesByAirports(airportMap)
+      val allAppealBonuses = loadAirlineAppealBonusesByAirports(airportIds)
+      val allCampaigns     = CampaignSource.loadCampaignsByAreaAirports(airportIds)
+      val allBusyManagers  = ManagerSource.loadBusyManagersByCampaigns(allCampaigns.values.flatten.toList)
+      val allLoyalists     = LoyalistSource.loadLoyalistsByAirportIds(airportIds)
+      val allLounges       = AirlineSource.loadLoungesByAirportIds(airportIds, airportData)
+
+      airportData.foreach { airport =>
+        airport.initAirlineBases(allAirlineBases.getOrElse(airport.id, Nil))
+
+        val bonusByAirlineId = mutable.Map[Int, ListBuffer[AirlineBonus]]()
+
+        // Title bonuses — Caffeine-backed, no DB
+        CountryAirlineTitle.getTopTitlesByCountry(airport.countryCode).foreach { entry =>
+          bonusByAirlineId.getOrElseUpdate(entry.airline.id, ListBuffer()) +=
+            AirlineBonus(bonusType = CountryAirlineTitle.getBonusType(entry.title), bonus = AirlineAppeal(entry.loyaltyBonus), expirationCycle = None)
+        }
+
+        // Appeal bonuses — pre-loaded
+        allAppealBonuses.getOrElse(airport.id, Map.empty).foreach {
+          case (airline, bonusList) =>
+            bonusByAirlineId.getOrElseUpdate(airline.id, ListBuffer()).appendAll(bonusList)
+        }
+
+        // Campaign bonuses — pre-loaded
+        allCampaigns.getOrElse(airport.id, Nil).foreach { campaign =>
+          allBusyManagers.get(campaign).foreach { managers =>
+            val bonus = campaign.getAirlineBonus(campaign.airline, airport, managers.map(_.assignedTask.asInstanceOf[CampaignManagerTask]), currentCycle)
+            bonusByAirlineId.getOrElseUpdate(campaign.airline.id, ListBuffer()) += bonus
+          }
+        }
+
+        // Global airline bonuses — pre-loaded before Phase 1
+        airlineGlobalBonuses.foreach {
+          case (airlineId, bonuses) =>
+            bonusByAirlineId.getOrElseUpdate(airlineId, ListBuffer()).appendAll(bonuses)
+        }
+
+        airport.initAirlineAppealsComputeLoyalty(
+          bonusByAirlineId.view.mapValues(_.toList).toMap,
+          allLoyalists.getOrElse(airport.id, Nil))
+
+        airport.initLounges(allLounges.getOrElse(airport.id, Nil))
+      }
+    }
+
+    airportData
   }
 
   def updateAirportBaseSpecializations(airportId : Int, airlineId : Int, airlineBaseSpecializationTypes : List[AirlineBaseSpecialization]) = {
