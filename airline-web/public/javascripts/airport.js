@@ -758,6 +758,8 @@ function populateAirportDetails(airport) {
         initSantaClaus()
     } else if (holidayEvent === "easter") {
         initEasterBunny()
+    } else if (holidayEvent === "lostchild") {
+        initLostChild()
     }
 }
 

@@ -112,7 +112,7 @@ object ChristmasSource {
   def loadSantaClausGuessesByAirline(airline : Airline) = {
     val connection = Meta.getConnection()
     try {
-      val preparedStatement = connection.prepareStatement("SELECT * FROM " + SANTA_CLAUS_GUESS_TABLE + " WHERE airline = ?")
+      val preparedStatement = connection.prepareStatement("SELECT * FROM " + SANTA_CLAUS_GUESS_TABLE + " WHERE airline = ? ORDER BY id ASC")
       preparedStatement.setInt(1, airline.id)
       val resultSet = preparedStatement.executeQuery()
 

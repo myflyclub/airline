@@ -208,6 +208,12 @@ GET		 /easter-bunny/attempt-status/:airportId/:airlineId  controllers.EasterAppl
 GET		 /easter-bunny/award-options/:airlineId  controllers.EasterApplication.getAwardOptions(airlineId : Int)
 POST      /easter-bunny/pick-award/:airlineId/:optionId   controllers.EasterApplication.pickAwardOption(airlineId : Int, optionId : Int)
 
+POST      /lost-child/guess/:airportId/:airlineId         controllers.LostChildApplication.makeGuess(airportId : Int, airlineId : Int)
+POST      /lost-child/interrogate/:airlineId              controllers.LostChildApplication.interrogate(airlineId : Int)
+GET       /lost-child/attempt-status/:airportId/:airlineId  controllers.LostChildApplication.getAttemptStatus(airportId : Int, airlineId : Int)
+GET       /lost-child/award-options/:airlineId            controllers.LostChildApplication.getAwardOptions(airlineId : Int)
+POST      /lost-child/pick-award/:airlineId/:optionId     controllers.LostChildApplication.pickAwardOption(airlineId : Int, optionId : Int)
+
 GET     /search-route/:fromAirportId/:toAirportId controllers.SearchApplication.searchRoute(fromAirportId : Int, toAirportId : Int)
 POST    /search-link-history    controllers.ChangeHistoryApplication.searchLinkHistory()
 GET     /research-link/:fromAirportId/:toAirportId  controllers.SearchApplication.researchLink(fromAirportId : Int, toAirportId : Int)

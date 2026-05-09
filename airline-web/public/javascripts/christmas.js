@@ -1,4 +1,4 @@
-var holidayEvent = null  // "christmas" | "easter" | null
+var holidayEvent = "lostchild"  // "christmas" | "easter" | "lostchild" | null
 var santaFound = false
 var snowflakeCount
 

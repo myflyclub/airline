@@ -506,6 +506,63 @@
 		</div>
 	</div>
 
+	<div id="lostChildModal" class="modal" aria-hidden="true">
+		<div class="modal-content" style="width: 600px;">
+			<div style="margin-bottom: 30px"><h2>🧒 Return the lost child to their home airport 👣</h2></div>
+			<span class="close" onclick="closeLostChildModal()">&times;</span>
+            <p class="pb-4 pr-4">A lost child has been found wandering the waiting areas of your home terminal. Can you find they're home airport?</p>
+			<h4 style="margin-top: 10px; margin-bottom: 10px;">Search Log</h4>
+			<div style="width: 100%;">
+				<div style="width: 100%;">
+					<div class="table data" style="width: 100%">
+						<div class="table-header">
+							<div class="cell" style="width: 35%; border-bottom: none">Action</div>
+							<div class="cell" style="width: 65%; border-bottom: none">Clue</div>
+						</div>
+					</div>
+					<div class="table data" id="lostChildGuessTable" style="max-height: 300px; overflow-y: auto; width: 100%">
+						<div class="table-header">
+							<div class="cell" style="width: 35%"></div>
+							<div class="cell" style="width: 65%"></div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<p class="py-4 pr-4">Interrogate the child for general clues (max 5), or fly them to an airport to see how far it is from home. They could be from any airport size 2 or larger.</p>
+			<div class="warning" style="margin-bottom: 15px;">
+				<span>Actions Left: </span><span id="lostChildAttemptsLeft"></span>
+				<span style="margin-left: 15px;">Interrogations Left: </span><span id="lostChildInterrogationsLeft"></span>
+			</div>
+			<div class="button interrogateButton" onclick="interrogateLostChild()" style="margin-right: 8px;">Interrogate child</div>
+			<div class="button flyButton" onclick="flyLostChild()">Fly child to this airport</div>
+			<h4 id="lostChildExhausted" style="display: none;">The search has been called off. You have generously agreed to provide the child with a cubby-hole in baggage claim and a few years in airport meal vouchers. Months later you find a child's drawing on the back of a letter, a letter that has a printed address to <span id="lostChildExhaustedCity"></span>. You think nothing of it as you throw it away.</h4>
+
+			<div id="lostChildRewardOptions" style="display: none;">
+				<div style="float:left"><img src='@routes.Assets.versioned("/images/icons/rubber-balloons.png")'></div>
+				<div style="float:left"> <h4>🎉 The child's home has been located, and they've been reunited with their family!</h4></div>
+				<div style="float:left"><img src='@routes.Assets.versioned("/images/icons/rubber-balloons.png")'></div>
+				<div style="clear:both; margin-bottom: 15px"></div>
+
+				<h4>In a state of celebration you've been rewarded!</h4>
+				<div class="table data" id="lostChildRewardOptionsTable" style="height: 300px; width: 100%">
+					<div class="table-header">
+						<div class="cell" style="width: 10%"></div>
+						<div class="cell" style="width: 90%"></div>
+					</div>
+				</div>
+			</div>
+			<div id="lostChildPickedReward" style="display: none;">
+				<div style="float:left"> <h4>You already claimed your reward 🧒</h4></div>
+				<div style="clear:both; margin-bottom: 15px"></div>
+				<div class="table data" style="width: 100%">
+					<div class="table-row">
+						<div class="cell label" style="width: 100%"><span id="lostChildPickedRewardText" class="text"></span></div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
 	<!-- airport passenger quality expectation model -->
 	<div id="expectedQualityModal" class="modal">
 		<div class="modal-content"  style="width : 500px;">
