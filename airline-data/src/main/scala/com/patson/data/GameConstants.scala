@@ -102,7 +102,7 @@ object GameConstants {
     "YYJ",
     "HYA", "ISP", "HTO", //us allow channel crossings & block transit
     "OGG", "HNM", //us HI
-    "HTI", "CDB", "NLG", "SDP", "ADQ", "MYU", "PQS", "RSH", "ANI", "NUP", "AKN", "KCG", "SDP", "NLG", "TKJ", "MNT", "OTZ", "OME", //US AK (want to ignore min distance)
+    "HTI", "CDB", "SDP", "ADQ", "MYU", "PQS", "RSH", "ANI", "NUP", "AKN", "KCG", "SDP", "TKJ", "MNT", "OTZ", "OME", //US AK (want to ignore min distance)
     "CZM", //MX
     "CYA", //HT
     //oceania

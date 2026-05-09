@@ -78,11 +78,11 @@ sealed case class InternationalHubFeature(baseStrength : Int, boosts : List[Airp
         else 0.05
       val specialCountryModifier =
         if (List("GB").contains(fromAirport.countryCode) && fromAirport.countryCode != toAirport.countryCode) {
-          2.5
+          2.3
         } else if (List("AU","NZ","BE","NL","LU","DE","AT","CH","DK","SE","NO").contains(fromAirport.countryCode)) {
-          2.2 //they travel a lot...
+          2.0 //they travel a lot...
         } else if (fromAirport.zone.contains("EU")) {
-          1.9
+          1.7
         } else if (List("US","CN","IN").contains(fromAirport.countryCode)) {
           0.55
         } else 1.0

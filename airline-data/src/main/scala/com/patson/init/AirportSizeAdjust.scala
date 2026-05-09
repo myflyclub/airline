@@ -70,7 +70,7 @@ object AirportSizeAdjust {
         "TPE" -> 7,
         //https://en.wikipedia.org/wiki/List_of_the_busiest_airports_in_Europe
         //2023, up to 10m pax, excluding "discount" airports
-        "LGW" -> 7,
+        "LGW" -> 8,
         "SVO" -> 7,
         "LIS" -> 7,
         "DUB" -> 7,
@@ -240,6 +240,7 @@ object AirportSizeAdjust {
         "YXS" -> 4,
         "YCD" -> 3,
         "YXL" -> 3,
+        "YWS" -> 2,
         //downgrades
         "YYR" -> 4,
         "YQQ" -> 4,
@@ -698,7 +699,7 @@ object AirportSizeAdjust {
         "PDP" -> 4,
         //https://en.wikipedia.org/wiki/List_of_busiest_airports_in_the_United_Kingdom
         "LTN" -> 6,
-        "STN" -> 6,
+        "STN" -> 5,
         "SEN" -> 4,
         "BRS" -> 6,
         "GLA" -> 6,
@@ -786,7 +787,6 @@ object AirportSizeAdjust {
         "LRU" -> 2,
         "USA" -> 3,
         "SWO" -> 2,
-        "BKG" -> 2,
         "OWB" -> 2,
         //upgrade established city airports
         "SAT" -> 6,
@@ -824,16 +824,18 @@ object AirportSizeAdjust {
         "BIL" -> 5,
         "GTF" -> 4,
         "MSO" -> 4,
+        "WYS" -> 4,
         //dakotas
         "FAR" -> 4,
         "DLH" -> 4,
         "FSD" -> 4,
+        "BIS" -> 4,
         //colorado
         "COS" -> 4,
         "PUB" -> 3,
         "MTJ" -> 3,
         "GUC" -> 3,
-        "WYS" -> 4,
+        "HDN" -> 3,
         //utah
         "CNY" -> 3,
         "OGD" -> 3,
@@ -842,7 +844,7 @@ object AirportSizeAdjust {
         "IDA" -> 4,
         //airzona
         "PRC" -> 2,
-        "GCN" -> 2,
+        "GCN" -> 3,
         "YUM" -> 3,
         "AZA" -> 4,
         //texas
@@ -868,6 +870,8 @@ object AirportSizeAdjust {
         "MLB" -> 3,
         "LAL" -> 3,
         "OPF" -> 1,
+        //Atlantic
+        "DOV" -> 3,
         //NE
         "PVD" -> 5,
         "HYA" -> 3,

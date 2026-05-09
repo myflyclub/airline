@@ -1,11 +1,11 @@
 iata,strength,comment
 CJU,265,Jeju City
 PMI,131,Palma De Mallorca
-MCO,118,Orlando
-JED,95,Jeddah
-CTS,90,Chitose / Tomakomai
-HNL,87,Honolulu
-CUN,80,Cancún
+MCO,125,Orlando
+JED,100,Jeddah
+CTS,95,Chitose / Tomakomai
+HNL,90,Honolulu
+CUN,85,Cancún
 HND,80,Tokyo / Haneda
 LAS,79,Las Vegas
 AER,78,Sochi
@@ -53,6 +53,7 @@ TFS,40,Tenerife Island
 SHJ,40,Sharjah AE
 SYX,40,Sanya
 YUL,40,Montreal
+PUJ,40,Punta Cana
 MAD,39,Madrid
 BTH,39,Batam Island
 AEP,39,Buenos Aires
@@ -68,6 +69,7 @@ SMR,36,Santa Marta
 AGA,36,Agadir
 YIA,36,Yogyakarta
 LLA,36,LuleÃ¥
+MBJ,36,Montego Bay
 MED,35,Medina
 MEL,35,Melbourne
 DBV,35,Dubrovnik
@@ -96,7 +98,6 @@ BNE,31,Brisbane
 SHA,31,Shanghai China
 CNF,31,Belo Horizonte
 CWB,31,Curitiba
-PUJ,30,Punta Cana
 ADB,30,Izmir
 BER,30,Berlin
 RAK,30,Marrakech
@@ -112,7 +113,8 @@ ADZ,30,San Andrés
 NSN,30,NZ
 LIN,30,Milan Italian Alps
 STI,30,Santiago
-MBJ,29,Montego Bay
+GCM,30,Georgetown
+IBZ,29,Ibiza
 IGR,29,Puerto Iguazu
 LYS,29,Lyon
 ORY,29,Paris
@@ -136,7 +138,6 @@ VKO,26,Moscow
 SKD,26,Samarkand
 BRC,26,San Carlos de Bariloche
 KZN,26,Kazan
-IBZ,25,Ibiza
 FUE,25,Fuerteventura Island
 DME,25,Moscow
 CFU,25,Kerkyra Island
@@ -153,6 +154,7 @@ BPS,24,Porto Seguro
 AJA,24,Ajaccio/NapolÃ©on Bonaparte
 KCH,24,MY
 KTT,24,Kittilä FI
+MAH,23,Menorca Island ES
 CJC,23,Calama
 FLR,23,Firenze
 LOP,23,Mataram
@@ -183,6 +185,7 @@ ENO,21,Encarnación
 PLS,21,Providenciales Turks and Caicos
 SFB,21,Orlando
 RMU,21,
+OOL,20,Gold Coast
 ISG,20,Ryukyu Islands JP
 CXR,20,Nha Trang
 YVR,20,Vancouver
@@ -204,8 +207,8 @@ VCP,20,Campinas
 ZIA,20,Moscow
 YOW,20,Ottawa
 YTZ,20,
+REU,19
 LCA,19,Larnarca
-MAH,19,Menorca Island
 GOX,19,Goa IN
 AMM,19,Amman
 BIO,19,Bilbao
@@ -224,7 +227,7 @@ ANU,18,St. John's
 BON,18,Kralendijk Bonaire
 YYC,18,Calgary
 BOO,18,Nordland NO
-OOL,17,Gold Coast
+MCY,17
 YYT,17,St John
 SVQ,17,Seville ES
 ORN,17,Oran 
@@ -239,7 +242,7 @@ QSR,16,Amalfi coast
 HUX,16,Huatulco
 JAI,16,Jaipur
 KRS,16,NO
-GCM,16,Georgetown
+TSF,16
 PPP,16,Whitsunday Coast Airport
 RKT,16,
 SRQ,16,Sarasota/Bradenton
@@ -270,6 +273,9 @@ PGD,14,FL
 MAA,14,Chennai
 EFL,13,Kefallinia Island
 SCQ,13,Santiago de Compostela ES
+EYW,13,Key West
+ASP,13,Alice Springs
+BZN,13,Bozeman
 DLM,12,Dalaman
 CHQ,12,Heraklion
 LPQ,12,Luang Phabang
@@ -293,16 +299,14 @@ TLU,12,
 SKG,12,
 NLK,12,
 IXL,12,Leh,IN
-EYW,11,Key West
-ASP,11,Alice Springs
 KNO,11,North Sumatra
 JER,11,Guernsey
-AQJ,11,Aqaba
 LMP,11,Italy
 OVD,11,Avilés ES
-BZN,11,Bozeman
+AQP,11,PE
 MMY,11,Ryukyu Islands 
 ALH,11,AU
+GRX,10,ES
 HRG,10,Hurghada
 SSH,10,Sharm el-Sheikh
 CPT,10,Cape Town
@@ -326,6 +330,9 @@ FCA,10,Glacier National Park
 JAC,10,Jackson
 HKD,10,JP
 IZO,10,JP
+SAF,10,Santa Fe
+HVB,9,AU
+LST,9,AU
 NAP,9,Nápoli
 IAO,9,
 FTE,9,El Calafate
@@ -334,7 +341,6 @@ IXZ,9,Port Blair
 SAN,9,San Diego USA
 YYJ,9,
 ZAD,9,Zemunik (Zadar)
-AQP,9,Peru
 REG,9,
 GCI,9,Jersey
 AES,9,NO
@@ -362,7 +368,6 @@ NQU,8,
 SVX,8,RU
 LCG,8,Coruña ES
 YDF,8,Gros Morne National Park Canada
-SAF,8,Santa Fe
 COS,8,Colorado Springs
 LZN,8,TW islands
 AMD,8,Ahmedabad
@@ -394,6 +399,10 @@ YYB,7,North Bay
 MSO,7,Missoula
 YQQ,7,Vancouver Island
 CND,6,Constanța RO
+TEX,6,CO
+SGU,6,Zion National Park
+CNY,6,Arches National Park USA
+HDN,6,Hayden Steamboat Springs CO
 BHE,6,
 LKO,6,Lucknow
 NKG,6,Nanjing
@@ -417,6 +426,9 @@ TVC,6,Traverse City
 CPX,6,Culebra PR
 GTF,6,
 TAT,6,Poprad-Tatry
+ZUH,6,Zhuhai
+BDB,5,AU
+BNK,5,AU
 FAT,5,Yosemite National Park USA
 SBZ,5,Sibiu
 EPR,5,AU
@@ -443,10 +455,16 @@ ACV,5,Eureka
 LSI,5,Shetland
 DLU,5,Dali CN
 PQQ,5,
+GUC,5,CO
 MLB,5,FL 
 CHS,5,
-VRB,5,FL 
+VRB,5,FL
+KNS,4,AU
+FLS,4,AU
+ACI,4
 RAP,5,South Dakota NPs
+CEZ,4,CO
+DRO,4,CO
 TKN,4,JP
 UEO,4,JP
 JTR,4,Santorini Island
@@ -471,9 +489,6 @@ KLV,4,Karlovy CZ
 CPE,4,
 PXM,4,Puerto Escondido MX
 KMI,4,JP
-SGU,4,Zion National Park
-CNY,4,Arches National Park USA
-HDN,4,Hayden Steamboat Springs Colorado USA
 HAC,4,
 HGL,4,
 VPS,4,Gulf coast
@@ -482,7 +497,6 @@ GJT,4,
 ANX,4,
 YRB,4,
 SHL,4,IN rainforest
-ZUH,3,Zhuhai
 BEJ,3,
 BDO,3,Bandung ID
 EBA,3,
@@ -496,6 +510,7 @@ ACY,3,Atlantic City
 CFB,3,BR
 GUZ,3,BR
 MMH,3,Yellowstone
+COD,3,Yellowstone
 HYA,2,Cape Cod
 MFR,2,Crater lake 
 OTH,2,North Bend
