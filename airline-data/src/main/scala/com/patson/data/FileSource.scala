@@ -5,7 +5,7 @@ import java.nio.file.Files
 import javax.imageio.ImageIO
 
 object FileSource {
-  val LOGO_DIRECTORY = "data/logos"
+  val LOGO_DIRECTORY = sys.env.getOrElse("LOGO_DIR", "data/logos")
 
   val CONTENT_TYPE_PNG = "image/png"
   val CONTENT_TYPE_JPEG = "image/jpeg"
