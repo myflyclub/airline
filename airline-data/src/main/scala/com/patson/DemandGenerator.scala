@@ -35,14 +35,17 @@ object DemandGenerator {
    * @return
    */
   def canHaveDemand(fromAirport: Airport, toAirport: Airport, distance: Int): Boolean = {
-    fromAirport != toAirport && (distance > MIN_DISTANCE || GameConstants.connectsIsland(fromAirport, toAirport) && distance > 25 || toAirport.hasFeature(AirportFeatureType.BUSH_HUB))
+    fromAirport != toAirport && (distance > MIN_DISTANCE || GameConstants.connectsIsland(fromAirport, toAirport) && (distance > 30 || toAirport.hasFeature(AirportFeatureType.BUSH_HUB) || fromAirport.hasFeature(AirportFeatureType.BUSH_HUB)))
   }
 
+  /**
+   * average cyclePhaseLength is 45
+   **/ 
   def demandRandomizerByType(passengerType: PassengerType.Value, demand: Int, cycle: Int, cyclePhaseLength: Int): Int = {
     val randomizedDemand = if (passengerType == PassengerType.TOURIST) {
-      demandRandomizer(demand, cycle, cyclePhaseLength, 1.5, 24)
+      demandRandomizer(demand, cycle, cyclePhaseLength, 1.5, 30)
     } else if (passengerType == PassengerType.BUSINESS) {
-      demandRandomizer(demand, cycle, cyclePhaseLength, 1, 12)
+      demandRandomizer(demand, cycle, cyclePhaseLength, 1, 15)
     } else { //traveler, elite
       demandRandomizer(demand, cycle, cyclePhaseLength)
     }
@@ -92,14 +95,14 @@ object DemandGenerator {
       List.empty
     } else {
       val localizedDistance = DemandConstants.localityMinDistanceMap.getOrElse(fromAirport.countryCode, DemandConstants.localityMinDistanceMap("default"))
-      val minDistance = if (GameConstants.isIsland(fromAirport)) 25 else localizedDistance
+      val minDistance = if (GameConstants.isIsland(fromAirport)) 15 else localizedDistance
       val maxDistance = Math.max(localizedDistance * 4, IsolatedTownFeature.HUB_RANGE_BRACKETS(isIsolatedMultiplier))
       //mostly trying to generate a base of domestic demand (also is more performant), but in smaller markets do int'l
-      val intlCountries = List("AE","AL","AM","AT","AZ","BD","BY","BE","BJ","BT","BA","BI","BW","CH","CW","CZ","DE","DJ","DM","EE","GE","GM","GH","GD","GN","GY","HK","HR","HU","IE","IL","JM","JO","KI","KW","KG","LV","LS","LR","LI","LT","LU","MO","MT","MD","MK","NA","NL","PA","PR","QA","RW","RS","SG","SK","SI","SR","SY","SX","SZ","TC","TJ","UY","UZ","VC","VG","VI","VU")
+      val intlCountries = List("AE","AL","AM","AS","AT","AZ","BD","BY","BE","BJ","BT","BA","BI","BW","CH","CW","CZ","DE","DJ","DM","EE","GE","GM","GH","GD","GN","GY","HK","HR","HU","IE","IL","JM","JO","KI","KW","KG","KN","LV","LS","LR","LI","LT","LU","MO","MT","MD","MK","NA","NL","PA","PR","QA","RW","RS","SG","SK","SI","SR","SY","SX","SZ","TC","TJ","UY","UZ","VC","VG","VI","VU")
       val intlAirports = List("TPE","KHH","LHR","LGW","STN","LTN","MAN","EDI","CDG","FSP")
       val isDomestic = if (intlCountries.contains(fromAirport.countryCode) || intlAirports.contains(fromAirport.iata)) false else true
-      val airports = Computation.getAirportWithinRange(fromAirport, maxDistance, minDistance, isDomestic)
-      val numberDestinations = Math.min(22, (isIsolatedMultiplier + 1) * (fromAirport.size + 6))
+      val airports = Computation.getAirportWithinRange(fromAirport, maxDistance, minDistance, isDomestic).filter(_.id != fromAirport.id)
+      val numberDestinations = Math.min(22, (isIsolatedMultiplier + 1) * fromAirport.size + 6)
       percentagesHubAirports(airports, fromAirport, numberDestinations, isIsolatedMultiplier, cycle) //find important airports
     }
   }
@@ -114,11 +117,13 @@ object DemandGenerator {
 
       val airportsWithScores = hubAirports.map { airport =>
         val popPercent = Math.min(16 * (isIsolatedMultiplier + 1), airport.popMiddleIncome.toDouble / avgPopMiddleIncome) //pop weight at most 16x
-        val distancePercent = 1 - Math.max(distanceFloor, Computation.calculateDistance(airport, fromAirport)).toDouble / avgDistance
+        val dist = Math.max(distanceFloor, Computation.calculateDistance(airport, fromAirport)).toDouble
+        val distancePercent = if (avgDistance > 0) 1 - dist / avgDistance else 0.5
+        val isInternational = if(airport.countryCode != fromAirport.countryCode) 0.1 else 1.0
         val variability = (airport.id + cycle + 2) % 4 / 4.0
         val weightedScore = if (DemandConstants.doesPairExist(fromAirport.iata, airport.iata, DemandConstants.railLookupSet)) {
           0
-        } else Math.max(0, 0.7 * distancePercent + 0.2 * popPercent + 0.1 * variability)
+        } else Math.max(0, (0.7 * distancePercent + 0.2 * popPercent + 0.1 * variability) * isInternational)
         (airport, weightedScore)
       }.sortBy(_._2).takeRight(numberDestinations)
 
@@ -153,7 +158,8 @@ object DemandGenerator {
       val fromDemand = if (hubAirports.length < 3 && fromAirport.popMiddleIncome < 2000) {
         32
       } else if (isIsolatedMultiplier > 0) {
-        Math.min(4800, fromAirport.popMiddleIncome.toDouble / (225.0 / (isIsolatedMultiplier + 2) * Math.min(5, fromAirport.size)))
+        val output = Math.min(4800, fromAirport.popMiddleIncome.toDouble / (225.0 / (isIsolatedMultiplier + 2) * Math.min(5, fromAirport.size)))
+        if (output <= 4 * hubAirports.length) 4 * hubAirports.length else output
       } else {
         Math.min(4800, Math.max(30, fromAirport.popMiddleIncome.toDouble / 800) * Math.min(5, fromAirport.size + 1)) * Math.max(1.0, DemandConstants.localityAdjustMap.getOrElse(fromAirport.countryCode, 1.0))
       }
@@ -172,7 +178,7 @@ object DemandGenerator {
   }
 
   def computeDemand(cycle: Int, airportStats: immutable.Map[Int, AirportStatistics]): List[(PassengerGroup, Airport, Int)] = {
-    val cyclePhaseLength = CycleSource.loadAndUpdateCyclePhase()
+    val cyclePhaseLength = CycleSource.loadAndUpdateCyclePhase() //average length is 45
     println("Loading airports")
     val airports: List[Airport] = AirportSource.loadAllAirports(true).filter { airport =>
       airport.iata != "" && airport.popMiddleIncome > 0

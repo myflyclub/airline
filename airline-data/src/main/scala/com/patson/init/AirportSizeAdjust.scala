@@ -58,13 +58,11 @@ object AirportSizeAdjust {
         "MIA" -> 8,
         "SFO" -> 8,
         "PHX" -> 8,
-        "MEX" -> 8,
         "MNL" -> 8,
         "YYZ" -> 8,
         "CKG" -> 8,
         "KMG" -> 8,
         "XIY" -> 8,
-        "GRU" -> 8,
         "HGH" -> 8,
         "SGN" -> 8,
         "TPE" -> 7,
@@ -217,7 +215,6 @@ object AirportSizeAdjust {
         "NVT" -> 4,
         "IGU" -> 4,
         "UNA" -> 3,
-        "CFB" -> 3,
         "IZA" -> 2,
         "CFB" -> 2,
         //https://en.wikipedia.org/wiki/List_of_airports_in_Cameroon
@@ -227,6 +224,7 @@ object AirportSizeAdjust {
         "YUL" -> 7,
         "YYC" -> 7,
         "YTZ" -> 4, //toronto city
+        "YKF" -> 3,
         "YHM" -> 4,
         "YLW" -> 5, //Kelowna
         "YQT" -> 5, //Thunder Bay
@@ -299,6 +297,9 @@ object AirportSizeAdjust {
         "SJO" -> 5,
         //cuba
         "CYO" -> 4,
+        //czechia
+        "KLV" -> 3,
+        "PED" -> 3,
         //denmark
         "AAL" -> 5,
         "KRP" -> 3,
@@ -349,6 +350,8 @@ object AirportSizeAdjust {
         "BRE" -> 4,
         "LBC" -> 3,
         "MHG" -> 3,
+        "FCN" -> 2,
+        "FDH" -> 2,
         //finland
         "RVN" -> 4,
         //https://en.wikipedia.org/wiki/List_of_the_busiest_airports_in_Greece
@@ -374,7 +377,6 @@ object AirportSizeAdjust {
         "CTS" -> 7,
         "OKA" -> 7,
         "NRT" -> 8,
-        "KIX" -> 7,
         "ITM" -> 6,
         "KIX" -> 6,
         "KOJ" -> 6,
@@ -449,7 +451,6 @@ object AirportSizeAdjust {
         "PKU" -> 6,
         "PDG" -> 6,
         "MDC" -> 5,
-        "BIK" -> 3,
         "KDI" -> 3,
         "KOE" -> 5,
         "DJB" -> 4,
@@ -467,7 +468,8 @@ object AirportSizeAdjust {
         //https://en.wikipedia.org/wiki/List_of_the_busiest_airports_in_Italy
         "NAP" -> 6,
         "BGY" -> 5,
-        "CTA" -> 5,
+        "LIN" -> 5,
+        "CTA" -> 6,
         "PMO" -> 5,
         "BLQ" -> 5,
         "BRI" -> 5,
@@ -567,7 +569,6 @@ object AirportSizeAdjust {
         //https://en.wikipedia.org/wiki/List_of_the_busiest_airports_in_the_Philippines
         "DVO" -> 6,
         "MPH" -> 6,
-        "DRP" -> 4,
         "GES" -> 3,
         "DRP" -> 3,
         //https://en.wikipedia.org/wiki/List_of_the_busiest_airports_in_Poland
@@ -588,7 +589,6 @@ object AirportSizeAdjust {
         "AER" -> 6,
         "SVX" -> 6,
         "KRR" -> 6,
-        "KGD" -> 5,
         "MCX" -> 5,
         "NAL" -> 2,
         "OGZ" -> 2,
@@ -603,7 +603,6 @@ object AirportSizeAdjust {
         "ESL" -> 2,
         "KPW" -> 4,
         //https://en.wikipedia.org/wiki/List_of_airports_in_Saudi_Arabia
-        "EJH" -> 3,
         "ABT" -> 3,
         "EJH" -> 3,
         "WAE" -> 3,
@@ -626,7 +625,6 @@ object AirportSizeAdjust {
         "HLA" -> 4,
         "PLZ" -> 5,
         "ELS" -> 5,
-        "PTG" -> 4,
         "GRJ" -> 4,
         "BFN" -> 3,
         "HDS" -> 3,
@@ -658,6 +656,8 @@ object AirportSizeAdjust {
         "TNN" -> 3,
         "CYI" -> 3,
         "HUN" -> 2,
+        "PIF" -> 1,
+        "HCN" -> 2,
         //https://en.wikipedia.org/wiki/List_of_airports_in_Tajikistan
         //https://en.wikipedia.org/wiki/List_of_airports_in_Tanzania
         "BKZ" -> 2,
@@ -666,10 +666,6 @@ object AirportSizeAdjust {
         "MWZ" -> 3,
         "JRO" -> 4,
         "DAR" -> 6,
-        //Taiwan
-        "PIF" -> 1,
-        "HCN" -> 2,
-        "TNN" -> 3,
         //trinidad tobago
         "TAB" -> 4,
         //https://en.wikipedia.org/wiki/List_of_the_busiest_airports_in_Turkey
@@ -701,6 +697,7 @@ object AirportSizeAdjust {
         "LTN" -> 6,
         "STN" -> 5,
         "SEN" -> 4,
+        "NWI" -> 4,
         "BRS" -> 6,
         "GLA" -> 6,
         "BFS" -> 5,
@@ -708,7 +705,6 @@ object AirportSizeAdjust {
         "LPL" -> 5,
         "DSA" -> 3,
         "LCY" -> 5,
-        "BHD" -> 4,
         "SOU" -> 4,
         "BOH" -> 4,
         "LDY" -> 3,
@@ -775,7 +771,7 @@ object AirportSizeAdjust {
         "KOA" -> 4,
         "LIH" -> 4,
         //downgrade secondary USA airports
-        "BFI" -> 3,
+        "BFI" -> 2,
         "LCK" -> 3,
         "BLV" -> 3,
         "GRK" -> 2,
@@ -805,7 +801,6 @@ object AirportSizeAdjust {
         "MYR" -> 5,
         "LIT" -> 5,
         "ORF" -> 5,
-        "AVL" -> 4,
         //alaska
         "FAI" -> 5,
         "JNU" -> 4,
@@ -858,7 +853,7 @@ object AirportSizeAdjust {
         //SE ATL
         "BHM" -> 6,
         "TYS" -> 5,
-        "AVL" -> 5,
+        "AVL" -> 4,
         "AGS" -> 4,
         "CAE" -> 4,
         //florida

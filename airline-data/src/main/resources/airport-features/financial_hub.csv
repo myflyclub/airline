@@ -1,21 +1,21 @@
 iata,strength,comment
 NRT,75,Tokyo
-PVG,65,Shanghai
+PVG,70,Shanghai
 SIN,60,Singapore
 HND,60,Tokyo
 ICN,59,Seoul
 SZX,58,Shenzhen
 FRA,57,Frankfurt
-JFK,56,New York
-LHR,55,London
 GVA,54,Geneva
 LAX,53,Los Angeles
+JFK,52,New York
+LHR,51,London
 DXB,50,Dubai
 BOM,49,Mumbai
 ZRH,49,Zurich
+DEL,48,New Delhi
 SCL,47,Santiago
 KUL,46,Kuala Lumpur
-DEL,45,New Delhi
 HKG,45,Hong Kong
 CAN,44,Guangzhou
 JNB,43,Johannesburg
@@ -28,7 +28,6 @@ TPE,41,Taipei
 MUC,41,Munich
 SEA,40,Seattle
 AUH,40,Abu Dhabi
-AMS,40,Amsterdam
 SYD,40,Sydney
 MAD,39,Madrid
 YVR,39,Vancouver
@@ -37,19 +36,21 @@ MNL,39,Manila
 ORD,39,Chicago
 DOH,38,Doha
 DFW,38,Dallas Fort Worth
-SGN,38,Ho Chi Minh City
+SGN,37,Ho Chi Minh City
 MEX,37,Mexico City
+AMS,36,Amsterdam
 DEN,36,Denver
 FUK,35,Fukuoka
 CLT,35,Charlotte
 IAH,35,Houston
 EWR,35,New York
 PEK,35,Beijing
+KIX,35,Osaka
 ATL,35,Atlanta
 CPH,34,Copenhagen
 AKL,34,Auckland
 BER,34,Berlin
-KIX,33,Osaka
+SHA,34,Shanghai
 TLV,33,Tel Aviv
 YUL,33,Montreal
 PUS,33,Busan
@@ -69,7 +70,6 @@ BRU,29,Brussels
 PTY,29,Panama City
 VIE,28,Vienna
 MXP,28,Milan
-SHA,28,Shanghai
 LIM,27,Lima
 DUS,27,Dusseldorf
 LED,27,St Petersburg
@@ -78,6 +78,7 @@ OSL,26,Oslo
 TAS,26,Tashkent
 BAH,25,Bahrain
 GIG,25,Rio de Janeiro
+PKX,25,Beijing
 DUB,24,Dublin
 LGW,24,London
 LGA,24,New York
@@ -87,7 +88,6 @@ EZE,23,Buenos Aires
 LIN,22,Milan
 HAN,22,Hanoi
 KHH,22,Kaohsiung
-RUH,21,Riyadh
 LUX,21,Luxembourg
 LOS,21,Lagos
 CTU,21,Chengdu
@@ -104,6 +104,7 @@ PER,19,Perth
 PRG,19,Prague
 WAW,19,Warsaw
 SAN,19,San Diego
+RUH,18,Riyadh
 BOS,18,Boston
 NGO,18,Nagoya
 BLQ,18,Bologna
@@ -131,7 +132,7 @@ ESB,15,Ankara
 TPA,15,Tampa
 GYD,15,Baku
 DAL,14,Dallas
-PKX,14,Beijing
+ORY,14,Paris
 VNO,14,Vilnius
 HAJ,14,Hanover
 MTY,14,Monterrey
@@ -156,7 +157,7 @@ MLA,12,Malta
 SHJ,12,
 SJC,11,San Francisco
 KUN,11,Kaunas
-CCP,11,Concepcion
+MAN,10,Manchester
 AEP,10,Buenos Aires
 PHL,10,Philadelphia
 TSA,10,Taipei
@@ -164,7 +165,6 @@ HAM,10,Hamburg
 DUR,10,Durban
 MCT,10,
 BDA,10,Bermuda
-ORY,10,Paris
 ADL,10,Adelaide
 NLU,10,Mexico City
 ATH,9,Athens
@@ -193,11 +193,11 @@ NQZ,7,Nur-Sultan
 PNQ,7,Pune
 PEN,7,
 KGL,7,Kigali
-LIN,7,Milan
+CCP,7,Concepcion
 LEJ,7,Leipzig
 YQR,7,Regina
 AMM,7,
-MAN,7,Manchester
+NMI,7,Mumbai
 DMK,6,Bangkok
 UPG,6,Makassar
 NCL,6,Newcastle
@@ -221,6 +221,8 @@ OVB,5,
 BOI,5,
 LAD,5,Luanda
 ABJ,5,
+BFS,5,Belfast
+IOM,5,Castletown
 TLS,4,Toulouse
 STL,4,
 SDQ,4,
@@ -244,7 +246,6 @@ NSI,4,
 LYS,3,Grenoble
 TRD,3,Trondheim
 KEF,3,Reykjavik
-IOM,3,Castletown
 JNU,3,Juneau
 MCI,3,
 SJJ,3,Sarajevo
@@ -264,9 +265,7 @@ KNO,2,
 SDJ,2,Sendai
 ABQ,2,
 CLE,2,
-EBL,2,Arbil
 MKE,2,
-YWG,2,
 PZU,2,Port Sudan
 CAY,2,
 AOJ,2,Aomori
@@ -281,6 +280,7 @@ CHC,2,
 HGH,2,Hangzhou
 MRV,2,
 BPN,2,
+JER,1
 CXH,1,Vancouver Heliport
 JRA,1,NYC Heliport
 JRB,1,NYC Heliport

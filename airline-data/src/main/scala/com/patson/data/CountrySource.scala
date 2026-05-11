@@ -213,9 +213,9 @@ object CountrySource {
       val ComunidadAndina = Set("BO","EC","PE","CO")
       val ALBA = Set("VE","CU","BO","NI")
       val USMCA = Set("US","PR","CA","MX")
-      val AngloCaribbean = Set("US","CA","PR","AG","BB","BS","GY","JM","TT")
+      val AngloCaribbean = Set("US","CA","PR","BB","BS","GY","JM","TT")
       val TaxHavens = Set("GB","NL","US","CA","PR","PA","IE")
-      val EastCaribbean = Set("AG", "BB", "DM", "PR", "FR", "VC", "GD", "TT", "US")
+      val EastCaribbean = Set("AG", "BB", "DM", "PR", "FR", "KV", "LC", "VC", "GD", "TT", "US")
       val CAFTA = Set("US","MX","GT","HN","SV","NI","PA","PR","DO")
       val ASEANPlus = Set("BN","KH","ID","LA","MY","PH","SG","TH","VN","TW")
       val PIF = Set("AU","NZ","FR","US","PG","VU","TV","TO","KI","MH","WS","FJ")
@@ -280,7 +280,8 @@ object CountrySource {
       addOverride(scores, 2, "PA", Set("ES","DE","FR","AE","HK","PE","CO","JP","CN"))
       addOverride(scores, 3, "CR", Set("US","CA","MX","PR","PA","CO"))
       addOverride(scores, 2, "TT", Set("VE"))
-      addOverride(scores, 2, "SR", Set("NL","BR","GY"))
+      addOverride(scores, 4, "SR", Set("NL","GY"))
+      addOverride(scores, 3, "SR", Set("BR","FR"))
 
       // South America
       addOverride(scores, 1, "BR", Set("IN","GB","FR"))
