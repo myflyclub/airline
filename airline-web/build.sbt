@@ -21,9 +21,9 @@ libraryDependencies ++= Seq(
   ws,
   guice,
   specs2 % Test,
-  "org.apache.pekko" %% "pekko-testkit" % "1.0.3" % Test,
+  "org.apache.pekko" %% "pekko-testkit" % "1.6.0" % Test,
   "org.scalatest" %% "scalatest" % "3.2.19" % Test,
-  "org.apache.pekko" %% "pekko-remote" % "1.0.3",
+  "org.apache.pekko" %% "pekko-remote" % "1.6.0",
   "org.apache.commons" % "commons-text" % "1.15.0",
   "default" %% "airline-data" % "5.2-SNAPSHOT",
 
