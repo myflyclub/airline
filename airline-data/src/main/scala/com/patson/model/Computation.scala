@@ -80,7 +80,7 @@ object Computation {
   }
 
   def calculateDealerValue(airplane : Airplane) : Int = {
-    val value = (airplane.condition / Airplane.MAX_CONDITION) * airplane.purchasePrice
+    val value = (airplane.condition / Airplane.MAX_CONDITION) * airplane.model.price
     if (value < 0) 0 else value.toInt
   }
   
