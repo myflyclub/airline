@@ -32,10 +32,10 @@ object StockModel {
           ),
           dividendsPerShare = allMetrics("dividends_per_share").copy(
             floor  = percentile(divList, 0.2),
-            target = Math.max(percentile(divList, 0.9), allMetrics("dividends_per_share").target)
+            target = Math.max(percentile(divList, 1.0), allMetrics("dividends_per_share").target)
           ),
           codeshares = allMetrics("codeshares").copy(
-            floor  = percentile(codeshares, 0.2),
+            floor  = percentile(codeshares, 0.0),
             target = Math.max(percentile(codeshares, 0.8), allMetrics("codeshares").target)
           )
         )
