@@ -52,7 +52,9 @@ object UserSource {
     // Load modifiers first with their own connection, before opening the main connection
     val modifiersByUserId : Map[Int, List[UserModifier.Value]] = UserSource.loadUserModifiers()
 
-    Using.resource(Meta.getConnection()) { connection =>
+    // Release the DB connection before touching AirlineCache, which may need its own connection.
+    // Holding a connection open while waiting for the cache risks pool exhaustion under concurrency.
+    val userList = Using.resource(Meta.getConnection()) { connection =>
       var queryString = "SELECT u.*, ua.* FROM " +  USER_TABLE + " u LEFT JOIN " + USER_AIRLINE_TABLE + " ua ON u.user_name = ua.user_name"
 
       if (!criteria.isEmpty) {
@@ -63,7 +65,7 @@ object UserSource {
         queryString += criteria.last._1 + " = ?"
       }
 
-      val userList = Using.resource(connection.prepareStatement(queryString)) { preparedStatement =>
+      Using.resource(connection.prepareStatement(queryString)) { preparedStatement =>
         for (i <- 0 until criteria.size) {
           preparedStatement.setObject(i + 1, criteria(i)._2)
         }
@@ -89,26 +91,22 @@ object UserSource {
             val airlineId = resultSet.getInt("ua.airline")
             if (airlineId != 0) {
               userAirlines += airlineId
-            } else {
-              println(s"User $user has no airline!")
             }
           }
           userList
         }
       }
+    } // connection released here, before cache access
 
-      val allAirlineIds : List[Int] = userList.values.map(_._2).flatten.toSet.toList
+    val allAirlineIds : List[Int] = userList.values.map(_._2).flatten.toSet.toList
+    val airlinesMap = AirlineCache.getAirlines(allAirlineIds, true)
 
-      //val airlinesMap = AirlineSource.loadAirlinesByIds(allAirlineIds, true).map(airline => (airline.id, airline)).toMap
-      val airlinesMap = AirlineCache.getAirlines(allAirlineIds, true)
-
-      userList.values.foreach {
-        case(user,userAirlineIds) =>
-          user.setAccesibleAirlines(userAirlineIds.map(airlineId => airlinesMap.get(airlineId)).flatten.toList)
-      }
-
-      userList.values.map(_._1).toList
+    userList.values.foreach {
+      case(user,userAirlineIds) =>
+        user.setAccesibleAirlines(userAirlineIds.map(airlineId => airlinesMap.get(airlineId)).flatten.toList)
     }
+
+    userList.values.map(_._1).toList
   }
 
 

@@ -17,6 +17,22 @@ class AirplaneSimulationSpec extends AnyWordSpecLike with Matchers {
   val link1 = Link(airport1, airport2, airline1, LinkClassValues.getInstance(), 0, LinkClassValues.getInstance(), 0, 0, 1)
   val link2 = Link(airport1, airport2, airline2, LinkClassValues.getInstance(), 0, LinkClassValues.getInstance(), 0, 0, 1)
 
+  "calculateDealerValue" should {
+    "return the same value regardless of prior purchasePrice (buy-sell cycle stability)" in {
+      val freshAirplane = Airplane(model, airline1, 0, 0, 60, model.price, id = 10)
+      val usedAirplane  = Airplane(model, airline1, 0, 0, 60, model.price / 2, id = 11)
+
+      Computation.calculateDealerValue(freshAirplane) shouldEqual Computation.calculateDealerValue(usedAirplane)
+    }
+
+    "scale with condition only" in {
+      val fullCondition = Airplane(model, airline1, 0, 0, 100, model.price / 3, id = 12)
+      val halfCondition = Airplane(model, airline1, 0, 0, 50,  model.price / 3, id = 13)
+
+      Computation.calculateDealerValue(fullCondition) should be > Computation.calculateDealerValue(halfCondition)
+    }
+  }
+
   "decayAirplanesByAirline" should {
     "decay slower if no assigned link" in {
       val a1 = this.airplane1.copy()

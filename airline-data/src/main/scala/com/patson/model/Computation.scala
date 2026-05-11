@@ -80,14 +80,14 @@ object Computation {
   }
 
   def calculateDealerValue(airplane : Airplane) : Int = {
-    val value = (airplane.condition / Airplane.MAX_CONDITION) * airplane.purchasePrice
+    val value = (airplane.condition / Airplane.MAX_CONDITION) * airplane.model.price
     if (value < 0) 0 else value.toInt
   }
   
   val distanceCache = new ConcurrentHashMap[String, Int]()
 
   def calculateDistance(fromAirport: Airport, toAirport: Airport) : Int = {
-    val key = s"${fromAirport.id}${toAirport.id}"
+    val key = s"${fromAirport.id}_${toAirport.id}"
     distanceCache.computeIfAbsent(key, _ => Util.calculateDistance(fromAirport.latitude, fromAirport.longitude, toAirport.latitude, toAirport.longitude).toInt)
   }
 
@@ -258,7 +258,7 @@ def constructAffinityText(fromZone : String, toZone : String, fromCountry : Stri
     val amountFromAirplanes = AirplaneSource.loadAirplanesByOwner(airlineId, false).map(Computation.calculateAirplaneSellValue(_).toLong).sum
     val amountFromBases = AirlineSource.loadAirlineBasesByAirline(airlineId).map(_.getValue * 0.2).sum.toLong //only get 20% back
     val amountFromLoans = BankSource.loadLoansByAirline(airlineId).map(_.earlyRepayment(currentCycle) * -1).sum //repay all loans now
-    val existingBalance = AirlineCache.getAirline(airlineId).get.airlineInfo.balance
+    val existingBalance = AirlineCache.getAirline(airlineId).map(_.airlineInfo.balance).getOrElse(0L)
 
     ResetAmountInfo(amountFromAirplanes, amountFromBases, amountFromLoans, existingBalance)
   }

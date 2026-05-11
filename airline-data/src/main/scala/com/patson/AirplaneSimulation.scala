@@ -48,7 +48,6 @@ object AirplaneSimulation {
     println("Finished renewing airplanes")
     
     println("Start retiring airplanes")
-    //adjustLinksBasedOnAirplaneStatus(updatingAirplanes, cycle)
     val retiredCount = retireAgingAirplanes(updatedAirplanes)
     println(s"Finished retiring $retiredCount airplanes")
 
@@ -149,9 +148,27 @@ object AirplaneSimulation {
     AirplaneSource.updateAirplanes(renewedAirplanes.toList) //no version check, since money is deducted already, and renewed airplanes are safe to save
   }
 
+  def adjustLinksBasedOnAirplaneStatus(retiringAirplanes: List[Airplane]): Unit = {
+    if (retiringAirplanes.isEmpty) return
+    val retiringIds = retiringAirplanes.map(_.id).toSet
+    val affectedLinkIds = retiringAirplanes.flatMap { airplane =>
+      AirplaneSource.loadAirplaneLinkAssignmentsByAirplaneId(airplane.id).assignments.keys
+    }.toSet
+    affectedLinkIds.foreach { linkId =>
+      LinkSource.loadFlightLinkById(linkId).foreach { link =>
+        val remaining = link.getAssignedAirplanes().filter { case (a, _) => !retiringIds.contains(a.id) }
+        link.setAssignedAirplanes(remaining)
+        LinkSource.updateLink(link)
+        LinkSource.updateAssignedPlanes(linkId, remaining)
+      }
+    }
+  }
+
   def retireAgingAirplanes(airplanes : List[Airplane]) : Int = {
+    val retiringAirplanes = airplanes.filter(_.condition <= 0)
+    adjustLinksBasedOnAirplaneStatus(retiringAirplanes)
     var deletedCount = 0
-    airplanes.filter(_.condition <= 0).foreach { airplane =>
+    retiringAirplanes.foreach { airplane =>
       println("Deleting airplane " + airplane)
       deletedCount += AirplaneSource.deleteAirplane(airplane.id, Some(airplane.version))
     }
@@ -165,7 +182,7 @@ object AirplaneSimulation {
       case(airplane, linkAssignments) =>
         val baseDecayRate = Airplane.MAX_CONDITION.toDouble / airplane.model.lifespan //live the whole lifespan
         val decayRate = baseDecayRate / 3 + baseDecayRate * (2.0 / 3) * airplane.utilizationRate
-        val newCondition = airplane.condition - decayRate
+        val newCondition = Math.max(0.0, airplane.condition - decayRate)
 
         updatingAirplanes.append(airplane.copy(condition = newCondition))
     }

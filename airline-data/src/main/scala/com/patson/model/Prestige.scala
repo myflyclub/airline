@@ -4,11 +4,13 @@ import com.patson.data.{CycleSource, PrestigeSource}
 
 object Prestige {
   def processPrestige(airline : Airline) = {
-    var airport = airline.getHeadQuarter().get.airport
-    var prestigePoints = PrestigePoints.getPoints(airline.getReputation())
-    if (prestigePoints > 0) {
-      PrestigeSource.createPrestige(airline.id, airport.id, airline.name, prestigePoints, CycleSource.loadCycle())
-      airline.setPrestigePoints(airline.getPrestigePoints() + prestigePoints)
+    airline.getHeadQuarter().foreach { hq =>
+      val airport = hq.airport
+      val prestigePoints = PrestigePoints.getPoints(airline.getReputation())
+      if (prestigePoints > 0) {
+        PrestigeSource.createPrestige(airline.id, airport.id, airline.name, prestigePoints, CycleSource.loadCycle())
+        airline.setPrestigePoints(airline.getPrestigePoints() + prestigePoints)
+      }
     }
   }
 

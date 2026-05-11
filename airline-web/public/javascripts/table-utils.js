@@ -471,9 +471,10 @@ function addTableSummaryRow(tableSelector, dataArray, columnConfigs, aggregation
     summaryRow.append("<div class='cell'> </div>");
 
     columnConfigs.forEach((config) => {
+        const keyAttr = config.key ? ` data-col-key="${config.key}"` : '';
         if (!config.getValue) {
             // Non-numeric column, just add empty cell or label
-            summaryRow.append("<div class='cell'>" + (config.label || '') + "</div>");
+            summaryRow.append(`<div class='cell'${keyAttr}>` + (config.label || '') + "</div>");
             return;
         }
 
@@ -505,7 +506,7 @@ function addTableSummaryRow(tableSelector, dataArray, columnConfigs, aggregation
             }
         }
 
-        summaryRow.append("<div class='cell' align='right'>" + aggregateValue + "</div>");
+        summaryRow.append(`<div class='cell'${keyAttr} align='right'>` + aggregateValue + "</div>");
     });
 
     $(tableSelector).append(summaryRow);

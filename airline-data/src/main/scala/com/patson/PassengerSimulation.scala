@@ -241,7 +241,7 @@ object PassengerSimulation {
     val missedPax = missedDemandChunks.asScala.map(_._3).sum
     println("Total missed pax " + missedPax)
 
-    val worldStatistics = WorldStatistics(currentCycle, Period.WEEKLY, totalTicketsSold, missedPax, loadFactor)
+    val worldStatistics = WorldStatistics(currentCycle, Period.WEEKLY, totalPax, totalTicketsSold, missedPax, loadFactor)
     WorldStatisticsSource.saveWorldStats(List(worldStatistics))
 
     //collapse it now

@@ -899,26 +899,28 @@ class LinkApplication @Inject()(cc: ControllerComponents) extends AbstractContro
 
 
 
-        val competitorLinkConsumptions = (LinkSource.loadFlightLinksByAirports(fromAirportId, toAirportId, LinkSource.ID_LOAD) ++ LinkSource.loadFlightLinksByAirports(toAirportId, fromAirportId, LinkSource.ID_LOAD)).flatMap { link =>
-          LinkSource.loadLinkConsumptionsByLinkId(link.id, 1)
-        }
+        val directCompetitorLinks =
+          LinkSource.loadFlightLinksByAirports(fromAirportId, toAirportId, LinkSource.ID_LOAD) ++
+          LinkSource.loadFlightLinksByAirports(toAirportId, fromAirportId, LinkSource.ID_LOAD)
+        val competitorLinkConsumptions =
+          LinkSource.loadLinkConsumptionsByLinksId(directCompetitorLinks.map(_.id), 1)
         var otherLinkArray = Json.toJson(competitorLinkConsumptions.filter(_.link.capacity.total > 0).map { linkConsumption => Json.toJson(linkConsumption)(SimpleLinkConsumptionWrite) }.toSeq)
         resultObject = resultObject + ("otherLinks", otherLinkArray)
 
         val nearbyFromAirports = loadGenericTransitAirports(fromAirport)
         val nearbyToAirports = loadGenericTransitAirports(toAirport)
         val competitorViaLocalTransitLinkConsumptions : List[LinkConsumptionDetails] = {
-          val viaLocalTransitFlightLinks : List[Link] =
-            nearbyFromAirports.flatMap { localTransitAirport =>
-              (nearbyToAirports.map(_.id) :+ toAirportId).flatMap { toAirportId =>
-                LinkSource.loadFlightLinksByAirports(localTransitAirport.id, toAirportId, LinkSource.ID_LOAD) ++ LinkSource.loadFlightLinksByAirports(toAirportId, localTransitAirport.id, LinkSource.ID_LOAD)
-              }
-            } ++
-            nearbyToAirports.flatMap { localTransitAirport =>
-              (nearbyFromAirports.map(_.id) :+ fromAirportId).flatMap { fromAirportId =>
-                LinkSource.loadFlightLinksByAirports(localTransitAirport.id, fromAirportId, LinkSource.ID_LOAD) ++ LinkSource.loadFlightLinksByAirports(fromAirportId, localTransitAirport.id, LinkSource.ID_LOAD)
-              }
-            }
+          val nearbyFromIds = nearbyFromAirports.map(_.id)
+          val nearbyToIds   = nearbyToAirports.map(_.id)
+          val allToSide   = nearbyToIds :+ toAirportId
+          val allFromSide = nearbyFromIds :+ fromAirportId
+          val directIds   = directCompetitorLinks.map(_.id).toSet
+
+          val viaLocalTransitFlightLinks =
+            (LinkSource.loadFlightLinksByAirportSets(allFromSide, allToSide, LinkSource.ID_LOAD) ++
+             LinkSource.loadFlightLinksByAirportSets(allToSide, allFromSide, LinkSource.ID_LOAD))
+              .distinctBy(_.id)
+              .filterNot(l => directIds.contains(l.id))
           LinkSource.loadLinkConsumptionsByLinksId(viaLocalTransitFlightLinks.map(_.id), 1)
         }
         val otherViaLocalTransitLinkArray = Json.toJson(competitorViaLocalTransitLinkConsumptions.filter {consumption =>  consumption.link.capacity.total > 0 && consumption.link.distance > 50 }.map { linkConsumption => {

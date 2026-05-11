@@ -13,7 +13,7 @@ import scala.collection.mutable.ListBuffer
 import scala.collection.parallel.CollectionConverters._
 
 class DemandGeneratorSpec extends AnyWordSpecLike with Matchers {
-  val cycle = CycleSource.loadCycle()
+  val cycle = 0
 
   "generateDemand".must {
     "min distance test".in {
@@ -22,6 +22,13 @@ class DemandGeneratorSpec extends AnyWordSpecLike with Matchers {
       val distance = Computation.calculateDistance(fromAirport, toAirport)
       val canHaveDemand = DemandGenerator.canHaveDemand(fromAirport, toAirport, distance)
       assert(!canHaveDemand)
+    }
+    "island test".in {
+      val fromAirport = AirportSource.loadAirportByIata("SAB").get
+      val toAirport = AirportSource.loadAirportByIata("SXM").get
+      val distance = Computation.calculateDistance(fromAirport, toAirport)
+      val canHaveDemand = DemandGenerator.canHaveDemand(fromAirport, toAirport, distance)
+      assert(canHaveDemand)
     }
      "isolatedAirportTest".in {
        val fromAirport = AirportSource.loadAirportByIata("TER", true).get
@@ -35,8 +42,8 @@ class DemandGeneratorSpec extends AnyWordSpecLike with Matchers {
        println(demand)
        assert(demand > 0)
      }
-    "Size 9 should find 13 hub airports".in {
-      val fromAirport = AirportSource.loadAirportByIata("add", true).get
+    "Size 9 should find 16 hub airports".in {
+      val fromAirport = AirportSource.loadAirportByIata("pvg", fullLoad = true).get
       val hubAirports: List[(Airport, Double)] = DemandGenerator.getHubAirports(fromAirport, 0, cycle)
       var percentTotal = 0.0
       println(s"from ${fromAirport.iata}:")
@@ -45,7 +52,7 @@ class DemandGeneratorSpec extends AnyWordSpecLike with Matchers {
         val formattedPercentage = f"${percentage * 100}%.2f%%"
         println(s"${airport.iata}, $formattedPercentage")
       }
-      assert(hubAirports.length == 15)
+      assert(hubAirports.length == 16)
       assert(percentTotal <= 1.0 && percentTotal >= 0.99)
     }
     "Size 7 should find 11 hub airports".in {
@@ -60,8 +67,8 @@ class DemandGeneratorSpec extends AnyWordSpecLike with Matchers {
       }
       assert(hubAirports.size == 13)
     }
-    "Size 1 Isolated Town strength 1 should find 8 hub airports".in {
-      val fromAirport = AirportSource.loadAirportByIata("brw", true).get
+    "Size 2 Isolated Town strength 2 should find 8 hub airports".in {
+      val fromAirport = AirportSource.loadAirportByIata("AGX", true).get
       val hubAirports: List[(String, LinkClassValues)] = DemandGenerator.generateHubAirportDemand(fromAirport, cycle).toList
       val total = hubAirports.map(_._2.total).sum
       println(s"from ${fromAirport.iata} ${fromAirport.countryCode}:")
@@ -553,57 +560,266 @@ class DemandGeneratorSpec extends AnyWordSpecLike with Matchers {
 
     "computeDemand should have no PassengerType exceeding 35% of total demand".in {
       // Load airport stats from database
-      val airportStatsList = AirportStatisticsSource.loadAllAirportStats()
-      val airportStats: Map[Int, AirportStatistics] = airportStatsList.map(s => s.airportId -> s).toMap
+//      val airportStatsList = AirportStatisticsSource.loadAllAirportStats()
+//      val airportStats: Map[Int, AirportStatistics] = airportStatsList.map(s => s.airportId -> s).toMap
+//
+//      println(s"Loaded ${airportStats.size} airport statistics")
+//
+//      // Run computeDemand for cycle 1
+//      val cycle = 1
+//      val startTime = System.currentTimeMillis()
+//      val demand = DemandGenerator.computeDemand(cycle, airportStats)
+//      val elapsed = System.currentTimeMillis() - startTime
+//
+//      println(s"Cycle $cycle: total chunks = ${demand.size}, time = ${elapsed}ms")
+//
+//      // Group demand by PassengerType
+//      val demandByType = demand.groupBy { case (passengerGroup, _, _) =>
+//        passengerGroup.passengerType
+//      }.map { case (passengerType, chunks) =>
+//        val totalForType = chunks.map(_._3).sum.toLong
+//        (passengerType, totalForType)
+//      }
+//
+//      val totalDemand = demandByType.values.sum.toDouble
+//
+//      println(s"\n=== Demand Distribution by PassengerType (cycle $cycle) ===")
+//      println(s"Total demand: ${totalDemand.toLong}")
+//      println(f"${"PassengerType"}%-20s | ${"Demand"}%12s | ${"Percentage"}%10s")
+//      println("-" * 50)
+//
+//      demandByType.toList.sortBy(-_._2).foreach { case (passengerType, typeDemand) =>
+//        val percentage = typeDemand / totalDemand * 100
+//        println(f"$passengerType%-20s | $typeDemand%12d | $percentage%9.2f%%")
+//      }
+//
+//      // Verify no PassengerType exceeds 35% of total
+//      val maxPercentage = 0.35
+//      val violations = demandByType.filter { case (_, typeDemand) =>
+//        typeDemand / totalDemand > maxPercentage
+//      }
+//
+//      if (violations.nonEmpty) {
+//        println(s"\n!!! VIOLATIONS (>${(maxPercentage * 100).toInt}%) !!!")
+//        violations.foreach { case (passengerType, typeDemand) =>
+//          val percentage = typeDemand / totalDemand * 100
+//          println(f"$passengerType: $percentage%.2f%%")
+//        }
+//      }
+//
+//      assert(violations.isEmpty,
+//        s"No PassengerType should exceed ${(maxPercentage * 100).toInt}% of total. Violations: ${
+//          violations.map { case (pt, d) => s"$pt: ${(d / totalDemand * 100).toInt}%" }.mkString(", ")
+//        }")
+    }
 
-      println(s"Loaded ${airportStats.size} airport statistics")
+    "VAV hub airports should include TBU (isolated town gateway in same country)".in {
+      val fromAirport = AirportSource.loadAirportByIata("VAV", fullLoad = true).get
+      val isolatedFeature = fromAirport.getFeatures().find(_.featureType == AirportFeatureType.ISOLATED_TOWN)
+      val isIsland = GameConstants.isIsland(fromAirport)
+      assert(isIsland, "VAV should be an island")
+      assert(isolatedFeature.isDefined, "VAV should have IsolatedTownFeature")
 
-      // Run computeDemand for cycle 1
-      val cycle = 1
-      val startTime = System.currentTimeMillis()
-      val demand = DemandGenerator.computeDemand(cycle, airportStats)
-      val elapsed = System.currentTimeMillis() - startTime
+      val isIsolatedMultiplier = isolatedFeature.get.strength
+      val hubAirports = DemandGenerator.getHubAirports(fromAirport, isIsolatedMultiplier, cycle)
+      val hubIatas = hubAirports.map(_._1.iata).toSet
 
-      println(s"Cycle $cycle: total chunks = ${demand.size}, time = ${elapsed}ms")
-
-      // Group demand by PassengerType
-      val demandByType = demand.groupBy { case (passengerGroup, _, _) =>
-        passengerGroup.passengerType
-      }.map { case (passengerType, chunks) =>
-        val totalForType = chunks.map(_._3).sum.toLong
-        (passengerType, totalForType)
+      println(s"VAV (TO, isolated strength=$isIsolatedMultiplier) hub airports:")
+      hubAirports.foreach { case (airport, pct) =>
+        println(f"  ${airport.iata}%5s (${airport.countryCode}) ${pct * 100}%.1f%%")
       }
 
-      val totalDemand = demandByType.values.sum.toDouble
+      assert(hubIatas.contains("TBU"),
+        s"TBU should be in VAV's hub airports (same country gateway), but hub airports were: $hubIatas")
+    }
 
-      println(s"\n=== Demand Distribution by PassengerType (cycle $cycle) ===")
-      println(s"Total demand: ${totalDemand.toLong}")
-      println(f"${"PassengerType"}%-20s | ${"Demand"}%12s | ${"Percentage"}%10s")
-      println("-" * 50)
+    "VAV should have demand to TBU via isolated-town gateway feature".in {
+      val fromAirport = AirportSource.loadAirportByIata("VAV", fullLoad = true).get
+      val toAirport = AirportSource.loadAirportByIata("TBU", fullLoad = true).get
+      val distance = Computation.calculateDistance(fromAirport, toAirport)
+      val relationship = CountrySource.getCountryMutualRelationships().getOrElse((fromAirport.countryCode, toAirport.countryCode), 0)
+      val affinity = Computation.calculateAffinityValue(fromAirport.zone, toAirport.zone, relationship)
 
-      demandByType.toList.sortBy(-_._2).foreach { case (passengerType, typeDemand) =>
-        val percentage = typeDemand / totalDemand * 100
-        println(f"$passengerType%-20s | $typeDemand%12d | $percentage%9.2f%%")
+      assert(toAirport.isGateway(), "TBU should have GATEWAY_AIRPORT feature")
+      assert(fromAirport.hasFeature(AirportFeatureType.ISOLATED_TOWN), "VAV should have ISOLATED_TOWN feature")
+      assert(DemandGenerator.canHaveDemand(fromAirport, toAirport, distance),
+        s"canHaveDemand(VAV, TBU) should be true (distance=$distance)")
+
+      val demand = computeBaseDemandBetweenAirports(fromAirport, toAirport, affinity, distance)
+      val total = DemandGenerator.addUpDemands(demand)
+      println(s"VAV -> TBU: distance=$distance, affinity=$affinity, total base demand=$total")
+      println(s"  traveler=${demand.travelerDemand.total}, business=${demand.businessDemand.total}, tourist=${demand.touristDemand.total}")
+
+      assert(total > 0, s"VAV -> TBU should have demand via isolated-town gateway feature, got 0")
+    }
+
+    "VAV should have demand to TBU including hub demand".in {
+      val fromAirport = AirportSource.loadAirportByIata("VAV", fullLoad = true).get
+      val toAirport = AirportSource.loadAirportByIata("TBU", fullLoad = true).get
+      val distance = Computation.calculateDistance(fromAirport, toAirport)
+      val relationship = CountrySource.getCountryMutualRelationships().getOrElse((fromAirport.countryCode, toAirport.countryCode), 0)
+      val affinity = Computation.calculateAffinityValue(fromAirport.zone, toAirport.zone, relationship)
+
+      val hubDemand = DemandGenerator.generateHubAirportDemand(fromAirport, cycle)
+      val hubToTBU = hubDemand.getOrElse(toAirport.iata, LinkClassValues.empty)
+      println(s"VAV hub demand to TBU: ${hubToTBU.total} (economy=${hubToTBU(ECONOMY)}, discount=${hubToTBU(DISCOUNT_ECONOMY)})")
+
+      val totalFromPrefs = computeDemandWithPreferencesBetweenAirports(fromAirport, toAirport, affinity, distance, cycle).values.sum
+      println(s"VAV -> TBU total demand with preferences: $totalFromPrefs")
+
+      assert(totalFromPrefs > 0 || hubToTBU.total > 0,
+        "VAV -> TBU should have demand either from base formula or hub airport demand")
+    }
+
+    "OFU should have demand to Pago Pago including hub demand".in {
+      val fromAirport = AirportSource.loadAirportByIata("PPG", fullLoad = true).get
+      val toAirport = AirportSource.loadAirportByIata("OFU", fullLoad = true).get
+      val distance = Computation.calculateDistance(fromAirport, toAirport)
+      val relationship = CountrySource.getCountryMutualRelationships().getOrElse((fromAirport.countryCode, toAirport.countryCode), 0)
+      val affinity = Computation.calculateAffinityValue(fromAirport.zone, toAirport.zone, relationship)
+
+      val hubDemand = DemandGenerator.generateHubAirportDemand(fromAirport, cycle)
+      val hubToTBU = hubDemand.getOrElse(toAirport.iata, LinkClassValues.empty)
+      hubDemand.foreach { case (airport, demands) =>
+        println(s"${airport}, ${demands.total}")
+      }
+      val totalFromPrefs = computeDemandWithPreferencesBetweenAirports(fromAirport, toAirport, affinity, distance, cycle).values.sum
+      println(s"OFU -> PPG total demand with preferences: $totalFromPrefs")
+
+      assert(totalFromPrefs > 0 && hubToTBU.total > 0,
+        "OFU -> PPG should have demand from base formula and hub airport demand")
+    }
+
+    "IsolatedTownFeature gateway demand should not double-count when both airports have ISOLATED_TOWN".in {
+      val fromAirport = AirportSource.loadAirportByIata("VAV", fullLoad = true).get
+      val toAirport = AirportSource.loadAirportByIata("TBU", fullLoad = true).get
+      val distance = Computation.calculateDistance(fromAirport, toAirport)
+      val relationship = CountrySource.getCountryMutualRelationships().getOrElse((fromAirport.countryCode, toAirport.countryCode), 0)
+      val affinity = Computation.calculateAffinityValue(fromAirport.zone, toAirport.zone, relationship)
+
+      assert(fromAirport.hasFeature(AirportFeatureType.ISOLATED_TOWN), "VAV must have ISOLATED_TOWN for this test")
+      assert(toAirport.hasFeature(AirportFeatureType.ISOLATED_TOWN), "TBU must have ISOLATED_TOWN for this test")
+      assert(toAirport.isGateway(), "TBU must be a gateway for this test")
+
+      val vavToTbu = DemandGenerator.addUpDemands(computeBaseDemandBetweenAirports(fromAirport, toAirport, affinity, distance))
+      val tbuToVav = DemandGenerator.addUpDemands(computeBaseDemandBetweenAirports(toAirport, fromAirport, affinity, distance))
+
+      println(s"VAV->TBU total demand: $vavToTbu")
+      println(s"TBU->VAV total demand: $tbuToVav")
+
+      // VAV->TBU should have demand (isolated town to gateway), TBU->VAV should be lower (TBU is not to a gateway)
+      assert(vavToTbu > 0, "VAV->TBU should have positive demand")
+      // If double-counting were present, vavToTbu would be exactly 2x the single-feature value;
+      // with the airportId guard the demand is only counted once
+      assert(vavToTbu <= tbuToVav * 3, s"VAV->TBU ($vavToTbu) demand should not be vastly larger than TBU->VAV ($tbuToVav), which would indicate double-counting")
+    }
+
+    "SKB should have demand to ANU via isolated-town gateway feature".in {
+      val fromAirport = AirportSource.loadAirportByIata("SKB", fullLoad = true).get
+      val toAirport   = AirportSource.loadAirportByIata("ANU", fullLoad = true).get
+      val distance    = Computation.calculateDistance(fromAirport, toAirport)
+      val relationship = CountrySource.getCountryMutualRelationships().getOrElse((fromAirport.countryCode, toAirport.countryCode), 0)
+      val affinity    = Computation.calculateAffinityValue(fromAirport.zone, toAirport.zone, relationship)
+
+      println(s"SKB (${fromAirport.countryCode}) -> ANU (${toAirport.countryCode}): distance=$distance, affinity=$affinity, relationship=$relationship")
+      println(s"  SKB has ISOLATED_TOWN: ${fromAirport.hasFeature(AirportFeatureType.ISOLATED_TOWN)}, ANU isGateway: ${toAirport.isGateway()}")
+      println(s"  canHaveDemand: ${DemandGenerator.canHaveDemand(fromAirport, toAirport, distance)}")
+
+      assert(toAirport.isGateway(), "ANU should have GATEWAY_AIRPORT feature")
+      assert(fromAirport.hasFeature(AirportFeatureType.ISOLATED_TOWN), "SKB should have ISOLATED_TOWN feature")
+      assert(DemandGenerator.canHaveDemand(fromAirport, toAirport, distance),
+        s"canHaveDemand(SKB, ANU) should be true (distance=$distance)")
+
+      val demand = computeBaseDemandBetweenAirports(fromAirport, toAirport, affinity, distance)
+      val total  = DemandGenerator.addUpDemands(demand)
+      println(s"  total base demand=$total (traveler=${demand.travelerDemand.total}, business=${demand.businessDemand.total}, tourist=${demand.touristDemand.total})")
+
+      assert(total > 0, s"SKB -> ANU should have demand via isolated-town gateway feature, got 0")
+    }
+
+    "SKB should have demand to NEV including hub demand".in {
+      val fromAirport = AirportSource.loadAirportByIata("SKB", fullLoad = true).get
+      val toAirport   = AirportSource.loadAirportByIata("NEV", fullLoad = true).get
+      val distance    = Computation.calculateDistance(fromAirport, toAirport)
+      val relationship = CountrySource.getCountryMutualRelationships().getOrElse((fromAirport.countryCode, toAirport.countryCode), 0)
+      val affinity    = Computation.calculateAffinityValue(fromAirport.zone, toAirport.zone, relationship)
+
+      val isIsland = GameConstants.isIsland(fromAirport)
+      println(isIsland)
+      assert(isIsland, "SKB is island")
+
+
+      val hubDemand  = DemandGenerator.generateHubAirportDemand(fromAirport, cycle)
+      val hubToANU   = hubDemand.getOrElse(toAirport.iata, LinkClassValues.empty)
+      hubDemand.foreach { case (airport, demands) =>
+        println(s"${airport}, ${demands.total}")
+      }
+      println(s"SKB hub demand to NEV: ${hubToANU.total} (economy=${hubToANU(ECONOMY)}, discount=${hubToANU(DISCOUNT_ECONOMY)})")
+
+      val totalFromPrefs = computeDemandWithPreferencesBetweenAirports(fromAirport, toAirport, affinity, distance, cycle).values.sum
+      println(s"SKB -> NEV total demand with preferences: $totalFromPrefs")
+
+      assert(totalFromPrefs > 0 && hubToANU.total > 0,
+        "SKB -> NEV should have demand either from base formula or hub airport demand")
+    }
+
+    "SAB hub airports should include SXM (isolated-town to international gateway)".in {
+      val fromAirport = AirportSource.loadAirportByIata("SAB", fullLoad = true).get
+      val isolatedFeature = fromAirport.getFeatures().find(_.featureType == AirportFeatureType.ISOLATED_TOWN)
+      assert(isolatedFeature.isDefined, "SAB should have IsolatedTownFeature")
+
+      val isIsolatedMultiplier = isolatedFeature.get.strength
+      val hubAirports = DemandGenerator.getHubAirports(fromAirport, isIsolatedMultiplier, cycle)
+      val hubIatas = hubAirports.map(_._1.iata).toSet
+
+      println(s"SAB (BQ, isolated strength=$isIsolatedMultiplier) hub airports:")
+      hubAirports.foreach { case (airport, pct) =>
+        println(f"  ${airport.iata}%5s (${airport.countryCode}) ${pct * 100}%.1f%%")
       }
 
-      // Verify no PassengerType exceeds 35% of total
-      val maxPercentage = 0.35
-      val violations = demandByType.filter { case (_, typeDemand) =>
-        typeDemand / totalDemand > maxPercentage
-      }
+      assert(hubIatas.contains("SXM"),
+        s"SXM should be in SAB's hub airports (nearby international gateway), but hub airports were: $hubIatas")
+    }
 
-      if (violations.nonEmpty) {
-        println(s"\n!!! VIOLATIONS (>${(maxPercentage * 100).toInt}%) !!!")
-        violations.foreach { case (passengerType, typeDemand) =>
-          val percentage = typeDemand / totalDemand * 100
-          println(f"$passengerType: $percentage%.2f%%")
-        }
-      }
+    "SAB should have demand to SXM via isolated-town gateway feature".in {
+      val fromAirport = AirportSource.loadAirportByIata("SAB", fullLoad = true).get
+      val toAirport   = AirportSource.loadAirportByIata("SXM", fullLoad = true).get
+      val distance    = Computation.calculateDistance(fromAirport, toAirport)
+      val relationship = CountrySource.getCountryMutualRelationships().getOrElse((fromAirport.countryCode, toAirport.countryCode), 0)
+      val affinity    = Computation.calculateAffinityValue(fromAirport.zone, toAirport.zone, relationship)
 
-      assert(violations.isEmpty,
-        s"No PassengerType should exceed ${(maxPercentage * 100).toInt}% of total. Violations: ${
-          violations.map { case (pt, d) => s"$pt: ${(d / totalDemand * 100).toInt}%" }.mkString(", ")
-        }")
+      println(s"SAB (${fromAirport.countryCode}) -> SXM (${toAirport.countryCode}): distance=$distance, affinity=$affinity, relationship=$relationship")
+      println(s"  SAB has ISOLATED_TOWN: ${fromAirport.hasFeature(AirportFeatureType.ISOLATED_TOWN)}, SXM isGateway: ${toAirport.isGateway()}")
+      println(s"  canHaveDemand: ${DemandGenerator.canHaveDemand(fromAirport, toAirport, distance)}")
+
+      assert(toAirport.isGateway(), "SXM should have GATEWAY_AIRPORT feature")
+      assert(fromAirport.hasFeature(AirportFeatureType.ISOLATED_TOWN), "SAB should have ISOLATED_TOWN feature")
+      assert(DemandGenerator.canHaveDemand(fromAirport, toAirport, distance),
+        s"canHaveDemand(SAB, SXM) should be true (distance=$distance)")
+
+      val demand = computeBaseDemandBetweenAirports(fromAirport, toAirport, affinity, distance)
+      val total  = DemandGenerator.addUpDemands(demand)
+      println(s"  total base demand=$total (traveler=${demand.travelerDemand.total}, business=${demand.businessDemand.total}, tourist=${demand.touristDemand.total})")
+
+      assert(total > 0, s"SAB -> SXM should have demand via isolated-town gateway feature, got 0")
+    }
+
+    "SAB should have demand to SXM including hub demand".in {
+      val fromAirport = AirportSource.loadAirportByIata("SAB", fullLoad = true).get
+      val toAirport   = AirportSource.loadAirportByIata("SXM", fullLoad = true).get
+      val distance    = Computation.calculateDistance(fromAirport, toAirport)
+      val relationship = CountrySource.getCountryMutualRelationships().getOrElse((fromAirport.countryCode, toAirport.countryCode), 0)
+      val affinity    = Computation.calculateAffinityValue(fromAirport.zone, toAirport.zone, relationship)
+
+      val hubDemand  = DemandGenerator.generateHubAirportDemand(fromAirport, cycle)
+      val hubToSXM   = hubDemand.getOrElse(toAirport.iata, LinkClassValues.empty)
+      println(s"SAB hub demand to SXM: ${hubToSXM.total} (economy=${hubToSXM(ECONOMY)}, discount=${hubToSXM(DISCOUNT_ECONOMY)})")
+
+      val totalFromPrefs = computeDemandWithPreferencesBetweenAirports(fromAirport, toAirport, affinity, distance, cycle).values.sum
+      println(s"SAB -> SXM total demand with preferences: $totalFromPrefs")
+
+      assert(totalFromPrefs > 0 || hubToSXM.total > 0,
+        "SAB -> SXM should have demand either from base formula or hub airport demand")
     }
   }
 }

@@ -55,7 +55,7 @@ object CycleSource {
       val (phaseLength, phaseIndex) = if (resultSet.next() && resultSet.getInt("cycle_phase_index") > 0) {
         (resultSet.getInt("cycle_phase_length"), resultSet.getInt("cycle_phase_index") - 1)
       } else {
-        val newLength = ThreadLocalRandom.current().nextInt(40, 50)
+        val newLength = ThreadLocalRandom.current().nextInt(38, 52)
         (newLength, newLength)
       }
 

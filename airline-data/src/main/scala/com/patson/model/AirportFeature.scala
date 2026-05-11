@@ -78,11 +78,11 @@ sealed case class InternationalHubFeature(baseStrength : Int, boosts : List[Airp
         else 0.05
       val specialCountryModifier =
         if (List("GB").contains(fromAirport.countryCode) && fromAirport.countryCode != toAirport.countryCode) {
-          2.5
+          2.2
         } else if (List("AU","NZ","BE","NL","LU","DE","AT","CH","DK","SE","NO").contains(fromAirport.countryCode)) {
-          2.2 //they travel a lot...
+          2.0 //they travel a lot...
         } else if (fromAirport.zone.contains("EU")) {
-          1.9
+          1.7
         } else if (List("US","CN","IN").contains(fromAirport.countryCode)) {
           0.55
         } else 1.0
@@ -267,19 +267,20 @@ sealed case class IsolatedTownFeature(strength : Int) extends AirportFeature {
 
   import IsolatedTownFeature._
   override def demandAdjustment(rawDemand: Double, passengerType: PassengerType.Value, airportId: Int, fromAirport: Airport, toAirport: Airport, affinity: Int, distance: Int) : Int = {
-    if ((passengerType == PassengerType.TRAVELER || passengerType == PassengerType.TRAVELER_SMALL_TOWN) && fromAirport.hasFeature(AirportFeatureType.ISOLATED_TOWN) && affinity >= 2) {
+    if (airportId == fromAirport.id && (passengerType == PassengerType.TRAVELER || passengerType == PassengerType.TRAVELER_SMALL_TOWN) && fromAirport.hasFeature(AirportFeatureType.ISOLATED_TOWN) && affinity >= 2) {
       val affinityMod = affinity / 5.0
       val distanceMod = 1.0 - distance / boostRange.toDouble
-      val rng: Int = 4
-//      val rng: Int = 4 + ThreadLocalRandom.current().nextInt(10)
+      val rng: Int = 5
 
       // Most isolated demand is created in the base getHubAirports() function
       if (toAirport.isGateway() && fromAirport.zone.contains("CC") && distance <= boostRange) {
-        (rawDemand * affinityMod * distanceMod).toInt //Increase Caribbean demand
-      } else if (toAirport.isGateway() && fromAirport.countryCode == toAirport.countryCode && List("GB", "ES", "NL", "FR", "DK", "GR", "JP", "ID", "PH", "MH", "PG", "RU").contains(fromAirport.countryCode)) {
-        rng //add demand from territories or islands back to Metropol
+        ((rawDemand + rng) * affinityMod * distanceMod).toInt //Increase Caribbean demand
       } else if ((toAirport.hasFeature(AirportFeatureType.BUSH_HUB) || fromAirport.hasFeature(AirportFeatureType.BUSH_HUB)) && distance <= boostRange * 2 && affinity >= 4) {
-        (rawDemand * distanceMod * affinityMod * 1.5).toInt //Create bush hub demand
+        ((rawDemand + rng) * distanceMod * affinityMod).toInt //Create bush hub demand
+      } else if (toAirport.isGateway() && List("TO", "FJ", "MH", "CV", "BZ").contains(fromAirport.countryCode)) {
+        ((rawDemand + rng) * affinityMod * distanceMod).toInt //too isolated & poor and need more demand to be playable
+      } else if (toAirport.isGateway() && fromAirport.countryCode == toAirport.countryCode && List("GB", "ES", "NL", "FR", "DK", "GR", "JP", "ID", "PH", "MH", "PG", "RU").contains(fromAirport.countryCode)) {
+        (rawDemand + rng).toInt //add demand from territories or islands back to Metropol
       } else if (affinity >= 3 && rawDemand >= 1 && toAirport.size >= 4 && distance <= boostRange) {
         (rawDemand * rng * affinityMod * distanceMod).toInt
       } else {

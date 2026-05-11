@@ -7,12 +7,15 @@ import { state } from './state.js';
 import { hasSource, hasLayer, addSource, addLayer, removeLayer, removeSource, setSourceData, on, off, setCursor } from './core.js';
 import { createGreatCircleGeometry } from './geodesic.js';
 import { getCurrentStyle, getPathOpacity } from './styles.js';
+import { showLinkHoverPopup, hideLinkHoverPopup } from './popups.js';
 
 let tempPathData = null;
 let highlightedLinkId = null;
 let highlightAnimation = null;
 let hoveredRouteId = null;
 let routeSelectable = true;
+let airportLinksHandlersBound = false;
+let hoveredAirportLinkKey = null;
 
 /**
  * Generic route layer factory - creates source, layers, and refresh function.
@@ -86,32 +89,33 @@ export function getLinkColor(profit, revenue) {
 
     profitFactor = Math.max(minProfitFactor, Math.min(maxProfitFactor, profitFactor));
 
-    let redHex, greenHex;
-    if (profitFactor > 0) {
-        redHex = 220 * (1 - (profitFactor / maxProfitFactor));
+    const isLight = getCurrentStyle() === 'light';
+    let r, g, b;
+
+    if (typeof isColorBlindMode === 'function' && isColorBlindMode()) {
+        // Blue (profitable) ↔ Yellow (break-even) ↔ Orange (unprofitable)
+        if (profitFactor > 0) {
+            const t = profitFactor / maxProfitFactor;
+            r = Math.round(220 * (1 - t) + 32 * t);
+            g = Math.round(220 * (1 - t) + 32 * t);
+            b = Math.round(32 * (1 - t) + 220 * t);
+        } else if (profitFactor < 0) {
+            const t = Math.abs(profitFactor) / maxProfitFactor;
+            r = 220;
+            g = Math.round(220 * (1 - t) + 140 * t);
+            b = 32;
+        } else {
+            r = 220; g = 220; b = 32;
+        }
+        if (isLight) { r = Math.max(0, r - 50); g = Math.max(0, g - 50); b = Math.max(0, b - 50); }
     } else {
-        redHex = 220;
+        r = profitFactor > 0 ? Math.round(220 * (1 - profitFactor / maxProfitFactor)) : 220;
+        g = profitFactor < 0 ? Math.round(220 * (1 + profitFactor / maxProfitFactor)) : 220;
+        b = 32;
+        if (isLight) { r = Math.max(0, r - 50); g = Math.max(0, g - 50); }
     }
 
-    if (profitFactor < 0) {
-        greenHex = 220 * (1 + (profitFactor / maxProfitFactor));
-    } else {
-        greenHex = 220;
-    }
-
-    const currentStyle = getCurrentStyle();
-    if (currentStyle === 'light') {
-        redHex -= 50;
-        greenHex -= 50;
-    }
-
-    redHex = Math.max(0, Math.round(redHex));
-    greenHex = Math.max(0, Math.round(greenHex));
-
-    const redHexString = redHex.toString(16).padStart(2, '0');
-    const greenHexString = greenHex.toString(16).padStart(2, '0');
-
-    return `#${redHexString}${greenHexString}20`;
+    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
 }
 
 /**
@@ -122,7 +126,12 @@ export function initRoutes() {
 
     // Listen for style changes to re-add layers
     window.addEventListener('mapStyleChanged', () => {
-        // Re-add route layers after style change
+        if (Object.keys(state.flightPaths).length > 0) {
+            refreshAllRoutes();
+        }
+    });
+
+    document.addEventListener('colorBlindModeChanged', () => {
         if (Object.keys(state.flightPaths).length > 0) {
             refreshAllRoutes();
         }
@@ -292,6 +301,11 @@ function setupRouteInteractions() {
                 hoveredRouteId = featureId;
                 state.map.setFeatureState({ source: flightRoutes.sourceId, id: hoveredRouteId }, { hover: true });
                 highlightPath(linkId, false);
+
+                const link = state.flightPaths[linkId]?.link;
+                if (link) {
+                    showLinkHoverPopup(linkToNormalized(link), e.lngLat, `link-${linkId}`);
+                }
             }
         }
     });
@@ -303,6 +317,7 @@ function setupRouteInteractions() {
             hoveredRouteId = null;
         }
         if (highlightedLinkId && !state.selectedLink) unhighlightPath(highlightedLinkId);
+        hideLinkHoverPopup();
     });
 
     on('click', flightRoutes.clickLayerId, (e) => {
@@ -316,6 +331,61 @@ function setupRouteInteractions() {
             const linkId = e.features[0].properties.id;
             if (typeof selectLinkFromMap === 'function') selectLinkFromMap(linkId, false);
         }
+    });
+}
+
+/**
+ * Normalize a single-airline link into the shape expected by showLinkHoverPopup.
+ */
+function linkToNormalized(link) {
+    const isOwnLink = window.activeAirline && link.airlineId === window.activeAirline.id;
+    return {
+        fromAirport: { iata: link.fromAirportCode, city: link.fromAirportCity, countryCode: link.fromCountryCode },
+        toAirport: { iata: link.toAirportCode, city: link.toAirportCity, countryCode: link.toCountryCode },
+        operators: [{
+            airlineId: link.airlineId,
+            airlineName: link.airlineName,
+            capacity: link.capacity,
+            frequency: link.frequency
+        }],
+        totalProfit: (isOwnLink && typeof link.profit === 'number') ? link.profit : undefined
+    };
+}
+
+/**
+ * Normalize an airport-link path entry (multi-operator) into the hover-popup shape.
+ */
+function airportLinkPathToNormalized(pathData) {
+    return {
+        fromAirport: pathData.localAirport,
+        toAirport: pathData.remoteAirport,
+        operators: (pathData.details && pathData.details.operators) || []
+    };
+}
+
+/**
+ * Bind hover handlers for the airport-links layer. Idempotent.
+ */
+function setupAirportLinksInteractions() {
+    if (!state.map || airportLinksHandlersBound) return;
+    airportLinksHandlersBound = true;
+
+    on('mousemove', airportLinks.clickLayerId, (e) => {
+        setCursor('pointer');
+        if (e.features.length === 0) return;
+        const pathKey = e.features[0].properties.id;
+        const pathData = state.airportLinkPaths[pathKey];
+        if (!pathData) return;
+        if (hoveredAirportLinkKey !== pathKey) {
+            hoveredAirportLinkKey = pathKey;
+        }
+        showLinkHoverPopup(airportLinkPathToNormalized(pathData), e.lngLat, `airport-link-${pathKey}`);
+    });
+
+    on('mouseleave', airportLinks.clickLayerId, () => {
+        setCursor('');
+        hoveredAirportLinkKey = null;
+        hideLinkHoverPopup();
     });
 }
 
@@ -548,15 +618,19 @@ export function removeTempPath() {
 export function drawAirportLinkPath(localAirport, details) {
     if (!state.map) return;
 
+    const wasNew = !hasSource(airportLinks.sourceId);
+    airportLinks.ensure();
+    if (wasNew) setupAirportLinksInteractions();
+
     const remoteAirport = details.remoteAirport;
     const pathKey = remoteAirport.id;
 
     const totalCapacity = details.capacity.total;
     let opacity;
-    if (totalCapacity < 2000) {
-        opacity = 0.2 + (totalCapacity / 2000) * 0.6;
+    if (totalCapacity < 4000) {
+        opacity = 0.5 + (totalCapacity / 4000) * 0.5;
     } else {
-        opacity = 0.8;
+        opacity = 1.0;
     }
 
     state.airportLinkPaths[pathKey] = {

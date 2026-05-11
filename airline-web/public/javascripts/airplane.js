@@ -4,7 +4,7 @@ var loadedUsedAirplanes = []
 var selectedModelId
 var selectedModel
 var closedAirplaneModals = []
-var currentAirplaneLoadCall
+var lastAirplaneLoadArgs
 var isAirplaneSelectionMode = false; // Toggles between selection and details view
 var storeSelectedAirplaneIds = [];
 /**
@@ -198,7 +198,9 @@ async function showAirplaneCanvas(selectedAircraftTab = 'hangar', airplaneModel 
 
     $("#ownedAirplaneDetailModal").data("reloadFunction", function() {
         $("#ownedAirplaneDetailModal").data("hasChange", true) //so closing this modal always force update. it's hard to detect whether there was any change before the reload...
-        $.ajax(currentAirplaneLoadCall)
+        if (lastAirplaneLoadArgs) {
+            loadOwnedAirplaneDetails(...lastAirplaneLoadArgs)
+        }
     })
 }
 
@@ -1471,182 +1473,122 @@ function closeAllAndStoreAirplaneModals() {
     closedAirplaneModals = closeAllModals() //in case we want to restore the modals when clicking "back" button
 }
 
-function loadOwnedAirplaneDetails(airplaneId, selectedItem, closeCallback, disableChangeHome) {
-	//highlight the selected model
-	if (selectedItem) {
-	    selectedItem.addClass("selected")
-   }
-	
-	var airlineId = activeAirline.id 
-	$("#actionAirplaneId").val(airplaneId)
-	var currentCycle
-	$.ajax({
-        type: 'GET',
-        url: "/current-cycle",
-        contentType: 'application/json; charset=utf-8',
-        dataType: 'json',
-        async: false,
-        success: function(result) {
-            currentCycle = result.cycle
-        },
-        error: function(jqXHR, textStatus, errorThrown) {
-                console.log(JSON.stringify(jqXHR));
-                console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
+async function loadOwnedAirplaneDetails(airplaneId, selectedItem, closeCallback, disableChangeHome) {
+    if (selectedItem) selectedItem.addClass("selected")
+
+    const airlineId = activeAirline.id
+    $("#ownedAirplaneHeading").text(`Aircraft ${airplaneId}`)
+    $("#actionAirplaneId").val(airplaneId)
+    lastAirplaneLoadArgs = [airplaneId, null, closeCallback, disableChangeHome]
+
+    let airplane
+    try {
+        const response = await fetch(`/airlines/${airlineId}/airplanes/${airplaneId}`, { headers: { 'Accept': 'application/json' } })
+        if (!response.ok) throw new Error(`HTTP ${response.status}`)
+        airplane = await response.json()
+    } catch (e) {
+        console.log("Failed to load airplane details:", e)
+        return
+    }
+
+    const model = loadedModelsById[airplane.modelId]
+    const $modal = $("#ownedAirplaneDetailModal")
+    const $detail = $("#ownedAirplaneDetail")
+
+    if (model.imageUrl) {
+        const slug = model.name.replace(/[''']/g, '').replace(/[–—]/g, '-').replace(/\s+/g, '-').toLowerCase()
+        $detail.find('.modelIllustration source').attr('srcset', `/assets/images/airplanes/${slug}.webp`)
+        $detail.find('.modelIllustration img').attr('src', `/assets/images/airplanes/${slug}.png`)
+        $detail.find('.modelIllustration a').attr('href', model.imageUrl)
+        $detail.find('.modelIllustration').show()
+    } else {
+        $detail.find('.modelIllustration').hide()
+    }
+
+    const cycle = airplane.currentCycle ?? currentCycle
+    const weeksSinceConstructed = cycle - airplane.constructedCycle
+    const $age = $("#airplaneDetailsAge")
+    if (airplane.isReady) {
+        $age.text(`${getYearMonthText(weeksSinceConstructed)} old | ${airplane.condition.toFixed(2)}% condition`)
+        $age.removeClass("warning fatal")
+        if (airplane.condition < gameConstants.aircraft.conditionCritical) $age.addClass("fatal")
+        else if (airplane.condition < gameConstants.aircraft.conditionBad) $age.addClass("warning")
+    } else {
+        $age.text(`Available in ${Math.abs(weeksSinceConstructed)} week(s)`)
+        $age.removeClass("warning fatal")
+    }
+
+    $("#sellAirplaneButton").text(`Sell for $${commaSeparateNumber(airplane.sellValue)}`)
+    const replaceCost = model.price - airplane.sellValue
+    $("#replaceAirplaneButton").text(`Replace for $${commaSeparateNumber(replaceCost)}`)
+
+    const $links = $("#airplaneDetailsLink").empty()
+    if (airplane.links.length > 0) {
+        for (const linkEntry of airplane.links) {
+            const link = linkEntry.link
+            const desc = `<div style='display: flex; align-items: center; margin: 4px 0;'>${getAirportText(link.fromAirportCity, link.fromAirportCode)}<img src='/assets/images/icons/arrow.png'>${getAirportText(link.toAirportCity, link.toAirportCode)} ${linkEntry.frequency} flight(s) per week</div>`
+            $links.append(`<div><a data-link='show-link-from-airplane' href='javascript:void(0)' onclick='closeAllAndStoreAirplaneModals(); showWorldMap(); selectLinkFromMap(${link.id}, true)'>${desc}</a></div>`)
         }
-    });
+        disableButton("#sellAirplaneButton", "Cannot sell airplanes with route assigned")
+    } else {
+        $links.text("-")
+        if (airplane.isReady) enableButton("#sellAirplaneButton")
+        else disableButton("#sellAirplaneButton", "Cannot sell airplanes that are still under construction")
+    }
 
-    currentAirplaneLoadCall =
-    {
-    		type: 'GET',
-    		url: "/airlines/" + airlineId + "/airplanes/" + airplaneId,
-    	    contentType: 'application/json; charset=utf-8',
-    	    dataType: 'json',
-    	    success: function(airplane) {
-    	        var model = loadedModelsById[airplane.modelId]
-                if (model.imageUrl) {
-                    const imageLocation = '/assets/images/airplanes/' + model.name.replace(/[''']/g, '').replace(/[–—]/g, '-').replace(/\s+/g, '-').toLowerCase() + '.webp'
-                    const fallbackLocation = '/assets/images/airplanes/' + model.name.replace(/[''']/g, '').replace(/[–—]/g, '-').replace(/\s+/g, '-').toLowerCase() + '.png'
-                    $('#ownedAirplaneDetail .modelIllustration source').attr('srcset', imageLocation)
-                    $('#ownedAirplaneDetail .modelIllustration img').attr('src', fallbackLocation)
-                    $('#ownedAirplaneDetail .modelIllustration a').attr('href', model.imageUrl)
-                    $('#ownedAirplaneDetail .modelIllustration').show()
-                } else {
-                    $('#ownedAirplaneDetail .modelIllustration').hide()
-                }
+    $detail.find(".availableFlightMinutes").text(`${airplane.availableFlightMinutes} available flight minutes`)
+    populateAirplaneHome(airplane, disableChangeHome)
 
-        		var age = currentCycle - airplane.constructedCycle
+    const weeksTillReplaceable = airplane.constructionTime - (cycle - airplane.purchasedCycle)
+    if (weeksTillReplaceable <= 0) {
+        if (activeAirline.balance < replaceCost) disableButton("#replaceAirplaneButton", "Not enough cash to replace this airplane")
+        else enableButton("#replaceAirplaneButton")
+    } else {
+        disableButton("#replaceAirplaneButton", `Can only replace this airplane ${weeksTillReplaceable} week(s) from now`)
+    }
 
-        		if (age >= 0) {
-        		    $("#airplaneDetailsAge").text(getYearMonthText(age) + " old | " + airplane.condition.toFixed(2) + "% condition")
-                    $("#airplaneDetailsCondition").removeClass("warning fatal")
-                    if (airplane.condition < gameConstants.aircraft.conditionCritical) {
-                        $("#airplaneDetailsCondition").addClass("fatal")
-                    } else if (airplane.condition < gameConstants.aircraft.conditionBad) {
-                        $("#airplaneDetailsCondition").addClass("warning")
-                    }
-        			$("#airplaneDetailsAge").show()
-        			$("#airplaneDetailsDelivery").hide()
-        		} else {
-        			$("#airplaneDetailsAge").hide()
-        			$("#airplaneDetailsDelivery").text("Will be available in " + -age * -1 + "week(s)")
-        			$("#airplaneDetailsDeliver").show()
-        		}
-    	    	$("#sellAirplaneButton").text("Sell for $" + commaSeparateNumber(airplane.sellValue))
-    	    	var replaceCost = model.price - airplane.sellValue
-                $("#replaceAirplaneButton").text("Replace for $" + commaSeparateNumber(replaceCost))
-    	    	$("#airplaneDetailsLink").empty()
-    	    	if (airplane.links.length > 0) {
-    	    	    $.each(airplane.links, function(index, linkEntry) {
-    	    	        var link = linkEntry.link
-    	    	        var linkDescription = "<div style='display: flex; align-items: center; margin: 4px 0;'>" + getAirportText(link.fromAirportCity, link.fromAirportCode) + "<img src='/assets/images/icons/arrow.png'>" + getAirportText(link.toAirportCity, link.toAirportCode) + " " + linkEntry.frequency + " flight(s) per week</div>"
-    	    	        $("#airplaneDetailsLink").append("<div><a data-link='show-link-from-airplane' href='javascript:void(0)' onclick='closeAllAndStoreAirplaneModals(); showWorldMap(); selectLinkFromMap(" + link.id + ", true)'>" + linkDescription + "</a></div>" )
-    	    	    })
-    	    		disableButton("#sellAirplaneButton", "Cannot sell airplanes with route assigned")
-    	    	} else {
-    	    		$("#airplaneDetailsLink").text("-")
-    	    		if (age >= 0) {
-    	    		    enableButton("#sellAirplaneButton")
-    	    		} else {
-    	    			disableButton("#sellAirplaneButton", "Cannot sell airplanes that are still under construction")
-    	    		}
+    $detail.data("airplane", airplane)
 
-    	    	}
-    	    	$("#ownedAirplaneDetail .availableFlightMinutes").text(airplane.availableFlightMinutes + " available flight minutes")
-    	    	populateAirplaneHome(airplane, disableChangeHome)
+    const configurations = airplane.configurations || []
+    const spaceMultipliers = airplane.spaceMultipliers
+    let matchingIndex = configurations.findIndex(c => c.id == airplane.configurationId)
+    if (matchingIndex < 0) matchingIndex = 0
+    const configuration = configurations[matchingIndex]
 
-                var weeksRemainingBeforeReplacement = airplane.constructionTime - (currentCycle - airplane.purchasedCycle)
-    	    	if (weeksRemainingBeforeReplacement <= 0) {
-    	    	    if (activeAirline.balance < replaceCost) {
-                	    disableButton("#replaceAirplaneButton", "Not enough cash to replace this airplane")
-                	} else {
-    	    	        enableButton("#replaceAirplaneButton")
-                    }
-    	    	} else {
-                    disableButton("#replaceAirplaneButton", "Can only replace this airplane " + weeksRemainingBeforeReplacement + " week(s) from now")
-    	    	}
+    plotSeatConfigurationBar('ownedAirplaneDetailModal-configurationBar', configuration, airplane.capacity, spaceMultipliers)
 
-    	    	$("#ownedAirplaneDetail").data("airplane", airplane)
+    if (configurations.length <= 1) {
+        $detail.find(".configuration-edit-button").hide()
+        $detail.find("#configuration-warning").show()
+    } else {
+        $detail.find("#configuration-warning").hide()
+        $detail.find(".configuration-edit-button").show()
 
-                $.ajax({
-                    type: 'GET',
-                    url: "/airlines/" + airlineId + "/configurations?modelId=" + airplane.modelId,
-                    contentType: 'application/json; charset=utf-8',
-                    dataType: 'json',
-                    success: function(result) {
-                        var configuration
-                        var matchingIndex
-                        $.each(result.configurations, function(index, option) {
-                            if (option.id == airplane.configurationId) {
-                                configuration = option
-                                matchingIndex = index
-                            }
-                        })
+        const $options = $detail.find(".configuration-options").empty()
+        $options.data("selectedIndex", 0)
+        $options.data("optionCount", configurations.length)
+        for (let i = 0; i < configurations.length; i++) {
+            const option = configurations[(i + matchingIndex) % configurations.length]
+            const barDiv = $(`<div id='configuration-${airplaneId}-${option.id}' class='configuration-option' style='height:16px; width: 100%;'></div>`)
+            $options.append(barDiv)
+            barDiv.data("configurationId", option.id)
+            if (i !== 0) barDiv.hide()
+            plotSeatConfigurationBar(`configuration-${airplaneId}-${option.id}`, option, airplane.capacity, spaceMultipliers)
+        }
+        $detail.find(".configuration-view .edit").show()
+    }
 
-                        //just in case, sometimes it comes to a stale state
-                        if (configuration == null && result.configurations) {
-                            configuration = result.configurations[0]
-                            matchingIndex = 0
-                        }
-
-                        plotSeatConfigurationBar('ownedAirplaneDetailModal-configurationBar', configuration, airplane.capacity, result.spaceMultipliers)
-
-                        if (result.configurations.length <= 1) { //then cannot change
-                            $("#ownedAirplaneDetail .configuration-edit-button").hide()
-                            $("#ownedAirplaneDetail #configuration-warning").show()
-                        } else {
-                            $("#ownedAirplaneDetail #configuration-warning").hide()
-                            $("#ownedAirplaneDetail .configuration-edit-button").show()
-
-                            $("#ownedAirplaneDetail .configuration-options").empty()
-                            $("#ownedAirplaneDetail .configuration-options").data("selectedIndex", 0)
-                            $("#ownedAirplaneDetail .configuration-options").data("optionCount", result.configurations.length)
-                            for (i = 0 ; i < result.configurations.length; i ++) {
-                                //start from the matching one
-                                var index = (i + matchingIndex) % result.configurations.length
-                                var option = result.configurations[index]
-                                // make the configuration div id unique per option so multiple configs render correctly
-                                var barDiv = $(`<div id='configuration-${airplaneId}-${option.id}' class='configuration-option' style="height:16px; width: 100%;"></div>`)
-                                $("#ownedAirplaneDetail .configuration-options").append(barDiv)
-                                barDiv.data("configurationId", option.id)
-                                if (i != 0) { //if not the matching one, hide by default
-                                    barDiv.hide()
-                                }
-                                // use the unique id above when plotting so ChartUtils targets the correct element
-                                plotSeatConfigurationBar(`configuration-${airplaneId}-${option.id}`, option, airplane.capacity, result.spaceMultipliers)
-                            }
-                            $("#ownedAirplaneDetail .configuration-view .edit").show()
-                        }
-//                        $("#ownedAirplaneDetail #configuration-view").show()
-//                        $("#ownedAirplaneDetail #configuration-edit-button").hide()
-
-                        if (closeCallback) {
-                            $("#ownedAirplaneDetailModal").data("closeCallback", function() {
-                                if ($("#ownedAirplaneDetailModal").data("hasChange")) { //only trigger close callback if there are changes
-                                    closeCallback()
-                                    $("#ownedAirplaneDetailModal").removeData("hasChange")
-                                }
-                            })
-                        } else {
-                            $("#ownedAirplaneDetailModal").removeData("closeCallback")
-                        }
-                        $("#ownedAirplaneDetailModal").fadeIn(200)
-                    },
-                     error: function(jqXHR, textStatus, errorThrown) {
-                    	            console.log(JSON.stringify(jqXHR));
-                    	            console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
-                    	    }
-                });
-
-
-
-
-    	    },
-            error: function(jqXHR, textStatus, errorThrown) {
-    	            console.log(JSON.stringify(jqXHR));
-    	            console.log("AJAX error: " + textStatus + ' : ' + errorThrown);
-    	    }
-    	}
-	$.ajax(currentAirplaneLoadCall);
+    if (closeCallback) {
+        $modal.data("closeCallback", function() {
+            if ($modal.data("hasChange")) {
+                closeCallback()
+                $modal.removeData("hasChange")
+            }
+        })
+    } else {
+        $modal.removeData("closeCallback")
+    }
+    $modal.fadeIn(200)
 }
 
 function populateAirplaneHome(airplane, disableChangeHome) {

@@ -69,7 +69,7 @@ html {
 html[data-theme='dark'] {
     --text-color: #b0b0b0;
     --text-color-heading: #cccccc;
-    --background-1: #0e0e23;
+    --background-1: #12122a;
     --background-2: #1a1a2e;
     --background-3: #252545;
     --input-background: rgba(255, 255, 255, 0.05);
@@ -118,7 +118,7 @@ html[data-theme='dark'] {
     --loading-spinner-background: rgba(0, 0, 0, .7);
     --fallback-background: #0e0e23;
     --highlight-text-color: #6093e7;
-    --shadow-1: 0 4px 12px rgba(0, 0, 0, 0.4);
+    --shadow-1: 0 2px 10px rgba(0, 0, 0, 0.6);
     --shadow-2: none;
     --link-decoration-color: #6a6a8a;
     --zing-color: #4a9e4a;
@@ -491,6 +491,10 @@ li.row, div.table-row {
 }
 .bankCanvasRightGroup, .oilCanvasRightGroup {
     width: 56%;
+}
+
+#newLoanOptionsTable {
+    min-width: 800px;
 }
 
 .airplaneCanvasRightGroup {
@@ -1458,6 +1462,36 @@ html[data-theme='dark'] .section {
 .maplibregl-popup * {
     color: var(--text-color-heading) !important;
 }
+.mapLinkHoverPopup {
+    pointer-events: none;
+}
+.mapLinkHoverPopup .maplibregl-popup-content {
+    padding: 6px 10px !important;
+    border-radius: 8px !important;
+    font-size: 12px;
+    line-height: 1.4;
+}
+.mapLinkHoverPopup * {
+    color: var(--text-color) !important;
+    font-weight: normal;
+}
+.mapLinkHoverPopupContent {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    white-space: nowrap;
+}
+.mapLinkHoverRoute {
+    font-weight: 600 !important;
+}
+.mapLinkHoverOperator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.mapLinkHoverProfit {
+    margin-top: 2px;
+}
 .airportPopupName, .airportPopupName {
     font-size: 16px;
     padding: 0 20px 6px 0;
@@ -1579,6 +1613,15 @@ input[type='number'] {
     border-radius: 0px;
     padding: 0;
 }
+.label-checkbox {
+    display: block;
+    cursor: pointer;
+    padding: 2px 0;
+    transition: opacity 0.2s;
+}
+.label-checkbox:hover {
+    opacity: .8;
+}
 
 /* ========================================
    Airport Features & Details
@@ -1634,6 +1677,7 @@ input[type='number'] {
 .caption {
     position: absolute;
     bottom: 8px;
+    color: var(--background-1);
     background: rgba(0, 0, 0, .4);
     font-size: 10px;
 }
@@ -2471,6 +2515,9 @@ i, .italic {
 .h-8 { height: 32px !important; }
 .w-56 {width: 56px;}
 .w-68 {width: 68px;}
+.w-auto { width: auto !important; }
+.w-full { width: 100% !important; }
+.w-half { width: 50% !important; }
 .min-w-40 { min-width: 10rem; }
 .min-w-52 { min-width: 13rem; }
 .min-w-80 { min-width: 20rem; }
@@ -2478,8 +2525,6 @@ i, .italic {
 .max-w-60 { max-width: 15rem; }
 .max-w-72 { max-width: 19rem; }
 .max-w-260px { max-width: 260px; }
-.w-full { width: 100% !important; }
-.w-half { width: 50% !important; }
 .max-w-32 {max-width: 8rem;}
 .gap-0 { gap: 0 !important; }
 .gap-2 { gap: 0.5rem !important; }
@@ -3131,3 +3176,41 @@ i, .italic {
     transform: scale(1.2);
     box-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
 }
+
+/* Links table column widths */
+.link-col-flight  { width: 5%; }
+.link-col-from    { width: 13%; }
+.link-col-to      { width: 13%; }
+.link-col-model   { width: 11%; }
+.link-col-dist    { width: 6%; }
+.link-col-cap     { width: 7%; }
+.link-col-q       { width: 3%; }
+.link-col-lf      { width: 4%; }
+.link-col-elf     { width: 4%; }
+.link-col-blf     { width: 4%; }
+.link-col-flf     { width: 4%; }
+.link-col-sf      { width: 4%; }
+.link-col-rev     { width: 6%; }
+.link-col-profit  { width: 6%; }
+.link-col-margin  { width: 5%; }
+.link-col-staff   { width: 5%; }
+.link-col-pps     { width: 6%; }
+
+/* Links column visibility — CSS-class approach (O(1) per toggle) */
+#linksCanvas.links-hide-flightCode           [data-col-key="flightCode"]           { display: none; }
+#linksCanvas.links-hide-fromAirportCode      [data-col-key="fromAirportCode"]      { display: none; }
+#linksCanvas.links-hide-toAirportCode        [data-col-key="toAirportCode"]        { display: none; }
+#linksCanvas.links-hide-model                [data-col-key="model"]                { display: none; }
+#linksCanvas.links-hide-distance             [data-col-key="distance"]             { display: none; }
+#linksCanvas.links-hide-totalCapacity        [data-col-key="totalCapacity"]        { display: none; }
+#linksCanvas.links-hide-computedQuality      [data-col-key="computedQuality"]      { display: none; }
+#linksCanvas.links-hide-totalLoadFactor      [data-col-key="totalLoadFactor"]      { display: none; }
+#linksCanvas.links-hide-economyLF            [data-col-key="economyLF"]            { display: none; }
+#linksCanvas.links-hide-businessLF           [data-col-key="businessLF"]           { display: none; }
+#linksCanvas.links-hide-firstLF              [data-col-key="firstLF"]              { display: none; }
+#linksCanvas.links-hide-satisfaction         [data-col-key="satisfaction"]         { display: none; }
+#linksCanvas.links-hide-revenue              [data-col-key="revenue"]              { display: none; }
+#linksCanvas.links-hide-profit               [data-col-key="profit"]               { display: none; }
+#linksCanvas.links-hide-profitMargin         [data-col-key="profitMargin"]         { display: none; }
+#linksCanvas.links-hide-currentStaffRequired [data-col-key="currentStaffRequired"] { display: none; }
+#linksCanvas.links-hide-profitPerStaff       [data-col-key="profitPerStaff"]       { display: none; }

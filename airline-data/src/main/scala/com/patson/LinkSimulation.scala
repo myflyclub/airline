@@ -596,7 +596,7 @@ object LinkSimulation {
         val smallAirportBoost = 1.5 - (10 - airport.size).toDouble / 20.0
         val localDemandMet = fromPax.toDouble / airportStats.baselineDemand
         val localTravelRate = Airport.travelRateAdjusted(fromPax, airportStats.baselineDemand, airport.size)
-        val percentGlobally = allPax.toDouble / worldStats.totalPax
+        val percentGlobally = allPax.toDouble / worldStats.totalTicketsSold
         val rep = Math.max(airport.size, BigDecimal(Math.pow(localTravelRate, smallAirportBoost) * percentGlobally * Airport.GLOBAL_AIRPORT_REPUTATION_POOL).setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble)
         AirportStatisticsUpdate(
           airport.id,

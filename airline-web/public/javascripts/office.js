@@ -1005,13 +1005,10 @@ function editAirlineName() {
 
 function validateAirlineName(airlineName) {
     var airlineId = activeAirline.id
-    var url = "/airlines/" + airlineId + "/airline-name"
-    var data = { "airlineName" : airlineName }
+    var url = "/airlines/" + airlineId + "/airline-name?airlineName=" + encodeURIComponent(airlineName)
     $.ajax({
-        type: 'PUT',
+        type: 'GET',
         url: url,
-        data: JSON.stringify(data),
-        contentType: 'application/json; charset=utf-8',
         dataType: 'json',
         success: function(result) {
             if (result.ok) {

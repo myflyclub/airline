@@ -1,5 +1,5 @@
 // The Play plugin
-addSbtPlugin("org.playframework" % "sbt-plugin" % "3.0.5")
+addSbtPlugin("org.playframework" % "sbt-plugin" % "3.0.9")
 
 // sbt-web and related plugins
 addSbtPlugin("com.github.sbt" % "sbt-web" % "1.5.0")

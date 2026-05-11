@@ -7,6 +7,7 @@ import com.patson.model.{Airport, Airline}
 import com.patson.model.campaign._
 import com.patson.util.{AirlineCache, AirportCache}
 
+import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
 
@@ -218,6 +219,70 @@ object CampaignSource {
         }
     } finally {
       statement.close()
+      connection.close()
+    }
+  }
+
+  def loadCampaignsByAreaAirports(airportIds: List[Int]): Map[Int, List[Campaign]] = {
+    if (airportIds.isEmpty) return Map.empty
+
+    val (airportToCampaignIds, allCampaignIds) = {
+      val connection = Meta.getConnection()
+      try {
+        val stmt = connection.prepareStatement(s"SELECT airport, campaign FROM $CAMPAIGN_AREA_TABLE WHERE airport IN (${airportIds.mkString(",")})")
+        val rs = stmt.executeQuery()
+        val airportMap = mutable.Map[Int, ListBuffer[Int]]()
+        val campaignSet = mutable.Set[Int]()
+        while (rs.next()) {
+          val airportId = rs.getInt("airport")
+          val campaignId = rs.getInt("campaign")
+          airportMap.getOrElseUpdate(airportId, ListBuffer()) += campaignId
+          campaignSet += campaignId
+        }
+        rs.close()
+        stmt.close()
+        (airportMap.view.mapValues(_.toList).toMap, campaignSet.toSet)
+      } finally {
+        connection.close()
+      }
+    }
+
+    if (allCampaignIds.isEmpty) return Map.empty
+
+    val campaignIdClause = allCampaignIds.mkString(",")
+
+    val connection = Meta.getConnection()
+    try {
+      val areaStmt = connection.prepareStatement(s"SELECT campaign, airport FROM $CAMPAIGN_AREA_TABLE WHERE campaign IN ($campaignIdClause)")
+      val areaRs = areaStmt.executeQuery()
+      val areasByCampaignId = mutable.Map[Int, ListBuffer[Airport]]()
+      while (areaRs.next()) {
+        val campaignId = areaRs.getInt("campaign")
+        val airportId = areaRs.getInt("airport")
+        //do NOT fullLoad here — same reason as existing loadCampaignArea: would cause infinite loop via airport.initBonus
+        areasByCampaignId.getOrElseUpdate(campaignId, ListBuffer()) += AirportCache.getAirport(airportId).get
+      }
+      areaRs.close()
+      areaStmt.close()
+
+      val campStmt = connection.prepareStatement(s"SELECT * FROM $CAMPAIGN_TABLE WHERE id IN ($campaignIdClause)")
+      val campRs = campStmt.executeQuery()
+      val campaignById = mutable.Map[Int, Campaign]()
+      while (campRs.next()) {
+        val campaignId = campRs.getInt("id")
+        campaignById(campaignId) = Campaign(
+          AirlineCache.getAirline(campRs.getInt("airline")).get,
+          AirportCache.getAirport(campRs.getInt("principal_airport")).get,
+          campRs.getInt("radius"),
+          campRs.getLong("population_coverage"),
+          areasByCampaignId.getOrElse(campaignId, ListBuffer()).toList,
+          campaignId)
+      }
+      campRs.close()
+      campStmt.close()
+
+      airportToCampaignIds.view.mapValues(ids => ids.flatMap(campaignById.get)).toMap
+    } finally {
       connection.close()
     }
   }

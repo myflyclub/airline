@@ -808,9 +808,9 @@ class FlightPreferenceSpec(_system: ActorSystem) extends TestKit(_system) with I
       val link3 = Link(airportWithLounge, airportWithLounge, airline, defaultPrice, distance = 1000, defaultCapacity, rawQuality = 50, duration, 14)
       val cost3 = preference.loungeAdjust(1000.0, link3, 0, BUSINESS)
 
-      println(s"Lounge at FROM only: $cost1")
-      println(s"Lounge at TO only: $cost2")
-      println(s"Lounge at BOTH: $cost3")
+      println(s"Lounge at from only: $cost1")
+      println(s"Lounge at to only: $cost2")
+      println(s"Lounge at both: $cost3")
 
       cost1 shouldBe 880.0
       cost2 shouldBe 880.0

@@ -138,6 +138,7 @@ object GenericTransitGenerator {
     "GIG" -> "CFB",
     "CGH" -> "VCP",
     "ORK" -> "SNN",
+    "KIR" -> "SNN",
     "LGW" -> "LTN",
     "STN" -> "LHR",
     "STN" -> "LGW",

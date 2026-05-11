@@ -1074,6 +1074,13 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
     }
   }
 
+  def checkAirlineName(airlineId: Int, airlineName: String) = AuthenticatedAirline(airlineId) { request =>
+    getRenameRejection(request.user, airlineName) match {
+      case Some(rejection) => Ok(Json.obj("rejection" -> rejection))
+      case None            => Ok(Json.obj("ok" -> true))
+    }
+  }
+
   def setAirlineName(airlineId: Int) = AuthenticatedAirline(airlineId) { request =>
     if (request.body.isInstanceOf[AnyContentAsJson]) {
       val newName = request.body.asInstanceOf[AnyContentAsJson].json.\("airlineName").as[String]

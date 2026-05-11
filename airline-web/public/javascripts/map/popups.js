@@ -157,71 +157,89 @@ export function closeAirportInfoPopup() {
     closeAirportPopup();
 }
 
-export function showLinkPopup(link, lngLat) {
-    if (!state.map) return;
+const linkHoverPopupOffsets = {
+    'top': [0, 4],
+    'bottom': [0, -4],
+    'left': [4, 0],
+    'right': [-4, 0],
+    'center': [0, 0]
+};
 
-    const popupEl = document.getElementById('linkPopup');
-    if (popupEl) {
-        popupEl.style.display = 'block';
-        const fromFlag = typeof getCountryFlagImg === 'function' ? getCountryFlagImg(link.fromCountryCode) : '';
-        const toFlag = typeof getCountryFlagImg === 'function' ? getCountryFlagImg(link.toCountryCode) : '';
-        const fromAirport = typeof getAirportText === 'function' ? getAirportText(link.fromAirportCity, link.fromAirportCode) : link.fromAirportCode;
-        const toAirport = typeof getAirportText === 'function' ? getAirportText(link.toAirportCity, link.toAirportCode) : link.toAirportCode;
+let linkHoverPopup = null;
+let linkHoverKey = null;
 
-        popupEl.querySelector('#linkPopupFrom').innerHTML = `${fromFlag}&nbsp;${fromAirport}`;
-        popupEl.querySelector('#linkPopupTo').innerHTML = `${toFlag}&nbsp;${toAirport}`;
-        popupEl.querySelector('#linkPopupCapacity').textContent = link.capacity?.total || '';
-        
-        const logo = typeof getAirlineLogoImg === 'function' ? getAirlineLogoImg(link.airlineId) : '';
-        popupEl.querySelector('#linkPopupAirline').innerHTML = `${logo}&nbsp;${link.airlineName || ''}`;
-
-        closePopup();
-        currentPopup = createPopup({ maxWidth: '400px' });
-        currentPopup.setLngLat([lngLat.lng, lngLat.lat])
-            .setDOMContent(popupEl)
-            .addTo(state.map);
-    }
+function airportFlagText(airport) {
+    const flag = typeof getCountryFlagImg === 'function' ? getCountryFlagImg(airport.countryCode) : '';
+    const text = typeof getAirportText === 'function' ? getAirportText(airport.city, airport.iata) : airport.iata;
+    return `${flag}${text}`;
 }
 
-export function showAirportLinkPopup(pathData, lngLat) {
+function buildOperatorRow(operator) {
+    const $logo = typeof getAirlineLogoSpan === 'function'
+        ? getAirlineLogoSpan(operator.airlineId, operator.airlineName)
+        : null;
+    const logoHtml = $logo ? $logo.prop('outerHTML') : (operator.airlineName || '');
+    const capStr = typeof toLinkClassValueString === 'function'
+        ? toLinkClassValueString(operator.capacity)
+        : (operator.capacity?.total ?? '');
+    return `<div class="mapLinkHoverOperator">${logoHtml}<span>${capStr}&nbsp;(${operator.frequency})</span></div>`;
+}
+
+function formatProfit(value) {
+    const fmt = typeof commaSeparateNumber === 'function' ? commaSeparateNumber(Math.abs(value)) : Math.abs(value);
+    return value < 0 ? `-$${fmt}` : `$${fmt}`;
+}
+
+function buildLinkHoverContent(normalized) {
+    const div = document.createElement('div');
+    div.className = 'mapLinkHoverPopupContent';
+    const route = `${airportFlagText(normalized.fromAirport)} &ndash; ${airportFlagText(normalized.toAirport)}`;
+    const operatorsHtml = normalized.operators.map(buildOperatorRow).join('');
+    const profitHtml = (typeof normalized.totalProfit === 'number')
+        ? `<div class="mapLinkHoverProfit">Profit: ${formatProfit(normalized.totalProfit)}</div>`
+        : '';
+    div.innerHTML = `<div class="mapLinkHoverRoute">${route}</div>${operatorsHtml}${profitHtml}`;
+    return div;
+}
+
+/**
+ * Show a hover tooltip for any flight path. Accepts a normalized shape:
+ *   { fromAirport, toAirport, operators: [{ airlineId, airlineName, capacity, frequency }, ...], totalProfit? }
+ * - Single-airline routes pass an `operators` array of length 1.
+ * - Airport-links view passes one entry per operator.
+ * - totalProfit (optional) renders a profit line — only set on the standard map view.
+ * `key` lets the caller skip rebuilds when hovering the same path repeatedly.
+ */
+export function showLinkHoverPopup(normalized, lngLat, key) {
     if (!state.map) return;
+    if (!normalized || !normalized.operators || normalized.operators.length === 0) return;
 
-    const localAirport = pathData.localAirport || pathData.fromAirport;
-    const remoteAirport = pathData.remoteAirport || pathData.toAirport;
-    const details = pathData.details;
-
-    const popupEl = document.getElementById('airportLinkPopup');
-    if (popupEl) {
-        popupEl.style.display = 'block';
-        const fromFlag = typeof getCountryFlagImg === 'function' ? getCountryFlagImg(localAirport.countryCode) : '';
-        const toFlag = typeof getCountryFlagImg === 'function' ? getCountryFlagImg(remoteAirport.countryCode) : '';
-        const fromAirport = typeof getAirportText === 'function' ? getAirportText(localAirport.city, localAirport.iata) : localAirport.iata;
-        const toAirport = typeof getAirportText === 'function' ? getAirportText(remoteAirport.city, remoteAirport.iata) : remoteAirport.iata;
-
-        popupEl.querySelector('#airportLinkPopupFrom').innerHTML = `${fromFlag}${fromAirport}`;
-        popupEl.querySelector('#airportLinkPopupTo').innerHTML = `${toFlag}${toAirport}`;
-        
-        const capacityStr = toLinkClassValueString(details.capacity);
-        popupEl.querySelector('#airportLinkPopupCapacity').textContent = `${capacityStr}(${details.frequency})`;
-
-        const operatorsEl = popupEl.querySelector('#airportLinkOperators');
-        if (operatorsEl && details.operators) {
-            operatorsEl.innerHTML = '';
-            details.operators.forEach(operator => {
-                const div = document.createElement('div');
-                const logo = getAirlineLogoSpan(operator.airlineId, operator.airlineName);
-                const capStr = toLinkClassValueString(operator.capacity);
-                div.innerHTML = `${logo}<span>${operator.frequency}&nbsp;flight(s) weekly&nbsp;${capStr}</span>`;
-                operatorsEl.appendChild(div);
-            });
-        }
-
-        closePopup();
-        currentPopup = createPopup({ maxWidth: '400px' });
-        currentPopup.setLngLat([lngLat.lng, lngLat.lat])
-            .setDOMContent(popupEl)
-            .addTo(state.map);
+    if (linkHoverPopup && linkHoverKey === key) {
+        linkHoverPopup.setLngLat([lngLat.lng, lngLat.lat]);
+        return;
     }
+
+    if (linkHoverPopup) linkHoverPopup.remove();
+    linkHoverPopup = new maplibregl.Popup({
+        closeButton: false,
+        closeOnClick: false,
+        maxWidth: 'none',
+        anchor: 'bottom',
+        offset: linkHoverPopupOffsets,
+        className: 'mapLinkHoverPopup'
+    });
+    linkHoverPopup.setLngLat([lngLat.lng, lngLat.lat])
+        .setDOMContent(buildLinkHoverContent(normalized))
+        .addTo(state.map);
+    linkHoverKey = key;
+}
+
+export function hideLinkHoverPopup() {
+    if (linkHoverPopup) {
+        linkHoverPopup.remove();
+        linkHoverPopup = null;
+    }
+    linkHoverKey = null;
 }
 
 export function showAllianceBasePopup(baseInfo, lngLat) {

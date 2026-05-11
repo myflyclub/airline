@@ -6,6 +6,31 @@ var loadedLinksById = {}
 var linksTableSummaryState = false
 var linksAverages = null
 var linksViewMode = 'weekly'
+
+const LINK_COLUMNS = [
+    { key: 'flightCode',           label: 'Flight #' },
+    { key: 'fromAirportCode',      label: 'From Airport' },
+    { key: 'toAirportCode',        label: 'To Airport' },
+    { key: 'model',                label: 'Model' },
+    { key: 'distance',             label: 'Distance' },
+    { key: 'totalCapacity',        label: 'Capacity' },
+    { key: 'computedQuality',      label: 'Q' },
+    { key: 'totalLoadFactor',      label: 'LF' },
+    { key: 'economyLF',            label: 'E-LF' },
+    { key: 'businessLF',           label: 'B-LF' },
+    { key: 'firstLF',              label: 'F-LF' },
+    { key: 'satisfaction',         label: 'SF' },
+    { key: 'revenue',              label: 'Revenue' },
+    { key: 'profit',               label: 'Profit' },
+    { key: 'profitMargin',         label: 'Margin' },
+    { key: 'currentStaffRequired', label: 'Staff' },
+    { key: 'profitPerStaff',       label: 'Profit/Staff' },
+]
+const LINK_COLUMNS_DEFAULT_HIDDEN = ['computedQuality', 'economyLF', 'businessLF', 'firstLF', 'revenue']
+let hiddenLinkColumns = new Set(
+    JSON.parse(localStorage.getItem('hiddenLinkColumns') ?? 'null')
+    ?? LINK_COLUMNS_DEFAULT_HIDDEN
+)
 var currentAnimationStatus = false
 var selectedLinkIds = new Set()
 var linkColors = JSON.parse(localStorage.getItem('linkColors')) || {}
@@ -1951,6 +1976,8 @@ function removeTempPath() {
 
 function showLinksCanvas(selectedLink = null, isReload = true) {
     initLinksViewSwitch()
+    initLinksColumnPicker()
+    applyLinkColumnVisibility()
     var selectLinkId = selectedLink ? parseInt(selectedLink) : null
     loadLinksTable(function() {
         if (selectLinkId) {
@@ -1979,6 +2006,13 @@ function computeLinkDerivedProperties(links) {
         const cancelledTotal = link.cancelledSeats ? link.cancelledSeats.total : 0
         link.totalLoadFactor = link.totalCapacityHistory > 0 ? Math.round(link.totalPassengers / (link.totalCapacityHistory - cancelledTotal) * 100) : 0
         link.model = (link.assignedAirplanes && link.assignedAirplanes.length > 0) ? link.assignedAirplanes[0].airplane.name : "-"
+        link.flightNum = parseInt(link.flightCode.split(' ')[1]) || 0
+        const cancelledEco = link.cancelledSeats?.economy  ?? 0
+        const cancelledBiz = link.cancelledSeats?.business ?? 0
+        const cancelledFst = link.cancelledSeats?.first    ?? 0
+        link.economyLF  = (link.capacityHistory?.economy  ?? 0) > 0 ? Math.round(link.passengers.economy  / (link.capacityHistory.economy  - cancelledEco) * 100) : 0
+        link.businessLF = (link.capacityHistory?.business ?? 0) > 0 ? Math.round(link.passengers.business / (link.capacityHistory.business - cancelledBiz) * 100) : 0
+        link.firstLF    = (link.capacityHistory?.first    ?? 0) > 0 ? Math.round(link.passengers.first    / (link.capacityHistory.first    - cancelledFst) * 100) : 0
         link.displayLoadFactor   = link.totalLoadFactor
         link.displaySatisfaction = link.satisfaction
         link.displayProfit       = link.profit
@@ -2022,6 +2056,50 @@ function initLinksViewSwitch() {
     })
 }
 
+function initLinksColumnPicker() {
+    const container = $('#linksColumnPickerContainer')
+    if (container.data('inited')) return
+    container.data('inited', true)
+    const picker = $('#linksColumnPicker')
+    LINK_COLUMNS.forEach(col => {
+        const checked = hiddenLinkColumns.has(col.key) ? '' : 'checked'
+        picker.append(
+            `<label class="label-checkbox">` +
+            `<input type="checkbox" ${checked} onchange="toggleLinkColumnVisibility('${col.key}')"> ${col.label}` +
+            `</label>`
+        )
+    })
+    $(document).on('click.colPicker', function(e) {
+        if (!$(e.target).closest('#linksColumnPickerContainer').length) {
+            $('#linksColumnPicker').hide()
+        }
+    })
+}
+
+function toggleLinksColumnPicker(event) {
+    event.stopPropagation()
+    $('#linksColumnPicker').toggle()
+}
+
+function toggleLinkColumnVisibility(key) {
+    if (hiddenLinkColumns.has(key)) {
+        hiddenLinkColumns.delete(key)
+    } else {
+        hiddenLinkColumns.add(key)
+    }
+    localStorage.setItem('hiddenLinkColumns', JSON.stringify([...hiddenLinkColumns]))
+    applyLinkColumnVisibility()
+    const sel = $('#linksTableSortHeader .cell.selected')
+    updateLinksTable(sel.data('sort-property'), sel.data('sort-order'))
+}
+
+function applyLinkColumnVisibility() {
+    const canvas = document.getElementById('linksCanvas')
+    LINK_COLUMNS.forEach(col => {
+        canvas.classList.toggle('links-hide-' + col.key, hiddenLinkColumns.has(col.key))
+    })
+}
+
 document.addEventListener('distanceUnitChanged', function() {
     if ($('#linksCanvas').is(':visible')) {
         loadLinksTable(null, true);
@@ -2038,6 +2116,48 @@ function loadLinksTable(onComplete, forceRefresh) {
         linksTable.on('click', '.link-checkbox', function(e) {
             e.stopPropagation();
             toggleLinkSelection($(this).closest('.table-row').data('link-id'), $(this));
+        });
+        linksTable.on('click', '.flight-code-cell', function(e) {
+            e.stopPropagation();
+            const cell = $(this);
+            if (cell.find('input').length) return;
+
+            const linkId = cell.closest('.table-row').data('link-id');
+            const flightCode = cell.data('flight-code');
+            const [airlineCode, numStr] = flightCode.split(' ');
+            const currentNum = parseInt(numStr);
+
+            const input = $('<input>').attr({ type: 'number', min: 1, max: 9999, value: currentNum })
+                .css({ width: '4em', textAlign: 'center' });
+            cell.empty().append(airlineCode + ' ').append(input);
+            input.focus().select();
+
+            function save() {
+                const newNumber = parseInt(input.val());
+                if (newNumber >= 1 && newNumber <= 9999 && newNumber !== currentNum) {
+                    $.ajax({
+                        type: 'PATCH',
+                        url: '/airlines/' + activeAirline.id + '/links/' + linkId + '/flight-number',
+                        contentType: 'application/json; charset=utf-8',
+                        data: JSON.stringify({ flightNumber: newNumber }),
+                        dataType: 'json',
+                        success: function(result) {
+                            const cached = loadedLinksById[linkId];
+                            if (cached) cached.flightCode = result.flightCode;
+                            cell.data('flight-code', result.flightCode).text(result.flightCode);
+                        },
+                        error: function() { cell.text(flightCode); }
+                    });
+                } else {
+                    cell.text(flightCode);
+                }
+            }
+
+            input.on('keydown', function(e) {
+                if (e.key === 'Enter') { input.off('blur'); save(); }
+                if (e.key === 'Escape') { input.off('blur'); cell.text(flightCode); }
+            });
+            input.on('blur', save);
         });
         linksTable.data('delegation-set', true);
     }
@@ -2101,19 +2221,23 @@ function addSummaryRow(links) {
     const data = Array.isArray(links) ? links : loadedLinks
 
     const linkColumnConfigs = [
-        { label: prettyLabel(linksTableSummaryState) }, // From Airport
-        {}, // To Airport
-        {}, // Model
-        { getValue: (link) => link.distance, format: (val) => Math.round(convertDistance(val)) + distanceLabel() },
-        { getValue: (link) => link.totalCapacity, format: (val) => val.toFixed(0) }, // Capacity
-        { getValue: (link) => link.computedQuality > 0 ? link.computedQuality : '-', format: (val) => val.toFixed(0) },
-        { getValue: (link) => link.displayLoadFactor, format: (val) => val.toFixed(0) + '%' },
-        { getValue: (link) => Math.round(link.displaySatisfaction * 100), format: (val) => val.toFixed(0) + '%' },
-        { getValue: (link) => link.displayRevenue, format: (val) => '$' + commaSeparateNumber(val.toFixed(0)) },
-        { getValue: (link) => link.displayProfit, format: (val) => '$' + commaSeparateNumber(val.toFixed(0)) },
-        { getValue: (link) => link.displayProfitMargin, format: (val) => (val * 100).toFixed(2) + "%" },
-        { getValue: (link) => link.currentStaffRequired, format: (val) => val },
-        { getValue: (link) => link.profitPerStaff, format: (val) => '$' + commaSeparateNumber(val.toFixed(0)) }
+        { key: 'flightCode',           label: prettyLabel(linksTableSummaryState) },
+        { key: 'fromAirportCode' },
+        { key: 'toAirportCode' },
+        { key: 'model' },
+        { key: 'distance',             getValue: (link) => link.distance, format: (val) => Math.round(convertDistance(val)) + distanceLabel() },
+        { key: 'totalCapacity',        getValue: (link) => link.totalCapacity, format: (val) => val.toFixed(0) },
+        { key: 'computedQuality',      getValue: (link) => link.computedQuality > 0 ? link.computedQuality : '-', format: (val) => val.toFixed(0) },
+        { key: 'totalLoadFactor',      getValue: (link) => link.displayLoadFactor, format: (val) => val.toFixed(0) + '%' },
+        { key: 'economyLF',            getValue: (link) => link.capacityHistory?.economy  > 0 ? link.economyLF  : null, format: (val) => val.toFixed(0) + '%' },
+        { key: 'businessLF',           getValue: (link) => link.capacityHistory?.business > 0 ? link.businessLF : null, format: (val) => val.toFixed(0) + '%' },
+        { key: 'firstLF',              getValue: (link) => link.capacityHistory?.first    > 0 ? link.firstLF    : null, format: (val) => val.toFixed(0) + '%' },
+        { key: 'satisfaction',         getValue: (link) => Math.round(link.displaySatisfaction * 100), format: (val) => val.toFixed(0) + '%' },
+        { key: 'revenue',              getValue: (link) => link.displayRevenue, format: (val) => '$' + commaSeparateNumber(val.toFixed(0)) },
+        { key: 'profit',               getValue: (link) => link.displayProfit, format: (val) => '$' + commaSeparateNumber(val.toFixed(0)) },
+        { key: 'profitMargin',         getValue: (link) => link.displayProfitMargin, format: (val) => (val * 100).toFixed(2) + '%' },
+        { key: 'currentStaffRequired', getValue: (link) => link.currentStaffRequired, format: (val) => val },
+        { key: 'profitPerStaff',       getValue: (link) => link.profitPerStaff, format: (val) => '$' + commaSeparateNumber(val.toFixed(0)) },
     ];
     addTableSummaryRow("#linksCanvas #linksTable", data, linkColumnConfigs, linksTableSummaryState);
 }
@@ -2156,19 +2280,23 @@ function updateLinksTable(sortProperty, sortOrder) {
         rowsHtml.push(
             `<div class='table-row clickable${selectedClass}' data-link-id='${link.id}'${bgStyle}>` +
             `<div class='cell'><input type='checkbox' class='link-checkbox'${checkedAttr}></div>` +
-            `<div class='cell'>${getCountryFlagImg(link.fromCountryCode)}${getAirportText(link.fromAirportCity, link.fromAirportCode)}</div>` +
-            `<div class='cell'>${getCountryFlagImg(link.toCountryCode)}${getAirportText(link.toAirportCity, link.toAirportCode)}</div>` +
-            `<div class='cell'>${link.model}</div>` +
-            `<div class='cell' align='right'>${Math.round(convertDistance(link.distance))}${distanceLabel()}</div>` +
-            `<div class='cell' align='right'>${link.totalCapacity}(${link.frequency})</div>` +
-            `<div class='cell' align='right'>${quality}</div>` +
-            `<div class='cell${avgClass}' align='right'>${link.displayLoadFactor}%</div>` +
-            `<div class='cell${avgClass}' align='right'>${Math.round(link.displaySatisfaction * 100)}%</div>` +
-            `<div class='cell${avgClass}' align='right'>$${commaSeparateNumber(link.revenue)}</div>` +
-            `<div class='cell${avgClass}' align='right'>$${commaSeparateNumber(link.displayProfit)}</div>` +
-            `<div class='cell${avgClass}' align='right'>${(link.displayProfitMargin * 100).toFixed(2)}%</div>` +
-            `<div class='cell' align='right'>${link.currentStaffRequired}</div>` +
-            `<div class='cell' align='right'>$${commaSeparateNumber(link.profitPerStaff)}</div>` +
+            `<div class='cell flight-code-cell' data-col-key='flightCode' data-flight-code='${link.flightCode}'>${link.flightCode}</div>` +
+            `<div class='cell' data-col-key='fromAirportCode'>${getCountryFlagImg(link.fromCountryCode)}${getAirportText(link.fromAirportCity, link.fromAirportCode)}</div>` +
+            `<div class='cell' data-col-key='toAirportCode'>${getCountryFlagImg(link.toCountryCode)}${getAirportText(link.toAirportCity, link.toAirportCode)}</div>` +
+            `<div class='cell' data-col-key='model'>${link.model}</div>` +
+            `<div class='cell' data-col-key='distance' align='right'>${Math.round(convertDistance(link.distance))}${distanceLabel()}</div>` +
+            `<div class='cell' data-col-key='totalCapacity' align='right'>${link.totalCapacity}(${link.frequency})</div>` +
+            `<div class='cell' data-col-key='computedQuality' align='right'>${quality}</div>` +
+            `<div class='cell${avgClass}' data-col-key='totalLoadFactor' align='right'>${link.displayLoadFactor}%</div>` +
+            `<div class='cell' data-col-key='economyLF' align='right'>${link.capacityHistory?.economy > 0 ? link.economyLF + '%' : '-'}</div>` +
+            `<div class='cell' data-col-key='businessLF' align='right'>${link.capacityHistory?.business > 0 ? link.businessLF + '%' : '-'}</div>` +
+            `<div class='cell' data-col-key='firstLF' align='right'>${link.capacityHistory?.first > 0 ? link.firstLF + '%' : '-'}</div>` +
+            `<div class='cell${avgClass}' data-col-key='satisfaction' align='right'>${Math.round(link.displaySatisfaction * 100)}%</div>` +
+            `<div class='cell${avgClass}' data-col-key='revenue' align='right'>$${commaSeparateNumber(link.revenue)}</div>` +
+            `<div class='cell${avgClass}' data-col-key='profit' align='right'>$${commaSeparateNumber(link.displayProfit)}</div>` +
+            `<div class='cell${avgClass}' data-col-key='profitMargin' align='right'>${(link.displayProfitMargin * 100).toFixed(2)}%</div>` +
+            `<div class='cell' data-col-key='currentStaffRequired' align='right'>${link.currentStaffRequired}</div>` +
+            `<div class='cell' data-col-key='profitPerStaff' align='right'>$${commaSeparateNumber(link.profitPerStaff)}</div>` +
             `</div>`
         );
     });
@@ -2791,7 +2919,7 @@ function showSatisfactionBreakdown($icon, positiveComments, negativeComments, sa
         if (percentage == 0) {
             percentage = "< 1"
         }
-        var $row = $('<div class="table-row" style="font-size: 15px; text-shadow: 0px 0px 3px rgba(0,0,0,0.5);"><div class="cell">' + entry[0].comment + '</div><div class="cell">' + percentage + '%</div></div>')
+        var $row = $('<div class="table-row" style="font-size: 15px;"><div class="cell">' + entry[0].comment + '</div><div class="cell">' + percentage + '%</div></div>')
         $row.css('color', '#9ACD32')
         $('#satisfactionDetailsTooltip .table').append($row)
     })
@@ -2800,7 +2928,7 @@ function showSatisfactionBreakdown($icon, positiveComments, negativeComments, sa
         if (percentage == 0) {
             percentage = "< 1"
         }
-        var $row = $('<div class="table-row"  style="font-size: 15px; text-shadow: 0px 0px 3px rgba(0,0,0,0.5);"><div class="cell">' + entry[0].comment + '</div><div class="cell">' + percentage + '%</div></div>')
+        var $row = $('<div class="table-row"  style="font-size: 15px;"><div class="cell">' + entry[0].comment + '</div><div class="cell">' + percentage + '%</div></div>')
         $row.css('color', '#F08080')
         $('#satisfactionDetailsTooltip .table').append($row)
     })

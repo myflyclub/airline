@@ -13,7 +13,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 
 object MainSimulation extends App {
-  val CYCLE_DURATION : Int = 60 * 29
+  val CYCLE_DURATION : Int = 60 * 4
   val SCHEDULE_BUFFER_SECS : Int = 30
   val SCHEDULE_OVERHEAD_FACTOR : Double = 1.1
   var currentWeek: Int = 0
@@ -30,7 +30,7 @@ object MainSimulation extends App {
     val startTime = System.currentTimeMillis()
     AirportCache.getAllAirports(true)
     val endTime = System.currentTimeMillis()
-    println(s"Cache initialization completed in ${endTime - startTime}ms")
+    println(s"Airport cache initialization completed in ${endTime - startTime}ms")
   }
 
   def invalidateCaches() = {
@@ -156,7 +156,13 @@ object MainSimulation extends App {
 
         try {
           startCycle(currentWeek)
-          postCycle(currentWeek + 1)
+
+          // Advance the cycle before postCycle so refreshLinksPostCycle sees newly-delivered
+          // airplanes as isReady, keeping DB capacity in sync with the upcoming cycle's view.
+          currentWeek += 1
+          CycleSource.setCycle(currentWeek)
+
+          postCycle(currentWeek)
 
           lastExecutionMs = System.currentTimeMillis() - startMs
 
@@ -173,7 +179,8 @@ object MainSimulation extends App {
 
         } catch {
           case e : Exception =>
-            println(s"!!!!!!! Cycle $currentWeek failed with exception: ${e.getClass.getSimpleName}: ${e.getMessage}. Retrying in 60s.")
+            println(s"!!!!!!! Cycle $currentWeek failed with exception: ${e.getClass.getName}: ${e.getMessage}. Retrying in 60s.")
+            e.printStackTrace()
             status = SimulationStatus.WAITING_CYCLE_START
             context.system.scheduler.scheduleOnce(Duration(60, TimeUnit.SECONDS), self, ExecuteProcessing)
         }
@@ -181,10 +188,7 @@ object MainSimulation extends App {
       case BroadcastAndAdvance =>
         val endTime = System.currentTimeMillis()
         println("Publish Cycle Complete message")
-        SimulationEventStream.publish(CycleCompleted(currentWeek, endTime), None)
-
-        currentWeek += 1
-        CycleSource.setCycle(currentWeek)
+        SimulationEventStream.publish(CycleCompleted(currentWeek - 1, endTime), None)
 
         targetDeadline = System.currentTimeMillis() + CYCLE_INTERVAL_MS
         self ! ScheduleNext

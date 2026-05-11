@@ -127,7 +127,7 @@
 									<div class="i-label">Airport Loyalty
 									    <img src='@routes.Assets.versioned("/images/icons/information.svg")'
 											class="svg info clickable airportLoyaltyBonusTrigger" style="vertical-align:text-bottom"
-											onmouseover="showAppealBreakdown($(this), $('#appealBonusDetailsTooltip').data('loyaltyBreakdown'))"
+											onmouseover="showAppealBreakdown($(this), activeAirport?.bonusList?.[activeAirline.id]?.loyaltyBreakdown)"
 											onmouseout="hideAppealBreakdown()"/>
 									</div>
 									<div class="i-value airportLoyalty">
@@ -152,6 +152,7 @@
                         <button type="button" class="button" id="deleteBaseButton" style="display: none;" onclick='promptConfirm("Remove this base? All routes from this airport will also be removed. All airplanes assigned to this base will be re-assigned to HQs. All assets of this Airport will be sold.", deleteBase)'>Remove</button>
                         <button type="button" class="button" id="santaClausButton" style="display: none;" onclick="showSantaClausAttemptStatus()">Find Santa</button>
                         <button type="button" class="button" id="easterBunnyButton" style="display: none;" onclick="showEasterBunnyAttemptStatus()">Hunt for Eggs 🥚</button>
+                        <button type="button" class="button" id="lostChildButton" style="display: none;" onclick="showLostChildAttemptStatus()">Lost Child 🧒</button>
                         <button type="button" class="button" onclick="showSpecializationModal()">Base Specializations</button>
                     </div>
                 </div>

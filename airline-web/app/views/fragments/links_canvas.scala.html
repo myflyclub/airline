@@ -15,86 +15,77 @@
                         <span class="switch-selection"></span>
                       </div>
                     </div>
+                    <div id="linksColumnPickerContainer" class="w-auto switch mt-2" style="position: relative;">
+                        <a class="px-2 button text py-1 flex-align-center tooltip-attr tooltip-attr-bottom" data-tooltip="Show / Hide Columns" onclick="toggleLinksColumnPicker(event)">Cols ▾</a>
+                        <div id="linksColumnPicker" class="p-2" style="display:none; position:absolute; right:0; top:100%; z-index:20; min-width:140px; white-space:nowrap; background-image: var(--modal-content-background-image); box-shadow: var(--shadow-1);"></div>
+                    </div>
 				</div>
 				<div class="table-container-x">
-					<div class="table data" style="min-width: 980px; height: 20px;">
+					<div class="table data" style="min-width: 1040px; height: 20px;">
 						<div class="table-header" id="linksTableSortHeader">
-							<div class="cell" style="width: 3%"><input type="checkbox" id="toggleAllLinks"
-									onclick="toggleAllLinks(this)"></div>
-                            <div class="cell clickable" style="width: 0%" data-sort-property="lastUpdate"
-								data-sort-order="ascending" id="hiddenLinkSortBy"></div>
-							<div class="cell clickable selected" style="width: 16%" data-sort-property="fromAirportCode"
-								data-sort-order="descending" onclick="toggleLinksTableSortOrder($(this))">From Airport
-							</div>
-							<div class="cell clickable" style="width: 16%" data-sort-property="toAirportCode"
-								data-sort-order="descending" onclick="toggleLinksTableSortOrder($(this))">To Airport
-							</div>
-							<div class="cell clickable" style="width: 14%" data-sort-property="model"
-								data-sort-order="ascending" onclick="toggleLinksTableSortOrder($(this))">Model</div>
-							<div class="cell clickable" style="width: 8%" align="right" data-sort-property="distance"
-								data-sort-order="ascending" onclick="toggleLinksTableSortOrder($(this))">Distance</div>
-							<div class="cell clickable" style="width: 8%" align="right"
-								data-sort-property="totalCapacity" data-sort-order="ascending"
-								onclick="toggleLinksTableSortOrder($(this))">Capacity (Freq.)</div>
-							<div class="cell clickable" style="width: 3%" align="right"
-								data-sort-property="computedQuality" data-sort-order="ascending"
-								onclick="toggleLinksTableSortOrder($(this))" title="Quality">Q</div>							
-                            <div class="cell clickable" style="width: 4%" align="right"
-								data-sort-property="totalLoadFactor" data-sort-order="ascending"
-								onclick="toggleLinksTableSortOrder($(this))" title="Load Factor">LF</div>
-							<div class="cell clickable" style="width: 5%" align="right"
-								data-sort-property="satisfaction" data-sort-order="ascending"
-								onclick="toggleLinksTableSortOrder($(this))" title="Satisfaction Factor">SF</div>
-							<div class="cell clickable" style="width: 8%" align="right" data-sort-property="revenue"
-								data-sort-order="ascending" onclick="toggleLinksTableSortOrder($(this))">Revenue</div>
-							<div class="cell clickable" style="width: 8%" align="right" data-sort-property="profit"
-								data-sort-order="ascending" onclick="toggleLinksTableSortOrder($(this))">Profit</div>
-							<div class="cell clickable" style="width: 7%" align="right"
-								data-sort-property="profitMargin" data-sort-order="ascending"
-								onclick="toggleLinksTableSortOrder($(this))">Margin</div>
-							<div class="cell clickable" style="width: 6%" align="right"
-								data-sort-property="currentStaffRequired" data-sort-order="ascending"
-								onclick="toggleLinksTableSortOrder($(this))" title="Current Staff Required">Staff</div>
-							<div class="cell clickable" style="width: 8%" align="right"
-								data-sort-property="profitPerStaff" data-sort-order="ascending"
-								onclick="toggleLinksTableSortOrder($(this))">Profit per staff</div>
+							<div class="cell" style="width: 3%"><input type="checkbox" id="toggleAllLinks" onclick="toggleAllLinks(this)"></div>
+							<div class="cell" style="width: 0%" data-sort-property="lastUpdate" data-sort-order="ascending" id="hiddenLinkSortBy"></div>
+							<div class="cell link-col-flight clickable" data-col-key="flightCode" data-sort-property="flightNum" data-sort-order="ascending" onclick="toggleLinksTableSortOrder($(this))">Flight</div>
+							<div class="cell link-col-from clickable selected" data-col-key="fromAirportCode" data-sort-property="fromAirportCode" data-sort-order="descending" onclick="toggleLinksTableSortOrder($(this))">From Airport</div>
+							<div class="cell link-col-to clickable" data-col-key="toAirportCode" data-sort-property="toAirportCode" data-sort-order="descending" onclick="toggleLinksTableSortOrder($(this))">To Airport</div>
+							<div class="cell link-col-model clickable" data-col-key="model" data-sort-property="model" data-sort-order="ascending" onclick="toggleLinksTableSortOrder($(this))">Model</div>
+							<div class="cell link-col-dist clickable" align="right" data-col-key="distance" data-sort-property="distance" data-sort-order="ascending" onclick="toggleLinksTableSortOrder($(this))">Distance</div>
+							<div class="cell link-col-cap clickable" align="right" data-col-key="totalCapacity" data-sort-property="totalCapacity" data-sort-order="ascending" onclick="toggleLinksTableSortOrder($(this))">Capacity (Freq.)</div>
+							<div class="cell link-col-q clickable" align="right" data-col-key="computedQuality" data-sort-property="computedQuality" data-sort-order="ascending" onclick="toggleLinksTableSortOrder($(this))" title="Quality">Q</div>
+							<div class="cell link-col-lf clickable" align="right" data-col-key="totalLoadFactor" data-sort-property="totalLoadFactor" data-sort-order="ascending" onclick="toggleLinksTableSortOrder($(this))" title="Load Factor">LF</div>
+							<div class="cell link-col-elf clickable" align="right" data-col-key="economyLF" data-sort-property="economyLF" data-sort-order="ascending" onclick="toggleLinksTableSortOrder($(this))" title="Economy Load Factor">E-LF</div>
+							<div class="cell link-col-blf clickable" align="right" data-col-key="businessLF" data-sort-property="businessLF" data-sort-order="ascending" onclick="toggleLinksTableSortOrder($(this))" title="Business Load Factor">B-LF</div>
+							<div class="cell link-col-flf clickable" align="right" data-col-key="firstLF" data-sort-property="firstLF" data-sort-order="ascending" onclick="toggleLinksTableSortOrder($(this))" title="First Class Load Factor">F-LF</div>
+							<div class="cell link-col-sf clickable" align="right" data-col-key="satisfaction" data-sort-property="satisfaction" data-sort-order="ascending" onclick="toggleLinksTableSortOrder($(this))" title="Satisfaction Factor">SF</div>
+							<div class="cell link-col-rev clickable" align="right" data-col-key="revenue" data-sort-property="revenue" data-sort-order="ascending" onclick="toggleLinksTableSortOrder($(this))">Revenue</div>
+							<div class="cell link-col-profit clickable" align="right" data-col-key="profit" data-sort-property="profit" data-sort-order="ascending" onclick="toggleLinksTableSortOrder($(this))">Profit</div>
+							<div class="cell link-col-margin clickable" align="right" data-col-key="profitMargin" data-sort-property="profitMargin" data-sort-order="ascending" onclick="toggleLinksTableSortOrder($(this))">Margin</div>
+							<div class="cell link-col-staff clickable" align="right" data-col-key="currentStaffRequired" data-sort-property="currentStaffRequired" data-sort-order="ascending" onclick="toggleLinksTableSortOrder($(this))" title="Current Staff Required">Staff</div>
+							<div class="cell link-col-pps clickable" align="right" data-col-key="profitPerStaff" data-sort-property="profitPerStaff" data-sort-order="ascending" onclick="toggleLinksTableSortOrder($(this))">Profit per staff</div>
 						</div>
 						<div class="table-header" id="linksTableFilterHeader" style="display: none;">
 							<div class="cell" style="width: 3%">&nbsp;</div>
-                            <div class="cell" style="width: 0%"></div>
-							<div class="cell" style="width: 16%" data-filter-property="fromAirportCode">&nbsp;</div>
-							<div class="cell" style="width: 16%" data-filter-property="toAirportCode">&nbsp;</div>
-							<div class="cell" style="width: 14%" data-filter-property="modelId">&nbsp;</div>
-							<div class="cell" style="width: 8%" data-filter-property="distance">&nbsp;</div>
-							<div class="cell" style="width: 8%">&nbsp;</div>
-							<div class="cell" style="width: 4%">&nbsp;</div>
-							<div class="cell" style="width: 3%">&nbsp;</div>
-							<div class="cell" style="width: 4%">&nbsp;</div>
-							<div class="cell" style="width: 5%">&nbsp;</div>
-							<div class="cell" style="width: 8%">&nbsp;</div>
-							<div class="cell" style="width: 8%">&nbsp;</div>
-							<div class="cell" style="width: 7%">&nbsp;</div>
-							<div class="cell" style="width: 6%">&nbsp;</div>
-							<div class="cell" style="width: 8%">&nbsp;</div>
+							<div class="cell" style="width: 0%"></div>
+							<div class="cell link-col-flight" data-col-key="flightCode">&nbsp;</div>
+							<div class="cell link-col-from" data-col-key="fromAirportCode" data-filter-property="fromAirportCode">&nbsp;</div>
+							<div class="cell link-col-to" data-col-key="toAirportCode" data-filter-property="toAirportCode">&nbsp;</div>
+							<div class="cell link-col-model" data-col-key="model" data-filter-property="modelId">&nbsp;</div>
+							<div class="cell link-col-dist" data-col-key="distance" data-filter-property="distance">&nbsp;</div>
+							<div class="cell link-col-cap" data-col-key="totalCapacity">&nbsp;</div>
+							<div class="cell link-col-q" data-col-key="computedQuality">&nbsp;</div>
+							<div class="cell link-col-lf" data-col-key="totalLoadFactor">&nbsp;</div>
+							<div class="cell link-col-elf" data-col-key="economyLF">&nbsp;</div>
+							<div class="cell link-col-blf" data-col-key="businessLF">&nbsp;</div>
+							<div class="cell link-col-flf" data-col-key="firstLF">&nbsp;</div>
+							<div class="cell link-col-sf" data-col-key="satisfaction">&nbsp;</div>
+							<div class="cell link-col-rev" data-col-key="revenue">&nbsp;</div>
+							<div class="cell link-col-profit" data-col-key="profit">&nbsp;</div>
+							<div class="cell link-col-margin" data-col-key="profitMargin">&nbsp;</div>
+							<div class="cell link-col-staff" data-col-key="currentStaffRequired">&nbsp;</div>
+							<div class="cell link-col-pps" data-col-key="profitPerStaff">&nbsp;</div>
 						</div>
 					</div>
-					<div class="table-container-y" style="min-width: 980px;">
+					<div class="table-container-y" style="min-width: 1040px;">
 						<div class="table data" id="linksTable">
 							<div class="table-header">
-                                <div class="cell" style="width: 3%; border-bottom: none;"></div>
-								<div class="cell" style="width: 16%; border-bottom: none;"></div>
-								<div class="cell" style="width: 16%; border-bottom: none;"></div>
-								<div class="cell" style="width: 14%; border-bottom: none;"></div>
-								<div class="cell" style="width: 8%; border-bottom: none;"></div>
-								<div class="cell" style="width: 8%; border-bottom: none;"></div>
 								<div class="cell" style="width: 3%; border-bottom: none;"></div>
-								<div class="cell" style="width: 4%; border-bottom: none;"></div>
-								<div class="cell" style="width: 5%; border-bottom: none;"></div>
-								<div class="cell" style="width: 8%; border-bottom: none;"></div>
-								<div class="cell" style="width: 8%; border-bottom: none;"></div>
-								<div class="cell" style="width: 7%; border-bottom: none;"></div>
-								<div class="cell" style="width: 6%; border-bottom: none;"></div>
-								<div class="cell" style="width: 8%; border-bottom: none;"></div>
+								<div class="cell link-col-flight" data-col-key="flightCode" style="border-bottom: none;"></div>
+								<div class="cell link-col-from" data-col-key="fromAirportCode" style="border-bottom: none;"></div>
+								<div class="cell link-col-to" data-col-key="toAirportCode" style="border-bottom: none;"></div>
+								<div class="cell link-col-model" data-col-key="model" style="border-bottom: none;"></div>
+								<div class="cell link-col-dist" data-col-key="distance" style="border-bottom: none;"></div>
+								<div class="cell link-col-cap" data-col-key="totalCapacity" style="border-bottom: none;"></div>
+								<div class="cell link-col-q" data-col-key="computedQuality" style="border-bottom: none;"></div>
+								<div class="cell link-col-lf" data-col-key="totalLoadFactor" style="border-bottom: none;"></div>
+								<div class="cell link-col-elf" data-col-key="economyLF" style="border-bottom: none;"></div>
+								<div class="cell link-col-blf" data-col-key="businessLF" style="border-bottom: none;"></div>
+								<div class="cell link-col-flf" data-col-key="firstLF" style="border-bottom: none;"></div>
+								<div class="cell link-col-sf" data-col-key="satisfaction" style="border-bottom: none;"></div>
+								<div class="cell link-col-rev" data-col-key="revenue" style="border-bottom: none;"></div>
+								<div class="cell link-col-profit" data-col-key="profit" style="border-bottom: none;"></div>
+								<div class="cell link-col-margin" data-col-key="profitMargin" style="border-bottom: none;"></div>
+								<div class="cell link-col-staff" data-col-key="currentStaffRequired" style="border-bottom: none;"></div>
+								<div class="cell link-col-pps" data-col-key="profitPerStaff" style="border-bottom: none;"></div>
 							</div>
 						</div>
 						<div style="height: 100px; width: 100%; min-width: 600px; display:none;" class="noLinkTips">

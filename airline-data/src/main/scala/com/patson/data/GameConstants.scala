@@ -12,15 +12,15 @@ object GameConstants {
   )
 
   val COUNTRIES_SUB_SAHARAN = List("AO", "BJ", "BW", "BF", "BI", "CM", "CV", "CF", "TD", "KM", "CG", "CD", "CI", "DJ", "GQ", "ER", "ET", "GA", "GM", "GH", "GN", "GW", "KE", "LS", "LR", "MG", "MW", "ML", "MR", "MU", "YT", "MZ", "NA", "NE", "NG", "RE", "RW", "ST", "SN", "SC", "SL", "SO", "ZA", "SS", "SZ", "TZ", "TG", "UG", "ZM", "ZW")
-  val ISOLATED_COUNTRIES: Seq[String] = List("AG", "AI", "AS", "BQ", "BL", "BS", "BT", "CC", "CK", "CV", "DM", "FO", "GD", "KI", "KM", "KY", "MF", "MP", "MS", "MU", "MV", "NP", "SC", "ST", "SX", "TC", "VI", "VG", "VC", "VU", "WF")
+  val ISOLATED_COUNTRIES: Seq[String] = List("AG", "AI", "AS", "BB", "BQ", "BL", "BS", "BT", "CC", "CK", "CV", "DM", "FI", "FO", "FM", "GD", "GU", "KI", "KM", "KN", "KY", "KV", "LC", "MF", "MH", "MP", "MS", "MU", "MV", "NP", "SC", "ST", "SX", "TC", "TO", "VI", "VG", "VC", "VU", "WF", "WS")
   val ISOLATED_ISLAND_AIRPORTS: Seq[String] = List(
     //europe
     "SMA", "SJZ", "HOR", "FNC", "PIX", "GRW", "PXO", "CVU", //pt
     "VDE", "GMZ", "SPC", "LPA", "FUE", "ACE", "IBZ", "PMI", "MAH", //es
     "IDY", "ACI", "BIC", "ISC", "OUI", "IDY", //FR
     "UVE", "LIF", "TGJ", "MEE", "ILP", "NOU", //FR Pacific
-    "PNL", "LMP", "EBA", //IT
-    "HGL", "BMK", "GWT", "BMR", //DE
+    "PNL", "LMP", "EBA", "TQR", //IT
+    "HGL", "BMK", "GWT", "BMR", "NRD", "AGE", //DE
     "EGH", "EOI", "FIE", "FOA", "LWK", "LSI", "ACI", "TRE", "BRR", "BEB", "SYY", "KOI", "ILY", "CAL", "ISC", "GCI", "JER", "GIB", "IOM", "EOI", "NRL", "PPW", "WRY", "COL", //GB
     "BYR", "RNN", "FAE", //DK
     "CPH", //highly connected but want more demand to Jutland
@@ -59,7 +59,7 @@ object GameConstants {
     "GJA", "RTB", //HU
     "CYC", "CUK", "PND", "PLJ", "DGA", "INB", //BZ
     //oceania
-    "NMF", "HRF", "KDM", "NAN", "MEE", "PTF", "ELC", "XCH",   //oceania & AU
+    "NMF", "HRF", "KDM", "NAN", "MEE", "PTF", "ELC", "XCH", "PTF", "YAS", "NGI", //oceania & AU
     "PMK", "OKR", "SBR", "CNC", "SYU", "KUG", "HID", "ABM", "ONG", //QZ AU
     "GTE", "WSZ", "WLS", "ELC", "MGT", "SNB", "KGC", "KNS", "FLS", "CBI", //more AU
     //asia
@@ -102,7 +102,7 @@ object GameConstants {
     "YYJ",
     "HYA", "ISP", "HTO", //us allow channel crossings & block transit
     "OGG", "HNM", //us HI
-    "HTI", "CDB", "NLG", "SDP", "ADQ", "MYU", "PQS", "RSH", "ANI", "NUP", "AKN", "KCG", "SDP", "NLG", "TKJ", "MNT", "OTZ", "OME", //US AK (want to ignore min distance)
+    "HTI", "CDB", "SDP", "ADQ", "MYU", "PQS", "RSH", "ANI", "NUP", "AKN", "KCG", "SDP", "TKJ", "MNT", "OTZ", "OME", //US AK (want to ignore min distance)
     "CZM", //MX
     "CYA", //HT
     //oceania

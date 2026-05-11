@@ -97,6 +97,15 @@ function switchDistanceUnit(unit) {
     document.dispatchEvent(new Event('distanceUnitChanged'));
 }
 
+function isColorBlindMode() {
+    return localStorage.getItem('colorBlindRoutes') === 'true';
+}
+
+function switchColorBlindMode(enabled) {
+    localStorage.setItem('colorBlindRoutes', enabled ? 'true' : 'false');
+    document.dispatchEvent(new Event('colorBlindModeChanged'));
+}
+
 
 $( document ).ready(function() {
     //initialize theme radio buttons
@@ -127,6 +136,13 @@ $( document ).ready(function() {
     // Distance unit radio init
     var distanceUnit = localStorage.getItem('distanceUnit') || 'km';
     $("input[name='distanceUnit'][value='" + distanceUnit + "']").prop('checked', true);
+
+    // Color blind mode radio init
+    if (localStorage.getItem('colorBlindRoutes') === 'true') {
+        $("#switchColorBlindOn").prop('checked', true);
+    } else {
+        $("#switchColorBlindOff").prop('checked', true);
+    }
 })
 /**
  * global variable to store device settings
