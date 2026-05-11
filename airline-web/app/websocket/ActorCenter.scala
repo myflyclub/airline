@@ -8,22 +8,24 @@ import com.typesafe.config.ConfigFactory
 import controllers.{AirlineTutorial, AirportUtil, Application, GooglePhotoUtil, ResponseCache}
 import models.PendingAction
 import play.api.libs.json.{JsString, Json}
-import websocket.chat.TriggerPing
-
 import scala.collection.mutable
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
 sealed class LocalActor(out: ActorRef, airlineId: Int) extends Actor {
+  private case object Ping
+
   override def preStart(): Unit = {
     Broadcaster.subscribeToBroadcaster(self, airlineId)
-    context.system.eventStream.subscribe(self, classOf[TriggerPing])
     context.system.eventStream.subscribe(self, classOf[(SimulationEvent, Any)])
-
     ActorCenter.remoteMainActor ! "getCycleInfo"
+    context.system.scheduler.scheduleWithFixedDelay(30.seconds, 30.seconds, self, Ping)(context.dispatcher)
   }
 
   def receive: Receive = {
+    case Ping =>
+      out ! Json.obj("ping" -> "keepalive")
+
     case Notification(message) =>
       out ! message
 
@@ -36,9 +38,6 @@ sealed class LocalActor(out: ActorRef, airlineId: Int) extends Actor {
         println(s"${self.path} Received cycle info on cycle: $cycle")
         out ! Json.obj("messageType" -> "cycleInfo", "cycle" -> cycle, "fraction" -> fraction, "cycleDurationEstimation" -> cycleDurationEstimation)
     }
-
-    case _: TriggerPing =>
-      out ! Json.obj("ping" -> "event")
 
     case BroadcastMessage(text) =>
       out ! Json.obj("messageType" -> "broadcastMessage", "message" -> text)

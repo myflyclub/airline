@@ -35,6 +35,9 @@ document.addEventListener('visibilitychange', function() {
         console.log("Recreating tick timer!")
         currentTickTimer = tickTimerCreator()
     }
+    if (!document.hidden && selectedAirlineId) {
+        checkWebSocket(selectedAirlineId)
+    }
     if (!document.hidden && refreshState === 'needed' && selectedAirlineId) {
         scheduleRefresh(500, 4000)
     }
@@ -71,6 +74,9 @@ function connectWebSocket(airlineId) {
     }
     websocket.onclose = function() {
         if (selectedAirlineId && connectionOpened) {
+            if (document.hidden) {
+                return
+            }
             var delay = Math.min(5000 * Math.pow(2, reconnectAttempts), maxReconnectDelay)
             reconnectAttempts++
             reconnectTimer = setTimeout(function() {
