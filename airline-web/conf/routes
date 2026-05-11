@@ -101,6 +101,7 @@ DELETE	 /airlines/:airlineId/livery	controllers.AirlineApplication.deleteLivery(
 GET		 /airlines/:airlineId/slogan	controllers.AirlineApplication.getSlogan(airlineId : Int)
 PUT	     /airlines/:airlineId/slogan	controllers.AirlineApplication.saveSlogan(airlineId : Int)
 PUT		 /airlines/:airlineId/airline-code	   controllers.AirlineApplication.setAirlineCode(airlineId : Int)
+GET		 /airlines/:airlineId/airline-name	   controllers.AirlineApplication.checkAirlineName(airlineId : Int, airlineName : String)
 PUT		 /airlines/:airlineId/airline-name	   controllers.AirlineApplication.setAirlineName(airlineId : Int)
 GET		 /colors			  controllers.AirlineApplication.getColors()
 POST		 /airlines/:airlineId/set-color			  controllers.AirlineApplication.setColor(airlineId : Int, color : String)
