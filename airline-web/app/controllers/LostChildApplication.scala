@@ -15,6 +15,27 @@ class LostChildApplication @Inject()(cc: ControllerComponents) extends AbstractC
 
   lazy val possibleAirports = AirportCache.getAllAirports().filter(_.size >= LostChildInfo.AIRPORT_SIZE_THRESHOLD).map(_.id)
 
+  private def getWeatherObservation(airport: Airport): String = {
+    val weather = WeatherUtil.getWeather(new WeatherUtil.Coordinates(airport.latitude, airport.longitude))
+    if (weather == null) return ""
+    val id = weather.getWeatherId
+    val temp = weather.getTemperature
+    if (id >= 600 && id <= 622)
+      "Notably, the child keeps asking 'why so green' and complains about being hot."
+    else if (temp >= 32)
+      "The child was seen revelling in the heat. Could they be from a particularly hot place?"
+    else if (temp <= 0)
+      "The child arrived in a miniature ski suit and seems to seek cold."
+    else if (temp <= 10)
+      "Curiously, the child declared this airport 'too hot' and immediately started taking off all their clothes."
+    else if (id == 800)
+      "By the way, a flight attendant noticed the child had a sun hat and sunscreen."
+    else if (id >= 200 && id <= 531)
+      "Curiously, the child expresses shock at seeing the sun."
+    else
+      "A flight attendant notices the child's clothing is aggressively ordinary, as if they come from a locale with an aggressively mild climate."
+  }
+
   def getAttemptStatus(airportId: Int, airlineId: Int) = AuthenticatedAirline(airlineId) { request =>
     if (possibleAirports.contains(airportId)) {
       val airline = request.user
@@ -45,7 +66,7 @@ class LostChildApplication @Inject()(cc: ControllerComponents) extends AbstractC
                 LostChildAward.getInterrogationClueText(interrogationIdx, entry.airport)
               } else {
                 flightIdx += 1
-                LostChildAward.getFlightClueText(flightIdx, entry.airport, guess.airport)
+                LostChildAward.getFlightClueText(flightIdx, entry.airport, guess.airport, getWeatherObservation(entry.airport))
               }
               guessesJson = guessesJson.append(Json.obj(
                 "isInterrogation" -> JsBoolean(isInterrogation),
@@ -116,7 +137,7 @@ class LostChildApplication @Inject()(cc: ControllerComponents) extends AbstractC
             AirlineSource.saveLedgerEntry(AirlineLedgerEntry(airline.id, CycleSource.loadCycle(), LedgerType.PRIZE, PENALTY, Some("Meal vouchers for child you failed to reunite with family.")))
           }
 
-          val clueText = LostChildAward.getFlightClueText(flightIndex, targetAirport, selectedAirport)
+          val clueText = LostChildAward.getFlightClueText(flightIndex, targetAirport, selectedAirport, getWeatherObservation(targetAirport))
 
           Ok(Json.obj("found" -> found, "attemptsLeft" -> newAttemptsLeft, "clueText" -> clueText))
         }

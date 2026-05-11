@@ -1,7 +1,6 @@
 package com.patson.model.lostchild
 
 import com.patson.data.{AirlineSource, AirportSource, ChristmasSource, CycleSource}
-import com.patson.init.AirportWeatherData
 import com.patson.model.christmas.{SantaClausAwardType, SantaClausInfo}
 import com.patson.model.{Airline, AirlineAppeal, AirlineBonus, AirlineLedgerEntry, Airport, BonusType, Computation, LedgerType, Period}
 import com.patson.util.AirlineCache
@@ -84,9 +83,9 @@ object LostChildAward {
     case _ => ""
   }
 
-  def getFlightClueText(flightIndex: Int, target: Airport, guessAirport: Airport): String = {
+  def getFlightClueText(flightIndex: Int, target: Airport, guessAirport: Airport, weatherObservation: String = ""): String = {
     if (target.id == guessAirport.id) "The child hops in joy as they recognize their home airport! You did it!!!"
-    else if (flightIndex <= 3 && getUtcOffset(target) != getUtcOffset(guessAirport)) getLongitudeClue(flightIndex, target, guessAirport)
+    else if (flightIndex <= 3 && getUtcOffset(target) != getUtcOffset(guessAirport)) getLongitudeClue(flightIndex, target, guessAirport, weatherObservation)
     else getDistanceClue(Computation.calculateDistance(target, guessAirport))
   }
 
@@ -116,7 +115,7 @@ object LostChildAward {
     if (minutes == 0) s"UTC $sign$hours" else s"UTC $sign$hours:${"%02d".format(minutes)}"
   }
 
-  def getLongitudeClue(flightIndex: Int, target: Airport, guessAirport: Airport): String = {
+  def getLongitudeClue(flightIndex: Int, target: Airport, guessAirport: Airport, weatherObservation: String = ""): String = {
     val targetOffset = getUtcOffset(target)
     val guessOffset = getUtcOffset(guessAirport)
     val rawDiff = Math.abs(targetOffset - guessOffset)
@@ -124,9 +123,8 @@ object LostChildAward {
     flightIndex match {
       case 1 => getBroadTimezoneClue(absDiff, targetOffset)
       case 2 =>
-        val weather = getWeatherObservation(target)
         val tz = getMediumTimezoneClue(absDiff, targetOffset)
-        if (weather.nonEmpty) s"$tz $weather" else tz
+        if (weatherObservation.nonEmpty) s"$tz $weatherObservation" else tz
       case _ => getTightTimezoneClue(absDiff, targetOffset)
     }
   }
@@ -177,27 +175,6 @@ object LostChildAward {
       s"The child seems fully adjusted; around here must be their home timezone or very close to it."
   }
 
-  def getWeatherObservation(target: Airport): String = {
-    AirportWeatherData.getAirportWeatherData(target) match {
-      case None => ""
-      case Some(w) =>
-        if (w.snowPerDay > 0.5)
-          "Notably, the child keeps asking 'why so green' and complains about being hot."
-        else if (w.maxTemperature >= 32)
-          "The child was seen revelling in the heat. Could they be from a particularly hot place?"
-        else if (w.maxTemperature <= 0)
-          "The child arrived in a miniature ski suit and seems to seek cold."
-        else if (w.maxTemperature <= 10)
-          "Curiously, the child declared this airport 'too hot' and immediately started taking off all their clothes."
-        else if (w.sunnyDayPercentage >= 80)
-          "By the way, a flight attendant noticed the child had a sun hat and sunscreen."
-        else if (w.sunnyDayPercentage <= 20)
-          "Curiously, the child expresses shock at seeing the sun."
-        else
-          "A flight attendant notices the child's clothing is aggressively ordinary, as if they come from a locale with an aggressively mild climate."
-    }
-  }
-
   def getDistanceClue(distance: Int): String = {
     if (distance == 0)
         "The child hops in joy as they recognize their home airport! You did it!!!"
@@ -219,9 +196,9 @@ object LostChildAward {
     if (population >= 10000000)
       "Called the food 'mid' and meant it. Is clearly an urban sophisticate from an airport with over 10,000,000 population."
     else if (population >= 1000000)
-      "Child was capable of navigating the terminal alone. Is clearly Between 1,000,000 and 10,000,000 population."
+      "Child was capable of navigating the terminal alone. Is clearly from somehwere with 1,000,000 to 10,000,000 population."
     else
-      "On the Fascinated by an escalator. Fewer than 1,000,000 population at home."
+      "On the way to being interrogated, the child was fascinated by an escalator. Must come from somewhere with less than 1,000,000 population at home."
   }
 
   def getPopulationClueTight(population: Int): String = {

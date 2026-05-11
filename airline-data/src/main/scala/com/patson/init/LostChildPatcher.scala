@@ -1,7 +1,5 @@
 package com.patson.init
 
-import com.mchange.v2.c3p0.ComboPooledDataSource
-import com.patson.data.Constants.{DATABASE_CONNECTION, DATABASE_PASSWORD, DATABASE_USER, DB_DRIVER}
 import com.patson.data.{AirlineSource, AirportSource, ChristmasSource, Meta}
 import com.patson.model.{Airport, Computation}
 import com.patson.model.christmas.SantaClausInfo
@@ -13,21 +11,11 @@ import scala.util.Random
 object LostChildPatcher extends App {
   val MIN_DISTANCE_FROM_HQ = 6000
 
-  Class.forName(DB_DRIVER)
-  val dataSource = new ComboPooledDataSource()
-  dataSource.setUser(DATABASE_USER)
-  dataSource.setPassword(DATABASE_PASSWORD)
-  dataSource.setJdbcUrl(DATABASE_CONNECTION)
-  dataSource.setMaxPoolSize(5)
-
-  println("Select mode:")
-  println("  1 - Full reset: clear ALL existing data and assign for every airline")
-  println("  2 - Incremental: only assign for airlines that don't have an entry yet")
-  print("Enter choice (1 or 2): ")
-  val choice = scala.io.StdIn.readLine().trim
-
+  val choice = args.headOption.map(_.trim).getOrElse("")
   if (choice != "1" && choice != "2") {
-    println("Invalid choice — exiting without changes.")
+    println("Usage: LostChildPatcher <1|2>")
+    println("  1 - Full reset: clear ALL existing data and assign for every airline")
+    println("  2 - Incremental: only assign for airlines that don't have an entry yet")
     System.exit(1)
   }
 
@@ -40,7 +28,7 @@ object LostChildPatcher extends App {
 
   val airlinesToProcess = if (choice == "1") {
     println("Clearing all existing lost child data...")
-    val connection = dataSource.getConnection()
+    val connection = Meta.getConnection()
     Meta.createSantaClaus(connection)
     connection.close()
     allAirlines
