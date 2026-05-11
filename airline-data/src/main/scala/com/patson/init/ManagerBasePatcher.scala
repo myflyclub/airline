@@ -10,6 +10,9 @@ object ManagerBasePatcher extends App {
   mainFlow()
 
   def mainFlow(): Unit = {
+    val orphans = ManagerSource.deleteOrphanedDelegates()
+    println(s"Deleted $orphans orphaned delegate(s) with no task record")
+
     val airlines = AirlineSource.loadAllAirlines(fullLoad = true)
 
     var corrected = 0

@@ -491,6 +491,27 @@ object ManagerSource {
     }
   }
 
+  def deleteOrphanedDelegates(): Int = {
+    val connection = Meta.getConnection()
+    try {
+      val preparedStatement = connection.prepareStatement(
+        s"""DELETE FROM $BUSY_DELEGATE_TABLE
+           |WHERE task_type != ?
+           |AND id NOT IN (
+           |  SELECT delegate FROM $COUNTRY_DELEGATE_TASK_TABLE
+           |  UNION ALL SELECT delegate FROM $CAMPAIGN_DELEGATE_TASK_TABLE
+           |  UNION ALL SELECT delegate FROM $AIRCRAFT_MODEL_DELEGATE_TASK_TABLE
+           |)""".stripMargin
+      )
+      preparedStatement.setInt(1, ManagerTaskType.MANAGER_BASE.id)
+      val deleted = preparedStatement.executeUpdate()
+      preparedStatement.close()
+      deleted
+    } finally {
+      connection.close()
+    }
+  }
+
   def deleteBusyDelegateByCriteria(criteria : List[(String, String, Any)]) = {
       //open the hsqldb
     val connection = Meta.getConnection()
