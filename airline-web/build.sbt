@@ -37,6 +37,12 @@ libraryDependencies ++= Seq(
   "com.sun.mail" % "javax.mail" % "1.6.2"
 )
 
+dependencyOverrides ++= Seq(
+  "org.apache.pekko" %% "pekko-actor-typed"           % "1.6.0",
+  "org.apache.pekko" %% "pekko-serialization-jackson" % "1.6.0",
+  "org.apache.pekko" %% "pekko-slf4j"                 % "1.6.0"
+)
+
 routesGenerator := InjectedRoutesGenerator
 
 Assets / pipelineStages := Seq(digest)

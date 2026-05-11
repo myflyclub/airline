@@ -20,6 +20,9 @@ jobs:
           distribution: 'temurin'
           cache: 'sbt'
 
+      - name: Set up SBT
+        uses: sbt/setup-sbt@v1
+
       - name: Inject Secrets
         shell: bash
         env:
