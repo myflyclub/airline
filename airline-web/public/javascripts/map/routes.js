@@ -89,32 +89,33 @@ export function getLinkColor(profit, revenue) {
 
     profitFactor = Math.max(minProfitFactor, Math.min(maxProfitFactor, profitFactor));
 
-    let redHex, greenHex;
-    if (profitFactor > 0) {
-        redHex = 220 * (1 - (profitFactor / maxProfitFactor));
+    const isLight = getCurrentStyle() === 'light';
+    let r, g, b;
+
+    if (typeof isColorBlindMode === 'function' && isColorBlindMode()) {
+        // Blue (profitable) ↔ Yellow (break-even) ↔ Orange (unprofitable)
+        if (profitFactor > 0) {
+            const t = profitFactor / maxProfitFactor;
+            r = Math.round(220 * (1 - t) + 32 * t);
+            g = Math.round(220 * (1 - t) + 32 * t);
+            b = Math.round(32 * (1 - t) + 220 * t);
+        } else if (profitFactor < 0) {
+            const t = Math.abs(profitFactor) / maxProfitFactor;
+            r = 220;
+            g = Math.round(220 * (1 - t) + 140 * t);
+            b = 32;
+        } else {
+            r = 220; g = 220; b = 32;
+        }
+        if (isLight) { r = Math.max(0, r - 50); g = Math.max(0, g - 50); b = Math.max(0, b - 50); }
     } else {
-        redHex = 220;
+        r = profitFactor > 0 ? Math.round(220 * (1 - profitFactor / maxProfitFactor)) : 220;
+        g = profitFactor < 0 ? Math.round(220 * (1 + profitFactor / maxProfitFactor)) : 220;
+        b = 32;
+        if (isLight) { r = Math.max(0, r - 50); g = Math.max(0, g - 50); }
     }
 
-    if (profitFactor < 0) {
-        greenHex = 220 * (1 + (profitFactor / maxProfitFactor));
-    } else {
-        greenHex = 220;
-    }
-
-    const currentStyle = getCurrentStyle();
-    if (currentStyle === 'light') {
-        redHex -= 50;
-        greenHex -= 50;
-    }
-
-    redHex = Math.max(0, Math.round(redHex));
-    greenHex = Math.max(0, Math.round(greenHex));
-
-    const redHexString = redHex.toString(16).padStart(2, '0');
-    const greenHexString = greenHex.toString(16).padStart(2, '0');
-
-    return `#${redHexString}${greenHexString}20`;
+    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
 }
 
 /**
@@ -125,7 +126,12 @@ export function initRoutes() {
 
     // Listen for style changes to re-add layers
     window.addEventListener('mapStyleChanged', () => {
-        // Re-add route layers after style change
+        if (Object.keys(state.flightPaths).length > 0) {
+            refreshAllRoutes();
+        }
+    });
+
+    document.addEventListener('colorBlindModeChanged', () => {
         if (Object.keys(state.flightPaths).length > 0) {
             refreshAllRoutes();
         }
@@ -621,10 +627,10 @@ export function drawAirportLinkPath(localAirport, details) {
 
     const totalCapacity = details.capacity.total;
     let opacity;
-    if (totalCapacity < 2000) {
-        opacity = 0.2 + (totalCapacity / 2000) * 0.6;
+    if (totalCapacity < 4000) {
+        opacity = 0.5 + (totalCapacity / 4000) * 0.5;
     } else {
-        opacity = 0.8;
+        opacity = 1.0;
     }
 
     state.airportLinkPaths[pathKey] = {
