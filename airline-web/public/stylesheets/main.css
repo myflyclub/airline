@@ -493,6 +493,10 @@ li.row, div.table-row {
     width: 56%;
 }
 
+#newLoanOptionsTable {
+    min-width: 800px;
+}
+
 .airplaneCanvasRightGroup {
     width: 30%;
 }
@@ -1673,6 +1677,7 @@ input[type='number'] {
 .caption {
     position: absolute;
     bottom: 8px;
+    color: var(--background-1);
     background: rgba(0, 0, 0, .4);
     font-size: 10px;
 }

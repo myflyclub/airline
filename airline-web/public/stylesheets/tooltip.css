@@ -99,6 +99,11 @@
     -webkit-backdrop-filter: blur(10px);
 }
 
+#satisfactionDetailsTooltip .tooltiptext {
+    background-color: var(--background-1);
+    box-shadow: var(--shadow-2);
+}
+
 /* ─── Retained for layout compat; hover logic removed (handled by JS) ──────── */
 .tooltip-attr {
     position: relative;

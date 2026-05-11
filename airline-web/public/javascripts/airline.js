@@ -2919,7 +2919,7 @@ function showSatisfactionBreakdown($icon, positiveComments, negativeComments, sa
         if (percentage == 0) {
             percentage = "< 1"
         }
-        var $row = $('<div class="table-row" style="font-size: 15px; text-shadow: 0px 0px 3px rgba(0,0,0,0.5);"><div class="cell">' + entry[0].comment + '</div><div class="cell">' + percentage + '%</div></div>')
+        var $row = $('<div class="table-row" style="font-size: 15px;"><div class="cell">' + entry[0].comment + '</div><div class="cell">' + percentage + '%</div></div>')
         $row.css('color', '#9ACD32')
         $('#satisfactionDetailsTooltip .table').append($row)
     })
@@ -2928,7 +2928,7 @@ function showSatisfactionBreakdown($icon, positiveComments, negativeComments, sa
         if (percentage == 0) {
             percentage = "< 1"
         }
-        var $row = $('<div class="table-row"  style="font-size: 15px; text-shadow: 0px 0px 3px rgba(0,0,0,0.5);"><div class="cell">' + entry[0].comment + '</div><div class="cell">' + percentage + '%</div></div>')
+        var $row = $('<div class="table-row"  style="font-size: 15px;"><div class="cell">' + entry[0].comment + '</div><div class="cell">' + percentage + '%</div></div>')
         $row.css('color', '#F08080')
         $('#satisfactionDetailsTooltip .table').append($row)
     })
