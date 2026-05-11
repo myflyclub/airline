@@ -14,12 +14,13 @@ object WorldStatisticsSource {
       val preparedStatement = connection.prepareStatement("SELECT * FROM " + WORLD_STATISTICS_TABLE + " WHERE week = ?")
       preparedStatement.setInt(1, cycle)
       val resultSet = preparedStatement.executeQuery()
-      
+
       while (resultSet.next()) {
         stats += WorldStatistics(
           week = resultSet.getInt("week"),
           period = Period(resultSet.getInt("period")),
           totalPax = resultSet.getInt("total_pax"),
+          totalTicketsSold = resultSet.getInt("total_tickets_sold"),
           missedPax = resultSet.getInt("missed_pax"),
           loadFactor = resultSet.getDouble("load_factor")
         )
@@ -35,14 +36,15 @@ object WorldStatisticsSource {
     val connection = Meta.getConnection()
     try {
       connection.setAutoCommit(false)
-      val preparedStatement = connection.prepareStatement("REPLACE INTO " + WORLD_STATISTICS_TABLE + " (week, period, total_pax, missed_pax, load_factor) VALUES(?,?,?,?,?)")
-      
+      val preparedStatement = connection.prepareStatement("REPLACE INTO " + WORLD_STATISTICS_TABLE + " (week, period, total_pax, total_tickets_sold, missed_pax, load_factor) VALUES(?,?,?,?,?,?)")
+
       stats.foreach { stat =>
         preparedStatement.setInt(1, stat.week)
         preparedStatement.setInt(2, stat.period.id)
         preparedStatement.setInt(3, stat.totalPax)
-        preparedStatement.setInt(4, stat.missedPax)
-        preparedStatement.setDouble(5, stat.loadFactor)
+        preparedStatement.setInt(4, stat.totalTicketsSold)
+        preparedStatement.setInt(5, stat.missedPax)
+        preparedStatement.setDouble(6, stat.loadFactor)
         preparedStatement.addBatch()
       }
       
