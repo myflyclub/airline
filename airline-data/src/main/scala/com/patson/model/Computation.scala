@@ -87,7 +87,7 @@ object Computation {
   val distanceCache = new ConcurrentHashMap[String, Int]()
 
   def calculateDistance(fromAirport: Airport, toAirport: Airport) : Int = {
-    val key = s"${fromAirport.id}${toAirport.id}"
+    val key = s"${fromAirport.id}_${toAirport.id}"
     distanceCache.computeIfAbsent(key, _ => Util.calculateDistance(fromAirport.latitude, fromAirport.longitude, toAirport.latitude, toAirport.longitude).toInt)
   }
 
