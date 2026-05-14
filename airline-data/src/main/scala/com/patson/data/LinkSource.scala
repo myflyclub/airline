@@ -520,8 +520,10 @@ object LinkSource {
         println("Updated " + updateCount + " link!")
 
         if (link.isInstanceOf[Link]) {
-          if (hasChange(existingLink.get, link)) {
-            ChangeHistorySource.saveLinkChange(buildChangeHistory(existingLink.map(_.asInstanceOf[Link]), Some(link.asInstanceOf[Link])))
+          existingLink.foreach { existing =>
+            if (hasChange(existing, link)) {
+              ChangeHistorySource.saveLinkChange(buildChangeHistory(Some(existing.asInstanceOf[Link]), Some(link.asInstanceOf[Link])))
+            }
           }
         }
 

@@ -2007,7 +2007,7 @@ function promptSwapModels() {
         if (!Object.prototype.hasOwnProperty.call(loadedModelsById, mId)) continue;
         var model = loadedModelsById[mId];
         // Same or smaller size
-        if (model.size <= selectedAirplaneModel.size + 0.01 && (!model.rejection || model.rejection.length === 0)) {
+        if (!model.rejection || model.rejection.length === 0) {
             var option = document.createElement('option');
             option.value = model.id;
             option.textContent = model.name;
@@ -2134,8 +2134,11 @@ function processSwapModels(isEstimate = true) {
                 }
 
                 const apCost = result.actionPointCost || 0;
+                const sizeApCost = result.sizeApCost || 0;
+                const constructionTimeApCost = result.constructionTimeApCost || 0;
                 const availableAP = activeAirline.actionPoints != null ? activeAirline.actionPoints : 0;
-                $('#swapAirplaneModal .apCost').text("⚡" + apCost).css('color', availableAP < apCost ? 'red' : '');
+                $('#swapAirplaneModal .apCostSize').text("⚡" + sizeApCost).css('color', availableAP < apCost ? 'red' : '');
+                $('#swapAirplaneModal .apCostDelivery').text("⚡" + constructionTimeApCost).css('color', availableAP < apCost ? 'red' : '');
 
                 if (costDiff > activeAirline.balance) {
                      disableButton($('#swapAirplaneModal .add'), "Not enough cash");

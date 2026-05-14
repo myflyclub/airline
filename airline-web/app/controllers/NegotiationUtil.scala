@@ -35,6 +35,26 @@ object NegotiationUtil {
   }
 
   /**
+   * Base aircraft-size impact for both link negotiation and airplane-swap AP costs.
+   * Returns (aircraftSizeDelta, multiplier) WITHOUT any negotiation-specialization discount;
+   * callers that need one subtract it from the returned multiplier locally.
+   */
+  def computeAircraftSizeImpact(
+      newModel: Model,
+      newFrequency: Int,
+      existingModel: Model,
+      existingFrequency: Int,
+      distance: Int,
+      flightCategory: FlightCategory.Value
+  ): (Double, Double) = {
+    val aircraftSizeDelta = newModel.airplaneTypeSize * newFrequency - existingModel.airplaneTypeSize * existingFrequency
+    val multiplier =
+      if (flightCategory == FlightCategory.INTERNATIONAL) 2.0
+      else 1.0 + Math.floor(distance / 700) / 10
+    (aircraftSizeDelta, multiplier)
+  }
+
+  /**
    * Returns the startup vigor adjustment (always <= 0, i.e. a discount) to add to the
    * requirement total, or None if no adjustment applies.
    *
@@ -165,13 +185,16 @@ object NegotiationUtil {
     }
     val existingFrequency = existingLinkOption.map(_.futureFrequency()).getOrElse(0)
 
-    val aircraftSizeDelta = newModel.airplaneTypeSize * newFrequency - existingModel.airplaneTypeSize * existingFrequency
+    val (aircraftSizeDelta, baseMultiplier) = NegotiationUtil.computeAircraftSizeImpact(
+      newModel, newFrequency, existingModel, existingFrequency,
+      newLink.distance, flightCategory
+    )
     val frequencyDelta = newFrequency - existingFrequency
     val requirements = ListBuffer[NegotiationRequirement]()
 
     val negotiationSmall = if(baseSpecializations.contains(AirlineBaseSpecialization.NEGOTIATION_SMALL) && newLink.to.size <= NegoSmall.maxAirportSize) 0.5 else 0
     val negotiationSmallText = if(baseSpecializations.contains(AirlineBaseSpecialization.NEGOTIATION_SMALL) && newLink.to.size <= NegoSmall.maxAirportSize) ", Small Airport Negotiator" else ""
-    val multiplier = if (flightCategory == FlightCategory.INTERNATIONAL) 2 - negotiationSmall else 1 + Math.floor(newLink.distance / 700) / 10 - negotiationSmall
+    val multiplier = baseMultiplier - negotiationSmall
     val NEW_LINK_BASE_REQUIREMENT = 1
     val UPDATE_BASE_REQUIREMENT = 0.3
 
