@@ -2,8 +2,10 @@ package com.patson.data
 
 import java.sql.Connection
 import java.sql.PreparedStatement
+import java.util.concurrent.{Executors, ScheduledExecutorService, ThreadFactory, TimeUnit}
 import com.patson.data.Constants._
 import com.zaxxer.hikari.{HikariConfig, HikariDataSource}
+import org.slf4j.LoggerFactory
 
 object Meta {
   private val hikariConfig = new HikariConfig()
@@ -22,12 +24,63 @@ object Meta {
       Constants.configFactory.getLong("hikari.connectionTimeout")
     else 10_000
   )
-  hikariConfig.setLeakDetectionThreshold(30000)
+  hikariConfig.setLeakDetectionThreshold(120_000)
 
   val dataSource = new HikariDataSource(hikariConfig)
 
+  private val logger = LoggerFactory.getLogger("com.patson.data.Meta")
+
+  private val appTag: String = {
+    val sysProp = System.getProperty("airline.appTag")
+    if (sysProp != null && sysProp.nonEmpty) sysProp
+    else if (Constants.configFactory.hasPath("play.http.secret.key")) "web"
+    else "data"
+  }
+
+  private val slowQueryThresholdMs: Long =
+    if (Constants.configFactory.hasPath("hikari.slowQueryThresholdMs"))
+      Constants.configFactory.getLong("hikari.slowQueryThresholdMs")
+    else 1000L
+
+  private val metricsScheduler: Option[ScheduledExecutorService] = {
+    val enabled =
+      Constants.configFactory.hasPath("hikari.metricsEnabled") &&
+        Constants.configFactory.getBoolean("hikari.metricsEnabled")
+    if (!enabled) None
+    else {
+      val interval =
+        if (Constants.configFactory.hasPath("hikari.metricsIntervalSeconds"))
+          Constants.configFactory.getInt("hikari.metricsIntervalSeconds")
+        else 30
+      val factory = new ThreadFactory {
+        def newThread(r: Runnable): Thread = {
+          val t = new Thread(r, "hikari-stats")
+          t.setDaemon(true)
+          t
+        }
+      }
+      val exec = Executors.newSingleThreadScheduledExecutor(factory)
+      exec.scheduleAtFixedRate(new Runnable {
+        def run(): Unit = {
+          try {
+            val mx = dataSource.getHikariPoolMXBean
+            if (mx == null) {
+              logger.info(s"[hikari][$appTag] pool not ready")
+            } else {
+              logger.info(s"[hikari][$appTag] active=${mx.getActiveConnections} idle=${mx.getIdleConnections} waiting=${mx.getThreadsAwaitingConnection} total=${mx.getTotalConnections} max=${dataSource.getMaximumPoolSize}")
+            }
+          } catch {
+            case t: Throwable => logger.warn(s"[hikari][$appTag] metrics log failed: ${t.getMessage}")
+          }
+        }
+      }, interval.toLong, interval.toLong, TimeUnit.SECONDS)
+      Some(exec)
+    }
+  }
+
   // Attempt to close the pool gracefully on JVM exit
   sys.addShutdownHook {
+    metricsScheduler.foreach(_.shutdownNow())
     if (!dataSource.isClosed) {
         dataSource.close()
     }
@@ -35,6 +88,22 @@ object Meta {
 
   def getConnection(): java.sql.Connection = {
     dataSource.getConnection()
+  }
+
+  def withTimedConnection[T](label: String)(body: java.sql.Connection => T): T = {
+    val t0 = System.nanoTime()
+    val connection = getConnection()
+    val acquired = System.nanoTime()
+    val acquireMs = (acquired - t0) / 1_000_000L
+    try {
+      body(connection)
+    } finally {
+      try connection.close() catch { case _: Throwable => () }
+      val workMs = (System.nanoTime() - acquired) / 1_000_000L
+      if (acquireMs + workMs >= slowQueryThresholdMs) {
+        logger.warn(s"[slow-db][$appTag] label=$label acquireMs=$acquireMs workMs=$workMs")
+      }
+    }
   }
 
   def createSchema() {
@@ -1930,6 +1999,7 @@ object Meta {
       "week INTEGER, " +
       "period INTEGER, " +
       "total_pax INTEGER, " +
+      "total_tickets_sold INTEGER NOT NULL DEFAULT 0, " +
       "missed_pax INTEGER, " +
       "load_factor DOUBLE, " +
       "PRIMARY KEY (week, period)" +

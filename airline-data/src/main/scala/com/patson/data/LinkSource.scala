@@ -21,6 +21,7 @@ object LinkSource {
   val ID_LOAD : Map[DetailType.Type, Boolean] = Map.empty
   
   private[this]val BASE_QUERY = "SELECT * FROM " + LINK_TABLE
+  private val CHUNK_SIZE = 1000
   
   def loadLinksByCriteria(criteria : List[(String, Any)], loadDetails : Map[DetailType.Value, Boolean] = SIMPLE_LOAD) = {
     var queryString = BASE_QUERY 
@@ -346,16 +347,6 @@ object LinkSource {
     loadFlightLinksByCriteria(List(("to_airport", toAirportId)), loadDetails)
   }
 
-//  def saveLink2(link : Link) : Option[Link] = {
-//       case Some(generatedId) =>
-//         link.id = generatedId
-//         Some(link)
-//       case None =>
-//         None
-//     }
-//  }
-
-    //[T <: RequestType](t: T)
   def saveLink[T <: Transport](link : T) : Option[T] = {
     val (fromAirportId : Int, toAirportId : Int, airlineId : Int, price : LinkClassValues, distance : Int, capacity : LinkClassValues, rawQuality : Int,  duration : Int, frequency : Int, flightNumber : Int, assignedAirplanes : Map[Airplane, LinkAssignment]) = {
       link.transportType match {
@@ -369,116 +360,104 @@ object LinkSource {
 
 
     }
-    //open the hsqldb
-    val connection = Meta.getConnection()
-    val preparedStatement = connection.prepareStatement("INSERT INTO " + LINK_TABLE + "(from_airport, to_airport, airline, price_economy, price_business, price_first, distance, capacity_economy, capacity_business, capacity_first, quality, duration, frequency, flight_number, airplane_model, from_country, to_country, transport_type) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS)
-
-    try {
-      preparedStatement.setInt(1, fromAirportId)
-      preparedStatement.setInt(2, toAirportId)
-      preparedStatement.setInt(3, airlineId)
-      preparedStatement.setInt(4, price(ECONOMY))
-      preparedStatement.setInt(5, price(BUSINESS))
-      preparedStatement.setInt(6, price(FIRST))
-      preparedStatement.setDouble(7, distance)
-      preparedStatement.setInt(8, capacity(ECONOMY))
-      preparedStatement.setInt(9, capacity(BUSINESS))
-      preparedStatement.setInt(10, capacity(FIRST))
-      preparedStatement.setInt(11, rawQuality)
-      preparedStatement.setInt(12, duration)
-      preparedStatement.setInt(13, frequency)
-      preparedStatement.setInt(14, flightNumber)
-      if (link.isInstanceOf[Link]) {
-        preparedStatement.setInt(15, link.asInstanceOf[Link].getAssignedModel().map(_.id).getOrElse(0))
-      } else {
-        preparedStatement.setNull(15, Types.INTEGER)
-      }
-      preparedStatement.setString(16, link.from.countryCode)
-      preparedStatement.setString(17, link.to.countryCode)
-      preparedStatement.setInt(18, link.transportType.id)
-
-      val updateCount = preparedStatement.executeUpdate()
-      //println("Saved " + updateCount + " link!")
-
-      if (updateCount > 0) {
-        val generatedKeys = preparedStatement.getGeneratedKeys
-        if (generatedKeys.next()) {
-          val generatedId = generatedKeys.getInt(1)
-        //  println("Id is " + generatedId)
-          //try to save assigned airplanes if any
-          updateAssignedPlanes(generatedId, assignedAirplanes)
-          link.id = generatedId
-
-          if (link.isInstanceOf[Link]) {
-            ChangeHistorySource.saveLinkChange(buildChangeHistory(None, Some(link.asInstanceOf[Link])))
-          }
-
-          return Some(link)
-        }
-      }
-      None
-    } finally {
-      preparedStatement.close()
-      connection.close()
-    }
-  }
-
-  def saveLinks[T <: Transport](links : List[T]) : Int = {
-     //open the hsqldb
-    val connection = Meta.getConnection()
-    val preparedStatement = connection.prepareStatement("INSERT INTO " + LINK_TABLE + "(from_airport, to_airport, airline, price_economy, price_business, price_first, distance, capacity_economy, capacity_business, capacity_first, quality, duration, frequency, flight_number, airplane_model, from_country, to_country, transport_type) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS)
-    var updateCount = 0
-    val changeHistoryEntries = ListBuffer[LinkChange]()
-    connection.setAutoCommit(false)
-    try {
-      links.foreach { link =>
-        preparedStatement.setInt(1, link.from.id)
-        preparedStatement.setInt(2, link.to.id)
-        preparedStatement.setInt(3, link.airline.id)
-        preparedStatement.setInt(4, link.price(ECONOMY))
-        preparedStatement.setInt(5, link.price(BUSINESS))
-        preparedStatement.setInt(6, link.price(FIRST))
-        preparedStatement.setDouble(7, link.distance)
-        preparedStatement.setInt(8, link.capacity(ECONOMY))
-        preparedStatement.setInt(9, link.capacity(BUSINESS))
-        preparedStatement.setInt(10, link.capacity(FIRST))
+    val generatedIdOption: Option[Int] = Using.resource(Meta.getConnection()) { connection =>
+      Using.resource(connection.prepareStatement("INSERT INTO " + LINK_TABLE + "(from_airport, to_airport, airline, price_economy, price_business, price_first, distance, capacity_economy, capacity_business, capacity_first, quality, duration, frequency, flight_number, airplane_model, from_country, to_country, transport_type) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS)) { preparedStatement =>
+        preparedStatement.setInt(1, fromAirportId)
+        preparedStatement.setInt(2, toAirportId)
+        preparedStatement.setInt(3, airlineId)
+        preparedStatement.setInt(4, price(ECONOMY))
+        preparedStatement.setInt(5, price(BUSINESS))
+        preparedStatement.setInt(6, price(FIRST))
+        preparedStatement.setDouble(7, distance)
+        preparedStatement.setInt(8, capacity(ECONOMY))
+        preparedStatement.setInt(9, capacity(BUSINESS))
+        preparedStatement.setInt(10, capacity(FIRST))
+        preparedStatement.setInt(11, rawQuality)
+        preparedStatement.setInt(12, duration)
+        preparedStatement.setInt(13, frequency)
+        preparedStatement.setInt(14, flightNumber)
         if (link.isInstanceOf[Link]) {
-          preparedStatement.setInt(11, link.asInstanceOf[Link].rawQuality)
-        } else {
-          preparedStatement.setNull(11, Types.INTEGER)
-        }
-        preparedStatement.setInt(12, link.duration)
-        preparedStatement.setInt(13, link.frequency)
-        if (link.isInstanceOf[Link]) {
-          preparedStatement.setInt(14, link.asInstanceOf[Link].flightNumber)
           preparedStatement.setInt(15, link.asInstanceOf[Link].getAssignedModel().map(_.id).getOrElse(0))
         } else {
-          preparedStatement.setNull(14, Types.INTEGER)
           preparedStatement.setNull(15, Types.INTEGER)
         }
         preparedStatement.setString(16, link.from.countryCode)
         preparedStatement.setString(17, link.to.countryCode)
         preparedStatement.setInt(18, link.transportType.id)
 
-
-        updateCount += preparedStatement.executeUpdate()
-        //println("Saved " + updateCount + " link!")
-
+        val updateCount = preparedStatement.executeUpdate()
         if (updateCount > 0) {
           val generatedKeys = preparedStatement.getGeneratedKeys
-          if (generatedKeys.next()) {
-            val generatedId = generatedKeys.getInt(1)
-            link.id = generatedId
+          if (generatedKeys.next()) Some(generatedKeys.getInt(1)) else None
+        } else None
+      }
+    }
+
+    generatedIdOption match {
+      case Some(generatedId) =>
+        link.id = generatedId
+        updateAssignedPlanes(generatedId, assignedAirplanes)
+        if (link.isInstanceOf[Link]) {
+          ChangeHistorySource.saveLinkChange(buildChangeHistory(None, Some(link.asInstanceOf[Link])))
+        }
+        Some(link)
+      case None => None
+    }
+  }
+
+  def saveLinks[T <: Transport](links : List[T]) : Int = {
+    var updateCount = 0
+    val changeHistoryEntries = ListBuffer[LinkChange]()
+
+    links.grouped(CHUNK_SIZE).foreach { chunk =>
+      Using.resource(Meta.getConnection()) { connection =>
+        connection.setAutoCommit(false)
+        Using.resource(connection.prepareStatement("INSERT INTO " + LINK_TABLE + "(from_airport, to_airport, airline, price_economy, price_business, price_first, distance, capacity_economy, capacity_business, capacity_first, quality, duration, frequency, flight_number, airplane_model, from_country, to_country, transport_type) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS)) { preparedStatement =>
+          chunk.foreach { link =>
+            preparedStatement.setInt(1, link.from.id)
+            preparedStatement.setInt(2, link.to.id)
+            preparedStatement.setInt(3, link.airline.id)
+            preparedStatement.setInt(4, link.price(ECONOMY))
+            preparedStatement.setInt(5, link.price(BUSINESS))
+            preparedStatement.setInt(6, link.price(FIRST))
+            preparedStatement.setDouble(7, link.distance)
+            preparedStatement.setInt(8, link.capacity(ECONOMY))
+            preparedStatement.setInt(9, link.capacity(BUSINESS))
+            preparedStatement.setInt(10, link.capacity(FIRST))
             if (link.isInstanceOf[Link]) {
-              changeHistoryEntries.append(buildChangeHistory(None, Some(link.asInstanceOf[Link])))
+              preparedStatement.setInt(11, link.asInstanceOf[Link].rawQuality)
+            } else {
+              preparedStatement.setNull(11, Types.INTEGER)
+            }
+            preparedStatement.setInt(12, link.duration)
+            preparedStatement.setInt(13, link.frequency)
+            if (link.isInstanceOf[Link]) {
+              preparedStatement.setInt(14, link.asInstanceOf[Link].flightNumber)
+              preparedStatement.setInt(15, link.asInstanceOf[Link].getAssignedModel().map(_.id).getOrElse(0))
+            } else {
+              preparedStatement.setNull(14, Types.INTEGER)
+              preparedStatement.setNull(15, Types.INTEGER)
+            }
+            preparedStatement.setString(16, link.from.countryCode)
+            preparedStatement.setString(17, link.to.countryCode)
+            preparedStatement.setInt(18, link.transportType.id)
+
+            val rowsAffected = preparedStatement.executeUpdate()
+            updateCount += rowsAffected
+
+            if (rowsAffected > 0) {
+              val generatedKeys = preparedStatement.getGeneratedKeys
+              if (generatedKeys.next()) {
+                link.id = generatedKeys.getInt(1)
+                if (link.isInstanceOf[Link]) {
+                  changeHistoryEntries.append(buildChangeHistory(None, Some(link.asInstanceOf[Link])))
+                }
+              }
             }
           }
         }
+        connection.commit()
       }
-      connection.commit()
-    } finally {
-      preparedStatement.close()
-      connection.close()
     }
 
     links.filter(_.transportType == TransportType.FLIGHT).foreach { link =>
@@ -491,7 +470,7 @@ object LinkSource {
 
   def updateLink(link : Transport) = {
     val existingLink = loadFlightLinkById(link.id, ID_LOAD) //use ID load to get the simple freq/capacity of previous state (even tho some airplanes might have just arrived)
-    Using.resource(Meta.getConnection()) { connection =>
+    val updateCount = Using.resource(Meta.getConnection()) { connection =>
       Using.resource(connection.prepareStatement("UPDATE " + LINK_TABLE + " SET price_economy = ?, price_business = ?, price_first = ?, capacity_economy = ?, capacity_business = ?, capacity_first = ?, quality = ?, duration = ?, frequency = ?, flight_number = ?, airplane_model = ?, last_update = ? WHERE id = ?")) { preparedStatement =>
         preparedStatement.setInt(1, link.price(ECONOMY))
         preparedStatement.setInt(2, link.price(BUSINESS))
@@ -516,64 +495,64 @@ object LinkSource {
         preparedStatement.setTimestamp(12, new java.sql.Timestamp(new Date().getTime()))
         preparedStatement.setInt(13, link.id)
 
-        val updateCount = preparedStatement.executeUpdate()
-        println("Updated " + updateCount + " link!")
-
-        if (link.isInstanceOf[Link]) {
-          if (hasChange(existingLink.get, link)) {
-            ChangeHistorySource.saveLinkChange(buildChangeHistory(existingLink.map(_.asInstanceOf[Link]), Some(link.asInstanceOf[Link])))
-          }
-        }
-
-        updateCount
+        preparedStatement.executeUpdate()
       }
     }
+
+    if (link.isInstanceOf[Link] && existingLink.exists(hasChange(_, link))) {
+      ChangeHistorySource.saveLinkChange(buildChangeHistory(existingLink.map(_.asInstanceOf[Link]), Some(link.asInstanceOf[Link])))
+    }
+
+    updateCount
   }
 
   def updateLinks[T <: Transport](links : List[T]) = {
-    val existingLinks = loadLinksByIds(links.map(_.id)).map(link => (link.id, link)).toMap
-    val changeEntries = ListBuffer[LinkChange]()
+    links.grouped(CHUNK_SIZE).foreach { chunk =>
+      val existingLinks = loadLinksByIds(chunk.map(_.id)).map(link => (link.id, link)).toMap
+      val chunkChangeEntries = ListBuffer[LinkChange]()
 
-    Using.resource(Meta.getConnection()) { connection =>
-      connection.setAutoCommit(false)
-      Using.resource(connection.prepareStatement("UPDATE " + LINK_TABLE + " SET price_economy = ?, price_business = ?, price_first = ?, capacity_economy = ?, capacity_business = ?, capacity_first = ?, quality = ?, duration = ?, frequency = ?, flight_number = ?, airplane_model = ?, last_update = ? WHERE id = ?")) { preparedStatement =>
-        links.foreach { link =>
-          preparedStatement.setInt(1, link.price(ECONOMY))
-          preparedStatement.setInt(2, link.price(BUSINESS))
-          preparedStatement.setInt(3, link.price(FIRST))
-          preparedStatement.setInt(4, link.capacity(ECONOMY))
-          preparedStatement.setInt(5, link.capacity(BUSINESS))
-          preparedStatement.setInt(6, link.capacity(FIRST))
-          if (link.isInstanceOf[Link]) {
-            preparedStatement.setInt(7, link.asInstanceOf[Link].rawQuality)
-          } else {
-            preparedStatement.setNull(7, Types.INTEGER)
-          }
-          preparedStatement.setInt(8, link.duration)
-          preparedStatement.setInt(9, link.frequency)
-          if (link.isInstanceOf[Link]) {
-            preparedStatement.setInt(10, link.asInstanceOf[Link].flightNumber)
-            preparedStatement.setInt(11, link.asInstanceOf[Link].getAssignedModel().map(_.id).getOrElse(0))
-          } else {
-            preparedStatement.setNull(10, Types.INTEGER)
-            preparedStatement.setNull(11, Types.INTEGER)
-          }
-          preparedStatement.setTimestamp(12, new java.sql.Timestamp(new Date().getTime()))
-          preparedStatement.setInt(13, link.id)
-          preparedStatement.addBatch()
+      Using.resource(Meta.getConnection()) { connection =>
+        connection.setAutoCommit(false)
+        Using.resource(connection.prepareStatement("UPDATE " + LINK_TABLE + " SET price_economy = ?, price_business = ?, price_first = ?, capacity_economy = ?, capacity_business = ?, capacity_first = ?, quality = ?, duration = ?, frequency = ?, flight_number = ?, airplane_model = ?, last_update = ? WHERE id = ?")) { preparedStatement =>
+          chunk.foreach { link =>
+            preparedStatement.setInt(1, link.price(ECONOMY))
+            preparedStatement.setInt(2, link.price(BUSINESS))
+            preparedStatement.setInt(3, link.price(FIRST))
+            preparedStatement.setInt(4, link.capacity(ECONOMY))
+            preparedStatement.setInt(5, link.capacity(BUSINESS))
+            preparedStatement.setInt(6, link.capacity(FIRST))
+            if (link.isInstanceOf[Link]) {
+              preparedStatement.setInt(7, link.asInstanceOf[Link].rawQuality)
+            } else {
+              preparedStatement.setNull(7, Types.INTEGER)
+            }
+            preparedStatement.setInt(8, link.duration)
+            preparedStatement.setInt(9, link.frequency)
+            if (link.isInstanceOf[Link]) {
+              preparedStatement.setInt(10, link.asInstanceOf[Link].flightNumber)
+              preparedStatement.setInt(11, link.asInstanceOf[Link].getAssignedModel().map(_.id).getOrElse(0))
+            } else {
+              preparedStatement.setNull(10, Types.INTEGER)
+              preparedStatement.setNull(11, Types.INTEGER)
+            }
+            preparedStatement.setTimestamp(12, new java.sql.Timestamp(new Date().getTime()))
+            preparedStatement.setInt(13, link.id)
+            preparedStatement.addBatch()
 
-          if (link.transportType == TransportType.FLIGHT) {
-            val flightLink = link.asInstanceOf[Link]
-            if (hasChange(existingLinks.get(link.id).get.asInstanceOf[Link], flightLink)) {
-              changeEntries.append(buildChangeHistory(existingLinks.get(flightLink.id).map(_.asInstanceOf[Link]), Some(flightLink)))
+            if (link.transportType == TransportType.FLIGHT) {
+              val flightLink = link.asInstanceOf[Link]
+              if (hasChange(existingLinks.get(link.id).get.asInstanceOf[Link], flightLink)) {
+                chunkChangeEntries.append(buildChangeHistory(existingLinks.get(flightLink.id).map(_.asInstanceOf[Link]), Some(flightLink)))
+              }
             }
           }
-        }
 
-        preparedStatement.executeBatch()
-        ChangeHistorySource.saveLinkChanges(changeEntries.toList)
+          preparedStatement.executeBatch()
+        }
+        connection.commit()
       }
-      connection.commit()
+
+      ChangeHistorySource.saveLinkChanges(chunkChangeEntries.toList)
     }
   }
 
@@ -611,30 +590,32 @@ object LinkSource {
   }
 
   def updateAssignedPlanes(assignedAirplanesByLinkId : Map[Int, Map[Airplane, LinkAssignment]]) = {
-    Using.resource(Meta.getConnection()) { connection =>
-      connection.setAutoCommit(false)
-      Using.resource(connection.prepareStatement("DELETE FROM " + LINK_ASSIGNMENT_TABLE + " WHERE link = ?")) { removeStatement =>
-        Using.resource(connection.prepareStatement("INSERT INTO " + LINK_ASSIGNMENT_TABLE + "(link, airplane, frequency, flight_minutes) VALUES(?,?,?,?)")) { insertStatement =>
-          assignedAirplanesByLinkId.foreach {
-            case (linkId, assignedAirplanes) =>
-              //remove all the existing ones assigned to this link
-              removeStatement.setInt(1, linkId)
-              removeStatement.addBatch()
-              assignedAirplanes.foreach { case(airplane, assignment) =>
-                if (assignment.frequency > 0) {
-                  insertStatement.setInt(1, linkId)
-                  insertStatement.setInt(2, airplane.id)
-                  insertStatement.setInt(3, assignment.frequency)
-                  insertStatement.setInt(4, assignment.flightMinutes)
-                  insertStatement.addBatch()
+    assignedAirplanesByLinkId.grouped(CHUNK_SIZE).foreach { chunk =>
+      Using.resource(Meta.getConnection()) { connection =>
+        connection.setAutoCommit(false)
+        Using.resource(connection.prepareStatement("DELETE FROM " + LINK_ASSIGNMENT_TABLE + " WHERE link = ?")) { removeStatement =>
+          Using.resource(connection.prepareStatement("INSERT INTO " + LINK_ASSIGNMENT_TABLE + "(link, airplane, frequency, flight_minutes) VALUES(?,?,?,?)")) { insertStatement =>
+            chunk.foreach {
+              case (linkId, assignedAirplanes) =>
+                //remove all the existing ones assigned to this link
+                removeStatement.setInt(1, linkId)
+                removeStatement.addBatch()
+                assignedAirplanes.foreach { case(airplane, assignment) =>
+                  if (assignment.frequency > 0) {
+                    insertStatement.setInt(1, linkId)
+                    insertStatement.setInt(2, airplane.id)
+                    insertStatement.setInt(3, assignment.frequency)
+                    insertStatement.setInt(4, assignment.flightMinutes)
+                    insertStatement.addBatch()
+                  }
                 }
-              }
+            }
+            removeStatement.executeBatch()
+            insertStatement.executeBatch()
           }
-          removeStatement.executeBatch()
-          insertStatement.executeBatch()
         }
+        connection.commit()
       }
-      connection.commit()
     }
   }
 
@@ -753,59 +734,68 @@ object LinkSource {
   def saveLinkConsumptions(linkConsumptions: List[LinkConsumptionDetails]) = {
     val (flightConsumptions, transitConsumptions) = linkConsumptions.partition(_.link.transportType == TransportType.FLIGHT)
 
-    Using.resource(Meta.getConnection()) { connection =>
-      connection.setAutoCommit(false)
-      Using.resource(connection.prepareStatement("REPLACE INTO " + LINK_CONSUMPTION_TABLE + "(link, price_economy, price_business, price_first, capacity_economy, capacity_business, capacity_first, sold_seats_economy, sold_seats_business, sold_seats_first, quality, fuel_cost, fuel_tax, crew_cost, airport_fees, inflight_cost, delay_compensation, maintenance_cost, lounge_cost, depreciation, revenue, profit, minor_delay_count, major_delay_count, cancellation_count, from_airport, to_airport, airline, distance, frequency, duration, flight_number, airplane_model, satisfaction, cycle) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")) { preparedStatement =>
-        flightConsumptions.foreach { linkConsumption =>
-          preparedStatement.setInt(1, linkConsumption.link.id)
-          preparedStatement.setInt(2, linkConsumption.link.price(ECONOMY))
-          preparedStatement.setInt(3, linkConsumption.link.price(BUSINESS))
-          preparedStatement.setInt(4, linkConsumption.link.price(FIRST))
-          preparedStatement.setInt(5, linkConsumption.link.capacity(ECONOMY))
-          preparedStatement.setInt(6, linkConsumption.link.capacity(BUSINESS))
-          preparedStatement.setInt(7, linkConsumption.link.capacity(FIRST))
-          preparedStatement.setInt(8, linkConsumption.link.soldSeats(ECONOMY))
-          preparedStatement.setInt(9, linkConsumption.link.soldSeats(BUSINESS))
-          preparedStatement.setInt(10, linkConsumption.link.soldSeats(FIRST))
-          preparedStatement.setInt(11, linkConsumption.link.computedQuality())
-          preparedStatement.setInt(12, linkConsumption.fuelCost)
-          preparedStatement.setInt(13, linkConsumption.fuelTax)
-          preparedStatement.setInt(14, linkConsumption.crewCost)
-          preparedStatement.setInt(15, linkConsumption.airportFees)
-          preparedStatement.setInt(16, linkConsumption.inflightCost)
-          preparedStatement.setInt(17, linkConsumption.delayCompensation)
-          preparedStatement.setInt(18, linkConsumption.maintenanceCost)
-          preparedStatement.setInt(19, linkConsumption.loungeCost)
-          preparedStatement.setInt(20, linkConsumption.depreciation)
-          preparedStatement.setInt(21, linkConsumption.revenue)
-          preparedStatement.setInt(22, linkConsumption.profit)
-          preparedStatement.setInt(23, linkConsumption.link.minorDelayCount)
-          preparedStatement.setInt(24, linkConsumption.link.majorDelayCount)
-          preparedStatement.setInt(25, linkConsumption.link.cancellationCount)
-          preparedStatement.setInt(26, linkConsumption.link.from.id)
-          preparedStatement.setInt(27, linkConsumption.link.to.id)
-          preparedStatement.setInt(28, linkConsumption.link.airline.id)
-          preparedStatement.setInt(29, linkConsumption.link.distance)
-          preparedStatement.setInt(30, linkConsumption.link.frequency)
-          preparedStatement.setInt(31, linkConsumption.link.duration)
-          preparedStatement.setInt(32, linkConsumption.link.asInstanceOf[Link].flightNumber)
-          preparedStatement.setInt(33, linkConsumption.link.asInstanceOf[Link].getAssignedModel().map(_.id).getOrElse(0))
-          preparedStatement.setDouble(34, linkConsumption.satisfaction)
-          preparedStatement.setInt(35, linkConsumption.cycle)
-          preparedStatement.addBatch()
+    flightConsumptions.grouped(CHUNK_SIZE).foreach { chunk =>
+      Using.resource(Meta.getConnection()) { connection =>
+        connection.setAutoCommit(false)
+        Using.resource(connection.prepareStatement("REPLACE INTO " + LINK_CONSUMPTION_TABLE + "(link, price_economy, price_business, price_first, capacity_economy, capacity_business, capacity_first, sold_seats_economy, sold_seats_business, sold_seats_first, quality, fuel_cost, fuel_tax, crew_cost, airport_fees, inflight_cost, delay_compensation, maintenance_cost, lounge_cost, depreciation, revenue, profit, minor_delay_count, major_delay_count, cancellation_count, from_airport, to_airport, airline, distance, frequency, duration, flight_number, airplane_model, satisfaction, cycle) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")) { preparedStatement =>
+          chunk.foreach { linkConsumption =>
+            preparedStatement.setInt(1, linkConsumption.link.id)
+            preparedStatement.setInt(2, linkConsumption.link.price(ECONOMY))
+            preparedStatement.setInt(3, linkConsumption.link.price(BUSINESS))
+            preparedStatement.setInt(4, linkConsumption.link.price(FIRST))
+            preparedStatement.setInt(5, linkConsumption.link.capacity(ECONOMY))
+            preparedStatement.setInt(6, linkConsumption.link.capacity(BUSINESS))
+            preparedStatement.setInt(7, linkConsumption.link.capacity(FIRST))
+            preparedStatement.setInt(8, linkConsumption.link.soldSeats(ECONOMY))
+            preparedStatement.setInt(9, linkConsumption.link.soldSeats(BUSINESS))
+            preparedStatement.setInt(10, linkConsumption.link.soldSeats(FIRST))
+            preparedStatement.setInt(11, linkConsumption.link.computedQuality())
+            preparedStatement.setInt(12, linkConsumption.fuelCost)
+            preparedStatement.setInt(13, linkConsumption.fuelTax)
+            preparedStatement.setInt(14, linkConsumption.crewCost)
+            preparedStatement.setInt(15, linkConsumption.airportFees)
+            preparedStatement.setInt(16, linkConsumption.inflightCost)
+            preparedStatement.setInt(17, linkConsumption.delayCompensation)
+            preparedStatement.setInt(18, linkConsumption.maintenanceCost)
+            preparedStatement.setInt(19, linkConsumption.loungeCost)
+            preparedStatement.setInt(20, linkConsumption.depreciation)
+            preparedStatement.setInt(21, linkConsumption.revenue)
+            preparedStatement.setInt(22, linkConsumption.profit)
+            preparedStatement.setInt(23, linkConsumption.link.minorDelayCount)
+            preparedStatement.setInt(24, linkConsumption.link.majorDelayCount)
+            preparedStatement.setInt(25, linkConsumption.link.cancellationCount)
+            preparedStatement.setInt(26, linkConsumption.link.from.id)
+            preparedStatement.setInt(27, linkConsumption.link.to.id)
+            preparedStatement.setInt(28, linkConsumption.link.airline.id)
+            preparedStatement.setInt(29, linkConsumption.link.distance)
+            preparedStatement.setInt(30, linkConsumption.link.frequency)
+            preparedStatement.setInt(31, linkConsumption.link.duration)
+            preparedStatement.setInt(32, linkConsumption.link.asInstanceOf[Link].flightNumber)
+            preparedStatement.setInt(33, linkConsumption.link.asInstanceOf[Link].getAssignedModel().map(_.id).getOrElse(0))
+            preparedStatement.setDouble(34, linkConsumption.satisfaction)
+            preparedStatement.setInt(35, linkConsumption.cycle)
+            preparedStatement.addBatch()
+          }
+          preparedStatement.executeBatch()
         }
-        preparedStatement.executeBatch()
+        connection.commit()
       }
-      Using.resource(connection.prepareStatement("REPLACE INTO " + TRANSIT_CONSUMPTION_TABLE + "(link, sold_seats_economy, cycle) VALUES(?,?,?)")) { preparedStatement =>
-        transitConsumptions.foreach { linkConsumption =>
-          preparedStatement.setInt(1, linkConsumption.link.id)
-          preparedStatement.setInt(2, linkConsumption.link.soldSeats(ECONOMY))
-          preparedStatement.setInt(3, linkConsumption.cycle)
-          preparedStatement.addBatch()
+    }
+
+    transitConsumptions.grouped(CHUNK_SIZE).foreach { chunk =>
+      Using.resource(Meta.getConnection()) { connection =>
+        connection.setAutoCommit(false)
+        Using.resource(connection.prepareStatement("REPLACE INTO " + TRANSIT_CONSUMPTION_TABLE + "(link, sold_seats_economy, cycle) VALUES(?,?,?)")) { preparedStatement =>
+          chunk.foreach { linkConsumption =>
+            preparedStatement.setInt(1, linkConsumption.link.id)
+            preparedStatement.setInt(2, linkConsumption.link.soldSeats(ECONOMY))
+            preparedStatement.setInt(3, linkConsumption.cycle)
+            preparedStatement.addBatch()
+          }
+          preparedStatement.executeBatch()
         }
-        preparedStatement.executeBatch()
+        connection.commit()
       }
-      connection.commit()
     }
   }
   def deleteLinkConsumptionsByCycle(cyclesFromLatest : Int) = {
