@@ -3178,23 +3178,24 @@ i, .italic {
 }
 
 /* Links table column widths */
-.link-col-flight  { width: 5%; }
-.link-col-from    { width: 13%; }
-.link-col-to      { width: 13%; }
-.link-col-model   { width: 11%; }
-.link-col-dist    { width: 6%; }
-.link-col-cap     { width: 7%; }
-.link-col-q       { width: 3%; }
-.link-col-lf      { width: 4%; }
-.link-col-elf     { width: 4%; }
-.link-col-blf     { width: 4%; }
-.link-col-flf     { width: 4%; }
-.link-col-sf      { width: 4%; }
-.link-col-rev     { width: 6%; }
-.link-col-profit  { width: 6%; }
-.link-col-margin  { width: 5%; }
-.link-col-staff   { width: 5%; }
-.link-col-pps     { width: 6%; }
+.link-col-flight        { width: 5%; }
+.link-col-from          { width: 13%; }
+.link-col-to            { width: 13%; }
+.link-col-model         { width: 10%; }
+.link-col-airplaneIds   { width: 12%; }
+.link-col-dist          { width: 6%; }
+.link-col-cap           { width: 7%; }
+.link-col-q             { width: 4%; }
+.link-col-lf            { width: 4%; }
+.link-col-elf           { width: 4%; }
+.link-col-blf           { width: 4%; }
+.link-col-flf           { width: 4%; }
+.link-col-sf            { width: 4%; }
+.link-col-rev           { width: 6%; }
+.link-col-profit        { width: 6%; }
+.link-col-margin        { width: 5%; }
+.link-col-staff         { width: 5%; }
+.link-col-pps           { width: 6%; }
 
 /* Links column visibility — CSS-class approach (O(1) per toggle) */
 #linksCanvas.links-hide-flightCode           [data-col-key="flightCode"]           { display: none; }
@@ -3214,3 +3215,83 @@ i, .italic {
 #linksCanvas.links-hide-profitMargin         [data-col-key="profitMargin"]         { display: none; }
 #linksCanvas.links-hide-currentStaffRequired [data-col-key="currentStaffRequired"] { display: none; }
 #linksCanvas.links-hide-profitPerStaff       [data-col-key="profitPerStaff"]       { display: none; }
+#linksCanvas.links-hide-airplaneIds          [data-col-key="airplaneIds"]          { display: none; }
+
+/* Vertical dual-handle range filter slider */
+.rs-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    box-sizing: border-box;
+    padding: 8px 0 6px;
+    gap: 3px;
+}
+.rs-label {
+    font-size: 9px;
+    font-weight: 600;
+    color: var(--table-header-color);
+    text-align: center;
+    white-space: nowrap;
+    line-height: 1.2;
+    letter-spacing: 0.2px;
+}
+.rs-label.active {
+    color: var(--accent-color);
+}
+.rs-area {
+    position: relative;
+    flex: 1;
+    width: 20px;
+    min-height: 40px;
+}
+.rs-track,
+.rs-fill {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 3px;
+    top: 0;
+    bottom: 0;
+    border-radius: 2px;
+    pointer-events: none;
+}
+.rs-track { background: var(--table-header-border); }
+.rs-fill  { background: var(--accent-color); opacity: 0.75; bottom: unset; }
+.rs-input {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 20px;
+    height: 100%;
+    writing-mode: vertical-lr;
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    pointer-events: none;
+    margin: 0;
+    padding: 0;
+}
+.rs-input::-webkit-slider-runnable-track { background: transparent; }
+.rs-input::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    pointer-events: auto;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--accent-color);
+    border: 2px solid var(--background-1);
+    cursor: ns-resize;
+    box-shadow: var(--shadow-1);
+}
+.rs-input::-moz-range-thumb {
+    pointer-events: auto;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--accent-color);
+    border: 2px solid var(--background-1);
+    cursor: ns-resize;
+    box-shadow: var(--shadow-1);
+}
+.rs-input::-moz-range-track { background: transparent; }

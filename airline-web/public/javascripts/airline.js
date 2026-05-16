@@ -8,25 +8,27 @@ var linksAverages = null
 var linksViewMode = 'weekly'
 
 const LINK_COLUMNS = [
-    { key: 'flightCode',           label: 'Flight #' },
-    { key: 'fromAirportCode',      label: 'From Airport' },
-    { key: 'toAirportCode',        label: 'To Airport' },
-    { key: 'model',                label: 'Model' },
-    { key: 'distance',             label: 'Distance' },
-    { key: 'totalCapacity',        label: 'Capacity' },
-    { key: 'computedQuality',      label: 'Q' },
-    { key: 'totalLoadFactor',      label: 'LF' },
-    { key: 'economyLF',            label: 'E-LF' },
-    { key: 'businessLF',           label: 'B-LF' },
-    { key: 'firstLF',              label: 'F-LF' },
-    { key: 'satisfaction',         label: 'SF' },
-    { key: 'revenue',              label: 'Revenue' },
-    { key: 'profit',               label: 'Profit' },
-    { key: 'profitMargin',         label: 'Margin' },
-    { key: 'currentStaffRequired', label: 'Staff' },
-    { key: 'profitPerStaff',       label: 'Profit/Staff' },
+    { key: 'flightCode',           label: 'Flight #',     minWidth:  60 },
+    { key: 'fromAirportCode',      label: 'From Airport', minWidth: 140 },
+    { key: 'toAirportCode',        label: 'To Airport',   minWidth: 140 },
+    { key: 'model',                label: 'Model',        minWidth: 130 },
+    { key: 'airplaneIds',          label: 'Aircraft',     minWidth: 150 },
+    { key: 'distance',             label: 'Distance',     minWidth:  70 },
+    { key: 'totalCapacity',        label: 'Capacity',     minWidth:  70 },
+    { key: 'computedQuality',      label: 'Q',            minWidth:  40 },
+    { key: 'totalLoadFactor',      label: 'LF',           minWidth:  45 },
+    { key: 'economyLF',            label: 'E-LF',         minWidth:  45 },
+    { key: 'businessLF',           label: 'B-LF',         minWidth:  45 },
+    { key: 'firstLF',              label: 'F-LF',         minWidth:  45 },
+    { key: 'satisfaction',         label: 'SF',           minWidth:  45 },
+    { key: 'revenue',              label: 'Revenue',      minWidth:  75 },
+    { key: 'profit',               label: 'Profit',       minWidth:  75 },
+    { key: 'profitMargin',         label: 'Margin',       minWidth:  75 },
+    { key: 'currentStaffRequired', label: 'Staff',        minWidth:  55 },
+    { key: 'profitPerStaff',       label: 'Profit/Staff', minWidth:  80 },
 ]
-const LINK_COLUMNS_DEFAULT_HIDDEN = ['computedQuality', 'economyLF', 'businessLF', 'firstLF', 'revenue']
+const LINK_COLUMNS_DEFAULT_HIDDEN = ['computedQuality', 'economyLF', 'businessLF', 'firstLF', 'revenue', 'airplaneIds']
+const LINKS_TABLE_CHECKBOX_WIDTH = 40
 let hiddenLinkColumns = new Set(
     JSON.parse(localStorage.getItem('hiddenLinkColumns') ?? 'null')
     ?? LINK_COLUMNS_DEFAULT_HIDDEN
@@ -1975,6 +1977,7 @@ function removeTempPath() {
 }
 
 function showLinksCanvas(selectedLink = null, isReload = true) {
+    if (typeof storeSelectedAirplaneIds !== 'undefined') storeSelectedAirplaneIds = [];
     initLinksViewSwitch()
     initLinksColumnPicker()
     applyLinkColumnVisibility()
@@ -2006,6 +2009,7 @@ function computeLinkDerivedProperties(links) {
         const cancelledTotal = link.cancelledSeats ? link.cancelledSeats.total : 0
         link.totalLoadFactor = link.totalCapacityHistory > 0 ? Math.round(link.totalPassengers / (link.totalCapacityHistory - cancelledTotal) * 100) : 0
         link.model = (link.assignedAirplanes && link.assignedAirplanes.length > 0) ? link.assignedAirplanes[0].airplane.name : "-"
+        link.airplaneIds = (link.assignedAirplanes || []).map(a => a.airplane.id).join(', ')
         link.flightNum = parseInt(link.flightCode.split(' ')[1]) || 0
         const cancelledEco = link.cancelledSeats?.economy  ?? 0
         const cancelledBiz = link.cancelledSeats?.business ?? 0
@@ -2095,9 +2099,13 @@ function toggleLinkColumnVisibility(key) {
 
 function applyLinkColumnVisibility() {
     const canvas = document.getElementById('linksCanvas')
+    let totalWidth = LINKS_TABLE_CHECKBOX_WIDTH
     LINK_COLUMNS.forEach(col => {
-        canvas.classList.toggle('links-hide-' + col.key, hiddenLinkColumns.has(col.key))
+        const hidden = hiddenLinkColumns.has(col.key)
+        canvas.classList.toggle('links-hide-' + col.key, hidden)
+        if (!hidden) totalWidth += col.minWidth
     })
+    $('#linksCanvas .table-container-x > .table.data, #linksCanvas .table-container-y').css('min-width', totalWidth + 'px')
 }
 
 document.addEventListener('distanceUnitChanged', function() {
@@ -2255,11 +2263,12 @@ function updateLinksTable(sortProperty, sortOrder) {
     $.each(loadedLinks, function(index, link) {
         let isFiltered = false;
         Object.entries(state.selectedColumnFilter).forEach(([property, filterValues]) => {
-            if (!Array.isArray(filterValues) || filterValues.length < 1) {
-                return;
-            }
-            if (!filterValues.includes(String(link[property]))) {
-                isFiltered = true;
+            if (!filterValues) return;
+            if (filterValues.min !== undefined) {
+                const val = Number(link[property]);
+                if (val < filterValues.min || val > filterValues.max) isFiltered = true;
+            } else if (Array.isArray(filterValues) && filterValues.length > 0) {
+                if (!filterValues.includes(String(link[property]))) isFiltered = true;
             }
         });
         if (!isFiltered) {
@@ -2284,6 +2293,7 @@ function updateLinksTable(sortProperty, sortOrder) {
             `<div class='cell' data-col-key='fromAirportCode'>${getCountryFlagImg(link.fromCountryCode)}${getAirportText(link.fromAirportCity, link.fromAirportCode)}</div>` +
             `<div class='cell' data-col-key='toAirportCode'>${getCountryFlagImg(link.toCountryCode)}${getAirportText(link.toAirportCity, link.toAirportCode)}</div>` +
             `<div class='cell' data-col-key='model'>${link.model}</div>` +
+            `<div class='cell' data-col-key='airplaneIds'>${link.airplaneIds}</div>` +
             `<div class='cell' data-col-key='distance' align='right'>${Math.round(convertDistance(link.distance))}${distanceLabel()}</div>` +
             `<div class='cell' data-col-key='totalCapacity' align='right'>${link.totalCapacity}(${link.frequency})</div>` +
             `<div class='cell' data-col-key='computedQuality' align='right'>${quality}</div>` +
@@ -3630,6 +3640,12 @@ function toggleLinkSelection(linkId, checkbox) {
         $("#toggleAllLinks").prop('checked', false)
     }
     updateLinksActionBar()
+}
+
+function clearLinksSelection() {
+    selectedLinkIds.clear();
+    $('.link-checkbox').prop('checked', false);
+    updateLinksActionBar();
 }
 
 function updateLinksActionBar() {

@@ -746,12 +746,6 @@ class AirplaneApplication @Inject()(cc: ControllerComponents) extends AbstractCo
                 val newModel = newModelOpt.get
                 var validationError: Option[String] = None
 
-                if (Model.Type.size(newModel.airplaneType) > Model.Type.size(airplanesToSwap.head.model.airplaneType)) {
-                  val oldModel = airplanesToSwap.head.model
-                  validationError = Some(s"Can only swap planes if they're of the same or smaller size-classification type, and ${newModel.name} is a ${newModel.airplaneType} whereas ${oldModel.name} is a ${oldModel.airplaneType}.")
-                }
-
-
                 // Check for mixed aircraft on links: get all links where these airplanes are assigned
                 val airplaneIdSet = airplaneIds.toSet
                 val allLinksWithAssignedAirplanes = LinkSource.loadFlightLinksByCriteria(List(("airline", airlineId)), LinkSource.FULL_LOAD)
@@ -803,10 +797,6 @@ class AirplaneApplication @Inject()(cc: ControllerComponents) extends AbstractCo
                 if (validationError.isDefined) {
                   BadRequest(validationError.get)
                 } else {
-                  // Calculate action point cost: 1 per 400 total capacity or 1 per 5 aircraft, whichever is more rounded down, at least 1
-                  val totalCapacity = airplanesToSwap.map(_.model.capacity).sum
-                  val apCost = Math.max(Math.max(totalCapacity / 200, airplanesToSwap.length / 4), 1)
-
                   // Calculate total sell value
                   val totalSellValue: Long = airplanesToSwap.map(airplane =>
                     Computation.calculateAirplaneSellValue(airplane).toLong
@@ -817,6 +807,31 @@ class AirplaneApplication @Inject()(cc: ControllerComponents) extends AbstractCo
                     ModelDiscount.getCombinedDiscountsByModelId(airlineId, newModel.id)
                   )
                   val totalBuyCost = newModelWithDiscounts.price.toLong * airplanesToSwap.length
+
+                  // ---- Size AP (mirrors negotiation cost rate for gate upsizing) ----
+                  val sizeApTotal: Double = linksOfSwappingAirplanes.map { link =>
+                    val swappingFreqOnLink = airplanesToSwap.flatMap { a =>
+                      oldAirplaneAssignments.get(a.id).flatMap(_.assignments.get(link.id)).map(_.frequency)
+                    }.sum
+                    if (swappingFreqOnLink == 0) 0.0
+                    else {
+                      val oldModel = airplanesToSwap.head.model
+                      val flightCategory = Computation.getFlightCategory(link.from, link.to)
+                      val (sizeDelta, multiplier) = NegotiationUtil.computeAircraftSizeImpact(
+                        newModelWithDiscounts, swappingFreqOnLink,
+                        oldModel, swappingFreqOnLink,
+                        link.distance, flightCategory
+                      )
+                      Math.max(0.0, sizeDelta) * multiplier
+                    }
+                  }.sum
+                  val sizeApCost: Int = Math.ceil(sizeApTotal).toInt
+
+                  // ---- Construction-time AP (1 AP per airplane per 12 months extra delivery time) ----
+                  val ctDelta = Math.max(0, newModelWithDiscounts.constructionTime - airplanesToSwap.head.model.constructionTime)
+                  val constructionTimeApCost: Int = (ctDelta / 52) * airplanesToSwap.length
+
+                  val apCost: Int = sizeApCost + constructionTimeApCost
 
                   // Per-airplane utilization check: detect if new model would push any airplane over 100%.
                   // airplaneFrequencyCuts: (airplaneId, linkId) -> new (reduced) frequency
@@ -871,6 +886,8 @@ class AirplaneApplication @Inject()(cc: ControllerComponents) extends AbstractCo
                       "buyCost" -> totalBuyCost,
                       "costDifference" -> costDifference,
                       "actionPointCost" -> apCost,
+                      "sizeApCost" -> sizeApCost,
+                      "constructionTimeApCost" -> constructionTimeApCost,
                       "isEstimate" -> true,
                       "envelope" -> Json.obj(
                         "maxDistance" -> maxDistance,
@@ -999,6 +1016,8 @@ class AirplaneApplication @Inject()(cc: ControllerComponents) extends AbstractCo
                         "buyCost" -> totalBuyCost,
                         "netCost" -> netCost,
                         "actionPointCost" -> apCost,
+                        "sizeApCost" -> sizeApCost,
+                        "constructionTimeApCost" -> constructionTimeApCost,
                         "newAirplanes" -> Json.toJson(newAirplanesToCreate.toList)
                       ))
                     }

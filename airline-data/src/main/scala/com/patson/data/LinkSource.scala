@@ -495,7 +495,18 @@ object LinkSource {
         preparedStatement.setTimestamp(12, new java.sql.Timestamp(new Date().getTime()))
         preparedStatement.setInt(13, link.id)
 
-        preparedStatement.executeUpdate()
+        val updateCount = preparedStatement.executeUpdate()
+        println("Updated " + updateCount + " link!")
+
+        if (link.isInstanceOf[Link]) {
+          existingLink.foreach { existing =>
+            if (hasChange(existing, link)) {
+              ChangeHistorySource.saveLinkChange(buildChangeHistory(Some(existing.asInstanceOf[Link]), Some(link.asInstanceOf[Link])))
+            }
+          }
+        }
+
+        updateCount
       }
     }
 

@@ -58,6 +58,14 @@ function updateColumnFilterOptions(values, tableName = 'links') {
     }
 
     Object.entries(values).forEach(([column, rows]) => {
+        const filterDivId = "fromAirportCode" in values ? '#linksTableFilterHeader' : '#aircraftTableFilterHeader';
+        const filterDiv = $(filterDivId).find(`[data-filter-property='${column}']`);
+
+        if (isRangeColumn(column)) {
+            renderRangeSlider(column, rows, state, tableName, filterDiv);
+            return;
+        }
+
         let selectElement = $('<select>', {
             multiple: "multiple",
             style: "width: 100%; height: 100%; background: transparent"
@@ -116,76 +124,6 @@ function updateColumnFilterOptions(values, tableName = 'links') {
                     updateAirplaneModelTable(selectedSortHeader.data('sort-property'), selectedSortHeader.data('sort-order'));
                 }
             });
-        } else if (shouldUseBuckets(column, rows)) {
-            const buckets = createDynamicBuckets(column, rows);
-
-            if (buckets.length === 0) {
-                // Fallback to regular dropdown if no valid buckets
-                Object.entries(rows)
-                    .sort((a, b) => {
-                        const numA = Number(a[0]);
-                        const numB = Number(b[0]);
-                        return !isNaN(numA) && !isNaN(numB) ? numA - numB : a[0].localeCompare(b[0]);
-                    })
-                    .forEach(([key, value]) => {
-                        const option = $('<option>', { value: key, text: value });
-                        selectElement.append(option);
-                    });
-            } else {
-                // Create options for each bucket that has data
-                buckets.forEach((bucket, index) => {
-                    // Check if any values fall within this bucket
-                    const hasDataInBucket = Object.keys(rows).some(key => {
-                        const value = parseInt(key);
-                        return !isNaN(value) && value >= bucket.min && value <= bucket.max;
-                    });
-
-                    if (hasDataInBucket) {
-                        const bucketOption = $('<option>', {
-                            value: `bucket-${index}`,
-                            text: bucket.label
-                        });
-                        selectElement.append(bucketOption);
-                    }
-                });
-            }
-
-            $(selectElement).on("change", function (event) {
-                state.selectedColumnFilter[column] = [];
-
-                for (let option of this.selectedOptions) {
-                    if (option.value === "") { // Show all
-                        state.selectedColumnFilter[column] = [];
-                        break;
-                    }
-
-                    if (option.value.startsWith("bucket-")) {
-                        const bucketIndex = parseInt(option.value.replace("bucket-", ""));
-                        const bucket = buckets[bucketIndex];
-
-                        if (bucket) {
-                            // Add all values that fall within this bucket
-                            Object.keys(rows).forEach(key => {
-                                const value = parseInt(key);
-                                if (!isNaN(value) && value >= bucket.min && value <= bucket.max) {
-                                    state.selectedColumnFilter[column].push(key);
-                                }
-                            });
-                        }
-                    } else {
-                        // Handle non-bucket selections (fallback case)
-                        state.selectedColumnFilter[column].push(option.value);
-                    }
-                }
-
-                updateSelectedClasses(this, column, tableName);
-                var selectedSortHeader = $(`#${tableName}TableSortHeader .cell.selected`);
-                if (tableName === 'links') {
-                    updateLinksTable(selectedSortHeader.data('sort-property'), selectedSortHeader.data('sort-order'));
-                } else if (tableName === 'aircraft') {
-                    updateAirplaneModelTable(selectedSortHeader.data('sort-property'), selectedSortHeader.data('sort-order'));
-                }
-            });
         } else { // Render other columns
             Object.entries(rows).sort((a, b) => {
                 const keyA = a[0];
@@ -229,9 +167,6 @@ function updateColumnFilterOptions(values, tableName = 'links') {
             });
         }
 
-        // look for hard-coded values to set the filterDivId
-        const filterDivId = "fromAirportCode" in values ? '#linksTableFilterHeader' : '#aircraftTableFilterHeader';
-        const filterDiv = $(filterDivId).find(`[data-filter-property='${column}']`);
         filterDiv.empty();
         filterDiv.append(selectElement);
 
@@ -240,144 +175,94 @@ function updateColumnFilterOptions(values, tableName = 'links') {
     });
 }
 
-function shouldUseBuckets(column, rows) {
-    const bucketColumns = ['distance', 'range', 'runwayRequirement', 'capacity'];
-
-    if (!bucketColumns.includes(column)) {
-        return false;
-    }
-
-    // Check if the data is primarily numeric
-    const keys = Object.keys(rows);
-    const numericKeys = keys.filter(key => !isNaN(parseInt(key))).length;
-
-    // Use bucketing if more than 75% of values are numeric and we have enough data points
-    return numericKeys > keys.length * 0.75 && keys.length > 6;
+function isRangeColumn(column) {
+    return ['distance', 'range', 'runwayRequirement', 'capacity', 'quality'].includes(column);
 }
 
-function getUnitLabel(column) {
-    const unitMap = {
-        'distance': distanceLabel(),
-        'range': distanceLabel(),
-        'runwayRequirement': 'm',
-        'capacity': 'pax'
-    };
-    return unitMap[column] || '';
+function formatRangeLabel(column, value) {
+    if (column === 'range' || column === 'distance') return Math.round(convertDistance(value));
+    return Math.round(value);
 }
 
-function roundToNearest(value, nearest) {
-    if (nearest <= 0) return Math.round(value); // Default to Math.round if nearest is invalid
-    return Math.round(value / nearest) * nearest;
-}
+function renderRangeSlider(column, rows, state, tableName, filterDiv) {
+    const rawValues = Object.keys(rows).map(Number).filter(v => !isNaN(v));
+    if (rawValues.length === 0) return;
 
-function createDynamicBuckets(column, rows, bucketCount = 9) {
-    // Get all numeric values from the keys of the 'rows' object
-    const values = Object.keys(rows).map(key => parseInt(key)).filter(val => !isNaN(val));
+    const overallMin = Math.min(...rawValues);
+    const overallMax = Math.max(...rawValues);
+    const unit = column === 'range' || column === 'distance' ? distanceLabel()
+               : column === 'runwayRequirement' ? 'm' : '';
 
-    if (values.length === 0) {
-        return [];
+    const saved = state.filterOptionValues[column];
+    const curMin = (saved && saved.min !== undefined) ? saved.min : overallMin;
+    const curMax = (saved && saved.max !== undefined) ? saved.max : overallMax;
+
+    const wrap = $('<div class="rs-wrap"></div>');
+    const loLabel = $(`<div class="rs-label rs-lo-label">${formatRangeLabel(column, curMin)}${unit ? ' ' + unit : ''}</div>`);
+    const hiLabel = $(`<div class="rs-label rs-hi-label">${formatRangeLabel(column, curMax)}${unit ? ' ' + unit : ''}</div>`);
+    const area = $('<div class="rs-area"></div>');
+    const track = $('<div class="rs-track"></div>');
+    const fill = $('<div class="rs-fill"></div>');
+    const inputHi = $('<input type="range" orient="vertical" class="rs-input rs-hi">').attr({ min: overallMin, max: overallMax, value: curMax, step: 1 });
+    const inputLo = $('<input type="range" orient="vertical" class="rs-input rs-lo">').attr({ min: overallMin, max: overallMax, value: curMin, step: 1 });
+
+    area.append(track, fill, inputHi, inputLo);
+    wrap.append(loLabel, area, hiLabel);
+    filterDiv.empty().append(wrap);
+
+    function updateFill(lo, hi) {
+        const span = overallMax - overallMin || 1;
+        const loPct = (lo - overallMin) / span * 100;
+        const hiPct = (hi - overallMin) / span * 100;
+        // min at top (loPct=0), max at bottom (hiPct=100)
+        fill.css({ top: loPct + '%', height: (hiPct - loPct) + '%' });
+        loLabel.text(formatRangeLabel(column, lo) + (unit ? ' ' + unit : ''));
+        hiLabel.text(formatRangeLabel(column, hi) + (unit ? ' ' + unit : ''));
+        const isFiltering = lo !== overallMin || hi !== overallMax;
+        loLabel.toggleClass('active', isFiltering);
+        hiLabel.toggleClass('active', isFiltering);
+        // When both thumbs are near the bottom (high values), lo needs to be on top so it can be dragged up
+        if (hiPct > 50) { inputLo.css('z-index', 3); inputHi.css('z-index', 2); }
+        else             { inputLo.css('z-index', 2); inputHi.css('z-index', 3); }
     }
 
-    const minValue = Math.min(...values);
-    const maxValue = Math.max(...values);
-    const unit = getUnitLabel(column);
-
-    // Handle cases where all values are the same
-    if (minValue === maxValue) {
-        return [{
-            min: minValue,
-            max: maxValue,
-            label: `${minValue} ${unit}`
-        }];
-    }
-
-    const range = maxValue - minValue;
-    let roundingPrecision;
-
-    // Determine rounding precision based on the range
-    if (range < 10) {         // Very small range
-        roundingPrecision = 1;  // Round to nearest integer
-    } else if (range > 1000) { // Large range
-        roundingPrecision = 100;
-    } else {
-        roundingPrecision = 10; // Defaulting to 10 for this intermediate range
-    }
-
-    // Calculate base segment size
-    const segmentSize = range / bucketCount;
-
-    const buckets = [];
-    let lastProcessedMax = -Infinity; // Tracks the max of the previously created bucket
-
-    for (let i = 0; i < bucketCount; i++) {
-        let bucketMin, bucketMax;
-
-        // --- Calculate bucketMin ---
-        if (i === 0) {
-            // First bucket's min is the rounded overall minValue
-            bucketMin = roundToNearest(minValue, roundingPrecision);
-        } else {
-            // Subsequent bucket's min starts after the previous bucket's max
-            let potentialMin = lastProcessedMax + 1; // Conceptual start (e.g., if lastMax was 19, this is 20)
-            bucketMin = roundToNearest(potentialMin, roundingPrecision);
-
-            // Adjust if rounding didn't advance enough
-            // e.g. lastProcessedMax=20 (rp=10). potentialMin=21. roundToNearest(21,10)=20.
-            // So, bucketMin (20) <= lastProcessedMax (20). Needs to jump to 30.
-            if (bucketMin <= lastProcessedMax) {
-                bucketMin = lastProcessedMax + 1;
-            }
-        }
-
-        // --- Calculate bucketMax ---
-        if (i === bucketCount - 1) {
-            // Last bucket's max is the rounded overall maxValue
-            bucketMax = roundToNearest(maxValue, roundingPrecision);
-        } else {
-            // Theoretical end (exclusive) for this bucket
-            let rawBucketEndExclusive = minValue + ((i + 1) * segmentSize);
-            // Inclusive max is (theoretical end - 1), then rounded
-            bucketMax = roundToNearest(rawBucketEndExclusive - 1, roundingPrecision);
-        }
-
-        // --- Ensure min <= max ---
-        // This can happen if segmentSize is very small relative to roundingPrecision,
-        // or if bucketMin was pushed up aggressively.
-        if (bucketMin > bucketMax) {
-            bucketMax = bucketMin; // Make it a "point" bucket
-        }
-
-        // combine the last two buckets as our biggest bucket is often too small
-        if (i === bucketCount - 2) {
-            buckets.push({
-                min: bucketMin,
-                max: maxValue
-            });
-            break;
-        }
-
-        buckets.push({
-            min: bucketMin,
-            max: bucketMax,
-        });
-
-        lastProcessedMax = bucketMax;
-    }
-
-    buckets.forEach((bucket, index) => {
-        if (bucket.min === bucket.max) {
-            bucket.label = `${bucket.min} ${unit}`;
-        } else if (index === buckets.length - 1) { // Last bucket
-            // Check if this last bucket effectively is the end or extends beyond known max
-            // The "+" implies it catches all higher values.
-            bucket.label = `${bucket.min}+ ${unit}`;
-        } else {
-            bucket.label = `${bucket.min}-${bucket.max} ${unit}`;
-        }
+    inputHi.on('input', function() {
+        let hi = parseInt(this.value);
+        const lo = parseInt(inputLo.val());
+        if (hi < lo) { hi = lo; this.value = hi; }
+        updateFill(lo, hi);
+        applyRangeFilter(column, lo, hi, overallMin, overallMax, state, tableName);
     });
 
-    // Filter out any potentially problematic buckets if min somehow ended up > max
-    return buckets.filter(b => b.min <= b.max);
+    inputLo.on('input', function() {
+        const hi = parseInt(inputHi.val());
+        let lo = parseInt(this.value);
+        if (lo > hi) { lo = hi; this.value = lo; }
+        updateFill(lo, hi);
+        applyRangeFilter(column, lo, hi, overallMin, overallMax, state, tableName);
+    });
+
+    updateFill(curMin, curMax);
+
+    if (saved && saved.min !== undefined && (saved.min !== overallMin || saved.max !== overallMax)) {
+        state.selectedColumnFilter[column] = { min: curMin, max: curMax };
+    }
+}
+
+function applyRangeFilter(column, lo, hi, overallMin, overallMax, state, tableName) {
+    if (lo === overallMin && hi === overallMax) {
+        delete state.selectedColumnFilter[column];
+        state.filterOptionValues[column] = {};
+    } else {
+        state.selectedColumnFilter[column] = { min: lo, max: hi };
+        state.filterOptionValues[column] = { min: lo, max: hi };
+    }
+    const selectedSortHeader = $(`#${tableName}TableSortHeader .cell.selected`);
+    if (tableName === 'links') {
+        updateLinksTable(selectedSortHeader.data('sort-property'), selectedSortHeader.data('sort-order'));
+    } else if (tableName === 'aircraft') {
+        updateAirplaneModelTable(selectedSortHeader.data('sort-property'), selectedSortHeader.data('sort-order'));
+    }
 }
 
 function updateSelectedClasses(selectElement, column, tableName) {
@@ -444,6 +329,9 @@ function resetTableFilters(tableName) {
         $(this).find('option').prop('selected', false).removeClass('selected')
         $(this).find('option[value=""]').prop('selected', true).addClass('selected')
     })
+    $(headerId).find('.rs-lo').each(function() { this.value = this.min; })
+    $(headerId).find('.rs-hi').each(function() { this.value = this.max; })
+    $(headerId).find('.rs-fill').css({ top: '0%', height: '100%' })
 }
 
 function toggleSimpleSortOrder(sortHeader, renderFn, ...extraArgs) {
