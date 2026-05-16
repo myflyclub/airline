@@ -96,53 +96,34 @@ object CountryAirlineTitle {
     if (totalPax == 0) return CountryTitles(List.empty, List.empty)
 
     val currentCycle = CycleSource.loadCycle()
-    val delegateLevels = ManagerSource.loadCountryDelegateLevelsByCountry(countryCode, currentCycle)
-    val delegateMultiplier = AirlineCountryRelationship.getDelegateBonusMultiplier(country)
-    val countryMutualRelationships = AirlineCountryRelationship.countryRelationships
+    val managerLevels = ManagerSource.loadCountryDelegateLevelsByCountry(countryCode, currentCycle)
+    val managerMultiplier = AirlineCountryRelationship.getManagerBonusMultiplier(country)
 
-    // Score each airline using HOME_COUNTRY + MARKET_SHARE + DELEGATE factors (no TITLE — avoids circularity).
-    // Score is BigDecimal so pct acts as a tiebreaker within the same integer score.
-    // Carry the Airline object to avoid repeated cache lookups during partition and result mapping.
+    // Score = same base factors as the displayed relationship, plus pct/1000 as a
+    // tiebreaker so equal integer scores resolve by market share.
     val airlineScores: List[(Airline, BigDecimal)] = marketShares.airlineShares.map { case (airlineId, pax) =>
       val airline = AirlineCache.getAirline(airlineId).getOrElse(Airline.fromId(airlineId))
-      var score = BigDecimal(0)
-
-      // HOME_COUNTRY factor
-      airline.getCountryCode().foreach { homeCode =>
-        val rel = countryMutualRelationships.getOrElse((homeCode, countryCode), 0)
-        val mult = if (rel >= 0) AirlineCountryRelationship.HOME_COUNTRY_POSITIVE_RELATIONSHIP_MULTIPLIER
-                   else AirlineCountryRelationship.HOME_COUNTRY_NEGATIVE_RELATIONSHIP_MULTIPLIER
-        val bonus = if (rel >= 5) 20 else 0
-        score += rel * mult + bonus
-      }
-
-      // MARKET_SHARE factor (pct kept as BigDecimal sub-unit for tiebreaking)
       val pct = BigDecimal(pax.toDouble / totalPax * 100).setScale(2, BigDecimal.RoundingMode.HALF_UP)
-      score += AirlineCountryRelationship.getMarketShareRelationshipBonus(pct) + pct / 1000
-
-      // DELEGATE factor
-      score += Math.round(delegateLevels.getOrElse(airlineId, 0) * delegateMultiplier).toInt
-
-      (airline, score)
+      val factors = AirlineCountryRelationship.baseFactors(
+        airline, country, Some(pct), managerLevels.getOrElse(airlineId, 0), managerMultiplier
+      )
+      (airline, BigDecimal(factors.values.sum) + pct / 1000)
     }.toList
 
-    // Separate domestic (HQ in this country) from foreign
+    // NATIONAL: top scorers HQ'd here. PARTNERED: top scorers among everyone else.
     val (domestic, foreign) = airlineScores.partition { case (airline, _) =>
       airline.getCountryCode().contains(countryCode)
     }
-
     val nationalQuota = computeNationalAirlineCount(country)
     val partneredQuota = computePartneredAirlineCount(country)
     val sortedDomestic = domestic.sortBy(-_._2)
-    val sortedOthers = sortedDomestic.drop(nationalQuota) ++ foreign.sortBy(-_._2)
+    val remainingSorted = (sortedDomestic.drop(nationalQuota) ++ foreign).sortBy(-_._2)
 
-    val topTitles = sortedDomestic.take(nationalQuota).map { case (airline, _) =>
-      CountryAirlineTitle(country, airline, Title.NATIONAL_AIRLINE)
-    } ++ sortedOthers.take(partneredQuota).map { case (airline, _) =>
-      CountryAirlineTitle(country, airline, Title.PARTNERED_AIRLINE)
-    }
+    val topTitles =
+      sortedDomestic.take(nationalQuota).map { case (airline, _) => CountryAirlineTitle(country, airline, Title.NATIONAL_AIRLINE) } ++
+      remainingSorted.take(partneredQuota).map { case (airline, _) => CountryAirlineTitle(country, airline, Title.PARTNERED_AIRLINE) }
 
-    val nextInLine = sortedOthers.drop(partneredQuota).take(5).map { case (airline, _) =>
+    val nextInLine = remainingSorted.drop(partneredQuota).take(5).map { case (airline, _) =>
       CountryAirlineTitle(country, airline, Title.PRIVILEGED_AIRLINE)
     }
 
