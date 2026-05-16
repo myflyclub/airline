@@ -187,7 +187,7 @@ object LostChildAward {
     else if (distance >= 500)
         "The child possibly recognizes a distant mountain while in-flight, suggesting this airport is a distance of 500 to 1,000 km away from their home."
     else if (distance >= 250)
-        "The child thinks they recognize the snack brands in the shop. They're not sure. Within 500 to 1,000 km."
+        "The child thinks they recognize the snack brands in the shop. They're not sure. Within 250 to 500 km."
     else
         "As the airplane is landing, the child excitedly points out familiar geography, suggesting their home is less than 250 km away."
   }
