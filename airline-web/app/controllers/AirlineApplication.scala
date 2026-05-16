@@ -18,13 +18,14 @@ import java.util.{Calendar, Date}
 import javax.inject.Inject
 import scala.collection.immutable.SortedSet
 import scala.collection.mutable
+import scala.concurrent.Future
 import scala.concurrent.duration.{DAYS, Duration, MILLISECONDS}
 import scala.math.BigDecimal
 import scala.math.BigDecimal.RoundingMode
 import scala.util.{Failure, Success, Try}
 
 
-class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractController(cc) {
+class AirlineApplication @Inject()(cc: ControllerComponents, jdbcEC: JdbcExecutionContext) extends AbstractController(cc) {
   object OwnedAirlineWrites extends Writes[Airline] {
     def writes(airline: Airline): JsValue = {
       val tracks = JsObject(
@@ -818,16 +819,18 @@ class AirlineApplication @Inject()(cc: ControllerComponents) extends AbstractCon
     }
   }
 
-  def getFleet(airlineId: Int) = Action { request =>
-    var result = Json.arr()
-    AirplaneSource.loadAirplanesByOwner(airlineId)
-      .filter(_.owner.airlineType != NonPlayerAirline)
-      .groupBy(_.model).toList
-      .sortBy(_._1.name).foreach {
-        case (model, airplanes) => result = result.append(Json.obj("name" -> model.name, "quantity" -> airplanes.size))
-      }
+  def getFleet(airlineId: Int) = Action.async {
+    Future {
+      var result = Json.arr()
+      AirplaneSource.loadAirplanesByOwner(airlineId)
+        .filter(_.owner.airlineType != NonPlayerAirline)
+        .groupBy(_.model).toList
+        .sortBy(_._1.name).foreach {
+          case (model, airplanes) => result = result.append(Json.obj("name" -> model.name, "quantity" -> airplanes.size))
+        }
 
-    Ok(result)
+      Ok(result)
+    }(jdbcEC)
   }
 
   def getServiceFundingProjection(airlineId: Int) = AuthenticatedAirline(airlineId) { request =>

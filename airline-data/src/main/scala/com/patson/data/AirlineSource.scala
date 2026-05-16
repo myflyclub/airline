@@ -49,7 +49,7 @@ object AirlineSource {
   }
 
   private def loadAirlinesByQueryString(queryString : String, parameters : List[Any], fullLoad : Boolean = false) : List[Airline] = {
-    Using.resource(Meta.getConnection()) { connection =>
+    Meta.withTimedConnection("AirlineSource.loadAirlinesByQueryString") { connection =>
       val airlines = Using.resource(connection.prepareStatement(queryString)) { preparedStatement =>
         for (i <- 0 until parameters.size) {
           preparedStatement.setObject(i + 1, parameters(i))
@@ -121,7 +121,7 @@ object AirlineSource {
 
 
   def saveAirlines(airlines : List[Airline]) = {
-    Using.resource(Meta.getConnection()) { connection =>
+    Meta.withTimedConnection("AirlineSource.saveAirlines") { connection =>
       connection.setAutoCommit(false)
       Using.resource(connection.prepareStatement("INSERT INTO " + AIRLINE_TABLE + "(name, airline_type) VALUES(?,?)", Statement.RETURN_GENERATED_KEYS)) { preparedStatement =>
         airlines.foreach { airline =>
