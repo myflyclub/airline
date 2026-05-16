@@ -43,7 +43,7 @@ object DemandGenerator {
    **/ 
   def demandRandomizerByType(passengerType: PassengerType.Value, demand: Int, cycle: Int, cyclePhaseLength: Int): Int = {
     val randomizedDemand = if (passengerType == PassengerType.TOURIST) {
-      demandRandomizer(demand, cycle, cyclePhaseLength, 1.5, 30)
+      demandRandomizer(demand, cycle, cyclePhaseLength, 1.25, 30)
     } else if (passengerType == PassengerType.BUSINESS) {
       demandRandomizer(demand, cycle, cyclePhaseLength, 1, 15)
     } else { //traveler, elite
