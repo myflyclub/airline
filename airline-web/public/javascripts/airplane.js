@@ -241,11 +241,12 @@ function updateAirplaneModelTable(sortProperty, sortOrder) {
 
         let isFiltered = false;
 		Object.entries(state.selectedColumnFilter).forEach(([property, filterValues]) => {
-			if (!Array.isArray(filterValues) || filterValues.length < 1) {
-				return;
-			}
-			if (!filterValues.includes(String(modelOwnerInfo[property]))) {
-				isFiltered = true;
+			if (!filterValues) return;
+			if (filterValues.min !== undefined) {
+				const val = Number(modelOwnerInfo[property]);
+				if (val < filterValues.min || val > filterValues.max) isFiltered = true;
+			} else if (Array.isArray(filterValues) && filterValues.length > 0) {
+				if (!filterValues.includes(String(modelOwnerInfo[property]))) isFiltered = true;
 			}
 		});
 		if (isFiltered) {
@@ -1378,8 +1379,6 @@ function getAirplaneIcon(airplane, badConditionThreshold, explicitIsAssigned) {
 }
 
 function enableAirplaneIconDrag(airplaneIcon, airplaneId, isAssigned) {
-    //airplaneIcon.attr("ondrop", "onAirplaneSwapDrop(event, " + airplaneId + ")")
-    //airplaneIcon.attr("ondragover", "event.preventDefault")
     airplaneIcon.attr("ondragstart", "onAirplaneDragStart(event, " + airplaneId + ", " + isAssigned + ")")
     airplaneIcon.attr("draggable", true)
 }
@@ -1922,6 +1921,30 @@ function getAssignedAirplanesCount(compareKey, compareValue, modelId) {
     return count
 }
 
+async function promptSwapModelsFromLinks() {
+    storeSelectedAirplaneIds = [];
+
+    for (const linkId of selectedLinkIds) {
+        const link = loadedLinksById[linkId];
+        if (link && link.assignedAirplanes) {
+            link.assignedAirplanes.forEach(function(entry) {
+                const id = entry.airplane.id;
+                if (id != null && !storeSelectedAirplaneIds.includes(id)) {
+                    storeSelectedAirplaneIds.push(id);
+                }
+            });
+        }
+    }
+
+    if (storeSelectedAirplaneIds.length === 0) {
+        return;
+    }
+
+    await loadAirplaneModels();
+    loadAirplaneModelOwnerInfo();
+    promptSwapModels();
+}
+
 function promptSwapModels() {
     if (storeSelectedAirplaneIds.length < 1) {
         const infoEl = document.getElementById('promptSwapModelsWarning');
@@ -2007,7 +2030,7 @@ function promptSwapModels() {
         if (!Object.prototype.hasOwnProperty.call(loadedModelsById, mId)) continue;
         var model = loadedModelsById[mId];
         // Same or smaller size
-        if (model.size <= selectedAirplaneModel.size + 0.01 && (!model.rejection || model.rejection.length === 0)) {
+        if (!model.rejection || model.rejection.length === 0) {
             var option = document.createElement('option');
             option.value = model.id;
             option.textContent = model.name;
@@ -2134,8 +2157,11 @@ function processSwapModels(isEstimate = true) {
                 }
 
                 const apCost = result.actionPointCost || 0;
+                const sizeApCost = result.sizeApCost || 0;
+                const constructionTimeApCost = result.constructionTimeApCost || 0;
                 const availableAP = activeAirline.actionPoints != null ? activeAirline.actionPoints : 0;
-                $('#swapAirplaneModal .apCost').text("⚡" + apCost).css('color', availableAP < apCost ? 'red' : '');
+                $('#swapAirplaneModal .apCostSize').text("⚡" + sizeApCost).css('color', availableAP < apCost ? 'red' : '');
+                $('#swapAirplaneModal .apCostDelivery').text("⚡" + constructionTimeApCost).css('color', availableAP < apCost ? 'red' : '');
 
                 if (costDiff > activeAirline.balance) {
                      disableButton($('#swapAirplaneModal .add'), "Not enough cash");

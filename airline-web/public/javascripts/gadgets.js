@@ -633,6 +633,9 @@ function setActiveDiv(activeDiv, callback) {
 	}
 
 	if (existingActiveDiv.length > 0){
+	    if (existingActiveDiv.is('#linksCanvas') && typeof clearLinksSelection === 'function') {
+	        clearLinksSelection();
+	    }
 	    existingActiveDiv.removeClass('active')
 	    activeDiv.addClass('active')
         existingActiveDiv.hide()

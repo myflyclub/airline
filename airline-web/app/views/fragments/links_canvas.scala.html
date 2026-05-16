@@ -21,7 +21,7 @@
                     </div>
 				</div>
 				<div class="table-container-x">
-					<div class="table data" style="min-width: 1040px; height: 20px;">
+					<div class="table data" style="min-width: 920px; height: 20px;">
 						<div class="table-header" id="linksTableSortHeader">
 							<div class="cell" style="width: 3%"><input type="checkbox" id="toggleAllLinks" onclick="toggleAllLinks(this)"></div>
 							<div class="cell" style="width: 0%" data-sort-property="lastUpdate" data-sort-order="ascending" id="hiddenLinkSortBy"></div>
@@ -29,6 +29,7 @@
 							<div class="cell link-col-from clickable selected" data-col-key="fromAirportCode" data-sort-property="fromAirportCode" data-sort-order="descending" onclick="toggleLinksTableSortOrder($(this))">From Airport</div>
 							<div class="cell link-col-to clickable" data-col-key="toAirportCode" data-sort-property="toAirportCode" data-sort-order="descending" onclick="toggleLinksTableSortOrder($(this))">To Airport</div>
 							<div class="cell link-col-model clickable" data-col-key="model" data-sort-property="model" data-sort-order="ascending" onclick="toggleLinksTableSortOrder($(this))">Model</div>
+							<div class="cell link-col-airplaneIds clickable" data-col-key="airplaneIds" data-sort-property="airplaneIds" data-sort-order="ascending" onclick="toggleLinksTableSortOrder($(this))">Aircraft</div>
 							<div class="cell link-col-dist clickable" align="right" data-col-key="distance" data-sort-property="distance" data-sort-order="ascending" onclick="toggleLinksTableSortOrder($(this))">Distance</div>
 							<div class="cell link-col-cap clickable" align="right" data-col-key="totalCapacity" data-sort-property="totalCapacity" data-sort-order="ascending" onclick="toggleLinksTableSortOrder($(this))">Capacity (Freq.)</div>
 							<div class="cell link-col-q clickable" align="right" data-col-key="computedQuality" data-sort-property="computedQuality" data-sort-order="ascending" onclick="toggleLinksTableSortOrder($(this))" title="Quality">Q</div>
@@ -50,6 +51,7 @@
 							<div class="cell link-col-from" data-col-key="fromAirportCode" data-filter-property="fromAirportCode">&nbsp;</div>
 							<div class="cell link-col-to" data-col-key="toAirportCode" data-filter-property="toAirportCode">&nbsp;</div>
 							<div class="cell link-col-model" data-col-key="model" data-filter-property="modelId">&nbsp;</div>
+							<div class="cell link-col-airplaneIds" data-col-key="airplaneIds">&nbsp;</div>
 							<div class="cell link-col-dist" data-col-key="distance" data-filter-property="distance">&nbsp;</div>
 							<div class="cell link-col-cap" data-col-key="totalCapacity">&nbsp;</div>
 							<div class="cell link-col-q" data-col-key="computedQuality">&nbsp;</div>
@@ -65,7 +67,7 @@
 							<div class="cell link-col-pps" data-col-key="profitPerStaff">&nbsp;</div>
 						</div>
 					</div>
-					<div class="table-container-y" style="min-width: 1040px;">
+					<div class="table-container-y" style="min-width: 920px;">
 						<div class="table data" id="linksTable">
 							<div class="table-header">
 								<div class="cell" style="width: 3%; border-bottom: none;"></div>
@@ -73,6 +75,7 @@
 								<div class="cell link-col-from" data-col-key="fromAirportCode" style="border-bottom: none;"></div>
 								<div class="cell link-col-to" data-col-key="toAirportCode" style="border-bottom: none;"></div>
 								<div class="cell link-col-model" data-col-key="model" style="border-bottom: none;"></div>
+								<div class="cell link-col-airplaneIds" data-col-key="airplaneIds" style="border-bottom: none;"></div>
 								<div class="cell link-col-dist" data-col-key="distance" style="border-bottom: none;"></div>
 								<div class="cell link-col-cap" data-col-key="totalCapacity" style="border-bottom: none;"></div>
 								<div class="cell link-col-q" data-col-key="computedQuality" style="border-bottom: none;"></div>
@@ -127,6 +130,8 @@
               <div id="bulkUpdateQualityBar" data-empty-icon='@routes.Assets.versioned("/images/icons/star-empty.svg")' data-fill-icon='@routes.Assets.versioned("/images/icons/star-full.svg")'></div>
               <input type="hidden" id="bulkUpdateQualityLevel" value="1" />
               <button class="button px-4 py-1" onclick="submitBulkUpdateQuality()">Update Quality</button>
+              <div class="divider-v mx-5"></div>
+              <button class="button px-4 py-1" onclick="promptSwapModelsFromLinks()">Swap Aircraft</button>
               <div class="divider-v mx-5"></div>
               <button class="button warning px-4 py-1" onclick="promptBulkDelete()">Delete Selected</button>
           </div>

@@ -212,44 +212,34 @@ case object TaxHavenSpecialization extends AirlineBaseSpecialization with Airpor
 }
 
 // Loyalty Specializations
-case object LoyaltySpecialization1 extends AirlineBaseSpecialization {
-  override val id = "LOYALTY_1"
+sealed abstract class LoyaltySpecialization extends AirlineBaseSpecialization {
   override val getType = BaseSpecializationType.LOYALTY
-  override val label = "Local Sports Sponsorship"
-  val loyaltyBoost = 10
-  override val scaleRequirement: Int = 5
-  override def descriptions(airport: Airport) = List(s"Boost loyalty of this airport by $loyaltyBoost")
+  val loyaltyBoost: Int
 
-  override def apply(airline: Airline, airport: Airport) = {
-    unapply(airline, airport) //unapply first to avoid duplicates
-    AirportSource.saveAirlineAppealBonus(airport.id, airline.id, AirlineBonus(BonusType.BASE_SPECIALIZATION_BONUS, AirlineAppeal(loyalty = loyaltyBoost), None))
+  override def apply(airline: Airline, airport: Airport): Unit = {
+    AirportSource.deleteAirlineAppealBonus(airport.id, airline.id, BonusType.BASE_SPECIALIZATION_BONUS)
+    val totalLoyalty = AirportSource.loadAirportBaseSpecializations(airport.id, airline.id)
+      .collect { case s: LoyaltySpecialization => s.loyaltyBoost }.sum
+    if (totalLoyalty > 0)
+      AirportSource.saveAirlineAppealBonus(airport.id, airline.id, AirlineBonus(BonusType.BASE_SPECIALIZATION_BONUS, AirlineAppeal(loyalty = totalLoyalty), None))
   }
-
-  override def unapply(airline: Airline, airport: Airport) = {
-    AirportSource.loadAirlineAppealBonusByAirportAndAirline(airport.id, airline.id).find(_.bonusType == BonusType.BASE_SPECIALIZATION_BONUS).foreach { existingBonus =>
-      AirportSource.deleteAirlineAppealBonus(airport.id, airline.id, BonusType.BASE_SPECIALIZATION_BONUS)
-    }
-  }
+  override def unapply(airline: Airline, airport: Airport): Unit = apply(airline, airport)
 }
 
-case object LoyaltySpecialization2 extends AirlineBaseSpecialization {
+case object LoyaltySpecialization1 extends LoyaltySpecialization {
+  override val id = "LOYALTY_1"
+  override val label = "Local Sports Sponsorship"
+  override val loyaltyBoost = 10
+  override val scaleRequirement: Int = 5
+  override def descriptions(airport: Airport) = List(s"Boost loyalty of this airport by $loyaltyBoost")
+}
+
+case object LoyaltySpecialization2 extends LoyaltySpecialization {
   override val id = "LOYALTY_2"
-  override val getType = BaseSpecializationType.LOYALTY
   override val label = "Stadium Naming Rights"
-  val loyaltyBoost = 12
+  override val loyaltyBoost = 12
   override val scaleRequirement: Int = 10
   override def descriptions(airport: Airport) = List(s"Boost loyalty of this airport by $loyaltyBoost")
-
-  override def apply(airline: Airline, airport: Airport) = {
-    unapply(airline, airport) //unapply first to avoid duplicates
-    AirportSource.saveAirlineAppealBonus(airport.id, airline.id, AirlineBonus(BonusType.BASE_SPECIALIZATION_BONUS, AirlineAppeal(loyalty = loyaltyBoost), None))
-  }
-
-  override def unapply(airline: Airline, airport: Airport) = {
-    AirportSource.loadAirlineAppealBonusByAirportAndAirline(airport.id, airline.id).find(_.bonusType == BonusType.BASE_SPECIALIZATION_BONUS).foreach { existingBonus =>
-      AirportSource.deleteAirlineAppealBonus(airport.id, airline.id, BonusType.BASE_SPECIALIZATION_BONUS)
-    }
-  }
 }
 
 // Flight Type Specializations

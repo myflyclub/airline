@@ -172,7 +172,7 @@ object RankingSimulation {
   private[this] def getPassengerQualityRanking(linkConsumptions: Map[Int, List[LinkConsumptionDetails]], airlinesById: Map[Int, Airline]): List[Ranking] = {
     val passengerQualityByAirline: Map[Int, Double] = linkConsumptions.view.mapValues { linkConsumption =>
       val paxMiles = linkConsumption.map { linkConsumption =>
-        linkConsumption.link.soldSeats.total * linkConsumption.link.distance
+        linkConsumption.link.soldSeats.total.toLong * linkConsumption.link.distance
       }.sum
       val qualityPaxMiles = linkConsumption.map { linkConsumption =>
         linkConsumption.link.soldSeats.total.toLong * linkConsumption.link.distance * linkConsumption.link.computedQuality
