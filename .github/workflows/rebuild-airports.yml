@@ -1,0 +1,70 @@
+name: Rebuild Airports
+run-name: ${{ github.actor }} airport geo patch
+on:
+  workflow_dispatch:
+
+jobs:
+  rebuild-airports:
+    name: Run AirportGeoPatcher
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+          cache: 'sbt'
+
+      - name: Set up SBT
+        uses: sbt/setup-sbt@v1
+
+      - name: Inject Secrets
+        shell: bash
+        env:
+          DB_USER: ${{ secrets.production_user }}
+          DB_PASSWORD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
+        run: |
+          sed -i.bak "s/\(user *= *\"\)root\(\"\)/\1${DB_USER}\2/" airline-data/src/main/resources/application.conf
+          sed -i.bak "s/\(password *= *\"\)\(\"\)/\1${DB_PASSWORD}\2/" airline-data/src/main/resources/application.conf
+
+      - name: Build Fat JAR
+        run: |
+          cd airline-data
+          sbt clean assembly
+
+      - name: SCP JAR to Server
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.production_host }}
+          username: ${{ secrets.production_user }}
+          key: ${{ secrets.production_key }}
+          port: 22
+          source: "airline-data/target/scala-2.13/*-assembly-*.jar"
+          strip_components: 0
+          target: "/var/www/myfly/releases"
+
+      - name: Run AirportGeoPatcher
+        uses: appleboy/ssh-action@v0.1.10
+        env:
+          LOGO_DIR: /var/www/myfly/data/logos
+        with:
+          host: ${{ secrets.production_host }}
+          username: ${{ secrets.production_user }}
+          key: ${{ secrets.production_key }}
+          port: 22
+          envs: LOGO_DIR
+          script_stop: true
+          timeout: 30m
+          command_timeout: 30m
+          script: |
+            JAR=$(ls /var/www/myfly/releases/airline-data/target/scala-2.13/*-assembly-*.jar | tail -n 1)
+            echo "Running AirportGeoPatcher from $JAR"
+            java -Xms4G -Xmx4G \
+              -XX:+UseG1GC \
+              --sun-misc-unsafe-memory-access=allow \
+              -cp "$JAR" \
+              com.patson.init.AirportGeoPatcher
+            echo "AirportGeoPatcher complete"
