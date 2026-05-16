@@ -64,65 +64,71 @@ object AirlineCountryRelationship {
 
   val HOME_COUNTRY_POSITIVE_RELATIONSHIP_MULTIPLIER = 4
   val HOME_COUNTRY_NEGATIVE_RELATIONSHIP_MULTIPLIER = 15
+  val HOME_COUNTRY_HIGH_RELATIONSHIP_BONUS = 15 // applied when home->target relationship >= 5; privileged threshold is 35
 
-  def getAirlineCountryRelationship(countryCode : String, airline : Airline) : AirlineCountryRelationship = {
+  // Shared with CountryAirlineTitle so title ranking and the displayed relationship use
+  // identical math. TITLE/ALLIANCE_MEMBER_TITLE are excluded — they depend on title state
+  // and would be circular during title computation.
+  def baseFactors(
+    airline: Airline,
+    targetCountry: Country,
+    marketSharePct: Option[BigDecimal],
+    managerLevel: Int,
+    managerMultiplier: Double
+  ): mutable.LinkedHashMap[RelationshipFactor, Int] = {
     val factors = mutable.LinkedHashMap[RelationshipFactor, Int]()
+    airline.getCountryCode().foreach { homeCode =>
+      val rel = countryRelationships.getOrElse((homeCode, targetCountry.countryCode), 0)
+      val mult = if (rel >= 0) HOME_COUNTRY_POSITIVE_RELATIONSHIP_MULTIPLIER else HOME_COUNTRY_NEGATIVE_RELATIONSHIP_MULTIPLIER
+      val bonus = if (rel >= 5) HOME_COUNTRY_HIGH_RELATIONSHIP_BONUS else 0
+      factors.put(HOME_COUNTRY(countryMap(homeCode), targetCountry, rel), rel * mult + bonus)
+    }
+    marketSharePct.foreach { pct =>
+      factors.put(MARKET_SHARE(pct), getMarketShareRelationshipBonus(pct))
+    }
+    factors.put(MANAGER(managerLevel), Math.round(managerLevel * managerMultiplier).toInt)
+    factors
+  }
+
+  def getAirlineCountryRelationship(countryCode: String, airline: Airline): AirlineCountryRelationship = {
     val targetCountry = countryMap(countryCode)
 
-    airline.getCountryCode() match {
-      case Some(homeCountryCode: String) =>
-        //home country vs target country
-        val relationship = countryRelationships.getOrElse((homeCountryCode, countryCode), 0)
-        val multiplier = if (relationship >= 0) HOME_COUNTRY_POSITIVE_RELATIONSHIP_MULTIPLIER else HOME_COUNTRY_NEGATIVE_RELATIONSHIP_MULTIPLIER
-        val home_country_bonus = if (relationship >= 5) 15 else 0 //privileged = 35, so want 15 as relationship * multiplier = 20
-          factors.put(HOME_COUNTRY(countryMap(homeCountryCode), targetCountry, relationship), relationship * multiplier + home_country_bonus)
+    //country relationship
+    if (airline.getCountryCode().isEmpty) {
+      return AirlineCountryRelationship(airline, targetCountry, Map.empty)
+    }
 
-        //market share
-        CountrySource.loadMarketSharesByCountryCode(countryCode).foreach {
-          marketShares => {
-            marketShares.airlineShares.get(airline.id).foreach {
-              marketShareOfThisAirline => {
-                var percentage = BigDecimal(marketShareOfThisAirline.toDouble / marketShares.airlineShares.values.sum * 100)
-                percentage = percentage.setScale(2, BigDecimal.RoundingMode.HALF_UP)
-                factors.put(MARKET_SHARE(percentage), getMarketShareRelationshipBonus(percentage))
-              }
+    //market share
+    val marketSharePct: Option[BigDecimal] =
+      CountrySource.loadMarketSharesByCountryCode(countryCode).flatMap { ms =>
+        ms.airlineShares.get(airline.id).map { pax =>
+          BigDecimal(pax.toDouble / ms.airlineShares.values.sum * 100).setScale(2, BigDecimal.RoundingMode.HALF_UP)
+        }
+      }
+
+    //manager
+    val currentCycle = CycleSource.loadCycle()
+    val managerLevel = ManagerSource.loadCountryDelegateByAirlineAndCountry(airline.id, countryCode).map(_.assignedTask.asInstanceOf[CountryManagerTask].level(currentCycle)).sum
+    val managerMultiplier = getManagerBonusMultiplier(targetCountry)
+
+    val factors = baseFactors(airline, targetCountry, marketSharePct, managerLevel, managerMultiplier)
+
+    //if alliance member has NATIONAL/PARTNERED, you get at most (PRIVILEGED - 5)/ESTABLISHED bonus.
+    airline.getAllianceId().foreach { allianceId =>
+      val allianceMemberIds: List[Int] = AllianceSource.loadAllianceById(allianceId).get.members.filter(_.airline.id != airline.id).map(_.airline.id)
+      val allTitles = CountryAirlineTitle.getTopTitlesByCountry(countryCode)
+      val currentRelationship = factors.values.sum
+      allTitles.find(t => t.title == Title.NATIONAL_AIRLINE && allianceMemberIds.contains(t.airline.id)) match {
+        case Some(nationalTitle) =>
+          val bonus = Math.max(0, Math.min(CountryAirlineTitle.PRIVILEGED_AIRLINE_RELATIONSHIP_THRESHOLD - 5, CountryAirlineTitle.PRIVILEGED_AIRLINE_RELATIONSHIP_THRESHOLD - currentRelationship - 5))
+          if (bonus > 0) factors.put(ALLIANCE_MEMBER_TITLE(nationalTitle), bonus)
+        case None =>
+          allTitles.find(t => t.title == Title.PARTNERED_AIRLINE && allianceMemberIds.contains(t.airline.id))
+            .foreach { partneredTitle =>
+              val bonus = Math.max(0, Math.min(CountryAirlineTitle.ESTABLISHED_AIRLINE_RELATIONSHIP_THRESHOLD, CountryAirlineTitle.ESTABLISHED_AIRLINE_RELATIONSHIP_THRESHOLD - currentRelationship))
+              if (bonus > 0) factors.put(ALLIANCE_MEMBER_TITLE(partneredTitle), bonus)
             }
-          }
-        }
-
-        //manager
-        val currentCycle = CycleSource.loadCycle()
-        val totalLevel : Int = ManagerSource.loadCountryDelegateByAirlineAndCountry(airline.id, countryCode).map(_.assignedTask.asInstanceOf[CountryManagerTask].level(currentCycle)).sum
-        val levelMultiplier = getDelegateBonusMultiplier(targetCountry)
-        factors.put(MANAGER(totalLevel), Math.round(totalLevel * levelMultiplier).toInt)
-
-        //alliance member get at least a title if other alliance member has status
-        val allTitles = CountryAirlineTitle.getTopTitlesByCountry(countryCode)
-        airline.getAllianceId().foreach { allianceId =>
-          val allianceMemberAirlineIds : List[Int] = AllianceSource.loadAllianceById(allianceId).get.members.filter(_.airline.id != airline.id).map(_.airline.id) //make sure it's not the current airline
-          val allianceMemberNational = allTitles.find { t =>
-            t.title == Title.NATIONAL_AIRLINE && allianceMemberAirlineIds.contains(t.airline.id)
-          }
-          val currentRelationship = factors.values.sum
-          allianceMemberNational match {
-            case Some(nationalTitle) =>
-              val nationalPartnerBonus = Math.max(0, CountryAirlineTitle.PRIVILEGED_AIRLINE_RELATIONSHIP_THRESHOLD - currentRelationship)
-              if (nationalPartnerBonus > 0) {
-                factors.put(ALLIANCE_MEMBER_TITLE(nationalTitle), nationalPartnerBonus)
-              }
-            case None =>
-              allTitles.find { t =>
-                t.title == Title.PARTNERED_AIRLINE && allianceMemberAirlineIds.contains(t.airline.id)
-              }.foreach { partneredTitle =>
-                val privilegedPartnerBonus = Math.max(0, 5 + CountryAirlineTitle.ESTABLISHED_AIRLINE_RELATIONSHIP_THRESHOLD - currentRelationship)
-                if (privilegedPartnerBonus > 0) {
-                  factors.put(ALLIANCE_MEMBER_TITLE(partneredTitle), privilegedPartnerBonus)
-                }
-              }
-          }
-        }
-
-      case None =>
+      }
     }
 
     AirlineCountryRelationship(airline, targetCountry, factors.toMap)
@@ -141,7 +147,7 @@ object AirlineCountryRelationship {
     case _             => 1
   }
 
-  val getDelegateBonusMultiplier = (country : Country) => {
+  val getManagerBonusMultiplier = (country : Country) => {
     val ratioToModelPower = Computation.MODEL_COUNTRY_POWER / (country.airportPopulation * country.income.toDouble).toLong
     val logRatio = Math.max(0.1, Math.log10(ratioToModelPower * 100) / 2) //0.1 to 1
     val levelMultiplier = CountryManagerTask.MAX_MANAGER_POWER / logRatio

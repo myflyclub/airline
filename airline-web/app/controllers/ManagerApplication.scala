@@ -19,7 +19,7 @@ class ManagerApplication @Inject()(cc: ControllerComponents) extends AbstractCon
   }
 
   def getCountryDelegates(countryCode : String, airlineId : Int) = AuthenticatedAirline(airlineId) { request =>
-    val multiplier = AirlineCountryRelationship.getDelegateBonusMultiplier(CountryCache.getCountry(countryCode).get)
+    val multiplier = AirlineCountryRelationship.getManagerBonusMultiplier(CountryCache.getCountry(countryCode).get)
     implicit val writes = new CountryManagerWrites(CycleSource.loadCycle())
     Ok(Json.obj(
       "managers" -> ManagerSource.loadCountryDelegateByAirlineAndCountry(airlineId, countryCode),
@@ -152,7 +152,7 @@ class LevelingManagerWrites(
     val base = Json.toJson(m)(new BusyManagerWrites(currentCycle)).asInstanceOf[JsObject]
     m.assignedTask match {
       case task: CountryManagerTask =>
-        val mult = AirlineCountryRelationship.getDelegateBonusMultiplier(task.country)
+        val mult = AirlineCountryRelationship.getManagerBonusMultiplier(task.country)
         val contribution = BigDecimal(task.level(currentCycle) * mult).setScale(2, RoundingMode.HALF_UP)
         base +
           ("countryCode"     -> JsString(task.country.countryCode)) +

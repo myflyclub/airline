@@ -827,9 +827,8 @@ class AirplaneApplication @Inject()(cc: ControllerComponents) extends AbstractCo
                   }.sum
                   val sizeApCost: Int = Math.ceil(sizeApTotal).toInt
 
-                  // ---- Construction-time AP (1 AP per airplane per 12 months extra delivery time) ----
                   val ctDelta = Math.max(0, newModelWithDiscounts.constructionTime - airplanesToSwap.head.model.constructionTime)
-                  val constructionTimeApCost: Int = (ctDelta / 52) * airplanesToSwap.length
+                  val constructionTimeApCost: Int = ((ctDelta.toDouble / 24) * airplanesToSwap.length).round.toInt
 
                   val apCost: Int = sizeApCost + constructionTimeApCost
 
