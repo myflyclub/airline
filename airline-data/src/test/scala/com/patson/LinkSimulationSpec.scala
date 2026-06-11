@@ -43,7 +43,6 @@ class LinkSimulationSpec(_system: ActorSystem) extends TestKit(_system) with Imp
   val largeAirplaneModel = Model.modelByName("Boeing 787-8 Dreamliner")
   val extraLargeAirplaneModel = Model.modelByName("Airbus A350-1000")
   val jumboAirplaneModel = Model.modelByName("Boeing 747-400ER")
-  val supersonicAirplaneModel = Model.modelByName("Concorde")
 
   val lightAirplane = Airplane(lightModel, testAirline1, 0, purchasedCycle = 0, 100, lightModel.price)
   val smallAirplane = Airplane(smallModel, testAirline1, 0, purchasedCycle = 0, 100, smallModel.price)
@@ -615,6 +614,35 @@ class LinkSimulationSpec(_system: ActorSystem) extends TestKit(_system) with Imp
 
       val expectedOnTime = 1 - (0.666 * 0.2 + 0.182 * 0.8 + 0.052 * 1.0)
       link.getDelayRatio should be (expectedOnTime +- 0.05)
+    }
+
+    "Produce repeatable delay counts when a link random seed is set" in {
+      def seededLink(): Link = {
+        val airplane = Airplane(lightModel, testAirline1, 0, purchasedCycle = 0, 15, lightModel.price, id = 901)
+        val frequency = 500
+        val distance = 500
+        val duration = Computation.calculateDuration(airplane.model, distance)
+        val capacity = frequency * airplane.model.capacity
+
+        val price = Pricing.computeStandardPrice(distance, FlightCategory.DOMESTIC, ECONOMY, PassengerType.TRAVELER, Airport.HIGH_INCOME / 2)
+        val link = Link(fromAirport, toAirport, testAirline1, LinkClassValues.getInstanceByMap(Map(ECONOMY -> price)), distance, LinkClassValues.getInstanceByMap(Map(ECONOMY -> capacity)), rawQuality = 0, duration, frequency, id = 9901)
+        link.setTestingAssignedAirplanes(Map(airplane -> frequency))
+        link
+      }
+
+      val airportStats = scala.collection.immutable.Map(
+        fromAirport.id -> AirportStatistics(fromAirport.id, 0, 0, 0.6, 0, 0),
+        toAirport.id -> AirportStatistics(toAirport.id, 0, 0, 0.6, 0, 0)
+      )
+      val customWeather = scala.collection.immutable.Map(fromAirport.id -> 1.0, toAirport.id -> 1.0)
+
+      val link1 = seededLink()
+      val link2 = seededLink()
+      LinkSimulation.simulateLinkError(List(link1), airportStats, customWeather, Some(20260607L))
+      LinkSimulation.simulateLinkError(List(link2), airportStats, customWeather, Some(20260607L))
+
+      (link1.minorDelayCount, link1.majorDelayCount, link1.cancellationCount) shouldBe
+        (link2.minorDelayCount, link2.majorDelayCount, link2.cancellationCount)
     }
   }
 

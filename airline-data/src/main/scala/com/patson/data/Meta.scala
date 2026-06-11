@@ -2053,8 +2053,12 @@ object Meta {
   }
 
   def isTableExist(connection : Connection, tableName : String): Boolean = {
-    val tables = connection.getMetaData.getTables(null, null, tableName, null)
-    tables.next()
+    val tables = connection.getMetaData.getTables(connection.getCatalog, null, tableName, Array("TABLE"))
+    try {
+      tables.next()
+    } finally {
+      tables.close()
+    }
   }
 
 }

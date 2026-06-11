@@ -4,6 +4,15 @@
 *.scala-build
 *.vscode
 .idea
+.mysql-data/
+.mysql-logs/
+backups/
+.run-logs/
+logs/
+fixtures/
+target/
+project/project/
+project/target/
 /docker-compose.override.yaml
 /airline-data/airline-data.iml
 /.bash_history
