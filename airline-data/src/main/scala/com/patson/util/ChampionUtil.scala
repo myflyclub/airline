@@ -1,5 +1,6 @@
 package com.patson.util
 
+import com.patson.SimulationConfig
 import com.patson.model._
 import com.patson.data.{AirlineSource, AirportSource, AirportStatisticsSource, Constants, CountrySource, LoyalistSource}
 
@@ -53,8 +54,12 @@ object ChampionUtil {
     val allAirportReps = AirportStatisticsSource.loadAllAirportStats()
       .map(stats => stats.airportId -> stats.reputation)
       .toMap
+    val deterministicTieBreak = SimulationConfig.loyalistRandomSeed.isDefined
 
-    loyalists.groupBy(_.airport.id).toList.flatMap { case (airportId, airportLoyalists) =>
+    val loyalistsByAirport = loyalists.groupBy(_.airport.id).toList
+    val orderedLoyalistsByAirport = if (deterministicTieBreak) loyalistsByAirport.sortBy(_._1) else loyalistsByAirport
+
+    orderedLoyalistsByAirport.flatMap { case (airportId, airportLoyalists) =>
       AirportCache.getAirport(airportId) match {
         case None => Nil
 
@@ -63,9 +68,11 @@ object ChampionUtil {
           val totalLoyalistAmount = airportLoyalists.iterator.map(_.amount).sum
           val loyalistToPopRatio = math.min(1.0, totalLoyalistAmount.toDouble / airport.popMiddleIncome)
           val baseReputation = allAirportReps.getOrElse(airportId, 0.0)
+          val orderedAirportLoyalists =
+            if (deterministicTieBreak) airportLoyalists.sortBy(loyalist => (-loyalist.amount, loyalist.airline.id))
+            else airportLoyalists.sortBy(-_.amount)
 
-          airportLoyalists
-            .sortBy(-_.amount)
+          orderedAirportLoyalists
             .take(airportSize)
             .zipWithIndex
             .map { case (loyalist, index) =>

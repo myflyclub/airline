@@ -28,7 +28,7 @@ object ConsumptionHistorySource {
 
       Using.resource(connection.prepareStatement("INSERT INTO " + PASSENGER_ROUTE_HISTORY_TABLE_TEMP + " (route_id, passenger_count, home_country, home_airport, destination_airport, passenger_type, preference_type, preferred_link_class, route_cost) VALUES(?,?,?,?,?,?,?,?,?)")) { passengerRouteHistoryStatement =>
         Using.resource(connection.prepareStatement("INSERT INTO " + PASSENGER_LINK_HISTORY_TABLE_TEMP + " (route_id, link, link_class, inverted, cost, satisfaction) VALUES(?,?,?,?,?,?)")) { passengerLinkHistoryStatement =>
-          consumptions.foreach {
+          consumptions.toList.sortBy(consumptionHistorySortKey).foreach {
             case((passengerGroup, _, route), passengerCount) => {
               routeId += 1
 
@@ -109,6 +109,30 @@ object ConsumptionHistorySource {
       }
       println("Finished rotating tables")
     }
+  }
+
+  private def consumptionHistorySortKey(entry: ((PassengerGroup, Airport, Route), Int)): String = {
+    val ((passengerGroup, _, route), passengerCount) = entry
+    val routeLegKey = route.links.map { linkConsideration =>
+      Seq(
+        linkConsideration.link.id,
+        linkConsideration.linkClass.code,
+        linkConsideration.inverted,
+        f"${linkConsideration.cost}%1.9f"
+      ).mkString(":")
+    }.mkString(",")
+
+    Seq(
+      passengerCount,
+      passengerGroup.fromAirport.countryCode,
+      passengerGroup.fromAirport.id,
+      route.links.last.to.id,
+      passengerGroup.passengerType.id,
+      passengerGroup.preference.getPreferenceType.id,
+      passengerGroup.preference.preferredLinkClass.code,
+      route.totalCost.toInt,
+      routeLegKey
+    ).mkString("|")
   }
 
   case class TicketedDemandEntry(toAirportId: Int, passengerType: Int, preferenceType: Int, preferredLinkClass: String, passengerCount: Int, airlineIds: List[Int])

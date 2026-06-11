@@ -35,6 +35,7 @@ class PassengerSimulationSpec(_system: ActorSystem) extends TestKit(_system) wit
   val fromAirport = Airport.fromId(1).copy(baseIncome = 40000, basePopulation = 1) // income 40k . mid income country
   val airlineAppeal = AirlineAppeal(0)
   fromAirport.initAirlineAppeals(Map(testAirline1.id -> airlineAppeal, testAirline2.id -> airlineAppeal))
+  fromAirport.initAirlineBases(List.empty)
   fromAirport.initLounges(List.empty)
   val toAirportsList = List(
     Airport("", "", "To Airport", 0, 30, "", "", "", 1, 0, 0, 0, id = 2),
@@ -46,6 +47,7 @@ class PassengerSimulationSpec(_system: ActorSystem) extends TestKit(_system) wit
 
   toAirportsList.foreach { airport =>
     airport.initAirlineAppeals(Map(testAirline1.id -> airlineAppeal, testAirline2.id -> airlineAppeal))
+    airport.initAirlineBases(List.empty)
     airport.initLounges(List.empty)
   }
   val toAirports = Set(toAirportsList: _*)
@@ -77,6 +79,37 @@ class PassengerSimulationSpec(_system: ActorSystem) extends TestKit(_system) wit
   }
 
   val passengerGroup = PassengerGroup(fromAirport, DealPreference(homeAirport = fromAirport, preferredLinkClass = ECONOMY, 1.0), PassengerType.BUSINESS)
+
+  case class FixedCostPreference(homeAirport: Airport, preferredLinkClass: LinkClass) extends FlightPreference(homeAirport) {
+    override val priceSensitivity: Double = 1.0
+    override val getPreferenceType: FlightPreferenceType.Value = FlightPreferenceType.DEAL
+
+    override def computeCost(baseCost: Double, link: Transport, linkClass: LinkClass): Double = baseCost
+
+    override def computeCost(link: Transport, linkClass: LinkClass, paxType: PassengerType.Value, externalCostModifier: Double = 1.0): Double = {
+      link.cost(linkClass) * externalCostModifier
+    }
+  }
+
+  private def assertRoutesEquivalent(legacyRoutes: Map[Airport, Route], compactRoutes: Map[Airport, Route]): Unit = {
+    compactRoutes.keySet.map(_.id) shouldEqual legacyRoutes.keySet.map(_.id)
+    legacyRoutes.foreach {
+      case (airport, legacyRoute) =>
+        val compactRoute = compactRoutes(airport)
+        compactRoute.totalCost shouldBe legacyRoute.totalCost +- 0.000000001
+        compactRoute.links.size shouldBe legacyRoute.links.size
+
+        compactRoute.links.zip(legacyRoute.links).foreach {
+          case (compactLink, legacyLink) =>
+            compactLink.link.id shouldBe legacyLink.link.id
+            compactLink.from.id shouldBe legacyLink.from.id
+            compactLink.to.id shouldBe legacyLink.to.id
+            compactLink.inverted shouldBe legacyLink.inverted
+            compactLink.linkClass shouldBe legacyLink.linkClass
+            compactLink.cost shouldBe legacyLink.cost +- 0.000000001
+        }
+    }
+  }
 
   "Find shortest route" should {
     "find no route if there's no links" in {
@@ -246,6 +279,89 @@ class PassengerSimulationSpec(_system: ActorSystem) extends TestKit(_system) wit
 
       routesTraveler(toAirportsList(1)).links.size should be > 0
       routesElite(toAirportsList(1)).links.size should be > 0
+    }
+  }
+
+  "Compact route kernel" should {
+    "match legacy shortest route for direct and connecting routes" in {
+      val cheapLinks = List(
+        LinkConsideration.getExplicit(Link(fromAirport, toAirportsList(0), testAirline1, LinkClassValues.getInstance(100), distance = 3500, LinkClassValues.getInstance(10000), 0, duration = 200, frequency = 42), 3500, ECONOMY, false),
+        LinkConsideration.getExplicit(Link(toAirportsList(0), toAirportsList(1), testAirline1, LinkClassValues.getInstance(100), distance = 3500, LinkClassValues.getInstance(10000), 0, duration = 200, frequency = 42), 3500, ECONOMY, false),
+        LinkConsideration.getExplicit(Link(toAirportsList(1), toAirportsList(2), testAirline1, LinkClassValues.getInstance(100), distance = 3500, LinkClassValues.getInstance(10000), 0, duration = 200, frequency = 42), 3500, ECONOMY, false)
+      )
+      val allLinks = LinkConsideration.getExplicit(Link(fromAirport, toAirportsList(2), testAirline1, LinkClassValues.getInstance(100), 10000, LinkClassValues.getInstance(10000), 0, duration = 600, frequency = 1), 13000, ECONOMY, false) :: cheapLinks
+      assignLinkConsiderationIds(allLinks)
+
+      val legacyRoutes = PassengerSimulation.findShortestRoute(passengerGroup, toAirports, allAirportIds, allLinks.asJava, Collections.emptyMap[Int, Int](), 3)
+      val compactRoutes = CompactRouteKernel.findShortestRoute(passengerGroup, toAirports, allAirportIds, allLinks.asJava, Collections.emptyMap[Int, Int](), 3)
+      val adjacencyRoutes = CompactRouteKernel.findShortestRouteAdjacency(passengerGroup, toAirports, allAirportIds, allLinks.asJava, Collections.emptyMap[Int, Int](), 3)
+
+      assertRoutesEquivalent(legacyRoutes, compactRoutes)
+      assertRoutesEquivalent(legacyRoutes, adjacencyRoutes)
+    }
+
+    "match legacy reverse direction handling" in {
+      val links = List(
+        LinkConsideration.getExplicit(Link(toAirportsList(2), toAirportsList(1), testAirline1, LinkClassValues.getInstance(100), 10000, LinkClassValues.getInstance(10000), 0, 600, 1), 100, ECONOMY, true),
+        LinkConsideration.getExplicit(Link(toAirportsList(1), toAirportsList(0), testAirline1, LinkClassValues.getInstance(100), 10000, LinkClassValues.getInstance(10000), 0, 600, 1), 100, ECONOMY, true),
+        LinkConsideration.getExplicit(Link(toAirportsList(0), fromAirport, testAirline1, LinkClassValues.getInstance(100), 10000, LinkClassValues.getInstance(10000), 0, 600, 1), 100, ECONOMY, true)
+      )
+      assignLinkConsiderationIds(links)
+
+      val legacyRoutes = PassengerSimulation.findShortestRoute(passengerGroup, toAirports, allAirportIds, links.asJava, Collections.emptyMap[Int, Int](), 3)
+      val compactRoutes = CompactRouteKernel.findShortestRoute(passengerGroup, toAirports, allAirportIds, links.asJava, Collections.emptyMap[Int, Int](), 3)
+      val adjacencyRoutes = CompactRouteKernel.findShortestRouteAdjacency(passengerGroup, toAirports, allAirportIds, links.asJava, Collections.emptyMap[Int, Int](), 3)
+
+      assertRoutesEquivalent(legacyRoutes, compactRoutes)
+      assertRoutesEquivalent(legacyRoutes, adjacencyRoutes)
+    }
+
+    "match legacy equal-cost tie-breaking" in {
+      val firstLink = LinkConsideration.getExplicit(Link(fromAirport, toAirportsList(2), testAirline1, LinkClassValues.getInstance(100), 10000, LinkClassValues.getInstance(10000), 0, 600, 7), 500, ECONOMY, false)
+      val secondLink = LinkConsideration.getExplicit(Link(fromAirport, toAirportsList(2), testAirline2, LinkClassValues.getInstance(100), 10000, LinkClassValues.getInstance(10000), 0, 600, 7), 500, ECONOMY, false)
+      val allLinks = List(firstLink, secondLink)
+      assignLinkConsiderationIds(allLinks)
+
+      val legacyRoutes = PassengerSimulation.findShortestRoute(passengerGroup, Set(toAirportsList(2)), allAirportIds, allLinks.asJava, Collections.emptyMap[Int, Int](), 3)
+      val compactRoutes = CompactRouteKernel.findShortestRoute(passengerGroup, Set(toAirportsList(2)), allAirportIds, allLinks.asJava, Collections.emptyMap[Int, Int](), 3)
+      val adjacencyRoutes = CompactRouteKernel.findShortestRouteAdjacency(passengerGroup, Set(toAirportsList(2)), allAirportIds, allLinks.asJava, Collections.emptyMap[Int, Int](), 3)
+
+      assertRoutesEquivalent(legacyRoutes, compactRoutes)
+      assertRoutesEquivalent(legacyRoutes, adjacencyRoutes)
+      compactRoutes(toAirportsList(2)).links.head.link.id shouldBe firstLink.link.id
+      adjacencyRoutes(toAirportsList(2)).links.head.link.id shouldBe firstLink.link.id
+    }
+
+    "match legacy single-ticket airline switch rejection" in {
+      val links = List(
+        LinkConsideration.getExplicit(Link(fromAirport, toAirportsList(0), testAirline1, LinkClassValues.getInstance(100), 3500, LinkClassValues.getInstance(10000), 0, 200, 42), 100, ECONOMY, false),
+        LinkConsideration.getExplicit(Link(toAirportsList(0), toAirportsList(2), testAirline2, LinkClassValues.getInstance(100), 3500, LinkClassValues.getInstance(10000), 0, 200, 42), 100, ECONOMY, false),
+        LinkConsideration.getExplicit(Link(fromAirport, toAirportsList(2), testAirline1, LinkClassValues.getInstance(100), 7000, LinkClassValues.getInstance(10000), 0, 400, 42), 1000, ECONOMY, false)
+      )
+      assignLinkConsiderationIds(links)
+
+      val legacyRoutes = PassengerSimulation.findShortestRoute(passengerGroup, Set(toAirportsList(2)), allAirportIds, links.asJava, Collections.emptyMap[Int, Int](), 3, isSingleTicket = true)
+      val compactRoutes = CompactRouteKernel.findShortestRoute(passengerGroup, Set(toAirportsList(2)), allAirportIds, links.asJava, Collections.emptyMap[Int, Int](), 3, isSingleTicket = true)
+      val adjacencyRoutes = CompactRouteKernel.findShortestRouteAdjacency(passengerGroup, Set(toAirportsList(2)), allAirportIds, links.asJava, Collections.emptyMap[Int, Int](), 3, isSingleTicket = true)
+
+      assertRoutesEquivalent(legacyRoutes, compactRoutes)
+      assertRoutesEquivalent(legacyRoutes, adjacencyRoutes)
+    }
+
+    "match legacy route-builder boundary with deterministic costs" in {
+      val fixedPassengerGroup = PassengerGroup(fromAirport, FixedCostPreference(fromAirport, ECONOMY), PassengerType.TRAVELER)
+      val directLink = Link(fromAirport, toAirportsList(2), testAirline1, LinkClassValues.getInstance(1200), 7000, LinkClassValues.getInstance(10000), 0, 400, 42)
+      val firstHop = Link(fromAirport, toAirportsList(0), testAirline1, LinkClassValues.getInstance(100), 3500, LinkClassValues.getInstance(10000), 0, 200, 42)
+      val secondHop = Link(toAirportsList(0), toAirportsList(2), testAirline1, LinkClassValues.getInstance(100), 3500, LinkClassValues.getInstance(10000), 0, 200, 42)
+      val links = List(directLink, firstHop, secondHop)
+      assignLinkIds(links)
+
+      val legacyRoutes = PassengerSimulation.findRoutesByPassengerGroupLegacy(fixedPassengerGroup, Set(toAirportsList(2)), links, Map("" -> 100), Collections.emptyMap[Int, Int](), None, 3)
+      val compactRoutes = CompactRouteKernel.findRoutesByPassengerGroup(fixedPassengerGroup, Set(toAirportsList(2)), links, Map("" -> 100), Collections.emptyMap[Int, Int](), None, 3, isSingleTicket = false, Map.empty)
+      val adjacencyRoutes = CompactRouteKernel.findRoutesByPassengerGroupAdjacency(fixedPassengerGroup, Set(toAirportsList(2)), links, Map("" -> 100), Collections.emptyMap[Int, Int](), None, 3, isSingleTicket = false, Map.empty)
+
+      assertRoutesEquivalent(legacyRoutes, compactRoutes)
+      assertRoutesEquivalent(legacyRoutes, adjacencyRoutes)
     }
   }
 

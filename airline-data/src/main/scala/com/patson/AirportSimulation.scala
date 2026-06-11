@@ -84,6 +84,7 @@ object AirportSimulation {
   private[patson] def decayLoyalists(existingLoyalistByAirportId : immutable.Map[Int, List[Loyalist]]) : immutable.Map[Int, List[Loyalist]] = {
     val updatingLoyalists, deletingLoyalists = ListBuffer[Loyalist]()
     val r = new Random()
+    val loyalistRandomSeed = SimulationConfig.loyalistRandomSeed
     val result : immutable.Map[Int, List[Loyalist]] = existingLoyalistByAirportId.view.mapValues { loyalists =>
       loyalists.map {
         loyalist =>
@@ -92,7 +93,10 @@ object AirportSimulation {
             if (loyalist.airport.basePopulation >= 1_000_000) {
               decayAmount = 1
             } else { //for pop 0, one in 100 chance to lose 1
-              if (r.nextInt(100) <= loyalist.airport.basePopulation / 10_000 ) {
+              val decayRoll = loyalistRandomSeed
+                .map(seed => stableBoundedRandom(seed, "loyalist-decay", 100, loyalist.airport.id, loyalist.airline.id, loyalist.amount))
+                .getOrElse(r.nextInt(100))
+              if (decayRoll <= loyalist.airport.basePopulation / 10_000 ) {
                 decayAmount = 1
               }
             }
@@ -132,8 +136,12 @@ object AirportSimulation {
   private[patson] def computeLoyalists(linkRidershipDetails: immutable.Map[(PassengerGroup, Airport, Route), Int], existingLoyalistByAirportId : immutable.Map[Int, List[Loyalist]]): (List[Loyalist], List[Loyalist], immutable.Map[Int, Int]) = {
     val result = ListBuffer[Loyalist]() //airlineId, amount
     val allAirportPaxCounts = mutable.Map[Int, Int]() //airportId, amount
+    val loyalistRandomSeed = SimulationConfig.loyalistRandomSeed
 
-    linkRidershipDetails.groupBy(_._1._1.fromAirport).foreach {
+    val ridershipByOrigin = linkRidershipDetails.groupBy(_._1._1.fromAirport).toList
+    val orderedRidershipByOrigin = if (loyalistRandomSeed.isDefined) ridershipByOrigin.sortBy(_._1.id) else ridershipByOrigin
+
+    orderedRidershipByOrigin.foreach {
       case ((fromAirport, passengersFromThisAirport)) =>
         val loyalistIncrementOfAirlines = mutable.Map[Int, Int]() //airlineId, delta
         passengersFromThisAirport.toList.foreach {
@@ -171,7 +179,10 @@ object AirportSimulation {
         val loyalistDistribution = ListBuffer[(Int, Int)]() //airlineId, threshold
         var walker = 0
         val existingLoyalistOfThisAirport = existingLoyalistByAirportId.getOrElse(fromAirport.id, List.empty).map(entry => (entry.airline.id, entry.amount)).toMap
-        existingLoyalistOfThisAirport.foreach {
+        val orderedExistingLoyalists =
+          if (loyalistRandomSeed.isDefined) existingLoyalistOfThisAirport.toList.sortBy(_._1)
+          else existingLoyalistOfThisAirport.toList
+        orderedExistingLoyalists.foreach {
           case(airlineId, loyalistAmount) =>
             walker = walker + loyalistAmount
             loyalistDistribution.append((airlineId, walker))
@@ -182,16 +193,23 @@ object AirportSimulation {
 
         val totalLoyalist = existingLoyalistOfThisAirport.values.sum
         //now with delta, see what the flips are
-        loyalistIncrementOfAirlines.foreach {
+        val orderedLoyalistIncrements =
+          if (loyalistRandomSeed.isDefined) loyalistIncrementOfAirlines.toList.sortBy(_._1)
+          else loyalistIncrementOfAirlines.toList
+        orderedLoyalistIncrements.foreach {
           case (gainAirlineId, increment) => //split into chunks for better randomness
             if (increment > 0) {
               var unclaimedLoyalist = (fromAirport.popMiddleIncome - totalLoyalist).toInt
               var remainingIncrement = increment
+              var chunkIndex = 0
               while (remainingIncrement > 0) {
                 val chunk = if (remainingIncrement <= CHUNK_SIZE) remainingIncrement else CHUNK_SIZE
 
                 //Has to compare pop vs total, as  in rare scenario fromAirport.population < existingLoyalistOfThisAirport.values.sum, for example demolished property that +pop
-                val flipTrigger = ThreadLocalRandom.current().nextInt(Math.max(1, Math.max(fromAirport.popMiddleIncome, totalLoyalist).toInt))
+                val flipBound = Math.max(1, Math.max(fromAirport.popMiddleIncome, totalLoyalist).toInt)
+                val flipTrigger = loyalistRandomSeed
+                  .map(seed => stableBoundedRandom(seed, "loyalist-flip", flipBound, fromAirport.id, gainAirlineId, chunkIndex, increment))
+                  .getOrElse(ThreadLocalRandom.current().nextInt(flipBound))
 
                 val flippedAirlineIdOption = loyalistDistribution.find {
                   case (airlineId : Int, threshold : Int) => flipTrigger < threshold
@@ -238,6 +256,7 @@ object AirportSimulation {
                     }
                 }
                 remainingIncrement = remainingIncrement - chunk
+                chunkIndex = chunkIndex + 1
               }
             }
         }
@@ -249,6 +268,22 @@ object AirportSimulation {
     }
     val (positive, nonPositive) = result.toList.partition(_.amount > 0)
     (positive, nonPositive, allAirportPaxCounts.toMap)
+  }
+
+  private def stableBoundedRandom(seed: Long, purpose: String, bound: Int, parts: Int*): Int = {
+    val random = new java.util.Random(stableSeed(seed, purpose, parts))
+    random.nextInt(bound)
+  }
+
+  private def stableSeed(seed: Long, purpose: String, parts: scala.collection.immutable.Seq[Int]): Long = {
+    var mixed = seed * 31 + purpose.hashCode
+    parts.foreach { part =>
+      mixed = mixed * 31 + part
+      mixed ^= (mixed << 13)
+      mixed ^= (mixed >>> 7)
+      mixed ^= (mixed << 17)
+    }
+    mixed
   }
 
   def updateLoungeStatus(allAirports : List[Airport], linkRidershipDetails : Predef.Map[(PassengerGroup, Airport, Route), Int]) = {

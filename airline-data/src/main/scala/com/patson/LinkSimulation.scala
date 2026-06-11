@@ -36,18 +36,26 @@ object LinkSimulation {
     val allAirportStats = AirportStatisticsSource.loadAllAirportStats()
     val airportStatsLookup: immutable.Map[Int, AirportStatistics] = allAirportStats.map(stats => stats.airportId -> stats).toMap
 
-    val demand = DemandGenerator.computeDemand(cycle, airportStatsLookup)
+    val demand = SimulationLog.time("demandGeneration", Some(cycle), metrics = Seq("linkCount" -> links.size)) {
+      DemandGenerator.computeDemand(cycle, airportStatsLookup)
+    }
     println("DONE with demand total demand: " + demand.foldLeft(0) {
       case(holder, (_, _, demandValue)) =>  
         holder + demandValue
     })
 
+    val linkRandomSeed = SimulationConfig.linkSimulationRandomSeed
     val airportWeather = links.flatMap(link => mutable.Seq(link.from, link.to)).toSet.map { airport: Airport =>
-      airport.id -> ThreadLocalRandom.current().nextDouble()
+      airport.id -> linkRandomSeed
+        .map(seed => stableUnitRandom(seed, "airport-weather", airport.id))
+        .getOrElse(ThreadLocalRandom.current().nextDouble())
     }.toMap //weather to make the RNG more brown-noise, todo: should be exposed to players
-    simulateLinkError(flightLinks, airportStatsLookup, airportWeather)
+    simulateLinkError(flightLinks, airportStatsLookup, airportWeather, linkRandomSeed)
     
-    val PassengerConsumptionResult(consumptionResult: scala.collection.immutable.Map[(PassengerGroup, Airport, Route), Int], missedPassengerResult: immutable.Map[(PassengerGroup, Airport), Int], worldStats: WorldStatistics) = PassengerSimulation.passengerConsume(demand, links)
+    val PassengerConsumptionResult(consumptionResult: scala.collection.immutable.Map[(PassengerGroup, Airport, Route), Int], missedPassengerResult: immutable.Map[(PassengerGroup, Airport), Int], worldStats: WorldStatistics) =
+      SimulationLog.time("passengerConsume", Some(cycle), metrics = Seq("inputDemandChunks" -> demand.size, "availableLinks" -> links.size)) {
+        PassengerSimulation.passengerConsume(demand, links, Some(cycle))
+      }
 
     println("Tallying airline & stats")
     startTime = System.currentTimeMillis()
@@ -76,14 +84,18 @@ object LinkSimulation {
 
     println("Saving generated stats to DB")
     startTime = System.currentTimeMillis()
-    LinkStatisticsSource.deleteLinkStatisticsBeforeCycle(cycle - 2) //was cycle - 5
-    LinkStatisticsSource.saveLinkStatistics(linkStatistics)
-    AirportStatisticsSource.updateAllAirportStats(updatedAirportStatistics)
+    SimulationLog.time("dbStatsSave", Some(cycle), metrics = Seq("linkStatistics" -> linkStatistics.size, "airportStatistics" -> updatedAirportStatistics.size)) {
+      LinkStatisticsSource.deleteLinkStatisticsBeforeCycle(cycle - 2) //was cycle - 5
+      LinkStatisticsSource.saveLinkStatistics(linkStatistics)
+      AirportStatisticsSource.updateAllAirportStats(updatedAirportStatistics)
+    }
     Util.outputTimeDiff(startTime, "Saved all stats. Took ")
 
     //save country market share (now generated in the same loop)
     println("Saving country market share to DB")
-    CountrySource.saveMarketShares(countryMarketShares)
+    SimulationLog.time("dbCountryMarketShareSave", Some(cycle), metrics = Seq("countryMarketShares" -> countryMarketShares.size)) {
+      CountrySource.saveMarketShares(countryMarketShares)
+    }
 
     //generate Olympics stats
     EventSource.loadEvents().filter(_.isActive(cycle)).foreach {
@@ -106,7 +118,9 @@ object LinkSimulation {
     //save all consumptions
     startTime = System.currentTimeMillis()
     println("Saving " + consumptionResult.size +  " consumptions")
-    ConsumptionHistorySource.updateConsumptions(consumptionResult)
+    SimulationLog.time("dbConsumptionSave", Some(cycle), metrics = Seq("consumptions" -> consumptionResult.size)) {
+      ConsumptionHistorySource.updateConsumptions(consumptionResult)
+    }
     Util.outputTimeDiff(startTime, "Saved all consumptions. Took ")
 
     //save top 10 missed demand per origin airport
@@ -129,7 +143,9 @@ object LinkSimulation {
             MissedDemandEntry(fId, tId, paxType, prefType, linkClass, count)
         }
       }
-    MissedDemandSource.deleteAndSave(topMissed)
+    SimulationLog.time("dbMissedDemandSave", Some(cycle), metrics = Seq("missedDemandEntries" -> topMissed.size)) {
+      MissedDemandSource.deleteAndSave(topMissed)
+    }
     Util.outputTimeDiff(startTime, "Saved missed demand. Took ")
 
     println("Calculating profits by links")
@@ -160,7 +176,9 @@ object LinkSimulation {
     checkLoadFactor(flightLinks, cycle)
 
     LinkSource.deleteLinkConsumptionsByCycle(145)
-    LinkSource.saveLinkConsumptions(linkConsumptionDetails.toList)
+    SimulationLog.time("dbLinkConsumptionSave", Some(cycle), metrics = Seq("linkConsumptions" -> linkConsumptionDetails.size)) {
+      LinkSource.saveLinkConsumptions(linkConsumptionDetails.toList)
+    }
 
     println("Calculating Lounge usage")
     val loungeResult: List[LoungeConsumptionDetails] = loungeConsumptionDetails.groupBy(_.lounge).map{
@@ -175,8 +193,10 @@ object LinkSimulation {
         LoungeConsumptionDetails(lounge, totalSelfVisitors, totalAllianceVisitors, cycle)
     }.toList
 
-    LoungeHistorySource.updateConsumptions(loungeResult)
-    LoungeHistorySource.deleteConsumptionsBeforeCycle(cycle)
+    SimulationLog.time("dbLoungeConsumptionSave", Some(cycle), metrics = Seq("loungeConsumptions" -> loungeResult.size)) {
+      LoungeHistorySource.updateConsumptions(loungeResult)
+      LoungeHistorySource.deleteConsumptionsBeforeCycle(cycle)
+    }
     Util.outputTimeDiff(startTime, "Finished calculation on profits by links & lounges. Took ")
 
     (linkConsumptionDetails.toList, loungeResult, consumptionResult, airlineStats)
@@ -199,7 +219,7 @@ object LinkSimulation {
     "Aircraft age, modified by base specializations like hangars, and airport congestion are the two equal factors for causing delays and flight cancellations. Weather is randomly generated at each airport each cycle which may cause more delays when confounded with congestion and old aircraft."
   )
 
-  def simulateLinkError(links: List[Link], allAirportStats: immutable.Map[Int, AirportStatistics], airportWeather: immutable.Map[Int, Double]): Unit = {
+  def simulateLinkError(links: List[Link], allAirportStats: immutable.Map[Int, AirportStatistics], airportWeather: immutable.Map[Int, Double], linkRandomSeed: Option[Long] = SimulationConfig.linkSimulationRandomSeed): Unit = {
     links.foreach {
       link => {
         val flights: List[Airplane] = link.getAssignedAirplanes().filter(_._1.isReady).flatMap {
@@ -213,6 +233,7 @@ object LinkSimulation {
           val hangarCountFrom = link.from.getAirlineBase(link.airline.id).map(_.specializations.count(_.getType == BaseSpecializationType.HANGAR)).getOrElse(0)
           val hangarCountTo = link.to.getAirlineBase(link.airline.id).map(_.specializations.count(_.getType == BaseSpecializationType.HANGAR)).getOrElse(0)
 
+          var flightIndex = 0
           flights.foreach { airplane =>
             val airplaneDecay = 100 - Math.min(110, (hangarCountTo + hangarCountFrom) * 5 + airplane.condition) //hangars improve over 100 to 110
 
@@ -246,7 +267,9 @@ object LinkSimulation {
             majorDelayChance = Math.min(0.4, majorDelayChance)
             cancellationChance = Math.min(0.2, cancellationChance)
 
-            val rand = scala.util.Random.nextDouble()
+            val rand = linkRandomSeed
+              .map(seed => stableUnitRandom(seed, "link-error", link.id, airplane.id, flightIndex))
+              .getOrElse(scala.util.Random.nextDouble())
 
             if (rand < cancellationChance) {
               link.cancellationCount += 1
@@ -255,6 +278,7 @@ object LinkSimulation {
             } else if (rand < cancellationChance + majorDelayChance + minorDelayChance) {
               link.minorDelayCount += 1
             }
+            flightIndex += 1
           }
         }
       }
@@ -278,6 +302,22 @@ object LinkSimulation {
     } else {
       0
     }
+  }
+
+  private def stableUnitRandom(seed: Long, purpose: String, parts: Int*): Double = {
+    val random = new java.util.Random(stableSeed(seed, purpose, parts))
+    random.nextDouble()
+  }
+
+  private def stableSeed(seed: Long, purpose: String, parts: scala.collection.immutable.Seq[Int]): Long = {
+    var mixed = seed * 31 + purpose.hashCode
+    parts.foreach { part =>
+      mixed = mixed * 31 + part
+      mixed ^= (mixed << 13)
+      mixed ^= (mixed >>> 7)
+      mixed ^= (mixed << 17)
+    }
+    mixed
   }
 
   /**

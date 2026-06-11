@@ -163,15 +163,18 @@ object Constants {
   //  val DATABASE_CONNECTION = "jdbc:sqlite:../airline-data/db/default.db"
   //  val DB_DRIVER = "org.sqlite.JDBC"
   val configFactory = ConfigFactory.load()
-  val DB_HOST = if (configFactory.hasPath("mysqldb.host")) configFactory.getString("mysqldb.host") else sys.env.get("DB_HOST").getOrElse("localhost:3306")
-  val dbParams = if (configFactory.hasPath("mysqldb.dbParams")) configFactory.getString("mysqldb.dbParams") else ""
+  private def configString(path: String): Option[String] = {
+    if (configFactory.hasPath(path)) Some(configFactory.getString(path)) else None
+  }
+  val DB_HOST = sys.env.get("DB_HOST").orElse(configString("mysqldb.host")).getOrElse("localhost:3306")
+  val dbParams = sys.env.get("DB_PARAMS").orElse(configString("mysqldb.dbParams")).getOrElse("")
   println("!!!!!!!!!!!!!!!DB HOST IS " + DB_HOST)
-  val SCHEMA_NAME = if (configFactory.hasPath("mysqldb.schema")) configFactory.getString("mysqldb.schema") else sys.env.get("DB_NAME").getOrElse("airline")
+  val SCHEMA_NAME = sys.env.get("DB_NAME").orElse(configString("mysqldb.schema")).getOrElse("airline")
 
   val DATABASE_CONNECTION = "jdbc:mysql://" + DB_HOST + "/" + SCHEMA_NAME +"?rewriteBatchedStatements=true&sslMode=DISABLED&useUnicode=true&characterEncoding=utf-8&allowPublicKeyRetrieval=true&socketTimeout=90000&connectTimeout=10000" + dbParams
   val DB_DRIVER = "com.mysql.cj.jdbc.Driver"
-  val DATABASE_USER = if (configFactory.hasPath("mysqldb.user")) configFactory.getString("mysqldb.user") else sys.env.get("DB_USER").getOrElse("mfc01")
-  val DATABASE_PASSWORD = if (configFactory.hasPath("mysqldb.password")) configFactory.getString("mysqldb.password") else sys.env.get("DB_PASSWORD").getOrElse("ghEtmwBdnXYBQH4")
+  val DATABASE_USER = sys.env.get("DB_USER").orElse(configString("mysqldb.user")).getOrElse("root")
+  val DATABASE_PASSWORD = sys.env.get("DB_PASSWORD").orElse(configString("mysqldb.password")).getOrElse("")
 
   println(s"!!!!!!!!!!!!!!!FINAL DB str $DATABASE_CONNECTION with user $DATABASE_USER")
 

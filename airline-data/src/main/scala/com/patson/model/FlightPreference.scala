@@ -1,5 +1,6 @@
 package com.patson.model
 
+import com.patson.SimulationConfig
 import com.patson.Util
 import java.util.concurrent.ThreadLocalRandom
 
@@ -13,6 +14,7 @@ abstract class FlightPreference(homeAirport : Airport) {
   def computeCost(baseCost : Double, link : Transport, linkClass : LinkClass) : Double
   def preferredLinkClass : LinkClass
   def getPreferenceType : FlightPreferenceType.Value
+  private[patson] def homeAirportForKernel: Airport = homeAirport
 
 
   def computeCost(link : Transport, linkClass : LinkClass, paxType: PassengerType.Value, externalCostModifier : Double = 1.0) : Double = {
@@ -90,8 +92,95 @@ abstract class FlightPreference(homeAirport : Airport) {
   /**
    * flattop bell random centered at 0
    */
-  def getFlatTopBellRandom(topWidth: Double, bellExtension: Double) = {
+  def getFlatTopBellRandom(topWidth: Double, bellExtension: Double): Double = {
     topWidth / 2 - ThreadLocalRandom.current().nextDouble() * topWidth + Util.getBellRandom(0) * bellExtension
+  }
+
+  def getFlatTopBellRandom(topWidth: Double, bellExtension: Double, link: Transport, linkClass: LinkClass): Double = {
+    deterministicRouteCostRandom("flatTopBell", link, linkClass).map { random =>
+      topWidth / 2 - random.nextDouble() * topWidth + random.nextGaussian() * bellExtension
+    }.getOrElse(getFlatTopBellRandom(topWidth, bellExtension))
+  }
+
+  @transient private[this] lazy val routeCostSeedForPreference: Option[Long] = SimulationConfig.passengerRouteCostSeed
+
+  protected def deterministicRouteCostRandom(purpose: String,
+                                             link: Transport,
+                                             linkClass: LinkClass,
+                                             paxType: Option[PassengerType.Value] = None): Option[java.util.Random] = {
+    routeCostSeedForPreference.map { seed =>
+      new java.util.Random(stableRouteCostSeed(seed, purpose, link, linkClass, paxType))
+    }
+  }
+
+  private[patson] def deterministicRouteCostRandomForKernel(purpose: String,
+                                                            link: Transport,
+                                                            linkClass: LinkClass,
+                                                            paxType: Option[PassengerType.Value] = None): Option[java.util.Random] = {
+    deterministicRouteCostRandom(purpose, link, linkClass, paxType)
+  }
+
+  private[patson] def deterministicRouteCostRandomForKernel(seed: Long,
+                                                            purpose: String,
+                                                            link: Transport,
+                                                            linkClass: LinkClass,
+                                                            paxTypeId: Int): java.util.Random = {
+    new java.util.Random(stableRouteCostSeed(seed, purpose, link, linkClass, paxTypeId))
+  }
+
+  private def stableRouteCostSeed(seed: Long,
+                                  purpose: String,
+                                  link: Transport,
+                                  linkClass: LinkClass,
+                                  paxType: Option[PassengerType.Value]): Long = {
+    stableRouteCostSeed(seed, purpose, link, linkClass, if (paxType.isDefined) paxType.get.id else -1)
+  }
+
+  private def stableRouteCostSeed(seed: Long,
+                                  purpose: String,
+                                  link: Transport,
+                                  linkClass: LinkClass,
+                                  paxTypeId: Int): Long = {
+    var hash = seed ^ -7046029254386353131L
+    hash = mixRouteCostSeed(hash, purpose)
+    hash = mixRouteCostSeed(hash, homeAirport.id)
+    hash = mixRouteCostSeed(hash, getPreferenceType.id)
+    hash = mixRouteCostSeed(hash, preferredLinkClass.code)
+    hash = mixRouteCostSeed(hash, linkClass.code)
+    hash = mixRouteCostSeed(hash, paxTypeId)
+    hash = mixRouteCostSeed(hash, link.id)
+    hash = mixRouteCostSeed(hash, link.from.id)
+    hash = mixRouteCostSeed(hash, link.to.id)
+    hash = mixRouteCostSeed(hash, link.airline.id)
+    hash = mixRouteCostSeed(hash, priceModifier)
+    hash = mixRouteCostSeed(hash, qualitySensitivity)
+    hash = mixRouteCostSeed(hash, loyaltySensitivity)
+    hash = mixRouteCostSeed(hash, frequencyThreshold)
+    hash = mixRouteCostSeed(hash, loungeLevelRequired)
+    mixRouteCostSeed(hash, connectionCostRatio)
+  }
+
+  private def mixRouteCostSeed(hash: Long, value: String): Long = {
+    mixRouteCostSeedText(hash, String.valueOf(value))
+  }
+
+  private def mixRouteCostSeed(hash: Long, value: Int): Long = {
+    mixRouteCostSeedText(hash, java.lang.Integer.toString(value))
+  }
+
+  private def mixRouteCostSeed(hash: Long, value: Double): Long = {
+    mixRouteCostSeedText(hash, java.lang.Double.toString(value))
+  }
+
+  private def mixRouteCostSeedText(hash: Long, text: String): Long = {
+    var current = hash
+    var index = 0
+    while (index < text.length) {
+      current ^= text.charAt(index).toLong
+      current *= 1099511628211L
+      index += 1
+    }
+    current
   }
   /**
    * priceSensitivity : how sensitive to the price, base value is 1 (100%)
@@ -213,7 +302,9 @@ abstract class FlightPreference(homeAirport : Airport) {
     }
 
     val isFrequency = frequencyThreshold * 2
-    val frequencyThresholdperPax = ThreadLocalRandom.current().nextInt(isFrequency)
+    val frequencyThresholdperPax = deterministicRouteCostRandom("frequencyThreshold", link, linkClass, Some(paxType))
+      .map(_.nextInt(isFrequency))
+      .getOrElse(ThreadLocalRandom.current().nextInt(isFrequency))
 
     val delta = Math.max(-4, (frequencyThresholdperPax - link.frequency).toDouble / frequencyThresholdperPax)
     if (delta < 0) {
@@ -260,7 +351,7 @@ case class DealPreference(homeAirport : Airport, preferredLinkClass: LinkClass, 
   override val frequencyThreshold = 2
 
   def computeCost(baseCost: Double, link : Transport, linkClass : LinkClass) : Double = {
-    val noise = 0.9 + getFlatTopBellRandom(0.2, 0.2)
+    val noise = 0.9 + getFlatTopBellRandom(0.2, 0.2, link, linkClass)
     val finalCost = baseCost * noise
     Math.max(1, finalCost)
   }
@@ -278,7 +369,7 @@ case class LastMinutePreference(homeAirport : Airport, preferredLinkClass: LinkC
     1.0
   }
   def computeCost(baseCost: Double, link : Transport, linkClass : LinkClass) : Double = {
-    val noise = 0.8 + getFlatTopBellRandom(0.3, 0.3)
+    val noise = 0.8 + getFlatTopBellRandom(0.3, 0.3, link, linkClass)
     val finalCost = baseCost * noise
     Math.max(1, finalCost)
   }
@@ -331,7 +422,7 @@ case class AppealPreference(homeAirport : Airport, preferredLinkClass : LinkClas
   }
 
   def computeCost(baseCost: Double, link : Transport, linkClass : LinkClass) : Double = {
-    val noise = 0.8 + getFlatTopBellRandom(0.3, 0.3)
+    val noise = 0.8 + getFlatTopBellRandom(0.3, 0.3, link, linkClass)
     val finalCost = baseCost * noise
     Math.max(1, finalCost)
   }
